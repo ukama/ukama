@@ -39,7 +39,7 @@ phases:
         networks: net-001
         expected_value: 5.00
         tolerance: 0.001
-        timeout_seconds: 600
+        timeout_seconds: 120
       - type: kpi_value
         key: REVENUE
         span: daily
@@ -48,5 +48,5 @@ phases:
         networks: net-001
         expected_value: 5.00
         tolerance: 0.001
-        timeout_seconds: 600
+        timeout_seconds: 120
 

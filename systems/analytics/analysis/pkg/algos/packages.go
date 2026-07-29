@@ -215,20 +215,27 @@ func Mrr(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) 
 	}), nil
 }
 
-// Arpu (ARPU @ scope network_id): MRR ÷ distinct subscribers holding an
-// active assignment. State gauge.
+// Arpu (ARPU @ scope network_id): committed spend ÷ distinct subscribers
+// holding an active assignment, per network. Committed spend is the sum of the
+// package's ACTUAL price (not the 30-day-normalized MRR figure) over every
+// currently-active assignment, so a $1 plan bought by one subscriber reads $1
+// regardless of the plan's duration — a per-user spend, not a monthly
+// run-rate. The denominator matches CUSTOMERS_ON_PLAN (distinct subscribers on
+// any active plan) so ARPU × customers reconciles to committed spend. State
+// gauge; networks with no active subscriber read $0.
 func Arpu(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	mrrResults, err := Mrr(win, in, spec)
+	packages, err := decodePackages(in)
 	if err != nil {
 		return nil, fmt.Errorf("ARPU: %w", err)
 	}
 
-	assignments, _, err := packageInputs(in, "ARPU")
+	assignments, networks, err := packageInputs(in, "ARPU")
 	if err != nil {
 		return nil, err
 	}
 
-	subscribers := map[string]map[string]bool{}
+	spend := map[string]float64{}               // network -> committed cents
+	subscribers := map[string]map[string]bool{} // network -> distinct subscriber ids
 
 	for _, a := range activeOf(assignments) {
 		networkID, subscriberID := str(a["network_id"]), str(a["subscriber_id"])
@@ -241,22 +248,23 @@ func Arpu(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error)
 		}
 
 		subscribers[networkID][subscriberID] = true
+
+		// Numerator counts only assignments we can price; an unresolvable
+		// package contributes $0 but the subscriber still counts (data issue,
+		// not a reason to shrink the denominator).
+		if p, ok := packages[str(a["package_id"])]; ok && p.appliesTo(networkID) {
+			spend[networkID] += p.amountCents
+		}
 	}
 
-	results := make([]Result, 0, len(mrrResults))
-
-	for _, m := range mrrResults {
-		n := float64(len(subscribers[m.Scope["network_id"]]))
-
-		value := 0.0
-		if n > 0 {
-			value = math.Round(m.Value / n)
+	return zeroFilled(networks, func(networkID string) float64 {
+		n := float64(len(subscribers[networkID]))
+		if n == 0 {
+			return 0
 		}
 
-		results = append(results, CountResult(m.Scope, value))
-	}
-
-	return results, nil
+		return math.Round(spend[networkID] / n)
+	}), nil
 }
 
 // CustomersOnPlan (CUSTOMERS_ON_PLAN @ scope network_id): distinct
