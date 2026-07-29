@@ -84,36 +84,6 @@ func (_m *ReportRepo) Get(id uuid.UUID) (*db.Report, error) {
 	return r0, r1
 }
 
-// GetByTransactionId provides a mock function with given fields: transactionId
-func (_m *ReportRepo) GetByTransactionId(transactionId string) (*db.Report, error) {
-	ret := _m.Called(transactionId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetByTransactionId")
-	}
-
-	var r0 *db.Report
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Report, error)); ok {
-		return rf(transactionId)
-	}
-	if rf, ok := ret.Get(0).(func(string) *db.Report); ok {
-		r0 = rf(transactionId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Report)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(transactionId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // List provides a mock function with given fields: ownerId, ownerType, networkId, reportType, isPaid, count, sort
 func (_m *ReportRepo) List(ownerId string, ownerType ukama.OwnerType, networkId string, reportType ukama.ReportType, isPaid bool, count uint32, sort bool) ([]db.Report, error) {
 	ret := _m.Called(ownerId, ownerType, networkId, reportType, isPaid, count, sort)

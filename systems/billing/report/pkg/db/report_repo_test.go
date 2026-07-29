@@ -179,64 +179,6 @@ func TestReportRepo_Get(t *testing.T) {
 	})
 }
 
-func TestReportRepo_GetByTransactionId(t *testing.T) {
-	t.Run("reportFound", func(t *testing.T) {
-		// Arrange
-		var reportId = uuid.NewV4()
-		var ownerId = uuid.NewV4()
-		var transactionId = uuid.NewV4().String()
-
-		mock, gdb := prepare_db(t)
-
-		rows := sqlmock.NewRows([]string{"id", "owner_id", "transaction_id"}).
-			AddRow(reportId, ownerId, transactionId)
-
-		mock.ExpectQuery(`^SELECT.*reports.*`).
-			WithArgs(transactionId, sqlmock.AnyArg()).
-			WillReturnRows(rows)
-
-		r := db.NewReportRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		// Act
-		rep, err := r.GetByTransactionId(transactionId)
-
-		// Assert
-		assert.NoError(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.NotNil(t, rep)
-		assert.Equal(t, transactionId, rep.TransactionId)
-	})
-
-	t.Run("reportNotFound", func(t *testing.T) {
-		// Arrange
-		var transactionId = uuid.NewV4().String()
-
-		mock, gdb := prepare_db(t)
-
-		mock.ExpectQuery(`^SELECT.*reports.*`).
-			WithArgs(transactionId, sqlmock.AnyArg()).
-			WillReturnError(sql.ErrNoRows)
-
-		r := db.NewReportRepo(&UkamaDbMock{
-			GormDb: gdb,
-		})
-
-		// Act
-		rep, err := r.GetByTransactionId(transactionId)
-
-		// Assert
-		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-		assert.Nil(t, rep)
-	})
-}
-
 func TestReportRepo_List(t *testing.T) {
 	t.Run("ListAll", func(t *testing.T) {
 		report := &db.Report{
