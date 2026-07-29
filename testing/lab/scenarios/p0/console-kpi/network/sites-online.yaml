@@ -1,10 +1,10 @@
 version: 1
-name: p0-console-kpi-sites-online
-description: Disable and re-enable the only site through the GraphQL controller mutation and verify SITES_ONLINE moves from zero back to one for that network.
-seed: 4711
+name: p0-console-kpi-sites-degraded
+description: Turn the site service off and back on, verifying SITES_DEGRADED moves from zero to one and back for that network.
+seed: 4713
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, sites-online, controller, graphql]
+tags: [virtual, console-kpi, sites-degraded, service, graphql]
 status: active
 provider:
   type: virtual
@@ -22,13 +22,25 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: take_site_out_of_service
+  - name: baseline_not_degraded
+    checks:
+      - type: kpi_value
+        key: SITES_DEGRADED
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 0
+        immediate: true
+        timeout_seconds: 600
+        poll_seconds: 10
+  - name: service_off_degrades
     events:
       - type: toggle_service
         sites: site-001
         state: off
       - type: wait
-        seconds: 40
+        seconds: 90
     checks:
       - type: kpi_value
         key: SITES_DEGRADED
@@ -37,14 +49,16 @@ phases:
         scope_key: network_id
         networks: net-001
         expected_value: 1
+        immediate: true
         timeout_seconds: 300
-  - name: restore_site_service
+        poll_seconds: 10
+  - name: service_on_clears_degraded
     events:
       - type: toggle_service
         sites: site-001
         state: on
       - type: wait
-        seconds: 40
+        seconds: 90
     checks:
       - type: kpi_value
         key: SITES_DEGRADED
@@ -55,4 +69,4 @@ phases:
         expected_value: 0
         immediate: true
         timeout_seconds: 300
-
+        poll_seconds: 10
