@@ -160,10 +160,7 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 		return nil, fmt.Errorf("%s: missing input 'nodes'", kpi)
 	}
 
-	healthByNode := map[string]map[string]interface{}{}
-	for _, h := range health {
-		healthByNode[str(h["node_id"])] = h
-	}
+	healthByNode := indexHealthByNode(health)
 
 	sites := map[string]*siteAgg{}
 
@@ -197,6 +194,17 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	}
 
 	return sites, nil
+}
+
+// indexHealthByNode keys the node.health.interfaces rows of a window by node
+// id. Shared by the uptime algos and SITES_DEGRADED.
+func indexHealthByNode(health []map[string]interface{}) map[string]map[string]interface{} {
+	out := make(map[string]map[string]interface{}, len(health))
+	for _, h := range health {
+		out[str(h["node_id"])] = h
+	}
+
+	return out
 }
 
 // Node/window classification states.

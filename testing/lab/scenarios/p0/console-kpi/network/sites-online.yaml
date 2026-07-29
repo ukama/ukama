@@ -28,31 +28,31 @@ phases:
         sites: site-001
         state: off
       - type: wait
-        seconds: 10
+        seconds: 40
     checks:
       - type: kpi_value
-        key: SITES_ONLINE
+        key: SITES_DEGRADED
         span: daily
         op: LAST
         scope_key: network_id
         networks: net-001
-        expected_value: 0
-        timeout_seconds: 600
+        expected_value: 1
+        timeout_seconds: 300
   - name: restore_site_service
     events:
       - type: toggle_service
         sites: site-001
         state: on
       - type: wait
-        seconds: 10
+        seconds: 40
     checks:
       - type: kpi_value
-        key: SITES_ONLINE
+        key: SITES_DEGRADED
         span: daily
         op: LAST
         scope_key: network_id
         networks: net-001
-        expected_value: 1
+        expected_value: 0
         immediate: true
-        timeout_seconds: 600
+        timeout_seconds: 300
 

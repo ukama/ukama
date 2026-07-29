@@ -57,41 +57,6 @@ func SitesOnline(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result,
 	return results, nil
 }
 
-// SitesDegraded (SITES_DEGRADED @ scope network_id): sites with at least one
-// offline node.
-//
-// Inputs: same as SITES_ONLINE.
-func SitesDegraded(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sites, networks, err := groupSites(in, "SITES_DEGRADED")
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]Result, 0, len(networks))
-
-	for _, network := range networks {
-		networkID := str(network["network_id"])
-		if networkID == "" {
-			continue
-		}
-
-		degraded := 0
-
-		for _, nodes := range sites[networkID] {
-			if siteHasOfflineNode(nodes) {
-				degraded++
-			}
-		}
-
-		results = append(results, CountResult(
-			map[string]string{"network_id": networkID},
-			float64(degraded),
-		))
-	}
-
-	return results, nil
-}
-
 func groupSites(in Datasets, kpi string) (siteNodes, []map[string]interface{}, error) {
 	nodes, ok := in["nodes"]
 	if !ok {
@@ -127,17 +92,6 @@ func groupSites(in Datasets, kpi string) (siteNodes, []map[string]interface{}, e
 func siteIsOnline(nodes []map[string]interface{}) bool {
 	for _, node := range nodes {
 		if strings.EqualFold(str(node["type"]), "cnode") && isOnline(node["connectivity"]) {
-			return true
-		}
-	}
-
-	return false
-}
-
-// siteHasOfflineNode: any node of the site is not online.
-func siteHasOfflineNode(nodes []map[string]interface{}) bool {
-	for _, node := range nodes {
-		if !isOnline(node["connectivity"]) {
 			return true
 		}
 	}

@@ -64,7 +64,9 @@ func Default() *Registry {
 
 	// v2: site online = its cnode is online (was: any node online).
 	r.Register("sites_online@v2", SitesOnline)
-	r.Register("sites_degraded@v1", SitesDegraded)
+	// v2: degraded = any node offline OR a tnode/anode health fault
+	// (cellular/radio unavailable, probe unreachable). Was: connectivity only.
+	r.Register("sites_degraded@v2", SitesDegraded)
 	r.Register("site_uptime@v1", SiteUptime)
 	r.Register("network_uptime@v1", NetworkUptime)
 	// v3: reads the shared all-sims dataset (subscriber.sim.list) and
