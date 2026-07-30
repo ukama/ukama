@@ -16,6 +16,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/storage"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -25,16 +26,20 @@ import (
 
 const dateLayout = "January 2, 2006"
 
+const receiptContentType = "application/pdf"
+
 type MailerEventServer struct {
 	orgName string
 	s       *MailerServer
+	storage storage.Storage
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewMailerEventServer(orgName string, s *MailerServer) *MailerEventServer {
+func NewMailerEventServer(orgName string, s *MailerServer, store storage.Storage) *MailerEventServer {
 	return &MailerEventServer{
 		orgName: orgName,
 		s:       s,
+		storage: store,
 	}
 }
 
@@ -69,6 +74,15 @@ func (es *MailerEventServer) EventNotification(ctx context.Context, e *epb.Event
 		}
 
 		return es.handleEventSimAddPackage(ctx, msg)
+
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventReceiptGenerate]):
+		c := evt.EventToEventConfig[evt.EventReceiptGenerate]
+		msg, err := epb.UnmarshalEventReceiptGenerated(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		return es.handleEventReceiptGenerate(ctx, msg)
 
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
@@ -181,6 +195,56 @@ func (es *MailerEventServer) handleEventSimAddPackage(ctx context.Context, msg *
 		emailTemplate.EmailKeyExpiration:      msg.PackageEndDate,
 		emailTemplate.EmailKeyPackage:         msg.PackageName,
 	})
+}
+
+func (es *MailerEventServer) handleEventReceiptGenerate(ctx context.Context, msg *epb.EventReceiptGenerated) (*epb.EventResponse, error) {
+	if msg.PayerEmail == "" {
+		log.Warnf("Skipping %s email for receipt %s: no recipient in event",
+			emailTemplate.EmailTemplatePaymentReceipt, msg.ReceiptNumber)
+
+		return &epb.EventResponse{}, nil
+	}
+
+	if es.storage == nil {
+		log.Warnf("Skipping %s email for receipt %s: storage is not configured",
+			emailTemplate.EmailTemplatePaymentReceipt, msg.ReceiptNumber)
+
+		return &epb.EventResponse{}, nil
+	}
+
+	content, err := es.storage.Get(ctx, msg.Bucket, msg.ObjectKey)
+	if err != nil {
+		log.Errorf("Failed to fetch receipt %s from %s/%s. Error %v",
+			msg.ReceiptNumber, msg.Bucket, msg.ObjectKey, err)
+
+		return nil, err
+	}
+
+	mailId, err := es.s.QueueEmail(ctx, []string{msg.PayerEmail},
+		emailTemplate.EmailTemplatePaymentReceipt, map[string]string{
+			emailTemplate.EmailKeyName:          msg.PayerName,
+			emailTemplate.EmailKeyOrg:           msg.OrgName,
+			emailTemplate.EmailKeyAmount:        fmt.Sprintf("%s %s", msg.Currency, msg.Amount),
+			emailTemplate.EmailKeyReceiptNumber: msg.ReceiptNumber,
+			emailTemplate.EmailKeyPaymentDate:   msg.PaidAt,
+			emailTemplate.EmailKeyPaymentMethod: msg.PaymentMethod,
+			emailTemplate.EmailKeyDescription:   msg.Description,
+		}, []EmailAttachment{
+			{
+				Filename:    msg.FileName,
+				ContentType: receiptContentType,
+				Content:     content,
+			},
+		})
+	if err != nil {
+		log.Errorf("Failed to queue %s email. Error %v", emailTemplate.EmailTemplatePaymentReceipt, err)
+
+		return nil, err
+	}
+
+	log.Infof("Queued %s email with mail id %s", emailTemplate.EmailTemplatePaymentReceipt, mailId)
+
+	return &epb.EventResponse{}, nil
 }
 
 func (es *MailerEventServer) queue(ctx context.Context, to string, templateName string, values map[string]string) (*epb.EventResponse, error) {

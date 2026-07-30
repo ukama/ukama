@@ -5,5 +5,6 @@ COPY templates/test-template.tmpl /templates/test-template.tmpl
 COPY templates/member-invite.tmpl /templates/member-invite.tmpl
 COPY templates/sim-allocation.tmpl /templates/sim-allocation.tmpl
 COPY templates/topup-plan.tmpl /templates/topup-plan.tmpl
+COPY templates/payment-receipt.tmpl /templates/payment-receipt.tmpl
 
 CMD ["/usr/bin/mailer"]
