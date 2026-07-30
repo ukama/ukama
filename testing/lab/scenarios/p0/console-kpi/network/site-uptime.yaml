@@ -49,7 +49,7 @@ phases:
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
-        op: MAX
+        op: AVG
         scope_key: site_id
         scope_value: site-001
         networks: net-001
@@ -90,7 +90,7 @@ phases:
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
-        op: MAX
+        op: AVG
         scope_key: site_id
         scope_value: site-001
         networks: net-001
