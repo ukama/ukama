@@ -14,6 +14,7 @@
 #include <unistd.h>
 
 #include "check.h"
+#include "log.h"
 #include "selector.h"
 #include "util.h"
 
@@ -205,8 +206,35 @@ static int package_business_metrics(check_ctx_t *ctx,
         return ULAB_ERR;
     }
     deadline = time(NULL) + (time_t)(check->timeout_seconds ?
-                                    check->timeout_seconds : 300u);
-    poll = check->poll_seconds ? check->poll_seconds : 5u;
+                                    check->timeout_seconds : 60u);
+    poll = check->poll_seconds ? check->poll_seconds : 10u;
+    if (check->has_expected_value && check->has_expected_count) {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_revenue=%.2f expected_attach=%u "
+                    "timeout=%us poll=%us",
+                    check->package_ref, check->expected_value,
+                    check->expected_count,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
+                    poll);
+    } else if (check->has_expected_value) {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_revenue=%.2f timeout=%us poll=%us",
+                    check->package_ref, check->expected_value,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
+                    poll);
+    } else {
+        ulab_status("CHECK",
+                    "package_business_metrics package=%s "
+                    "expected_attach=%u timeout=%us poll=%us",
+                    check->package_ref, check->expected_count,
+                    check->timeout_seconds ?
+                        check->timeout_seconds : 60u,
+                    poll);
+    }
     do {
         matched = 0;
         for (i = 0; i < networks.count; i++) {
@@ -250,12 +278,29 @@ static int package_business_metrics(check_ctx_t *ctx,
     } while (matched != networks.count && time(NULL) < deadline);
 
     res->passed = matched == networks.count;
-    snprintf(res->detail, sizeof(res->detail),
-             "package=%s found=%s revenue=%.2f expected=%.2f "
-             "attach=%u expected_attach=%u matched=%zu/%zu",
-             check->package_ref, last_found ? "true" : "false",
-             last.revenue, check->expected_value, last.attach_count,
-             check->expected_count, matched, networks.count);
+    if (check->has_expected_value && check->has_expected_count) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f "
+                 "expected_revenue=%.2f attach=%u expected_attach=%u "
+                 "matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, check->expected_value, last.attach_count,
+                 check->expected_count, matched, networks.count);
+    } else if (check->has_expected_value) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f "
+                 "expected_revenue=%.2f matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, check->expected_value, matched,
+                 networks.count);
+    } else {
+        snprintf(res->detail, sizeof(res->detail),
+                 "package=%s found=%s revenue=%.2f attach=%u "
+                 "expected_attach=%u matched=%zu/%zu",
+                 check->package_ref, last_found ? "true" : "false",
+                 last.revenue, last.attach_count, check->expected_count,
+                 matched, networks.count);
+    }
     selector_result_free(&networks);
     return ULAB_OK;
 }

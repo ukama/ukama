@@ -25,6 +25,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/invitation/pkg/db"
 
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
@@ -47,7 +48,6 @@ const (
 
 	// Test configuration
 	TestAuthLoginBaseURL = "https://auth.ukama.com"
-	TestTemplateName     = "invitation_template"
 	TestExpiryTime       = uint(24) // 24 hours
 )
 
@@ -93,7 +93,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -125,12 +124,16 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(nil).Once()
 		userClient.On("GetByEmail", email).Return(invitedUserInfo, nil).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		var publishedEvt *epb.EventInvitationCreated
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once().
+			Run(func(args mock.Arguments) {
+				publishedEvt = args.Get(1).(*epb.EventInvitationCreated)
+			})
+
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -146,10 +149,15 @@ func TestInvitationServer_Add(t *testing.T) {
 		assert.Equal(t, name, res.Invitation.Name)
 		assert.Equal(t, role, res.Invitation.Role)
 		assert.Equal(t, upb.InvitationStatus_INVITE_PENDING, res.Invitation.Status)
+
+		assert.NotNil(t, publishedEvt)
+		assert.Equal(t, orgName, publishedEvt.OrgName)
+		assert.Equal(t, ownerInfo.Name, publishedEvt.OwnerName)
+		assert.Equal(t, res.Invitation.Id, publishedEvt.Id)
+
 		invitationRepo.AssertExpectations(t)
 		orgClient.AssertExpectations(t)
 		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
 	})
 
@@ -158,7 +166,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -183,12 +190,11 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(nil).Once()
 		userClient.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -207,7 +213,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo.AssertExpectations(t)
 		orgClient.AssertExpectations(t)
 		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
 	})
 
@@ -216,14 +221,13 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		email := TestInvitationEmail1
 		name := TestInvitationName1
 		role := upb.RoleType_ROLE_OWNER
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, "", TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, "")
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -243,14 +247,13 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 		name := TestInvitationName1
 		role := upb.RoleType_ROLE_OWNER
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -270,7 +273,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -280,7 +282,7 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -300,7 +302,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -320,7 +321,7 @@ func TestInvitationServer_Add(t *testing.T) {
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -336,61 +337,12 @@ func TestInvitationServer_Add(t *testing.T) {
 		userClient.AssertExpectations(t)
 	})
 
-	t.Run("mailerClientError", func(t *testing.T) {
-		// Arrange
-		invitationRepo := &mocks.InvitationRepo{}
-		orgClient := &cmocks.OrgClient{}
-		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-
-		orgName := TestOrgName
-		email := TestInvitationEmail1
-		name := TestInvitationName1
-		role := upb.RoleType_ROLE_OWNER
-		ownerId := TestOwnerId
-
-		// Mock organization info
-		orgInfo := &cnucl.OrgInfo{
-			Id:            uuid.NewV4().String(),
-			Name:          orgName,
-			Owner:         ownerId,
-			IsDeactivated: false,
-		}
-
-		// Mock owner info
-		ownerInfo := &cnucl.UserInfo{
-			Id:   ownerId,
-			Name: "Org Owner",
-		}
-
-		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
-		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(gorm.ErrInvalidDB).Once()
-
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
-
-		// Act
-		res, err := s.Add(context.TODO(), &pb.AddRequest{
-			Email: email,
-			Name:  name,
-			Role:  role,
-		})
-
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, res)
-		orgClient.AssertExpectations(t)
-		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
-	})
 
 	t.Run("databaseErrorDuringAdd", func(t *testing.T) {
 		// Arrange
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -422,11 +374,10 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(nil).Once()
 		userClient.On("GetByEmail", email).Return(invitedUserInfo, nil).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -441,7 +392,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo.AssertExpectations(t)
 		orgClient.AssertExpectations(t)
 		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
 	})
 
 	t.Run("addWithMessageBusFailure", func(t *testing.T) {
@@ -449,7 +399,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -481,12 +430,11 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(nil).Once()
 		userClient.On("GetByEmail", email).Return(invitedUserInfo, nil).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -504,7 +452,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo.AssertExpectations(t)
 		orgClient.AssertExpectations(t)
 		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
 		msgbusClient.AssertExpectations(t)
 	})
 
@@ -513,7 +460,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 
 		orgName := TestOrgName
 		email := TestInvitationEmail1
@@ -544,11 +490,10 @@ func TestInvitationServer_Add(t *testing.T) {
 
 		orgClient.On("Get", orgName).Return(orgInfo, nil).Once()
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
-		mailerClient.On("SendEmail", mock.AnythingOfType("notification.SendEmailReq")).Return(nil).Once()
 		userClient.On("GetByEmail", email).Return(invitedUserInfo, nil).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, nil, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, nil, orgName)
 
 		// Act
 		res, err := s.Add(context.TODO(), &pb.AddRequest{
@@ -566,7 +511,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo.AssertExpectations(t)
 		orgClient.AssertExpectations(t)
 		userClient.AssertExpectations(t)
-		mailerClient.AssertExpectations(t)
 	})
 }
 
@@ -576,7 +520,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -599,7 +542,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -619,12 +562,11 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -642,7 +584,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -650,7 +591,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -668,7 +609,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -676,7 +616,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -694,7 +634,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -716,7 +655,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo.On("Get", invitationId).Return(existingInvitation, nil).Once()
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -734,7 +673,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -757,7 +695,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -777,7 +715,6 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 
 		orgName := TestOrgName
 		invitationId := uuid.NewV4()
@@ -798,7 +735,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 		invitationRepo.On("Get", invitationId).Return(existingInvitation, nil).Once()
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, nil, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, nil, orgName)
 
 		// Act
 		res, err := s.Delete(context.TODO(), &pb.DeleteRequest{
@@ -819,7 +756,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -854,7 +790,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("Get", invitationId).Return(updatedInvitation, nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -878,14 +814,13 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 		email := TestInvitationEmail1
 		newStatus := upb.InvitationStatus_INVITE_ACCEPTED
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -905,7 +840,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -915,7 +849,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 
 		userClient.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -935,7 +869,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -952,7 +885,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 
 		userClient.On("GetByEmail", email).Return(userInfo, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -973,7 +906,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -993,7 +925,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		userClient.On("GetByEmail", email).Return(userInfo, nil).Once()
 		invitationRepo.On("UpdateUserId", invitationId, mock.AnythingOfType("uuid.UUID")).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -1014,7 +946,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1035,7 +966,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("UpdateUserId", invitationId, mock.AnythingOfType("uuid.UUID")).Return(nil).Once()
 		invitationRepo.On("UpdateStatus", invitationId, uint8(newStatus.Number())).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -1056,7 +987,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1078,7 +1008,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("UpdateStatus", invitationId, uint8(newStatus.Number())).Return(nil).Once()
 		invitationRepo.On("Get", invitationId).Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -1099,7 +1029,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1134,7 +1063,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("Get", invitationId).Return(updatedInvitation, nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -1158,7 +1087,6 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 
 		orgName := TestOrgName
 		invitationId := uuid.NewV4()
@@ -1191,7 +1119,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("UpdateStatus", invitationId, uint8(newStatus.Number())).Return(nil).Once()
 		invitationRepo.On("Get", invitationId).Return(updatedInvitation, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, nil, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, nil, orgName)
 
 		// Act
 		res, err := s.UpdateStatus(context.TODO(), &pb.UpdateStatusRequest{
@@ -1216,7 +1144,6 @@ func TestInvitationServer_Get(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1239,7 +1166,7 @@ func TestInvitationServer_Get(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(invitation, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
@@ -1262,12 +1189,11 @@ func TestInvitationServer_Get(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
@@ -1285,7 +1211,6 @@ func TestInvitationServer_Get(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1293,7 +1218,7 @@ func TestInvitationServer_Get(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
@@ -1311,7 +1236,6 @@ func TestInvitationServer_Get(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1319,7 +1243,7 @@ func TestInvitationServer_Get(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.Get(context.TODO(), &pb.GetRequest{
@@ -1339,7 +1263,6 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1362,7 +1285,7 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 
 		invitationRepo.On("GetByEmail", email).Return(invitation, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetByEmail(context.TODO(), &pb.GetByEmailRequest{
@@ -1385,12 +1308,11 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetByEmail(context.TODO(), &pb.GetByEmailRequest{
@@ -1408,7 +1330,6 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1416,7 +1337,7 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 
 		invitationRepo.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetByEmail(context.TODO(), &pb.GetByEmailRequest{
@@ -1434,7 +1355,6 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1442,7 +1362,7 @@ func TestInvitationServer_GetByEmail(t *testing.T) {
 
 		invitationRepo.On("GetByEmail", email).Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetByEmail(context.TODO(), &pb.GetByEmailRequest{
@@ -1462,7 +1382,6 @@ func TestInvitationServer_GetAll(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
@@ -1501,7 +1420,7 @@ func TestInvitationServer_GetAll(t *testing.T) {
 
 		invitationRepo.On("GetAll").Return(invitations, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetAll(context.TODO(), &pb.GetAllRequest{})
@@ -1528,14 +1447,13 @@ func TestInvitationServer_GetAll(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 
 		invitationRepo.On("GetAll").Return([]*db.Invitation{}, nil).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetAll(context.TODO(), &pb.GetAllRequest{})
@@ -1552,14 +1470,13 @@ func TestInvitationServer_GetAll(t *testing.T) {
 		invitationRepo := &mocks.InvitationRepo{}
 		orgClient := &cmocks.OrgClient{}
 		userClient := &cmocks.UserClient{}
-		mailerClient := &cmocks.MailerClient{}
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		orgName := TestOrgName
 
 		invitationRepo.On("GetAll").Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, mailerClient, orgClient, userClient, msgbusClient, orgName, TestTemplateName)
+		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
 		// Act
 		res, err := s.GetAll(context.TODO(), &pb.GetAllRequest{})

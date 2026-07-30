@@ -29,6 +29,7 @@ export const KPI_KEYS = {
   mrr: 'MRR',
   arpu: 'ARPU',
   usageByNetwork: 'USAGE_BY_NETWORK',
+  dataSold: 'DATA_SOLD',
   packageSales: 'PACKAGE_SALES',
 } as const;
 
@@ -69,6 +70,12 @@ export const kpiDelta = (
   kpis: readonly Kpi[] | undefined,
   key: string,
 ): number | undefined => kpiByKey(kpis, key)?.trend?.changePct ?? undefined;
+
+/** Period-over-period absolute change for a KPI (trend.changeAbs), or undefined. */
+export const kpiChangeAbs = (
+  kpis: readonly Kpi[] | undefined,
+  key: string,
+): number | undefined => kpiByKey(kpis, key)?.trend?.changeAbs ?? undefined;
 
 /** Previous-period value for a KPI (trend.prevValue), or undefined. */
 export const kpiPrev = (

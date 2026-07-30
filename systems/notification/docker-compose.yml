@@ -21,6 +21,11 @@ services:
    - DB_PASSWORD=Pass2020!
    - DB_USER=postgres
    - QUEUE_URI=amqp://guest:guest@${LOCAL_HOST_IP}:5672
+   - MSGCLIENT_HOST=msgclient-notification:9095
+   - MAILER_SERVICE_HOST=mailer
+   - MAILER_SERVICE_PORT=9090
+   - ORGNAME=${ORGNAME}
+   - ORGID=${ORGID}
    - MAILER_HOST=${MAILER_HOST}
    - MAILER_PORT=${MAILER_PORT}
    - MAILER_PASSWORD=${MAILER_PASSWORD}

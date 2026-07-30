@@ -6,6 +6,8 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 
+	time "time"
+
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -85,6 +87,36 @@ func (_m *MailerRepo) GetFailedEmails() ([]*db.Mailing, error) {
 
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetStalledEmails provides a mock function with given fields: olderThan
+func (_m *MailerRepo) GetStalledEmails(olderThan time.Time) ([]*db.Mailing, error) {
+	ret := _m.Called(olderThan)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStalledEmails")
+	}
+
+	var r0 []*db.Mailing
+	var r1 error
+	if rf, ok := ret.Get(0).(func(time.Time) ([]*db.Mailing, error)); ok {
+		return rf(olderThan)
+	}
+	if rf, ok := ret.Get(0).(func(time.Time) []*db.Mailing); ok {
+		r0 = rf(olderThan)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*db.Mailing)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(time.Time) error); ok {
+		r1 = rf(olderThan)
 	} else {
 		r1 = ret.Error(1)
 	}

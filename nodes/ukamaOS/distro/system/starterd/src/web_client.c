@@ -398,6 +398,263 @@ bool wc_app_ping(Config *config, App *app) {
     return ok;
 }
 
+bool wc_app_ready(Config *config, App *app, AppReadyResponse *result) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    JsonObj *root;
+    JsonObj *value;
+    JsonErrObj error;
+    const char *reason;
+    int probePort;
+    bool valid;
+
+    req = NULL;
+    resp = NULL;
+    root = NULL;
+    valid = false;
+
+    if (!config || !app || !result) return false;
+
+    memset(result, 0, sizeof(*result));
+    probePort = wc_get_probe_port(app);
+    if (probePort <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url),
+                      "127.0.0.1",
+                      probePort,
+                      "/v1/ready")) {
+        return false;
+    }
+
+    req = wc_create_request(url, "GET", config->pingTimeoutSec);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
+    }
+
+    result->status = resp->status;
+    if (resp->status != HttpStatus_OK &&
+        resp->status != HttpStatus_Accepted &&
+        resp->status != HttpStatus_ServiceUnavailable) {
+        wc_clean(req, resp);
+        return false;
+    }
+
+    if (!resp->binary_body || resp->binary_body_length == 0) {
+        wc_clean(req, resp);
+        return false;
+    }
+
+    memset(&error, 0, sizeof(error));
+    root = json_loadb((const char *)resp->binary_body,
+                      resp->binary_body_length,
+                      0,
+                      &error);
+    if (!root) {
+        wc_clean(req, resp);
+        return false;
+    }
+
+    value = json_object_get(root, "ready");
+    if (json_is_boolean(value)) {
+        result->ready = json_is_true(value);
+        valid = true;
+    }
+
+    value = json_object_get(root, "reason");
+    reason = json_is_string(value) ? json_string_value(value) : NULL;
+    snprintf(result->reason,
+             sizeof(result->reason),
+             "%s",
+             (reason && *reason) ? reason :
+             (result->ready ? "ready" : "not ready"));
+
+    if ((resp->status == HttpStatus_OK && !result->ready) ||
+        (resp->status != HttpStatus_OK && result->ready)) {
+        valid = false;
+    }
+
+    json_decref(root);
+    wc_clean(req, resp);
+    return valid;
+}
+
+bool wc_mesh_status(Config *config,
+                    App *app,
+                    bool *connected,
+                    char *reason,
+                    size_t reasonSize) {
+
+    char url[256];
+    URequest *req;
+    UResponse *resp;
+    JsonObj *root;
+    JsonObj *value;
+    JsonErrObj error;
+    const char *text;
+    int probePort;
+    bool valid;
+
+    req = NULL;
+    resp = NULL;
+    root = NULL;
+    valid = false;
+
+    if (!config || !app || !connected || !reason || reasonSize == 0) {
+        return false;
+    }
+
+    *connected = false;
+    reason[0] = '\0';
+
+    probePort = wc_get_probe_port(app);
+    if (probePort <= 0) return false;
+
+    if (!wc_build_url(url, sizeof(url),
+                      "127.0.0.1",
+                      probePort,
+                      "/v1/status")) {
+        return false;
+    }
+
+    req = wc_create_request(url, "GET", config->pingTimeoutSec);
+    if (!req) return false;
+
+    if (!wc_send(req, &resp)) {
+        wc_clean(req, NULL);
+        return false;
+    }
+
+    if (resp->status != HttpStatus_OK ||
+        !resp->binary_body ||
+        resp->binary_body_length == 0) {
+        wc_clean(req, resp);
+        return false;
+    }
+
+    memset(&error, 0, sizeof(error));
+    root = json_loadb((const char *)resp->binary_body,
+                      resp->binary_body_length,
+                      0,
+                      &error);
+    if (!root) {
+        wc_clean(req, resp);
+        return false;
+    }
+
+    value = json_object_get(root, "connected");
+    if (json_is_boolean(value)) {
+        *connected = json_is_true(value);
+        valid = true;
+    }
+
+    value = json_object_get(root, "reason");
+    text = json_is_string(value) ? json_string_value(value) : NULL;
+    snprintf(reason,
+             reasonSize,
+             "%s",
+             (text && *text) ? text :
+             (*connected ? "connected" : "disconnected"));
+
+    json_decref(root);
+    wc_clean(req, resp);
+    return valid;
+}
+
+bool wc_notify_node_state(Config *config,
+                          bool ready,
+                          const char *reason) {
+
+    char url[256];
+    char path[96];
+    char *body;
+    URequest *req;
+    UResponse *resp;
+    JsonObj *json;
+    int notifyPort;
+    bool ok;
+
+    (void)config;
+
+    req = NULL;
+    resp = NULL;
+    json = NULL;
+    body = NULL;
+    ok = false;
+
+    notifyPort = usys_find_service_port(SERVICE_NOTIFY);
+    if (notifyPort <= 0) {
+        usys_log_error("readiness: notify.d port not found");
+        return false;
+    }
+
+    snprintf(path,
+             sizeof(path),
+             "/v1/event/%s",
+             STARTERD_SERVICE_NAME);
+    if (!wc_build_url(url,
+                      sizeof(url),
+                      "127.0.0.1",
+                      notifyPort,
+                      path)) {
+        return false;
+    }
+
+    json = json_object();
+    if (!json) return false;
+
+    json_object_set_new(json,
+                        "service_name",
+                        json_string(STARTERD_SERVICE_NAME));
+    json_object_set_new(json,
+                        "severity",
+                        json_string(ready ? "low" : "high"));
+    json_object_set_new(json, "time", json_integer(time(NULL)));
+    json_object_set_new(json, "module", json_string("node"));
+    json_object_set_new(json,
+                        "name",
+                        json_string(ready ? "ready" : "faulty"));
+    json_object_set_new(json,
+                        "value",
+                        json_string(ready ? "READY" : "FAULTY"));
+    json_object_set_new(json, "units", json_string(""));
+    json_object_set_new(json,
+                        "details",
+                        json_string(reason ? reason : ""));
+
+    body = json_dumps(json, JSON_COMPACT);
+    json_decref(json);
+    if (!body) return false;
+
+    req = wc_create_request(url, "POST", 3);
+    if (!req) {
+        free(body);
+        return false;
+    }
+
+    ulfius_set_string_body_request(req, body);
+    u_map_put(req->map_header, "Content-Type", "application/json");
+
+    if (wc_send(req, &resp) &&
+        resp &&
+        resp->status == HttpStatus_Accepted) {
+        ok = true;
+    }
+
+    if (!ok) {
+        usys_log_warn("readiness: notify.d did not accept %s event",
+                      ready ? "READY" : "FAULTY");
+    }
+
+    free(body);
+    wc_clean(req, resp);
+    return ok;
+}
+
 static const char *wc_strip_v_prefix(const char *s) {
 
     if (s != NULL && s[0] == 'v' && s[1] != '\0') {

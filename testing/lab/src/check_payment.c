@@ -9,6 +9,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "check.h"
 #include "selector.h"
@@ -25,13 +26,9 @@ static int payment_status_matches(const char *actual, const char *expected) {
     return ulab_streq(actual, expected);
 }
 
-static int payment_matches(const bff_payment_t *payment,
-                           const ue_t *ue,
-                           const subscriber_t *subscriber,
-                           const check_spec_t *check) {
-    double actual_amount;
-    double tolerance;
-
+static int payment_identity_matches(const bff_payment_t *payment,
+                                    const ue_t *ue,
+                                    const subscriber_t *subscriber) {
     if (ue->last_payment_id[0] != '\0' &&
         !ulab_streq(payment->id, ue->last_payment_id)) {
         return 0;
@@ -41,11 +38,28 @@ static int payment_matches(const bff_payment_t *payment,
         !ulab_streq(payment->payer_email, subscriber->email)) {
         return 0;
     }
+    return 1;
+}
+
+static int payment_matches(const bff_payment_t *payment,
+                           const ue_t *ue,
+                           const subscriber_t *subscriber,
+                           const check_spec_t *check) {
+    double actual_amount;
+    double tolerance;
+
+    if (!payment_identity_matches(payment, ue, subscriber)) {
+        return 0;
+    }
     if (!payment_status_matches(payment->status, check->status)) {
         return 0;
     }
     if (check->currency[0] != '\0' &&
         !ulab_streq(payment->currency, check->currency)) {
+        return 0;
+    }
+    if (check->payment_method[0] != '\0' &&
+        !ulab_streq(payment->payment_method, check->payment_method)) {
         return 0;
     }
     if (!check->has_expected_value) {
@@ -64,6 +78,8 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
     size_t i;
     size_t ok;
     size_t observed_total;
+    bff_payment_t observed_payment;
+    int have_observed_payment;
 
     if (selector_resolve_ues(ctx->world, &check->ues, &ues, err)) {
         return ULAB_ERR;
@@ -71,6 +87,8 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
 
     ok = 0;
     observed_total = 0;
+    memset(&observed_payment, 0, sizeof(observed_payment));
+    have_observed_payment = 0;
     for (i = 0; i < ues.count; i++) {
         ue_t *ue;
         package_t *pkg;
@@ -104,8 +122,17 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
                                            check->status)) {
                     matching++;
                 }
-            } else if (payment_matches(&payments[j], ue, subscriber, check)) {
-                matching++;
+            } else {
+                if (!have_observed_payment &&
+                    payment_identity_matches(&payments[j], ue,
+                                             subscriber)) {
+                    memcpy(&observed_payment, &payments[j],
+                           sizeof(observed_payment));
+                    have_observed_payment = 1;
+                }
+                if (payment_matches(&payments[j], ue, subscriber, check)) {
+                    matching++;
+                }
             }
         }
         observed_total += matching;
@@ -117,10 +144,31 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
     }
 
     res->passed = ok == ues.count;
-    snprintf(res->detail, sizeof(res->detail),
-             "%s=%zu/%zu observed=%zu expected_count=%u",
-             scenario_check_name(check->type), ok, ues.count,
-             observed_total, check->expected_count);
+    if (check->type == CHECK_PAYMENT_COUNT) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "%s=%zu/%zu observed=%zu expected_count=%u",
+                 scenario_check_name(check->type), ok, ues.count,
+                 observed_total, check->expected_count);
+    } else if (have_observed_payment) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "%s=%zu/%zu matched=%zu "
+                 "actual={amount=%s currency=%s status=%s "
+                 "payment_method=%s} expected={amount=%.6g "
+                 "currency=%s status=%s payment_method=%s}",
+                 scenario_check_name(check->type), ok, ues.count,
+                 observed_total, observed_payment.amount,
+                 observed_payment.currency, observed_payment.status,
+                 observed_payment.payment_method, check->expected_value,
+                 check->currency, check->status, check->payment_method);
+    } else {
+        snprintf(res->detail, sizeof(res->detail),
+                 "%s=%zu/%zu matched=%zu actual={payment=not-found} "
+                 "expected={amount=%.6g currency=%s status=%s "
+                 "payment_method=%s}",
+                 scenario_check_name(check->type), ok, ues.count,
+                 observed_total, check->expected_value, check->currency,
+                 check->status, check->payment_method);
+    }
     selector_result_free(&ues);
     return ULAB_OK;
 }

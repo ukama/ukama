@@ -88,17 +88,24 @@ func (rt *Router) Run() {
 }
 
 func (r *Router) ping(c *gin.Context) {
-	status := r.controller.Status()
-	if !status.Ready {
-		c.String(http.StatusServiceUnavailable, "not ready")
-		return
-	}
-
 	c.String(http.StatusOK, "OK")
 }
 
 func (r *Router) version(c *gin.Context) {
 	c.String(http.StatusOK, version.Version)
+}
+
+func (r *Router) ready(c *gin.Context) {
+	status := r.controller.Status()
+	if !status.Ready {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"ready":  false,
+			"reason": status.Reason,
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"ready": true})
 }
 
 func (r *Router) status(c *gin.Context) {
@@ -131,6 +138,7 @@ func (r *Router) init() {
 
 	r.f.Engine().GET("/v1/ping", r.ping)
 	r.f.Engine().GET("/v1/version", r.version)
+	r.f.Engine().GET("/v1/ready", r.ready)
 	r.f.Engine().GET("/v1/status", r.status)
 
 	auth := r.f.Group("", "PCRF for Node", "API system version v1", func(ctx *gin.Context) {
@@ -189,6 +197,7 @@ func (r *Router) setService(c *gin.Context, req *api.ServiceRequest) error {
 
 func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 	log.Infof("Received request for create session: %v", req)
+
 	req.ImsiStr = uintArrayToString(req.Imsi)
 	req.IpStr = uintToIp(req.Ip)
 	return r.controller.CreateSession(c, req)
@@ -196,6 +205,7 @@ func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 
 func (r *Router) endSession(c *gin.Context, req *api.EndSession) error {
 	log.Infof("Received request for end session: %v", req)
+
 	req.ImsiStr = uintArrayToString(req.Imsi)
 	return r.controller.EndSession(c, req)
 }

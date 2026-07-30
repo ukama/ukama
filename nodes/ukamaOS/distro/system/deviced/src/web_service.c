@@ -7,6 +7,7 @@
  */
 
 #include <pthread.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -28,6 +29,8 @@
 #define WAIT_AFTER_REMOTE_REBOOT 2
 #endif
 
+#define CONTROL_ACTION_MAX_ATTEMPTS 3
+
 typedef struct {
     Config *Config;
     ControlSubsystem Subsystem;
@@ -35,6 +38,37 @@ typedef struct {
     bool Immediate;
     unsigned long long Token;
 } WorkerArgs;
+
+static int retry_action(Config *config,
+                        ControlSubsystem subsystem,
+                        ControlState desired) {
+
+    int attempt;
+    int ret;
+
+    ret = STATUS_NOK;
+    for (attempt = 1; attempt <= CONTROL_ACTION_MAX_ATTEMPTS; attempt++) {
+        if (subsystem == CONTROL_SUBSYS_SERVICE) {
+            ret = actions_service_apply(config, desired);
+        } else if (subsystem == CONTROL_SUBSYS_RADIO) {
+            ret = actions_radio_apply(config, desired);
+        } else if (subsystem == CONTROL_SUBSYS_REBOOT) {
+            ret = actions_reboot_apply(config);
+        }
+
+        if (ret == STATUS_OK) return ret;
+
+        usys_log_warn("control: action %d attempt %d/%d failed",
+                      subsystem,
+                      attempt,
+                      CONTROL_ACTION_MAX_ATTEMPTS);
+        if (attempt < CONTROL_ACTION_MAX_ATTEMPTS) {
+            sleep(1);
+        }
+    }
+
+    return ret;
+}
 
 static int json_set_empty(UResponse *response, int status) {
 
@@ -182,7 +216,9 @@ static void* worker_run(void *arg) {
             sleep(WAIT_AFTER_REMOTE_REBOOT);
         }
 
-        execRet = actions_reboot_apply(config);
+        execRet = retry_action(config,
+                               CONTROL_SUBSYS_REBOOT,
+                               CONTROL_STATE_OFF);
 
         /*
          * A production reboot does not return. Debug mode and virtual-node
@@ -206,7 +242,9 @@ static void* worker_run(void *arg) {
                                           "Enabling cellular service" : "Disabling cellular service",
                                            &retCode);
 
-        execRet = actions_service_apply(config, desired);
+        execRet = retry_action(config,
+                               CONTROL_SUBSYS_SERVICE,
+                               desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -224,7 +262,9 @@ static void* worker_run(void *arg) {
                                               "Enabling radio" : "Disabling radio",
                                               &retCode);
 
-        execRet = actions_radio_apply(config, desired);
+        execRet = retry_action(config,
+                               CONTROL_SUBSYS_RADIO,
+                               desired);
         if (execRet == STATUS_OK) {
             control_mark_done(control, args->Subsystem, desired);
         } else {
@@ -361,6 +401,56 @@ int web_service_cb_state(const URequest *request,
     json_object_set_new(json, "uptime_s", json_integer(uptime));
 
     ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    Config *config;
+    ControlReadiness readiness;
+    JsonObj *json;
+    char reason[128];
+    int status;
+
+    (void)request;
+
+    config = (Config *)epConfig;
+    if (!config) {
+        return json_set_empty(response, HttpStatus_InternalServerError);
+    }
+
+    if (config->clientMode) {
+        readiness = CONTROL_READINESS_READY;
+        snprintf(reason, sizeof(reason), "ready");
+    } else {
+        readiness = control_get_readiness(config->control,
+                                          reason,
+                                          sizeof(reason));
+    }
+
+    status = HttpStatus_OK;
+    if (readiness == CONTROL_READINESS_PENDING) {
+        status = HttpStatus_Accepted;
+    } else if (readiness == CONTROL_READINESS_FAULT) {
+        status = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (!json) {
+        return json_set_empty(response, HttpStatus_InternalServerError);
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(readiness == CONTROL_READINESS_READY));
+    if (readiness != CONTROL_READINESS_READY) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    ulfius_set_json_body_response(response, status, json);
     json_decref(json);
     return U_CALLBACK_CONTINUE;
 }

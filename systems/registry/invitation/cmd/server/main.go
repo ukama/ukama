@@ -15,7 +15,6 @@ import (
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v2"
 
-	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/invitation/cmd/version"
@@ -27,13 +26,9 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	generated "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
-
-const notificationSystemName = "notification"
 
 var serviceConfig *pkg.Config
 
@@ -75,14 +70,6 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	//TODO: we need to call this on demand because the URL can change when the targeted service restarts.
-	notifUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, notificationSystemName), &serviceConfig.OrgName)
-	if err != nil {
-		log.Fatalf("Failed to resolve notification system address from initClient: %v", err)
-	}
-
-	mailerClient := cnotif.NewMailerClient(notifUrl.String())
 	orgClient := cnucl.NewOrgClient(serviceConfig.Http.NucleusClient)
 	userClient := cnucl.NewUserClient(serviceConfig.Http.NucleusClient)
 
@@ -93,7 +80,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	invitationServer := server.NewInvitationServer(db.NewInvitationRepo(gormdb),
 		serviceConfig.InvitationExpiryTime, serviceConfig.AuthLoginbaseURL,
-		mailerClient, orgClient, userClient, mbClient, serviceConfig.OrgName, serviceConfig.TemplateName)
+		orgClient, userClient, mbClient, serviceConfig.OrgName)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {

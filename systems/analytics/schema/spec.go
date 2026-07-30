@@ -119,7 +119,7 @@ type OutputSpec struct {
 
 // Rollup operations.
 var ValidOps = map[string]bool{
-	"SUM": true, "AVG": true, "MIN": true, "MAX": true, "COUNT": true, "LAST": true,
+	"SUM": true, "AVG": true, "MIN": true, "MAX": true, "COUNT": true, "LAST": true, "DELTA": true,
 }
 
 // LoadSourceSpecs reads and validates all *.yaml files in dir.

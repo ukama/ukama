@@ -23,6 +23,7 @@
 #include "supervisor.h"
 #include "http_status.h"
 #include "app.h"
+#include "readiness.h"
 
 static int ws_reply_text(struct _u_response *resp,
                          int status,
@@ -113,6 +114,49 @@ static int ws_version_cb(const struct _u_request *req,
                          VERSION);
 }
 
+static int ws_ready_cb(const struct _u_request *req,
+                       struct _u_response *resp,
+                       void *userData) {
+
+    StarterContext *ctx;
+    NodeReadinessState state;
+    json_t *json;
+    char reason[STARTERD_READY_REASON_LEN];
+    int status;
+
+    (void)req;
+
+    ctx = (StarterContext *)userData;
+    state = readiness_get(ctx ? ctx->readiness : NULL,
+                          reason,
+                          sizeof(reason));
+
+    status = HttpStatus_Accepted;
+    if (state == NODE_READINESS_READY) {
+        status = HttpStatus_OK;
+    } else if (state == NODE_READINESS_FAULTY) {
+        status = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (!json) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(state == NODE_READINESS_READY));
+    if (state != NODE_READINESS_READY) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    ulfius_set_json_body_response(resp, status, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
 static int ws_status_cb(const struct _u_request *req,
                         struct _u_response *resp,
                         void *userData) {
@@ -120,6 +164,8 @@ static int ws_status_cb(const struct _u_request *req,
     StarterContext *ctx;
     json_t *j;
     json_t *meta;
+    json_t *readiness;
+    json_t *connectivity;
     char *body;
 
     (void)req;
@@ -148,6 +194,14 @@ static int ws_status_cb(const struct _u_request *req,
                             json_boolean(ctx->switchRequested ? 1 : 0));
         json_object_set_new(meta, "exitCode",
                             json_integer(ctx->exitCode));
+        readiness = readiness_status_json(ctx->readiness);
+        connectivity = readiness_connectivity_json(ctx->readiness);
+        if (readiness) {
+            json_object_set_new(meta, "readiness", readiness);
+        }
+        if (connectivity) {
+            json_object_set_new(meta, "connectivity", connectivity);
+        }
         json_object_set_new(j, "starterd", meta);
     }
 
@@ -525,6 +579,12 @@ bool web_service_start(StarterContext *ctx) {
                                &ws_version_cb, ctx);
     setup_unsupported_methods(ctx->uInstance, "GET",
                               "/v1", "/version");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
+                               "/v1", "/ready", 0,
+                               &ws_ready_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "GET",
+                              "/v1", "/ready");
 
     ulfius_add_endpoint_by_val(ctx->uInstance, "GET",
                                "/v1", "/status", 0,

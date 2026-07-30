@@ -390,3 +390,40 @@ func Test_GetFailedEmails(t *testing.T) {
 
 	assert.NoError(t, setup.mock.ExpectationsWereMet())
 }
+
+func Test_GetStalledEmails(t *testing.T) {
+	setup := setupTestDB(t)
+	defer setup.cleanup()
+
+	email1 := createTestMailing(
+		withEmail(failedEmail),
+		withStatus(ukama.MailStatusPending),
+		withName(failedUserName),
+	)
+
+	email2 := createTestMailing(
+		withEmail(retryEmail),
+		withStatus(ukama.MailStatusProcess),
+		withName(retryUserName),
+	)
+
+	rows := createMultipleMockRows(email1, email2)
+
+	setup.mock.ExpectQuery(`SELECT \* FROM "mailings" WHERE status IN \(\$1, \$2\) AND updated_at < \$3`).
+		WithArgs(ukama.MailStatusPending, ukama.MailStatusProcess, sqlmock.AnyArg()).
+		WillReturnRows(rows)
+
+	result, err := setup.repo.GetStalledEmails(time.Now().Add(-5 * time.Minute))
+
+	assert.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Len(t, result, 2)
+
+	assert.Equal(t, email1.MailId, result[0].MailId)
+	assert.Equal(t, ukama.MailStatusPending, result[0].Status)
+
+	assert.Equal(t, email2.MailId, result[1].MailId)
+	assert.Equal(t, ukama.MailStatusProcess, result[1].Status)
+
+	assert.NoError(t, setup.mock.ExpectationsWereMet())
+}

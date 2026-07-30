@@ -283,6 +283,11 @@ static int read_capp_table(toml_table_t *table, Config *config,
                         DATUM_INT | DATUM_MANDATORY)) {
             return FALSE;
         }
+
+        if (!read_entry(table, KEY_READINESS, NULL, &capp->readiness,
+                        DATUM_BOOL)) {
+            return FALSE;
+        }
     } else {
         return FALSE;
     }
@@ -794,6 +799,7 @@ void log_config(Config *config) {
         log_debug("\t version: %s", capp->version);
         log_debug("\t autostart:  %s", (capp->autostart ? "true" : "false"));
         log_debug("\t autorestart:  %s", (capp->autorestart ? "true" : "false"));
+        log_debug("\t readiness:  %s", (capp->readiness ? "true" : "false"));
         log_debug("\t binary:  %s", capp->bin);
         log_debug("\t path: %s", capp->path);
 

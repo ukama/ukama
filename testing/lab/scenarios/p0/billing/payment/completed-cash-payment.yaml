@@ -35,6 +35,7 @@ phases:
         ues: all
         package: cash_plan
         status: settled
+        payment_method: cash
         expected_value: 5.00
         currency: USD
       - type: revenue_summary

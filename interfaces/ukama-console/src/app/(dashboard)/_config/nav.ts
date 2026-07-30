@@ -47,7 +47,9 @@ export const BIZ_NAV: NavGroup[] = [
     group: 'Manage',
     items: [
       { href: '/business/manage/data-plans', label: 'Data plans', icon: 'apps' },
-      { href: '/business/manage/billing', label: 'Billing', icon: 'monetization_on' },
+      // Billing is hidden for now — will finish later. Re-enable this item
+      // and remove the notFound() guard in business/manage/billing/page.tsx.
+      // { href: '/business/manage/billing', label: 'Billing', icon: 'monetization_on' },
       { href: '/business/manage/members', label: 'Members', icon: 'manage_accounts' },
       { href: '/business/manage/sim-pool', label: 'SIM pool', icon: 'sim_card' },
     ],

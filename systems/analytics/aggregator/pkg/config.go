@@ -11,8 +11,8 @@ package pkg
 import (
 	"time"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/analytics/schema"
+	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
@@ -46,6 +46,11 @@ type RollupConfig struct {
 	SweepInterval time.Duration `default:"120s"`
 	// FlatThresholdPct: |change_pct| below this reads as a flat trend.
 	FlatThresholdPct float64 `default:"1.0"`
+	// ReportWindow is the trailing window the performance-report composer
+	// aggregates over. Reports need more history than the headline KPI tiles
+	// to show stable per-entity stats, so this is a longer, config-driven
+	// rolling window (default 8 weeks = 1344h) rather than the UI filter.
+	ReportWindow time.Duration `default:"1344h"`
 }
 
 func NewConfig(name string) *Config {

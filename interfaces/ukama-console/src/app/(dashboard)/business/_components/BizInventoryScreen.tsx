@@ -16,7 +16,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
 import { useInventoryOverviewQuery } from '@/client/graphql/team.generated';
-import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
 import FilterChips from '@/components/FilterChips';
 import { KpiRow } from '@/components/Kpi';
@@ -41,7 +40,6 @@ export default function BizInventoryScreen() {
       <PageHeader
         title="Inventory"
         sub="Do I have enough SIMs and nodes to operate and grow?"
-        actions={<DateChip />}
       />
       <KpiRow
         items={[

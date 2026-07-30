@@ -66,18 +66,10 @@ export function Delta({
   );
 }
 
-export function Kpi({
-  icon,
-  color,
-  label,
-  value,
-  unit,
-  delta,
-  dir,
-  sub,
-  danger,
-  truncate,
-}: KpiProps) {
+// For now KPI cards show only the label + value (with unit); the trend delta
+// and sub-note are intentionally not rendered. The delta/dir/sub/danger props
+// remain on KpiProps so callers are unchanged and it's easy to restore later.
+export function Kpi({ icon, color, label, value, unit, truncate }: KpiProps) {
   return (
     <Card
       sx={{
@@ -140,21 +132,6 @@ export function Kpi({
           </Box>
         )}
       </Box>
-      {delta != null ? (
-        <Delta dir={dir ?? 'up'}>{delta}</Delta>
-      ) : sub != null ? (
-        <Box
-          component="span"
-          sx={(t) => ({
-            fontSize: 12.5,
-            fontWeight: 500,
-            color: danger ? 'var(--uk-error-deep, #cf121b)' : 'var(--uk-ink-3)',
-            ...(danger ? t.applyStyles('dark', { color: '#ff8a8a' }) : {}),
-          })}
-        >
-          {sub}
-        </Box>
-      ) : null}
     </Card>
   );
 }

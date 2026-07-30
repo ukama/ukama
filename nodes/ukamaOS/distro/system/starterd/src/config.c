@@ -138,6 +138,12 @@ static bool cfg_validate(Config *config) {
 
     if (config->commitTimeoutSec <= 0)      config->commitTimeoutSec = 20;
     if (config->pingTimeoutSec <= 0)        config->pingTimeoutSec = 3;
+    if (config->readyTimeoutSec <= 0) {
+        config->readyTimeoutSec = STARTERD_DEFAULT_READY_TIMEOUT_SEC;
+    }
+    if (config->readyPollSec <= 0) {
+        config->readyPollSec = STARTERD_DEFAULT_READY_POLL_SEC;
+    }
     if (config->termGraceSec <= 0)          config->termGraceSec = 5;
     if (config->restartMaxBackoffSec <= 0)  config->restartMaxBackoffSec = 60;
     if (config->restartStableResetSec <= 0) config->restartStableResetSec = 300;
@@ -219,6 +225,12 @@ bool config_load(Config *config) {
 
     config->commitTimeoutSec = cfg_get_int("STARTERD_COMMIT_TIMEOUT_SEC", 60);
     config->pingTimeoutSec   = cfg_get_int("STARTERD_PING_TIMEOUT_SEC",   3);
+    config->readyTimeoutSec =
+        cfg_get_int("STARTERD_READY_TIMEOUT_SEC",
+                    STARTERD_DEFAULT_READY_TIMEOUT_SEC);
+    config->readyPollSec =
+        cfg_get_int("STARTERD_READY_POLL_SEC",
+                    STARTERD_DEFAULT_READY_POLL_SEC);
     config->termGraceSec     = cfg_get_int("STARTERD_TERM_GRACE_SEC",     5);
 
     config->restartMaxBackoffSec =

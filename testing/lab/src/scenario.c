@@ -473,6 +473,19 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
         snprintf(err->msg, sizeof(err->msg), "unknown check type: %s", type);
         return NULL;
     }
+
+    /*
+     * Package lifecycle checks should fail quickly when the backend state
+     * does not transition. Dashboard metrics can lag slightly longer, but
+     * should not hold a P0 run for five minutes by default. Scenario YAML
+     * may still override both values explicitly.
+     */
+    if (c->type == CHECK_PACKAGE_STATE) {
+        c->timeout_seconds = 30;
+    } else if (c->type == CHECK_PACKAGE_BUSINESS_METRICS) {
+        c->timeout_seconds = 60;
+        c->poll_seconds = 10;
+    }
     return c;
 }
 
@@ -523,6 +536,10 @@ static int apply_check_field(check_spec_t *c, const char *key,
     }
     if (ulab_streq(key, "currency")) return ulab_copy(c->currency,
         sizeof(c->currency), val);
+    if (ulab_streq(key, "payment_method")) {
+        return ulab_copy(c->payment_method,
+                         sizeof(c->payment_method), val);
+    }
     if (ulab_streq(key, "expected_value")) {
         if (ulab_parse_double(val, &c->expected_value)) return ULAB_ERR;
         c->has_expected_value = 1;

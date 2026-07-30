@@ -5,11 +5,13 @@
  */
 'use client';
 
-/** Packages — selling & performance, wired to the analytics gateway. Per-plan
- *  rows come from the `package_performance` report (`getPerformanceReport`):
- *  attributes name/price/active, columns sold/revenue/data_used, plus a
- *  threshold-derived status. MRR / ARPU headline KPIs come from `getKpiValues`.
- *  Active-SIMs-per-package has no column in the report, so it shows "—". */
+/** Packages — selling & performance, wired to the analytics gateway. Everything
+ *  on this page derives from the `package_performance` report
+ *  (`getPerformanceReport`): per-package attributes (name/price/validity/
+ *  data_volume/active) and columns (sold/revenue/data_used), plus a
+ *  threshold-derived status. The four headline tiles are report-derived totals:
+ *  Package revenue (Σ revenue), Packages sold (Σ sold), Best package (best
+ *  seller's allowance / validity) and Data consumed (USAGE_BY_NETWORK). */
 import { useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -22,19 +24,19 @@ import {
   useGetKpiValuesQuery,
   useGetPerformanceReportQuery,
 } from '@/client/graphql/analytics.generated';
-import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { EmptyState } from '@/components/EmptyState';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import SectionCard from '@/components/SectionCard';
-import { sectionValue } from '@/components/SectionFallback';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
+import { formatDuration } from '@/lib/duration';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
-import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiAmount } from '@/lib/kpis';
+import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
+import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 interface Plan {
@@ -43,6 +45,9 @@ interface Plan {
   price: number;
   revenue: number;
   sold: number;
+  dataVolume: number;
+  dataUnit: string;
+  duration: number;
   active: boolean;
   statusLabel?: string | null;
 }
@@ -52,26 +57,37 @@ export default function BizPackagesScreen() {
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
-  const span = rangeToSpan(range);
 
-  const { data: kpiData } = useGetKpiValuesQuery({
-    variables: {
-      data: { keys: [KPI_KEYS.mrr, KPI_KEYS.arpu], span, networkId },
-    },
-    skip: !networkId,
-  });
-
-  // The packages table/mix depend ONLY on the performance report — a KPI-strip
-  // failure must not blank them (and vice versa). MRR/ARPU degrade to "—" on
-  // their own when getKpiValues fails.
+  // Every Packages KPI + the table/mix derive from the package_performance
+  // report, windowed by the DateChip filter (last 24h / 7 days / 30 days).
   const { data, loading, error, refetch } = useGetPerformanceReportQuery({
     variables: {
-      data: { report: 'package_performance', span, networkId },
+      data: {
+        report: 'package_performance',
+        span: rangeToSpan(range),
+        networkId,
+      },
     },
     skip: !networkId,
   });
 
-  const kpis = kpiData?.getKpiValues.values;
+  // Data consumed = total network data usage (USAGE_BY_NETWORK), read at the
+  // selected rolling span — the direct per-network metric (no per-package
+  // active-assignment attribution required).
+  const { data: usageData } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.usageByNetwork],
+        span: rangeToSpan(range),
+        networkId,
+      },
+    },
+    skip: !networkId,
+  });
+  const usageBytes = kpiValue(
+    usageData?.getKpiValues.values,
+    KPI_KEYS.usageByNetwork,
+  );
 
   const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({
     packageId: r.entityId,
@@ -79,6 +95,9 @@ export default function BizPackagesScreen() {
     price: Number(attrValue(r.attributes, 'price') ?? 0),
     revenue: cellMoney(r.cells, 'revenue'),
     sold: cellValue(r.cells, 'sold') ?? 0,
+    dataVolume: Number(attrValue(r.attributes, 'data_volume') ?? 0),
+    dataUnit: attrValue(r.attributes, 'data_unit') ?? '',
+    duration: Number(attrValue(r.attributes, 'validity') ?? 0),
     active: (attrValue(r.attributes, 'active') ?? '').toLowerCase() === 'true',
     statusLabel: r.status,
   }));
@@ -88,7 +107,6 @@ export default function BizPackagesScreen() {
     totalRevenue > 0 ? Math.round((p.revenue / totalRevenue) * 100) : 0;
 
   const byRevenue = [...plans].sort((a, z) => z.revenue - a.revenue);
-  const top = byRevenue[0];
   const topPkgs = byRevenue.slice(0, 3);
   const maxRevenue = Math.max(...topPkgs.map((p) => p.revenue), 1);
   const mix = byRevenue
@@ -98,6 +116,16 @@ export default function BizPackagesScreen() {
       value: p.revenue,
       color: BAR_COLORS[i % BAR_COLORS.length] ?? 'var(--uk-ac)',
     }));
+
+  // Headline KPIs (value-only) derived from the report.
+  const totalSold = plans.reduce((sum, p) => sum + p.sold, 0);
+  // Best package = the best seller, shown by its spec (e.g. "1 GB / 7d").
+  const bestSeller = [...plans]
+    .filter((p) => p.sold > 0)
+    .sort((a, z) => z.sold - a.sold)[0];
+  const bestLabel = bestSeller
+    ? `${formatBytes(dataVolumeToBytes(bestSeller.dataVolume, bestSeller.dataUnit))} / ${formatDuration(bestSeller.duration)}`
+    : '—';
 
   return (
     <div className="page">
@@ -112,36 +140,27 @@ export default function BizPackagesScreen() {
           {
             icon: 'monetization_on',
             color: 'var(--uk-beige)',
-            label: 'Monthly recurring revenue',
-            value: kpiAmount(kpis, KPI_KEYS.mrr, money),
-            sub: 'recurring',
-          },
-          {
-            icon: 'payments',
-            color: 'var(--uk-ac)',
-            label: 'ARPU',
-            value: kpiAmount(kpis, KPI_KEYS.arpu, money),
-            sub: 'avg revenue / active SIM',
-          },
-          {
-            icon: 'donut_small',
-            color: 'var(--uk-success-bright)',
-            label: 'Top plan by revenue',
-            value: top && top.revenue > 0 ? top.name : '—',
-            truncate: true,
-            sub:
-              top && top.revenue > 0
-                ? `${sharePct(top)}% of revenue`
-                : undefined,
+            label: 'Package revenue',
+            value: error ? '—' : money(totalRevenue),
           },
           {
             icon: 'sell',
             color: 'var(--uk-secondary)',
-            label: 'Active plans',
-            value: error
-              ? '—'
-              : sectionValue(plans.filter((p) => p.active).length || null),
-            sub: `across ${plans.length} packages`,
+            label: 'Packages sold',
+            value: error ? '—' : String(totalSold),
+          },
+          {
+            icon: 'donut_small',
+            color: 'var(--uk-success-bright)',
+            label: 'Best package',
+            value: error ? '—' : bestLabel,
+            truncate: true,
+          },
+          {
+            icon: 'data_usage',
+            color: 'var(--uk-ac)',
+            label: 'Data consumed (all packages)',
+            value: usageBytes == null ? '—' : formatBytes(usageBytes),
           },
         ]}
       />
@@ -293,7 +312,14 @@ export default function BizPackagesScreen() {
             </div>
           )}
         </SectionCard>
-        <SectionCard title="Package revenue mix">
+        <SectionCard
+          title="Package revenue mix"
+          right={
+            <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
+              Share of revenue
+            </span>
+          }
+        >
           {mix.length === 0 || error ? (
             <div
               style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}
@@ -301,7 +327,74 @@ export default function BizPackagesScreen() {
               No package revenue yet.
             </div>
           ) : (
-            <BarList rows={mix} />
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {mix.map((m, i) => (
+                <div
+                  key={`${m.name}-${i}`}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: '13px 0',
+                    borderBottom:
+                      i < mix.length - 1
+                        ? '1px solid var(--uk-line-soft)'
+                        : 'none',
+                  }}
+                >
+                  <span
+                    className="tnum"
+                    style={{
+                      fontFamily: 'var(--font-display)',
+                      fontSize: 15,
+                      fontWeight: 500,
+                      color: 'var(--uk-ink-3)',
+                      width: 18,
+                      flex: 'none',
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        gap: 12,
+                        marginBottom: 6,
+                      }}
+                    >
+                      <span style={{ fontSize: 13.5, fontWeight: 600 }}>
+                        {m.name}
+                      </span>
+                      <span
+                        className="tnum"
+                        style={{
+                          fontSize: 13,
+                          color: 'var(--uk-ink-2)',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        <b style={{ color: 'var(--uk-ink)' }}>
+                          {money(m.value)}
+                        </b>
+                        {totalRevenue > 0
+                          ? ` · ${Math.round((m.value / totalRevenue) * 100)}%`
+                          : ''}
+                      </span>
+                    </div>
+                    <Meter
+                      value={
+                        totalRevenue > 0
+                          ? Math.round((m.value / totalRevenue) * 100)
+                          : 0
+                      }
+                      color={m.color}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </SectionCard>
       </div>

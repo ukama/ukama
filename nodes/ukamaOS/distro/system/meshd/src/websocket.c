@@ -30,6 +30,72 @@ extern State    *state;
 extern int start_websocket_client(Config *config,
                                   struct _websocket_client_handler *handler);
 
+void mesh_status_init(State *meshState) {
+
+    if (!meshState) return;
+
+    pthread_mutex_init(&meshState->statusMutex, NULL);
+    meshState->statusMutexInitialized = true;
+    meshState->connected = false;
+    meshState->connectivityChangedAt = time(NULL);
+    snprintf(meshState->connectivityReason,
+             sizeof(meshState->connectivityReason),
+             "connecting");
+}
+
+void mesh_status_destroy(State *meshState) {
+
+    if (!meshState || !meshState->statusMutexInitialized) return;
+
+    pthread_mutex_destroy(&meshState->statusMutex);
+    meshState->statusMutexInitialized = false;
+}
+
+void mesh_status_set(State *meshState,
+                     bool connected,
+                     const char *reason) {
+
+    if (!meshState || !meshState->statusMutexInitialized) return;
+
+    pthread_mutex_lock(&meshState->statusMutex);
+    if (meshState->connected != connected) {
+        meshState->connectivityChangedAt = time(NULL);
+    }
+    meshState->connected = connected;
+    snprintf(meshState->connectivityReason,
+             sizeof(meshState->connectivityReason),
+             "%s",
+             (reason && *reason) ? reason :
+             (connected ? "connected" : "disconnected"));
+    pthread_mutex_unlock(&meshState->statusMutex);
+}
+
+void mesh_status_get(State *meshState,
+                     bool *connected,
+                     time_t *changedAt,
+                     char *reason,
+                     size_t reasonSize) {
+
+    if (connected) *connected = false;
+    if (changedAt) *changedAt = 0;
+    if (reason && reasonSize > 0) {
+        snprintf(reason, reasonSize, "status unavailable");
+    }
+
+    if (!meshState || !meshState->statusMutexInitialized) return;
+
+    pthread_mutex_lock(&meshState->statusMutex);
+    if (connected) *connected = meshState->connected;
+    if (changedAt) *changedAt = meshState->connectivityChangedAt;
+    if (reason && reasonSize > 0) {
+        snprintf(reason,
+                 reasonSize,
+                 "%s",
+                 meshState->connectivityReason);
+    }
+    pthread_mutex_unlock(&meshState->statusMutex);
+}
+
 STATIC const char *ts_now(void) {
 
     static char buf[32];
@@ -138,9 +204,11 @@ void *monitor_websocket(void *args) {
         sleep(MESH_LOCK_TIMEOUT);
 
         if (is_websocket_client_valid(handler, config->remoteConnect)) {
+            mesh_status_set(state, true, "connected");
             continue;
         }
 
+        mesh_status_set(state, false, "websocket disconnected");
         usys_log_error("Trying to reconnect ...");
 
         while (start_websocket_client(config, handler) == FALSE) {
@@ -174,6 +242,7 @@ void websocket_manager(const URequest *request,
 
     list   = *transmit;
     config = (Config *)data;
+    mesh_status_set(state, true, "connected");
 
     while (TRUE) {
 
@@ -319,6 +388,9 @@ done:
 void  websocket_onclose(const URequest *request, WSManager *manager,
 						void *data) {
 
+    (void)request;
+    (void)manager;
+    (void)data;
+    mesh_status_set(state, false, "websocket closed");
 	return;
 }
-

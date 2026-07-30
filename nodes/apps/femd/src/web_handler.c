@@ -365,6 +365,97 @@ int cb_get_ping(const URequest *request, UResponse *response, void *user_data) {
                         HttpStatusStr(HttpStatus_OK));
 }
 
+static bool sample_is_fresh(uint32_t now,
+                            uint32_t sampleAt,
+                            uint32_t maxAge) {
+
+    if (sampleAt == 0) return false;
+    return (uint32_t)(now - sampleAt) <= maxAge;
+}
+
+int cb_get_ready(const URequest *request,
+                 UResponse *response,
+                 void *user_data) {
+
+    WebCtx *ctx;
+    FemSnapshot fem1;
+    FemSnapshot fem2;
+    CtrlSnapshot ctrl;
+    json_t *json;
+    const char *reason;
+    uint32_t now;
+    uint32_t maxAge;
+    bool pending;
+    bool ready;
+    int status;
+
+    (void)request;
+
+    ctx = (WebCtx *)user_data;
+    pending = false;
+    ready = false;
+    reason = "femd context unavailable";
+    status = HttpStatus_ServiceUnavailable;
+
+    if (ctx && ctx->cfg && ctx->snap && ctx->lanes) {
+        now = snapshot_now_ms();
+        maxAge = ctx->cfg->samplePeriodMs * 3U;
+        if (maxAge < 3000U) maxAge = 3000U;
+
+        memset(&fem1, 0, sizeof(fem1));
+        memset(&fem2, 0, sizeof(fem2));
+        memset(&ctrl, 0, sizeof(ctrl));
+        (void)snapshot_get_fem(ctx->snap, FEM_UNIT_1, &fem1);
+        (void)snapshot_get_fem(ctx->snap, FEM_UNIT_2, &fem2);
+        (void)snapshot_get_ctrl(ctx->snap, &ctrl);
+
+        pending = !ctx->lanes->running ||
+                  (uint32_t)(now - ctx->startedAtMs) <= maxAge;
+
+        if (ctx->safety &&
+            safety_is_pa_disabled(ctx->safety, FEM_UNIT_1)) {
+            reason = "FEM1 PA disabled by safety";
+        } else if (ctx->safety &&
+                   safety_is_pa_disabled(ctx->safety, FEM_UNIT_2)) {
+            reason = "FEM2 PA disabled by safety";
+        } else if (!fem1.present ||
+                   !sample_is_fresh(now, fem1.sampleTsMs, maxAge)) {
+            reason = "FEM1 telemetry unavailable";
+        } else if (!fem2.present ||
+                   !sample_is_fresh(now, fem2.sampleTsMs, maxAge)) {
+            reason = "FEM2 telemetry unavailable";
+        } else if (!ctrl.present ||
+                   !sample_is_fresh(now, ctrl.sampleTsMs, maxAge)) {
+            reason = "controller telemetry unavailable";
+        } else {
+            ready = true;
+            reason = "ready";
+        }
+
+        if (ready) {
+            status = HttpStatus_OK;
+        } else if (pending) {
+            status = HttpStatus_Accepted;
+        }
+    }
+
+    json = json_object();
+    if (!json) {
+        return respond_text(response,
+                            HttpStatus_InternalServerError,
+                            "serialize");
+    }
+
+    json_object_set_new(json, "ready", json_boolean(ready));
+    if (!ready) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    respond_json_obj(response, status, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
 int cb_get_fems(const URequest *request, UResponse *response, void *user_data) {
 
     WebCtx *ctx = (WebCtx *)user_data;

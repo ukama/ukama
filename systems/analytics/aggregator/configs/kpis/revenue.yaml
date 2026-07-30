@@ -1,14 +1,22 @@
-# REVENUE: successful payments settled in the window (org-wide; payments
-# carry no network attribution). One KPI, three cards via ops:
-#   SUM = revenue collected, COUNT = purchases, AVG = avg purchase.
+# REVENUE: settled payments, attributed to a network via the paying SIM.
+# Payments carry no network field — only a SIM id in their metadata — so we
+# join the SIM to subscriber.sim.list (sim_id -> network_id). Payments whose
+# SIM can't be resolved land in the org bucket (empty scope). One KPI, three
+# cards via ops: SUM = revenue collected, COUNT = purchases, AVG = avg purchase.
 kpi: REVENUE
 domain: business
 algo: revenue@v1
-scope: []
+scope: [network_id]
 inputs:
   payments:
     dataset: payments.processor.list
-    fields: [payment_id, amount, status, paid_at]
+    fields: [payment_id, amount, status, paid_at, metadata]
+  sims:
+    dataset: subscriber.sim.list
+    fields: [sim_id, network_id]
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
 output: { type: int, unit: cents, symbol: "$" }
 rollup_ops: [SUM, COUNT, AVG, MAX]
 positive_direction: up

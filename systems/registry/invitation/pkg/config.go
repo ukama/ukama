@@ -22,7 +22,6 @@ type Config struct {
 	Timeout              time.Duration    `default:"3s"`
 	MsgClient            *uconf.MsgClient `default:"{}"`
 	AuthLoginbaseURL     string           `default:"http://localhost:4455/auth/login"`
-	TemplateName         string           `default:"member-invite"`
 	InvitationExpiryTime uint             `default:"24"`
 	OrgName              string
 	Service              *uconf.Service

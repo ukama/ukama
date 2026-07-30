@@ -1,4 +1,6 @@
-# PACKAGE_SALES: sim-package assignments started in the window (sold count).
+# PACKAGE_SALES: sim-package assignments PURCHASED (created_at) in the window
+# (sold count). Counts by purchase time, not activation, so a queued package
+# (future start_date) still counts as sold now — consistent with REVENUE.
 kpi: PACKAGE_SALES
 domain: business
 algo: package_sales@v1
@@ -6,7 +8,7 @@ scope: [network_id, package_id]
 inputs:
   sim_packages:
     dataset: subscriber.simpackage.listBySim
-    fields: [sim_package_id, package_id, sim_id, network_id, start_date]
+    fields: [sim_package_id, package_id, sim_id, network_id, created_at]
 output: { type: int, unit: count, symbol: "" }
 rollup_ops: [SUM, AVG, MAX]
 positive_direction: up

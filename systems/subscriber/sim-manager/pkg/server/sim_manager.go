@@ -21,7 +21,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client"
@@ -38,7 +37,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cdplan "github.com/ukama/ukama/systems/common/rest/client/dataplan"
-	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnuc "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	cpay "github.com/ukama/ukama/systems/common/rest/client/payments"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -51,8 +49,9 @@ import (
 //TODO; Replace all these GetBy with List functions.
 
 const (
-	DefaultMinuteDelayForPackageStartDate = 1
+	DefaultMinuteDelayForPackageStartDate = 0
 	eventPublishErrorMsg                  = "Failed to publish message %+v with key %+v. Errors %v"
+	emailDateFormat                       = "January 2, 2006"
 
 	// Payment metadata keys. metadataSimKey ties a payment to a SIM;
 	// metadataProvisionedKey marks a payment whose package was already added by
@@ -76,7 +75,6 @@ type SimManagerServer struct {
 	orgId                     string
 	orgName                   string
 	metricsPusher             MetricsPusher
-	mailerClient              cnotif.MailerClient
 	networkClient             creg.NetworkClient
 	nucleusOrgClient          cnuc.OrgClient
 	nucleusUserClient         cnuc.UserClient
@@ -93,7 +91,6 @@ func NewSimManagerServer(
 	msgBus mb.MsgBusServiceClient,
 	orgId string,
 	pushMetricHost string,
-	mailerClient cnotif.MailerClient,
 	networkClient creg.NetworkClient,
 	nucleusOrgClient cnuc.OrgClient,
 	nucleusUserClient cnuc.UserClient,
@@ -113,7 +110,6 @@ func NewSimManagerServer(
 			SetOrgName(orgName).SetService(pkg.ServiceName),
 		orgId:             orgId,
 		metricsPusher:     NewMetricsPusher(pushMetricHost),
-		mailerClient:      mailerClient,
 		networkClient:     networkClient,
 		nucleusOrgClient:  nucleusOrgClient,
 		nucleusUserClient: nucleusUserClient,
@@ -309,39 +305,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"without recording a payment sale", sim.Id.String(), packageId.String())
 	}
 
-	orgInfos, err := s.nucleusOrgClient.Get(s.orgName)
-	if err != nil {
-		return nil, err
-	}
-
-	userInfos, err := s.nucleusUserClient.GetById(orgInfos.Owner)
-	if err != nil {
-		return nil, err
-	}
-
-	if poolSim.QrCode != "" && !poolSim.IsPhysical {
-		err = s.mailerClient.SendEmail(cnotif.SendEmailReq{
-			To:           []string{remoteSubResp.Subscriber.Email},
-			TemplateName: emailTemplate.EmailTemplateSimAllocation,
-			Values: map[string]interface{}{
-				emailTemplate.EmailKeySubscriber: remoteSubResp.Subscriber.Name,
-				emailTemplate.EmailKeyNetwork:    netInfo.Name,
-				emailTemplate.EmailKeyName:       userInfos.Name,
-				emailTemplate.EmailKeyQRCode:     poolSim.QrCode,
-				emailTemplate.EmailKeyVolume:     fmt.Sprintf("%v", packageInfo.DataVolume),
-				emailTemplate.EmailKeyUnit:       packageInfo.DataUnit,
-				emailTemplate.EmailKeyOrg:        s.orgName,
-				emailTemplate.EmailKeyEndDate:    sim.Package.EndDate.Format("January 2, 2006"),
-				emailTemplate.EmailKeyPackage:    packageInfo.Name,
-				emailTemplate.EmailKeyDuration:   fmt.Sprintf("%v", packageInfo.Duration),
-				emailTemplate.EmailKeyAmount:     fmt.Sprintf("%v", packageInfo.Amount),
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-
 	err = pushTotalSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.metricsPusher)
 	if err != nil {
 		log.Errorf("Error while pushing metrics on sim allocation operation: %s", err.Error())
@@ -354,20 +317,31 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	route := s.baseRoutingKey.SetAction("allocate").SetObject("sim").MustBuild()
 	evt := &epb.EventSimAllocation{
-		Id:             sim.Id.String(),
-		SubscriberId:   sim.SubscriberId.String(),
-		NetworkId:      sim.NetworkId.String(),
-		OrgId:          orgId.String(),
-		DataPlanId:     sim.Package.PackageId.String(),
-		Iccid:          sim.Iccid,
-		Msisdn:         sim.Msisdn,
-		Imsi:           sim.Imsi,
-		Type:           sim.Type.String(),
-		Status:         sim.Status.String(),
-		IsPhysical:     sim.IsPhysical,
-		PackageId:      sim.Package.Id.String(),
-		TrafficPolicy:  sim.TrafficPolicy,
-		PackageEndDate: timestamppb.New(sim.Package.EndDate),
+		Id:                sim.Id.String(),
+		SubscriberId:      sim.SubscriberId.String(),
+		NetworkId:         sim.NetworkId.String(),
+		OrgId:             orgId.String(),
+		DataPlanId:        sim.Package.PackageId.String(),
+		Iccid:             sim.Iccid,
+		Msisdn:            sim.Msisdn,
+		Imsi:              sim.Imsi,
+		Type:              sim.Type.String(),
+		Status:            sim.Status.String(),
+		IsPhysical:        sim.IsPhysical,
+		PackageId:         sim.Package.Id.String(),
+		TrafficPolicy:     sim.TrafficPolicy,
+		PackageEndDate:    timestamppb.New(sim.Package.EndDate),
+		SubscriberName:    remoteSubResp.Subscriber.Name,
+		SubscriberEmail:   remoteSubResp.Subscriber.Email,
+		NetworkName:       netInfo.Name,
+		OrgName:           s.orgName,
+		OwnerName:         orgOwnerName(s.orgName, s.nucleusOrgClient, s.nucleusUserClient),
+		QrCode:            poolSim.QrCode,
+		PackageName:       packageInfo.Name,
+		PackageDataVolume: fmt.Sprintf("%v", packageInfo.DataVolume),
+		PackageDataUnit:   packageInfo.DataUnit,
+		PackageAmount:     fmt.Sprintf("%v", packageInfo.Amount),
+		PackageDuration:   fmt.Sprintf("%v", packageInfo.Duration),
 	}
 
 	err = publishEventMessage(route, evt, s.msgbus)
@@ -659,7 +633,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
 	if err := addPackageForSim(ctx, req.SimId, req.PackageId, req.StartDate, s.simRepo, s.packageRepo, s.packageClient,
 		s.orgName, s.orgId, s.metricsPusher, s.nucleusOrgClient, s.nucleusUserClient, s.subscriberRegistryService,
-		s.networkClient, s.mailerClient, s.msgbus, s.baseRoutingKey); err != nil {
+		s.networkClient, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
@@ -1044,7 +1018,7 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 func addPackageForSim(ctx context.Context, simId, packageId, startDate string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	packageClient cdplan.PackageClient, orgName, orgId string, metricsPusher MetricsPusher, nucleusOrgClient cnuc.OrgClient,
 	nucleusUserClient cnuc.UserClient, subscriberRegistryService providers.SubscriberRegistryClientProvider, networkClient creg.NetworkClient,
-	mailerClient cnotif.MailerClient, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	log.Infof("Adding package %v to sim: %v", packageId, simId)
 
 	formattedStart, err := validation.ValidateDate(startDate)
@@ -1129,14 +1103,35 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		return grpc.SqlErrorToGrpc(err, "package")
 	}
 
+	subscriberName, subscriberEmail := subscriberNameAndEmail(ctx, sim.SubscriberId.String(), subscriberRegistryService)
+
+	networkName := ""
+
+	netInfo, err := networkClient.Get(sim.NetworkId.String())
+	if err != nil {
+		log.Errorf("Failed to get network %s while enriching sim add package event: %v",
+			sim.NetworkId.String(), err)
+	} else {
+		networkName = netInfo.Name
+	}
+
 	route := baseRoutingKey.SetAction("addpackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimAddPackage{
-		Id:           sim.Id.String(),
-		SubscriberId: sim.SubscriberId.String(),
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    packageUuid.String(),
+		Id:              sim.Id.String(),
+		SubscriberId:    sim.SubscriberId.String(),
+		Iccid:           sim.Iccid,
+		Imsi:            sim.Imsi,
+		NetworkId:       sim.NetworkId.String(),
+		PackageId:       packageUuid.String(),
+		SubscriberName:  subscriberName,
+		SubscriberEmail: subscriberEmail,
+		NetworkName:     networkName,
+		OrgName:         orgName,
+		OwnerName:       orgOwnerName(orgName, nucleusOrgClient, nucleusUserClient),
+		PackageName:     pkgInfo.Name,
+		PackagesCount:   fmt.Sprintf("%v", len(packages)+1),
+		PackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+		PackageEndDate:  pkg.EndDate.Format(emailDateFormat),
 	}
 
 	err = publishEventMessage(route, evtMsg, msgbus)
@@ -1144,52 +1139,46 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	orgInfos, err := nucleusOrgClient.Get(orgName)
+	return nil
+}
+
+func orgOwnerName(orgName string, nucleusOrgClient cnuc.OrgClient, nucleusUserClient cnuc.UserClient) string {
+	orgInfo, err := nucleusOrgClient.Get(orgName)
 	if err != nil {
-		return err
+		log.Errorf("Failed to get org %s while enriching event: %v", orgName, err)
+
+		return ""
 	}
 
-	userInfos, err := nucleusUserClient.GetById(orgInfos.Owner)
+	userInfo, err := nucleusUserClient.GetById(orgInfo.Owner)
 	if err != nil {
-		return err
+		log.Errorf("Failed to get org owner %s while enriching event: %v", orgInfo.Owner, err)
+
+		return ""
 	}
 
+	return userInfo.Name
+}
+
+func subscriberNameAndEmail(ctx context.Context, subscriberId string,
+	subscriberRegistryService providers.SubscriberRegistryClientProvider) (string, string) {
 	subscriberRegistrySvc, err := subscriberRegistryService.GetClient()
 	if err != nil {
-		return err
+		log.Errorf("Failed to get subscriber registry client while enriching event: %v", err)
+
+		return "", ""
 	}
 
 	remoteSubResp, err := subscriberRegistrySvc.Get(ctx, &subregpb.GetSubscriberRequest{
-		SubscriberId: sim.SubscriberId.String(),
+		SubscriberId: subscriberId,
 	})
 	if err != nil {
-		return err
+		log.Errorf("Failed to get subscriber %s while enriching event: %v", subscriberId, err)
+
+		return "", ""
 	}
 
-	netInfo, err := networkClient.Get(sim.NetworkId.String())
-	if err != nil {
-		return err
-	}
-
-	err = mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{remoteSubResp.Subscriber.Email},
-		TemplateName: emailTemplate.EmailTemplatePackageAddition,
-		Values: map[string]interface{}{
-			emailTemplate.EmailKeySubscriber:      remoteSubResp.Subscriber.Name,
-			emailTemplate.EmailKeyNetwork:         netInfo.Name,
-			emailTemplate.EmailKeyName:            userInfos.Name,
-			emailTemplate.EmailKeyOrg:             orgName,
-			emailTemplate.EmailKeyPackagesCount:   fmt.Sprintf("%v", len(packages)+1),
-			emailTemplate.EmailKeyPackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
-			emailTemplate.EmailKeyExpiration:      pkg.EndDate.Format("January 2, 2006"),
-			emailTemplate.EmailKeyPackage:         pkgInfo.Name,
-		},
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return remoteSubResp.Subscriber.Name, remoteSubResp.Subscriber.Email
 }
 
 func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,

@@ -62,6 +62,9 @@ void status_destroy(AppStatus *status);
 void status_set(AppStatus *status, InitState state, const char *reason);
 void status_fail(AppStatus *status, const char *reason);
 bool status_is_ready(AppStatus *status);
+InitState status_get(AppStatus *status,
+                     char *reason,
+                     size_t reasonSize);
 const char *status_state_str(InitState state);
 JsonObj *status_to_json(AppStatus *status, Config *config);
 

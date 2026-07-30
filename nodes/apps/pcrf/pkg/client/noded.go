@@ -68,10 +68,14 @@ func NewNodedClient(h string, debug bool) (*nodedClient, error) {
 func (r *nodedClient) GetNodeId() (string, error) {
 	ni, err := r.GetNodeInfo()
 	if err != nil {
-		return "", err
+		log.Errorf("Fail to get node Id.Error: %v", err)
+
+		return "", fmt.Errorf("GetNodeId failure: %w", err)
 	}
 
 	if ni.Id == "" {
+		log.Errorf("Node info missing UUID: %v", err)
+
 		return "", fmt.Errorf("node info missing UUID")
 	}
 

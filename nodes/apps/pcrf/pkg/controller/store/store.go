@@ -10,6 +10,7 @@ package store
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -26,6 +27,12 @@ import (
 )
 
 const PCRFDB = "/ukama/apps/db/pcrf.db"
+
+var (
+	ErrSubscriberNotFound = errors.New("subscriber not found")
+	ErrPolicyInvalid      = errors.New("policy invalid for subscriber")
+	ErrDataCapExceeded    = errors.New("data cap exceeded")
+)
 
 type Store struct {
 	db *sql.DB
@@ -45,9 +52,11 @@ func NewStore(name string) (*Store, error) {
 	}
 
 	if err := os.MkdirAll(filepath.Dir(dbPath), 0755); err != nil {
-		log.Errorf("Error creating database directory %s. Error %s",
-			filepath.Dir(dbPath), err.Error())
-		return nil, err
+		log.Errorf("Error creating database directory %s. Error: %v",
+			filepath.Dir(dbPath), err)
+
+		return nil, fmt.Errorf("error creating database directory %s. Error: %w",
+			filepath.Dir(dbPath), err)
 	}
 
 	sql.Register("sqlite3_with_extensions",
@@ -59,16 +68,18 @@ func NewStore(name string) (*Store, error) {
 
 	database, err := sql.Open("sqlite3", dbPath)
 	if err != nil {
-		log.Errorf("Error opening database: %s. Error %s", dbPath, err.Error())
-		return nil, err
+		log.Errorf("Error opening database: %s. Error: %v", dbPath, err)
+
+		return nil, fmt.Errorf("error opening database: %s. Error: %w", dbPath, err)
 	}
 
 	repo.db = database
 
 	err = repo.CreateTables()
 	if err != nil {
-		log.Errorf("Error creating tables %s", err.Error())
-		return nil, err
+		log.Errorf("Error creating tables %v", err)
+
+		return nil, fmt.Errorf("error creating tables %w", err)
 	}
 
 	return repo, nil
@@ -90,8 +101,9 @@ func (s *Store) createPolicyTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Policies table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Policies table. Error: %v", err)
+
+		return fmt.Errorf("error creating Policies table. Error: %w", err)
 	}
 	return nil
 }
@@ -104,8 +116,9 @@ func (s *Store) createRerouteTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Reroute table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Reroute table. Error: %v", err)
+
+		return fmt.Errorf("error creating Reroute table. Error: %w", err)
 	}
 	return nil
 }
@@ -122,8 +135,9 @@ func (s *Store) createSubscriberTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Subscriber table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Subscriber table. Error: %v", err)
+
+		return fmt.Errorf("error creating Subscriber table. Error: %w", err)
 	}
 	return nil
 }
@@ -139,8 +153,9 @@ func (s *Store) createUsageTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Usage table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Usage table. Error: %v", err)
+
+		return fmt.Errorf("Error creating Usage table. Error: %w", err)
 	}
 	return nil
 }
@@ -155,8 +170,9 @@ func (s *Store) createMeterTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Meter table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Meter table. Error: %v", err)
+
+		return fmt.Errorf("error creating Meter table. Error: %w", err)
 	}
 	return nil
 }
@@ -177,8 +193,9 @@ func (s *Store) createFlowTable() error {
 	);
 `)
 	if err != nil {
-		log.Errorf("Error creating Flow table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Flow table. Error: %v", err)
+
+		return fmt.Errorf("error creating Flow table. Error: %w", err)
 	}
 	return nil
 }
@@ -209,8 +226,9 @@ func (s *Store) createSessionTable() error {
 		);
 	`)
 	if err != nil {
-		log.Errorf("Error creating Session table.Error %s", err.Error())
-		return err
+		log.Errorf("Error creating Session table. Error: %v", err)
+
+		return fmt.Errorf("error creating Session table. Error: %w", err)
 	}
 	return nil
 }
@@ -218,7 +236,7 @@ func (s *Store) createSessionTable() error {
 func (s *Store) CreateTables() error { // Enable the UUID extension
 	// _, err := s.db.Exec("SELECT load_extension('/usr/lib/libsqlite3_mod_uuid.so')")
 	// if err != nil {
-	// 	log.Errorf("Failed to load uuid extension. Error: %s", err.Error())
+	// 	log.Errorf("Failed to load uuid extension. Error: %v", err)
 	// 	log.Fatal(err)
 	// }
 
@@ -279,8 +297,9 @@ func (s *Store) CreatePolicy(p *api.Policy) (*Policy, error) {
 
 	err := s.InsertPolicy(&policy)
 	if err != nil {
-		log.Errorf("Error inserting policy %v.Error: %v", policy.ID.Bytes(), err)
-		return nil, err
+		log.Errorf("Error inserting policy %v. Error: %v", policy.ID.Bytes(), err)
+
+		return nil, fmt.Errorf("error inserting policy %v. Error: %w", policy.ID.Bytes(), err)
 	}
 
 	log.Infof("Created policy %v", policy)
@@ -329,15 +348,17 @@ func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM PathType) (*Meter,
 		`, p.Dlbr, typeM, p.Burst)
 	}
 	if err != nil {
-		log.Errorf("Failed to insert meter for subscriber %s.Error: %s", sub.Imsi, err.Error())
-		return nil, err
+		log.Errorf("Failed to insert meter for subscriber %s. Error: %v", sub.Imsi, err)
+
+		return nil, fmt.Errorf("failed to insert meter for subscriber %s. Error: %v", sub.Imsi, err)
 	}
 
 	// Get the ID of the last inserted Subscriber
 	mId, err := r.LastInsertId()
 	if err != nil {
 		log.Errorf("Failed to get last inserted meter. Error: %v", err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to get last inserted meter. Error: %w", err)
 	}
 
 	meter, err := s.GetMeter(uint32(mId))
@@ -358,7 +379,8 @@ func (s *Store) DeleteMeter(id uint32) error {
 	`, id)
 	if err != nil {
 		log.Errorf("Failed to delete meter %d. Error: %v", id, err)
-		return err
+
+		return fmt.Errorf("failed to delete meter %d. Error: %w", id, err)
 	}
 
 	return nil
@@ -372,8 +394,9 @@ func (s *Store) GetMeter(id uint32) (*Meter, error) {
 		WHERE id = ?;
 	`, id).Scan(&meter.ID, &meter.Rate, &meter.Type, &meter.Burst)
 	if err != nil {
-		log.Errorf("Failed to get meter %d. Error: %s", id, err.Error())
-		return nil, err
+		log.Errorf("Failed to get meter %d. Error: %v", id, err)
+
+		return nil, fmt.Errorf("failed to get meter %d. Error: %w", id, err)
 	}
 
 	return &meter, nil
@@ -387,8 +410,9 @@ func (s *Store) CreateFlow(m *Meter, r *ReRoute, ip string, table, priority uint
 		ck = uint64(rand.Uint32())
 		b, err := s.CheckUniqueCookie(ck)
 		if err != nil {
-			log.Errorf("Failed to check unique cookie.Error: %s", err.Error())
-			return nil, err
+			log.Errorf("Failed to check unique cookie. Error: %v", err)
+
+			return nil, fmt.Errorf("failed to check unique cookie. Error: %w", err)
 		}
 		if b {
 			break
@@ -401,14 +425,16 @@ func (s *Store) CreateFlow(m *Meter, r *ReRoute, ip string, table, priority uint
 	`, ck, table, priority, ip, r.ID, m.ID)
 	if err != nil {
 		log.Errorf("Failed to create flow for UE %s meter %d. Error: %v", ip, m.ID, err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to create flow for UE %s meter %d. Error: %w", ip, m.ID, err)
 	}
 
 	// Get the ID of the last inserted Subscriber
 	fId, err := res.LastInsertId()
 	if err != nil {
 		log.Errorf("Failed to get last inserted flow. Error: %v", err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to get last inserted flow. Error: %w", err)
 	}
 
 	flow, err := s.GetFlow(int(fId))
@@ -429,7 +455,8 @@ func (s *Store) DeleteFlow(id uint32) error {
 	`, id)
 	if err != nil {
 		log.Errorf("Failed to delete flow %d. Error: %v", id, err)
-		return err
+
+		return fmt.Errorf("failed to delete flow %d. Error: %w", id, err)
 	}
 
 	return nil
@@ -444,20 +471,23 @@ func (s *Store) GetFlow(id int) (*Flow, error) {
 	`, id).Scan(&f.ID, &f.Cookie, &f.Tableid, &f.Priority, &f.UeIpAddr, &f.MeterID.ID, &f.ReRouting.ID)
 	if err != nil {
 		log.Errorf("Failed to get flow %d. Error: %v", id, err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to get flow %d. Error: %w", id, err)
 	}
 
 	m, err := s.GetMeter(uint32(f.MeterID.ID))
 	if err != nil {
 		log.Errorf("Failed to get meter %d for flow %d. Error: %v", f.MeterID.ID, f.ID, err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to get meter %d for flow %d. Error: %w", f.MeterID.ID, f.ID, err)
 	}
 	f.MeterID = *m
 
 	r, err := s.GetReRouteByID(f.ReRouting.ID)
 	if err != nil {
 		log.Errorf("Failed to get reeoute %d for flow %d. Error: %v", f.ReRouting.ID, f.ID, err)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to get reeoute %d for flow %d. Error: %w", f.ReRouting.ID, f.ID, err)
 	}
 	f.ReRouting = *r
 
@@ -489,7 +519,8 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 	`, sub.ID, time.Now().Unix(), 0)
 	if err != nil {
 		log.Errorf("Failed to create usage for subscriber %s. Error: %v", sub.Imsi, err)
-		return err
+
+		return fmt.Errorf("failed to create usage for subscriber %s. Error: %w", sub.Imsi, err)
 	}
 	log.Infof("Created usage for subscriber %s", sub.Imsi)
 	return nil
@@ -497,7 +528,6 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 
 /* Create a subscriber */
 func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.UsageDetails) (*Subscriber, error) {
-
 	var reouteId *int = nil
 
 	/* create a policy */
@@ -521,22 +551,25 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.
 		Imsi: imsi,
 	}, &(sp.ID), reouteId)
 	if err != nil {
-		log.Errorf("Failed to create subscriber with imsi %s. Error: %s", imsi, err.Error())
-		return nil, err
+		log.Errorf("Failed to create subscriber with imsi %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to create subscriber with imsi %s. Error: %w", imsi, err)
 	}
 
 	sub, err := s.GetSubscriber(imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber with imsi %s. Error: %s", imsi, err.Error())
-		return nil, err
+		log.Errorf("Failed to get subscriber with imsi %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", imsi, err)
 	}
 
 	// Recalulate the usage if any sessions reports are available
 	if d != nil {
 		_, err = s.ReCalculateImsiUsage(sub.Imsi, d)
 		if err != nil {
-			log.Errorf("Failed to update usage for subscriber with imsi %s. Error: %s", imsi, err.Error())
-			return nil, err
+			log.Errorf("Failed to update usage for subscriber with imsi %s. Error: %v", imsi, err)
+
+			return nil, fmt.Errorf("failed to update usage for subscriber with imsi %s. Error: %w", imsi, err)
 		}
 	}
 
@@ -544,10 +577,9 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.
 }
 
 func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
-
 	sub, err := s.GetSubscriber(imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber %s from db. Error %s", imsi, err.Error())
+		log.Errorf("Failed to get subscriber %s from db. Error: %v", imsi, err)
 		if err == sql.ErrNoRows {
 			log.Infof("Converting request to add subscriber for %s", imsi)
 			return s.CreateSubscriber(imsi, p, nil, nil)
@@ -560,8 +592,11 @@ func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 		sub.PolicyID.Consumed = p.Consumed
 		err := s.UpdatePolicy(&sub.PolicyID)
 		if err != nil {
-			log.Errorf("Failed to update %s policy for subscriber %s in db. Error %s", sub.PolicyID.ID, imsi, err.Error())
-			return nil, err
+			log.Errorf("Failed to update %s policy for subscriber %s in db. Error: %v",
+				sub.PolicyID.ID, imsi, err)
+
+			return nil, fmt.Errorf("failed to update %s policy for subscriber %s in db. Error: %w",
+				sub.PolicyID.ID, imsi, err)
 		}
 	} else {
 		log.Debugf("Need to create a new policy %s for subscriber %s", p.Uuid, imsi)
@@ -571,8 +606,9 @@ func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 	/* Rereading sub from db */
 	usub, err := s.GetSubscriber(imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber with imsi %s. Error: %s", imsi, err.Error())
-		return nil, err
+		log.Errorf("Failed to get subscriber with imsi %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", imsi, err)
 	}
 
 	return usub, nil
@@ -585,20 +621,23 @@ func (s *Store) InsertSession(se *Session) (*Session, error) {
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);
 		`, se.NodeId, se.SubscriberID.ID, se.PolicyID.ID.Bytes(), se.ApnName, se.UeIpAddr, se.StartTime, se.EndTime, se.TxBytes, se.RxBytes, se.TotalBytes, se.TxMeterID.ID, se.RxMeterID.ID, se.State, se.Sync, se.UpdatedAt)
 	if err != nil {
-		log.Errorf("Failed to insert session.Error %v", err)
-		return nil, err
+		log.Errorf("Failed to insert session. Error: %v", err)
+
+		return nil, fmt.Errorf("failed to insert session. Error: %w", err)
 	}
 
 	id, err := res.LastInsertId()
 	if err != nil {
-		log.Errorf("Failed to get last inserted session. Error %v", err)
-		return nil, err
+		log.Errorf("Failed to get last inserted session. Error: %v", err)
+
+		return nil, fmt.Errorf("failed to get last inserted session. Error: %w", err)
 	}
 
 	ns, err := s.GetSessionByID(int(id))
 	if err != nil {
-		log.Errorf("Failed to get session. Error %v", err)
-		return nil, err
+		log.Errorf("Failed to get session. Error: %v", err)
+
+		return nil, fmt.Errorf("failed to get session. Error: %w", err)
 	}
 	log.Infof("Session created in store %+v", ns)
 
@@ -611,8 +650,9 @@ func (s *Store) DeleteSession(sub *Subscriber) error {
 	`, sub.ID)
 
 	if err != nil {
-		log.Errorf("Failed to delete session for subscriber %d: Error: %v", sub.ID, err.Error())
-		return err
+		log.Errorf("Failed to delete session for subscriber %d: Error: %v", sub.ID, err)
+
+		return fmt.Errorf("failed to delete session for subscriber %d: Error: %w", sub.ID, err)
 	}
 	return nil
 }
@@ -663,6 +703,7 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 	availData := p.Data - p.Consumed
 	if u.Data >= availData {
 		log.Errorf("Subscriber has usage %+v reached max data cap of %d", u, p.Data)
+
 		return fmt.Errorf("max data cap hit")
 	}
 
@@ -670,17 +711,19 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 }
 
 func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId string) (*Session, *Flow, *Flow, error) {
-
 	/* TODO: Check if required here vaildate if user has enough data */
 	usage, err := s.GetUsageByImsi(subscriber.Imsi)
 	if err != nil {
-		log.Errorf("Error getting usage for subscriber: %s", err.Error())
+		log.Errorf("Error getting usage for subscriber: %v", err)
+
 		return nil, nil, nil, err
 	}
 
 	// Check if Data in Usage is less than Policy for rerouting
 	if usage.Data >= subscriber.PolicyID.Data {
-		log.Errorf("can't create flows. UE %s usage %d has reached max data cap of %d.", subscriber.Imsi, usage.Data, subscriber.PolicyID.Data)
+		log.Errorf("can't create flows. UE %s usage %d has reached max data cap of %d.",
+			subscriber.Imsi, usage.Data, subscriber.PolicyID.Data)
+
 		return nil, nil, nil, fmt.Errorf("max data cap exceeded")
 	}
 
@@ -761,19 +804,23 @@ func (s *Store) EndSession(session *Session) error {
 	// Update Usage for the subscriber
 	subscriber, err := s.GetSubscriberByID(session.SubscriberID.ID)
 	if err != nil {
-		return err
+		log.Errorf("Error getting subscriber %s by ID. Error: %v", session.SubscriberID.Imsi, err)
+
+		return fmt.Errorf("error getting subscriber %s by ID. Error: %w", session.SubscriberID.Imsi, err)
 	}
 
 	err = s.UpdateSessionEndUsage(session)
 	if err != nil {
-		log.Errorf("Error updating session usage for subscriber %s.Error %s", subscriber.Imsi, err.Error())
-		return err
+		log.Errorf("Error updating session usage for subscriber %s. Error: %v", subscriber.Imsi, err)
+
+		return fmt.Errorf("error updating session usage for subscriber %s. Error: %w", subscriber.Imsi, err)
 	}
 
 	usage, err := s.GetUsageByImsi(subscriber.Imsi)
 	if err != nil {
-		log.Errorf("Error getting usage for subscriber %s.Error %s", subscriber.Imsi, err.Error())
-		return err
+		log.Errorf("Error getting usage for subscriber %s. Error: %v", subscriber.Imsi, err)
+
+		return fmt.Errorf("error getting usage for subscriber %s. Error: %w", subscriber.Imsi, err)
 	}
 
 	usage.Data += session.TotalBytes
@@ -782,8 +829,9 @@ func (s *Store) EndSession(session *Session) error {
 	// Update subscriber and session
 	err = s.UpdateUsage(usage)
 	if err != nil {
-		log.Errorf("Error updating usage for subscriber %s.Error %s", subscriber.Imsi, err.Error())
-		return err
+		log.Errorf("Error updating usage for subscriber %s. Error: %v", subscriber.Imsi, err)
+
+		return fmt.Errorf("error updating usage for subscriber %s. Error: %w", subscriber.Imsi, err)
 	}
 
 	return nil
@@ -795,11 +843,11 @@ func (s *Store) EndSession(session *Session) error {
 In this case we have to get the updated usage and add any unsynced session values to calculate the exact usage
 */
 func (s *Store) ReCalculateImsiUsage(imsi string, details *api.UsageDetails) (*Usage, error) {
-
 	cu, err := s.GetUsageByImsi(imsi)
 	if err != nil {
-		log.Errorf("Error getting usage for subscriber %s.Error %s", imsi, err.Error())
-		return nil, err
+		log.Errorf("Error getting usage for subscriber %s. Error: %s", imsi, err)
+
+		return nil, fmt.Errorf("error getting usage for subscriber %s. Error: %w", imsi, err)
 	}
 
 	usage := &Usage{
@@ -810,8 +858,9 @@ func (s *Store) ReCalculateImsiUsage(imsi string, details *api.UsageDetails) (*U
 
 	sl, err := s.GetUnsyncSessionsByImsiAfterTime(imsi, details.Time)
 	if err != nil {
-		log.Errorf("Failed to get previos sessions for subscriber %s.Error: %v", imsi, err)
-		return nil, err
+		log.Errorf("Failed to get previos sessions for subscriber %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to get previos sessions for subscriber %s. Error: %w", imsi, err)
 	}
 
 	for _, se := range sl {
@@ -824,8 +873,9 @@ func (s *Store) ReCalculateImsiUsage(imsi string, details *api.UsageDetails) (*U
 
 	err = s.UpdateUsage(usage)
 	if err != nil {
-		log.Errorf("Failed to update subscriber %s usage to %+v.Error: %v", imsi, usage, err)
-		return nil, err
+		log.Errorf("Failed to update subscriber %s usage to %+v. Error: %v", imsi, usage, err)
+
+		return nil, fmt.Errorf("failed to update subscriber %s usage to %v. Error: %w", imsi, usage, err)
 	}
 	log.Infof("Recaculated subscriber %s usage is %+v", imsi, usage)
 	return usage, nil
@@ -857,18 +907,19 @@ func (s *Store) GetUsageByImsi(imsi string) (*Usage, error) {
 }
 
 func (s *Store) ResetUsageByImsi(imsi string) error {
-
 	u, err := s.GetUsageByImsi(imsi)
 	if err != nil {
-		log.Errorf("failed to get usage for imsi %s: %v", imsi, err)
-		return err
+		log.Errorf("Failed to get usage for imsi %s: %v", imsi, err)
+
+		return fmt.Errorf("failed to get usage for imsi %s: %w", imsi, err)
 	}
 	log.Infof("Reseting usage %+v for imsi %s", u, imsi)
 	u.Data = 0
 	err = s.UpdateUsage(u)
 	if err != nil {
-		log.Errorf("failed to reset usage for imsi %s: %v", imsi, err)
-		return err
+		log.Errorf("Failed to reset usage for imsi %s: %v", imsi, err)
+
+		return fmt.Errorf("failed to reset usage for imsi %s: %w", imsi, err)
 	}
 
 	return nil
@@ -950,8 +1001,9 @@ func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 
 	session.PolicyID.ID, err = uuid.FromBytes(bid)
 	if err != nil {
-		log.Errorf("Failed to get poilicy id for session %d.Error: %v", sessionID, err)
-		return nil, err
+		log.Errorf("Failed to get poilicy id for session %d. Error: %v", sessionID, err)
+
+		return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", sessionID, err)
 	}
 
 	session, err = s.GetSessionDetails(session)
@@ -988,8 +1040,9 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 
 		session.PolicyID.ID, err = uuid.FromBytes(bid)
 		if err != nil {
-			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
-			return nil, err
+			log.Errorf("Failed to get poilicy id for session %d. Error: %v", session.ID, err)
+
+			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
 		session, err = s.GetSessionDetails(session)
@@ -1029,8 +1082,9 @@ func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Se
 
 		session.PolicyID.ID, err = uuid.FromBytes(bid)
 		if err != nil {
-			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
-			return nil, err
+			log.Errorf("Failed to get poilicy id for session %d. Error: %v", session.ID, err)
+
+			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
 		session, err = s.GetSessionDetails(session)
@@ -1056,8 +1110,9 @@ func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
 
 	session.PolicyID.ID, err = uuid.FromBytes(bid)
 	if err != nil {
-		log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
-		return nil, err
+		log.Errorf("Failed to get poilicy id for session %d. Error: %v", session.ID, err)
+
+		return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 	}
 
 	session, err = s.GetSessionDetails(session)
@@ -1127,7 +1182,9 @@ func (s *Store) GetAllActiveSessions() ([]Session, error) {
 		if err != nil {
 			log.Errorf("Failed to get policy id for session %d. Error: %v",
 				session.ID, err)
-			return nil, err
+
+			return nil, fmt.Errorf("failed to get policy id for session %d. Error: %w",
+				session.ID, err)
 		}
 
 		session, err = s.GetSessionDetails(session)
@@ -1165,8 +1222,9 @@ func (s *Store) GetAllNonPublishedSessions() ([]Session, error) {
 
 		session.PolicyID.ID, err = uuid.FromBytes(bid)
 		if err != nil {
-			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
-			return nil, err
+			log.Errorf("Failed to get poilicy id for session %d. Error: %v", session.ID, err)
+
+			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
 		session, err = s.GetSessionDetails(session)
@@ -1204,7 +1262,7 @@ func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
 
 		session.PolicyID.ID, err = uuid.FromBytes(bid)
 		if err != nil {
-			log.Errorf("Failed to get poilicy id for session %d.Error: %v", session.ID, err)
+			log.Errorf("Failed to get poilicy id for session %d. Error: %v", session.ID, err)
 			return nil, err
 		}
 
@@ -1360,40 +1418,59 @@ func (s *Store) GetSubscriberID(imsi string) (*Subscriber, error) {
 	var subscriber Subscriber
 	err := row.Scan(&subscriber.ID, &subscriber.Imsi)
 	if err != nil {
-		return nil, fmt.Errorf("Subscriber not found: %v", err)
+		log.Errorf("Subscriber not found: %v", err)
+
+		return nil, fmt.Errorf("subscriber not found: %w", err)
 	}
 	return &subscriber, nil
 }
 
 func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
-
 	query := "SELECT id, imsi, policy_id, reroute_id FROM subscribers WHERE Imsi = ?"
 	row := s.db.QueryRow(query, imsi)
 
 	var subscriber Subscriber
 	var id []byte
+
 	err := row.Scan(&subscriber.ID, &subscriber.Imsi, &id, &subscriber.ReRouteID.ID)
 	if err != nil {
-		// Subscriber not found
-		return nil, fmt.Errorf("Subscriber not found: %v", err)
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Errorf("Subscriber record not found: %v", err)
+
+			return nil, fmt.Errorf("%w: imsi %s", ErrSubscriberNotFound, imsi)
+		}
+
+		log.Errorf("Failed to scan subscriber row for imsi %s. Error: %v", imsi, err)
+
+		return nil, fmt.Errorf("failed to query subscriber %s. Error: %w", imsi, err)
 	}
+
 	uuid, err := uuid.FromBytes(id)
 	if err != nil {
-		return nil, fmt.Errorf("policy id is not a valid uuid: %v", err)
+		log.Errorf("Policy id is not a valid uuid: %v", err)
+
+		return nil, fmt.Errorf("policy id is not a valid uuid: %w", err)
 	}
 
 	p, err := s.GetPolicyByID(uuid)
 	if err != nil {
-		log.Errorf("failed to get policy for subscriber %s.Error: %v", subscriber.Imsi, err)
-		return nil, err
+		log.Errorf("Failed to get policy for subscriber %s. Error: %v",
+			subscriber.Imsi, err)
+
+		return nil, fmt.Errorf("failed to get policy for subscriber %s. Error: %w",
+			subscriber.Imsi, err)
 	}
 	subscriber.PolicyID = *p
 
 	r, err := s.GetReRouteByID(subscriber.ReRouteID.ID)
 	if err != nil {
-		log.Errorf("failed to get reroute for subscriber %s.Error: %v", subscriber.Imsi, err)
-		return nil, err
+		log.Errorf("Failed to get reroute for subscriber %s. Error: %v",
+			subscriber.Imsi, err)
+
+		return nil, fmt.Errorf("failed to get reroute for subscriber %s. Error: %w",
+			subscriber.Imsi, err)
 	}
+
 	subscriber.ReRouteID = *r
 
 	log.Debugf("Subscriber %s is %+v", subscriber.Imsi, subscriber)
@@ -1401,7 +1478,6 @@ func (s *Store) GetSubscriber(imsi string) (*Subscriber, error) {
 }
 
 func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
-
 	query := "SELECT id, imsi, policy_id, reroute_id FROM subscribers WHERE id = ?"
 	row := s.db.QueryRow(query, id)
 
@@ -1409,26 +1485,33 @@ func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 	var idb []byte
 	err := row.Scan(&subscriber.ID, &subscriber.Imsi, &idb, &subscriber.ReRouteID.ID)
 	if err != nil {
-		// Subscriber not found
-		return nil, fmt.Errorf("Subscriber not found: %v", err)
+		log.Errorf("Subscriber not found: %v", err)
+
+		return nil, fmt.Errorf("subscriber not found: %w", err)
 	}
 
 	uuid, err := uuid.FromBytes(idb)
 	if err != nil {
-		return nil, fmt.Errorf("policy id is not a valid uuid: %v", err)
+		log.Errorf("Policy id is not a valid uuid: %v", err)
+
+		return nil, fmt.Errorf("policy id is not a valid uuid: %w", err)
 	}
 
 	p, err := s.GetPolicyByID(uuid)
 	if err != nil {
-		log.Errorf("failed to get policy for subscriber %s.Error: %v", subscriber.Imsi, err)
-		return nil, err
+		log.Errorf("Failed to get policy for subscriber %s. Error: %v",
+			subscriber.Imsi, err)
+
+		return nil, fmt.Errorf("failed to get policy for subscriber %s. Error: %w",
+			subscriber.Imsi, err)
 	}
 	subscriber.PolicyID = *p
 
 	r, err := s.GetReRouteByID(subscriber.ReRouteID.ID)
 	if err != nil {
-		log.Errorf("failed to get reroute for subscriber %s.Error: %v", subscriber.Imsi, err)
-		return nil, err
+		log.Errorf("Failed to get reroute for subscriber %s. Error: %v", subscriber.Imsi, err)
+
+		return nil, fmt.Errorf("failed to get reroute for subscriber %s. Error: %w", subscriber.Imsi, err)
 	}
 	subscriber.ReRouteID = *r
 
@@ -1438,33 +1521,39 @@ func (s *Store) GetSubscriberByID(id int) (*Subscriber, error) {
 func (s *Store) UpdateSubscriberDetails(sub *Subscriber, p *uuid.UUID, id *int) error {
 	// Subscriber already exists, update the policy
 	if p != nil {
-
 		if sub.PolicyID.ID.String() == p.String() {
 			log.Errorf("Subscriber %+v is already have policy %s assigned.", sub, p.String())
+
 			return fmt.Errorf("policy %s is already assigned", p.String())
 		}
 
 		err := s.UpdateSubscriberPolicy(sub, *p)
 		if err != nil {
-			log.Errorf("Failed to update policy %s for the subscriber %s.Error %s", p.String(), sub.Imsi, err.Error())
-			return err
+			log.Errorf("Failed to update policy %s for the subscriber %s. Error: %v",
+				p.String(), sub.Imsi, err)
+
+			return fmt.Errorf("failed to update policy %s for the subscriber %s. Error: %w",
+				p.String(), sub.Imsi, err)
 		}
 		log.Infof("Policy %s assigned to the new subscriber %s.", p.String(), sub.Imsi)
 
 		// Policy is updated ths means new policy is assigned and new data caps are available
 		err = s.ResetUsageByImsi(sub.Imsi)
 		if err != nil {
-			log.Errorf("Failed to reset usage for the subscriber %s.Error %s", sub.Imsi, err.Error())
-			return err
-		}
+			log.Errorf("Failed to reset usage for the subscriber %s. Error: %v", sub.Imsi, err)
 
+			return fmt.Errorf("failed to reset usage for the subscriber %s. Error: %w", sub.Imsi, err)
+		}
 	}
 
 	if id != nil {
 		err := s.UpdateSubscriberReRoute(sub, *id)
 		if err != nil {
-			log.Errorf("Failed to update Reroute %d for the subscriber %s.Error %s", *id, sub.Imsi, err.Error())
-			return err
+			log.Errorf("Failed to update Reroute %d for the subscriber %s. Error: %v",
+				*id, sub.Imsi, err)
+
+			return fmt.Errorf("failed to update Reroute %d for the subscriber %s. Error: %w",
+				*id, sub.Imsi, err)
 		}
 		log.Infof("Reroute %d assigned to the new subscriber %s.", *id, sub.Imsi)
 	}
@@ -1485,16 +1574,20 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 			Imsi: ns.Imsi,
 		})
 		if err != nil {
-			log.Errorf("Error inserting subscriber %s.Error: %v", subscriber.Imsi, err.Error())
-			return err
+			log.Errorf("Error inserting subscriber %s. Error: %v", subscriber.Imsi, err)
+
+			return fmt.Errorf("error inserting subscriber %s. Error: %w", subscriber.Imsi, err)
 		}
 		log.Infof("New subscriber with Imsi %s created.", ns.Imsi)
 
 		// Get the subscriber
 		subscriber, err = s.GetSubscriberID(ns.Imsi)
 		if err != nil {
-			log.Errorf("Erorr while getting subscriberID with imsi %s. Error %s", subscriber.Imsi, err.Error())
-			return err
+			log.Errorf("Erorr while getting subscriberID with imsi %s. Error: %v",
+				subscriber.Imsi, err)
+
+			return fmt.Errorf("erorr while getting subscriberID with imsi %s. Error: %w",
+				subscriber.Imsi, err)
 		}
 
 		/* Usage table */
@@ -1513,8 +1606,11 @@ func (s *Store) CreateOrUpdateSubscriber(ns *api.CreateSubscriber, p *uuid.UUID,
 	/* Get updated subscriber */
 	subscriber, err = s.GetSubscriber(ns.Imsi)
 	if err != nil {
-		log.Errorf("Erorr while getting subscriberID with imsi %s. Error %s", subscriber.Imsi, err.Error())
-		return err
+		log.Errorf("Erorr while getting subscriberID with imsi %s. Error: %v",
+			subscriber.Imsi, err)
+
+		return fmt.Errorf("erorr while getting subscriberID with imsi %s. Error: %w",
+			subscriber.Imsi, err)
 	}
 
 	return nil

@@ -10,6 +10,7 @@ package controller
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -201,19 +202,23 @@ func (c *Controller) ExitController() error {
 func (c *Controller) validateSubscriber(imsi string) (*store.Subscriber, error) {
 	s, err := c.store.GetSubscriber(imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber for %s.Error: %v", imsi, err)
+		log.Errorf("Failed to get subscriber for imsi %s. Error: %v", imsi, err)
 
-		return nil, fmt.Errorf("failed to get subscriber for %s.Error: %w", imsi, err)
+		return nil, fmt.Errorf("failed to get subscriber for imsi %s. Error: %w", imsi, err)
 	}
 
 	now := time.Now().Unix()
 	if s.PolicyID.StartTime > now || s.PolicyID.EndTime <= now {
-		return nil, fmt.Errorf("failed to get valid policy")
+		log.Errorf("Failed to get valid policy for imsi %s", s.Imsi)
+
+		return nil, fmt.Errorf("%w: imsi %s", store.ErrPolicyInvalid, s.Imsi)
 	}
 
 	err = c.store.ValidateDataCapLimits(imsi, &s.PolicyID)
 	if err != nil {
-		return nil, err
+		log.Errorf("Failed to validate data cap limits: %v", err)
+
+		return nil, fmt.Errorf("%w: %v", store.ErrDataCapExceeded, err)
 	}
 
 	return s, nil
@@ -256,10 +261,14 @@ func (c *Controller) SetService(ctx context.Context, req *api.ServiceRequest) er
 		c.serviceReason = "operator_disabled"
 		c.serviceMu.Unlock()
 		if err := c.sm.EndAllSessions(); err != nil {
-			return err
+			log.Errorf("Failed to turn off service: %v ", err)
+
+			return fmt.Errorf("failed to turn off service: %w ", err)
 		}
 		return nil
 	default:
+		log.Errorf("Invalid service state %q", req.State)
+
 		return fmt.Errorf("invalid service state %q", req.State)
 	}
 }
@@ -278,16 +287,51 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 		req.ImsiStr, req.IpStr)
 
 	if !c.serviceEnabled() {
+		log.Errorf("service_disabled")
+
 		return fmt.Errorf("service_disabled")
 	}
 
 	sub, err = c.validateSubscriber(req.ImsiStr)
 	if err != nil {
-		log.Errorf("Subscriber %s not configured locally or policy invalid: %v",
-			req.ImsiStr, err)
+		switch {
+		case errors.Is(err, store.ErrSubscriberNotFound):
+			log.Warnf("Subscriber %s not found on local node: %v", req.ImsiStr, err)
+			log.Infof("Fetching subscriber %s from remote asr", req.ImsiStr)
 
-		return fmt.Errorf("subscriber %s not configured locally or policy invalid: %w",
-			req.ImsiStr, err)
+			sub, err := c.rc.GetSubscriberProfile(req.ImsiStr)
+			if err != nil {
+				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, err)
+
+				return fmt.Errorf("subscriber %s not found either locally, nor in remote asr %w",
+					req.ImsiStr, err)
+			}
+
+			log.Infof("Subscriber %s found in remote asr", req.ImsiStr)
+			log.Infof("Registering subscriber %s in local node", req.ImsiStr)
+
+			_, err = c.store.CreateSubscriber(sub.Imsi, &sub.Policy, &sub.ReRoute, nil)
+			if err != nil {
+				log.Errorf("Failed to create missing subscriber with imsi %s. Error: %v", req.Imsi, err)
+
+				return fmt.Errorf("failed to create missing subscriber with imsi %s. Error: %w", req.Imsi, err)
+			}
+
+		case errors.Is(err, store.ErrPolicyInvalid):
+			log.Errorf("Subscriber %s has no valid policy: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("subscriber %s has no valid policy: %w", req.ImsiStr, err)
+
+		case errors.Is(err, store.ErrDataCapExceeded):
+			log.Errorf("Subscriber %s exceeded data cap: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("subscriber %s exceeded data cap: %w", req.ImsiStr, err)
+
+		default:
+			log.Errorf("Failed to validate subscriber %s: %v", req.ImsiStr, err)
+
+			return fmt.Errorf("failed to validate subscriber %s: %v", req.ImsiStr, err)
+		}
 	}
 
 	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.IpStr)
@@ -297,10 +341,10 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 
 		err = c.sm.EndSession(ctx, sub)
 		if err != nil {
-			log.Errorf("Failed to end session on bridge for subscriber %s.Error: %v",
+			log.Errorf("Failed to end session on bridge for subscriber %s. Error: %v",
 				req.ImsiStr, err)
 
-			return fmt.Errorf("failed to end session on bridge for subscriber %s.Error: %w",
+			return fmt.Errorf("failed to end session on bridge for subscriber %s. Error: %w",
 				req.ImsiStr, err)
 		}
 
@@ -309,19 +353,19 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 
 	s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr, c.nodeId)
 	if err != nil {
-		log.Errorf("Failed to create a session for subscriber %s.Error: %v",
+		log.Errorf("Failed to create a session for subscriber %s. Error: %v",
 			req.ImsiStr, err)
 
-		return fmt.Errorf("failed to create a session for subscriber %s.Error: %w",
+		return fmt.Errorf("failed to create a session for subscriber %s. Error: %w",
 			req.ImsiStr, err)
 	}
 
 	err = c.sm.CreateSesssion(ctx, sub, s, rxF, txF)
 	if err != nil {
-		log.Errorf("Failed to monitor session on bridge for subscriber %s.Error: %v",
+		log.Errorf("Failed to monitor session on bridge for subscriber %s. Error: %v",
 			req.ImsiStr, err)
 
-		return fmt.Errorf("failed to monitor session on bridge for subscriber %s.Error: %w",
+		return fmt.Errorf("failed to monitor session on bridge for subscriber %s. Error: %w",
 			req.ImsiStr, err)
 	}
 
@@ -331,17 +375,17 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
 	sub, err := c.store.GetSubscriber(req.ImsiStr)
 	if err != nil {
-		log.Errorf("Failed to get subscriber for imsi %s.Error: %v", req.ImsiStr, err)
+		log.Errorf("Failed to get subscriber for imsi %s. Error: %v", req.ImsiStr, err)
 
-		return fmt.Errorf("failed to get subscriber for imsi %s.Error: %w", req.ImsiStr, err)
+		return fmt.Errorf("failed to get subscriber for imsi %s. Error: %w", req.ImsiStr, err)
 	}
 
 	err = c.sm.EndSession(ctx, sub)
 	if err != nil {
-		log.Errorf("Failed to end session on bridge for subscriber %s.Error: %v",
+		log.Errorf("Failed to end session on bridge for subscriber %s. Error: %v",
 			req.ImsiStr, err)
 
-		return fmt.Errorf("failed to end session on bridge for subscriber %s.Error: %w",
+		return fmt.Errorf("failed to end session on bridge for subscriber %s. Error: %w",
 			req.ImsiStr, err)
 	}
 
@@ -351,9 +395,9 @@ func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
 func (c *Controller) GetSessionByID(ctx *gin.Context, req *api.GetSessionByID) (*api.SessionResponse, error) {
 	s, err := c.store.GetSessionByID(int(req.ID))
 	if err != nil {
-		log.Errorf("Failed to get session with id %d.Error: %v", req.ID, err)
+		log.Errorf("Failed to get session with id %d. Error: %v", req.ID, err)
 
-		return nil, fmt.Errorf("failed to get session with id %d.Error: %w", req.ID, err)
+		return nil, fmt.Errorf("failed to get session with id %d. Error: %w", req.ID, err)
 	}
 
 	return sessionResponse(s), nil
@@ -362,9 +406,9 @@ func (c *Controller) GetSessionByID(ctx *gin.Context, req *api.GetSessionByID) (
 func (c *Controller) GetActiveSessionByImsi(ctx *gin.Context, req *api.GetSessionByImsi) (*api.SessionResponse, error) {
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get active session for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get active session for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get active session for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
 	}
 	return sessionResponse(s), nil
 }
@@ -372,9 +416,9 @@ func (c *Controller) GetActiveSessionByImsi(ctx *gin.Context, req *api.GetSessio
 func (c *Controller) GetCDRBySessionId(ctx *gin.Context, req *api.GetCDRBySessionId) (*api.CDR, error) {
 	s, err := c.store.GetSessionByID(int(req.ID))
 	if err != nil {
-		log.Errorf("Failed to get session with id %d.Error: %v", req.ID, err)
+		log.Errorf("Failed to get session with id %d. Error: %v", req.ID, err)
 
-		return nil, fmt.Errorf("failed to get session with id %d.Error: %w", req.ID, err)
+		return nil, fmt.Errorf("failed to get session with id %d. Error: %w", req.ID, err)
 	}
 
 	cdr := store.PrepareCDR(s)
@@ -385,9 +429,9 @@ func (c *Controller) GetCDRBySessionId(ctx *gin.Context, req *api.GetCDRBySessio
 func (c *Controller) GetCDRByImsi(ctx *gin.Context, req *api.GetCDRByImsi) ([]*api.CDR, error) {
 	sess, err := c.store.GetSessionsByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get session for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get session for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get session for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get session for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	cdrs := make([]*api.CDR, len(sess))
@@ -401,9 +445,9 @@ func (c *Controller) GetCDRByImsi(ctx *gin.Context, req *api.GetCDRByImsi) ([]*a
 func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.GetPolicyByImsi) (*api.PolicyResponse, error) {
 	p, err := c.store.GetApplicablePolicyByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get policy for Imsi %s.Error: %v", req.Imsi, err.Error())
+		log.Errorf("Failed to get policy for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get policy for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get policy for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	return policyResponse(p), nil
@@ -412,16 +456,16 @@ func (c *Controller) GetPolicyByImsi(ctx *gin.Context, req *api.GetPolicyByImsi)
 func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*api.PolicyResponse, error) {
 	id, err := uuid.FromString(req.ID)
 	if err != nil {
-		log.Errorf("Invalid policy id.Error: %v", err.Error())
+		log.Errorf("Invalid policy id. Error: %v", err)
 
-		return nil, fmt.Errorf("invalid policy id.Error: %w", err)
+		return nil, fmt.Errorf("invalid policy id. Error: %w", err)
 	}
 
 	p, err := c.store.GetPolicyByID(id)
 	if err != nil {
-		log.Errorf("Failed to get policy with ID %s.Error: %v", req.ID, err.Error())
+		log.Errorf("Failed to get policy with ID %s. Error: %v", req.ID, err)
 
-		return nil, fmt.Errorf("failed to get policy with ID %s.Error: %w", req.ID, err)
+		return nil, fmt.Errorf("failed to get policy with ID %s. Error: %w", req.ID, err)
 
 	}
 	return policyResponse(p), nil
@@ -430,7 +474,7 @@ func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*a
 func (c *Controller) AddPolicy(ctx *gin.Context, req *api.Policy) error {
 	_, err := c.store.CreatePolicy(req)
 	if err != nil {
-		log.Errorf("Failed to add policy %s. Error: %s", req.Uuid.String(), err.Error())
+		log.Errorf("Failed to add policy %s. Error: %v", req.Uuid.String(), err)
 
 		return fmt.Errorf("failed to add policy %s. Error: %w", req.Uuid.String(), err)
 	}
@@ -443,31 +487,31 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get subscriber with Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get subscriber with Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get subscriber with Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get active session for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get active session for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get active session for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	fRx, err := c.store.GetFlowForMeter(s.RxMeterID.ID)
 	if err != nil {
-		log.Errorf("Failed to get RX flow for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get RX flow for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get RX flow for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get RX flow for Imsi %s. Error: %w", req.Imsi, err)
 	}
 	flows = append(flows, fRx)
 
 	fTx, err := c.store.GetFlowForMeter(s.TxMeterID.ID)
 	if err != nil {
-		log.Errorf("Failed to get TX flow for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get TX flow for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get TX flow for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get TX flow for Imsi %s. Error: %w", req.Imsi, err)
 	}
 	flows = append(flows, fTx)
 
@@ -477,28 +521,28 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 func (c *Controller) GetReroute(ctx *gin.Context, req *api.GetReRouteByImsi) (*api.ReRouteResponse, error) {
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber with Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get subscriber with Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get subscriber with Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get subscriber with Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get active session for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("Failed to get active session for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get active session for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	flow, err := c.store.GetFlowForMeter(s.TxMeterID.ID)
 	if err != nil {
-		log.Errorf("failed to get TX flow for Imsi %s.Error: %v", req.Imsi, err)
+		log.Errorf("failed to get TX flow for Imsi %s. Error: %v", req.Imsi, err)
 
-		return nil, fmt.Errorf("failed to get TX flow for Imsi %s.Error: %w", req.Imsi, err)
+		return nil, fmt.Errorf("failed to get TX flow for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	r, err := c.store.GetReRouteByID(flow.ReRouting.ID)
 	if err != nil {
-		log.Errorf("Failed to get reroute for imsi %s. Error %s", req.Imsi, err.Error())
+		log.Errorf("Failed to get reroute for imsi %s. Error %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get reroute for imsi %s. Error %w", req.Imsi, err)
 	}
@@ -512,7 +556,7 @@ func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById)
 		IpAddr: req.Ip,
 	})
 	if err != nil {
-		log.Errorf("Failed to update route for Id %d. Error: %s", req.Id, err.Error())
+		log.Errorf("Failed to update route for Id %d. Error: %v", req.Id, err)
 
 		return fmt.Errorf("failed to update route for Id %d. Error: %w", req.Id, err)
 	}
@@ -522,7 +566,7 @@ func (c *Controller) UpdateReroute(ctx *gin.Context, req *api.UpdateRerouteById)
 func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber) (*api.SubscriberResponse, error) {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("Failed to get subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
+		log.Errorf("Failed to get subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
@@ -532,16 +576,16 @@ func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber)
 func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscriber) error {
 	s, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
-		log.Errorf("failed to get subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
+		log.Errorf("failed to get subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
 
 	err = c.store.DeleteSubscriber(s)
 	if err != nil {
-		log.Errorf("Failed to delete subscriber with imsi %s.Error: %s", req.Imsi, err.Error())
+		log.Errorf("Failed to delete subscriber with imsi %s. Error: %v", req.Imsi, err)
 
-		return fmt.Errorf("failed to delete subscriber with imsi %s.Error: %w", req.Imsi, err)
+		return fmt.Errorf("failed to delete subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
 	return nil
 }
@@ -549,7 +593,7 @@ func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscrib
 func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
 	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
 	if err != nil {
-		log.Errorf("Failed to create subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
+		log.Errorf("Failed to create subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to create subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
@@ -559,7 +603,7 @@ func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) 
 func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscriber) error {
 	_, err := c.store.UpdateSubscriber(req.Imsi, &req.Policy)
 	if err != nil {
-		log.Errorf("Failed to update subscriber with imsi %s. Error: %s", req.Imsi, err.Error())
+		log.Errorf("Failed to update subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to update subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
@@ -569,7 +613,7 @@ func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscribe
 func handlePendingSyncSession(c *Controller) {
 	sessions, err := c.store.GetAllNonPublishedSessions()
 	if err != nil {
-		log.Errorf("[Publisher] Failed to get unpublished sessions from store.Error %s", err.Error())
+		log.Errorf("[Publisher] Failed to get unpublished sessions from store. Error %v", err)
 		return
 	}
 
@@ -587,14 +631,18 @@ func handlePendingSyncSession(c *Controller) {
 func handleTerminatedSession(c *Controller) {
 	sessions, err := c.store.GetAllNonPublishedTerminatedSessions()
 	if err != nil {
-		log.Errorf("[Publisher] Failed to get non-published terminated sessions from store.Error %s", err.Error())
+		log.Errorf("[Publisher] Failed to get non-published terminated sessions from store. Error %v",
+			err)
+
 		return
 	}
 
 	for _, session := range sessions {
 		err = c.store.UpdateSessionSyncState(session.ID, store.SessionSyncReady)
 		if err != nil {
-			log.Errorf("[Publisher] Failed to update session %d for subscriber %s in store.Error %s", session.ID, session.SubscriberID.Imsi, err.Error())
+			log.Errorf("[Publisher] Failed to update session %d for subscriber %s in store. Error %v",
+				session.ID, session.SubscriberID.Imsi, err)
+
 			return
 		}
 

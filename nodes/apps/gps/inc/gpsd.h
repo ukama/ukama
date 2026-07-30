@@ -10,6 +10,7 @@
 #define GPSD_H_
 
 #include <pthread.h>
+#include <time.h>
 
 #include "config.h"
 
@@ -32,6 +33,7 @@
 #define GPS_LOC_FILE           "/tmp/gps_loc.log"
 #define GPS_RAW_FILE           "/tmp/gps_raw.log"
 #define GPS_WAIT_TIME          5
+#define GPS_LOCK_TIMEOUT_SEC   600
 
 #define DEF_LOG_LEVEL          "TRACE"
 #define DEF_GPS_MODULE_HOST    "localhost"
@@ -43,6 +45,7 @@
 #define DEF_NODE_ID            "ukama-aaa-bbbb-ccc-dddd"
 #define DEF_NODE_TYPE          "tower"
 #define ENV_DEVICED_DEBUG_MODE "DEVICED_DEBUG_MODE"
+#define ENV_GPSD_LOCK_TIMEOUT_SEC "GPSD_LOCK_TIMEOUT_SEC"
 
 #define EP_BS                  "/"
 #define REST_API_VERSION       "v1"
@@ -62,6 +65,9 @@ typedef struct {
     char *time;
     char *latitude;
     char *longitude;
+    time_t lockLostAt;
+    time_t lastLockAt;
+    int lockTimeoutSec;
 
     pthread_mutex_t mutex;
 } GPSData;

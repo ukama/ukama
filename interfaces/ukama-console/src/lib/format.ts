@@ -32,3 +32,18 @@ export const initials = (name?: string, email?: string): string => {
       .join('') || '?'
   );
 };
+
+/**
+ * Human label for the analytics report-window token returned by
+ * getPerformanceReport (e.g. "8w" -> "Last 8 weeks", "3d" -> "Last 3 days").
+ * The report uses a config-driven rolling window independent of the UI filter,
+ * so screens show this to make the window explicit. "" for empty/unknown.
+ */
+export const reportWindowLabel = (span?: string | null): string => {
+  if (!span) return '';
+  const m = /^(\d+)([wd])$/.exec(span);
+  if (!m) return '';
+  const n = Number(m[1]);
+  const unit = m[2] === 'w' ? 'week' : 'day';
+  return `Last ${n} ${unit}${n === 1 ? '' : 's'}`;
+};

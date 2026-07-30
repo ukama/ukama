@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <jansson.h>
 
 #include "manifest.h"
@@ -224,6 +225,19 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     a->lastPgid     = 0;
     a->lastGoodTag  = strdup(tag);
 
+    v = json_object_get(j, "readiness");
+    a->readinessRequired =
+        (json_is_string(v) &&
+         strcasecmp(json_string_value(v), "yes") == 0);
+    a->readinessState = a->readinessRequired ?
+                        APP_READINESS_PENDING :
+                        APP_READINESS_IGNORED;
+    if (a->readinessRequired) {
+        snprintf(a->readinessReason,
+                 sizeof(a->readinessReason),
+                 "waiting for startup");
+    }
+
     if (!a->lastGoodTag) {
         m_free_app(a);
         return NULL;
@@ -282,6 +296,7 @@ bool manifest_load(Config *config, Space **spaceListOut) {
     Space *s;
     App *a;
     App *alast;
+    json_t *readyTimeout;
 
     if (!config || !spaceListOut) return false;
 
@@ -291,6 +306,13 @@ bool manifest_load(Config *config, Space **spaceListOut) {
     if (!root) {
         usys_log_error("manifest: load failed %s:%d %s", err.source, err.line, err.text);
         return false;
+    }
+
+    readyTimeout = json_object_get(root, "ready_timeout_sec");
+    if (json_is_integer(readyTimeout) &&
+        json_integer_value(readyTimeout) > 0) {
+        config->readyTimeoutSec =
+            (int)json_integer_value(readyTimeout);
     }
 
     spaces = json_object_get(root, "spaces");

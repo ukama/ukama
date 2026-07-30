@@ -14,6 +14,7 @@ type GetKpisRequest struct {
 	Span      string `form:"span" query:"span"`                                        // daily|weekly|monthly (default daily)
 	Op        string `form:"op" query:"op"`                                            // optional; defaults per KPI spec
 	NetworkId string `form:"network_id" query:"network_id"`                            // optional scope filter
+	SiteId    string `form:"site_id" query:"site_id"`                                   // optional scope filter (with network_id, e.g. SITE_UPTIME)
 }
 
 // GetKpiTimeSeriesRequest: one value per span bucket over a range.
@@ -24,6 +25,7 @@ type GetKpiTimeSeriesRequest struct {
 	From      string `form:"from" query:"from"` // RFC3339 inclusive
 	To        string `form:"to" query:"to"`     // RFC3339 exclusive
 	NetworkId string `form:"network_id" query:"network_id"`
+	SiteId    string `form:"site_id" query:"site_id"`
 }
 
 // GetPerformanceReportRequest: resource performance table from the latest

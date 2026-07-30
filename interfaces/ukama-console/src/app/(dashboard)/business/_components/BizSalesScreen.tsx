@@ -5,16 +5,16 @@
  */
 'use client';
 
-/** Revenue — the single most important number, wired to the analytics gateway's
- *  generic KPI API. Headline figures come from `getKpiValues` (revenue @ monthly
- *  with a month-over-month trend, plus mrr); the by-package breakdown from the
- *  `package_performance` report (`getPerformanceReport`). The gateway has no
- *  cumulative "collected to date" or "pending" KPI, so those are not shown.
- *  Absent keys degrade to "—". */
+/** Revenue — wired to the analytics gateway's generic KPI API. The headline
+ *  tiles are all REVENUE at different ops (SUM = revenue, COUNT = purchases,
+ *  AVG = avg purchase) plus PAID_CUSTOMERS, each at the selected rolling span;
+ *  the weekly trend comes from `getKpiTimeSeries`; the by-package breakdown
+ *  from the `package_performance` report. Absent keys degrade to "—". */
 import Skeleton from '@mui/material/Skeleton';
 import { useState } from 'react';
 
 import {
+  useGetKpiTimeSeriesQuery,
   useGetKpiValuesQuery,
   useGetPerformanceReportQuery,
 } from '@/client/graphql/analytics.generated';
@@ -22,18 +22,35 @@ import BarList from '@/components/BarList';
 import DateChip from '@/components/DateChip';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
+import RevenueTrendChart from '@/components/RevenueTrendChart';
 import SectionCard from '@/components/SectionCard';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
-import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
+import { DEFAULT_RANGE, type KpiSpan, rangeToSpan } from '@/lib/dateRange';
 import {
   attrValue,
   cellMoney,
   KPI_KEYS,
   kpiAmount,
-  kpiAmountPrev,
+  kpiChangeAbs,
+  kpiDelta,
+  kpiText,
 } from '@/lib/kpis';
 import { useNetworkId } from '@/lib/useNetworkId';
+
+// Trend/sub phrasing keyed by the selected rolling span, matching the DateChip.
+const TREND_SUFFIX: Record<KpiSpan, string> = {
+  last_24h: 'vs prev 24h',
+  last_7d: 'vs prev 7 days',
+  last_30d: 'vs prev 30 days',
+};
+const PERIOD_LABEL: Record<KpiSpan, string> = {
+  last_24h: 'last 24h',
+  last_7d: 'last 7 days',
+  last_30d: 'last 30 days',
+};
+
+const intFmt = (v: number) => String(Math.round(v));
 
 export default function BizSalesScreen() {
   const networkId = useNetworkId();
@@ -41,31 +58,78 @@ export default function BizSalesScreen() {
   const { money } = useCurrency();
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
+  // Fixed 30-day window for the revenue trend (daily buckets). Computed once
+  // so the query variables stay stable across renders.
+  const [trendRange] = useState(() => ({
+    to: new Date().toISOString(),
+    from: new Date(Date.now() - 30 * 864e5).toISOString(),
+  }));
 
-  const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
+  // getKpiValues resolves ONE op per call, so REVENUE at SUM/COUNT/AVG needs
+  // three calls. The base call uses each KPI's default op: REVENUE -> SUM,
+  // PAID_CUSTOMERS -> LAST.
+  const { data: baseData, loading: baseLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: { keys: [KPI_KEYS.revenue, KPI_KEYS.paidCustomers], span, networkId },
+    },
+    skip: !networkId,
+  });
+  const { data: countData, loading: countLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: { keys: [KPI_KEYS.revenue], span, op: 'COUNT', networkId },
+    },
+    skip: !networkId,
+  });
+  const { data: avgData, loading: avgLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: { keys: [KPI_KEYS.revenue], span, op: 'AVG', networkId },
+    },
+    skip: !networkId,
+  });
+
+  const { data: reportData, error: reportError } = useGetPerformanceReportQuery({
+    variables: {
+      data: { report: 'package_performance', span: 'last_30d', networkId },
+    },
+    skip: !networkId,
+  });
+
+  // Revenue trend: daily REVENUE (SUM) over the last 30 days.
+  const { data: trendData, loading: trendLoading } = useGetKpiTimeSeriesQuery({
     variables: {
       data: {
-        keys: [KPI_KEYS.revenue, KPI_KEYS.mrr],
-        span,
+        keys: [KPI_KEYS.revenue],
+        span: 'daily',
+        op: 'SUM',
+        from: trendRange.from,
+        to: trendRange.to,
         networkId,
       },
     },
     skip: !networkId,
   });
 
-  const { data: reportData, loading: reportLoading, error: reportError } =
-    useGetPerformanceReportQuery({
-      variables: {
-        data: { report: 'package_performance', span, networkId },
-      },
-      skip: !networkId,
-    });
-
-  const kpis = kpiData?.getKpiValues.values;
-  // The by-package breakdown depends only on the report; KPI tiles degrade to
-  // "—" on their own, so a KPI failure must not blank the breakdown.
+  const base = baseData?.getKpiValues.values;
+  const countVals = countData?.getKpiValues.values;
+  const avgVals = avgData?.getKpiValues.values;
+  const kpiLoading = baseLoading || countLoading || avgLoading;
   const error = reportError;
-  const loading = kpiLoading || reportLoading;
+
+  // Per-tile trends: revenue/avg are % (changePct); purchases/paid are counts
+  // (changeAbs).
+  const revDelta = kpiDelta(base, KPI_KEYS.revenue);
+  const purchasesDelta = kpiChangeAbs(countVals, KPI_KEYS.revenue);
+  const avgDelta = kpiDelta(avgVals, KPI_KEYS.revenue);
+  const paidDelta = kpiChangeAbs(base, KPI_KEYS.paidCustomers);
+
+  // Daily revenue points for the trend chart (REVENUE is reported in cents).
+  const trendPoints = (trendData?.getKpiTimeSeries.values ?? [])
+    .filter((v) => v.from)
+    .map((v) => ({
+      t: new Date(v.from as string).getTime(),
+      value: (v.unit ?? '').toLowerCase() === 'cents' ? v.value / 100 : v.value,
+    }))
+    .sort((a, z) => a.t - z.t);
 
   // Revenue-by-package bars from the package_performance report rows (money
   // columns are reported in cents).
@@ -89,91 +153,95 @@ export default function BizSalesScreen() {
         actions={<DateChip value={range} onChange={setRange} />}
       />
 
+      {kpiLoading ? (
+        <Skeleton variant="rounded" sx={{ height: 96 }} />
+      ) : (
+        <KpiRow
+          items={[
+            {
+              icon: 'monetization_on',
+              color: 'var(--uk-beige)',
+              label: 'Revenue',
+              value: kpiAmount(base, KPI_KEYS.revenue, money),
+              delta:
+                revDelta != null
+                  ? `${revDelta >= 0 ? '+' : ''}${Math.round(revDelta)}% ${TREND_SUFFIX[span]}`
+                  : undefined,
+              dir: revDelta != null && revDelta < 0 ? 'down' : 'up',
+            },
+            {
+              icon: 'sell',
+              color: 'var(--uk-secondary)',
+              label: 'Purchases',
+              value: kpiText(countVals, KPI_KEYS.revenue, intFmt),
+              delta:
+                purchasesDelta != null
+                  ? `${purchasesDelta >= 0 ? '+' : ''}${Math.round(purchasesDelta)} ${PERIOD_LABEL[span]}`
+                  : undefined,
+              dir: purchasesDelta != null && purchasesDelta < 0 ? 'down' : 'up',
+            },
+            {
+              icon: 'payments',
+              color: 'var(--uk-ac)',
+              label: 'Avg purchase',
+              value: kpiAmount(avgVals, KPI_KEYS.revenue, money),
+              // A ~0 change reads as "stable"; otherwise show the % move.
+              sub:
+                avgDelta == null || Math.round(avgDelta) === 0
+                  ? 'stable'
+                  : undefined,
+              delta:
+                avgDelta != null && Math.round(avgDelta) !== 0
+                  ? `${avgDelta >= 0 ? '+' : ''}${Math.round(avgDelta)}% ${TREND_SUFFIX[span]}`
+                  : undefined,
+              dir: avgDelta != null && avgDelta < 0 ? 'down' : 'up',
+            },
+            {
+              icon: 'group',
+              color: 'var(--uk-success-bright)',
+              label: 'Paid customers',
+              value: kpiText(base, KPI_KEYS.paidCustomers, intFmt),
+              delta:
+                paidDelta != null
+                  ? `${paidDelta >= 0 ? '+' : ''}${Math.round(paidDelta)} ${PERIOD_LABEL[span]}`
+                  : undefined,
+              dir: paidDelta != null && paidDelta < 0 ? 'down' : 'up',
+            },
+          ]}
+        />
+      )}
+
       <div className="card card-pad" style={{ marginBottom: 'var(--uk-gap)' }}>
-        <div className="sec-title" style={{ marginBottom: 12 }}>
-          Recurring revenue
+        <div
+          className="sec-head"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: 8,
+          }}
+        >
+          <div className="sec-title">Revenue trend</div>
+          <span style={{ fontSize: 12.5, color: 'var(--uk-ink-3)' }}>
+            Last 30 days
+          </span>
         </div>
-        {loading ? (
-          <Skeleton variant="rounded" sx={{ height: 72 }} />
-        ) : (
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              gap: 20,
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
-              <span
-                className="tnum"
-                style={{
-                  fontFamily: 'var(--font-display)',
-                  fontSize: 48,
-                  fontWeight: 500,
-                  lineHeight: 1,
-                }}
-              >
-                {kpiAmount(kpis, KPI_KEYS.mrr, money)}
-              </span>
-            </div>
-            <div style={{ flex: 1, minWidth: 20 }} />
-            <div style={{ display: 'flex', gap: 30, flexWrap: 'wrap' }}>
-              {(
-                [
-                  ['This period', kpiAmount(kpis, KPI_KEYS.revenue, money)],
-                  ['Previous', kpiAmountPrev(kpis, KPI_KEYS.revenue, money)],
-                ] as const
-              ).map(([k, v]) => (
-                <div key={k}>
-                  <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
-                    {k}
-                  </div>
-                  <div
-                    className="tnum"
-                    style={{
-                      fontFamily: 'var(--font-display)',
-                      fontSize: 19,
-                      fontWeight: 500,
-                      marginTop: 2,
-                    }}
-                  >
-                    {v}
-                  </div>
-                </div>
-              ))}
-            </div>
+        {trendLoading ? (
+          <Skeleton variant="rounded" sx={{ height: 300 }} />
+        ) : trendPoints.length === 0 ? (
+          <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
+            No revenue in this period.
           </div>
+        ) : (
+          <RevenueTrendChart
+            points={trendPoints}
+            formatValue={money}
+            height={300}
+          />
         )}
-        <div style={{ fontSize: 12.5, color: 'var(--uk-ink-3)', marginTop: 8 }}>
-          Recurring revenue and revenue for the selected period
-        </div>
       </div>
 
-      <KpiRow
-        items={[
-          {
-            icon: 'monetization_on',
-            color: 'var(--uk-beige)',
-            label: 'Revenue',
-            value: kpiAmount(kpis, KPI_KEYS.revenue, money),
-          },
-          {
-            icon: 'payments',
-            color: 'var(--uk-ac)',
-            label: 'Recurring revenue',
-            value: kpiAmount(kpis, KPI_KEYS.mrr, money),
-          },
-          {
-            icon: 'sell',
-            color: 'var(--uk-secondary)',
-            label: 'Plans earning revenue',
-            value: error ? '—' : String(byPackage.length),
-          },
-        ]}
-      />
-
-      <SectionCard title="Revenue by package">
+      <SectionCard title="Revenue by package · Last 30 days">
         {error || byPackage.length === 0 ? (
           <div style={{ padding: 24, fontSize: 13, color: 'var(--uk-ink-3)' }}>
             {error ? '—' : 'No package revenue yet.'}

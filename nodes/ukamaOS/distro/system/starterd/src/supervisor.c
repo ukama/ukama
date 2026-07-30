@@ -658,6 +658,9 @@ static void* supervisor_thread(void *arg) {
                 }
                 sp = sp->next;
             }
+            if (s->ctx) {
+                s->ctx->bootCompleted = 1;
+            }
         } else if (a->type == ACTION_TERMINATE_APP) {
             App *app;
 

@@ -30,7 +30,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	cnotif "github.com/ukama/ukama/systems/common/rest/client/notification"
 	cnucl "github.com/ukama/ukama/systems/common/rest/client/nucleus"
 	pb "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
@@ -40,21 +39,18 @@ type InvitationServer struct {
 	iRepo                db.InvitationRepo
 	orgClient            cnucl.OrgClient
 	userClient           cnucl.UserClient
-	mailerClient         cnotif.MailerClient
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 	msgbus               mb.MsgBusServiceClient
 	invitationExpiryTime uint
 	authLoginbaseURL     string
 	orgName              string
-	TemplateName         string
 }
 
-func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string, mailerClient cnotif.MailerClient,
-	orgClient cnucl.OrgClient, userClient cnucl.UserClient, msgBus mb.MsgBusServiceClient, orgName string, TemplateName string) *InvitationServer {
+func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, authLoginbaseURL string,
+	orgClient cnucl.OrgClient, userClient cnucl.UserClient, msgBus mb.MsgBusServiceClient, orgName string) *InvitationServer {
 
 	return &InvitationServer{
 		iRepo:                iRepo,
-		mailerClient:         mailerClient,
 		invitationExpiryTime: invitationExpiryTime,
 		authLoginbaseURL:     authLoginbaseURL,
 		orgClient:            orgClient,
@@ -62,7 +58,6 @@ func NewInvitationServer(iRepo db.InvitationRepo, invitationExpiryTime uint, aut
 		msgbus:               msgBus,
 		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		orgName:              orgName,
-		TemplateName:         TemplateName,
 	}
 }
 
@@ -87,22 +82,6 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 	}
 
 	orgOwnerInfo, err := i.userClient.GetById(orgInfo.Owner)
-	if err != nil {
-		return nil, err
-	}
-
-	err = i.mailerClient.SendEmail(cnotif.SendEmailReq{
-		To:           []string{req.GetEmail()},
-		TemplateName: i.TemplateName,
-		Values: map[string]interface{}{
-			"INVITATION": invitationId.String(),
-			"LINK":       link,
-			"OWNER":      orgOwnerInfo.Name,
-			"ORG":        orgInfo.Name,
-			"ROLE":       req.GetRole().String(),
-		},
-	})
-
 	if err != nil {
 		return nil, err
 	}
@@ -147,6 +126,8 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 			Status:    upb.InvitationStatus(invite.Status),
 			UserId:    invite.UserId,
 			ExpiresAt: invite.ExpiresAt.String(),
+			OrgName:   orgInfo.Name,
+			OwnerName: orgOwnerInfo.Name,
 		}
 		err = i.msgbus.PublishRequest(route, evt)
 		if err != nil {
