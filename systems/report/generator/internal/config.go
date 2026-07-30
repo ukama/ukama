@@ -30,6 +30,15 @@ type Config struct {
 	Service           *config.Service
 	OrgName           string
 	OrgId             string
+	Storage           *StorageConfig    `default:"{}"`
+}
+
+type StorageConfig struct {
+	Enabled   bool   `default:"false"`
+	Endpoint  string `default:""`
+	AccessKey string `default:""`
+	SecretKey string `default:""`
+	Bucket    string `default:"reports"`
 }
 
 func NewConfig(name string) *Config {

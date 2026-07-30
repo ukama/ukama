@@ -22,6 +22,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/report/generator/internal"
 	"github.com/ukama/ukama/systems/report/generator/internal/pdf"
+	"github.com/ukama/ukama/systems/report/generator/internal/storage"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -39,15 +40,17 @@ const (
 type GeneratorEventServer struct {
 	orgName        string
 	pdfEngine      pdf.PdfEngine
+	storage        storage.Storage
 	msgbus         mb.MsgBusServiceClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewGeneratorEventServer(orgName string, pdfEngine pdf.PdfEngine, msgBus mb.MsgBusServiceClient) *GeneratorEventServer {
+func NewGeneratorEventServer(orgName string, pdfEngine pdf.PdfEngine, store storage.Storage, msgBus mb.MsgBusServiceClient) *GeneratorEventServer {
 	return &GeneratorEventServer{
 		orgName:   orgName,
 		pdfEngine: pdfEngine,
+		storage:   store,
 		msgbus:    msgBus,
 		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
 			SetSystem(internal.SystemName).SetOrgName(orgName).SetService(internal.ServiceName),
@@ -230,6 +233,19 @@ func (g *GeneratorEventServer) GeneratePDF(data any, templatePath, outputPath st
 	}
 
 	log.Info("PDF generated successfully")
+
+	if g.storage != nil {
+		objectName := filepath.Base(outputPath)
+
+		location, err := g.storage.Upload(context.Background(), objectName, outputPath)
+		if err != nil {
+			log.Errorf("failed to upload PDF %s to storage: %v", objectName, err)
+
+			return fmt.Errorf("failed to upload PDF to storage: %w", err)
+		}
+
+		log.Infof("Uploaded PDF %s to storage at %s", objectName, location)
+	}
 
 	return nil
 }

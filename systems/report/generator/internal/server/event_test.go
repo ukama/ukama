@@ -165,7 +165,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
 		pdfEngine.On("Generate", mock.Anything).Return(nil).Once()
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
 
 		assert.NoError(t, err)
@@ -177,7 +177,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
 		pdfEngine.On("Generate", mock.Anything).Return(errors.New("fail to generate file")).Once()
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
 
 		assert.Error(t, err)
@@ -187,7 +187,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 	t.Run("SkipsNonPackagePayment", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent("invoice")))
 
 		assert.NoError(t, err)
@@ -198,10 +198,43 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 	t.Run("InvalidPaymentPayload", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 		_, err := s.EventNotification(context.TODO(), eventFor(t, &epb.Notification{Id: uuid.NewV4().String()}))
 
 		assert.Error(t, err)
+	})
+
+	t.Run("UploadsReceiptToStorage", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
+		pdfEngine.On("Generate", mock.Anything).Return(nil).Once()
+
+		store := &mocks.Storage{}
+		store.On("Upload", mock.Anything, mock.Anything, mock.Anything).
+			Return("http://minio/reports/receipt.pdf", nil).Once()
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, msgbusClient)
+		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
+
+		assert.NoError(t, err)
+		pdfEngine.AssertExpectations(t)
+		store.AssertExpectations(t)
+	})
+
+	t.Run("ErrorOnStorageUpload", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
+		pdfEngine.On("Generate", mock.Anything).Return(nil).Once()
+
+		store := &mocks.Storage{}
+		store.On("Upload", mock.Anything, mock.Anything, mock.Anything).
+			Return("", errors.New("upload failed")).Once()
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, msgbusClient)
+		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
+
+		assert.Error(t, err)
+		store.AssertExpectations(t)
 	})
 }
 
@@ -248,7 +281,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -287,7 +320,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -328,7 +361,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
@@ -349,7 +382,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 			Msg:        anyE,
 		}
 
-		s := server.NewGeneratorEventServer(OrgName, pdfEngine, msgbusClient)
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, nil, msgbusClient)
 
 		_, err = s.EventNotification(context.TODO(), msg)
 
