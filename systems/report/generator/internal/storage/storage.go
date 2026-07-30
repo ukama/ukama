@@ -22,6 +22,7 @@ const pdfContentType = "application/pdf"
 
 type Storage interface {
 	Upload(ctx context.Context, objectName, filePath string) (string, error)
+	Bucket() string
 }
 
 type MinioStorage struct {
@@ -83,4 +84,8 @@ func (m *MinioStorage) Upload(ctx context.Context, objectName, filePath string) 
 	log.Infof("Successfully uploaded %s of size %d", objectName, info.Size)
 
 	return info.Location, nil
+}
+
+func (m *MinioStorage) Bucket() string {
+	return m.bucket
 }

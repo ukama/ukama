@@ -41,6 +41,24 @@ func (_m *Storage) Upload(ctx context.Context, objectName string, filePath strin
 	return r0, r1
 }
 
+// Bucket provides a mock function with no fields
+func (_m *Storage) Bucket() string {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Bucket")
+	}
+
+	var r0 string
+	if rf, ok := ret.Get(0).(func() string); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	return r0
+}
+
 // NewStorage creates a new instance of Storage. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStorage(t interface {

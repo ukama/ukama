@@ -7,6 +7,7 @@ const (
     EmailTemplateMemberInvite      = "member-invite"
     EmailTemplateOrgInvite         = "org-invite"
     EmailTemplatePackageAddition   = "topup-plan" 
+    EmailTemplatePaymentReceipt    = "payment-receipt"
 )
 type EmailTemplateKeys struct {
 	TemplateName string
@@ -54,6 +55,18 @@ var EmailTemplateConfig = map[string]EmailTemplateKeys{
 			"PACKAGES_DETAILS",
         },
     },
+	EmailTemplatePaymentReceipt: {
+		TemplateName: EmailTemplatePaymentReceipt,
+		Keys: []string{
+			"NAME",
+			"ORG",
+			"AMOUNT",
+			"RECEIPT_NUMBER",
+			"PAYMENT_DATE",
+			"PAYMENT_METHOD",
+			"DESCRIPTION",
+		},
+	},
 }
 
 
@@ -76,6 +89,10 @@ const (
 	EmailKeyEndDate    = "ENDDATE"
 	EmailKeyPackage    = "PACKAGE"
 	EmailKeyAmount     = "AMOUNT"
+	EmailKeyDescription   = "DESCRIPTION"
+	EmailKeyReceiptNumber = "RECEIPT_NUMBER"
+	EmailKeyPaymentDate   = "PAYMENT_DATE"
+	EmailKeyPaymentMethod = "PAYMENT_METHOD"
 	EmailKeyDuration   = "DURATION"
 
 )
