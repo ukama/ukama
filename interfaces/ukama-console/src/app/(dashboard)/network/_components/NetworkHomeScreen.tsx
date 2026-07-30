@@ -92,13 +92,16 @@ export default function NetworkHomeScreen() {
 
   const site = mapSites.find((s) => s.id === sel);
   const sitesTotal = mapSites.length;
-  // Online count from the analytics SITES_ONLINE KPI; fall back to the live
-  // registry status when the KPI hasn't been emitted yet.
   // Sites online comes from the analytics SITES_ONLINE KPI only (no registry
-  // fallback); undefined when the KPI hasn't been emitted.
+  // fallback); undefined when the KPI hasn't been emitted. The KPI counts a
+  // site only when every one of its tnode/anode/cnode is online, so a site
+  // with an offline node — or with no nodes registered yet — is excluded and
+  // the count reads below the registry site total.
   const sitesOnlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
   const sitesOnline =
     sitesOnlineKpi != null ? Math.round(sitesOnlineKpi) : undefined;
+  const sitesOffline =
+    sitesOnline != null ? Math.max(0, sitesTotal - sitesOnline) : undefined;
 
   return (
     <div className="page">
@@ -122,7 +125,10 @@ export default function NetworkHomeScreen() {
                 KPI_KEYS.networkUptime,
                 (v) => `${v.toFixed(1)}%`,
               ),
-              sub: 'latest reading',
+              // NETWORK_UPTIME allows AVG/MIN/MAX (no LAST), so the gateway
+              // defaults to AVG: this is the share of site-time up across the
+              // selected window, not a spot reading.
+              sub: `average over ${range.toLowerCase()}`,
             },
             {
               icon: 'group',
@@ -146,11 +152,17 @@ export default function NetworkHomeScreen() {
                 sitesError || sitesOnline == null
                   ? '—'
                   : `${sitesOnline}/${sitesTotal}`,
+              // A site counts as online only when all of its nodes are
+              // connected, so the shortfall is "not fully online" rather than
+              // "down". No sub-line at all while the KPI is absent — the old
+              // copy claimed "all healthy" for a missing reading.
               sub:
-                sitesOnline != null && sitesOnline < sitesTotal
-                  ? `${sitesTotal - sitesOnline} need attention`
-                  : 'all healthy',
-              danger: sitesOnline != null && sitesOnline < sitesTotal,
+                sitesOffline == null
+                  ? undefined
+                  : sitesOffline > 0
+                    ? `${sitesOffline} not fully online`
+                    : 'all sites online',
+              danger: sitesOffline != null && sitesOffline > 0,
             },
           ]}
         />

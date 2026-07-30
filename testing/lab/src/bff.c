@@ -2373,7 +2373,11 @@ int bff_get_performance_report_row(bff_client_t *c,
             if (ulab_streq(key, "name")) row->has_name = 1;
             else if (ulab_streq(key, "price")) row->has_price = 1;
             else if (ulab_streq(key, "validity")) row->has_validity = 1;
-            else if (ulab_streq(key, "active")) row->has_active = 1;
+            else if (ulab_streq(key, "active")) {
+                row->has_active = 1;
+                json_get_optional_str(attribute, "value", row->active,
+                                      sizeof(row->active));
+            }
         }
         *found = 1;
         break;

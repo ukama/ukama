@@ -357,13 +357,13 @@ Console analytics checks always use BFF `getKpiValues` or
   networks: all
   package: next_plan
   column: revenue
-  expected_value: 500
+  expected_value: 5.00
   tolerance: 0.01
 ```
 
 KPI and report checks poll until the expected value is visible or the timeout
-expires. Monetary analytics values follow the BFF/console unit in the returned
-cell or KPI (currently minor units when `unit` is `cents`).
+expires. Monetary analytics values are in major currency units, like every
+other monetary value on the BFF surface (detailed below).
 
 The P0 billing, console, and usage checks also stay entirely on the BFF
 GraphQL contract:
@@ -384,7 +384,31 @@ GraphQL contract:
 - `kpi_contract` can require `expected_partial`, `computedAt`, scope, and
   trend consistency. `kpi_rollup_consistency` compares daily, weekly, and
   monthly values. `performance_report_row` verifies row identity attributes,
-  status, and optional before/after ordering.
+  status, the plan `active` attribute, and optional before/after ordering.
+
+`performance_report_row` distinguishes two fields that are easy to confuse:
+
+- `status:` matches the row's sales-performance label. For
+  `package_performance` the server vocabulary is `Inactive`, `No sales`,
+  `Low sales`, `Active`, computed from the report spec's status rules
+  (`active == false` -> `Inactive`, `sold == 0` -> `No sales`, `sold < 25` ->
+  `Low sales`, otherwise `Active`). The comparison is case sensitive, and
+  `Active` means "active plan with enough sales", not "the plan flag is on".
+- `active:` matches the row's `active` attribute (`true`/`false`), which is the
+  plan flag from the catalog. The comparison is case insensitive.
+
+Monetary values are in major currency units everywhere on the BFF surface.
+The analytics pipeline stores money as integer minor units (cents) for
+arithmetic exactness, and console-bff converts at the presentation boundary
+(`systems/console-bff/analytics/money.ts`), tagging the converted value with
+the org currency code (e.g. `unit: "usd"`). So a 7.00 USD plan sold once is
+`expected_value: 7.00` in `performance_report_cell`, matching
+`revenue_summary`, `package_business_metrics` and `purchase_package amount:`.
+
+Note that `span:` is inert for `package_performance`: the aggregator accepts
+`daily|weekly|monthly` but the composer only honours the rolling tokens
+(`last_24h`, `last_7d`, `last_30d`). Any calendar span falls back to the
+configured report window and the response echoes that window's label (`8w`).
 
 `status_equals` for SIMs supports `active` and `inactive` based on active
 package assignment. `set_sim_status` only validates the mutation path in this

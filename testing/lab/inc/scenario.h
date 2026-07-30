@@ -157,6 +157,7 @@ typedef struct {
     char         ref[ULAB_MAX_REF];
     char         entity[ULAB_MAX_REF];
     char         status[ULAB_MAX_REF];
+    char         expected_active[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];
     char         app[ULAB_MAX_NAME];
     char         key[ULAB_MAX_REF];

@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-package-performance-report
-description: Sell two packages and verify package_performance exposes identity attributes, plan status, sold count, settled revenue, data used, and descending revenue order through GraphQL.
+description: Sell two packages and verify package_performance exposes identity attributes, the plan active flag, sold count, settled revenue, data used, and descending revenue order through GraphQL.
 seed: 4709
 suite: p0
 priority: p0
@@ -50,7 +50,7 @@ phases:
         package: large_plan
         other_package: small_plan
         expected: before
-        status: active
+        active: true
       - type: performance_report_cell
         report: package_performance
         span: daily

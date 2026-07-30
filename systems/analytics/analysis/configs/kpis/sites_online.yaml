@@ -1,8 +1,11 @@
-# SITES_ONLINE (definition v2): sites per network whose cnode is online.
-# Sites without a cnode count as not online.
+# SITES_ONLINE: sites per network where every tnode, anode and cnode under the
+# site is online — a plain count of fully-connected sites, judged only on each
+# node's registry connectivity (no health report involved). A site carrying
+# none of those node types is not online; any other node type attached to the
+# site (hnode) is ignored rather than allowed to drag it offline.
 kpi: SITES_ONLINE
 domain: network
-algo: sites_online@v2
+algo: sites_online@v3
 scope: [network_id]
 inputs:
   nodes:

@@ -21,6 +21,10 @@ export class GetPerformanceReportResolver {
     @Ctx() ctx: AppContext
   ): Promise<GetPerformanceReportDto> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getPerformanceReport(baseURL, data);
+    return ctx.dataSources.analytics.getPerformanceReport(
+      baseURL,
+      data,
+      ctx.headers.currency
+    );
   }
 }

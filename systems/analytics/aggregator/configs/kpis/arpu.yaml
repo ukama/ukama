@@ -1,4 +1,5 @@
-# ARPU: MRR / distinct subscribers with an active assignment.
+# ARPU: committed spend (sum of active assignments' actual package price, not
+# duration-normalized) / distinct subscribers with an active assignment.
 kpi: ARPU
 domain: business
 algo: arpu@v1

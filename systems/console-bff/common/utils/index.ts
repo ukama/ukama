@@ -30,8 +30,12 @@ import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 const getTimestampCount = (count: string) =>
   parseInt((Date.now() / 1000).toString()) + "-" + count;
 
+// Token claim layout:
+//   orgId;orgName;userId;name;email;role;verified;welcome;country;currency[;exp]
 // Index of the optional `exp` (epoch seconds) claim within a token.
 const TOKEN_EXP_INDEX = 10;
+// Index of the optional org currency ISO code claim (e.g. "usd").
+const TOKEN_CURRENCY_INDEX = 9;
 
 /**
  * Verifies a token's HMAC signature and (if present) its expiry, returning
@@ -58,7 +62,7 @@ const verifyTokenClaims = (token: string): string[] | null => {
 
 const parseToken = (
   token: string,
-  get: "orgId" | "orgName" | "userId"
+  get: "orgId" | "orgName" | "userId" | "currency"
 ): string | undefined => {
   if (!token) return undefined;
 
@@ -74,6 +78,9 @@ const parseToken = (
       return claims[1];
     case "userId":
       return claims[2];
+    case "currency":
+      // Absent on tokens issued before the currency claim existed.
+      return (claims[TOKEN_CURRENCY_INDEX] ?? "").toLowerCase() || undefined;
   }
 };
 
@@ -91,6 +98,7 @@ const parseGatewayHeaders = (reqHeader: any): THeaders => {
     orgId: parseToken(reqHeader["token"], "orgId") ?? "",
     userId: parseToken(reqHeader["token"], "userId") ?? "",
     orgName: parseToken(reqHeader["token"], "orgName") ?? "",
+    currency: parseToken(reqHeader["token"], "currency") ?? "",
   };
 };
 
@@ -110,6 +118,7 @@ const parseExpressHeaders = (reqHeader: IncomingHttpHeaders): THeaders => {
     orgId: "",
     userId: "",
     orgName: "",
+    currency: "",
   };
 
   const sessionToken = (reqHeader["x-session-token"] as string) ?? "";

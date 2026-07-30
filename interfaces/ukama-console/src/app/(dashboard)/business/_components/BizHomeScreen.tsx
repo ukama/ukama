@@ -150,13 +150,13 @@ export default function BizHomeScreen() {
     () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
     [sitesData?.sitesView.sites.sites],
   );
-  // Online count from the analytics SITES_ONLINE KPI; fall back to the live
-  // registry status when the KPI hasn't been emitted yet.
+  // Sites online comes from the analytics SITES_ONLINE KPI only — undefined
+  // when it hasn't been emitted, same as the Ops home screen. The old registry
+  // fallback counted every site that wasn't deactivated, which no longer means
+  // the same thing: the KPI counts a site only when every one of its
+  // tnode/anode/cnode is online, so the fallback silently over-reported.
   const onlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
-  const online =
-    onlineKpi != null
-      ? Math.round(onlineKpi)
-      : sites.filter((s) => s.status !== 'offline').length;
+  const online = onlineKpi != null ? Math.round(onlineKpi) : undefined;
   // The business site-detail page was removed; drill into the canonical
   // Network site detail instead.
   const goSite = (id: string) => router.push(`/network/sites/${id}`);
@@ -237,7 +237,7 @@ export default function BizHomeScreen() {
               label: 'Network uptime',
               value: uptime != null ? `${uptime.toFixed(1)}%` : '—',
               sub:
-                sites.length === 0
+                sites.length === 0 || online == null
                   ? undefined
                   : `${online}/${sites.length} sites online`,
             },
@@ -317,7 +317,9 @@ export default function BizHomeScreen() {
               marginBottom: 4,
             }}
           >
-            {online} of {sites.length} sites online
+            {online == null
+              ? `${sites.length} sites`
+              : `${online} of ${sites.length} sites online`}
           </div>
           <SiteSummaryList
             sites={sites}

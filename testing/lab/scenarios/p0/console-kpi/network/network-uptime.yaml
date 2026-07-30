@@ -46,7 +46,7 @@ phases:
         expected_partial: true
         require_computed_at: true
         require_scope: true
-        timeout_seconds: 600
+        timeout_seconds: 100
       - type: kpi_value
         key: NETWORK_UPTIME
         span: daily
@@ -55,5 +55,5 @@ phases:
         networks: net-001
         comparator: less_or_equal
         expected_value: 100
-        timeout_seconds: 600
+        timeout_seconds: 100
 

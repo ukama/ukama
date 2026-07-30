@@ -772,6 +772,7 @@ func TestPackageServer_Add(t *testing.T) {
 			OwnerId:    ownerId,
 			Duration:   1,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		}
@@ -808,12 +809,17 @@ func TestPackageServer_Add(t *testing.T) {
 
 		s := NewPackageServer(OrgName, packageRepo, rate, nil, OrgId)
 
+		const flatrateAmount = 5.00
+
 		req := &pb.AddPackageRequest{
 			Name:       TestFlatratePackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
 			Duration:   1,
 			Flatrate:   true, // Test flatrate package
+			Amount:     flatrateAmount,
+			Currency:   "USD",
+			Country:    TestCountry,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		}
@@ -828,18 +834,37 @@ func TestPackageServer_Add(t *testing.T) {
 				SmsMo:    1,
 				SmsMt:    1,
 				Data:     10,
-				Country:  "USA",
+				Country:  TestCountry,
 				Provider: "ukama",
 			},
 		}, nil)
 
+		// Capture what actually gets persisted so we can assert the response
+		// and the stored rate agree (regression for issue #1505).
+		var persistedRate *db.PackageRate
 		packageRepo.On("GetByName", TestFlatratePackageName).Return(nil, gorm.ErrRecordNotFound).Once()
-		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil)
+		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil).
+			Run(func(args mock.Arguments) {
+				persistedRate = args.Get(1).(*db.PackageRate)
+			})
 
 		resp, err := s.Add(context.TODO(), req)
 		assert.NoError(t, err)
 		assert.NotNil(t, resp)
 		assert.True(t, resp.Package.Flatrate)
+
+		// Issue #1505: a flatrate package created with a non-zero amount must
+		// report that amount in the Add response, not 0. Previously the
+		// requested amount only reached the persisted row, so the mutation
+		// response disagreed with a follow-up Get.
+		assert.Equal(t, flatrateAmount, resp.Package.Amount)
+		assert.Equal(t, flatrateAmount, resp.Package.Rate.Amount)
+
+		// ...and the response must match what was written to the DB.
+		assert.NotNil(t, persistedRate)
+		assert.Equal(t, flatrateAmount, persistedRate.Amount)
+		assert.Equal(t, resp.Package.Rate.Amount, persistedRate.Amount)
+
 		packageRepo.AssertExpectations(t)
 	})
 
@@ -857,6 +882,7 @@ func TestPackageServer_Add(t *testing.T) {
 			OwnerId:    ownerId,
 			Duration:   1,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			NetworkId:  networkId.String(),
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
@@ -894,6 +920,7 @@ func TestPackageServer_Add(t *testing.T) {
 			Name:       TestPackageName,
 			OwnerId:    ownerId,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			Duration:   1,
 			NetworkId:  networkId.String(),
 			From:       fixedFromTime.Format(time.RFC3339),
@@ -932,6 +959,7 @@ func TestPackageServer_Add(t *testing.T) {
 			OwnerId:    ownerId,
 			Duration:   1,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		}
@@ -990,6 +1018,7 @@ func TestPackageServer_Add(t *testing.T) {
 			OwnerId:    ownerId,
 			Duration:   1,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		}
@@ -1027,6 +1056,7 @@ func TestPackageServer_Add(t *testing.T) {
 			OwnerId:    ownerId,
 			Duration:   1,
 			BaserateId: baserate,
+			Country:    TestCountry,
 			From:       fixedFromTime.Format(time.RFC3339),
 			To:         fixedToTime.Format(time.RFC3339),
 		}

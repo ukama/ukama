@@ -136,13 +136,18 @@ func (r *Runner) sweepOnce() {
 // TryCompute computes one KPI for one window if all inputs are ready.
 // Idempotent: recomputation upserts identical rows.
 func (r *Runner) TryCompute(kpi schema.KpiSpec, windowID int64) error {
-	ready, err := r.inputsReady(kpi, windowID)
+	blocker, err := r.blockingInput(kpi, windowID)
 	if err != nil {
 		return err
 	}
 
-	if !ready {
-		return nil // retried on next event/sweep
+	if blocker != "" {
+		// Not an error — the window is retried on the next event/sweep. Logged
+		// because "KPI silently absent" is otherwise indistinguishable from
+		// "KPI computed fine": name the dataset that is holding it up.
+		log.Debugf("kpi %s window %d waiting on dataset %s", kpi.Kpi, windowID, blocker)
+
+		return nil
 	}
 
 	claimed, err := r.ledger.ClaimKpi(r.org, kpi.Kpi, windowID)
@@ -169,19 +174,21 @@ func (r *Runner) TryCompute(kpi schema.KpiSpec, windowID int64) error {
 	return r.ledger.MarkKpi(r.org, kpi.Kpi, windowID, schema.StatusComputed, "")
 }
 
-func (r *Runner) inputsReady(kpi schema.KpiSpec, windowID int64) (bool, error) {
+// blockingInput returns the first input dataset that is not yet pulled for the
+// window, or "" when every input is ready.
+func (r *Runner) blockingInput(kpi schema.KpiSpec, windowID int64) (string, error) {
 	for _, ds := range kpi.InputDatasets() {
 		status, err := r.ledger.DatasetStatus(r.org, ds, windowID)
 		if err != nil {
-			return false, err
+			return "", err
 		}
 
 		if status != schema.StatusPulled {
-			return false, nil
+			return ds, nil
 		}
 	}
 
-	return true, nil
+	return "", nil
 }
 
 func (r *Runner) compute(kpi schema.KpiSpec, windowID int64) error {
@@ -227,6 +234,15 @@ func (r *Runner) compute(kpi schema.KpiSpec, windowID int64) error {
 	// Whole window per KPI is one write; no partial silent writes.
 	if err := r.kpiDb.Upsert(rows); err != nil {
 		return err
+	}
+
+	if len(rows) == 0 {
+		// The algo ran but matched nothing — e.g. no tnode/anode carries both
+		// site_id and network_id, so the uptime algos build no sites. The
+		// window is still marked computed, so without this the KPI just never
+		// appears and nothing anywhere says why.
+		log.Warnf("kpi %s window %d produced no scope rows (algo %s matched no entities — check its input data)",
+			kpi.Kpi, windowID, kpi.Algo)
 	}
 
 	log.Infof("kpi %s window %d computed (%d scope rows)", kpi.Kpi, windowID, len(rows))

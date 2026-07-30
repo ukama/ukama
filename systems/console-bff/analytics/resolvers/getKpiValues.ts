@@ -18,6 +18,10 @@ export class GetKpiValuesResolver {
     @Ctx() ctx: AppContext
   ): Promise<GetKpiValuesDto> {
     const baseURL = await ctx.urls.url("analytics");
-    return ctx.dataSources.analytics.getKpiValues(baseURL, data);
+    return ctx.dataSources.analytics.getKpiValues(
+      baseURL,
+      data,
+      ctx.headers.currency
+    );
   }
 }

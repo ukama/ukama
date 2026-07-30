@@ -74,8 +74,9 @@ func (s *AggregatorServer) getKpisRolling(req *pb.GetKpisRequest) (*pb.GetKpisRe
 
 	values := make([]*pb.KpiValue, 0)
 
-	for _, key := range req.Keys {
-		kpi, op, err := s.resolveKpiOp(key, req.Op)
+	// Unknown keys are skipped rather than failing the batch — see knownKpis.
+	for _, kpi := range s.knownKpis(req.Keys) {
+		op, err := s.resolveOp(kpi, req.Op)
 		if err != nil {
 			return nil, err
 		}
