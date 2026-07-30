@@ -274,13 +274,12 @@ func TestBaseRateService_GetBaseRatesById(t *testing.T) {
 	})
 }
 
-func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
+func TestBaseRateService_GetBaseRates(t *testing.T) {
 	t.Run("Success case", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		mockFilters := &pb.GetBaseRatesByCountryRequest{
+		mockFilters := &pb.GetBaseRatesRequest{
 			Country:     TestCountry,
 			Provider:    TestProvider,
-			EffectiveAt: TestEffectiveAt,
 			SimType:     TestSimType.String(),
 		}
 
@@ -305,9 +304,9 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
 
-		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+		rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
 		assert.Equal(t, mockFilters.SimType, rate.Rates[0].SimType)
@@ -316,10 +315,9 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 
 	t.Run("Multiple rates success", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		mockFilters := &pb.GetBaseRatesByCountryRequest{
+		mockFilters := &pb.GetBaseRatesRequest{
 			Country:     "Multiple Country",
 			Provider:    "Multiple Provider",
-			EffectiveAt: TestEffectiveAt,
 			SimType:     TestSimType.String(),
 		}
 
@@ -359,9 +357,9 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 			},
 		}
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
+		baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, TestSimType).Return(expectedRates, nil)
 
-		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+		rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.Len(t, rate.Rates, 2)
 		assert.Equal(t, mockFilters.Country, rate.Rates[0].Country)
@@ -373,19 +371,18 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 
 	t.Run("Empty result", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		mockFilters := &pb.GetBaseRatesByCountryRequest{
+		mockFilters := &pb.GetBaseRatesRequest{
 			Country:     "Non-existent Country",
 			Provider:    "Non-existent Provider",
-			EffectiveAt: TestEffectiveAt,
 			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return([]db.BaseRate{}, nil)
+		baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, TestSimType).Return([]db.BaseRate{}, nil)
 
-		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+		rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 		assert.NoError(t, err)
 		assert.NotNil(t, rate)
 		assert.Len(t, rate.Rates, 0)
@@ -394,19 +391,18 @@ func TestBaseRateService_GetBaseRatesByCountry(t *testing.T) {
 
 	t.Run("Database error", func(t *testing.T) {
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
-		mockFilters := &pb.GetBaseRatesByCountryRequest{
+		mockFilters := &pb.GetBaseRatesRequest{
 			Country:     "Error Country",
 			Provider:    "Error Provider",
-			EffectiveAt: TestEffectiveAt,
 			SimType:     TestSimType.String(),
 		}
 
 		baseRateRepo := &mocks.BaseRateRepo{}
 		s := NewBaseRateServer(OrgName, baseRateRepo, msgbusClient)
 
-		baseRateRepo.On("GetBaseRatesByCountry", mockFilters.Country, mockFilters.Provider, TestSimType).Return(nil, assert.AnError)
+		baseRateRepo.On("GetBaseRates", mockFilters.Country, mockFilters.Provider, TestSimType).Return(nil, assert.AnError)
 
-		rate, err := s.GetBaseRatesByCountry(context.TODO(), mockFilters)
+		rate, err := s.GetBaseRates(context.TODO(), mockFilters)
 		assert.Error(t, err)
 		assert.Nil(t, rate)
 		assert.Contains(t, err.Error(), "rpc error: code = Internal desc ")

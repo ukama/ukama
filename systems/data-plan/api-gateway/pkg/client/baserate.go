@@ -66,11 +66,11 @@ func (b *BaseRateClient) GetBaseRatesById(req *pb.GetBaseRatesByIdRequest) (*pb.
 	return b.client.GetBaseRatesById(ctx, req)
 }
 
-func (b *BaseRateClient) GetBaseRatesByCountry(req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
+func (b *BaseRateClient) GetBaseRates(req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), b.timeout)
 	defer cancel()
 
-	return b.client.GetBaseRatesByCountry(ctx, req)
+	return b.client.GetBaseRates(ctx, req)
 }
 
 func (b *BaseRateClient) GetBaseRatesHistoryByCountry(req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {

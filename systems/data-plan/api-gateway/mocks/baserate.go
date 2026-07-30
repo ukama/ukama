@@ -12,20 +12,20 @@ type baserate struct {
 	mock.Mock
 }
 
-// GetBaseRatesByCountry provides a mock function with given fields: req
-func (_m *baserate) GetBaseRatesByCountry(req *gen.GetBaseRatesByCountryRequest) (*gen.GetBaseRatesResponse, error) {
+// GetBaseRates provides a mock function with given fields: req
+func (_m *baserate) GetBaseRates(req *gen.GetBaseRatesRequest) (*gen.GetBaseRatesResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetBaseRatesByCountry")
+		panic("no return value specified for GetBaseRates")
 	}
 
 	var r0 *gen.GetBaseRatesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesByCountryRequest) (*gen.GetBaseRatesResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesRequest) (*gen.GetBaseRatesResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesByCountryRequest) *gen.GetBaseRatesResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.GetBaseRatesRequest) *gen.GetBaseRatesResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
@@ -33,7 +33,7 @@ func (_m *baserate) GetBaseRatesByCountry(req *gen.GetBaseRatesByCountryRequest)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesByCountryRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.GetBaseRatesRequest) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)

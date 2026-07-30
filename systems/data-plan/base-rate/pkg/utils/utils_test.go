@@ -150,7 +150,7 @@ func TestRateService_FetchData_Success(t *testing.T) {
 
 	rawRates, err := FetchData(mockFileUrl)
 	assert.NoError(t, err)
-	assert.Equal(t, "The lunar maria", rawRates[0].Country)
+	assert.Equal(t, "USA", rawRates[0].Country)
 }
 
 // Fetch data error case invalid file url

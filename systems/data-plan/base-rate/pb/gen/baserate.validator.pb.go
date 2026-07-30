@@ -30,6 +30,9 @@ func (this *GetBaseRatesResponse) Validate() error {
 func (this *GetBaseRatesByCountryRequest) Validate() error {
 	return nil
 }
+func (this *GetBaseRatesRequest) Validate() error {
+	return nil
+}
 func (this *GetBaseRatesByPeriodRequest) Validate() error {
 	return nil
 }

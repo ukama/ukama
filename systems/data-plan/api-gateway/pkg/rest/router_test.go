@@ -596,7 +596,7 @@ func TestRouter_UploadBaseRates(t *testing.T) {
 
 func TestRouter_GetBaseRates(t *testing.T) {
 	t.Run("ByCountry", func(t *testing.T) {
-		ureq := GetBaseRatesByCountryRequest{
+		ureq := GetBaseRatesRequest{
 			Country:  testCountry,
 			Provider: testProvider,
 			SimType:  testSimType,
@@ -614,7 +614,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 		p := &pmocks.PackagesServiceClient{}
 		b := &bmocks.BaseRatesServiceClient{}
 		arc := &cmocks.AuthClient{}
-		pReq := &bpb.GetBaseRatesByCountryRequest{
+		pReq := &bpb.GetBaseRatesRequest{
 			Country:  ureq.Country,
 			Provider: ureq.Provider,
 			SimType:  ureq.SimType,
@@ -628,7 +628,7 @@ func TestRouter_GetBaseRates(t *testing.T) {
 			},
 		}
 
-		b.On("GetBaseRatesByCountry", mock.Anything, pReq).Return(pResp, nil)
+		b.On("GetBaseRates", mock.Anything, pReq).Return(pResp, nil)
 		arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
 		r := NewRouter(&Clients{
