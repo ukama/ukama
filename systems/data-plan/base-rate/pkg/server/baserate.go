@@ -67,10 +67,10 @@ func (b *BaseRateServer) GetBaseRatesById(ctx context.Context, req *pb.GetBaseRa
 	return resp, nil
 }
 
-func (b *BaseRateServer) GetBaseRatesByCountry(ctx context.Context, req *pb.GetBaseRatesByCountryRequest) (*pb.GetBaseRatesResponse, error) {
+func (b *BaseRateServer) GetBaseRates(ctx context.Context, req *pb.GetBaseRatesRequest) (*pb.GetBaseRatesResponse, error) {
 	log.Infof("GetBaseRates where country = %s and network = %s and simType = %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
-	rates, err := b.baseRateRepo.GetBaseRatesByCountry(req.GetCountry(), req.GetProvider(), ukama.ParseSimType(req.GetSimType()))
+	rates, err := b.baseRateRepo.GetBaseRates(req.GetCountry(), req.GetProvider(), ukama.ParseSimType(req.GetSimType()))
 
 	if err != nil {
 		log.Errorf("error while getting rates: Error: %s", err.Error())

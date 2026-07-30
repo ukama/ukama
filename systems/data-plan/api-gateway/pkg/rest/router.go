@@ -62,7 +62,7 @@ type rates interface {
 
 type baserate interface {
 	GetBaseRatesById(req *bpb.GetBaseRatesByIdRequest) (*bpb.GetBaseRatesByIdResponse, error)
-	GetBaseRatesByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
+	GetBaseRates(req *bpb.GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesHistoryByCountry(req *bpb.GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesForPeriod(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
 	GetBaseRatesForPackage(req *bpb.GetBaseRatesByPeriodRequest) (*bpb.GetBaseRatesResponse, error)
@@ -140,7 +140,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		baseRates := auth.Group("/baserates", "BaseRates", "BaseRates operations")
 		baseRates.GET("/:base_rate", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHandler, http.StatusOK))
 		baseRates.POST("/upload", formatDoc("Upload baseRates", ""), tonic.Handler(r.uploadBaseRateHandler, http.StatusCreated))
-		baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRateByCountryHandler, http.StatusOK))
+		baseRates.GET("", formatDoc("Get BaseRates", ""), tonic.Handler(r.getBaseRatesHandler, http.StatusOK))
 		baseRates.GET("/history", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateHistoryByCountryHandler, http.StatusOK))
 		baseRates.GET("/period", formatDoc("Get BaseRate", ""), tonic.Handler(r.getBaseRateForPeriodHandler, http.StatusOK))
 		baseRates.GET("/package", formatDoc("Get BaseRate for package", ""), tonic.Handler(r.getBaseRateForPackageHandler, http.StatusOK))
@@ -190,8 +190,8 @@ func (r *Router) getBaseRateHandler(c *gin.Context, req *GetBaseRateRequest) (*b
 	})
 }
 
-func (r *Router) getBaseRateByCountryHandler(c *gin.Context, req *GetBaseRatesByCountryRequest) (*bpb.GetBaseRatesResponse, error) {
-	return r.clients.b.GetBaseRatesByCountry(&bpb.GetBaseRatesByCountryRequest{
+func (r *Router) getBaseRatesHandler(c *gin.Context, req *GetBaseRatesRequest) (*bpb.GetBaseRatesResponse, error) {
+	return r.clients.b.GetBaseRates(&bpb.GetBaseRatesRequest{
 		Country:  req.Country,
 		Provider: req.Provider,
 		SimType:  req.SimType,

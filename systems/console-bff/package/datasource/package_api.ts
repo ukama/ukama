@@ -81,7 +81,9 @@ class PackageApi extends BaseRESTDataSource {
   ): Promise<PackageDto> => {
     this.logger.info(`AddPackage [POST]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
-    const baserate = await this.get(`/${VERSION}/baserates/history`);
+    const baserate = await this.get(
+      `/${VERSION}/baserates?sim_type=${SIM_TYPE}`
+    );
     if (!baserate.rates || baserate?.rates?.length === 0) {
       throw new Error("No baserate found");
     }

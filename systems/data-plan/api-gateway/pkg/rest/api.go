@@ -56,6 +56,14 @@ type GetBaseRatesByCountryRequest struct {
 	EffectiveAt string `json:"effective_at" query:"effective_at" binding:"required"`
 }
 
+// GetBaseRatesRequest lists base rates. All filters are optional; omitting
+// them returns every non-deleted base rate.
+type GetBaseRatesRequest struct {
+	Country  string `json:"country" query:"country"`
+	Provider string `json:"provider" query:"provider"`
+	SimType  string `json:"sim_type" query:"sim_type"`
+}
+
 type GetBaseRatesForPeriodRequest struct {
 	Country  string `query:"country" validate:"required"`
 	Provider string `query:"provider" binding:"required" validate:"required"`

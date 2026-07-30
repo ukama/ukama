@@ -14,7 +14,7 @@ import "validator.proto";
 
 service BaseRatesService {
     rpc GetBaseRatesById (GetBaseRatesByIdRequest) returns (GetBaseRatesByIdResponse) {} /* List of base rates by id */
-    rpc GetBaseRatesByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all latest base rates version by network till date */
+    rpc GetBaseRates(GetBaseRatesRequest) returns (GetBaseRatesResponse){} /* List base rates with optional country/provider/simType filters, excludes deleted */
     rpc GetBaseRatesForPeriod(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
     rpc GetBaseRatesForPackage(GetBaseRatesByPeriodRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network in specified period */
     rpc GetBaseRatesHistoryByCountry(GetBaseRatesByCountryRequest) returns (GetBaseRatesResponse){} /* List of all base rates by network till date */
@@ -30,6 +30,12 @@ message GetBaseRatesByCountryRequest{
     string provider =2;
     string simType=3 [json_name = "sim_type"];
     string effectiveAt = 4 [json_name = "effective_at"];
+}
+
+message GetBaseRatesRequest{
+    string country = 1;
+    string provider = 2;
+    string simType = 3 [json_name = "sim_type"];
 }
 
 message GetBaseRatesByPeriodRequest{

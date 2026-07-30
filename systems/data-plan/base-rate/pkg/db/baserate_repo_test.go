@@ -199,11 +199,11 @@ func TestBaseRateRepo_dbTest(t *testing.T) {
 
 		rows := createMockRows(expectedRate)
 		mock.ExpectQuery(`^SELECT.*rate.*`).
-			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType, sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(expectedRate.Country, expectedRate.Provider, expectedRate.SimType).
 			WillReturnRows(rows)
 
 		// Act
-		rate, err := repo.GetBaseRatesByCountry(expectedRate.Country, expectedRate.Provider, expectedRate.SimType)
+		rate, err := repo.GetBaseRates(expectedRate.Country, expectedRate.Provider, expectedRate.SimType)
 
 		// Assert
 		assert.NoError(t, err)
@@ -341,11 +341,11 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		assert.Contains(t, err.Error(), "db error")
 	})
 
-	t.Run("GetBaseRatesByCountry returns error", func(t *testing.T) {
+	t.Run("GetBaseRates returns error", func(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnError(errors.New("db error"))
-		_, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
+		_, err := repo.GetBaseRates("c", "p", ukama.SimTypeUkamaData)
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "db error")
 	})
@@ -380,12 +380,12 @@ func TestBaseRateRepo_ErrorCases(t *testing.T) {
 		assert.Contains(t, err.Error(), "delete error")
 	})
 
-	t.Run("GetBaseRatesByCountry empty result", func(t *testing.T) {
+	t.Run("GetBaseRates empty result", func(t *testing.T) {
 		repo, mock, cleanup := newRepo()
 		defer cleanup()
 		rows := sqlmock.NewRows([]string{})
 		mock.ExpectQuery("SELECT.*rate.*").WillReturnRows(rows)
-		rates, err := repo.GetBaseRatesByCountry("c", "p", ukama.SimTypeUkamaData)
+		rates, err := repo.GetBaseRates("c", "p", ukama.SimTypeUkamaData)
 		assert.NoError(t, err)
 		assert.Empty(t, rates)
 	})

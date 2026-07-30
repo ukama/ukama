@@ -22,7 +22,7 @@ import (
 type BaseRateRepo interface {
 	GetBaseRateById(uuid uuid.UUID) (*BaseRate, error)
 	GetBaseRatesHistoryByCountry(country, provider string, sType ukama.SimType) ([]BaseRate, error)
-	GetBaseRatesByCountry(country, provider string, simType ukama.SimType) ([]BaseRate, error)
+	GetBaseRates(country, provider string, simType ukama.SimType) ([]BaseRate, error)
 	GetBaseRatesForPeriod(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error)
 	GetBaseRatesForPackage(country, provider string, from, to time.Time, simType ukama.SimType) ([]BaseRate, error)
 	UploadBaseRates(rateList []BaseRate) error
@@ -58,11 +58,23 @@ func (b *baseRateRepo) GetBaseRatesHistoryByCountry(country, provider string, sT
 	return rates, nil
 }
 
-func (b *baseRateRepo) GetBaseRatesByCountry(country, provider string, simType ukama.SimType) ([]BaseRate, error) {
+func (b *baseRateRepo) GetBaseRates(country, provider string, simType ukama.SimType) ([]BaseRate, error) {
 	var rates []BaseRate
-	t := time.Now().Add(time.Second * 1).Format(time.RFC3339)
-	result := b.Db.GetGormDb().Model(BaseRate{}).Where("country = ?", country).Where("provider = ?", provider).
-		Where("sim_type = ?", simType).Where("effective_at <= ?", t).Order("effective_at desc").Limit(1).Find(&rates)
+
+	// Default (soft-delete scoped) query so deleted rates are excluded.
+	// Filters are optional: an empty country/provider or an unknown simType is not applied.
+	tx := b.Db.GetGormDb().Model(BaseRate{})
+	if country != "" {
+		tx = tx.Where("country = ?", country)
+	}
+	if provider != "" {
+		tx = tx.Where("provider = ?", provider)
+	}
+	if simType != ukama.SimTypeUnknown {
+		tx = tx.Where("sim_type = ?", simType)
+	}
+
+	result := tx.Order("effective_at desc").Find(&rates)
 	if result.Error != nil {
 		return nil, result.Error
 	}
