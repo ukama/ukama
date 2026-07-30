@@ -43,12 +43,18 @@ services:
    - GENERATOR_SERVICE_PORT=9090
    - ORGNAME=${ORGNAME}
    - ORGID=${ORGID}
+   - STORAGE_ENABLED=true
+   - STORAGE_ENDPOINT=minio:9000
+   - STORAGE_ACCESSKEY=minioadmin
+   - STORAGE_SECRETKEY=minioadmin
+   - STORAGE_BUCKET=reports
   restart: always
   networks:
    - ukama-net
   depends_on:
    - postgresd-report
    - msg-client-report
+   - minio
 
 
  msg-client-report:
@@ -90,6 +96,21 @@ services:
   networks:
    - ukama-net
 
+ minio:
+  image: minio/minio:latest
+  container_name: report-minio
+  command: server /data --console-address ":9001"
+  ports:
+   - '9100:9000'
+   - '9101:9001'
+  environment:
+   - MINIO_ROOT_USER=minioadmin
+   - MINIO_ROOT_PASSWORD=minioadmin
+  networks:
+   - ukama-net
+  volumes:
+   - minio-data:/data
+
 networks:
  ukama-net:
   external: true
@@ -97,3 +118,4 @@ networks:
 
 volumes:
  postgress-data:
+ minio-data:
