@@ -102,7 +102,7 @@ func (as *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 func (as *AsrEventServer) handleEventCDRCreate(key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
-	err := as.s.UpdateAndSyncAsrProfile(cdr.GetImsi())
+	err := as.s.UpdateAndSyncAsrProfileFromCdr(cdr.GetImsi())
 	if err != nil {
 		log.Errorf("Failed to update the active subscriber %s. Error: %v", cdr.Imsi, err)
 
