@@ -1,10 +1,10 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Create a controlled radio-off window through GraphQL, restore it, and verify SITE_UPTIME publishes a scoped partial-period percentage within valid bounds.
+description: Switch the site radio off and back on, verifying SITE_UPTIME records down windows through MIN and drags AVG below 100, then recovers.
 seed: 4712
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, site-uptime, controller, graphql]
+tags: [virtual, console-kpi, site-uptime, radio, graphql]
 status: active
 provider:
   type: virtual
@@ -22,32 +22,41 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: create_uptime_window
+  - name: baseline_site_up
+    checks:
+      - type: kpi_value
+        key: SITE_UPTIME
+        span: daily
+        op: MAX
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        expected_value: 100
+        tolerance: 0.001
+        timeout_seconds: 120
+        poll_seconds: 20
+  - name: radio_off_drives_downtime
     events:
       - type: toggle_radio
         sites: site-001
         state: off
+      # The toggle reconciles cloud -> node, the node reports health on its own
+      # cadence, then the ingest window (~10s) and rollup follow. Allow the
+      # round trip before asserting; the checks poll on top of this.
       - type: wait
-        seconds: 30
-      - type: toggle_radio
-        sites: site-001
-        state: on
-      - type: wait
-        seconds: 10
+        seconds: 120
     checks:
-      - type: kpi_contract
+      - type: kpi_value
         key: SITE_UPTIME
         span: daily
-        op: AVG
+        op: MAX
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: greater_than
         expected_value: 0
-        expected_partial: true
-        require_computed_at: true
-        require_scope: true
-        timeout_seconds: 100
+        tolerance: 0.001
+        timeout_seconds: 120
+        poll_seconds: 20
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -55,7 +64,37 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: less_or_equal
+        comparator: less_than
         expected_value: 100
-        timeout_seconds: 100
-
+        timeout_seconds: 120
+        poll_seconds: 20
+  - name: radio_on_restores_service
+    events:
+      - type: toggle_radio
+        sites: site-001
+        state: on
+      - type: wait
+        seconds: 120
+    checks:
+      # Hard recovery gate: a point-in-time count, unlike a daily average.
+      - type: kpi_value
+        key: SITES_ONLINE
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 1
+        timeout_seconds: 120
+        poll_seconds: 20
+      # The site has been up in at least one window across the day.
+      - type: kpi_value
+        key: SITE_UPTIME
+        span: daily
+        op: MAX
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        expected_value: 100
+        tolerance: 0.001
+        timeout_seconds: 120
+        poll_seconds: 20

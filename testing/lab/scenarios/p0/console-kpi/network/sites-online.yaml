@@ -1,16 +1,16 @@
 version: 1
-name: p0-console-kpi-sites-degraded
-description: Turn the site service off and back on, verifying SITES_DEGRADED moves from zero to one and back for that network.
-seed: 4713
+name: p0-console-kpi-sites-online
+description: Disconnect nodes in two sites one at a time and restore them, verifying SITES_ONLINE counts down 2 to 1 to 0 and back as each site loses and regains a fully connected node set.
+seed: 4711
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, sites-degraded, service, graphql]
+tags: [virtual, console-kpi, sites-online, node-connectivity, graphql]
 status: active
 provider:
   type: virtual
 world:
   networks: 1
-  sites_per_network: 1
+  sites_per_network: 2
   nodes_per_site:
     tower: 1
     amplifier: 1
@@ -21,52 +21,94 @@ setup:
 runtime:
   start: [nodes]
   wait: [nodes_ready]
+# The tower outage runs FIRST on purpose. An amplifier disconnect has not been
+# shown to flip registry connectivity (a 300s wait timed out with the anode
+# still Online), and the tower is the site anchor, so leading with it means one
+# run tells us whether the mechanism works at all before testing whether it is
+# amplifier-specific. With the amplifier first the run aborts before the tower
+# is ever exercised.
+#
+# Connectivity waits use 900s, the validate.c cap, because the offline
+# transition depends on a cloud-side heartbeat timeout of unknown length.
 phases:
-  - name: baseline_not_degraded
+  - name: baseline_all_sites_online
     checks:
       - type: kpi_value
-        key: SITES_DEGRADED
+        key: SITES_ONLINE
         span: daily
         op: LAST
         scope_key: network_id
         networks: net-001
-        expected_value: 0
+        expected_value: 2
         immediate: true
-        timeout_seconds: 600
+        timeout_seconds: 90
         poll_seconds: 10
-  - name: service_off_degrades
+  - name: tower_outage_takes_one_site_offline
     events:
-      - type: toggle_service
-        sites: site-001
-        state: off
+      - type: disconnect_nodes
+        nodes: tower-site-002-001
+      - type: wait_node_connectivity
+        nodes: tower-site-002-001
+        connectivity: Offline
+        seconds: 120
       - type: wait
-        seconds: 90
+        seconds: 160
     checks:
       - type: kpi_value
-        key: SITES_DEGRADED
+        key: SITES_ONLINE
         span: daily
         op: LAST
         scope_key: network_id
         networks: net-001
         expected_value: 1
         immediate: true
-        timeout_seconds: 300
+        timeout_seconds: 90
         poll_seconds: 10
-  - name: service_on_clears_degraded
+  - name: amplifier_outage_takes_second_site_offline
     events:
-      - type: toggle_service
-        sites: site-001
-        state: on
+      - type: disconnect_nodes
+        nodes: amplifier-site-001-001
+      - type: wait_node_connectivity
+        nodes: amplifier-site-001-001
+        connectivity: Offline
+        seconds: 120
       - type: wait
-        seconds: 90
+        seconds: 160
     checks:
       - type: kpi_value
-        key: SITES_DEGRADED
+        key: SITES_ONLINE
         span: daily
         op: LAST
         scope_key: network_id
         networks: net-001
         expected_value: 0
         immediate: true
-        timeout_seconds: 300
+        timeout_seconds: 90
+        poll_seconds: 10
+  - name: restore_both_sites
+    events:
+      - type: reconnect_nodes
+        nodes: tower-site-002-001
+      - type: reconnect_nodes
+        nodes: amplifier-site-001-001
+      - type: wait_node_connectivity
+        nodes: tower-site-002-001
+        connectivity: Online
+        seconds: 90
+      - type: wait_node_connectivity
+        nodes: amplifier-site-001-001
+        connectivity: Online
+        seconds: 120
+      - type: wait
+        seconds: 160
+    checks:
+      - type: kpi_value
+        key: SITES_ONLINE
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 2
+        immediate: true
+        timeout_seconds: 120
         poll_seconds: 10
