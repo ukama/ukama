@@ -20,6 +20,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/util/payments"
 	"github.com/ukama/ukama/systems/report/generator/internal"
 	"github.com/ukama/ukama/systems/report/generator/internal/pdf"
 	"github.com/ukama/ukama/systems/report/generator/internal/storage"
@@ -108,13 +109,53 @@ func (g *GeneratorEventServer) handlePaymentSuccessEvent(key string, msg *epb.Pa
 	}
 
 	report := buildReceiptReport(msg)
+	objectName := msg.Id + ".pdf"
 
-	err := g.GeneratePDF(report, receiptTemplate, filepath.Join(pdfFolder, msg.Id+".pdf"))
+	err := g.GeneratePDF(report, receiptTemplate, filepath.Join(pdfFolder, objectName))
 	if err != nil {
 		log.Errorf("Failed to generate receipt PDF: %v", err)
+
+		return err
 	}
 
-	return err
+	g.publishReceiptGenerated(msg, report, objectName)
+
+	return nil
+}
+
+func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report *epb.Report, objectName string) {
+	if g.storage == nil {
+		log.Warnf("Skipping receipt generated event for payment %s: storage is not configured", msg.Id)
+
+		return
+	}
+
+	evt := &epb.EventReceiptGenerated{
+		Id:            msg.Id,
+		ReceiptNumber: report.RawReport.Number,
+		PayerName:     msg.PayerName,
+		PayerEmail:    msg.PayerEmail,
+		Amount:        payments.ToAmount(msg.AmountCents),
+		Currency:      msg.Currency,
+		PaidAt:        report.RawReport.IssuingDate,
+		PaymentMethod: msg.PaymentMethod,
+		Description:   msg.Description,
+		OrgName:       g.orgName,
+		Bucket:        g.storage.Bucket(),
+		ObjectKey:     objectName,
+		FileName:      report.RawReport.Number + ".pdf",
+	}
+
+	route := g.baseRoutingKey.SetObject("receipt").SetAction("generate").MustBuild()
+
+	err := g.msgbus.PublishRequest(route, evt)
+	if err != nil {
+		log.Errorf("Failed to publish receipt generated event for payment %s on route %s: %v", msg.Id, route, err)
+
+		return
+	}
+
+	log.Infof("Published receipt generated event for payment %s on route %s", msg.Id, route)
 }
 
 func buildReceiptReport(p *epb.Payment) *epb.Report {

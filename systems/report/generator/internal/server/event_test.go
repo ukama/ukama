@@ -11,6 +11,7 @@ package server_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -19,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/anypb"
 
@@ -127,6 +129,7 @@ var raw = `{
 
 func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
 
 	paymentEvent := func(itemType string) *epb.Payment {
 		return &epb.Payment{
@@ -212,6 +215,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		store := &mocks.Storage{}
 		store.On("Upload", mock.Anything, mock.Anything, mock.Anything).
 			Return("http://minio/reports/receipt.pdf", nil).Once()
+		store.On("Bucket").Return("report-ukama")
 
 		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, msgbusClient)
 		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
@@ -219,6 +223,35 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		assert.NoError(t, err)
 		pdfEngine.AssertExpectations(t)
 		store.AssertExpectations(t)
+	})
+
+	t.Run("PublishesReceiptGeneratedEvent", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
+		pdfEngine.On("Generate", mock.Anything).Return(nil).Once()
+
+		store := &mocks.Storage{}
+		store.On("Upload", mock.Anything, mock.Anything, mock.Anything).
+			Return("http://minio/reports/receipt.pdf", nil).Once()
+		store.On("Bucket").Return("report-ukama")
+
+		bus := &mbmocks.MsgBusServiceClient{}
+		bus.On("PublishRequest", mock.MatchedBy(func(route string) bool {
+			return strings.HasSuffix(route, "report.generator.receipt.generate")
+		}), mock.MatchedBy(func(m protoreflect.ProtoMessage) bool {
+			e, ok := m.(*epb.EventReceiptGenerated)
+
+			return ok && e.Bucket == "report-ukama" &&
+				strings.HasSuffix(e.ObjectKey, ".pdf") &&
+				e.PayerEmail == "brackley@ukama.com" &&
+				strings.HasPrefix(e.ReceiptNumber, "RCPT-")
+		})).Return(nil).Once()
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, bus)
+		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
+
+		assert.NoError(t, err)
+		bus.AssertExpectations(t)
 	})
 
 	t.Run("ErrorOnStorageUpload", func(t *testing.T) {
