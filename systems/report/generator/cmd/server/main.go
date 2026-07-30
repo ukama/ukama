@@ -93,7 +93,8 @@ func runGrpcServer() {
 	if serviceConfig.Storage != nil && serviceConfig.Storage.Enabled {
 		store, err = storage.NewMinioStorage(serviceConfig.Storage.Endpoint,
 			serviceConfig.Storage.AccessKey, serviceConfig.Storage.SecretKey,
-			serviceConfig.Storage.Bucket)
+			serviceConfig.Storage.Bucket, serviceConfig.Storage.Region,
+			serviceConfig.Storage.Secure)
 		if err != nil {
 			log.Fatalf("failed to init storage: %v", err)
 		}

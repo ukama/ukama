@@ -39,6 +39,8 @@ type StorageConfig struct {
 	AccessKey string `default:""`
 	SecretKey string `default:""`
 	Bucket    string `default:"reports"`
+	Region    string `default:""`
+	Secure    bool   `default:"false"`
 }
 
 func NewConfig(name string) *Config {

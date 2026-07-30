@@ -29,10 +29,11 @@ type MinioStorage struct {
 	bucket string
 }
 
-func NewMinioStorage(endpoint, accessKey, secretKey, bucket string) (*MinioStorage, error) {
+func NewMinioStorage(endpoint, accessKey, secretKey, bucket, region string, secure bool) (*MinioStorage, error) {
 	client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: false,
+		Secure: secure,
+		Region: region,
 	})
 	if err != nil {
 		return nil, err
