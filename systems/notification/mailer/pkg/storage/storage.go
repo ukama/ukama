@@ -14,6 +14,8 @@ import (
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type Storage interface {
@@ -43,7 +45,11 @@ func (m *MinioStorage) Get(ctx context.Context, bucket, objectName string) ([]by
 		return nil, err
 	}
 
-	defer obj.Close()
+	defer func() {
+		if err := obj.Close(); err != nil {
+			log.Errorf("Failed to close object %s/%s. Error %v", bucket, objectName, err)
+		}
+	}()
 
 	return io.ReadAll(obj)
 }
