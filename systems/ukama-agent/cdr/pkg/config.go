@@ -18,7 +18,7 @@ import (
 
 const (
 	DataUsage = "data_usage"
-	CountType = "gauge"
+	CountType = "count"
 )
 
 type Config struct {
@@ -35,9 +35,11 @@ type Config struct {
 	IsMsgBus          bool              `default:"true"`
 	OrgName           string
 	OrgId             string
+	Http              HttpServices
 }
 
-type GrpcEndPoints struct {
+type HttpServices struct {
+	InitClient string `default:"api-gateway-init:8080"`
 }
 
 func NewConfig(name string) *Config {
@@ -66,7 +68,7 @@ var UsageMetrics = []pmetric.MetricConfig{
 	{
 		Name:   DataUsage,
 		Type:   CountType,
-		Labels: map[string]string{"package": "", "dataplan": "", "network": ""},
+		Labels: map[string]string{"package": "", "dataplan": "", "network": "", "site": ""},
 		Value:  0,
 	},
 }
