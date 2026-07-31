@@ -8,6 +8,7 @@
 package server
 
 import (
+	"net/textproto"
 	"context"
 	"errors"
 	"testing"
@@ -890,4 +891,12 @@ func TestSweepRetries_StatusUpdateFailureAborts(t *testing.T) {
 	server.sweepRetries()
 
 	mockRepo.AssertExpectations(t)
+}
+
+func TestIsBenignSmtpError(t *testing.T) {
+	assert.True(t, isBenignSmtpError(&textproto.Error{Code: 250, Msg: "Ok 0100019fb7c4ff0c"}))
+	assert.True(t, isBenignSmtpError(&textproto.Error{Code: 221, Msg: "Bye"}))
+	assert.False(t, isBenignSmtpError(&textproto.Error{Code: 421, Msg: "Service not available"}))
+	assert.False(t, isBenignSmtpError(&textproto.Error{Code: 554, Msg: "Transaction failed"}))
+	assert.False(t, isBenignSmtpError(errors.New("dial tcp: connection refused")))
 }

@@ -23,6 +23,7 @@ import (
 	"github.com/ukama/ukama/systems/notification/mailer/pkg"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/server"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/storage"
 
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
@@ -84,7 +85,17 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
-	mailerEventServer := server.NewMailerEventServer(serviceConfig.OrgName, srv)
+	var store storage.Storage
+	if serviceConfig.Storage != nil && serviceConfig.Storage.Enabled {
+		store, err = storage.NewMinioStorage(serviceConfig.Storage.Endpoint,
+			serviceConfig.Storage.AccessKey, serviceConfig.Storage.SecretKey,
+			serviceConfig.Storage.Region, serviceConfig.Storage.Secure)
+		if err != nil {
+			log.Fatalf("Failed to initialize storage: %v", err)
+		}
+	}
+
+	mailerEventServer := server.NewMailerEventServer(serviceConfig.OrgName, srv, store)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterMailerServiceServer(s, srv)

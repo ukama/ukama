@@ -221,6 +221,7 @@ func Test_SendEmail(t *testing.T) {
 		email.MailId,
 		email.Email,
 		email.TemplateName,
+		email.ExternalRef,
 		email.SentAt,
 		email.Status,
 		email.RetryCount,

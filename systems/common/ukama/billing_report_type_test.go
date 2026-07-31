@@ -32,6 +32,22 @@ func TestReportType(t *testing.T) {
 		assert.Equal(t, report.String(), ukama.ReportTypeConsumption.String())
 	})
 
+	t.Run("ReportTypeReceiptValidString", func(tt *testing.T) {
+		report := ukama.ParseReportType("receipt")
+
+		assert.NotNil(t, report)
+		assert.Equal(t, report.String(), ukama.ReportTypeReceipt.String())
+		assert.Equal(t, uint8(report), uint8(3))
+	})
+
+	t.Run("ReportTypeReceiptValidNumber", func(tt *testing.T) {
+		report := ukama.ParseReportType("3")
+
+		assert.NotNil(t, report)
+		assert.Equal(t, uint8(report), uint8(3))
+		assert.Equal(t, report.String(), ukama.ReportTypeReceipt.String())
+	})
+
 	t.Run("ReportTypeNonValidString", func(tt *testing.T) {
 		report := ukama.ParseReportType("failure")
 

@@ -20,6 +20,7 @@ const (
 	ReportTypeUnknown ReportType = iota
 	ReportTypeInvoice
 	ReportTypeConsumption
+	ReportTypeReceipt
 )
 
 func (r *ReportType) Scan(value interface{}) error {
@@ -33,7 +34,7 @@ func (r ReportType) Value() (driver.Value, error) {
 }
 
 func (r ReportType) String() string {
-	t := map[ReportType]string{0: "unknown", 1: "invoice", 2: "consumption"}
+	t := map[ReportType]string{0: "unknown", 1: "invoice", 2: "consumption", 3: "receipt"}
 
 	v, ok := t[r]
 	if !ok {
@@ -49,7 +50,7 @@ func ParseReportType(value string) ReportType {
 		return ReportType(i)
 	}
 
-	t := map[string]ReportType{"unknown": 0, "invoice": 1, "consumption": 2}
+	t := map[string]ReportType{"unknown": 0, "invoice": 1, "consumption": 2, "receipt": 3}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {

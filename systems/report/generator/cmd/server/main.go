@@ -28,6 +28,7 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	fs "github.com/ukama/ukama/systems/report/generator/internal/server"
+	"github.com/ukama/ukama/systems/report/generator/internal/storage"
 )
 
 var serviceConfig = internal.NewConfig(internal.ServiceName)
@@ -88,8 +89,19 @@ func runGrpcServer() {
 		log.Fatalf("failed to get new PDF engine: %v", err)
 	}
 
+	var store storage.Storage
+	if serviceConfig.Storage != nil && serviceConfig.Storage.Enabled {
+		store, err = storage.NewMinioStorage(serviceConfig.Storage.Endpoint,
+			serviceConfig.Storage.AccessKey, serviceConfig.Storage.SecretKey,
+			serviceConfig.Storage.Bucket, serviceConfig.Storage.Region,
+			serviceConfig.Storage.Secure)
+		if err != nil {
+			log.Fatalf("failed to init storage: %v", err)
+		}
+	}
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		eSrv := fs.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, mbClient)
+		eSrv := fs.NewGeneratorEventServer(serviceConfig.OrgName, pdfEngine, store, mbClient)
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 
