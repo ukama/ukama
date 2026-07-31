@@ -2,52 +2,96 @@ Subject: [{{ .Values.ORG}}] Payment Receipt {{ .Values.RECEIPT_NUMBER}}
 Content-Type: text/html; charset="UTF-8"
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <title>Payment receipt</title>
   </head>
-  <body align="center">
-    <center>
-      <table border="0" cellpadding="0" cellspacing="0" width="100%" id="backgroundTable" align="center" style="background-color: #ffffff;">
-        <tr>
-          <td align="center" valign="top">
-            <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer" style="background-color: #ffffff; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-              <tr>
-                <td style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                  <h1 style="color: #000000; font-size: 24px; margin-bottom: 20px;">Payment Received</h1>
-                  <p>Hi {{.Values.NAME}},</p>
-                  <p>
-                    Thank you for your payment. Your receipt is attached to this email as a PDF.
+  <body style="margin:0; padding:0; background-color:#f4f5f7;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#f4f5f7;">
+      <tr>
+        <td align="center" style="padding:32px 12px;">
+          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="width:600px; max-width:100%; background-color:#ffffff; border-radius:10px; overflow:hidden; border:1px solid #e6e8eb;">
+            <tr>
+              <td style="height:4px; background-color:#1D90F8; font-size:0; line-height:0;">&nbsp;</td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif;">
+                <span style="font-size:22px; font-weight:bold; letter-spacing:0.5px; color:#1D90F8;">ukama</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 40px 0 40px; font-family:Arial,Helvetica,sans-serif; color:#1a1a1a;">
+                <h1 style="margin:0 0 16px 0; font-size:24px; font-weight:700; color:#1a1a1a;">Payment received</h1>
+                <p style="margin:0 0 16px 0; font-size:15px; line-height:1.6; color:#3c4149;">Hi {{.Values.NAME}},</p>
+                <p style="margin:0 0 24px 0; font-size:15px; line-height:1.6; color:#3c4149;">
+                  Thanks for your payment. We have received it in full, and a copy of your receipt is attached to this email as a PDF.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 40px;">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border:1px solid #e6e8eb; border-radius:8px; background-color:#fafbfc;">
+                  <tr>
+                    <td style="padding:16px 20px 6px 20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; font-weight:700; letter-spacing:0.6px; text-transform:uppercase; color:#8a929e;">Receipt details</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:0 20px 16px 20px; font-family:Arial,Helvetica,sans-serif;">
+                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="font-size:14px; color:#3c4149;">
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e;">Receipt</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a;">{{.Values.RECEIPT_NUMBER}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Date</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.PAYMENT_DATE}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Description</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.DESCRIPTION}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:7px 0; color:#8a929e; border-top:1px solid #edeff2;">Payment method</td>
+                          <td style="padding:7px 0; text-align:right; font-weight:600; color:#1a1a1a; border-top:1px solid #edeff2;">{{.Values.PAYMENT_METHOD}}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding:12px 0 7px 0; color:#1a1a1a; font-size:15px; font-weight:700; border-top:1px solid #e6e8eb;">Amount paid</td>
+                          <td style="padding:12px 0 7px 0; text-align:right; font-size:15px; font-weight:700; color:#1a1a1a; border-top:1px solid #e6e8eb;">{{.Values.AMOUNT}}</td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 40px 0 40px; font-family:Arial,Helvetica,sans-serif;">
+                <p style="margin:0; font-size:13px; line-height:1.6; color:#8a929e;">
+                  Keep this receipt for your records. If you did not make this payment, please contact us right away.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:24px 40px 8px 40px; font-family:Arial,Helvetica,sans-serif; color:#3c4149;">
+                <p style="margin:0; font-size:15px; line-height:1.6;">Thanks,<br />The Ukama Team</p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:28px 40px 32px 40px;">
+                <div style="border-top:1px solid #e6e8eb; padding-top:20px; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:1.6; color:#8a929e; text-align:center;">
+                  <p style="margin:0 0 8px 0;">&copy; Ukama Inc. &middot; 1233 Quarry Lane #115, Pleasanton, CA 94566</p>
+                  <p style="margin:0;">
+                    <a href="https://x.com/ukamanetworks" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">X</a>
+                    <a href="https://www.linkedin.com/company/ukama" target="_blank" style="color:#1D90F8; text-decoration:none; margin:0 8px;">LinkedIn</a>
                   </p>
-                  <table width="100%" style="border-collapse: collapse; margin-bottom: 20px;">
-                    <tr>
-                      <td style="padding: 8px 0; color: #8a929e;">Receipt</td>
-                      <td style="padding: 8px 0; text-align: right;">{{.Values.RECEIPT_NUMBER}}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; color: #8a929e;">Date</td>
-                      <td style="padding: 8px 0; text-align: right;">{{.Values.PAYMENT_DATE}}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; color: #8a929e;">Payment method</td>
-                      <td style="padding: 8px 0; text-align: right;">{{.Values.PAYMENT_METHOD}}</td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 8px 0; font-weight: bold; border-top: 1px solid #e6e8eb;">Amount paid</td>
-                      <td style="padding: 8px 0; text-align: right; font-weight: bold; border-top: 1px solid #e6e8eb;">{{.Values.AMOUNT}}</td>
-                    </tr>
-                  </table>
-                  <p>
-                    This receipt confirms payment has been received in full.
-                  </p>
-                  <p>Thanks,<br />The {{.Values.ORG}} Team</p>
-                </td>
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
-    </center>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>
