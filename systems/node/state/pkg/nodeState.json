@@ -87,12 +87,6 @@
           },
           {
             "to_state": "update",
-            "trigger":["ready"],
-            "expectedEvents": ["offline", "online", "ready"],
-            "timeout": 600
-          },
-          {
-            "to_state": "update",
             "trigger": ["update"],
             "expectedEvents": ["offline", "online", "ready"],
             "timeout": 600
@@ -165,7 +159,8 @@
         "reboot",
         "fault",
         "online",
-        "config"
+        "config",
+        "ready"
       ],
       "transition": [
         {
@@ -175,6 +170,10 @@
         {
           "to_state": "Configured",
           "trigger": ["config"]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": ["ready"]
         }
       ],
       "substate": {
