@@ -118,16 +118,14 @@ func (g *GeneratorEventServer) handlePaymentSuccessEvent(key string, msg *epb.Pa
 		return err
 	}
 
-	g.publishReceiptGenerated(msg, report, objectName)
-
-	return nil
+	return g.publishReceiptGenerated(msg, report, objectName)
 }
 
-func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report *epb.Report, objectName string) {
+func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report *epb.Report, objectName string) error {
 	if g.storage == nil {
 		log.Warnf("Skipping receipt generated event for payment %s: storage is not configured", msg.Id)
 
-		return
+		return nil
 	}
 
 	evt := &epb.EventReceiptGenerated{
@@ -152,10 +150,12 @@ func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report 
 	if err != nil {
 		log.Errorf("Failed to publish receipt generated event for payment %s on route %s: %v", msg.Id, route, err)
 
-		return
+		return fmt.Errorf("failed to publish receipt generated event: %w", err)
 	}
 
 	log.Infof("Published receipt generated event for payment %s on route %s", msg.Id, route)
+
+	return nil
 }
 
 func buildReceiptReport(p *epb.Payment) *epb.Report {
@@ -221,7 +221,11 @@ func formatReceiptDate(paidAt string) string {
 		paidAt = paidAt[:i]
 	}
 
-	t, err := time.Parse(timeStringLayout, paidAt)
+	t, err := time.Parse(time.RFC3339, paidAt)
+	if err != nil {
+		t, err = time.Parse(timeStringLayout, paidAt)
+	}
+
 	if err != nil {
 		return paidAt
 	}

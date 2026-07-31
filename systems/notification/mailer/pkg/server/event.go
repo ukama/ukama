@@ -229,7 +229,7 @@ func (es *MailerEventServer) handleEventReceiptGenerate(ctx context.Context, msg
 			emailTemplate.EmailKeyPaymentDate:   msg.PaidAt,
 			emailTemplate.EmailKeyPaymentMethod: msg.PaymentMethod,
 			emailTemplate.EmailKeyDescription:   msg.Description,
-		}, []EmailAttachment{
+		}, msg.Id, []EmailAttachment{
 			{
 				Filename:    msg.FileName,
 				ContentType: receiptContentType,
@@ -248,7 +248,7 @@ func (es *MailerEventServer) handleEventReceiptGenerate(ctx context.Context, msg
 }
 
 func (es *MailerEventServer) queue(ctx context.Context, to string, templateName string, values map[string]string) (*epb.EventResponse, error) {
-	mailId, err := es.s.QueueEmail(ctx, []string{to}, templateName, values, nil)
+	mailId, err := es.s.QueueEmail(ctx, []string{to}, templateName, values, "", nil)
 	if err != nil {
 		log.Errorf("Failed to queue %s email. Error %v", templateName, err)
 

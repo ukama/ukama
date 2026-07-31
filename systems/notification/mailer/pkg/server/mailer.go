@@ -9,6 +9,7 @@
 package server
 
 import (
+	"errors"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -24,6 +25,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -107,7 +109,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		}
 	}
 
-	mailId, err := s.QueueEmail(ctx, req.To, req.TemplateName, req.Values, attachments)
+	mailId, err := s.QueueEmail(ctx, req.To, req.TemplateName, req.Values, "", attachments)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +121,23 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 }
 
 func (s *MailerServer) QueueEmail(ctx context.Context, to []string, templateName string,
-	values map[string]string, attachments []EmailAttachment) (uuid.UUID, error) {
+	values map[string]string, externalRef string, attachments []EmailAttachment) (uuid.UUID, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
+
+	if externalRef != "" {
+		existing, err := s.mailerRepo.GetEmailByExternalRef(externalRef)
+		if err == nil && existing != nil {
+			log.Infof("Email for external ref %s already queued with mail id %s, skipping duplicate",
+				externalRef, existing.MailId)
+
+			return existing.MailId, nil
+		}
+
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return uuid.Nil, status.Errorf(codes.Internal, "failed to check for duplicate email: %v", err)
+		}
+	}
 
 	mailId := uuid.NewV4()
 	log.Infof("Queueing email to %v with template %s", to, templateName)
@@ -134,7 +150,7 @@ func (s *MailerServer) QueueEmail(ctx context.Context, to []string, templateName
 		Attachments:  attachments,
 	}
 
-	if err := s.saveEmailStatus(mailId, strings.Join(to, ","), templateName, ukama.MailStatusPending, values); err != nil {
+	if err := s.saveEmailStatus(mailId, strings.Join(to, ","), templateName, externalRef, ukama.MailStatusPending, values); err != nil {
 		return uuid.Nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
@@ -349,7 +365,7 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.MailStatus, values map[string]string) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName, externalRef string, status ukama.MailStatus, values map[string]string) error {
 	var nextRetryTime *time.Time
 	if status == ukama.MailStatusFailed {
 		t := time.Now().Add(InitialBackoff)
@@ -365,6 +381,7 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 		MailId:        mailId,
 		Email:         email,
 		TemplateName:  templateName,
+		ExternalRef:   externalRef,
 		Status:        status,
 		RetryCount:    0,
 		NextRetryTime: nextRetryTime,

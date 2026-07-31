@@ -21,7 +21,9 @@ import (
 
 	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"gorm.io/gorm"
 	"github.com/ukama/ukama/systems/common/ukama"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/mocks"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/storage"
@@ -384,6 +386,8 @@ func TestEventNotification_ReceiptGenerate(t *testing.T) {
 			Return([]byte("%PDF-1.4 receipt"), nil).Once()
 
 		es, repo := setupEventServerWithStorage(t, store)
+		repo.On("GetEmailByExternalRef", mock.AnythingOfType("string")).
+			Return(nil, gorm.ErrRecordNotFound).Once()
 		created := expectQueuedEmail(repo)
 
 		res, err := es.EventNotification(context.TODO(),
@@ -414,6 +418,23 @@ func TestEventNotification_ReceiptGenerate(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
+	})
+
+	t.Run("skips duplicate receipt email on event redelivery", func(t *testing.T) {
+		store := mocks.NewStorage(t)
+		store.On("Get", mock.Anything, testReceiptBucket, testReceiptKey).
+			Return([]byte("%PDF-1.4 receipt"), nil).Once()
+
+		es, repo := setupEventServerWithStorage(t, store)
+		repo.On("GetEmailByExternalRef", mock.AnythingOfType("string")).
+			Return(&db.Mailing{MailId: uuid.NewV4()}, nil).Once()
+
+		res, err := es.EventNotification(context.TODO(),
+			eventFor(t, evt.EventReceiptGenerate, receiptEvent()))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		repo.AssertNotCalled(t, "CreateEmail", mock.Anything)
 	})
 
 	t.Run("returns error so the event is retried when the pdf cannot be fetched", func(t *testing.T) {

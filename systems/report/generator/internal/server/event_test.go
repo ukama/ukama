@@ -254,6 +254,27 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		bus.AssertExpectations(t)
 	})
 
+	t.Run("ErrorOnPublishReceiptGenerated", func(t *testing.T) {
+		pdfEngine := &mocks.PdfEngine{}
+		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
+		pdfEngine.On("Generate", mock.Anything).Return(nil).Once()
+
+		store := &mocks.Storage{}
+		store.On("Upload", mock.Anything, mock.Anything, mock.Anything).
+			Return("http://minio/reports/receipt.pdf", nil).Once()
+		store.On("Bucket").Return("report-ukama")
+
+		bus := &mbmocks.MsgBusServiceClient{}
+		bus.On("PublishRequest", mock.Anything, mock.Anything).
+			Return(errors.New("rabbit down")).Once()
+
+		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, bus)
+		_, err := s.EventNotification(context.TODO(), eventFor(t, paymentEvent(ukama.ItemTypePackage.String())))
+
+		assert.Error(t, err)
+		bus.AssertExpectations(t)
+	})
+
 	t.Run("ErrorOnStorageUpload", func(t *testing.T) {
 		pdfEngine := &mocks.PdfEngine{}
 		pdfEngine.On("Configure", mock.Anything, mock.Anything).Return(nil).Once()
