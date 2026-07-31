@@ -290,6 +290,11 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			ItemType:      ukama.ItemTypePackage.String(),
 			Amount:        fmt.Sprintf("%.2f", packageInfo.Amount),
 			Currency:      packageInfo.Currency,
+			PayerPhone:    remoteSubResp.Subscriber.PhoneNumber,
+			PayerEmail:    remoteSubResp.Subscriber.Email,
+			PayerName:     remoteSubResp.Subscriber.Name,
+			Description:   packageInfo.Name,
+			Country:       packageInfo.Country,
 			PaymentMethod: ukama.PaymentMethodCash.String(),
 			Metadata: map[string]string{
 				metadataSimKey:         sim.Id.String(),
