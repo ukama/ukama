@@ -67,14 +67,14 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
 	if err != nil {
 		log.Errorf("Failed to sync subscriber policy after profile removal: %v", err)
-		//TODO: why aren't we failing?
+		//TODO: any push to pcrf retries policies?
 	}
 
 	if event {
 		err = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
 		if err != nil {
 			log.Errorf("Failed to publish subscriber profile removal event to backend: %v", err)
-			//TODO: why aren't we failing?
+			//TODO: msgb retries policies???
 		}
 	}
 

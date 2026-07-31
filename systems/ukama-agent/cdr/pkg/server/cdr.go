@@ -10,6 +10,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"time"
 
@@ -19,6 +20,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
@@ -36,6 +38,7 @@ type CDRServer struct {
 	cdrRepo         db.CDRRepo
 	usageRepo       db.UsageRepo
 	asrClient       client.AsrService
+	nodes           registry.NodeClient
 	msgbus          mb.MsgBusServiceClient
 	baseRoutingKey  msgbus.RoutingKeyBuilder
 	OrgName         string
@@ -43,12 +46,12 @@ type CDRServer struct {
 	pushGatewayHost string
 }
 
-func NewCDRServer(cdrRepo db.CDRRepo, usageRepo db.UsageRepo, orgId, orgName, pushGatewayHost string, asrClient client.AsrService, msgBus mb.MsgBusServiceClient) (*CDRServer, error) {
-
+func NewCDRServer(cdrRepo db.CDRRepo, usageRepo db.UsageRepo, nodes registry.NodeClient, orgId, orgName, pushGatewayHost string, asrClient client.AsrService, msgBus mb.MsgBusServiceClient) (*CDRServer, error) {
 	cdr := CDRServer{
 		cdrRepo:         cdrRepo,
 		usageRepo:       usageRepo,
 		asrClient:       asrClient,
+		nodes:           nodes,
 		OrgName:         orgName,
 		OrgId:           orgId,
 		pushGatewayHost: pushGatewayHost,
@@ -116,9 +119,11 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		log.Errorf("Error updating usage for imsi %s", err)
 	}
 
-	usage, err := s.cdrRepo.QueryUsage(req.Imsi, "", 0, 0, 0, []string{cdr.Policy}, 0, false)
+	node, err := s.nodes.Get(cdr.NodeId)
 	if err != nil {
-		return nil, err
+		log.Errorf("Failed to get node %s: Error: %v", cdr.NodeId, err)
+
+		return nil, fmt.Errorf("failed to get node %s : Error: %w", cdr.NodeId, err)
 	}
 
 	asr, err := s.asrClient.GetAsr(cdr.Imsi)
@@ -127,10 +132,11 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 			"package":  asr.Record.SimPackageId,
 			"dataplan": asr.Record.PackageId,
 			"network":  asr.Record.NetworkId,
+			"site":     node.Site.SiteId,
 			"iccid":    asr.Record.Iccid,
 		}
 
-		pushDataUsageMetrics(float64(usage), labels, s.pushGatewayHost)
+		pushDataUsageMetrics(float64(cdr.TotalBytes), labels, s.pushGatewayHost)
 	} else {
 		log.Errorf("Failure while processing  ASR for policy %s : Skipping data usage metric push.",
 			cdr.Policy)
@@ -560,7 +566,7 @@ func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHo
 	log.Infof("Collecting and pushing data usage metric to push gateway host: %s", pushGatewayHost)
 
 	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
-		pkg.DataUsage, float64(value), labels, pkg.SystemName)
+		pkg.DataUsage, value, labels, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing data usage  metric to push gateway %s", err.Error())
 	}

@@ -12,25 +12,29 @@ import (
 	"os"
 
 	"github.com/num30/config"
-	"github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
-	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
-	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/server"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	pkg "github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
-
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/cmd/version"
-
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egen "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cclient "github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	pkg "github.com/ukama/ukama/systems/ukama-agent/cdr/pkg"
+)
 
-	"github.com/ukama/ukama/systems/common/sql"
-	"google.golang.org/grpc"
+const (
+	registrySystem = "registry"
 )
 
 var serviceConfig *pkg.Config
@@ -90,12 +94,11 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	if serviceConfig.IsMsgBus {
-		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-			pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		mbClient = mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+			pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 			serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
 			serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-			serviceConfig.MsgClient.RetryCount,
-			serviceConfig.MsgClient.ListenerRoutes)
+			serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 		log.Debugf("MessageBus Client is %+v", mbClient)
 	} else {
@@ -105,16 +108,25 @@ func runGrpcServer(gormdb sql.Db) {
 	cdr := db.NewCDRRepo(gormdb)
 	usage := db.NewUsageRepo(gormdb)
 
+	nodeServiceUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient,
+		cclient.WithDebug(serviceConfig.DebugMode)), ic.CreateHostString(serviceConfig.OrgName,
+		registrySystem), &serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve %s system address from initClient: %v", registrySystem, err)
+	}
+
+	nodeClient := registry.NewNodeClient(nodeServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
+
 	// asr service
 	asrClient, err := client.NewAsrClient(serviceConfig.AsrHost, serviceConfig.Timeout)
 	if err != nil {
 		log.Fatalf("ASR Client initilization failed. Error: %v", err)
 	}
 
-	cdrServer, err := server.NewCDRServer(cdr, usage, serviceConfig.OrgId, serviceConfig.OrgName,
+	cdrServer, err := server.NewCDRServer(cdr, usage, nodeClient, serviceConfig.OrgId, serviceConfig.OrgName,
 		serviceConfig.PushGateway, asrClient, mbClient)
 	if err != nil {
-		log.Fatalf("asr server initialization failed. Error: %v", err)
+		log.Fatalf("CDR server initialization failed. Error: %v", err)
 	}
 
 	nSrv := server.NewCDREventServer(cdrServer, serviceConfig.OrgName)

@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/cdr/pkg/db"
@@ -28,39 +29,65 @@ import (
 	pb "github.com/ukama/ukama/systems/ukama-agent/cdr/pb/gen"
 )
 
-var cdr = db.CDR{
-	Session:       1,
-	NodeId:        ukama.NewVirtualHomeNodeId().String(),
-	Imsi:          "123456789012345678",
-	Policy:        uuid.NewV4().String(),
-	ApnName:       "ukama.co",
-	Ip:            "192.168.8.2",
-	StartTime:     uint64(time.Now().Unix() - 100000),
-	EndTime:       uint64(time.Now().Unix() - 50000),
-	LastUpdatedAt: uint64(time.Now().Unix() - 50000),
-	TxBytes:       2048000,
-	RxBytes:       1024000,
-	TotalBytes:    3072000,
-}
+const (
+	OrgName    = "ukama"
+	OrgId      = "40987edb-ebb6-4f84-a27c-99db7c136127"
+	session    = 1
+	imsi       = "123456789012345678"
+	apnName    = "ukama.co"
+	ip         = "192.168.8.2"
+	txBytes    = 2048000
+	rxBytes    = 1024000
+	totalBytes = 3072000
+)
 
-var usage = db.Usage{
-	Imsi:             "123456789012345678",
-	Historical:       0,
-	Usage:            0,
-	LastSessionUsage: 0,
-	LastSessionId:    0,
-}
+var (
+	nodeId        = ukama.NewVirtualHomeNodeId().String()
+	startTime     = uint64(time.Now().Unix() - 100000)
+	endTime       = uint64(time.Now().Unix() - 50000)
+	lastUpdatedAt = uint64(time.Now().Unix() - 50000)
+	policy        = uuid.NewV4().String()
+	siteId        = uuid.NewV4().String()
 
-var OrgName = "ukama"
-var OrgId = "40987edb-ebb6-4f84-a27c-99db7c136127"
+	cdr = db.CDR{
+		Session:       session,
+		NodeId:        nodeId,
+		Imsi:          imsi,
+		Policy:        policy,
+		ApnName:       apnName,
+		Ip:            ip,
+		StartTime:     startTime,
+		EndTime:       endTime,
+		LastUpdatedAt: lastUpdatedAt,
+		TxBytes:       txBytes,
+		RxBytes:       rxBytes,
+		TotalBytes:    totalBytes,
+	}
+
+	usage = db.Usage{
+		Imsi:             imsi,
+		Historical:       0,
+		Usage:            0,
+		LastSessionUsage: 0,
+		LastSessionId:    0,
+	}
+
+	nodeInfo = registry.NodeInfo{
+		Site: registry.NodeSiteInfo{
+			SiteId: siteId,
+			NodeId: nodeId,
+		},
+	}
+)
 
 func TestCDR_PostCDR(t *testing.T) {
 	cdrRepo := &mocks.CDRRepo{}
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
+	node := &cmocks.NodeClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	req := &pb.CDR{
@@ -79,18 +106,25 @@ func TestCDR_PostCDR(t *testing.T) {
 	}
 
 	asrClient.On("GetAsr", usage.Imsi).Return(
-		&asrpb.ReadResp{}, nil)
+		&asrpb.ReadResp{
+			Record: &asrpb.Record{
+				Policy: &asrpb.Policy{
+					Uuid: policy,
+				},
+			},
+		}, nil)
 	cdrRepo.On("Add", &cdr).Return(true, nil).Once()
 	usageRepo.On("Get", cdr.Imsi).Return(&usage, nil).Once()
-	cdrRepo.On("QueryUsage", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(uint64(0), nil).Once()
 	cdrRepo.On("GetByTimeAndNodeId", cdr.Imsi, cdr.StartTime, mock.Anything, cdr.NodeId).Return(&[]db.CDR{cdr}, nil).Once()
 	usageRepo.On("Add", mock.MatchedBy(func(u *db.Usage) bool {
 		return u.Imsi == cdr.Imsi
 	})).Return(nil).Once()
-	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.cdr.cdr.create", mock.MatchedBy(func(e *epb.CDRReported) bool {
-		return e.Imsi == cdr.Imsi
-	})).Return(nil).Once()
+	node.On("Get", cdr.NodeId).Return(&nodeInfo, nil).Once()
+
+	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.cdr.cdr.create",
+		mock.MatchedBy(func(e *epb.CDRReported) bool {
+			return e.Imsi == cdr.Imsi
+		})).Return(nil).Once()
 	_, err = s.PostCDR(context.TODO(), req)
 	assert.NoError(t, err)
 	cdrRepo.AssertExpectations(t)
@@ -102,9 +136,10 @@ func TestCDR_PostCDR_Duplicate(t *testing.T) {
 	cdrRepo := &mocks.CDRRepo{}
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
+	node := &cmocks.NodeClient{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	req := &pb.CDR{
@@ -144,8 +179,9 @@ func TestCDR_InitUsage(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	asrClient.On("GetAsr", usage.Imsi).Return(
@@ -167,8 +203,9 @@ func TestCDR_GetCDR(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	req := &pb.RecordReq{
@@ -193,8 +230,9 @@ func TestCDR_GetUsage(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	usageRepo.On("Get", cdr.Imsi).Return(&usage, nil).Once()
@@ -217,8 +255,9 @@ func TestCDR_GetUsageDetails(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	usageRepo.On("Get", cdr.Imsi).Return(&usage, nil).Once()
@@ -241,8 +280,9 @@ func TestCDR_GetUsageForPeriod(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	req := &pb.UsageForPeriodReq{
@@ -267,8 +307,9 @@ func TestCDR_ResetPackageUsage(t *testing.T) {
 	usageRepo := &mocks.UsageRepo{}
 	asrClient := &mocks.AsrService{}
 	mbC := &cmocks.MsgBusServiceClient{}
+	node := &cmocks.NodeClient{}
 
-	s, err := NewCDRServer(cdrRepo, usageRepo, OrgId, OrgName, "", asrClient, mbC)
+	s, err := NewCDRServer(cdrRepo, usageRepo, node, OrgId, OrgName, "", asrClient, mbC)
 	assert.NoError(t, err)
 
 	asrClient.On("GetAsr", usage.Imsi).Return(
