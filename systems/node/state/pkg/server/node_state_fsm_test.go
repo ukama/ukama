@@ -113,3 +113,39 @@ func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
 	require.NoError(t, instance.Transition("fault"))
 	assert.Equal(t, 2, published, "fault must publish")
 }
+
+func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.T) {
+	srv := &StateEventServer{
+		stateMachine: stm.NewStateMachine(func(stm.Event) {}),
+		configPath:   nodeStateConfigPath,
+		instances:    make(map[string]*stm.StateMachineInstance),
+	}
+
+	nodeId := "test-node-resync"
+
+	first, err := srv.getOrCreateInstance(nodeId, "Configured", "on")
+	require.NoError(t, err)
+	require.NoError(t, first.Transition("ready"))
+	require.Equal(t, "Operational", first.CurrentState)
+
+	t.Run("returns the cached instance when it matches stored state", func(t *testing.T) {
+		same, err := srv.getOrCreateInstance(nodeId, "Operational", "on")
+
+		require.NoError(t, err)
+		assert.Same(t, first, same)
+	})
+
+	t.Run("rebuilds from stored state when the cache has drifted", func(t *testing.T) {
+		resynced, err := srv.getOrCreateInstance(nodeId, "Faulty", "off")
+
+		require.NoError(t, err)
+		assert.NotSame(t, first, resynced)
+		assert.Equal(t, "Faulty", resynced.CurrentState)
+		assert.Equal(t, "off", resynced.CurrentSubstate,
+			"stored substate must survive the rebuild")
+
+		require.NoError(t, resynced.Transition("ready"))
+		assert.Equal(t, "Operational", resynced.CurrentState,
+			"resynced instance must transition from the stored state")
+	})
+}

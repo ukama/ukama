@@ -137,7 +137,7 @@ import (
  }
  
 
- func (n *StateEventServer) getOrCreateInstance(nodeID, initialState string) (*stm.StateMachineInstance, error) {
+ func (n *StateEventServer) getOrCreateInstance(nodeID, storedState, storedSubstate string) (*stm.StateMachineInstance, error) {
 	 if nodeID == "" {
 		 return nil, fmt.Errorf("node ID cannot be empty")
 	 }
@@ -146,11 +146,25 @@ import (
 	 defer n.instancesMu.Unlock()
  
 	 instance, exists := n.instances[nodeID]
+ 
+	 if exists && storedState != "" && instance.CurrentState != storedState {
+		 log.Warnf("Cached state %s for node %s does not match stored state %s, rebuilding instance",
+			 instance.CurrentState, nodeID, storedState)
+
+		 delete(n.instances, nodeID)
+		 exists = false
+	 }
+ 
 	 if !exists {
-		 newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, initialState)
+		 newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, storedState)
 		 if err != nil {
 			 return nil, fmt.Errorf("failed to create new instance: %w", err)
 		 }
+
+		 if storedSubstate != "" {
+			 newInstance.CurrentSubstate = storedSubstate
+		 }
+
 		 n.instances[nodeID] = newInstance
 		 instance = newInstance
 	 }
@@ -363,14 +377,20 @@ import (
 	 }
  
 	 var currentState npb.NodeState
+	 var currentSubstate string
+
 	 if latestState != nil && latestState.State != nil {
 		 currentState = latestState.State.CurrentState
+
+		 if len(latestState.State.SubState) > 0 {
+			 currentSubstate = latestState.State.SubState[len(latestState.State.SubState)-1]
+		 }
 	 } else {
 		 log.Infof("State information incomplete for node %s, creating initial state", nodeId)
 		 return n.createInitialNodeState(ctx, nodeId, eventName, msg)
 	 }
  
-	 instance, err := n.getOrCreateInstance(nodeId, currentState.String())
+	 instance, err := n.getOrCreateInstance(nodeId, currentState.String(), currentSubstate)
 	 if err != nil {
 		 return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	 }
@@ -421,7 +441,7 @@ import (
 	 
 	 log.Infof("Creating initial state for node %s with event %s", nodeId, eventName)
 	 
-	 instance, err := n.getOrCreateInstance(nodeId, "Unknown")
+	 instance, err := n.getOrCreateInstance(nodeId, npb.NodeState_Unknown.String(), "")
 	 if err != nil {
 		 return fmt.Errorf("failed to create state machine instance: %w", err)
 	 }
