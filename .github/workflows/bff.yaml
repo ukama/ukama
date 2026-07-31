@@ -15,7 +15,9 @@ jobs:
    working-directory: systems/console-bff
    PLANNING_TOOL_DB: ${{ secrets.PLANNING_TOOL_DB }}
   steps:
-   - uses: actions/checkout@v2
+   - uses: actions/checkout@v4
+     with:
+       fetch-depth: 0
      # init vars required for tag generation
    - name: Init vars
      id: vars_step
@@ -97,7 +99,7 @@ jobs:
    #       buildah push $REGISTRY\:${{ steps.vars_step.outputs.sha-short }}-test && \
    #       buildah push $REGISTRY\:latest-test
    - name: SonarCloud Scan
-     uses: sonarsource/sonarcloud-github-action@v2
+     uses: SonarSource/sonarqube-scan-action@v8
      env:
       GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}

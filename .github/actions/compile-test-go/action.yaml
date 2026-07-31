@@ -37,7 +37,7 @@ runs:
       path: |
         ~/.cache/go-build
         ~/go/pkg/mod
-        /opt/sonar-scanner/.sonar/cache
+        ~/.sonar/cache
       key: ${{ runner.os }}-go-ukama
       restore-keys: |
         ${{ runner.os }}-go-

@@ -29,6 +29,7 @@ jobs:
       aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
       aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
       build-listener: false
+      project-key: ukama_systems_dummy_dcontroller
 
  sonar-scan:
   name: sonar-scan
@@ -37,7 +38,9 @@ jobs:
   env:
    working-directory: testing/services/dummy/dcontroller
   steps:
-   - uses: actions/checkout@v3
+   - uses: actions/checkout@v4
+     with:
+       fetch-depth: 0
    - name: scan
      uses: ./.github/actions/sonar-go
      with:

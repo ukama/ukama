@@ -21,6 +21,10 @@ inputs:
     description: The build listener image 
     required: false
     default: "false"
+  project-key:
+    description: Sonarcloud project key, used to name the coverage artifact
+    required: false
+    default: ""
 
 runs:
   using: "composite"
@@ -40,12 +44,12 @@ runs:
     run: |
       git config --global url."https://none:${{ inputs.github-bot-token }}@github.com/ukama".insteadOf "https://github.com/ukama"
 
-  - uses: actions/cache@v3
+  - uses: actions/cache@v4
     with:
       path: |
         ~/.cache/go-build
         ~/go/pkg/mod
-        /opt/sonar-scanner/.sonar/cache
+        ~/.sonar/cache
       key: ${{ runner.os }}-go-ukama
       restore-keys: |
         ${{ runner.os }}-go-
