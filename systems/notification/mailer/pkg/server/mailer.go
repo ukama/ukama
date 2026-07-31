@@ -9,6 +9,7 @@
 package server
 
 import (
+	"errors"
 	"bytes"
 	"context"
 	"crypto/tls"
@@ -17,6 +18,7 @@ import (
 	"html/template"
 	"net"
 	"net/smtp"
+	"net/textproto"
 	"path/filepath"
 	"strings"
 	"time"
@@ -24,6 +26,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -107,7 +110,7 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 		}
 	}
 
-	mailId, err := s.QueueEmail(ctx, req.To, req.TemplateName, req.Values, attachments)
+	mailId, err := s.QueueEmail(ctx, req.To, req.TemplateName, req.Values, "", attachments)
 	if err != nil {
 		return nil, err
 	}
@@ -119,9 +122,23 @@ func (s *MailerServer) SendEmail(ctx context.Context, req *pb.SendEmailRequest) 
 }
 
 func (s *MailerServer) QueueEmail(ctx context.Context, to []string, templateName string,
-	values map[string]string, attachments []EmailAttachment) (uuid.UUID, error) {
+	values map[string]string, externalRef string, attachments []EmailAttachment) (uuid.UUID, error) {
 	timeoutCtx, cancel := context.WithTimeout(ctx, defaultTimeout)
 	defer cancel()
+
+	if externalRef != "" {
+		existing, err := s.mailerRepo.GetEmailByExternalRef(externalRef)
+		if err == nil && existing != nil {
+			log.Infof("Email for external ref %s already queued with mail id %s, skipping duplicate",
+				externalRef, existing.MailId)
+
+			return existing.MailId, nil
+		}
+
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return uuid.Nil, status.Errorf(codes.Internal, "failed to check for duplicate email: %v", err)
+		}
+	}
 
 	mailId := uuid.NewV4()
 	log.Infof("Queueing email to %v with template %s", to, templateName)
@@ -134,7 +151,7 @@ func (s *MailerServer) QueueEmail(ctx context.Context, to []string, templateName
 		Attachments:  attachments,
 	}
 
-	if err := s.saveEmailStatus(mailId, strings.Join(to, ","), templateName, ukama.MailStatusPending, values); err != nil {
+	if err := s.saveEmailStatus(mailId, strings.Join(to, ","), templateName, externalRef, ukama.MailStatusPending, values); err != nil {
 		return uuid.Nil, status.Errorf(codes.Internal, "failed to save email status: %v", err)
 	}
 
@@ -349,7 +366,7 @@ func (s *MailerServer) convertValues(reqValues map[string]string) map[string]int
 	return values
 }
 
-func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName string, status ukama.MailStatus, values map[string]string) error {
+func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName, externalRef string, status ukama.MailStatus, values map[string]string) error {
 	var nextRetryTime *time.Time
 	if status == ukama.MailStatusFailed {
 		t := time.Now().Add(InitialBackoff)
@@ -365,6 +382,7 @@ func (s *MailerServer) saveEmailStatus(mailId uuid.UUID, email, templateName str
 		MailId:        mailId,
 		Email:         email,
 		TemplateName:  templateName,
+		ExternalRef:   externalRef,
 		Status:        status,
 		RetryCount:    0,
 		NextRetryTime: nextRetryTime,
@@ -438,6 +456,15 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 	return client, nil
 }
 
+func isBenignSmtpError(err error) bool {
+	var tErr *textproto.Error
+	if errors.As(err, &tErr) {
+		return tErr.Code >= 200 && tErr.Code < 300
+	}
+
+	return false
+}
+
 func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload, body bytes.Buffer) error {
 	sendCtx, cancel := context.WithTimeout(context.Background(), smtpTimeout)
 	defer cancel()
@@ -462,22 +489,19 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 			return
 		}
 
-		defer func() {
-			if err := writer.Close(); err != nil {
-				log.Warnf("failed to close mail writer: %v", err)
-			}
-		}()
-
 		if _, err := writer.Write(body.Bytes()); err != nil {
 			errCh <- fmt.Errorf("failed to write message body: %w", err)
 			return
 		}
 
-		if err := client.Quit(); err != nil {
-			if !strings.Contains(err.Error(), "250 Ok") {
-				errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
-				return
-			}
+		if err := writer.Close(); err != nil {
+			errCh <- fmt.Errorf("failed to finalize message body: %w", err)
+			return
+		}
+
+		if err := client.Quit(); err != nil && !isBenignSmtpError(err) {
+			errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
+			return
 		}
 
 		errCh <- nil

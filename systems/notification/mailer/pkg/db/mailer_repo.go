@@ -22,6 +22,7 @@ import (
 type MailerRepo interface {
 	CreateEmail(mail *Mailing) error
 	GetEmailById(mailerId uuid.UUID) (*Mailing, error)
+	GetEmailByExternalRef(externalRef string) (*Mailing, error)
 	UpdateEmailStatus(mailing *Mailing) error
 	GetFailedEmails() ([]*Mailing, error)
 	GetStalledEmails(olderThan time.Time) ([]*Mailing, error)
@@ -46,6 +47,13 @@ func (s *mailerRepo) GetEmailById(mailerId uuid.UUID) (*Mailing, error) {
 	db := s.Db.GetGormDb()
 	mail := &Mailing{}
 	err := db.Where("mail_id = ?", mailerId).First(mail).Error
+	return mail, err
+}
+
+func (s *mailerRepo) GetEmailByExternalRef(externalRef string) (*Mailing, error) {
+	db := s.Db.GetGormDb()
+	mail := &Mailing{}
+	err := db.Where("external_ref = ?", externalRef).First(mail).Error
 	return mail, err
 }
 func (r *mailerRepo) UpdateEmailStatus(mailing *Mailing) error {

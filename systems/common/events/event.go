@@ -72,6 +72,7 @@ const (
 	EventOperationCompleted
 	EventOperationFailed
 	EventSiteDelete
+	EventReceiptGenerate
 )
 
 var EventRoutingKey = [...]string{
@@ -120,6 +121,7 @@ var EventRoutingKey = [...]string{
 	EventNotificationDelete: "event.cloud.local.{{ .Org}}.notification.notify.notification.delete",
 	EventNotificationStore:  "event.cloud.local.{{ .Org}}.notification.notify.notification.store",
 	EventPaymentSuccess:     "event.cloud.local.{{ .Org}}.payments.processor.payment.success",
+	EventReceiptGenerate:    "event.cloud.local.{{ .Org}}.report.generator.receipt.generate",
 	EventPaymentFailed:      "event.cloud.local.{{ .Org}}.payments.processor.payment.failed",
 	EventNodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
 	EventOperationCompleted:  "event.cloud.global.{{ .Org}}.operation.manager.operation.completed",
@@ -453,6 +455,14 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Name:        "EventInvoiceGenerate",
 		Title:       "Invoice Generated",
 		Description: "Invoice Generated",
+		Scope:       notif.SCOPE_ORG,
+		Type:        notif.TYPE_ACTIONABLE_INFO,
+	},
+	EventReceiptGenerate: {
+		Key:         EventReceiptGenerate,
+		Name:        "EventReceiptGenerated",
+		Title:       "Receipt Generated",
+		Description: "Receipt Generated",
 		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_ACTIONABLE_INFO,
 	},

@@ -1,0 +1,29 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2023-present, Ukama Inc.
+ */
+
+syntax = "proto3";
+
+option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
+
+package ukama.events.v1;
+
+message EventReceiptGenerated {
+    string id = 1;
+    string receiptNumber = 2 [json_name = "receipt_number"];
+    string payerName = 3 [json_name = "payer_name"];
+    string payerEmail = 4 [json_name = "payer_email"];
+    string amount = 5;
+    string currency = 6;
+    string paidAt = 7 [json_name = "paid_at"];
+    string paymentMethod = 8 [json_name = "payment_method"];
+    string description = 9;
+    string orgName = 10 [json_name = "org_name"];
+    string bucket = 11;
+    string objectKey = 12 [json_name = "object_key"];
+    string fileName = 13 [json_name = "file_name"];
+}

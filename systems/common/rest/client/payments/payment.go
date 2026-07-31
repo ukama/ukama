@@ -53,7 +53,7 @@ type AddPaymentRequest struct {
 	Amount        string            `json:"amount"`
 	Currency      string            `json:"currency"`
 	PaymentMethod string            `json:"payment_method"`
-	PayerName     string            `json:"payer_name"`
+	PayerName     string            `json:"payer_name,omitempty"`
 	PayerPhone    string            `json:"payer_phone,omitempty"`
 	PayerEmail    string            `json:"payer_email,omitempty"`
 	Country       string            `json:"country,omitempty"`

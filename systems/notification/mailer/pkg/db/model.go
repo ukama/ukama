@@ -21,6 +21,7 @@ type Mailing struct {
 	MailId        uuid.UUID        `gorm:"primaryKey;type:uuid"`
 	Email         string           `gorm:"size:255"`
 	TemplateName  string           `gorm:"size:255"`
+	ExternalRef   string           `gorm:"size:255;index"`
 	SentAt        *time.Time       `gorm:"index"`
 	Status        ukama.MailStatus `gorm:"type:uint;not null"`
 	RetryCount    int              `gorm:"default:0"`

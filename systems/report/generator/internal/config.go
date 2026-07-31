@@ -30,6 +30,17 @@ type Config struct {
 	Service           *config.Service
 	OrgName           string
 	OrgId             string
+	Storage           *StorageConfig    `default:"{}"`
+}
+
+type StorageConfig struct {
+	Enabled   bool   `default:"false"`
+	Endpoint  string `default:""`
+	AccessKey string `default:""`
+	SecretKey string `default:""`
+	Bucket    string `default:"reports"`
+	Region    string `default:""`
+	Secure    bool   `default:"false"`
 }
 
 func NewConfig(name string) *Config {
@@ -46,6 +57,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.generate",
 				"event.cloud.local.{{ .Org}}.billing.report.invoice.update",
+				"event.cloud.local.{{ .Org}}.payments.processor.payment.success",
 			},
 		},
 	}

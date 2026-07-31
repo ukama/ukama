@@ -21,9 +21,12 @@ import (
 
 	"github.com/ukama/ukama/systems/common/emailTemplate"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"gorm.io/gorm"
 	"github.com/ukama/ukama/systems/common/ukama"
+	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/mailer/mocks"
 	"github.com/ukama/ukama/systems/notification/mailer/pkg/db"
+	"github.com/ukama/ukama/systems/notification/mailer/pkg/storage"
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -39,12 +42,21 @@ const (
 	testOwnerName       = "Test Owner"
 	testQrCode          = "qr-code-payload"
 	testPackageName     = "Monthly 5GB"
+	testPayerEmail      = "brackley@ukama.com"
+	testPayerName       = "Brackley"
+	testReceiptNumber   = "RCPT-37522EA5"
+	testReceiptBucket   = "report-ukama"
+	testReceiptKey      = "37522ea5-3207-4d81-b19d-ab162adab725.pdf"
 )
 
 func setupEventServer(t *testing.T) (*MailerEventServer, *mocks.MailerRepo) {
+	return setupEventServerWithStorage(t, nil)
+}
+
+func setupEventServerWithStorage(t *testing.T, store storage.Storage) (*MailerEventServer, *mocks.MailerRepo) {
 	server, mockRepo := setupServer(t)
 
-	return NewMailerEventServer(testEventOrgName, server), mockRepo
+	return NewMailerEventServer(testEventOrgName, server, store), mockRepo
 }
 
 func eventFor(t *testing.T, key evt.EventId, msg proto.Message) *epb.Event {
@@ -346,4 +358,96 @@ func TestFriendlyRole(t *testing.T) {
 	for role, want := range cases {
 		assert.Equal(t, want, friendlyRole(role))
 	}
+}
+
+
+func receiptEvent() *epb.EventReceiptGenerated {
+	return &epb.EventReceiptGenerated{
+		Id:            "37522ea5-3207-4d81-b19d-ab162adab725",
+		ReceiptNumber: testReceiptNumber,
+		PayerName:     testPayerName,
+		PayerEmail:    testPayerEmail,
+		Amount:        "15.00",
+		Currency:      "USD",
+		PaidAt:        "July 30, 2026",
+		PaymentMethod: "cash",
+		Description:   "Prepaid 15GB",
+		OrgName:       testEventOrgName,
+		Bucket:        testReceiptBucket,
+		ObjectKey:     testReceiptKey,
+		FileName:      testReceiptNumber + ".pdf",
+	}
+}
+
+func TestEventNotification_ReceiptGenerate(t *testing.T) {
+	t.Run("queues receipt email with the pdf fetched from storage", func(t *testing.T) {
+		store := mocks.NewStorage(t)
+		store.On("Get", mock.Anything, testReceiptBucket, testReceiptKey).
+			Return([]byte("%PDF-1.4 receipt"), nil).Once()
+
+		es, repo := setupEventServerWithStorage(t, store)
+		repo.On("GetEmailByExternalRef", mock.AnythingOfType("string")).
+			Return(nil, gorm.ErrRecordNotFound).Once()
+		created := expectQueuedEmail(repo)
+
+		res, err := es.EventNotification(context.TODO(),
+			eventFor(t, evt.EventReceiptGenerate, receiptEvent()))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+
+		assert.Equal(t, testPayerEmail, created.Email)
+		assert.Equal(t, emailTemplate.EmailTemplatePaymentReceipt, created.TemplateName)
+		assert.Equal(t, ukama.MailStatusPending, created.Status)
+		assert.Equal(t, testPayerName, created.Values[emailTemplate.EmailKeyName])
+		assert.Equal(t, testEventOrgName, created.Values[emailTemplate.EmailKeyOrg])
+		assert.Equal(t, "USD 15.00", created.Values[emailTemplate.EmailKeyAmount])
+		assert.Equal(t, testReceiptNumber, created.Values[emailTemplate.EmailKeyReceiptNumber])
+		assert.Equal(t, "July 30, 2026", created.Values[emailTemplate.EmailKeyPaymentDate])
+		assert.Equal(t, "cash", created.Values[emailTemplate.EmailKeyPaymentMethod])
+	})
+
+	t.Run("skips when the event carries no payer email", func(t *testing.T) {
+		es, _ := setupEventServerWithStorage(t, nil)
+
+		msg := receiptEvent()
+		msg.PayerEmail = ""
+
+		res, err := es.EventNotification(context.TODO(),
+			eventFor(t, evt.EventReceiptGenerate, msg))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+	})
+
+	t.Run("skips duplicate receipt email on event redelivery", func(t *testing.T) {
+		store := mocks.NewStorage(t)
+		store.On("Get", mock.Anything, testReceiptBucket, testReceiptKey).
+			Return([]byte("%PDF-1.4 receipt"), nil).Once()
+
+		es, repo := setupEventServerWithStorage(t, store)
+		repo.On("GetEmailByExternalRef", mock.AnythingOfType("string")).
+			Return(&db.Mailing{MailId: uuid.NewV4()}, nil).Once()
+
+		res, err := es.EventNotification(context.TODO(),
+			eventFor(t, evt.EventReceiptGenerate, receiptEvent()))
+
+		assert.NoError(t, err)
+		assert.NotNil(t, res)
+		repo.AssertNotCalled(t, "CreateEmail", mock.Anything)
+	})
+
+	t.Run("returns error so the event is retried when the pdf cannot be fetched", func(t *testing.T) {
+		store := mocks.NewStorage(t)
+		store.On("Get", mock.Anything, testReceiptBucket, testReceiptKey).
+			Return(nil, assert.AnError).Once()
+
+		es, _ := setupEventServerWithStorage(t, store)
+
+		res, err := es.EventNotification(context.TODO(),
+			eventFor(t, evt.EventReceiptGenerate, receiptEvent()))
+
+		assert.Error(t, err)
+		assert.Nil(t, res)
+	})
 }

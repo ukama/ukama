@@ -23,6 +23,15 @@ type MailerConfig struct {
 	From     string `default:"hello@dev.ukama.com"`
 }
 
+type StorageConfig struct {
+	Enabled   bool   `default:"false"`
+	Endpoint  string `default:""`
+	AccessKey string `default:""`
+	SecretKey string `default:""`
+	Region    string `default:""`
+	Secure    bool   `default:"false"`
+}
+
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`
@@ -33,6 +42,7 @@ type Config struct {
 	TemplatesPath    string           `default:"templates"`
 	Service          *uconf.Service
 	Mailer           *MailerConfig
+	Storage          *StorageConfig `default:"{}"`
 	OrgName          string
 	OrgId            string
 }
@@ -49,6 +59,7 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventInviteCreate],
 				evt.EventRoutingKey[evt.EventSimAllocate],
 				evt.EventRoutingKey[evt.EventSimAddPackage],
+				evt.EventRoutingKey[evt.EventReceiptGenerate],
 			}},
 	}
 }
