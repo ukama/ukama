@@ -24,7 +24,7 @@ runs:
       path: |
         ~/.cache/go-build
         ~/go/pkg/mod
-        ~/.sonar/cache
+        /opt/sonar-scanner/.sonar/cache
       key: ${{ runner.os }}-go-ukama
       restore-keys: |
         ${{ runner.os }}-go-
@@ -36,7 +36,7 @@ runs:
       path: ${{ inputs.working-directory }}
 
   - name: SonarCloud Scan
-    uses: SonarSource/sonarqube-scan-action@v8
+    uses: sonarsource/sonarcloud-github-action@v3
     env:
       GITHUB_TOKEN: ${{ inputs.github-bot-token }}
       SONAR_TOKEN: ${{ inputs.sonar-token }}

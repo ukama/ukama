@@ -15,9 +15,7 @@ jobs:
   name: build and test
   runs-on: ubuntu-latest
   steps:
-   - uses: actions/checkout@v4
-     with:
-       fetch-depth: 0
+   - uses: actions/checkout@v3
      # init vars required for tag generation
    - name: Init vars
      id: vars_step
@@ -37,7 +35,7 @@ jobs:
       cache-dependency-path: 'interfaces/ukama-console/pnpm-lock.yaml'
 
    - name: Setup pnpm cache
-     uses: actions/cache@v4
+     uses: actions/cache@v3
      with:
       path: ~/.pnpm-store
       key: ${{ runner.os }}-pnpm-store-${{ hashFiles('interfaces/ukama-console/pnpm-lock.yaml') }}
@@ -80,7 +78,7 @@ jobs:
      working-directory: ${{ env.working-directory }}
 
    - name: SonarCloud Scan
-     uses: SonarSource/sonarqube-scan-action@v8
+     uses: sonarsource/sonarcloud-github-action@v2
      env:
       GITHUB_TOKEN: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
