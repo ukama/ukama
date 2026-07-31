@@ -1,2 +1,2 @@
 Country,Network,VPMN,IMSI,SMS MO,SMS MT,Data,2G,3G,5G,LTE,LTE-M,APN
-usa,Manged Telco,TTC,1,$0.2,$0.1,$0.5,2G,3G,,LTE,,Manual entry required
+USA,Manged Telco,TTC,1,$0.2,$0.1,$0.5,2G,3G,,LTE,,Manual entry required
