@@ -90,3 +90,26 @@ func TestNodeStateFsm_OnboardingFromUnknown(t *testing.T) {
 	require.NoError(t, instance.Transition("ready"))
 	assert.Equal(t, "Operational", instance.CurrentState)
 }
+
+func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
+	published := 0
+
+	sm := stm.NewStateMachine(func(e stm.Event) {
+		if e.OldState == e.NewState && e.OldSubstate == e.NewSubstate {
+			return
+		}
+		published++
+	})
+
+	instance, err := sm.NewInstance(nodeStateConfigPath, "no-op-publish", "Operational")
+	require.NoError(t, err)
+
+	require.NoError(t, instance.Transition("online"))
+	assert.Equal(t, 1, published, "online changes substate and must publish")
+
+	require.NoError(t, instance.Transition("ready"))
+	assert.Equal(t, 1, published, "repeat ready must not publish a state change")
+
+	require.NoError(t, instance.Transition("fault"))
+	assert.Equal(t, 2, published, "fault must publish")
+}

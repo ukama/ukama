@@ -83,6 +83,13 @@ import (
  
 
  func (n *StateEventServer) handleTransition(event stm.Event) {
+	 if event.OldState == event.NewState && event.OldSubstate == event.NewSubstate {
+		 log.Infof("Event %s for node %s did not change state %s, skipping transition event",
+			 event.Name, event.InstanceID, event.NewState)
+
+		 return
+	 }
+
 	 n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
  }
  
