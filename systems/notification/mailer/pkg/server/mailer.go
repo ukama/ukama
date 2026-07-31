@@ -18,6 +18,7 @@ import (
 	"html/template"
 	"net"
 	"net/smtp"
+	"net/textproto"
 	"path/filepath"
 	"strings"
 	"time"
@@ -455,6 +456,15 @@ func (s *MailerServer) createSMTPClient(ctx context.Context) (*smtp.Client, erro
 	return client, nil
 }
 
+func isBenignSmtpError(err error) bool {
+	var tErr *textproto.Error
+	if errors.As(err, &tErr) {
+		return tErr.Code >= 200 && tErr.Code < 300
+	}
+
+	return false
+}
+
 func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload, body bytes.Buffer) error {
 	sendCtx, cancel := context.WithTimeout(context.Background(), smtpTimeout)
 	defer cancel()
@@ -479,22 +489,19 @@ func (s *MailerServer) sendWithClient(client *smtp.Client, payload *EmailPayload
 			return
 		}
 
-		defer func() {
-			if err := writer.Close(); err != nil {
-				log.Warnf("failed to close mail writer: %v", err)
-			}
-		}()
-
 		if _, err := writer.Write(body.Bytes()); err != nil {
 			errCh <- fmt.Errorf("failed to write message body: %w", err)
 			return
 		}
 
-		if err := client.Quit(); err != nil {
-			if !strings.Contains(err.Error(), "250 Ok") {
-				errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
-				return
-			}
+		if err := writer.Close(); err != nil {
+			errCh <- fmt.Errorf("failed to finalize message body: %w", err)
+			return
+		}
+
+		if err := client.Quit(); err != nil && !isBenignSmtpError(err) {
+			errCh <- fmt.Errorf("failed to close SMTP connection: %w", err)
+			return
 		}
 
 		errCh <- nil
