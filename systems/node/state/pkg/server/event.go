@@ -421,18 +421,22 @@ import (
 	 
 	 if err := instance.Transition(eventName); err != nil {
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
-		 
-		 if eventName == evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline] && instance.CurrentSubstate == "" {
-			 instance.CurrentSubstate = DefaultSubstate
-			 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
-		 }
+	 }
+	 
+	 if instance.CurrentSubstate == "" {
+		 instance.CurrentSubstate = DefaultSubstate
+		 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
 	 }
 	 
 	 initialSubstate := instance.CurrentSubstate
-	 if initialSubstate == "" {
-		 initialSubstate = DefaultSubstate 
-		 log.Infof("Using default substate '%s' for node %s", DefaultSubstate, nodeId)
+	 
+	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	 if !ok {
+		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		 stateValue = int32(npb.NodeState_Unknown)
 	 }
+	 
+	 initialState := npb.NodeState(stateValue)
 	 
 	 var addStateRequest *pb.AddStateRequest
  
@@ -440,7 +444,7 @@ import (
 	 case *epb.NodeOnlineEvent:
 		 addStateRequest = &pb.AddStateRequest{
 			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState_Unknown,
+			 CurrentState: initialState,
 			 SubState:     []string{initialSubstate},
 			 Events:       []string{eventName},
 			 NodeIp:       m.NodeIp,
@@ -452,7 +456,7 @@ import (
 	 default:
 		 addStateRequest = &pb.AddStateRequest{
 			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState_Unknown,
+			 CurrentState: initialState,
 			 SubState:     []string{initialSubstate},
 			 Events:       []string{eventName},
 		 }
@@ -463,6 +467,6 @@ import (
 		 return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
 	 }
 	 
-	 log.Infof("Initial state created for node %s with state Unknown, substate %s", nodeId, initialSubstate)
+	 log.Infof("Initial state created for node %s with state %s, substate %s", nodeId, initialState, initialSubstate)
 	 return nil
  }
