@@ -58,6 +58,7 @@ type PackageInfo struct {
 	Overdraft      float64        `json:"overdraft"`
 	TrafficPolicy  uint32         `json:"traffic_policy"`
 	Networks       []string       `json:"networks"`
+	Country        string         `json:"country"`
 	SyncStatus     string         `json:"sync_status,omitempty"`
 }
 
@@ -87,6 +88,7 @@ type AddPackageRequest struct {
 	BaserateId    string   `json:"baserate_id" validation:"required"`
 	Overdraft     float64  `json:"overdraft"`
 	TrafficPolicy uint32   `json:"traffic_policy"`
+	Country       string   `json:"country"`
 	Networks      []string `json:"networks"`
 }
 

@@ -32,7 +32,7 @@ func NewConfig(name string) *Config {
 		},
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
-			Timeout:        5 * time.Second,
+			Timeout:        3 * time.Second,
 			ListenerRoutes: nil,
 		},
 	}
