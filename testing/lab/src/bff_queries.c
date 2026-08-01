@@ -166,6 +166,29 @@ const char *BFF_GET_APPS =
 "query GetApps($data: GetAppsInputDto!) {"
 " getApps(data: $data) { apps { name version tag status } } }";
 
+const char *BFF_GET_SOFTWARES =
+"query GetSoftwares($data: GetSoftwaresInput!) {"
+" getSoftwares(data: $data) { software { id releaseDate nodeId status "
+" currentVersion desiredVersion name createdAt updatedAt } } }";
+
+const char *BFF_GET_NODE_OPERATION_STATUS =
+"query GetNodeOperationStatus($nodeId: String!) {"
+" getNodeOperationStatus(data: { nodeId: $nodeId }) { nodeId type busy "
+" operation { id type status requestedBy startedAt leaseExpiresAt } } }";
+
+const char *BFF_GET_SITE_OPERATION_STATUS =
+"query GetSiteOperationStatus($siteId: String!) {"
+" getSiteOperationStatus(data: { siteId: $siteId }) { siteId busy degraded "
+" nodes { nodeId type busy operation { id type status requestedBy startedAt "
+" leaseExpiresAt } } actions { restartSite { available reason } "
+" rf { available reason } service { available reason } } } }";
+
+const char *BFF_GET_KPI_TIMESERIES =
+"query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {"
+" getKpiTimeSeries(data: $data) { values { kpi value span op from to unit "
+" symbol isPartial computedAt scope { key value } trend { direction "
+" changePct changeAbs prevValue hasPrevious } } } }";
+
 const char *BFF_GET_COMPONENTS_BY_USER_ID =
 "query GetComponentsByUserId($data: ComponentTypeInputDto!) {"
 " getComponentsByUserId(data: $data) {"

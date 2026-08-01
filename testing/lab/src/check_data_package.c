@@ -44,7 +44,7 @@ static int resolve_networks(world_t *world,
     return selector_resolve_networks(world, &effective, result, err);
 }
 
-static int package_catalog_equals(check_ctx_t *ctx,
+static int package_fields_equal(check_ctx_t *ctx,
                                   const check_spec_t *check,
                                   check_result_t *res,
                                   ulab_error_t *err) {
@@ -106,7 +106,7 @@ static int package_catalog_equals(check_ctx_t *ctx,
     }
     res->passed = matched == networks.count;
     snprintf(res->detail, sizeof(res->detail),
-             "package=%s catalog_match=%zu/%zu%s%s",
+             "package=%s fields_match=%zu/%zu%s%s",
              check->package_ref, matched, networks.count,
              detail[0] ? " " : "", detail);
     selector_result_free(&networks);
@@ -456,7 +456,7 @@ int check_data_package(check_ctx_t *ctx, const check_spec_t *check,
                        check_result_t *res, ulab_error_t *err) {
     switch (check->type) {
     case CHECK_PACKAGE_CATALOG_EQUALS:
-        return package_catalog_equals(ctx, check, res, err);
+        return package_fields_equal(ctx, check, res, err);
     case CHECK_PACKAGE_VISIBLE:
     case CHECK_PACKAGE_HIDDEN:
         return package_visibility(ctx, check, res, err);

@@ -32,6 +32,8 @@ int check_data_package(check_ctx_t *ctx, const check_spec_t *check,
                        check_result_t *res, ulab_error_t *err);
 int check_business(check_ctx_t *ctx, const check_spec_t *check,
                    check_result_t *res, ulab_error_t *err);
+int check_console(check_ctx_t *ctx, const check_spec_t *check,
+                  check_result_t *res, ulab_error_t *err);
 
 static void res_init(check_result_t *res, const check_spec_t *check) {
     memset(res, 0, sizeof(*res));
@@ -59,6 +61,17 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_NODE_HEALTH_OK:
     case CHECK_RELEASE_UNAVAILABLE:
         return check_runtime(ctx, check, res, err);
+    case CHECK_LIST_COUNT_EQUALS:
+    case CHECK_ENTITY_FIELDS_EQUAL:
+    case CHECK_ENTITY_RECONCILES:
+    case CHECK_NODE_STATUS_EQUALS:
+    case CHECK_SOFTWARE_STATUS_EQUALS:
+    case CHECK_SOFTWARE_COUNT_EQUALS:
+    case CHECK_NODE_OPERATION_STATUS_EQUALS:
+    case CHECK_SITE_OPERATION_STATUS_EQUALS:
+    case CHECK_KPI_STATE_EQUALS:
+    case CHECK_KPI_TIMESERIES:
+        return check_console(ctx, check, res, err);
     case CHECK_USAGE_PER_SIM:
     case CHECK_USAGE_SAMPLE:
         return check_usage(ctx, check, res, err);

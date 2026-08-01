@@ -81,7 +81,7 @@ Supported checks:
 - `package_state`
 - `package_assignment_count`
 - `package_assignment_chain`
-- `package_catalog_equals`
+- `package_fields_equal` (`package_catalog_equals` remains an alias)
 - `package_visible`
 - `package_hidden`
 - `package_name_available`
@@ -107,6 +107,16 @@ Supported checks:
 - `node_version_equals`
 - `node_health_ok`
 - `release_unavailable`
+- `list_count_equals`
+- `entity_fields_equal`
+- `entity_reconciles`
+- `node_status_equals`
+- `software_status_equals`
+- `software_count_equals`
+- `node_operation_status_equals`
+- `site_operation_status_equals`
+- `kpi_state_equals`
+- `kpi_timeseries`
 - `balance_non_negative`
 
 
@@ -301,7 +311,7 @@ overridden with `timeout_seconds` and `poll_seconds`.
 Data-package GraphQL effect checks:
 
 ```yaml
-- type: package_catalog_equals
+- type: package_fields_equal
   package: minute_plan
 
 - type: package_assignment_chain
@@ -320,7 +330,7 @@ Data-package GraphQL effect checks:
   network: net-001
 ```
 
-`package_catalog_equals` compares BFF catalog fields with the scenario plan.
+`package_fields_equal` compares the direct `getPackage` fields with the scenario plan. `package_catalog_equals` remains accepted as a temporary alias for existing scenarios.
 `package_assignment_chain` reads `getPackagesForSim`, verifies the expected
 assignment count and ordering, and rejects overlapping ranges; `expected: all`
 checks the full returned chain. `package_business_metrics` polls the BFF
@@ -335,6 +345,115 @@ Checks may set `immediate: true`. Such checks execute at their phase position
 instead of being deferred until after traffic reconciliation. This is intended
 for transition-boundary assertions whose state could change again while CDRs
 are being processed.
+
+Reusable console checks use the same direct BFF calls as the console:
+
+```yaml
+- type: list_count_equals
+  target: nodes
+  networks: net-001
+  expected_count: 3
+
+- type: entity_fields_equal
+  entity: site
+  ref: site-001
+
+- type: entity_reconciles
+  entity: node
+  ref: node-001
+
+- type: node_status_equals
+  type_selector: controller
+  connectivity: Online
+  state: Operational
+```
+
+`list_count_equals` counts the full current BFF list instead of counting only
+resources already known to the generated world. Supported targets are
+`networks`, `sites`, `nodes`, `customers`/`subscribers`, `plans`/`packages`,
+and `sims`. For every target except `networks`, select exactly one network
+because a console list is always scoped to one selected network.
+
+`entity_fields_equal` reads the entity's direct detail query and compares the
+visible identity fields with the generated world. Supported entities are
+`network`, `site`, `node`, `customer`/`subscriber`, and `plan`/`package`.
+`entity_reconciles` reads both the direct list and detail queries and verifies
+that their common fields agree.
+
+`node_status_equals` keeps connectivity and lifecycle state separate. Either
+field may be omitted, or both may be asserted together. It polls until all
+selected nodes match or `timeout_seconds` expires.
+
+Software and operation-state checks:
+
+```yaml
+- type: software_status_equals
+  type_selector: controller
+  app: example
+  status: update_in_progress
+  desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+
+- type: software_count_equals
+  type_selector: controller
+  expected_count: 4
+
+- type: node_operation_status_equals
+  type_selector: controller
+  busy: true
+  operation_type: software_update
+  operation_status: RUNNING
+
+- type: site_operation_status_equals
+  sites: site-001
+  busy: true
+  degraded: false
+  restart_available: false
+  rf_available: true
+  service_available: false
+```
+
+`software_status_equals` reads `getSoftwares`, which is the console-facing
+software status source. It can validate `status`, `current_version`, and
+`desired_version`. `software_count_equals` checks the full software-row count
+returned for each selected node. Runtime version and health should still be confirmed with
+`node_version_equals` and `node_health_ok`, which use `getApps`.
+
+`node_operation_status_equals` reads `getNodeOperationStatus`.
+`site_operation_status_equals` reads `getSiteOperationStatus` and can validate
+site busy/degraded state, per-action availability, and an active node
+operation's type/status. A repeated read is how a scenario represents a
+console refresh during an operation.
+
+KPI state and chart checks:
+
+```yaml
+- type: kpi_state_equals
+  key: REVENUE
+  networks: net-001
+  span: daily
+  value_state: fresh
+  max_age_seconds: 120
+
+- type: kpi_timeseries
+  key: REVENUE
+  networks: net-001
+  span: daily
+  from: 2026-07-01T00:00:00Z
+  to: 2026-08-01T00:00:00Z
+  expected_count: 31
+  expected_value: 25.00
+  comparator: equals
+  require_computed_at: true
+```
+
+`kpi_state_equals` supports `missing`, `unavailable`, `no_data`, `present`,
+`available`, `zero`, `non_zero`, `fresh`, and `stale`. Fresh/stale checks use
+`max_age_seconds` and the BFF `computedAt` timestamp.
+
+`kpi_timeseries` reads `getKpiTimeSeries`, verifies ordered bucket boundaries,
+and can assert bucket count, summed value, computed timestamps, and one of the
+states `empty`, `present`, `all_zero`, or `non_zero`. It intentionally validates
+BFF data rather than chart pixels.
 
 Console analytics checks always use BFF `getKpiValues` or
 `getPerformanceReport`; scenarios never call the analytics backend directly:

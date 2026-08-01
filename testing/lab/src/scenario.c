@@ -159,7 +159,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_PACKAGE_STATE: return "package_state";
     case CHECK_PACKAGE_ASSIGNMENT_COUNT: return "package_assignment_count";
     case CHECK_PACKAGE_ASSIGNMENT_CHAIN: return "package_assignment_chain";
-    case CHECK_PACKAGE_CATALOG_EQUALS: return "package_catalog_equals";
+    case CHECK_PACKAGE_CATALOG_EQUALS: return "package_fields_equal";
     case CHECK_PACKAGE_VISIBLE: return "package_visible";
     case CHECK_PACKAGE_HIDDEN: return "package_hidden";
     case CHECK_PACKAGE_NAME_AVAILABLE: return "package_name_available";
@@ -193,6 +193,18 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
     case CHECK_NODE_HEALTH_OK: return "node_health_ok";
     case CHECK_RELEASE_UNAVAILABLE: return "release_unavailable";
+    case CHECK_LIST_COUNT_EQUALS: return "list_count_equals";
+    case CHECK_ENTITY_FIELDS_EQUAL: return "entity_fields_equal";
+    case CHECK_ENTITY_RECONCILES: return "entity_reconciles";
+    case CHECK_NODE_STATUS_EQUALS: return "node_status_equals";
+    case CHECK_SOFTWARE_STATUS_EQUALS: return "software_status_equals";
+    case CHECK_SOFTWARE_COUNT_EQUALS: return "software_count_equals";
+    case CHECK_NODE_OPERATION_STATUS_EQUALS:
+        return "node_operation_status_equals";
+    case CHECK_SITE_OPERATION_STATUS_EQUALS:
+        return "site_operation_status_equals";
+    case CHECK_KPI_STATE_EQUALS: return "kpi_state_equals";
+    case CHECK_KPI_TIMESERIES: return "kpi_timeseries";
     case CHECK_HISTORY_PRESERVED: return "history_preserved";
     case CHECK_AUDIT_EVENT_EXISTS: return "audit_event_exists";
     case CHECK_RELATIONSHIP_EXISTS: return "relationship_exists";
@@ -288,7 +300,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_PACKAGE_ASSIGNMENT_COUNT;
     } else if (ulab_streq(name, "package_assignment_chain")) {
         *out = CHECK_PACKAGE_ASSIGNMENT_CHAIN;
-    } else if (ulab_streq(name, "package_catalog_equals")) {
+    } else if (ulab_streq(name, "package_fields_equal") ||
+               ulab_streq(name, "package_catalog_equals")) {
         *out = CHECK_PACKAGE_CATALOG_EQUALS;
     } else if (ulab_streq(name, "package_visible")) {
         *out = CHECK_PACKAGE_VISIBLE;
@@ -341,6 +354,26 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_HEALTH_OK;
     } else if (ulab_streq(name, "release_unavailable")) {
         *out = CHECK_RELEASE_UNAVAILABLE;
+    } else if (ulab_streq(name, "list_count_equals")) {
+        *out = CHECK_LIST_COUNT_EQUALS;
+    } else if (ulab_streq(name, "entity_fields_equal")) {
+        *out = CHECK_ENTITY_FIELDS_EQUAL;
+    } else if (ulab_streq(name, "entity_reconciles")) {
+        *out = CHECK_ENTITY_RECONCILES;
+    } else if (ulab_streq(name, "node_status_equals")) {
+        *out = CHECK_NODE_STATUS_EQUALS;
+    } else if (ulab_streq(name, "software_status_equals")) {
+        *out = CHECK_SOFTWARE_STATUS_EQUALS;
+    } else if (ulab_streq(name, "software_count_equals")) {
+        *out = CHECK_SOFTWARE_COUNT_EQUALS;
+    } else if (ulab_streq(name, "node_operation_status_equals")) {
+        *out = CHECK_NODE_OPERATION_STATUS_EQUALS;
+    } else if (ulab_streq(name, "site_operation_status_equals")) {
+        *out = CHECK_SITE_OPERATION_STATUS_EQUALS;
+    } else if (ulab_streq(name, "kpi_state_equals")) {
+        *out = CHECK_KPI_STATE_EQUALS;
+    } else if (ulab_streq(name, "kpi_timeseries")) {
+        *out = CHECK_KPI_TIMESERIES;
     } else if (ulab_streq(name, "history_preserved")) {
         *out = CHECK_HISTORY_PRESERVED;
     } else if (ulab_streq(name, "audit_event_exists")) {
@@ -482,6 +515,16 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
      */
     if (c->type == CHECK_PACKAGE_STATE) {
         c->timeout_seconds = 30;
+    } else if (c->type == CHECK_SOFTWARE_STATUS_EQUALS ||
+               c->type == CHECK_SOFTWARE_COUNT_EQUALS ||
+               c->type == CHECK_NODE_OPERATION_STATUS_EQUALS ||
+               c->type == CHECK_SITE_OPERATION_STATUS_EQUALS) {
+        c->timeout_seconds = 180;
+        c->poll_seconds = 2;
+    } else if (c->type == CHECK_KPI_STATE_EQUALS ||
+               c->type == CHECK_KPI_TIMESERIES) {
+        c->timeout_seconds = 300;
+        c->poll_seconds = 5;
     } else if (c->type == CHECK_PACKAGE_BUSINESS_METRICS) {
         c->timeout_seconds = 60;
         c->poll_seconds = 10;
@@ -542,6 +585,68 @@ static int apply_check_field(check_spec_t *c, const char *key,
         return ulab_copy(c->payment_method,
                          sizeof(c->payment_method), val);
     }
+    if (ulab_streq(key, "connectivity")) {
+        return ulab_copy(c->connectivity, sizeof(c->connectivity), val);
+    }
+    if (ulab_streq(key, "state")) {
+        return ulab_copy(c->lifecycle_state,
+                         sizeof(c->lifecycle_state), val);
+    }
+    if (ulab_streq(key, "current_version")) {
+        return ulab_copy(c->current_version,
+                         sizeof(c->current_version), val);
+    }
+    if (ulab_streq(key, "desired_version")) {
+        return ulab_copy(c->desired_version,
+                         sizeof(c->desired_version), val);
+    }
+    if (ulab_streq(key, "operation_type")) {
+        return ulab_copy(c->operation_type,
+                         sizeof(c->operation_type), val);
+    }
+    if (ulab_streq(key, "operation_status")) {
+        return ulab_copy(c->operation_status,
+                         sizeof(c->operation_status), val);
+    }
+    if (ulab_streq(key, "value_state")) {
+        return ulab_copy(c->value_state, sizeof(c->value_state), val);
+    }
+    if (ulab_streq(key, "from")) {
+        return ulab_copy(c->from, sizeof(c->from), val);
+    }
+    if (ulab_streq(key, "to")) {
+        return ulab_copy(c->to, sizeof(c->to), val);
+    }
+    if (ulab_streq(key, "busy")) {
+        c->expected_busy = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_busy = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "degraded")) {
+        c->expected_degraded = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_degraded = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "restart_available")) {
+        c->expected_restart_available = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_restart_available = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "rf_available")) {
+        c->expected_rf_available = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_rf_available = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "service_available")) {
+        c->expected_service_available = ulab_streq(val, "true") ||
+            ulab_streq(val, "1");
+        c->has_expected_service_available = 1;
+        return ULAB_OK;
+    }
     if (ulab_streq(key, "expected_value")) {
         if (ulab_parse_double(val, &c->expected_value)) return ULAB_ERR;
         c->has_expected_value = 1;
@@ -560,6 +665,9 @@ static int apply_check_field(check_spec_t *c, const char *key,
     }
     if (ulab_streq(key, "poll_seconds")) {
         return ulab_parse_u32(val, &c->poll_seconds);
+    }
+    if (ulab_streq(key, "max_age_seconds")) {
+        return ulab_parse_u32(val, &c->max_age_seconds);
     }
     if (ulab_streq(key, "expected_partial")) {
         c->expected_partial = ulab_streq(val, "true") ||

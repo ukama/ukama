@@ -136,6 +136,16 @@ typedef enum {
     CHECK_NODE_VERSION_EQUALS,
     CHECK_NODE_HEALTH_OK,
     CHECK_RELEASE_UNAVAILABLE,
+    CHECK_LIST_COUNT_EQUALS,
+    CHECK_ENTITY_FIELDS_EQUAL,
+    CHECK_ENTITY_RECONCILES,
+    CHECK_NODE_STATUS_EQUALS,
+    CHECK_SOFTWARE_STATUS_EQUALS,
+    CHECK_SOFTWARE_COUNT_EQUALS,
+    CHECK_NODE_OPERATION_STATUS_EQUALS,
+    CHECK_SITE_OPERATION_STATUS_EQUALS,
+    CHECK_KPI_STATE_EQUALS,
+    CHECK_KPI_TIMESERIES,
     CHECK_HISTORY_PRESERVED,
     CHECK_AUDIT_EVENT_EXISTS,
     CHECK_RELATIONSHIP_EXISTS,
@@ -171,13 +181,33 @@ typedef struct {
     char         trend_direction[ULAB_MAX_REF];
     char         currency[ULAB_MAX_REF];
     char         payment_method[ULAB_MAX_REF];
+    char         connectivity[ULAB_MAX_REF];
+    char         lifecycle_state[ULAB_MAX_REF];
+    char         current_version[ULAB_MAX_REF];
+    char         desired_version[ULAB_MAX_REF];
+    char         operation_type[ULAB_MAX_REF];
+    char         operation_status[ULAB_MAX_REF];
+    char         value_state[ULAB_MAX_REF];
+    char         from[ULAB_MAX_REF];
+    char         to[ULAB_MAX_REF];
     double       expected_value;
     double       tolerance_value;
     uint32_t     expected_count;
     int          has_expected_count;
     uint32_t     timeout_seconds;
     uint32_t     poll_seconds;
+    uint32_t     max_age_seconds;
     int          has_expected_value;
+    int          expected_busy;
+    int          has_expected_busy;
+    int          expected_degraded;
+    int          has_expected_degraded;
+    int          expected_restart_available;
+    int          has_expected_restart_available;
+    int          expected_rf_available;
+    int          has_expected_rf_available;
+    int          expected_service_available;
+    int          has_expected_service_available;
     int          expected_partial;
     int          has_expected_partial;
     int          require_computed_at;
