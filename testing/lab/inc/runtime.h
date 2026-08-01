@@ -22,6 +22,8 @@ typedef struct {
     int service_enabled;
     int radio_enabled;
     int node_offline;
+    int payment_failure_active;
+    int software_failure_active;
     char node_version[ULAB_MAX_REF];
 } runtime_t;
 
@@ -55,6 +57,11 @@ int runtime_set_service(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err);
 int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err);
+int runtime_set_failure_control(runtime_t *rt,
+                                const char *target,
+                                int enabled,
+                                ulab_error_t *err);
+int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err);
 int runtime_set_node_version(runtime_t *rt, const char *version,
                              ulab_error_t *err);
 int runtime_node_health_ok(const runtime_t *rt);

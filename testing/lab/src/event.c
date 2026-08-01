@@ -35,6 +35,7 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_SET_PACKAGE_ACTIVE:
     case EVT_REMOVE_PACKAGE_FROM_SIM:
     case EVT_SET_SIM_STATUS:
+    case EVT_WAIT_SIM_STATUS:
     case EVT_PROMOTE_RELEASE:
         return event_bff(ctx, event, err);
     case EVT_PURCHASE_PACKAGES_PARALLEL:
@@ -50,12 +51,14 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_WAIT_NODES_READY:
     case EVT_TOGGLE_SERVICE:
     case EVT_TOGGLE_RADIO:
+    case EVT_TOGGLE_INTERNET_SWITCH:
     case EVT_RESTART_SITE:
     case EVT_SOFTWARE_UPDATE:
     case EVT_DISCONNECT_NODES:
     case EVT_RECONNECT_NODES:
     case EVT_MARK_NODE_OFFLINE:
     case EVT_RESTORE_NODE:
+    case EVT_FAILURE_CONTROL:
         return event_runtime(ctx, event, err);
     case EVT_CHECK:
         return ULAB_OK;

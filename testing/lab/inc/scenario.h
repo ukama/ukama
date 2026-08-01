@@ -81,8 +81,10 @@ typedef enum {
     EVT_SET_PACKAGE_ACTIVE,
     EVT_REMOVE_PACKAGE_FROM_SIM,
     EVT_SET_SIM_STATUS,
+    EVT_WAIT_SIM_STATUS,
     EVT_TOGGLE_SERVICE,
     EVT_TOGGLE_RADIO,
+    EVT_TOGGLE_INTERNET_SWITCH,
     EVT_RESTART_SITE,
     EVT_PROMOTE_RELEASE,
     EVT_SOFTWARE_UPDATE,
@@ -90,6 +92,7 @@ typedef enum {
     EVT_RECONNECT_NODES,
     EVT_MARK_NODE_OFFLINE,
     EVT_RESTORE_NODE,
+    EVT_FAILURE_CONTROL,
     EVT_CHECK
 } event_type_t;
 
@@ -229,6 +232,7 @@ typedef struct {
     uint64_t     amount_mb;
     int64_t      offset_seconds;
     char         profile[ULAB_MAX_REF];
+    char         target[ULAB_MAX_REF];
     char         expect_result[ULAB_MAX_REF];
     char         error_contains[ULAB_MAX_ERR];
     char         status[ULAB_MAX_REF];
@@ -242,6 +246,8 @@ typedef struct {
     char         variant[ULAB_MAX_REF];
     double       amount;
     int          has_amount;
+    uint32_t     port;
+    int          has_port;
     int          active;
     int          has_active;
     uint32_t     count_per_site;

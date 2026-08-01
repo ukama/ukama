@@ -127,9 +127,11 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WAIT_PACKAGE_BOUNDARY: return "wait_package_boundary";
     case EVT_SET_PACKAGE_ACTIVE: return "set_package_active";
     case EVT_REMOVE_PACKAGE_FROM_SIM: return "remove_package_from_sim";
-    case EVT_SET_SIM_STATUS: return "set_sim_status";
+    case EVT_SET_SIM_STATUS: return "toggle_sim_status";
+    case EVT_WAIT_SIM_STATUS: return "wait_sim_status";
     case EVT_TOGGLE_SERVICE: return "toggle_service";
     case EVT_TOGGLE_RADIO: return "toggle_radio";
+    case EVT_TOGGLE_INTERNET_SWITCH: return "toggle_internet_switch";
     case EVT_RESTART_SITE: return "restart_site";
     case EVT_PROMOTE_RELEASE: return "promote_release";
     case EVT_SOFTWARE_UPDATE: return "software_update";
@@ -137,6 +139,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_RECONNECT_NODES: return "reconnect_nodes";
     case EVT_MARK_NODE_OFFLINE: return "mark_node_offline";
     case EVT_RESTORE_NODE: return "restore_node";
+    case EVT_FAILURE_CONTROL: return "failure_control";
     case EVT_CHECK: return "check";
     default: return "unknown";
     }
@@ -246,12 +249,17 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_SET_PACKAGE_ACTIVE;
     } else if (ulab_streq(name, "remove_package_from_sim")) {
         *out = EVT_REMOVE_PACKAGE_FROM_SIM;
-    } else if (ulab_streq(name, "set_sim_status")) {
+    } else if (ulab_streq(name, "set_sim_status") ||
+               ulab_streq(name, "toggle_sim_status")) {
         *out = EVT_SET_SIM_STATUS;
+    } else if (ulab_streq(name, "wait_sim_status")) {
+        *out = EVT_WAIT_SIM_STATUS;
     } else if (ulab_streq(name, "toggle_service")) {
         *out = EVT_TOGGLE_SERVICE;
     } else if (ulab_streq(name, "toggle_radio")) {
         *out = EVT_TOGGLE_RADIO;
+    } else if (ulab_streq(name, "toggle_internet_switch")) {
+        *out = EVT_TOGGLE_INTERNET_SWITCH;
     } else if (ulab_streq(name, "restart_site")) {
         *out = EVT_RESTART_SITE;
     } else if (ulab_streq(name, "promote_release")) {
@@ -266,6 +274,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_MARK_NODE_OFFLINE;
     } else if (ulab_streq(name, "restore_node")) {
         *out = EVT_RESTORE_NODE;
+    } else if (ulab_streq(name, "failure_control")) {
+        *out = EVT_FAILURE_CONTROL;
     } else if (ulab_streq(name, "check")) *out = EVT_CHECK;
     else return ULAB_ERR;
     return ULAB_OK;
@@ -758,6 +768,8 @@ static int apply_event_field(event_spec_t *e, const char *key,
     }
     if (ulab_streq(key, "profile")) return ulab_copy(e->profile,
         sizeof(e->profile), val);
+    if (ulab_streq(key, "target")) return ulab_copy(e->target,
+        sizeof(e->target), val);
     if (ulab_streq(key, "count_per_site")) {
         return ulab_parse_u32(val, &e->count_per_site);
     }
@@ -776,6 +788,11 @@ static int apply_event_field(event_spec_t *e, const char *key,
     if (ulab_streq(key, "amount")) {
         if (ulab_parse_double(val, &e->amount)) return ULAB_ERR;
         e->has_amount = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "port")) {
+        if (ulab_parse_u32(val, &e->port)) return ULAB_ERR;
+        e->has_port = 1;
         return ULAB_OK;
     }
     if (ulab_streq(key, "offset_seconds")) {

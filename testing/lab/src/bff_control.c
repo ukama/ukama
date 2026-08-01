@@ -19,15 +19,23 @@
 
 static const char *BFF_RESTART_NODE =
 "mutation RestartNode($data: RestartNodeInputDto!) {"
-" restartNode(data: $data) { success } }";
+" restartNode(data: $data) { success message } }";
+
+static const char *BFF_RESTART_SITE =
+"mutation RestartSite($data: RestartSiteInputDto!) {"
+" restartSite(data: $data) { success message } }";
 
 static const char *BFF_TOGGLE_SERVICE =
 "mutation ToggleService($data: ToggleSiteStatusInputDto!) {"
-" toggleService(data: $data) { success } }";
+" toggleService(data: $data) { success message } }";
 
 static const char *BFF_TOGGLE_RADIO =
 "mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {"
-" toggleRFStatus(data: $data) { success } }";
+" toggleRFStatus(data: $data) { success message } }";
+
+static const char *BFF_TOGGLE_INTERNET_SWITCH =
+"mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {"
+" toggleInternetSwitch(data: $data) { success message } }";
 
 typedef struct {
     char   *buf;
@@ -60,6 +68,8 @@ static int control_response_success(json_t *root, const char *field,
     json_t *data;
     json_t *result;
     json_t *success;
+    json_t *message;
+    const char *reason;
 
     data = json_object_get(root, "data");
     result = data ? json_object_get(data, field) : NULL;
@@ -72,8 +82,13 @@ static int control_response_success(json_t *root, const char *field,
     }
 
     if (!json_is_true(success)) {
-        snprintf(err->msg, sizeof(err->msg), "%s returned success=false",
-                 field);
+        message = result ? json_object_get(result, "message") : NULL;
+        reason = message && json_is_string(message) ?
+            json_string_value(message) : NULL;
+        snprintf(err->msg, sizeof(err->msg),
+                 "%s failed%s%.512s", field,
+                 reason && reason[0] ? ": " : "",
+                 reason && reason[0] ? reason : "");
         return ULAB_ERR;
     }
 
@@ -220,6 +235,66 @@ int bff_restart_node(bff_client_t *c, const node_t *node,
 
     return control_call(c, "restartNode", BFF_RESTART_NODE, vars,
                         "restartNode", err);
+}
+
+
+int bff_restart_site(bff_client_t *c, const site_t *site,
+                     const network_t *network, ulab_error_t *err) {
+    char vars[2048];
+
+    if (site == NULL || site->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "restartSite missing site id");
+        return ULAB_ERR;
+    }
+    if (network == NULL || network->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "restartSite missing network id");
+        return ULAB_ERR;
+    }
+
+    if (snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"siteId\":\"%s\","
+                 "\"networkId\":\"%s\"}}",
+                 site->bff_id, network->bff_id) >= (int)sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "restartSite variables too long");
+        return ULAB_ERR;
+    }
+
+    return control_call(c, "restartSite", BFF_RESTART_SITE, vars,
+                        "restartSite", err);
+}
+
+int bff_toggle_internet_switch(bff_client_t *c, const site_t *site,
+                               uint32_t port, int enabled,
+                               ulab_error_t *err) {
+    char vars[2048];
+
+    if (site == NULL || site->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleInternetSwitch missing site id");
+        return ULAB_ERR;
+    }
+    if (port == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleInternetSwitch requires port > 0");
+        return ULAB_ERR;
+    }
+
+    if (snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"siteId\":\"%s\","
+                 "\"port\":%u,\"status\":%s}}",
+                 site->bff_id, port, enabled ? "true" : "false") >=
+        (int)sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleInternetSwitch variables too long");
+        return ULAB_ERR;
+    }
+
+    return control_call(c, "toggleInternetSwitch",
+                        BFF_TOGGLE_INTERNET_SWITCH, vars,
+                        "toggleInternetSwitch", err);
 }
 
 int bff_toggle_site_service(bff_client_t *c, const site_t *site,

@@ -362,6 +362,8 @@ int runtime_init(runtime_t *rt,
     rt->service_enabled = 0;
     rt->radio_enabled = 1;
     rt->node_offline = 0;
+    rt->payment_failure_active = 0;
+    rt->software_failure_active = 0;
     snprintf(rt->node_version, sizeof(rt->node_version), "current");
 
     snprintf(path, sizeof(path), "%s/runtime.log", run_dir);
@@ -983,6 +985,11 @@ int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err) {
     failures = 0;
     memset(&tmp, 0, sizeof(tmp));
 
+    if (runtime_restore_failure_controls(rt, &tmp)) {
+        failures++;
+    }
+
+    memset(&tmp, 0, sizeof(tmp));
     if (runtime_stop_ues(rt, w, &tmp)) {
         failures++;
     }
@@ -1029,6 +1036,79 @@ int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err) {
     rt->service_enabled = 1;
     rt->radio_enabled = 1;
     ulab_status("NODE", "restored");
+    return ULAB_OK;
+}
+
+int runtime_set_failure_control(runtime_t *rt,
+                                const char *target,
+                                int enabled,
+                                ulab_error_t *err) {
+    char args[ULAB_MAX_ARGS];
+    int *active;
+    int rc;
+
+    if (rt == NULL || target == NULL || target[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failure control requires target");
+        return ULAB_ERR;
+    }
+
+    if (ulab_streq(target, "payment")) {
+        active = &rt->payment_failure_active;
+    } else if (ulab_streq(target, "software")) {
+        active = &rt->software_failure_active;
+    } else {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unsupported failure control target: %.64s", target);
+        return ULAB_ERR;
+    }
+
+    rc = snprintf(args, sizeof(args), "%s %s", target,
+                  enabled ? "on" : "off");
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failure control arguments too long");
+        return ULAB_ERR;
+    }
+
+    ulab_status("FAULT", "%s failure %s", target,
+                enabled ? "on" : "off");
+    if (run_script(rt, "test-control.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    *active = enabled ? 1 : 0;
+    return ULAB_OK;
+}
+
+int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err) {
+    ulab_error_t tmp;
+    int failures;
+
+    if (rt == NULL) {
+        return ULAB_OK;
+    }
+
+    failures = 0;
+    if (rt->payment_failure_active) {
+        memset(&tmp, 0, sizeof(tmp));
+        if (runtime_set_failure_control(rt, "payment", 0, &tmp)) {
+            failures++;
+        }
+    }
+    if (rt->software_failure_active) {
+        memset(&tmp, 0, sizeof(tmp));
+        if (runtime_set_failure_control(rt, "software", 0, &tmp)) {
+            failures++;
+        }
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failed to restore %d test control(s)", failures);
+        return ULAB_ERR;
+    }
+
     return ULAB_OK;
 }
 

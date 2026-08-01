@@ -431,6 +431,12 @@ int bff_toggle_sim_status(bff_client_t *c,
                           const char *status,
                           ulab_error_t *err);
 
+int bff_get_sim_status(bff_client_t *c,
+                       const ue_t *ue,
+                       char *status,
+                       size_t status_len,
+                       ulab_error_t *err);
+
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
                       const network_t *network,
@@ -458,6 +464,17 @@ int bff_get_node_status(bff_client_t *c,
 int bff_restart_node(bff_client_t *c,
                      const node_t *node,
                      ulab_error_t *err);
+
+int bff_restart_site(bff_client_t *c,
+                     const site_t *site,
+                     const network_t *network,
+                     ulab_error_t *err);
+
+int bff_toggle_internet_switch(bff_client_t *c,
+                               const site_t *site,
+                               uint32_t port,
+                               int enabled,
+                               ulab_error_t *err);
 
 int bff_get_release(bff_client_t *c,
                     const char *name,

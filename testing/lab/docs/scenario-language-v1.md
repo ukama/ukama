@@ -57,11 +57,17 @@ Supported events:
 - `wait_package_boundary`
 - `set_package_active`
 - `remove_package_from_sim`
-- `set_sim_status`
+- `toggle_sim_status` (`set_sim_status` remains an alias)
+- `wait_sim_status`
+- `toggle_service`
+- `toggle_radio`
+- `toggle_internet_switch`
+- `restart_site`
 - `promote_release`
 - `software_update`
 - `disconnect_nodes`
 - `reconnect_nodes`
+- `failure_control`
 - `check`
 
 Supported checks:
@@ -184,6 +190,27 @@ Virtual node network outage:
 network without deleting it. `reconnect_nodes` reconnects the same container,
 preserving its writable state across the simulated backhaul outage.
 
+A software update can be interrupted without a special combined event:
+
+```yaml
+- type: software_update
+  type_selector: controller
+  count_per_network: 1
+  app: example
+  tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+
+- type: wait
+  seconds: 2
+
+- type: disconnect_nodes
+  type_selector: controller
+  count_per_network: 1
+```
+
+The update mutation is asynchronous, so the following `wait` and
+`disconnect_nodes` events provide deterministic orchestration while keeping
+each action independently visible in the run log.
+
 Backend count:
 
 ```yaml
@@ -220,10 +247,49 @@ BFF lifecycle events:
   ues: all
   package: daily_1gb
 
-- type: set_sim_status
+- type: toggle_sim_status
   ues: all
   status: inactive
+
+- type: wait_sim_status
+  ues: all
+  status: inactive
+  seconds: 120
 ```
+
+`toggle_sim_status` calls the same mutation as the console and treats
+`success: false` as an event failure, preserving the BFF message for
+`expect.error_contains`. The backend applies SIM status asynchronously;
+`wait_sim_status` polls `getSim.status` until every selected SIM reaches the
+requested state. `ULAB_SIM_STATUS_POLL_SEC` controls the polling interval and
+defaults to two seconds. `set_sim_status` remains a compatible alias.
+
+Console site actions:
+
+```yaml
+- type: restart_site
+  sites: site-001-001
+
+- type: toggle_service
+  sites: site-001-001
+  state: on
+
+- type: toggle_radio
+  sites: site-001-001
+  state: off
+
+- type: toggle_internet_switch
+  sites: site-001-001
+  port: 1
+  state: on
+```
+
+`restart_site` uses the console BFF `restartSite` mutation with both the site
+and network IDs. For compatibility with older generated scenarios, it also
+accepts a `nodes:` selector and derives the unique sites from those nodes.
+`toggle_internet_switch` requires a positive port number. Controller action
+responses include the BFF failure message, so operation-lock scenarios can
+assert the reason with `expect.error_contains`.
 
 Subsequent cash package sale:
 
@@ -529,9 +595,45 @@ Note that `span:` is inert for `package_performance`: the aggregator accepts
 (`last_24h`, `last_7d`, `last_30d`). Any calendar span falls back to the
 configured report window and the response echoes that window's label (`8w`).
 
-`status_equals` for SIMs supports `active` and `inactive` based on active
-package assignment. `set_sim_status` only validates the mutation path in this
-build; runtime enforcement is tested separately.
+`status_equals` for SIMs continues to support `active` and `inactive` based
+on active package assignment for existing scenarios. Use `wait_sim_status`
+when validating the physical SIM status displayed by the console.
+
+## Controlled service failures
+
+`failure_control` enables deployment-specific failure injection without
+hard-coding Kubernetes, Podman, or Compose commands into ukama-lab:
+
+```yaml
+- type: failure_control
+  target: payment
+  state: on
+
+- type: purchase_package
+  ues: all
+  package: next_plan
+  expect:
+    result: failure
+
+- type: failure_control
+  target: payment
+  state: off
+```
+
+Supported targets are `payment` and `software`. Configure the commands used by
+the environment before running the scenario:
+
+```sh
+export ULAB_PAYMENT_FAILURE_ON_CMD='kubectl ...'
+export ULAB_PAYMENT_FAILURE_OFF_CMD='kubectl ...'
+export ULAB_SOFTWARE_FAILURE_ON_CMD='kubectl ...'
+export ULAB_SOFTWARE_FAILURE_OFF_CMD='kubectl ...'
+```
+
+The commands are executed by `scripts/test-control.sh`. Active controls are
+restored automatically during runtime cleanup, including after a failed
+scenario. If the required command is not configured, the event fails clearly
+instead of pretending a service failure was injected.
 
 ## Generated scenarios
 
