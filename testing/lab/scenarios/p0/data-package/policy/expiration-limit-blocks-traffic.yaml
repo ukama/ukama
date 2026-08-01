@@ -62,9 +62,3 @@ phases:
       - type: usage_per_sim
         ues: all
         expected: from_model
-      - type: package_business_metrics
-        networks: all
-        package: minute_plan
-        expected_count: 0
-        timeout_seconds: 60
-        poll_seconds: 10

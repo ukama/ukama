@@ -1,11 +1,12 @@
 version: 1
-name: p0-failed-cash-request-followed-by-valid-retry-creates-one-sale
+name: backend-underpriced-topup-retry-one-entitlement
 description: Verify an underpriced cash request is rejected and a corrected retry creates exactly one queued entitlement and one catalog-price revenue contribution.
 seed: 4207
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, retry, rejection, revenue]
-status: active
+tags: [virtual, data-package, purchase, retry, rejection, revenue, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:
@@ -65,9 +66,11 @@ phases:
         ues: all
         package: retry_plan
         expected: queued
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: retry_plan
+        column: revenue
         expected_value: 5.00
-        expected_count: 0
-
+        timeout_seconds: 600

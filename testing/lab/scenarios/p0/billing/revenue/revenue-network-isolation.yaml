@@ -1,10 +1,10 @@
 version: 1
 name: p0-revenue-network-isolation
-description: Create equal bootstrap sales in two networks, add a second sale only in network one, and verify the two RevenueOverview network selections remain isolated.
+description: Create sales in two networks, add a top-up only in network one, and verify each selected network retains its own settled revenue.
 seed: 4531
 suite: p0
 priority: p0
-tags: [virtual, billing, revenue, multi-network, isolation, graphql]
+tags: [virtual, billing, revenue, multi-network, isolation, console, graphql]
 status: active
 provider:
   type: virtual
@@ -43,13 +43,21 @@ phases:
         amount: 5.00
         currency: USD
     checks:
-      - type: revenue_summary
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 6.00
         tolerance: 0.001
-      - type: revenue_summary
+        timeout_seconds: 600
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-002
-        column: total_paid
         expected_value: 1.00
         tolerance: 0.001
+        timeout_seconds: 600

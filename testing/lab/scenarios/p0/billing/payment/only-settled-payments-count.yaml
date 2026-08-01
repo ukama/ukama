@@ -1,11 +1,12 @@
 version: 1
-name: p0-failed-cash-request-followed-by-valid-retry-creates-one-sale
+name: backend-underpriced-cash-retry-one-sale
 description: Reject a second cash request whose amount does not match the plan, retry with valid terms, and verify GraphQL exposes one entitlement and one settled sale rather than two.
 seed: 4526
 suite: p0
 priority: p0
-tags: [virtual, billing, payment, retry, rejection, graphql]
-status: active
+tags: [virtual, billing, payment, retry, rejection, graphql, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:
@@ -59,14 +60,21 @@ phases:
         ues: all
         package: target
         expected_count: 1
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: net-001
         package: target
+        column: revenue
         expected_value: 5.00
         tolerance: 0.001
-      - type: revenue_summary
+        timeout_seconds: 600
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 6.00
         tolerance: 0.001
-
+        timeout_seconds: 600

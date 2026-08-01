@@ -4,7 +4,7 @@ description: Create a network with no subscribers, SIMs, packages, or traffic an
 seed: 4722
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, contract, empty-state, graphql]
+tags: [virtual, console, analytics, empty-state, graphql]
 status: active
 provider:
   type: virtual
@@ -32,4 +32,3 @@ phases:
         networks: net-001
         expected_value: 0
         timeout_seconds: 600
-

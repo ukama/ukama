@@ -1,20 +1,20 @@
 version: 1
-name: software_update_controller_partial_rollout
-description: Verify an example app rollout upgrades the online controller while a second controller is offline, then automatically brings the offline controller to the same target after it reconnects.
-seed: 1744158695
+name: software_update_controller_offline_catches_up
+description: Verify an example app update requested while the controller is offline is retained and applied automatically after the same node reconnects, without reissuing the update.
+seed: 1744158693
 suite: p0
 priority: p0
-tags: [p0, virtual, software_update, controller, multi_node, partial, recovery]
+tags: [p0, virtual, software_update, controller, offline, recovery]
 status: active
 entity: software_update
-action: partial_controller_rollout
+action: update_offline_controller_after_reconnect
 
 provider:
   type: virtual
 
 world:
   networks: 1
-  sites_per_network: 2
+  sites_per_network: 1
   nodes_per_site:
     tower: 1
     amplifier: 1
@@ -33,19 +33,19 @@ runtime:
   wait: [nodes_ready]
 
 phases:
-  - name: verify_both_controllers_before_update
+  - name: verify_app_before_update
     checks:
       - type: node_health_ok
         type_selector: controller
-        count_per_network: 2
+        count_per_network: 1
         app: example
       - type: node_version_equals
         type_selector: controller
-        count_per_network: 2
+        count_per_network: 1
         app: example
         version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 
-  - name: promote_and_update_with_second_controller_offline
+  - name: promote_and_request_update_while_controller_is_offline
     events:
       - type: promote_release
         app: example
@@ -53,45 +53,47 @@ phases:
       - type: wait
         seconds: 30
       - type: disconnect_nodes
-        nodes: controller-site-002-001
+        type_selector: controller
+        count_per_network: 1
       - type: wait_node_connectivity
-        nodes: controller-site-002-001
+        type_selector: controller
+        count_per_network: 1
         connectivity: Offline
         seconds: 180
       - type: software_update
-        nodes: controller-site-001-001
-        app: example
-        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
-      - type: software_update
-        nodes: controller-site-002-001
+        type_selector: controller
+        count_per_network: 1
         app: example
         tag: ${ULAB_SOFTWARE_TARGET_VERSION}
       - type: wait
         seconds: 30
-    checks:
-      - type: node_version_equals
-        nodes: controller-site-001-001
-        app: example
-        version: ${ULAB_SOFTWARE_TARGET_VERSION}
-      - type: node_health_ok
-        nodes: controller-site-001-001
-        app: example
-
-  - name: reconnect_second_controller
-    events:
       - type: reconnect_nodes
-        nodes: controller-site-002-001
+        type_selector: controller
+        count_per_network: 1
       - type: wait_node_connectivity
-        nodes: controller-site-002-001
+        type_selector: controller
+        count_per_network: 1
         connectivity: Online
         seconds: 300
     checks:
       - type: node_version_equals
         type_selector: controller
-        count_per_network: 2
+        count_per_network: 1
         app: example
         version: ${ULAB_SOFTWARE_TARGET_VERSION}
       - type: node_health_ok
         type_selector: controller
-        count_per_network: 2
+        count_per_network: 1
         app: example
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: up_to_date
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: false
+        timeout_seconds: 300

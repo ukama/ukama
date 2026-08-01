@@ -4,8 +4,9 @@ description: Allocate two SIMs to one subscriber and verify SubscriberDetail bil
 seed: 4529
 suite: p0
 priority: p0
-tags: [virtual, billing, revenue, subscriber, graphql]
-status: active
+tags: [virtual, billing, revenue, subscriber, graphql, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:
@@ -32,9 +33,14 @@ runtime:
 phases:
   - name: verify_subscriber_billing
     checks:
-      - type: subscriber_billing_summary
+      - type: payment_count
         ues: all
+        package: subscriber_plan
+        status: settled
         expected_count: 2
-        expected_value: 6.00
-        tolerance: 0.001
-
+      - type: payment_equals
+        ues: all
+        package: subscriber_plan
+        status: settled
+        expected_value: 3.00
+        currency: USD

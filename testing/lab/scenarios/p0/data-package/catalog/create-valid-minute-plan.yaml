@@ -39,10 +39,9 @@ runtime:
 phases:
   - name: verify_created_plan
     checks:
-      - type: package_catalog_equals
+      - type: package_fields_equal
         networks: all
         package: minute_plan
       - type: package_visible
         networks: all
         package: minute_plan
-

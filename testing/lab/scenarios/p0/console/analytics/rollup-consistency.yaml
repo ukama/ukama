@@ -1,10 +1,10 @@
 version: 1
-name: p0-console-kpi-partial-period
-description: Create revenue in the still-open daily span and verify the GraphQL KPI marks that row partial and supplies its computation timestamp and network scope.
-seed: 4721
+name: p0-console-kpi-rollup-consistency
+description: Create one current-day sale in a new network and verify daily, weekly, and monthly REVENUE GraphQL rollups all equal the same five-dollar fact.
+seed: 4720
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, contract, partial-period, graphql]
+tags: [virtual, console, analytics, rollup, graphql]
 status: active
 provider:
   type: virtual
@@ -17,8 +17,8 @@ world:
     controller: 1
   ues_per_site: 1
 packages:
-  - ref: partial_plan
-    name: KPI Partial Period Plan
+  - ref: rollup_plan
+    name: KPI Rollup Plan
     data_mb: 100
     duration_days: 1
     amount: 5.00
@@ -29,18 +29,12 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: verify_open_period_metadata
+  - name: compare_rollups
     checks:
-      - type: kpi_contract
+      - type: kpi_rollup_consistency
         key: REVENUE
-        span: daily
         op: SUM
         scope_key: network_id
         networks: net-001
         expected_value: 5.00
         tolerance: 0.001
-        expected_partial: true
-        require_computed_at: true
-        require_scope: true
-        timeout_seconds: 600
-

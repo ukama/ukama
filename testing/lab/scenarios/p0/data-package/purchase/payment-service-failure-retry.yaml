@@ -1,0 +1,94 @@
+version: 1
+name: p0-payment-service-failure-retry
+description: Force a real payment-service failure for a console top-up, verify no payment or entitlement is created, restore the service, retry once, and verify one sale.
+seed: 4812
+suite: p0
+priority: p0
+tags: [virtual, console, topup, payment-failure, recovery, requires-payment-failure-control]
+status: wip
+# Activate after the corresponding ULAB_*_FAILURE_ON/OFF_CMD hooks are configured.
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Payment Failure Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: topup
+    name: Payment Failure Topup
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: fail_topup
+    events:
+      - type: failure_control
+        target: payment
+        state: on
+      - type: purchase_package
+        ues: all
+        package: topup
+        amount: 5.00
+        currency: USD
+        expect:
+          result: failure
+      - type: failure_control
+        target: payment
+        state: off
+    checks:
+      - type: payment_count
+        ues: all
+        package: topup
+        status: settled
+        expected_count: 0
+      - type: package_state
+        ues: all
+        package: topup
+        expected: absent
+
+  - name: retry_topup
+    events:
+      - type: purchase_package
+        ues: all
+        package: topup
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: payment_count
+        ues: all
+        package: topup
+        status: settled
+        expected_count: 1
+      - type: package_state
+        ues: all
+        package: topup
+        expected: queued
+      - type: package_assignment_count
+        ues: all
+        package: topup
+        expected_count: 1
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 6.00
+        tolerance: 0.001
+        timeout_seconds: 600

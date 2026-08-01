@@ -1,0 +1,92 @@
+version: 1
+name: p0-console-revenue-dashboard
+description: Verify Revenue, Purchases, Paid customers, and the revenue trend all reconcile after one initial sale and one console top-up.
+seed: 4807
+suite: p0
+priority: p0
+tags: [virtual, console, revenue, dashboard, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: bootstrap
+    name: Revenue Dashboard Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 100
+  - ref: topup
+    name: Revenue Dashboard Topup
+    data_mb: 500
+    duration_days: 1
+    amount: 5.00
+    assign_percent: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: create_topup
+    events:
+      - type: purchase_package
+        ues: all
+        package: topup
+        amount: 5.00
+        currency: USD
+    checks:
+      - type: payment_count
+        ues: all
+        package: bootstrap
+        status: settled
+        expected_count: 1
+      - type: payment_count
+        ues: all
+        package: topup
+        status: settled
+        expected_count: 1
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 7.00
+        tolerance: 0.001
+        timeout_seconds: 600
+      - type: kpi_value
+        key: PACKAGE_SALES
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 2
+        timeout_seconds: 600
+      - type: kpi_value
+        key: PAID_CUSTOMERS
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 1
+        timeout_seconds: 600
+      - type: kpi_contract
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 7.00
+        tolerance: 0.001
+        require_computed_at: true
+        require_scope: true
+        require_trend_consistency: true
+        timeout_seconds: 600

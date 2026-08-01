@@ -1,10 +1,10 @@
 version: 1
 name: p0-completed-cash-payment
-description: Allocate one SIM with its mandatory first package and verify the GraphQL payment record is settled while RevenueOverview reports exactly the package price.
+description: Allocate one SIM with its selected plan and verify one settled payment plus the matching network REVENUE KPI through current BFF calls.
 seed: 4525
 suite: p0
 priority: p0
-tags: [virtual, billing, payment, cash, graphql]
+tags: [virtual, billing, payment, cash, console, graphql]
 status: active
 provider:
   type: virtual
@@ -38,9 +38,17 @@ phases:
         payment_method: cash
         expected_value: 5.00
         currency: USD
-      - type: revenue_summary
+      - type: payment_count
+        ues: all
+        package: cash_plan
+        status: settled
+        expected_count: 1
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 5.00
         tolerance: 0.001
-
+        timeout_seconds: 600

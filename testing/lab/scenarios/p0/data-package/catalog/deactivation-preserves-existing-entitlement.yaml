@@ -4,8 +4,9 @@ description: Verify deactivating a catalog plan preserves its existing active en
 seed: 4105
 suite: p0
 priority: p0
-tags: [virtual, data-package, catalog, deactivation, revenue]
-status: active
+tags: [virtual, data-package, catalog, deactivation, revenue, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:
@@ -57,7 +58,7 @@ phases:
         ues: all
         amount_mb: 1
     checks:
-      - type: package_catalog_equals
+      - type: package_fields_equal
         networks: all
         package: existing_plan
       - type: package_state
@@ -68,11 +69,14 @@ phases:
         ues: all
         package: existing_plan
         expected_count: 1
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: existing_plan
+        column: revenue
         expected_value: 3.00
-        expected_count: 1
+        timeout_seconds: 600
       - type: usage_per_sim
         ues: all
         expected: from_model

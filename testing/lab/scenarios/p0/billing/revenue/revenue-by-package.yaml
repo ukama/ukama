@@ -1,10 +1,10 @@
 version: 1
 name: p0-revenue-by-package
-description: Sell two differently priced packages and verify the PackagesDashboard GraphQL rows retain the exact settled amount for each package rather than a combined or catalog-wide proxy.
+description: Sell two differently priced plans and verify package_performance keeps each plan's settled revenue separate.
 seed: 4528
 suite: p0
 priority: p0
-tags: [virtual, billing, revenue, package, graphql]
+tags: [virtual, billing, revenue, package, console, graphql]
 status: active
 provider:
   type: virtual
@@ -43,16 +43,28 @@ phases:
         amount: 7.00
         currency: USD
     checks:
-      - type: package_dashboard_metric
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: net-001
         package: small_plan
         column: revenue
         expected_value: 3.00
         tolerance: 0.001
-      - type: package_dashboard_metric
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: net-001
         package: large_plan
         column: revenue
         expected_value: 7.00
         tolerance: 0.001
-
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 10.00
+        tolerance: 0.001
+        timeout_seconds: 600

@@ -4,8 +4,9 @@ description: WIP until BFF GraphQL exposes an operation that can replay the same
 seed: 4517
 suite: p0
 priority: p0
-tags: [virtual, usage, accounting, idempotency, graphql-gap]
-status: wip
+tags: [virtual, usage, accounting, idempotency, graphql-gap, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:
@@ -23,4 +24,3 @@ runtime:
   wait: [nodes_ready]
 phases:
   - name: blocked_by_graphql_contract
-

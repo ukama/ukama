@@ -1,10 +1,10 @@
 version: 1
 name: p0-two-sites-small
-description: Verify two sites serve traffic with correct site, node, usage, and dashboard state.
+description: Verify the selected network exposes two sites, six attached nodes, correct site detail fields, and usage from both sites through current BFF queries.
 seed: 306
 suite: p0
 priority: p0
-tags: [virtual, site, runtime]
+tags: [virtual, console, sites, runtime]
 status: active
 
 provider:
@@ -55,17 +55,23 @@ phases:
         ues: all
         amount_mb: 20
     checks:
-      - type: backend_count
-        target: sites
-        expected: from_world
-      - type: backend_count
-        target: nodes
-        expected: from_world
       - type: usage_sample
         sample_per_site: 1
         expected: from_model
         tolerance_percent: 5
 
 final_checks:
-  - type: dashboard_loads
-    networks: all
+  - type: list_count_equals
+    target: sites
+    networks: net-001
+    expected_count: 2
+  - type: list_count_equals
+    target: nodes
+    networks: net-001
+    expected_count: 6
+  - type: entity_reconciles
+    entity: site
+    ref: site-001
+  - type: entity_reconciles
+    entity: site
+    ref: site-002

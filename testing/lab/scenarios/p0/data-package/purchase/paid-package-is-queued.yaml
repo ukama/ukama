@@ -60,9 +60,11 @@ phases:
         ues: all
         package: queued_plan
         after_package: current_plan
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: queued_plan
+        column: revenue
         expected_value: 4.00
-        expected_count: 0
-
+        timeout_seconds: 600

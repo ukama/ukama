@@ -4,7 +4,7 @@ description: WIP until BFF GraphQL exposes an ingestion or rollup replay mutatio
 seed: 4723
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, contract, idempotency, graphql-gap]
+tags: [virtual, console, analytics, idempotency, graphql-gap]
 status: wip
 provider:
   type: virtual

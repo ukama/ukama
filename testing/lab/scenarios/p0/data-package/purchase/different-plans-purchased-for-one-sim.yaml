@@ -65,14 +65,19 @@ phases:
         ues: all
         package: large_plan
         after_package: small_plan
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: small_plan
+        column: revenue
         expected_value: 2.00
-        expected_count: 0
-      - type: package_business_metrics
+        timeout_seconds: 600
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: large_plan
+        column: revenue
         expected_value: 8.00
-        expected_count: 0
-
+        timeout_seconds: 600

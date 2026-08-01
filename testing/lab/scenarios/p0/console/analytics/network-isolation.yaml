@@ -4,7 +4,7 @@ description: Create equal sales in two networks, add one sale only to network on
 seed: 4718
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, contract, network-isolation, graphql]
+tags: [virtual, console, analytics, network-isolation, graphql]
 status: active
 provider:
   type: virtual
@@ -61,4 +61,3 @@ phases:
         expected_value: 1.00
         tolerance: 0.001
         timeout_seconds: 600
-
