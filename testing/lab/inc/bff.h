@@ -114,7 +114,7 @@ typedef struct {
     double arpu;
     int    has_mrr;
     int    has_arpu;
-} bff_package_dashboard_t;
+} bff_package_kpis_t;
 
 typedef struct {
     uint32_t subscribers_total;
@@ -124,7 +124,7 @@ typedef struct {
     uint32_t nodes_total;
     uint32_t nodes_online;
     uint32_t nodes_offline;
-} bff_network_overview_t;
+} bff_network_summary_t;
 
 typedef struct {
     uint32_t component_total;
@@ -258,30 +258,31 @@ int bff_get_revenue_summary(bff_client_t *c,
                             bff_revenue_summary_t *summary,
                             ulab_error_t *err);
 
-int bff_get_package_dashboard(bff_client_t *c,
-                              const network_t *network,
-                              bff_package_dashboard_t *dashboard,
-                              ulab_error_t *err);
+int bff_get_package_kpis(bff_client_t *c,
+                         const network_t *network,
+                         bff_package_kpis_t *kpis,
+                         ulab_error_t *err);
 
-int bff_get_network_overview(bff_client_t *c,
-                             const network_t *network,
-                             bff_network_overview_t *overview,
-                             ulab_error_t *err);
+int bff_get_network_summary(bff_client_t *c,
+                            const network_t *network,
+                            bff_network_summary_t *summary,
+                            ulab_error_t *err);
 
-int bff_get_nodes_view_count(bff_client_t *c,
-                             const network_t *network,
-                             uint32_t *count,
-                             ulab_error_t *err);
+int bff_get_nodes_count(bff_client_t *c,
+                        const network_t *network,
+                        uint32_t *count,
+                        ulab_error_t *err);
 
 int bff_get_inventory_summary(bff_client_t *c,
                               const char *sim_type,
                               bff_inventory_summary_t *summary,
                               ulab_error_t *err);
 
-int bff_get_subscriber_billing(bff_client_t *c,
-                               const subscriber_t *subscriber,
-                               bff_subscriber_billing_t *billing,
-                               ulab_error_t *err);
+int bff_get_subscriber_payment_summary(
+    bff_client_t *c,
+    const subscriber_t *subscriber,
+    bff_subscriber_billing_t *billing,
+    ulab_error_t *err);
 
 int bff_sim_is_unallocated(bff_client_t *c,
                            const ue_t *ue,
@@ -449,13 +450,9 @@ int bff_toggle_site_radio(bff_client_t *c,
                           int enabled,
                           ulab_error_t *err);
 
-int bff_network_overview_loads(bff_client_t *c,
-                               const network_t *net,
-                               ulab_error_t *err);
-
-int bff_site_view_loads(bff_client_t *c,
-                        const site_t *site,
-                        ulab_error_t *err);
+int bff_console_network_loads(bff_client_t *c,
+                              const network_t *net,
+                              ulab_error_t *err);
 
 int bff_backend_count(bff_client_t *c,
                       const char *target,

@@ -28,7 +28,7 @@ int check_dashboard(check_ctx_t *ctx, const check_spec_t *check,
         return ULAB_ERR;
     }
     for (i = 0; i < nets.count; i++) {
-        if (bff_network_overview_loads(ctx->bff,
+        if (bff_console_network_loads(ctx->bff,
             &ctx->world->networks[nets.idx[i]], err) == ULAB_OK) {
             ok++;
         } else {

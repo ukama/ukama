@@ -106,7 +106,7 @@ static int check_revenue(check_ctx_t *ctx, const check_spec_t *check,
         actual = summary.month_over_month_percent;
     } else {
         snprintf(err->msg, sizeof(err->msg),
-                 "unknown RevenueOverview column %.64s", check->column);
+                 "unknown revenue summary column %.64s", check->column);
         return ULAB_ERR;
     }
     res->passed = value_matches(actual, check);
@@ -128,25 +128,25 @@ static int check_package_dashboard(check_ctx_t *ctx,
     actual = 0;
     if (ulab_streq(check->column, "mrr") ||
         ulab_streq(check->column, "arpu")) {
-        bff_package_dashboard_t dashboard;
+        bff_package_kpis_t kpis;
 
-        if (bff_get_package_dashboard(ctx->bff, network, &dashboard, err)) {
+        if (bff_get_package_kpis(ctx->bff, network, &kpis, err)) {
             return ULAB_ERR;
         }
         if (ulab_streq(check->column, "mrr")) {
-            if (!dashboard.has_mrr) {
+            if (!kpis.has_mrr) {
                 snprintf(err->msg, sizeof(err->msg),
-                         "PackagesDashboard returned null MRR");
+                         "MRR KPI is unavailable");
                 return ULAB_ERR;
             }
-            actual = dashboard.mrr;
+            actual = kpis.mrr;
         } else {
-            if (!dashboard.has_arpu) {
+            if (!kpis.has_arpu) {
                 snprintf(err->msg, sizeof(err->msg),
-                         "PackagesDashboard returned null ARPU");
+                         "ARPU KPI is unavailable");
                 return ULAB_ERR;
             }
-            actual = dashboard.arpu;
+            actual = kpis.arpu;
         }
     } else {
         package_t *pkg;
@@ -172,7 +172,7 @@ static int check_package_dashboard(check_ctx_t *ctx,
         }
         if (!found) {
             snprintf(err->msg, sizeof(err->msg),
-                     "PackagesDashboard missing package %.64s",
+                     "package performance is missing package %.64s",
                      check->package_ref);
             return ULAB_ERR;
         }
@@ -181,13 +181,13 @@ static int check_package_dashboard(check_ctx_t *ctx,
         } else if (ulab_streq(check->column, "attach_count")) {
             if (!metrics.has_attach_count) {
                 snprintf(err->msg, sizeof(err->msg),
-                         "PackagesDashboard returned null attachCount");
+                         "active package assignment count is unavailable");
                 return ULAB_ERR;
             }
             actual = (double)metrics.attach_count;
         } else {
             snprintf(err->msg, sizeof(err->msg),
-                     "unknown PackagesDashboard column %.64s",
+                     "unknown package metric column %.64s",
                      check->column);
             return ULAB_ERR;
         }
@@ -204,31 +204,31 @@ static int check_network_overview(check_ctx_t *ctx,
                                   check_result_t *res,
                                   ulab_error_t *err) {
     network_t *network;
-    bff_network_overview_t overview;
+    bff_network_summary_t summary;
     double actual;
 
     network = first_network(ctx, check, err);
     if (network == NULL) return ULAB_ERR;
-    if (bff_get_network_overview(ctx->bff, network, &overview, err)) {
+    if (bff_get_network_summary(ctx->bff, network, &summary, err)) {
         return ULAB_ERR;
     }
     if (ulab_streq(check->column, "subscribers_total")) {
-        actual = (double)overview.subscribers_total;
+        actual = (double)summary.subscribers_total;
     } else if (ulab_streq(check->column, "subscribers_active")) {
-        actual = (double)overview.subscribers_active;
+        actual = (double)summary.subscribers_active;
     } else if (ulab_streq(check->column, "subscribers_inactive")) {
-        actual = (double)overview.subscribers_inactive;
+        actual = (double)summary.subscribers_inactive;
     } else if (ulab_streq(check->column, "sites_total")) {
-        actual = (double)overview.sites_total;
+        actual = (double)summary.sites_total;
     } else if (ulab_streq(check->column, "nodes_total")) {
-        actual = (double)overview.nodes_total;
+        actual = (double)summary.nodes_total;
     } else if (ulab_streq(check->column, "nodes_online")) {
-        actual = (double)overview.nodes_online;
+        actual = (double)summary.nodes_online;
     } else if (ulab_streq(check->column, "nodes_offline")) {
-        actual = (double)overview.nodes_offline;
+        actual = (double)summary.nodes_offline;
     } else {
         snprintf(err->msg, sizeof(err->msg),
-                 "unknown NetworkHome column %.64s", check->column);
+                 "unknown network summary column %.64s", check->column);
         return ULAB_ERR;
     }
     res->passed = value_matches(actual, check);
@@ -276,23 +276,23 @@ static int check_inventory(check_ctx_t *ctx, const check_spec_t *check,
     }
     if (ulab_streq(check->target, "node")) {
         network_t *network;
-        bff_network_overview_t overview;
+        bff_network_summary_t summary;
         uint32_t nodes_list_count;
 
         network = first_network(ctx, check, err);
         if (network == NULL) return ULAB_ERR;
-        if (bff_get_network_overview(ctx->bff, network, &overview, err) ||
-            bff_get_nodes_view_count(ctx->bff, network,
-                                     &nodes_list_count, err)) {
+        if (bff_get_network_summary(ctx->bff, network, &summary, err) ||
+            bff_get_nodes_count(ctx->bff, network,
+                                &nodes_list_count, err)) {
             return ULAB_ERR;
         }
-        res->passed = overview.nodes_total == nodes_list_count &&
-            overview.nodes_total == overview.nodes_online +
-                overview.nodes_offline;
+        res->passed = summary.nodes_total == nodes_list_count &&
+            summary.nodes_total == summary.nodes_online +
+                summary.nodes_offline;
         snprintf(res->detail, sizeof(res->detail),
-                 "network_home=%u online=%u offline=%u nodes_list=%u",
-                 overview.nodes_total, overview.nodes_online,
-                 overview.nodes_offline, nodes_list_count);
+                 "nodes_total=%u online=%u offline=%u nodes_list=%u",
+                 summary.nodes_total, summary.nodes_online,
+                 summary.nodes_offline, nodes_list_count);
         return ULAB_OK;
     }
     snprintf(err->msg, sizeof(err->msg),
@@ -344,8 +344,8 @@ static int check_subscriber_billing(check_ctx_t *ctx,
         subscriber = world_subscriber_by_ref(ctx->world,
                                              ue->subscriber_ref);
         if (subscriber == NULL ||
-            bff_get_subscriber_billing(ctx->bff, subscriber,
-                                       &billing, err)) {
+            bff_get_subscriber_payment_summary(ctx->bff, subscriber,
+                                               &billing, err)) {
             selector_result_free(&ues);
             return ULAB_ERR;
         }
