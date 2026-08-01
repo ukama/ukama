@@ -83,6 +83,13 @@ import (
  
 
  func (n *StateEventServer) handleTransition(event stm.Event) {
+	 if event.OldState == event.NewState && event.OldSubstate == event.NewSubstate {
+		 log.Infof("Event %s for node %s did not change state %s, skipping transition event",
+			 event.Name, event.InstanceID, event.NewState)
+
+		 return
+	 }
+
 	 n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
  }
  
@@ -130,7 +137,7 @@ import (
  }
  
 
- func (n *StateEventServer) getOrCreateInstance(nodeID, initialState string) (*stm.StateMachineInstance, error) {
+ func (n *StateEventServer) getOrCreateInstance(nodeID, storedState, storedSubstate string) (*stm.StateMachineInstance, error) {
 	 if nodeID == "" {
 		 return nil, fmt.Errorf("node ID cannot be empty")
 	 }
@@ -139,11 +146,25 @@ import (
 	 defer n.instancesMu.Unlock()
  
 	 instance, exists := n.instances[nodeID]
+ 
+	 if exists && storedState != "" && instance.CurrentState != storedState {
+		 log.Warnf("Cached state %s for node %s does not match stored state %s, rebuilding instance",
+			 instance.CurrentState, nodeID, storedState)
+
+		 delete(n.instances, nodeID)
+		 exists = false
+	 }
+ 
 	 if !exists {
-		 newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, initialState)
+		 newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, storedState)
 		 if err != nil {
 			 return nil, fmt.Errorf("failed to create new instance: %w", err)
 		 }
+
+		 if storedSubstate != "" {
+			 newInstance.CurrentSubstate = storedSubstate
+		 }
+
 		 n.instances[nodeID] = newInstance
 		 instance = newInstance
 	 }
@@ -356,14 +377,20 @@ import (
 	 }
  
 	 var currentState npb.NodeState
+	 var currentSubstate string
+
 	 if latestState != nil && latestState.State != nil {
 		 currentState = latestState.State.CurrentState
+
+		 if len(latestState.State.SubState) > 0 {
+			 currentSubstate = latestState.State.SubState[len(latestState.State.SubState)-1]
+		 }
 	 } else {
 		 log.Infof("State information incomplete for node %s, creating initial state", nodeId)
 		 return n.createInitialNodeState(ctx, nodeId, eventName, msg)
 	 }
  
-	 instance, err := n.getOrCreateInstance(nodeId, currentState.String())
+	 instance, err := n.getOrCreateInstance(nodeId, currentState.String(), currentSubstate)
 	 if err != nil {
 		 return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	 }
@@ -414,25 +441,29 @@ import (
 	 
 	 log.Infof("Creating initial state for node %s with event %s", nodeId, eventName)
 	 
-	 instance, err := n.getOrCreateInstance(nodeId, "Unknown")
+	 instance, err := n.getOrCreateInstance(nodeId, npb.NodeState_Unknown.String(), "")
 	 if err != nil {
 		 return fmt.Errorf("failed to create state machine instance: %w", err)
 	 }
 	 
 	 if err := instance.Transition(eventName); err != nil {
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
-		 
-		 if eventName == evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline] && instance.CurrentSubstate == "" {
-			 instance.CurrentSubstate = DefaultSubstate
-			 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
-		 }
+	 }
+	 
+	 if instance.CurrentSubstate == "" {
+		 instance.CurrentSubstate = DefaultSubstate
+		 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
 	 }
 	 
 	 initialSubstate := instance.CurrentSubstate
-	 if initialSubstate == "" {
-		 initialSubstate = DefaultSubstate 
-		 log.Infof("Using default substate '%s' for node %s", DefaultSubstate, nodeId)
+	 
+	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	 if !ok {
+		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		 stateValue = int32(npb.NodeState_Unknown)
 	 }
+	 
+	 initialState := npb.NodeState(stateValue)
 	 
 	 var addStateRequest *pb.AddStateRequest
  
@@ -440,7 +471,7 @@ import (
 	 case *epb.NodeOnlineEvent:
 		 addStateRequest = &pb.AddStateRequest{
 			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState_Unknown,
+			 CurrentState: initialState,
 			 SubState:     []string{initialSubstate},
 			 Events:       []string{eventName},
 			 NodeIp:       m.NodeIp,
@@ -452,7 +483,7 @@ import (
 	 default:
 		 addStateRequest = &pb.AddStateRequest{
 			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState_Unknown,
+			 CurrentState: initialState,
 			 SubState:     []string{initialSubstate},
 			 Events:       []string{eventName},
 		 }
@@ -463,6 +494,6 @@ import (
 		 return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
 	 }
 	 
-	 log.Infof("Initial state created for node %s with state Unknown, substate %s", nodeId, initialSubstate)
+	 log.Infof("Initial state created for node %s with state %s, substate %s", nodeId, initialState, initialSubstate)
 	 return nil
  }
