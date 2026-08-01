@@ -5,16 +5,18 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-# Run P0 scenario categories sequentially and aggregate their reports.
+# Run P0 scenarios sequentially and aggregate their reports.
 #
-# Udev authentication and service values have defaults below. The caller may
-# override any of them by exporting a different value before starting.
+# With no category arguments, every top-level directory under scenarios/p0
+# is discovered and run recursively. Scenario status is still respected by
+# ukama-lab: active/xfail scenarios run, while wip/skip scenarios are reported
+# as skipped without provisioning a world.
 #
 # Usage:
-#   ./scripts/run-p0-scenarios.sh
-#   ./scripts/run-p0-scenarios.sh data-package usage
-#   ./scripts/run-p0-scenarios.sh --factory-nodes auto data-package
-#   ./scripts/run-p0-scenarios.sh --factory-nodes 100 usage billing
+#   ./utils/run-p0-scenarios.sh
+#   ./utils/run-p0-scenarios.sh software-update console site
+#   ./utils/run-p0-scenarios.sh --factory-nodes auto
+#   ./utils/run-p0-scenarios.sh --list
 
 set -uo pipefail
 
@@ -32,40 +34,45 @@ export ULAB_OVS_ALLOW_UNMETERED_FALLBACK="${ULAB_OVS_ALLOW_UNMETERED_FALLBACK:-1
 export ULAB_CDR_DIAG_DISABLE="${ULAB_CDR_DIAG_DISABLE:-1}"
 
 usage() {
-    printf '%s\n' \
-        "usage: $0 [--factory-nodes auto|N] [data-package|usage|billing|console-kpi ...]" \
-        "" \
-        "Options:" \
-        "  --factory-nodes auto       Ensure enough complete bundles for runnable scenarios" \
-        "  --factory-nodes N          Ensure at least N complete unprovisioned bundles" \
-        "  -h, --help                 Show this help" \
-        "" \
-        "Environment overrides:" \
-        "  UKAMA_REPO                 Ukama repository root" \
-        "  UKAMA_LAB_BFF              BFF GraphQL URL" \
-        "  UKAMA_LAB_WAREHOUSE_URL    Warehouse API URL" \
-        "  UKAMA_LAB_FACTORY_URL      Factory API URL used by ukama-lab" \
-        "  ULAB_FACTORY_NODE_COUNT    Default factory target: auto or N (default: 0/off)" \
-        "  ULAB_FACTORY_HEADROOM_PERCENT  Auto-mode safety margin (default: 10)" \
-        "  ULAB_FACTORY_SEED_URL      Factory URL used to generate node sets" \
-        "  P0_RUNS_DIR                Parent directory for batch results" \
-        "  SCENARIO_ROOT              P0 scenario root" \
-        "  LAB_BIN                    ukama-lab executable"
+    cat <<EOF_USAGE
+usage: $0 [options] [category ...]
+
+With no categories, every P0 category below SCENARIO_ROOT is run.
+Categories are top-level directories such as billing, console,
+console-kpi, data-package, node, sim, site, software-update, ue and usage.
+
+Options:
+  --factory-nodes auto       Ensure enough complete bundles for runnable scenarios
+  --factory-nodes N          Ensure at least N complete unprovisioned bundles
+  --list                     List selected scenarios and exit
+  --fail-fast                Stop after the first failed scenario
+  -h, --help                 Show this help
+
+Environment overrides:
+  UKAMA_REPO                 Ukama repository root
+  UKAMA_LAB_BFF              BFF GraphQL URL
+  UKAMA_LAB_WAREHOUSE_URL    Warehouse API URL
+  UKAMA_LAB_FACTORY_URL      Factory API URL used by ukama-lab
+  UKAMA_LAB_SIM_TYPE         SIM type (default: ukama_data)
+  ULAB_FACTORY_NODE_COUNT    Default factory target: auto or N (default: 0/off)
+  ULAB_FACTORY_HEADROOM_PERCENT
+                             Auto-mode safety margin (default: 10)
+  ULAB_FACTORY_SEED_URL      Factory URL used to generate node sets
+  P0_RUNS_DIR                Parent directory for batch results
+  SCENARIO_ROOT              P0 scenario root (default: scenarios/p0)
+  LAB_BIN                    ukama-lab executable (default: ./bin/ukama-lab)
+EOF_USAGE
 }
 
 require_env() {
     local name="$1"
 
     if [[ -z "${!name:-}" ]]; then
-        printf 'error: required environment variable %s is not set\n' "$name" >&2
+        printf 'error: required environment variable %s is not set\n' \
+            "$name" >&2
         return 1
     fi
 }
-
-require_env UKAMA_IDENTIFIER || exit 2
-require_env UKAMA_PASSWORD || exit 2
-require_env PAUTH_URL || exit 2
-require_env BFF_BASE_URL || exit 2
 
 LAB_BIN="${LAB_BIN:-./bin/ukama-lab}"
 SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/p0}"
@@ -78,13 +85,10 @@ SIM_TYPE="${UKAMA_LAB_SIM_TYPE:-ukama_data}"
 P0_RUNS_DIR="${P0_RUNS_DIR:-runs/p0-batches}"
 FACTORY_NODE_TARGET="${ULAB_FACTORY_NODE_COUNT:-0}"
 FACTORY_HEADROOM_PERCENT="${ULAB_FACTORY_HEADROOM_PERCENT:-10}"
-BATCH_STAMP="$(date -u +%Y%m%dt%H%M%Sz)"
-BATCH_DIR="${P0_RUNS_DIR%/}/${BATCH_STAMP}"
-RUNS_DIR="${BATCH_DIR}/runs"
-LOGS_DIR="${BATCH_DIR}/logs"
-SUMMARY_TSV="${BATCH_DIR}/scenarios.tsv"
+LIST_ONLY=0
+FAIL_FAST=0
 
-categories=()
+requested_categories=()
 while (($#)); do
     case "$1" in
         --factory-nodes)
@@ -99,13 +103,21 @@ while (($#)); do
             FACTORY_NODE_TARGET="${1#*=}"
             shift
             ;;
+        --list)
+            LIST_ONLY=1
+            shift
+            ;;
+        --fail-fast)
+            FAIL_FAST=1
+            shift
+            ;;
         -h|--help)
             usage
             exit 0
             ;;
         --)
             shift
-            categories+=("$@")
+            requested_categories+=("$@")
             break
             ;;
         -*)
@@ -114,15 +126,11 @@ while (($#)); do
             exit 2
             ;;
         *)
-            categories+=("$1")
+            requested_categories+=("$1")
             shift
             ;;
     esac
 done
-
-if ((${#categories[@]} == 0)); then
-    categories=(data-package usage billing console-kpi)
-fi
 
 if [[ "$FACTORY_NODE_TARGET" != "auto" &&
       ! "$FACTORY_NODE_TARGET" =~ ^[0-9]+$ ]]; then
@@ -133,30 +141,50 @@ if [[ ! "$FACTORY_HEADROOM_PERCENT" =~ ^[0-9]+$ ]]; then
     printf 'error: ULAB_FACTORY_HEADROOM_PERCENT must be a non-negative integer\n' >&2
     exit 2
 fi
-
-if [[ ! -x "$LAB_BIN" ]]; then
-    printf 'error: ukama-lab is not executable: %s\n' "$LAB_BIN" >&2
-    exit 2
-fi
 if [[ ! -d "$SCENARIO_ROOT" ]]; then
     printf 'error: scenario root does not exist: %s\n' "$SCENARIO_ROOT" >&2
     exit 2
 fi
-if [[ ! -d "$UKAMA_REPO" ]]; then
-    printf 'error: Ukama repository does not exist: %s\n' "$UKAMA_REPO" >&2
+
+# Discover every top-level P0 category dynamically. This prevents newly added
+# scenario trees from silently being omitted by an old hard-coded default.
+mapfile -d '' available_categories < <(
+    find "$SCENARIO_ROOT" -mindepth 1 -maxdepth 1 -type d \
+        -printf '%f\0' | sort -z
+)
+
+if ((${#available_categories[@]} == 0)); then
+    printf 'error: no P0 category directories found under %s\n' \
+        "$SCENARIO_ROOT" >&2
     exit 2
 fi
 
-for category in "${categories[@]}"; do
-    if [[ ! "$category" =~ ^[a-z0-9-]+$ ||
-          ! -d "${SCENARIO_ROOT%/}/${category}" ]]; then
-        printf 'error: unknown or missing P0 category: %s\n' "$category" >&2
-        exit 2
-    fi
-done
-
-mkdir -p "$RUNS_DIR" "$LOGS_DIR"
-printf 'category\tscenario\trun_id\texit_code\treport\tlog\n' >"$SUMMARY_TSV"
+categories=()
+if ((${#requested_categories[@]} == 0)); then
+    categories=("${available_categories[@]}")
+else
+    declare -A seen_categories=()
+    for category in "${requested_categories[@]}"; do
+        if [[ "$category" == "all" ]]; then
+            categories=("${available_categories[@]}")
+            seen_categories=()
+            break
+        fi
+        if [[ ! "$category" =~ ^[a-z0-9-]+$ ||
+              ! -d "${SCENARIO_ROOT%/}/${category}" ]]; then
+            printf 'error: unknown or missing P0 category: %s\n' \
+                "$category" >&2
+            printf 'available categories:' >&2
+            printf ' %s' "${available_categories[@]}" >&2
+            printf '\n' >&2
+            exit 2
+        fi
+        if [[ -z "${seen_categories[$category]+x}" ]]; then
+            categories+=("$category")
+            seen_categories[$category]=1
+        fi
+    done
+fi
 
 selected_scenarios=()
 for category in "${categories[@]}"; do
@@ -165,13 +193,108 @@ for category in "${categories[@]}"; do
         selected_scenarios+=("$scenario")
     done < <(
         find "$category_dir" -type f \
-            \( -name '*.yaml' -o -name '*.yml' \) -print0 | sort -z
+            \( -name '*.yaml' -o -name '*.yml' \) \
+            -print0 | sort -z
     )
 done
+
+if ((${#selected_scenarios[@]} == 0)); then
+    printf 'error: no scenario YAML files found for the selected categories\n' >&2
+    exit 2
+fi
+
+list_scenarios() {
+    python3 - "$SCENARIO_ROOT" "${selected_scenarios[@]}" <<'PY'
+import collections
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1]).resolve()
+counts = collections.Counter()
+
+for value in sys.argv[2:]:
+    path = pathlib.Path(value)
+    status = "active"
+    name = ""
+    try:
+        with path.open(encoding="utf-8") as stream:
+            for raw in stream:
+                line = raw.split("#", 1)[0].rstrip()
+                if not line or line[0].isspace() or ":" not in line:
+                    continue
+                key, value = line.split(":", 1)
+                key = key.strip()
+                value = value.strip().strip("\"'")
+                if key == "name":
+                    name = value
+                elif key == "status":
+                    status = value or status
+                if name and status != "active":
+                    # We have both values needed for the common non-active case.
+                    pass
+    except OSError as exc:
+        print(f"error\t{path}\t{exc}")
+        counts["error"] += 1
+        continue
+
+    try:
+        relative = path.resolve().relative_to(root)
+    except ValueError:
+        relative = path
+    category = relative.parts[0] if len(relative.parts) > 1 else "_root"
+    counts[status] += 1
+    print(f"{status:<7}  {category:<16}  {relative}  {name}")
+
+print("-" * 96)
+print(
+    "total={} active={} xfail={} wip={} skip={} error={}".format(
+        sum(counts.values()),
+        counts["active"],
+        counts["xfail"],
+        counts["wip"],
+        counts["skip"],
+        counts["error"],
+    )
+)
+PY
+}
+
+if ((LIST_ONLY)); then
+    printf 'P0 categories:'
+    printf ' %s' "${categories[@]}"
+    printf '\n\n'
+    list_scenarios
+    exit 0
+fi
+
+require_env UKAMA_IDENTIFIER || exit 2
+require_env UKAMA_PASSWORD || exit 2
+require_env PAUTH_URL || exit 2
+require_env BFF_BASE_URL || exit 2
+
+if [[ ! -x "$LAB_BIN" ]]; then
+    printf 'error: ukama-lab is not executable: %s\n' "$LAB_BIN" >&2
+    exit 2
+fi
+if [[ ! -d "$UKAMA_REPO" ]]; then
+    printf 'error: Ukama repository does not exist: %s\n' "$UKAMA_REPO" >&2
+    exit 2
+fi
+
+BATCH_STAMP="$(date -u +%Y%m%dt%H%M%Sz)"
+BATCH_DIR="${P0_RUNS_DIR%/}/${BATCH_STAMP}"
+RUNS_DIR="${BATCH_DIR}/runs"
+LOGS_DIR="${BATCH_DIR}/logs"
+SUMMARY_TSV="${BATCH_DIR}/scenarios.tsv"
+
+mkdir -p "$RUNS_DIR" "$LOGS_DIR"
+printf 'category\tscenario\trun_id\texit_code\treport\tlog\n' \
+    >"$SUMMARY_TSV"
 
 factory_scenario_plan() {
     python3 - "$@" <<'PY'
 import sys
+
 
 def scenario_values(path):
     status = "active"
@@ -190,7 +313,7 @@ def scenario_values(path):
             indent = len(line) - len(line.lstrip(" "))
             key, value = line.strip().split(":", 1)
             key = key.strip()
-            value = value.strip().strip('"\'')
+            value = value.strip().strip("\"'")
 
             if indent == 0:
                 section = key if not value else ""
@@ -223,8 +346,10 @@ for scenario in sys.argv[1:]:
     try:
         status, networks, sites, nodes = scenario_values(scenario)
     except (OSError, ValueError) as exc:
-        print(f"error: cannot calculate factory nodes for {scenario}: {exc}",
-              file=sys.stderr)
+        print(
+            f"error: cannot calculate factory nodes for {scenario}: {exc}",
+            file=sys.stderr,
+        )
         sys.exit(2)
 
     if status not in {"active", "xfail"}:
@@ -256,12 +381,21 @@ factory_available_bundles() {
 import json
 import sys
 
+
 def find_list(value):
     if isinstance(value, list):
         return value
     if isinstance(value, dict):
-        for key in ("nodes", "Nodes", "data", "Data", "items", "Items",
-                    "results", "Results"):
+        for key in (
+            "nodes",
+            "Nodes",
+            "data",
+            "Data",
+            "items",
+            "Items",
+            "results",
+            "Results",
+        ):
             if key in value:
                 result = find_list(value[key])
                 if result is not None:
@@ -423,11 +557,20 @@ if [[ -n "${UKAMA_LAB_ASR_URL:-}" ]]; then
     common_args+=(--asr-url "$UKAMA_LAB_ASR_URL")
 fi
 
+printf '\n============================================================\n'
+printf 'P0 batch: %s\n' "$BATCH_STAMP"
+printf 'Categories (%s):' "${#categories[@]}"
+printf ' %s' "${categories[@]}"
+printf '\nScenarios discovered: %s\n' "${#selected_scenarios[@]}"
+printf '============================================================\n'
+
+batch_failed=0
 for category in "${categories[@]}"; do
     category_dir="${SCENARIO_ROOT%/}/${category}"
     mapfile -d '' scenarios < <(
         find "$category_dir" -type f \
-            \( -name '*.yaml' -o -name '*.yml' \) -print0 | sort -z
+            \( -name '*.yaml' -o -name '*.yml' \) \
+            -print0 | sort -z
     )
 
     printf '\n============================================================\n'
@@ -459,6 +602,15 @@ for category in "${categories[@]}"; do
         printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
             "$category" "$relative" "$run_id" "$rc" \
             "$report_path" "$log_path" >>"$SUMMARY_TSV"
+
+        if ((rc != 0)); then
+            batch_failed=1
+            if ((FAIL_FAST)); then
+                printf 'stopping after failed scenario (--fail-fast): %s\n' \
+                    "$relative" >&2
+                break 2
+            fi
+        fi
     done
 done
 
@@ -494,21 +646,23 @@ with summary_path.open(newline="", encoding="utf-8") as stream:
         else:
             outcome = "FAIL"
 
-        results.append({
-            "category": row["category"],
-            "scenario": row["scenario"],
-            "run_id": row["run_id"],
-            "outcome": outcome,
-            "scenario_status": scenario_status,
-            "exit_code": exit_code,
-            "duration_sec": report.get("duration_sec", 0) if report else 0,
-            "events": report.get("events", {}) if report else {},
-            "checks": report.get("checks", {}) if report else {},
-            "cleanup": report.get("cleanup", "unknown") if report else "unknown",
-            "report": row["report"],
-            "log": row["log"],
-            "report_error": report_error,
-        })
+        results.append(
+            {
+                "category": row["category"],
+                "scenario": row["scenario"],
+                "run_id": row["run_id"],
+                "outcome": outcome,
+                "scenario_status": scenario_status,
+                "exit_code": exit_code,
+                "duration_sec": report.get("duration_sec", 0) if report else 0,
+                "events": report.get("events", {}) if report else {},
+                "checks": report.get("checks", {}) if report else {},
+                "cleanup": report.get("cleanup", "unknown") if report else "unknown",
+                "report": row["report"],
+                "log": row["log"],
+                "report_error": report_error,
+            }
+        )
 
 counts = Counter(item["outcome"] for item in results)
 payload = {
@@ -534,7 +688,7 @@ lines = [
 ]
 for item in results:
     lines.append(
-        f"{item['outcome']:<4}  {item['category']:<14}  "
+        f"{item['outcome']:<4}  {item['category']:<18}  "
         f"{item['scenario']}  ({item['duration_sec']}s)"
     )
 text_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -542,9 +696,9 @@ text_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 print("\n============================================================")
 print("P0 batch summary")
 print("============================================================")
-print(f"{'RESULT':<7} {'CATEGORY':<15} SCENARIO")
+print(f"{'RESULT':<7} {'CATEGORY':<19} SCENARIO")
 for item in results:
-    print(f"{item['outcome']:<7} {item['category']:<15} {item['scenario']}")
+    print(f"{item['outcome']:<7} {item['category']:<19} {item['scenario']}")
 print("------------------------------------------------------------")
 print(
     f"total={payload['total']} pass={payload['passed']} "
