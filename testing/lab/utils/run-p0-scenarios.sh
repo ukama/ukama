@@ -20,9 +20,10 @@
 
 set -uo pipefail
 
-# Udev defaults. A value already exported by the caller takes precedence.
-export UKAMA_IDENTIFIER="${UKAMA_IDENTIFIER:-ukama@ukama.com}"
-export UKAMA_PASSWORD="${UKAMA_PASSWORD:-@Pass2026.}"
+# Credentials must be supplied by the caller. Non-secret service URLs retain
+# useful udev defaults.
+export UKAMA_IDENTIFIER="${UKAMA_IDENTIFIER:-}"
+export UKAMA_PASSWORD="${UKAMA_PASSWORD:-}"
 export PAUTH_URL="${PAUTH_URL:-https://pauth.udev.ukama.com}"
 export BFF_BASE_URL="${BFF_BASE_URL:-https://bff.udev.ukama.com}"
 export UKAMA_LAB_DUMP_BFF_CURL="${UKAMA_LAB_DUMP_BFF_CURL:-1}"
@@ -44,6 +45,9 @@ console-kpi, data-package, node, sim, site, software-update, ue and usage.
 Options:
   --factory-nodes auto       Ensure enough complete bundles for runnable scenarios
   --factory-nodes N          Ensure at least N complete unprovisioned bundles
+  --scenario-list FILE       Run exact scenario paths listed in FILE
+  --batch-id ID              Use ID instead of a generated batch timestamp
+  --prepare-only             Prepare factory nodes, then exit
   --list                     List selected scenarios and exit
   --fail-fast                Stop after the first failed scenario
   -h, --help                 Show this help
@@ -61,6 +65,7 @@ Environment overrides:
   P0_RUNS_DIR                Parent directory for batch results
   SCENARIO_ROOT              P0 scenario root (default: scenarios/p0)
   LAB_BIN                    ukama-lab executable (default: ./bin/ukama-lab)
+  P0_STATUS_FILE             Optional live worker status TSV
 EOF_USAGE
 }
 
@@ -76,7 +81,7 @@ require_env() {
 
 LAB_BIN="${LAB_BIN:-./bin/ukama-lab}"
 SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/p0}"
-UKAMA_REPO="${UKAMA_REPO:-/home/kashif/work/ukama/repos/ukama/}"
+UKAMA_REPO="${UKAMA_REPO:-}"
 BFF_GRAPHQL_URL="${UKAMA_LAB_BFF:-${BFF_BASE_URL%/}/gateway/graphql}"
 WAREHOUSE_URL="${UKAMA_LAB_WAREHOUSE_URL:-http://warehouse-ukama.udev.ukama.com}"
 FACTORY_URL_FOR_LAB="${UKAMA_LAB_FACTORY_URL:-http://factory-ukama.udev.ukama.com}"
@@ -87,6 +92,10 @@ FACTORY_NODE_TARGET="${ULAB_FACTORY_NODE_COUNT:-0}"
 FACTORY_HEADROOM_PERCENT="${ULAB_FACTORY_HEADROOM_PERCENT:-10}"
 LIST_ONLY=0
 FAIL_FAST=0
+PREPARE_ONLY=0
+SCENARIO_LIST_FILE=""
+BATCH_ID_OVERRIDE=""
+STATUS_FILE="${P0_STATUS_FILE:-}"
 
 requested_categories=()
 while (($#)); do
@@ -101,6 +110,34 @@ while (($#)); do
             ;;
         --factory-nodes=*)
             FACTORY_NODE_TARGET="${1#*=}"
+            shift
+            ;;
+        --scenario-list)
+            if (($# < 2)); then
+                printf 'error: --scenario-list requires a file\n' >&2
+                exit 2
+            fi
+            SCENARIO_LIST_FILE="$2"
+            shift 2
+            ;;
+        --scenario-list=*)
+            SCENARIO_LIST_FILE="${1#*=}"
+            shift
+            ;;
+        --batch-id)
+            if (($# < 2)); then
+                printf 'error: --batch-id requires a value\n' >&2
+                exit 2
+            fi
+            BATCH_ID_OVERRIDE="$2"
+            shift 2
+            ;;
+        --batch-id=*)
+            BATCH_ID_OVERRIDE="${1#*=}"
+            shift
+            ;;
+        --prepare-only)
+            PREPARE_ONLY=1
             shift
             ;;
         --list)
@@ -145,9 +182,9 @@ if [[ ! -d "$SCENARIO_ROOT" ]]; then
     printf 'error: scenario root does not exist: %s\n' "$SCENARIO_ROOT" >&2
     exit 2
 fi
+SCENARIO_ROOT_ABS="$(CDPATH= cd -- "$SCENARIO_ROOT" && pwd)"
 
-# Discover every top-level P0 category dynamically. This prevents newly added
-# scenario trees from silently being omitted by an old hard-coded default.
+# Discover every top-level P0 category dynamically.
 mapfile -d '' available_categories < <(
     find "$SCENARIO_ROOT" -mindepth 1 -maxdepth 1 -type d \
         -printf '%f\0' | sort -z
@@ -160,46 +197,84 @@ if ((${#available_categories[@]} == 0)); then
 fi
 
 categories=()
-if ((${#requested_categories[@]} == 0)); then
-    categories=("${available_categories[@]}")
-else
+selected_scenarios=()
+
+if [[ -n "$SCENARIO_LIST_FILE" ]]; then
+    if ((${#requested_categories[@]} > 0)); then
+        printf 'error: categories cannot be combined with --scenario-list\n' >&2
+        exit 2
+    fi
+    if [[ ! -r "$SCENARIO_LIST_FILE" ]]; then
+        printf 'error: scenario list is not readable: %s\n' \
+            "$SCENARIO_LIST_FILE" >&2
+        exit 2
+    fi
+
+    declare -A seen_scenarios=()
     declare -A seen_categories=()
-    for category in "${requested_categories[@]}"; do
-        if [[ "$category" == "all" ]]; then
-            categories=("${available_categories[@]}")
-            seen_categories=()
-            break
+    while IFS= read -r scenario || [[ -n "$scenario" ]]; do
+        scenario="${scenario%%#*}"
+        scenario="$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<<"$scenario")"
+        [[ -n "$scenario" ]] || continue
+        if [[ "$scenario" != /* ]]; then
+            scenario="$(pwd)/$scenario"
         fi
-        if [[ ! "$category" =~ ^[a-z0-9-]+$ ||
-              ! -d "${SCENARIO_ROOT%/}/${category}" ]]; then
-            printf 'error: unknown or missing P0 category: %s\n' \
-                "$category" >&2
-            printf 'available categories:' >&2
-            printf ' %s' "${available_categories[@]}" >&2
-            printf '\n' >&2
+        if [[ ! -f "$scenario" || ! "$scenario" =~ \.ya?ml$ ]]; then
+            printf 'error: invalid scenario in %s: %s\n' \
+                "$SCENARIO_LIST_FILE" "$scenario" >&2
             exit 2
         fi
-        if [[ -z "${seen_categories[$category]+x}" ]]; then
+        if [[ -z "${seen_scenarios[$scenario]+x}" ]]; then
+            selected_scenarios+=("$scenario")
+            seen_scenarios[$scenario]=1
+        fi
+
+        scenario_abs="$(readlink -f -- "$scenario")"
+        relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
+        category="${relative%%/*}"
+        if [[ -n "$category" && -z "${seen_categories[$category]+x}" ]]; then
             categories+=("$category")
             seen_categories[$category]=1
         fi
+    done <"$SCENARIO_LIST_FILE"
+else
+    if ((${#requested_categories[@]} == 0)); then
+        categories=("${available_categories[@]}")
+    else
+        declare -A seen_categories=()
+        for category in "${requested_categories[@]}"; do
+            if [[ "$category" == "all" ]]; then
+                categories=("${available_categories[@]}")
+                seen_categories=()
+                break
+            fi
+            if [[ ! "$category" =~ ^[a-z0-9-]+$ ||
+                  ! -d "${SCENARIO_ROOT%/}/${category}" ]]; then
+                printf 'error: unknown or missing P0 category: %s\n' \
+                    "$category" >&2
+                exit 2
+            fi
+            if [[ -z "${seen_categories[$category]+x}" ]]; then
+                categories+=("$category")
+                seen_categories[$category]=1
+            fi
+        done
+    fi
+
+    for category in "${categories[@]}"; do
+        category_dir="${SCENARIO_ROOT%/}/${category}"
+        while IFS= read -r -d '' scenario; do
+            selected_scenarios+=("$scenario")
+        done < <(
+            find "$category_dir" -type f \
+                \( -name '*.yaml' -o -name '*.yml' \) \
+                -print0 | sort -z
+        )
     done
 fi
 
-selected_scenarios=()
-for category in "${categories[@]}"; do
-    category_dir="${SCENARIO_ROOT%/}/${category}"
-    while IFS= read -r -d '' scenario; do
-        selected_scenarios+=("$scenario")
-    done < <(
-        find "$category_dir" -type f \
-            \( -name '*.yaml' -o -name '*.yml' \) \
-            -print0 | sort -z
-    )
-done
-
 if ((${#selected_scenarios[@]} == 0)); then
-    printf 'error: no scenario YAML files found for the selected categories\n' >&2
+    printf 'error: no scenario YAML files selected\n' >&2
     exit 2
 fi
 
@@ -281,7 +356,15 @@ if [[ ! -d "$UKAMA_REPO" ]]; then
     exit 2
 fi
 
-BATCH_STAMP="$(date -u +%Y%m%dt%H%M%Sz)"
+if [[ -n "$BATCH_ID_OVERRIDE" ]]; then
+    if [[ ! "$BATCH_ID_OVERRIDE" =~ ^[A-Za-z0-9._-]+$ ]]; then
+        printf 'error: invalid --batch-id: %s\n' "$BATCH_ID_OVERRIDE" >&2
+        exit 2
+    fi
+    BATCH_STAMP="$BATCH_ID_OVERRIDE"
+else
+    BATCH_STAMP="$(date -u +%Y%m%dt%H%M%Sz)"
+fi
 BATCH_DIR="${P0_RUNS_DIR%/}/${BATCH_STAMP}"
 RUNS_DIR="${BATCH_DIR}/runs"
 LOGS_DIR="${BATCH_DIR}/logs"
@@ -543,6 +626,11 @@ if [[ "$FACTORY_NODE_TARGET" != "0" ]]; then
     fi
 fi
 
+if ((PREPARE_ONLY)); then
+    printf 'factory preparation complete; no scenarios executed\n'
+    exit 0
+fi
+
 common_args=(
     --sim-type "$SIM_TYPE"
     --warehouse-url "$WAREHOUSE_URL"
@@ -557,62 +645,114 @@ if [[ -n "${UKAMA_LAB_ASR_URL:-}" ]]; then
     common_args+=(--asr-url "$UKAMA_LAB_ASR_URL")
 fi
 
+write_status() {
+    local state="$1"
+    local current="${2:--}"
+    local message="${3:-}"
+
+    [[ -n "$STATUS_FILE" ]] || return 0
+    mkdir -p "$(dirname -- "$STATUS_FILE")"
+    {
+        printf 'state\t%s\n' "$state"
+        printf 'total\t%s\n' "${#selected_scenarios[@]}"
+        printf 'completed\t%s\n' "$completed_count"
+        printf 'passed\t%s\n' "$passed_count"
+        printf 'failed\t%s\n' "$failed_count"
+        printf 'skipped\t%s\n' "$skipped_count"
+        printf 'current\t%s\n' "$current"
+        printf 'message\t%s\n' "$message"
+        printf 'started_at\t%s\n' "$STATUS_STARTED_AT"
+        printf 'updated_at\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    } >"$STATUS_FILE.tmp"
+    mv "$STATUS_FILE.tmp" "$STATUS_FILE"
+}
+
+scenario_outcome() {
+    local report_path="$1"
+    local rc="$2"
+
+    python3 - "$report_path" "$rc" <<'PY_STATUS'
+import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+rc = int(sys.argv[2])
+report = {}
+if path.is_file():
+    try:
+        report = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        pass
+status = report.get("status", "")
+if rc == 0 and status in {"wip", "skip"}:
+    print("SKIP")
+elif rc == 0 and report.get("passed") is True:
+    print("PASS")
+else:
+    print("FAIL")
+PY_STATUS
+}
+
 printf '\n============================================================\n'
 printf 'P0 batch: %s\n' "$BATCH_STAMP"
 printf 'Categories (%s):' "${#categories[@]}"
 printf ' %s' "${categories[@]}"
-printf '\nScenarios discovered: %s\n' "${#selected_scenarios[@]}"
+printf '\nScenarios selected: %s\n' "${#selected_scenarios[@]}"
 printf '============================================================\n'
 
 batch_failed=0
-for category in "${categories[@]}"; do
-    category_dir="${SCENARIO_ROOT%/}/${category}"
-    mapfile -d '' scenarios < <(
-        find "$category_dir" -type f \
-            \( -name '*.yaml' -o -name '*.yml' \) \
-            -print0 | sort -z
-    )
+completed_count=0
+passed_count=0
+failed_count=0
+skipped_count=0
+STATUS_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+write_status RUNNING - 'starting batch'
 
-    printf '\n============================================================\n'
-    printf 'Category: %s (%s scenarios)\n' "$category" "${#scenarios[@]}"
-    printf '============================================================\n'
+for scenario in "${selected_scenarios[@]}"; do
+    scenario_abs="$(readlink -f -- "$scenario")"
+    relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
+    category="${relative%%/*}"
+    slug="${relative%.yaml}"
+    slug="${slug%.yml}"
+    slug="${slug//\//-}"
+    slug="${slug,,}"
+    slug="${slug//[^a-z0-9-]/-}"
+    run_id="p0-${BATCH_STAMP}-${slug}"
+    report_path="${RUNS_DIR}/${run_id}/report.json"
+    log_path="${LOGS_DIR}/${slug}.log"
 
-    if ((${#scenarios[@]} == 0)); then
-        printf 'warning: no scenarios found in %s\n' "$category_dir" >&2
-        continue
-    fi
+    write_status RUNNING "$relative" 'scenario started'
+    printf '\n-- Running: %s --\n' "$relative"
+    "$LAB_BIN" validate "$scenario" \
+        "${common_args[@]}" \
+        --run-id "$run_id" 2>&1 | tee "$log_path"
+    rc=${PIPESTATUS[0]}
 
-    for scenario in "${scenarios[@]}"; do
-        relative="${scenario#${SCENARIO_ROOT%/}/}"
-        slug="${relative%.yaml}"
-        slug="${slug%.yml}"
-        slug="${slug//\//-}"
-        slug="${slug,,}"
-        slug="${slug//[^a-z0-9-]/-}"
-        run_id="p0-${BATCH_STAMP}-${slug}"
-        report_path="${RUNS_DIR}/${run_id}/report.json"
-        log_path="${LOGS_DIR}/${slug}.log"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
+        "$category" "$relative" "$run_id" "$rc" \
+        "$report_path" "$log_path" >>"$SUMMARY_TSV"
 
-        printf '\n-- Running: %s --\n' "$relative"
-        "$LAB_BIN" validate "$scenario" \
-            "${common_args[@]}" \
-            --run-id "$run_id" 2>&1 | tee "$log_path"
-        rc=${PIPESTATUS[0]}
-
-        printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
-            "$category" "$relative" "$run_id" "$rc" \
-            "$report_path" "$log_path" >>"$SUMMARY_TSV"
-
-        if ((rc != 0)); then
+    outcome="$(scenario_outcome "$report_path" "$rc")"
+    completed_count=$((completed_count + 1))
+    case "$outcome" in
+        PASS) passed_count=$((passed_count + 1)) ;;
+        SKIP) skipped_count=$((skipped_count + 1)) ;;
+        *)
+            failed_count=$((failed_count + 1))
             batch_failed=1
-            if ((FAIL_FAST)); then
-                printf 'stopping after failed scenario (--fail-fast): %s\n' \
-                    "$relative" >&2
-                break 2
-            fi
-        fi
-    done
+            ;;
+    esac
+    write_status RUNNING - "last=$outcome $relative"
+
+    if ((rc != 0 && FAIL_FAST)); then
+        printf 'stopping after failed scenario (--fail-fast): %s\n' \
+            "$relative" >&2
+        break
+    fi
 done
+
+write_status FINALIZING - 'building batch report'
 
 python3 - "$SUMMARY_TSV" "$BATCH_DIR" <<'PY'
 import csv
@@ -710,3 +850,6 @@ print(f"json report: {json_path}")
 
 sys.exit(1 if payload["failed"] else 0)
 PY
+report_rc=$?
+write_status DONE - "batch_report_exit_code=$report_rc"
+exit "$report_rc"

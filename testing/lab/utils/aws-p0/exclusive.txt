@@ -1,0 +1,7 @@
+# Shell patterns matched against paths relative to the ukama-lab repository.
+# Matching scenarios are placed together on one final worker and run
+# sequentially. Keep deployment-wide operations here.
+
+scenarios/p0/software-update/*.yaml
+scenarios/p0/data-package/purchase/payment-service-failure-retry.yaml
+scenarios/p0/console/analytics/rollup-retry-idempotency.yaml
