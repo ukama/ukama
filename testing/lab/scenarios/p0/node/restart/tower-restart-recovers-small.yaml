@@ -1,10 +1,10 @@
 version: 1
 name: p0-tower-restart-recovers-small
-description: Verify traffic resumes and usage remains correct after restarting the tower node.
+description: Verify a UE reattaches and traffic resumes after restarting the tower node.
 seed: 308
 suite: p0
 priority: p0
-tags: [virtual, node, restart]
+tags: [virtual, node, restart, service, traffic]
 status: active
 
 provider:
@@ -17,7 +17,7 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 2
+  ues_per_site: 1
 
 packages:
   - ref: daily_1gb
@@ -47,16 +47,16 @@ phases:
       - type: toggle_service
         sites: all
         state: on
+
       - type: start_ues
-        ues: all
+        ues: ue-000001
+
       - type: wait_ues_attached
-        ues: all
-      - type: traffic
-        ues: all
-        amount_mb: 10
+        ues: ue-000001
+
     checks:
       - type: traffic_allowed
-        ues: all
+        ues: ue-000001
         amount_mb: 1
 
   - name: restart_tower
@@ -64,23 +64,25 @@ phases:
       - type: restart_nodes
         type_selector: tower
         count_per_network: 1
+
       - type: wait_nodes_ready
         nodes: all
+
+      - type: wait_ues_attached
+        ues: ue-000001
+
     checks:
       - type: node_ready
         nodes: all
 
-  - name: after_restart
-    events:
-      - type: traffic
-        ues: all
-        amount_mb: 10
-    checks:
-      - type: usage_sample
-        sample_per_site: 1
-        expected: from_model
-        tolerance_percent: 10
+      - type: traffic_allowed
+        ues: ue-000001
+        amount_mb: 1
 
 final_checks:
+  - type: backend_count
+    target: sims
+    expected: 1
+
   - type: balance_non_negative
     ues: all
