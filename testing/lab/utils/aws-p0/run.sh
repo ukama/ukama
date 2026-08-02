@@ -655,6 +655,14 @@ if ! command -v aws >/dev/null 2>&1; then
         DEBIAN_FRONTEND=noninteractive apt-get install -y awscli
     fi
 fi
+# /tmp is a 4 GiB tmpfs on c7i.xlarge. Virtual-node source packaging needs
+# more space, so place /tmp on the enlarged root EBS volume.
+mkdir -p /opt/ukama-p0/tmp
+chmod 1777 /opt/ukama-p0/tmp
+mount --bind /opt/ukama-p0/tmp /tmp
+printf 'Worker filesystem after /tmp bind mount:\n'
+df -hT / /tmp
+
 aws s3 cp $(printf '%q' "$BATCH_URI/input/worker.sh") /tmp/ukama-p0-worker.sh --only-show-errors
 chmod 700 /tmp/ukama-p0-worker.sh
 BATCH_ID=$(printf '%q' "$BATCH_ID") \\
