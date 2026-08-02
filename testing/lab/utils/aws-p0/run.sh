@@ -1,10 +1,4 @@
 #!/usr/bin/env bash
-# This Source Code Form is subject to the terms of the Mozilla Public
-# License, v. 2.0. If a copy of the MPL was not distributed with this
-# file, You can obtain one at https://mozilla.org/MPL/2.0/.
-#
-# Copyright (c) 2026-present, Ukama Inc.
-
 # Local controller for disposable EC2 P0 workers.
 # Protocol: tar archives + text files in S3.
 
@@ -19,6 +13,8 @@ p0_load_config "$SCRIPT_DIR"
 usage() {
     cat <<EOF_USAGE
 usage:
+  $0 [--workers N] [--dry-run] [--batch-id ID] [--scenario PATH ...]
+  $0 [--workers N] [--dry-run] [--batch-id ID] --scenario-list FILE
   $0 [--workers N] [--dry-run] [--batch-id ID] [category ...]
   $0 --status BATCH_ID
   $0 --resume BATCH_ID
@@ -37,6 +33,8 @@ MODE=run
 BATCH_ID=""
 MODE_BATCH_ID=""
 categories=()
+explicit_scenarios=()
+controller_scenario_list=""
 
 while (($#)); do
     case "$1" in
@@ -57,6 +55,28 @@ while (($#)); do
             (($# >= 2)) || p0_die '--batch-id requires a value'
             BATCH_ID="$2"
             shift 2
+            ;;
+        --batch-id=*)
+            BATCH_ID="${1#*=}"
+            shift
+            ;;
+        --scenario)
+            (($# >= 2)) || p0_die '--scenario requires a path'
+            explicit_scenarios+=("$2")
+            shift 2
+            ;;
+        --scenario=*)
+            explicit_scenarios+=("${1#*=}")
+            shift
+            ;;
+        --scenario-list)
+            (($# >= 2)) || p0_die '--scenario-list requires a file'
+            controller_scenario_list="$2"
+            shift 2
+            ;;
+        --scenario-list=*)
+            controller_scenario_list="${1#*=}"
+            shift
             ;;
         --status|--resume|--collect|--cleanup)
             (($# >= 2)) || p0_die "$1 requires a batch ID"
@@ -312,6 +332,23 @@ fi
 [[ -x "$LAB_ROOT/bin/ukama-lab" ]] ||
     p0_die "build ukama-lab first; missing executable $LAB_ROOT/bin/ukama-lab"
 
+# The udev control plane is private. Route workers through the known-good EC2
+# host that already has the working backend tunnel/route.
+if [[ -n "${BACKEND_GATEWAY_INSTANCE_ID:-}" ]]; then
+    if ((DRY_RUN)); then
+        BACKEND_GATEWAY_PRIVATE_IP="$(p0_aws ec2 describe-instances \
+            --instance-ids "$BACKEND_GATEWAY_INSTANCE_ID" \
+            --query 'Reservations[0].Instances[0].PrivateIpAddress' \
+            --output text)"
+        export BACKEND_GATEWAY_PRIVATE_IP
+    elif [[ "${BACKEND_GATEWAY_AUTO_SETUP:-true}" == "true" ]]; then
+        "$SCRIPT_DIR/setup-backend-gateway.sh" --quiet
+        p0_load_config "$SCRIPT_DIR"
+    fi
+    p0_require_config BACKEND_GATEWAY_PRIVATE_IP BACKEND_ROUTE_CIDR \
+        BACKEND_TEST_IP
+fi
+
 if [[ -z "$BATCH_ID" ]]; then
     BATCH_ID="$(date -u +%Y%m%dt%H%M%Sz)"
 fi
@@ -323,7 +360,53 @@ mkdir -p "$LOCAL_BATCH_DIR/input/shards"
 SCENARIO_LIST="$LOCAL_BATCH_DIR/input/scenarios.txt"
 : >"$SCENARIO_LIST"
 
-if ((${#categories[@]} == 0)); then
+if [[ -n "$controller_scenario_list" && ${#explicit_scenarios[@]} -gt 0 ]]; then
+    p0_die '--scenario and --scenario-list cannot be combined'
+fi
+if [[ -n "$controller_scenario_list" || ${#explicit_scenarios[@]} -gt 0 ]]; then
+    ((${#categories[@]} == 0)) ||
+        p0_die 'categories cannot be combined with --scenario or --scenario-list'
+fi
+
+add_scenario_path() {
+    local supplied="$1"
+    local absolute
+    local relative
+
+    supplied="${supplied%%#*}"
+    supplied="$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<<"$supplied")"
+    [[ -n "$supplied" ]] || return 0
+
+    if [[ "$supplied" == /* ]]; then
+        absolute="$supplied"
+    else
+        absolute="$LAB_ROOT/$supplied"
+    fi
+    absolute="$(readlink -f -- "$absolute")" ||
+        p0_die "scenario does not exist: $supplied"
+    [[ -f "$absolute" ]] || p0_die "scenario is not a file: $supplied"
+    case "$absolute" in
+        "$LAB_ROOT/scenarios/p0/"*.yaml|"$LAB_ROOT/scenarios/p0/"*.yml)
+            ;;
+        *)
+            p0_die "scenario must be below scenarios/p0: $supplied"
+            ;;
+    esac
+    relative="${absolute#"$LAB_ROOT/"}"
+    printf '%s\n' "$relative" >>"$SCENARIO_LIST"
+}
+
+if [[ -n "$controller_scenario_list" ]]; then
+    [[ -r "$controller_scenario_list" ]] ||
+        p0_die "scenario list is not readable: $controller_scenario_list"
+    while IFS= read -r scenario || [[ -n "$scenario" ]]; do
+        add_scenario_path "$scenario"
+    done <"$controller_scenario_list"
+elif ((${#explicit_scenarios[@]} > 0)); then
+    for scenario in "${explicit_scenarios[@]}"; do
+        add_scenario_path "$scenario"
+    done
+elif ((${#categories[@]} == 0)); then
     find "$LAB_ROOT/scenarios/p0" -type f \
         \( -name '*.yaml' -o -name '*.yml' \) -print |
         sort >"$SCENARIO_LIST.absolute"
@@ -336,10 +419,14 @@ else
     done | sort -u >"$SCENARIO_LIST.absolute"
 fi
 
-while IFS= read -r path; do
-    printf '%s\n' "${path#"$LAB_ROOT/"}" >>"$SCENARIO_LIST"
-done <"$SCENARIO_LIST.absolute"
-rm -f "$SCENARIO_LIST.absolute"
+if [[ -f "$SCENARIO_LIST.absolute" ]]; then
+    while IFS= read -r path; do
+        printf '%s\n' "${path#"$LAB_ROOT/"}" >>"$SCENARIO_LIST"
+    done <"$SCENARIO_LIST.absolute"
+    rm -f "$SCENARIO_LIST.absolute"
+else
+    sort -u -o "$SCENARIO_LIST" "$SCENARIO_LIST"
+fi
 
 SCENARIO_COUNT="$(wc -l <"$SCENARIO_LIST" | tr -d ' ')"
 ((SCENARIO_COUNT > 0)) || p0_die 'no scenarios selected'
@@ -437,6 +524,13 @@ EOF_MANIFEST
     printf 'UKAMA_LAB_WAREHOUSE_URL=%q\n' "${UKAMA_LAB_WAREHOUSE_URL:-http://warehouse-ukama.udev.ukama.com}"
     printf 'UKAMA_LAB_FACTORY_URL=%q\n' "${UKAMA_LAB_FACTORY_URL:-http://factory-ukama.udev.ukama.com}"
     printf 'ULAB_FACTORY_SEED_URL=%q\n' "${ULAB_FACTORY_SEED_URL:-https://factory-ukama.udev.ukama.com}"
+    printf 'ULAB_UKAMA_AGENT_NODE_GW_URL=%q\n' "${ULAB_UKAMA_AGENT_NODE_GW_URL:-https://ukamaagent-nodegateway-ukama.udev.ukama.com:8080/}"
+    printf 'ULAB_UKAMA_AGENT_API_GW_URL=%q\n' "${ULAB_UKAMA_AGENT_API_GW_URL:-https://ukamaagent-ukama.udev.ukama.com:8080/}"
+    printf 'BACKEND_GATEWAY_PRIVATE_IP=%q\n' "${BACKEND_GATEWAY_PRIVATE_IP:-}"
+    printf 'BACKEND_ROUTE_CIDR=%q\n' "${BACKEND_ROUTE_CIDR:-10.0.0.0/8}"
+    printf 'BACKEND_TEST_IP=%q\n' "${BACKEND_TEST_IP:-10.0.101.241}"
+    printf 'P0_CONNECT_TIMEOUT_SECONDS=%q\n' "${P0_CONNECT_TIMEOUT_SECONDS:-15}"
+    printf 'P0_HTTP_TIMEOUT_SECONDS=%q\n' "${P0_HTTP_TIMEOUT_SECONDS:-25}"
     printf 'UKAMA_LAB_DUMP_BFF_CURL=%q\n' "${UKAMA_LAB_DUMP_BFF_CURL:-1}"
     printf 'ULAB_CDR_WAIT_SEC=%q\n' "${ULAB_CDR_WAIT_SEC:-5}"
     printf 'ULAB_CDR_DIAG_STRICT=%q\n' "${ULAB_CDR_DIAG_STRICT:-0}"
@@ -479,7 +573,19 @@ fi
 printf '\nPackaging current local source trees...\n'
 tar --exclude-from="$SCRIPT_DIR/lab-excludes.txt" \
     -C "$LAB_ROOT" -czf "$LOCAL_BATCH_DIR/input/ukama-lab.tar.gz" .
-tar --exclude-from="$SCRIPT_DIR/ukama-excludes.txt" \
+
+ukama_tar_args=(--exclude-from="$SCRIPT_DIR/ukama-excludes.txt")
+case "$LAB_ROOT/" in
+    "$UKAMA_REPO"/*)
+        lab_relative="${LAB_ROOT#"$UKAMA_REPO"/}"
+        ukama_tar_args+=(
+            --exclude="$lab_relative"
+            --exclude="$lab_relative/**"
+        )
+        ;;
+esac
+
+tar "${ukama_tar_args[@]}" \
     -C "$UKAMA_REPO" -czf "$LOCAL_BATCH_DIR/input/ukama.tar.gz" .
 cp "$SCRIPT_DIR/worker.sh" "$LOCAL_BATCH_DIR/input/worker.sh"
 

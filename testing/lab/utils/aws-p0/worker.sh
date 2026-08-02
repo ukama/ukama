@@ -10,6 +10,11 @@
 set -Eeuo pipefail
 umask 077
 
+# cloud-init/systemd starts the worker without a login shell, so HOME may be
+# absent. Podman network helpers use HOME for their per-user CNI paths.
+export HOME="${HOME:-/root}"
+mkdir -p "$HOME"
+
 : "${BATCH_ID:?}"
 : "${WORKER_ID:?}"
 : "${S3_BUCKET:?}"
@@ -220,10 +225,16 @@ tar -xzf "$WORK_ROOT/ukama.tar.gz" -C "$WORK_ROOT/ukama"
 
 LAB_ROOT="$WORK_ROOT/ukama-lab"
 export UKAMA_REPO="$WORK_ROOT/ukama"
+git config --global --add safe.directory "$UKAMA_REPO"
 export LAB_BIN="$LAB_ROOT/bin/ukama-lab"
 export SCENARIO_ROOT="scenarios/p0"
 export P0_RUNS_DIR="$WORK_ROOT/results"
 export P0_STATUS_FILE="$STATUS_FILE"
+
+# Source archives intentionally exclude .git. Use one explicit version for all
+# virtual-node and application builds in this disposable worker.
+export UKAMA_APP_VERSION="${UKAMA_APP_VERSION:-v0.0.0-p0-${BATCH_ID}}"
+printf 'source version: %s\n' "$UKAMA_APP_VERSION"
 
 TOTAL_SCENARIOS="$(grep -Ev '^[[:space:]]*(#|$)' \
     "$WORK_ROOT/scenarios.txt" | wc -l | tr -d ' ')"
