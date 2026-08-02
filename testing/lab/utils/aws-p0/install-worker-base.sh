@@ -36,6 +36,7 @@ if command -v apt-get >/dev/null 2>&1; then
         iptables \
         openvswitch-switch \
         podman \
+        pigz \
         build-essential \
         libc6-dev \
         binutils \
