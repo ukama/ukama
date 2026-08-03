@@ -57,7 +57,7 @@ phases:
         status: inactive
         seconds: 120
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: all
         amount_mb: 1
       - type: package_assignment_count

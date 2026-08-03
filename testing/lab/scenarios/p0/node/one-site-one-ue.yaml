@@ -1,10 +1,10 @@
 version: 1
-name: smoke-service-on-off
-description: Verify service off blocks traffic and service on restores it.
-seed: 3
-suite: smoke
+name: one-site-one-ue
+description: Verify end-to-end setup, UE attach, 100 MB traffic, usage, SIM state, and package state.
+seed: 1
+suite: p0
 priority: p0
-tags: [virtual, runtime, site, service]
+tags: [runtime, bff, sim]
 status: active
 
 provider:
@@ -42,38 +42,33 @@ runtime:
   wait: [nodes_ready, ues_attached]
 
 phases:
-  - name: service_baseline
-    checks:
-      - type: traffic_allowed
-        ues: all
-        amount_mb: 1
-
-  - name: service_off
+  - name: first_usage
     events:
-      - type: toggle_service
-        sites: all
-        state: off
+      - type: traffic
+        ues: all
+        amount_mb: 100
     checks:
-      - type: traffic_unavailable
+      - type: usage_per_sim
         ues: all
-        amount_mb: 1
-
-  - name: service_on
-    events:
-      - type: toggle_service
-        sites: all
-        state: on
-      - type: wait_ues_attached
-        ues: all
-    checks:
-      - type: traffic_allowed
-        ues: all
-        amount_mb: 1
+        expected: from_model
+        tolerance_percent: 2
 
 final_checks:
   - type: backend_count
+    target: networks
+    expected: 1
+  - type: backend_count
     target: sites
     expected: 1
+  - type: backend_count
+    target: nodes
+    expected: 3
+  - type: backend_count
+    target: sims
+    expected: 1
+  - type: list_contains
+    view: sims
+    ref: ue-000001
   - type: status_equals
     entity: sim
     ref: ue-000001

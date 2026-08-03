@@ -114,6 +114,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_CREATE_UES: return "create_ues";
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
+    case EVT_WAIT_UE_SESSIONS: return "wait_ue_sessions";
+    case EVT_FINALIZE_UE_SESSIONS: return "finalize_ue_sessions";
     case EVT_WAIT: return "wait";
     case EVT_RESTART_NODES: return "restart_nodes";
     case EVT_WAIT_NODE_CONNECTIVITY: return "wait_node_connectivity";
@@ -153,6 +155,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_STATUS_EQUALS: return "status_equals";
     case CHECK_TRAFFIC_ALLOWED: return "traffic_allowed";
     case CHECK_TRAFFIC_BLOCKED: return "traffic_blocked";
+    case CHECK_TRAFFIC_UNAVAILABLE: return "traffic_unavailable";
     case CHECK_NODE_READY: return "node_ready";
     case CHECK_UE_ATTACHED: return "ue_attached";
     case CHECK_USAGE_PER_SIM: return "usage_per_sim";
@@ -225,6 +228,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
     else if (ulab_streq(name, "start_ues")) *out = EVT_START_UES;
     else if (ulab_streq(name, "wait_ues_attached")) {
         *out = EVT_WAIT_UES_ATTACHED;
+    } else if (ulab_streq(name, "wait_ue_sessions")) {
+        *out = EVT_WAIT_UE_SESSIONS;
+    } else if (ulab_streq(name, "finalize_ue_sessions")) {
+        *out = EVT_FINALIZE_UE_SESSIONS;
     } else if (ulab_streq(name, "wait")) {
         *out = EVT_WAIT;
     } else if (ulab_streq(name, "restart_nodes")) {
@@ -294,6 +301,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_TRAFFIC_ALLOWED;
     } else if (ulab_streq(name, "traffic_blocked")) {
         *out = CHECK_TRAFFIC_BLOCKED;
+    } else if (ulab_streq(name, "traffic_unavailable")) {
+        *out = CHECK_TRAFFIC_UNAVAILABLE;
     } else if (ulab_streq(name, "node_ready")) *out = CHECK_NODE_READY;
     else if (ulab_streq(name, "ue_attached")) *out = CHECK_UE_ATTACHED;
     else if (ulab_streq(name, "usage_per_sim")) {

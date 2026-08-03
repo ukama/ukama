@@ -52,11 +52,19 @@ phases:
         nodes: all
       - type: wait_nodes_ready
         nodes: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 3
-      - type: wait
+      - type: finalize_ue_sessions
+        ues: all
         seconds: 5
+      - type: start_ues
+        ues: all
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
     checks:
       - type: traffic_blocked
         ues: all

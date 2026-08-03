@@ -102,6 +102,131 @@ static int event_wait_ues_attached(event_ctx_t *ctx,
     return rc;
 }
 
+static int event_wait_ue_sessions(event_ctx_t *ctx,
+                                  const event_spec_t *event,
+                                  ulab_error_t *err) {
+    selector_result_t res;
+    ulab_error_t verify_err;
+    unsigned int timeout;
+    unsigned int elapsed;
+    unsigned int poll;
+    size_t i;
+    int rc;
+
+    memset(&res, 0, sizeof(res));
+    timeout = event->amount_mb > 0 ?
+              (unsigned int)event->amount_mb : 90u;
+    if (timeout > 300) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "wait_ue_sessions exceeds 300 seconds");
+        return ULAB_ERR;
+    }
+
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc != ULAB_OK) {
+        return rc;
+    }
+    if (res.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "wait_ue_sessions selected no UEs");
+        selector_result_free(&res);
+        return ULAB_ERR;
+    }
+
+    poll = 3u;
+    elapsed = 0;
+    for (;;) {
+        memset(&verify_err, 0, sizeof(verify_err));
+        rc = runtime_verify_ue_sessions(ctx->runtime, ctx->world,
+                                        &res, &verify_err);
+        if (rc == ULAB_OK) {
+            for (i = 0; i < res.count; i++) {
+                ctx->world->ues[res.idx[i]].attached = 1;
+            }
+            selector_result_free(&res);
+            return ULAB_OK;
+        }
+
+        if (elapsed >= timeout) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "UE sessions not healthy after %u seconds: %.700s",
+                     timeout, verify_err.msg);
+            selector_result_free(&res);
+            return ULAB_ERR;
+        }
+
+        sleep(poll);
+        elapsed = timeout - elapsed < poll ? timeout : elapsed + poll;
+    }
+}
+
+static unsigned int cdr_wait_seconds(const event_spec_t *event) {
+    const char *value;
+    char *end;
+    unsigned long seconds;
+
+    if (event != NULL && event->amount_mb > 0) {
+        return event->amount_mb > 300 ? 300u : (unsigned int)event->amount_mb;
+    }
+
+    value = getenv("ULAB_CDR_WAIT_SEC");
+    if (value == NULL || value[0] == '\0') {
+        return 5u;
+    }
+
+    end = NULL;
+    seconds = strtoul(value, &end, 10);
+    if (end == value || *end != '\0' || seconds > 300) {
+        return 5u;
+    }
+
+    return (unsigned int)seconds;
+}
+
+static int event_finalize_ue_sessions(event_ctx_t *ctx,
+                                      const event_spec_t *event,
+                                      ulab_error_t *err) {
+    selector_result_t res;
+    unsigned int wait_sec;
+    int rc;
+
+    memset(&res, 0, sizeof(res));
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc != ULAB_OK) {
+        return rc;
+    }
+
+    if (res.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "finalize_ue_sessions selected no UEs");
+        selector_result_free(&res);
+        return ULAB_ERR;
+    }
+
+    ulab_status("UE", "detach %zu session(s)", res.count);
+    rc = runtime_detach_selected_ues(ctx->runtime, ctx->world, &res, err);
+    if (rc != ULAB_OK) {
+        selector_result_free(&res);
+        return rc;
+    }
+
+    wait_sec = cdr_wait_seconds(event);
+    if (wait_sec > 0) {
+        ulab_status("CDR", "wait %u sec for finalized session(s)", wait_sec);
+        sleep(wait_sec);
+    }
+
+    rc = runtime_collect_cdr_diagnostics(ctx->runtime, ctx->world, err);
+    if (rc == ULAB_OK) {
+        ulab_status("UE", "stop %zu finalized UE container(s)", res.count);
+        rc = runtime_cleanup_selected_ues(ctx->runtime, ctx->world,
+                                          &res, err);
+    }
+
+    selector_result_free(&res);
+    return rc;
+}
+
 static int event_restart_nodes(event_ctx_t *ctx,
                                const event_spec_t *event,
                                ulab_error_t *err) {
@@ -634,6 +759,12 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_WAIT_UES_ATTACHED:
         return event_wait_ues_attached(ctx, event, err);
+
+    case EVT_WAIT_UE_SESSIONS:
+        return event_wait_ue_sessions(ctx, event, err);
+
+    case EVT_FINALIZE_UE_SESSIONS:
+        return event_finalize_ue_sessions(ctx, event, err);
 
     case EVT_WAIT:
         if (event->amount_mb > 300) {

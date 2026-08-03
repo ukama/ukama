@@ -375,8 +375,10 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
     }
 
     if (check->type == CHECK_TRAFFIC_ALLOWED ||
-        check->type == CHECK_TRAFFIC_BLOCKED) {
+        check->type == CHECK_TRAFFIC_BLOCKED ||
+        check->type == CHECK_TRAFFIC_UNAVAILABLE) {
         ulab_error_t tmp;
+        ulab_error_t session_err;
         uint64_t amount;
         unsigned int timeout;
         unsigned int attempt;
@@ -389,17 +391,34 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         rc = ULAB_ERR;
         expected = 0;
         attempt = 0;
+        memset(&tmp, 0, sizeof(tmp));
+        memset(&session_err, 0, sizeof(session_err));
 
         if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) {
             return ULAB_ERR;
+        }
+
+        if (check->type == CHECK_TRAFFIC_BLOCKED &&
+            runtime_verify_ue_sessions(ctx->runtime, ctx->world, &sel,
+                                       &session_err) != ULAB_OK) {
+            res->passed = 0;
+            snprintf(res->detail, sizeof(res->detail),
+                     "traffic block precondition failed: %.768s",
+                     session_err.msg);
+            selector_result_free(&sel);
+            return ULAB_OK;
         }
 
         do {
             memset(&tmp, 0, sizeof(tmp));
             rc = runtime_generate_traffic(ctx->runtime, ctx->world, &sel,
                                           amount, &tmp);
-            expected = check->type == CHECK_TRAFFIC_ALLOWED ?
-                       rc == ULAB_OK : rc != ULAB_OK;
+            if (check->type == CHECK_TRAFFIC_ALLOWED) {
+                expected = rc == ULAB_OK;
+            } else {
+                expected = rc != ULAB_OK;
+            }
+
             if (expected || attempt >= timeout) {
                 break;
             }
@@ -407,14 +426,29 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
             attempt++;
         } while (1);
 
+        if (expected && check->type == CHECK_TRAFFIC_BLOCKED) {
+            memset(&session_err, 0, sizeof(session_err));
+            if (runtime_verify_ue_policy_blocks(ctx->runtime, ctx->world,
+                                                &sel, &session_err) != ULAB_OK) {
+                expected = 0;
+            }
+        }
+
         res->passed = expected;
         n = snprintf(res->detail, sizeof(res->detail),
                      "ues=%zu amount_mb=%llu runtime_rc=%d attempts=%u",
                      sel.count, (unsigned long long)amount, rc,
                      attempt + 1);
         if (n > 0 && (size_t)n < sizeof(res->detail) && tmp.msg[0]) {
-            snprintf(res->detail + n, sizeof(res->detail) - (size_t)n,
-                     " error=%.256s", tmp.msg);
+            n += snprintf(res->detail + n,
+                          sizeof(res->detail) - (size_t)n,
+                          " traffic_error=%.256s", tmp.msg);
+        }
+        if (!expected && check->type == CHECK_TRAFFIC_BLOCKED &&
+            n > 0 && (size_t)n < sizeof(res->detail) && session_err.msg[0]) {
+            snprintf(res->detail + n,
+                     sizeof(res->detail) - (size_t)n,
+                     " session_error=%.256s", session_err.msg);
         }
 
         selector_result_free(&sel);

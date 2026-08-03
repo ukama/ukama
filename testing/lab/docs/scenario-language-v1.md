@@ -46,6 +46,9 @@ Supported events:
 - `create_ues` (reserved/disabled in v1.0)
 - `start_ues`
 - `wait_ues_attached`
+- `wait_ue_sessions`
+- `finalize_ue_sessions`
+- `wait`
 - `restart_nodes`
 - `wait_node_connectivity`
 - `wait_nodes_ready`
@@ -78,6 +81,7 @@ Supported checks:
 - `status_equals`
 - `traffic_allowed`
 - `traffic_blocked`
+- `traffic_unavailable`
 - `node_ready`
 - `ue_attached`
 - `usage_per_sim`
@@ -236,6 +240,33 @@ List/status/runtime checks:
   amount_mb: 1
 ```
 
+UE session boundaries:
+
+```yaml
+- type: finalize_ue_sessions
+  ues: all
+  seconds: 5
+
+- type: start_ues
+  ues: all
+
+- type: wait_ues_attached
+  ues: all
+```
+
+`finalize_ue_sessions` detaches the selected UEs, waits for CDR publication,
+collects optional CDR diagnostics, and removes the detached UE containers.
+Use it between traffic phases when a scenario must prove accounting across
+separate sessions. `wait_ue_sessions` is a lighter post-restart check: it
+requires a running UE, an attached EPC session, an available PCRF subscriber,
+and reachable site media without requiring an allowed user-plane policy.
+
+`traffic_blocked` is strict policy enforcement. It first requires a healthy UE
+session, then verifies after the failed transfer that PCRF intent, OVS state,
+tunnel routing, and the site-specific media return route are consistent with a
+policy block. Use `traffic_unavailable` for tests where any runtime failure is
+the expected outcome, such as disabled radio, disabled service, or deliberate
+non-admission.
 
 BFF lifecycle events:
 

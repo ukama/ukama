@@ -174,6 +174,18 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->type == EVT_WAIT_UE_SESSIONS ||
+                event->type == EVT_FINALIZE_UE_SESSIONS) {
+                if (event->ues.kind == SEL_NONE) {
+                    return fail(err,
+                                "UE session event requires UE selector");
+                }
+                if (event->amount_mb > 300) {
+                    return fail(err,
+                                "UE session event exceeds 300 seconds");
+                }
+            }
+
             if (event->type == EVT_WAIT_NODE_CONNECTIVITY) {
                 if (event->nodes.kind == SEL_NONE) {
                     return fail(err,

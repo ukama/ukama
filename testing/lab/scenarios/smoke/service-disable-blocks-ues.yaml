@@ -62,7 +62,7 @@ phases:
         sites: all
         state: off
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000001
         amount_mb: 1
 
@@ -76,7 +76,7 @@ phases:
         expect:
           result: failure
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000002
         amount_mb: 1
 

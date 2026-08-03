@@ -1,10 +1,10 @@
 version: 1
 name: p0-expired-package-cannot-reactivate
-description: Verify an exhausted entitlement remains inactive after node restart and cannot resume service or accrue additional usage.
+description: Verify an expired entitlement remains inactive after node restart and cannot resume service or accrue additional usage.
 seed: 4312
 suite: p0
 priority: p0
-tags: [virtual, data-package, policy, restart, no-reactivation]
+tags: [virtual, data-package, policy, exhaustion, restart, no-reactivation]
 status: active
 provider:
   type: virtual
@@ -48,12 +48,18 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 1
-      - type: wait
+      - type: finalize_ue_sessions
+        ues: all
         seconds: 5
       - type: restart_nodes
         nodes: all
       - type: wait_nodes_ready
         nodes: all
+      - type: start_ues
+        ues: all
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
     checks:
       - type: traffic_blocked
         ues: all

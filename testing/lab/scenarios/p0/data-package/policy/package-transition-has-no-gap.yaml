@@ -1,6 +1,6 @@
 version: 1
 name: p0-package-transition-has-no-gap
-description: Verify a queued successor accepts the next traffic unit immediately after exhaustion and the assignment ledger has a contiguous handoff.
+description: Verify a finalized exhausted session activates its queued successor before the next session and the assignment ledger has a contiguous handoff.
 seed: 4310
 suite: p0
 priority: p0
@@ -57,6 +57,13 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 1
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 5
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 1

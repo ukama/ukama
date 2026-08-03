@@ -41,8 +41,14 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
-      - type: wait
+      - type: finalize_ue_sessions
+        ues: all
         seconds: 5
+      - type: start_ues
+        ues: all
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
     checks:
       - type: traffic_blocked
         ues: all
