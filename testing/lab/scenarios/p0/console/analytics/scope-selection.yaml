@@ -42,7 +42,7 @@ phases:
         ues: all
         amount_mb: 3
       - type: wait
-        seconds: 5
+        seconds: 60
     checks:
       - type: usage_aggregate
         target: sim

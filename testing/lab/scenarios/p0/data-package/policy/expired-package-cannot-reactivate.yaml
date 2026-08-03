@@ -50,7 +50,7 @@ phases:
         amount_mb: 1
       - type: finalize_ue_sessions
         ues: all
-        seconds: 5
+        seconds: 60
       - type: restart_nodes
         nodes: all
       - type: wait_nodes_ready

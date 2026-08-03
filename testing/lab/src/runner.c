@@ -976,13 +976,13 @@ static unsigned int cdr_wait_seconds(void) {
 
     v = getenv("ULAB_CDR_WAIT_SEC");
     if (v == NULL || v[0] == '\0') {
-        return 5u;
+        return 60u;
     }
 
     end = NULL;
     sec = strtoul(v, &end, 10);
     if (end == v || sec > 300ul) {
-        return 5u;
+        return 60u;
     }
 
     return (unsigned int)sec;

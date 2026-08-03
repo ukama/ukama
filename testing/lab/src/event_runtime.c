@@ -171,13 +171,13 @@ static unsigned int cdr_wait_seconds(const event_spec_t *event) {
 
     value = getenv("ULAB_CDR_WAIT_SEC");
     if (value == NULL || value[0] == '\0') {
-        return 5u;
+        return 60u;
     }
 
     end = NULL;
     seconds = strtoul(value, &end, 10);
     if (end == value || *end != '\0' || seconds > 300) {
-        return 5u;
+        return 60u;
     }
 
     return (unsigned int)seconds;

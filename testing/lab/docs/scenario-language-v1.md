@@ -245,7 +245,7 @@ UE session boundaries:
 ```yaml
 - type: finalize_ue_sessions
   ues: all
-  seconds: 5
+  seconds: 60
 
 - type: start_ues
   ues: all
