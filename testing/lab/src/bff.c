@@ -34,6 +34,7 @@ extern const char *BFF_GET_NODES;
 extern const char *BFF_GET_SUBSCRIBERS_BY_NETWORK;
 extern const char *BFF_GET_SUBSCRIBER;
 extern const char *BFF_GET_SIMS_BY_NETWORK;
+extern const char *BFF_GET_SIMS;
 extern const char *BFF_INVENTORY_OVERVIEW;
 extern const char *BFF_SIM_POOL_OVERVIEW;
 extern const char *BFF_ADD_SUBSCRIBER;
@@ -3786,12 +3787,12 @@ static int direct_network_list_call(bff_client_t *c,
                         vars, root, err);
     }
     if (ulab_streq(target, "sims")) {
-        snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"networkId\":\"%s\",\"status\":\"\"}}",
                  network_esc);
-        *envelope = "getSimsByNetwork";
+        *envelope = "getSims";
         *list_key = "sims";
-        return bff_call(c, "getSimsByNetwork", BFF_GET_SIMS_BY_NETWORK,
-                        vars, root, err);
+        return bff_call(c, "getSims", BFF_GET_SIMS, vars, root, err);
     }
 
     snprintf(err->msg, sizeof(err->msg),

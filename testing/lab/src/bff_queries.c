@@ -85,10 +85,40 @@ const char *BFF_GET_SUBSCRIBER =
 " uuid name email phone networkId sim { id status networkId package {"
 " package_id is_active } } } }";
 
+/*
+ * Network-scoped SIM list, deprecated upstream but retained.
+ *
+ * Proxies subscriber /v1/sims/networks/{network_id}, marked "Deprecated: Use
+ * ListSims with networkId as filtering param instead" in both
+ * systems/subscriber/api-gateway/pkg/rest/router.go and
+ * sim-manager/pkg/db/sim_repo.go. Kept because it returns SubscriberSimDto,
+ * whose package is SimPackageDto with snake_case package_id/is_active --
+ * a different GraphQL type from what getSims below returns. Prefer
+ * BFF_GET_SIMS for new call sites.
+ */
 const char *BFF_GET_SIMS_BY_NETWORK =
 "query GetSimsByNetwork($networkId: String!) {"
 " getSimsByNetwork(networkId: $networkId) { sims {"
 " id subscriberId networkId status package { package_id is_active } } } }";
+
+/*
+ * Network-scoped SIM list, preferred.
+ *
+ * Proxies subscriber /v1/sim with query filters, the supported path. Returns
+ * the same rows as BFF_GET_SIMS_BY_NETWORK above.
+ *
+ * status is a non-null String on ListSimsInput and must be sent. An empty
+ * string parses to SimStatusUnknown (ukama/sim_status.go ParseSimStatus),
+ * which the repo treats as "no status filter", i.e. every SIM.
+ *
+ * Note the package field names: getSims returns SimPackage (camelCase
+ * packageId/isActive), whereas getSimsByNetwork returned SimPackageDto
+ * (snake_case package_id/is_active). They are different GraphQL types.
+ */
+const char *BFF_GET_SIMS =
+"query GetSims($data: ListSimsInput!) {"
+" getSims(data: $data) { sims {"
+" id subscriberId networkId status package { packageId isActive } } } }";
 
 const char *BFF_INVENTORY_OVERVIEW =
 "query InventoryOverview { inventoryView { components { total byCategory {"
