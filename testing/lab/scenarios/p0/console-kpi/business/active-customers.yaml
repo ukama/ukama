@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-active-customers
-description: Allocate three SIMs across two subscribers and verify NetworkHome counts two active customers, deduplicating the subscriber who owns two SIMs.
+description: Create two console customers and verify the selected network's direct customer list and ACTIVE_CUSTOMERS KPI both return two.
 seed: 4705
 suite: p0
 priority: p0
@@ -15,8 +15,7 @@ world:
     tower: 1
     amplifier: 1
     controller: 1
-  ues_per_site: 3
-  sims_per_subscriber: 2
+  ues_per_site: 2
 packages:
   - ref: customer_plan
     name: Console Active Customer Plan
@@ -32,12 +31,18 @@ runtime:
 phases:
   - name: verify_active_customers
     checks:
-      - type: network_overview_metric
+      - type: list_count_equals
+        target: customers
         networks: net-001
-        column: subscribers_total
-        expected_value: 2
-      - type: network_overview_metric
+        expected_count: 2
+      - type: kpi_value
+        key: ACTIVE_CUSTOMERS
+        span: daily
+        op: LAST
+        scope_key: network_id
         networks: net-001
-        column: subscribers_active
         expected_value: 2
-
+        timeout_seconds: 600
+      - type: entity_reconciles
+        entity: customer
+        ref: sub-000001

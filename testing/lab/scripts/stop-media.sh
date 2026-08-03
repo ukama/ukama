@@ -13,34 +13,53 @@ if [ "$#" -ne 1 ]; then
 fi
 
 RUN_DIR="$1"
-STATE_FILE="$RUN_DIR/runtime-media/media.env"
+STATE_DIR="$RUN_DIR/runtime-media"
 
-if [ ! -f "$STATE_FILE" ]; then
-    echo "stop-media: state not found $STATE_FILE"
+stop_one() {
+    STATE_FILE="$1"
+    SITE_REF=""
+    TNODE_CONTAINER=""
+    MEDIA_CONTAINER=""
+    MEDIA_IP=""
+    # shellcheck disable=SC1090
+    . "$STATE_FILE"
+
+    TUN_IF="${TUN_IF:-tun3}"
+    TUN_TABLE="${TUN_TABLE:-2000}"
+    UE_CIDR="${UE_CIDR:-192.168.8.0/22}"
+    TOWER_LAB_IF="${TOWER_LAB_IF:-eth0}"
+
+    if [ -n "$TNODE_CONTAINER" ] && [ -n "$MEDIA_IP" ]; then
+        podman exec "$TNODE_CONTAINER" sh -lc "
+            iptables -D FORWARD -i '$TUN_IF' -d '$MEDIA_IP/32' -j ACCEPT 2>/dev/null || true
+            iptables -D FORWARD -i '$TOWER_LAB_IF' -d '$UE_CIDR' -j ACCEPT 2>/dev/null || true
+            ip route del '$MEDIA_IP/32' table '$TUN_TABLE' 2>/dev/null || true
+            ip route flush cache >/dev/null 2>&1 || true
+        " >/dev/null 2>&1 || true
+    fi
+
+    if [ -n "$MEDIA_CONTAINER" ]; then
+        echo "stop-media: site=$SITE_REF rm $MEDIA_CONTAINER"
+        podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
+    fi
+}
+
+if [ ! -d "$STATE_DIR" ]; then
+    echo "stop-media: state directory not found $STATE_DIR"
     exit 0
 fi
 
-# shellcheck disable=SC1090
-. "$STATE_FILE"
+found=0
+for state in "$STATE_DIR"/*.env; do
+    [ -f "$state" ] || continue
+    [ "$(basename "$state")" = "media.env" ] && continue
+    found=1
+    stop_one "$state"
+done
 
-TUN_IF="${TUN_IF:-tun3}"
-TUN_TABLE="${TUN_TABLE:-2000}"
-UE_CIDR="${UE_CIDR:-192.168.8.0/22}"
-TOWER_LAB_IF="${TOWER_LAB_IF:-eth0}"
-
-if [ -n "${TNODE_CONTAINER:-}" ] && [ -n "${MEDIA_IP:-}" ]; then
-    echo "stop-media: delete media routes/rules"
-    podman exec "$TNODE_CONTAINER" sh -lc "
-        iptables -D FORWARD -i '$TUN_IF' -d '$MEDIA_IP/32' -j ACCEPT 2>/dev/null || true
-        iptables -D FORWARD -i '$TOWER_LAB_IF' -d '$UE_CIDR' -j ACCEPT 2>/dev/null || true
-        ip route del '$MEDIA_IP/32' table '$TUN_TABLE' 2>/dev/null || true
-        ip route flush cache >/dev/null 2>&1 || true
-    " >/dev/null 2>&1 || true
+if [ "$found" -eq 0 ] && [ -f "$STATE_DIR/media.env" ]; then
+    stop_one "$STATE_DIR/media.env"
 fi
 
-if [ -n "${MEDIA_CONTAINER:-}" ]; then
-    echo "stop-media: rm $MEDIA_CONTAINER"
-    podman rm -f "$MEDIA_CONTAINER" >/dev/null 2>&1 || true
-fi
-
+rm -f "$STATE_DIR/media.env"
 exit 0

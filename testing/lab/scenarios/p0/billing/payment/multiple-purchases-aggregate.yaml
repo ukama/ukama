@@ -1,10 +1,10 @@
 version: 1
 name: p0-multiple-purchases-aggregate
-description: Combine the mandatory first-package sale with a second cash purchase and verify RevenueOverview equals the sum of both settled GraphQL payments.
+description: Combine the mandatory first-plan sale with one console top-up and verify the two settled payments reconcile to seven dollars of network revenue.
 seed: 4527
 suite: p0
 priority: p0
-tags: [virtual, billing, payment, aggregation, graphql]
+tags: [virtual, billing, payment, aggregation, console, graphql]
 status: active
 provider:
   type: virtual
@@ -53,14 +53,15 @@ phases:
         package: additional
         status: settled
         expected_count: 1
-      - type: revenue_summary
+      - type: payment_entitlement_reconciles
+        ues: all
+        package: additional
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 7.00
         tolerance: 0.001
-      - type: revenue_summary
-        networks: net-001
-        column: month_paid
-        expected_value: 7.00
-        tolerance: 0.001
-
+        timeout_seconds: 600

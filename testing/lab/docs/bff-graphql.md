@@ -1,6 +1,8 @@
 # BFF GraphQL operations
 
-The BFF client is based on resolver/test definitions from Console BFF:
+Ukama Lab talks only to Console BFF. The client uses the same direct GraphQL
+operations that back the current console screens; it does not use the retired
+composite dashboard views.
 
 Mutations:
 
@@ -13,25 +15,38 @@ Mutations:
 - `addSubscriber(data: SubscriberInputDto!)`
 - `allocateSim(data: AllocateSimInputDto!)`
 - `addPayment(data: AddPaymentInputDto!)`
+- `updateSoftware(data: UpdateSoftwareInputDto!)`
 
-Queries:
+Direct resource queries:
 
+- `getNetwork(networkId: String!)`
+- `getNetworks`
+- `getSites(data: SitesInputDto!)`
+- `getSite(siteId: String!)`
+- `getNodes(data: NodesFilterInput!)`
+- `getNode(data: NodeInput!)`
+- `getNodesForSite(siteId: String!)`
+- `getSubscribersByNetwork(networkId: String!)`
+- `getSubscriber(subscriberId: String!)`
+- `getSimsByNetwork(networkId: String!)`
 - `getPackage(packageId: String!)`
 - `getPackages(networkId: String)`
 - `isPackageNameAvailable(name: String!)`
-- `packagesDashboard(networkId: String)`
-- `getSimsUsageByNetwork(networkId: String!)`
 - `getPackagesForSim(data: GetPackagesForSimInputDto!)`
+- `getSimsUsageByNetwork(networkId: String!)`
 - `getPayments(data: GetPaymentsInputDto!)`
+- `getApps(data: GetAppsInputDto!)`
+
+Analytics queries:
+
 - `getKpiValues(data: KpiValuesInput!)`
 - `getPerformanceReport(data: PerformanceReportInput!)`
-- `getNode(data: NodeInput!) { id status { connectivity state } }`
-- `networkOverview(networkId: String!)`
-- `siteView(siteId: String!)`
 
-The P0 data-package scenarios communicate only with these BFF GraphQL
-operations. Initial allocation billing is observed indirectly through
-`packagesDashboard` revenue and attachment count. Subsequent cash sales use
-`addPayment`; entitlement creation, ordering, and transitions are observed
-through `getPackagesForSim`. No scenario calls package, payment, subscriber,
-or analytics backend services directly.
+Release queries:
+
+- `getReleaseCatalog(data: GetReleaseCatalogInput!)`
+
+The existing scenario check names are kept temporarily for compatibility, but
+their implementations now read direct resources, payments, KPI values and
+performance reports. Scenario/check renaming is handled separately from this
+BFF-access patch.

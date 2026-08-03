@@ -7,6 +7,10 @@
 
 set -eu
 
+# EC2 systemd workers do not necessarily receive HOME.
+: "${HOME:=/root}"
+export HOME
+
 if [ "$#" -ne 1 ]; then
     echo "usage: $0 <run-dir>" >&2
     exit 2

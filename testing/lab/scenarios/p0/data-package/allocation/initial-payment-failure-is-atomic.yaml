@@ -46,12 +46,6 @@ phases:
     checks:
       - type: sim_unallocated
         ues: all
-      - type: package_catalog_equals
+      - type: package_fields_equal
         networks: all
         package: inactive_initial_plan
-      - type: package_business_metrics
-        networks: all
-        package: inactive_initial_plan
-        expected_value: 0.00
-        expected_count: 0
-

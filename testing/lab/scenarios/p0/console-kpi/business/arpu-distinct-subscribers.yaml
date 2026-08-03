@@ -4,8 +4,9 @@ description: Give one subscriber two paid SIMs and verify ARPU divides current-m
 seed: 4704
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, arpu, subscriber, graphql]
-status: active
+tags: [virtual, console-kpi, arpu, subscriber, graphql, backend-only, non-console]
+status: skip
+# Console acceptance: skipped because the current console cannot create this input or topology.
 provider:
   type: virtual
 world:

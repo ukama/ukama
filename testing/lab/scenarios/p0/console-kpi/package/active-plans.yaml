@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-active-plans
-description: Create two active catalog plans but attach a SIM to only one and verify ACTIVE_PLANS counts the distinct plan with an active assignment rather than both catalog flags.
+description: Create two active catalog plans, attach a SIM to only one, and verify the plan list plus ACTIVE_PLANS KPI use the intended active-assignment definition.
 seed: 4708
 suite: p0
 priority: p0
@@ -37,16 +37,22 @@ runtime:
 phases:
   - name: verify_active_plan_definition
     checks:
-      - type: package_dashboard_metric
+      - type: list_count_equals
+        target: plans
         networks: net-001
+        expected_count: 2
+      - type: package_fields_equal
         package: attached_plan
-        column: attach_count
-        expected_value: 1
-      - type: package_dashboard_metric
-        networks: net-001
+      - type: package_fields_equal
         package: unattached_plan
-        column: attach_count
-        expected_value: 0
+      - type: package_assignment_count
+        ues: all
+        package: attached_plan
+        expected_count: 1
+      - type: package_state
+        ues: all
+        package: unattached_plan
+        expected: absent
       - type: kpi_value
         key: ACTIVE_PLANS
         span: daily
@@ -55,4 +61,3 @@ phases:
         networks: net-001
         expected_value: 1
         timeout_seconds: 600
-

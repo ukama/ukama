@@ -41,14 +41,26 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 3
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 4
-      - type: wait
-        seconds: 5
     checks:
       - type: usage_per_sim
         ues: all

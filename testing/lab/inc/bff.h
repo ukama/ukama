@@ -46,6 +46,51 @@ typedef struct {
 } bff_app_state_t;
 
 typedef struct {
+    char id[ULAB_MAX_ID];
+    char release_date[ULAB_MAX_REF];
+    char node_id[ULAB_MAX_ID];
+    char status[ULAB_MAX_REF];
+    char current_version[ULAB_MAX_REF];
+    char desired_version[ULAB_MAX_REF];
+    char name[ULAB_MAX_NAME];
+    char created_at[ULAB_MAX_REF];
+    char updated_at[ULAB_MAX_REF];
+} bff_software_t;
+
+typedef struct {
+    char id[ULAB_MAX_ID];
+    char type[ULAB_MAX_REF];
+    char status[ULAB_MAX_REF];
+    char requested_by[ULAB_MAX_NAME];
+    char started_at[ULAB_MAX_REF];
+    char lease_expires_at[ULAB_MAX_REF];
+} bff_operation_t;
+
+typedef struct {
+    char node_id[ULAB_MAX_ID];
+    char node_type[ULAB_MAX_REF];
+    int  busy;
+    int  has_operation;
+    bff_operation_t operation;
+} bff_node_operation_status_t;
+
+typedef struct {
+    int  available;
+    char reason[ULAB_MAX_ERR];
+} bff_action_availability_t;
+
+typedef struct {
+    char site_id[ULAB_MAX_ID];
+    int  busy;
+    int  degraded;
+    size_t node_count;
+    bff_node_operation_status_t nodes[ULAB_MAX_LIST];
+    bff_action_availability_t restart_site;
+    bff_action_availability_t rf;
+    bff_action_availability_t service;
+} bff_site_operation_status_t;
+
+typedef struct {
     char name[ULAB_MAX_NAME];
     char type[ULAB_MAX_REF];
     char version[ULAB_MAX_REF];
@@ -114,7 +159,7 @@ typedef struct {
     double arpu;
     int    has_mrr;
     int    has_arpu;
-} bff_package_dashboard_t;
+} bff_package_kpis_t;
 
 typedef struct {
     uint32_t subscribers_total;
@@ -124,7 +169,7 @@ typedef struct {
     uint32_t nodes_total;
     uint32_t nodes_online;
     uint32_t nodes_offline;
-} bff_network_overview_t;
+} bff_network_summary_t;
 
 typedef struct {
     uint32_t component_total;
@@ -258,30 +303,31 @@ int bff_get_revenue_summary(bff_client_t *c,
                             bff_revenue_summary_t *summary,
                             ulab_error_t *err);
 
-int bff_get_package_dashboard(bff_client_t *c,
-                              const network_t *network,
-                              bff_package_dashboard_t *dashboard,
-                              ulab_error_t *err);
+int bff_get_package_kpis(bff_client_t *c,
+                         const network_t *network,
+                         bff_package_kpis_t *kpis,
+                         ulab_error_t *err);
 
-int bff_get_network_overview(bff_client_t *c,
-                             const network_t *network,
-                             bff_network_overview_t *overview,
-                             ulab_error_t *err);
+int bff_get_network_summary(bff_client_t *c,
+                            const network_t *network,
+                            bff_network_summary_t *summary,
+                            ulab_error_t *err);
 
-int bff_get_nodes_view_count(bff_client_t *c,
-                             const network_t *network,
-                             uint32_t *count,
-                             ulab_error_t *err);
+int bff_get_nodes_count(bff_client_t *c,
+                        const network_t *network,
+                        uint32_t *count,
+                        ulab_error_t *err);
 
 int bff_get_inventory_summary(bff_client_t *c,
                               const char *sim_type,
                               bff_inventory_summary_t *summary,
                               ulab_error_t *err);
 
-int bff_get_subscriber_billing(bff_client_t *c,
-                               const subscriber_t *subscriber,
-                               bff_subscriber_billing_t *billing,
-                               ulab_error_t *err);
+int bff_get_subscriber_payment_summary(
+    bff_client_t *c,
+    const subscriber_t *subscriber,
+    bff_subscriber_billing_t *billing,
+    ulab_error_t *err);
 
 int bff_sim_is_unallocated(bff_client_t *c,
                            const ue_t *ue,
@@ -385,6 +431,12 @@ int bff_toggle_sim_status(bff_client_t *c,
                           const char *status,
                           ulab_error_t *err);
 
+int bff_get_sim_status(bff_client_t *c,
+                       const ue_t *ue,
+                       char *status,
+                       size_t status_len,
+                       ulab_error_t *err);
+
 int bff_get_sim_usage(bff_client_t *c,
                       const ue_t *ue,
                       const network_t *network,
@@ -412,6 +464,17 @@ int bff_get_node_status(bff_client_t *c,
 int bff_restart_node(bff_client_t *c,
                      const node_t *node,
                      ulab_error_t *err);
+
+int bff_restart_site(bff_client_t *c,
+                     const site_t *site,
+                     const network_t *network,
+                     ulab_error_t *err);
+
+int bff_toggle_internet_switch(bff_client_t *c,
+                               const site_t *site,
+                               uint32_t port,
+                               int enabled,
+                               ulab_error_t *err);
 
 int bff_get_release(bff_client_t *c,
                     const char *name,
@@ -449,19 +512,76 @@ int bff_toggle_site_radio(bff_client_t *c,
                           int enabled,
                           ulab_error_t *err);
 
-int bff_network_overview_loads(bff_client_t *c,
-                               const network_t *net,
-                               ulab_error_t *err);
-
-int bff_site_view_loads(bff_client_t *c,
-                        const site_t *site,
-                        ulab_error_t *err);
+int bff_console_network_loads(bff_client_t *c,
+                              const network_t *net,
+                              ulab_error_t *err);
 
 int bff_backend_count(bff_client_t *c,
                       const char *target,
                       const world_t *w,
                       size_t *count,
                       ulab_error_t *err);
+
+int bff_get_list_count(bff_client_t *c,
+                       const char *target,
+                       const network_t *network,
+                       size_t *count,
+                       ulab_error_t *err);
+
+int bff_entity_fields_match_world(bff_client_t *c,
+                                  const char *entity,
+                                  const char *ref,
+                                  const world_t *world,
+                                  int *matched,
+                                  char *detail,
+                                  size_t detail_len,
+                                  ulab_error_t *err);
+
+int bff_entity_list_detail_reconciles(bff_client_t *c,
+                                      const char *entity,
+                                      const char *ref,
+                                      const world_t *world,
+                                      int *matched,
+                                      char *detail,
+                                      size_t detail_len,
+                                      ulab_error_t *err);
+
+int bff_get_software(bff_client_t *c,
+                     const node_t *node,
+                     const char *app,
+                     bff_software_t *software,
+                     int *found,
+                     ulab_error_t *err);
+
+int bff_get_software_count(bff_client_t *c,
+                           const node_t *node,
+                           size_t *count,
+                           ulab_error_t *err);
+
+int bff_get_node_operation_status(
+    bff_client_t *c,
+    const node_t *node,
+    bff_node_operation_status_t *status,
+    ulab_error_t *err);
+
+int bff_get_site_operation_status(
+    bff_client_t *c,
+    const site_t *site,
+    bff_site_operation_status_t *status,
+    ulab_error_t *err);
+
+int bff_get_kpi_timeseries(bff_client_t *c,
+                           const char *key,
+                           const char *span,
+                           const char *op,
+                           const char *from,
+                           const char *to,
+                           const char *network_id,
+                           const char *site_id,
+                           bff_kpi_value_t values[],
+                           size_t max_values,
+                           size_t *value_count,
+                           ulab_error_t *err);
 
 int bff_backend_contains(bff_client_t *c,
                          const char *view,

@@ -102,6 +102,131 @@ static int event_wait_ues_attached(event_ctx_t *ctx,
     return rc;
 }
 
+static int event_wait_ue_sessions(event_ctx_t *ctx,
+                                  const event_spec_t *event,
+                                  ulab_error_t *err) {
+    selector_result_t res;
+    ulab_error_t verify_err;
+    unsigned int timeout;
+    unsigned int elapsed;
+    unsigned int poll;
+    size_t i;
+    int rc;
+
+    memset(&res, 0, sizeof(res));
+    timeout = event->amount_mb > 0 ?
+              (unsigned int)event->amount_mb : 90u;
+    if (timeout > 300) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "wait_ue_sessions exceeds 300 seconds");
+        return ULAB_ERR;
+    }
+
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc != ULAB_OK) {
+        return rc;
+    }
+    if (res.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "wait_ue_sessions selected no UEs");
+        selector_result_free(&res);
+        return ULAB_ERR;
+    }
+
+    poll = 3u;
+    elapsed = 0;
+    for (;;) {
+        memset(&verify_err, 0, sizeof(verify_err));
+        rc = runtime_verify_ue_sessions(ctx->runtime, ctx->world,
+                                        &res, &verify_err);
+        if (rc == ULAB_OK) {
+            for (i = 0; i < res.count; i++) {
+                ctx->world->ues[res.idx[i]].attached = 1;
+            }
+            selector_result_free(&res);
+            return ULAB_OK;
+        }
+
+        if (elapsed >= timeout) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "UE sessions not healthy after %u seconds: %.700s",
+                     timeout, verify_err.msg);
+            selector_result_free(&res);
+            return ULAB_ERR;
+        }
+
+        sleep(poll);
+        elapsed = timeout - elapsed < poll ? timeout : elapsed + poll;
+    }
+}
+
+static unsigned int cdr_wait_seconds(const event_spec_t *event) {
+    const char *value;
+    char *end;
+    unsigned long seconds;
+
+    if (event != NULL && event->amount_mb > 0) {
+        return event->amount_mb > 300 ? 300u : (unsigned int)event->amount_mb;
+    }
+
+    value = getenv("ULAB_CDR_WAIT_SEC");
+    if (value == NULL || value[0] == '\0') {
+        return 60u;
+    }
+
+    end = NULL;
+    seconds = strtoul(value, &end, 10);
+    if (end == value || *end != '\0' || seconds > 300) {
+        return 60u;
+    }
+
+    return (unsigned int)seconds;
+}
+
+static int event_finalize_ue_sessions(event_ctx_t *ctx,
+                                      const event_spec_t *event,
+                                      ulab_error_t *err) {
+    selector_result_t res;
+    unsigned int wait_sec;
+    int rc;
+
+    memset(&res, 0, sizeof(res));
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc != ULAB_OK) {
+        return rc;
+    }
+
+    if (res.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "finalize_ue_sessions selected no UEs");
+        selector_result_free(&res);
+        return ULAB_ERR;
+    }
+
+    ulab_status("UE", "detach %zu session(s)", res.count);
+    rc = runtime_detach_selected_ues(ctx->runtime, ctx->world, &res, err);
+    if (rc != ULAB_OK) {
+        selector_result_free(&res);
+        return rc;
+    }
+
+    wait_sec = cdr_wait_seconds(event);
+    if (wait_sec > 0) {
+        ulab_status("CDR", "wait %u sec for finalized session(s)", wait_sec);
+        sleep(wait_sec);
+    }
+
+    rc = runtime_collect_cdr_diagnostics(ctx->runtime, ctx->world, err);
+    if (rc == ULAB_OK) {
+        ulab_status("UE", "stop %zu finalized UE container(s)", res.count);
+        rc = runtime_cleanup_selected_ues(ctx->runtime, ctx->world,
+                                          &res, err);
+    }
+
+    selector_result_free(&res);
+    return rc;
+}
+
 static int event_restart_nodes(event_ctx_t *ctx,
                                const event_spec_t *event,
                                ulab_error_t *err) {
@@ -283,6 +408,186 @@ static int event_wait_node_connectivity(event_ctx_t *ctx,
     return ULAB_ERR;
 }
 
+static int selector_result_add_unique(selector_result_t *res,
+                                      size_t idx) {
+    size_t *next;
+    size_t i;
+
+    for (i = 0; i < res->count; i++) {
+        if (res->idx[i] == idx) {
+            return ULAB_OK;
+        }
+    }
+
+    next = realloc(res->idx, (res->count + 1) * sizeof(*next));
+    if (next == NULL) {
+        return ULAB_ERR;
+    }
+    res->idx = next;
+    res->idx[res->count++] = idx;
+    return ULAB_OK;
+}
+
+static int event_resolve_sites(event_ctx_t *ctx,
+                               const event_spec_t *event,
+                               selector_result_t *sites,
+                               ulab_error_t *err) {
+    selector_result_t nodes;
+    size_t i;
+    size_t j;
+
+    memset(sites, 0, sizeof(*sites));
+    if (event->sites.kind != SEL_NONE) {
+        return selector_resolve_sites(ctx->world, &event->sites,
+                                      sites, err);
+    }
+
+    if (event->nodes.kind == SEL_NONE) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "%s requires a site selector",
+                 scenario_event_name(event->type));
+        return ULAB_ERR;
+    }
+
+    memset(&nodes, 0, sizeof(nodes));
+    if (selector_resolve_nodes(ctx->world, &event->nodes, &nodes, err)) {
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < nodes.count; i++) {
+        const node_t *node;
+        int found;
+
+        node = &ctx->world->nodes[nodes.idx[i]];
+        found = 0;
+        for (j = 0; j < ctx->world->site_count; j++) {
+            if (!ulab_streq(ctx->world->sites[j].ref, node->site_ref)) {
+                continue;
+            }
+            if (selector_result_add_unique(sites, j)) {
+                selector_result_free(&nodes);
+                selector_result_free(sites);
+                snprintf(err->msg, sizeof(err->msg),
+                         "failed to collect selected sites");
+                return ULAB_ERR;
+            }
+            found = 1;
+            break;
+        }
+        if (!found) {
+            selector_result_free(&nodes);
+            selector_result_free(sites);
+            snprintf(err->msg, sizeof(err->msg),
+                     "node %.128s has unknown site %.128s",
+                     node->ref, node->site_ref);
+            return ULAB_ERR;
+        }
+    }
+
+    selector_result_free(&nodes);
+    return ULAB_OK;
+}
+
+static int event_restart_site(event_ctx_t *ctx,
+                              const event_spec_t *event,
+                              ulab_error_t *err) {
+    selector_result_t sites;
+    size_t i;
+
+    if (event_resolve_sites(ctx, event, &sites, err)) {
+        return ULAB_ERR;
+    }
+    if (sites.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "restart_site selected no sites");
+        selector_result_free(&sites);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < sites.count; i++) {
+        site_t *site;
+        network_t *network;
+
+        site = &ctx->world->sites[sites.idx[i]];
+        network = world_network_by_ref(ctx->world, site->network_ref);
+        if (network == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "restart_site unknown network %.128s for site %.128s",
+                     site->network_ref, site->ref);
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+
+        ulab_status("SITE", "restart site=%s network=%s",
+                    site->bff_id, network->bff_id);
+        if (bff_restart_site(ctx->bff, site, network, err)) {
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+    }
+
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
+static int event_toggle_internet_switch(event_ctx_t *ctx,
+                                        const event_spec_t *event,
+                                        ulab_error_t *err) {
+    selector_result_t sites;
+    size_t i;
+    int enabled;
+
+    if (!event->has_port || event->port == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggle_internet_switch requires port > 0");
+        return ULAB_ERR;
+    }
+    if (event_state_enabled(event, &enabled, err)) {
+        return ULAB_ERR;
+    }
+    if (event_resolve_sites(ctx, event, &sites, err)) {
+        return ULAB_ERR;
+    }
+    if (sites.count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggle_internet_switch selected no sites");
+        selector_result_free(&sites);
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < sites.count; i++) {
+        site_t *site;
+
+        site = &ctx->world->sites[sites.idx[i]];
+        if (bff_toggle_internet_switch(ctx->bff, site, event->port,
+                                       enabled, err)) {
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+    }
+
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
+static int event_failure_control(event_ctx_t *ctx,
+                                 const event_spec_t *event,
+                                 ulab_error_t *err) {
+    int enabled;
+
+    if (event->target[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failure_control requires target");
+        return ULAB_ERR;
+    }
+    if (event_state_enabled(event, &enabled, err)) {
+        return ULAB_ERR;
+    }
+
+    return runtime_set_failure_control(ctx->runtime, event->target,
+                                       enabled, err);
+}
+
 static int event_software_update(event_ctx_t *ctx,
                                  const event_spec_t *event,
                                  ulab_error_t *err) {
@@ -397,11 +702,17 @@ int event_runtime(event_ctx_t *ctx,
     case EVT_TOGGLE_RADIO:
         return event_toggle_radio(ctx, event, err);
 
+    case EVT_TOGGLE_INTERNET_SWITCH:
+        return event_toggle_internet_switch(ctx, event, err);
+
     case EVT_MARK_NODE_OFFLINE:
         return runtime_mark_node_offline(ctx->runtime, err);
 
     case EVT_RESTORE_NODE:
         return runtime_restore_nodes(ctx->runtime, err);
+
+    case EVT_FAILURE_CONTROL:
+        return event_failure_control(ctx, event, err);
 
     case EVT_SOFTWARE_UPDATE:
         return event_software_update(ctx, event, err);
@@ -429,15 +740,7 @@ int event_runtime(event_ctx_t *ctx,
         return rc;
 
     case EVT_RESTART_SITE:
-        rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);
-        if (rc == ULAB_OK) {
-            rc = runtime_restart_nodes(ctx->runtime,
-                                       ctx->world,
-                                       &res,
-                                       err);
-        }
-        selector_result_free(&res);
-        return rc;
+        return event_restart_site(ctx, event, err);
 
     case EVT_START_UES:
         rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
@@ -456,6 +759,12 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_WAIT_UES_ATTACHED:
         return event_wait_ues_attached(ctx, event, err);
+
+    case EVT_WAIT_UE_SESSIONS:
+        return event_wait_ue_sessions(ctx, event, err);
+
+    case EVT_FINALIZE_UE_SESSIONS:
+        return event_finalize_ue_sessions(ctx, event, err);
 
     case EVT_WAIT:
         if (event->amount_mb > 300) {

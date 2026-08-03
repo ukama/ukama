@@ -46,6 +46,9 @@ Supported events:
 - `create_ues` (reserved/disabled in v1.0)
 - `start_ues`
 - `wait_ues_attached`
+- `wait_ue_sessions`
+- `finalize_ue_sessions`
+- `wait`
 - `restart_nodes`
 - `wait_node_connectivity`
 - `wait_nodes_ready`
@@ -57,11 +60,17 @@ Supported events:
 - `wait_package_boundary`
 - `set_package_active`
 - `remove_package_from_sim`
-- `set_sim_status`
+- `toggle_sim_status` (`set_sim_status` remains an alias)
+- `wait_sim_status`
+- `toggle_service`
+- `toggle_radio`
+- `toggle_internet_switch`
+- `restart_site`
 - `promote_release`
 - `software_update`
 - `disconnect_nodes`
 - `reconnect_nodes`
+- `failure_control`
 - `check`
 
 Supported checks:
@@ -72,6 +81,7 @@ Supported checks:
 - `status_equals`
 - `traffic_allowed`
 - `traffic_blocked`
+- `traffic_unavailable`
 - `node_ready`
 - `ue_attached`
 - `usage_per_sim`
@@ -81,7 +91,7 @@ Supported checks:
 - `package_state`
 - `package_assignment_count`
 - `package_assignment_chain`
-- `package_catalog_equals`
+- `package_fields_equal` (`package_catalog_equals` remains an alias)
 - `package_visible`
 - `package_hidden`
 - `package_name_available`
@@ -107,6 +117,16 @@ Supported checks:
 - `node_version_equals`
 - `node_health_ok`
 - `release_unavailable`
+- `list_count_equals`
+- `entity_fields_equal`
+- `entity_reconciles`
+- `node_status_equals`
+- `software_status_equals`
+- `software_count_equals`
+- `node_operation_status_equals`
+- `site_operation_status_equals`
+- `kpi_state_equals`
+- `kpi_timeseries`
 - `balance_non_negative`
 
 
@@ -174,6 +194,27 @@ Virtual node network outage:
 network without deleting it. `reconnect_nodes` reconnects the same container,
 preserving its writable state across the simulated backhaul outage.
 
+A software update can be interrupted without a special combined event:
+
+```yaml
+- type: software_update
+  type_selector: controller
+  count_per_network: 1
+  app: example
+  tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+
+- type: wait
+  seconds: 2
+
+- type: disconnect_nodes
+  type_selector: controller
+  count_per_network: 1
+```
+
+The update mutation is asynchronous, so the following `wait` and
+`disconnect_nodes` events provide deterministic orchestration while keeping
+each action independently visible in the run log.
+
 Backend count:
 
 ```yaml
@@ -199,6 +240,33 @@ List/status/runtime checks:
   amount_mb: 1
 ```
 
+UE session boundaries:
+
+```yaml
+- type: finalize_ue_sessions
+  ues: all
+  seconds: 60
+
+- type: start_ues
+  ues: all
+
+- type: wait_ues_attached
+  ues: all
+```
+
+`finalize_ue_sessions` detaches the selected UEs, waits for CDR publication,
+collects optional CDR diagnostics, and removes the detached UE containers.
+Use it between traffic phases when a scenario must prove accounting across
+separate sessions. `wait_ue_sessions` is a lighter post-restart check: it
+requires a running UE, an attached EPC session, an available PCRF subscriber,
+and reachable site media without requiring an allowed user-plane policy.
+
+`traffic_blocked` is strict policy enforcement. It first requires a healthy UE
+session, then verifies after the failed transfer that PCRF intent, OVS state,
+tunnel routing, and the site-specific media return route are consistent with a
+policy block. Use `traffic_unavailable` for tests where any runtime failure is
+the expected outcome, such as disabled radio, disabled service, or deliberate
+non-admission.
 
 BFF lifecycle events:
 
@@ -210,10 +278,49 @@ BFF lifecycle events:
   ues: all
   package: daily_1gb
 
-- type: set_sim_status
+- type: toggle_sim_status
   ues: all
   status: inactive
+
+- type: wait_sim_status
+  ues: all
+  status: inactive
+  seconds: 120
 ```
+
+`toggle_sim_status` calls the same mutation as the console and treats
+`success: false` as an event failure, preserving the BFF message for
+`expect.error_contains`. The backend applies SIM status asynchronously;
+`wait_sim_status` polls `getSim.status` until every selected SIM reaches the
+requested state. `ULAB_SIM_STATUS_POLL_SEC` controls the polling interval and
+defaults to two seconds. `set_sim_status` remains a compatible alias.
+
+Console site actions:
+
+```yaml
+- type: restart_site
+  sites: site-001-001
+
+- type: toggle_service
+  sites: site-001-001
+  state: on
+
+- type: toggle_radio
+  sites: site-001-001
+  state: off
+
+- type: toggle_internet_switch
+  sites: site-001-001
+  port: 1
+  state: on
+```
+
+`restart_site` uses the console BFF `restartSite` mutation with both the site
+and network IDs. For compatibility with older generated scenarios, it also
+accepts a `nodes:` selector and derives the unique sites from those nodes.
+`toggle_internet_switch` requires a positive port number. Controller action
+responses include the BFF failure message, so operation-lock scenarios can
+assert the reason with `expect.error_contains`.
 
 Subsequent cash package sale:
 
@@ -301,7 +408,7 @@ overridden with `timeout_seconds` and `poll_seconds`.
 Data-package GraphQL effect checks:
 
 ```yaml
-- type: package_catalog_equals
+- type: package_fields_equal
   package: minute_plan
 
 - type: package_assignment_chain
@@ -320,7 +427,7 @@ Data-package GraphQL effect checks:
   network: net-001
 ```
 
-`package_catalog_equals` compares BFF catalog fields with the scenario plan.
+`package_fields_equal` compares the direct `getPackage` fields with the scenario plan. `package_catalog_equals` remains accepted as a temporary alias for existing scenarios.
 `package_assignment_chain` reads `getPackagesForSim`, verifies the expected
 assignment count and ordering, and rejects overlapping ranges; `expected: all`
 checks the full returned chain. `package_business_metrics` polls the BFF
@@ -335,6 +442,115 @@ Checks may set `immediate: true`. Such checks execute at their phase position
 instead of being deferred until after traffic reconciliation. This is intended
 for transition-boundary assertions whose state could change again while CDRs
 are being processed.
+
+Reusable console checks use the same direct BFF calls as the console:
+
+```yaml
+- type: list_count_equals
+  target: nodes
+  networks: net-001
+  expected_count: 3
+
+- type: entity_fields_equal
+  entity: site
+  ref: site-001
+
+- type: entity_reconciles
+  entity: node
+  ref: node-001
+
+- type: node_status_equals
+  type_selector: controller
+  connectivity: Online
+  state: Operational
+```
+
+`list_count_equals` counts the full current BFF list instead of counting only
+resources already known to the generated world. Supported targets are
+`networks`, `sites`, `nodes`, `customers`/`subscribers`, `plans`/`packages`,
+and `sims`. For every target except `networks`, select exactly one network
+because a console list is always scoped to one selected network.
+
+`entity_fields_equal` reads the entity's direct detail query and compares the
+visible identity fields with the generated world. Supported entities are
+`network`, `site`, `node`, `customer`/`subscriber`, and `plan`/`package`.
+`entity_reconciles` reads both the direct list and detail queries and verifies
+that their common fields agree.
+
+`node_status_equals` keeps connectivity and lifecycle state separate. Either
+field may be omitted, or both may be asserted together. It polls until all
+selected nodes match or `timeout_seconds` expires.
+
+Software and operation-state checks:
+
+```yaml
+- type: software_status_equals
+  type_selector: controller
+  app: example
+  status: update_in_progress
+  desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+
+- type: software_count_equals
+  type_selector: controller
+  expected_count: 4
+
+- type: node_operation_status_equals
+  type_selector: controller
+  busy: true
+  operation_type: software_update
+  operation_status: RUNNING
+
+- type: site_operation_status_equals
+  sites: site-001
+  busy: true
+  degraded: false
+  restart_available: false
+  rf_available: true
+  service_available: false
+```
+
+`software_status_equals` reads `getSoftwares`, which is the console-facing
+software status source. It can validate `status`, `current_version`, and
+`desired_version`. `software_count_equals` checks the full software-row count
+returned for each selected node. Runtime version and health should still be confirmed with
+`node_version_equals` and `node_health_ok`, which use `getApps`.
+
+`node_operation_status_equals` reads `getNodeOperationStatus`.
+`site_operation_status_equals` reads `getSiteOperationStatus` and can validate
+site busy/degraded state, per-action availability, and an active node
+operation's type/status. A repeated read is how a scenario represents a
+console refresh during an operation.
+
+KPI state and chart checks:
+
+```yaml
+- type: kpi_state_equals
+  key: REVENUE
+  networks: net-001
+  span: daily
+  value_state: fresh
+  max_age_seconds: 120
+
+- type: kpi_timeseries
+  key: REVENUE
+  networks: net-001
+  span: daily
+  from: 2026-07-01T00:00:00Z
+  to: 2026-08-01T00:00:00Z
+  expected_count: 31
+  expected_value: 25.00
+  comparator: equals
+  require_computed_at: true
+```
+
+`kpi_state_equals` supports `missing`, `unavailable`, `no_data`, `present`,
+`available`, `zero`, `non_zero`, `fresh`, and `stale`. Fresh/stale checks use
+`max_age_seconds` and the BFF `computedAt` timestamp.
+
+`kpi_timeseries` reads `getKpiTimeSeries`, verifies ordered bucket boundaries,
+and can assert bucket count, summed value, computed timestamps, and one of the
+states `empty`, `present`, `all_zero`, or `non_zero`. It intentionally validates
+BFF data rather than chart pixels.
 
 Console analytics checks always use BFF `getKpiValues` or
 `getPerformanceReport`; scenarios never call the analytics backend directly:
@@ -410,9 +626,45 @@ Note that `span:` is inert for `package_performance`: the aggregator accepts
 (`last_24h`, `last_7d`, `last_30d`). Any calendar span falls back to the
 configured report window and the response echoes that window's label (`8w`).
 
-`status_equals` for SIMs supports `active` and `inactive` based on active
-package assignment. `set_sim_status` only validates the mutation path in this
-build; runtime enforcement is tested separately.
+`status_equals` for SIMs continues to support `active` and `inactive` based
+on active package assignment for existing scenarios. Use `wait_sim_status`
+when validating the physical SIM status displayed by the console.
+
+## Controlled service failures
+
+`failure_control` enables deployment-specific failure injection without
+hard-coding Kubernetes, Podman, or Compose commands into ukama-lab:
+
+```yaml
+- type: failure_control
+  target: payment
+  state: on
+
+- type: purchase_package
+  ues: all
+  package: next_plan
+  expect:
+    result: failure
+
+- type: failure_control
+  target: payment
+  state: off
+```
+
+Supported targets are `payment` and `software`. Configure the commands used by
+the environment before running the scenario:
+
+```sh
+export ULAB_PAYMENT_FAILURE_ON_CMD='kubectl ...'
+export ULAB_PAYMENT_FAILURE_OFF_CMD='kubectl ...'
+export ULAB_SOFTWARE_FAILURE_ON_CMD='kubectl ...'
+export ULAB_SOFTWARE_FAILURE_OFF_CMD='kubectl ...'
+```
+
+The commands are executed by `scripts/test-control.sh`. Active controls are
+restored automatically during runtime cleanup, including after a failed
+scenario. If the required command is not configured, the event fails clearly
+instead of pretending a service failure was injected.
 
 ## Generated scenarios
 

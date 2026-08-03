@@ -46,19 +46,30 @@ phases:
         amount: 7.00
         currency: USD
     checks:
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: net-001
         package: plan_v1
+        column: revenue
         expected_value: 3.00
         tolerance: 0.001
-      - type: package_business_metrics
+        timeout_seconds: 600
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: net-001
         package: plan_v2
+        column: revenue
         expected_value: 7.00
         tolerance: 0.001
-      - type: revenue_summary
+        timeout_seconds: 600
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 10.00
         tolerance: 0.001
-
+        timeout_seconds: 600

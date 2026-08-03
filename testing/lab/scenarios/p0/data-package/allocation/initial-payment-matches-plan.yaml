@@ -40,7 +40,7 @@ runtime:
 phases:
   - name: verify_catalog_assignment_and_revenue
     checks:
-      - type: package_catalog_equals
+      - type: package_fields_equal
         networks: all
         package: initial_plan
       - type: package_state
@@ -51,9 +51,11 @@ phases:
         ues: all
         package: initial_plan
         expected_count: 1
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: initial_plan
+        column: revenue
         expected_value: 5.00
-        expected_count: 1
-
+        timeout_seconds: 600

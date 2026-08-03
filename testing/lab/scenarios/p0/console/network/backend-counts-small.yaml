@@ -1,0 +1,85 @@
+version: 1
+name: p0-backend-counts-small
+description: Verify the current BFF network, site, node, customer, plan, and SIM lists match the generated world for the selected network.
+seed: 301
+suite: p0
+priority: p0
+tags: [virtual, bff, console, lists]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 2
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes, ues]
+  wait: [nodes_ready, ues_attached]
+
+phases:
+  - name: direct_console_lists
+    checks:
+      - type: list_count_equals
+        target: networks
+        expected_count: 1
+      - type: list_count_equals
+        target: sites
+        networks: net-001
+        expected_count: 1
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 3
+      - type: list_count_equals
+        target: customers
+        networks: net-001
+        expected_count: 2
+      - type: list_count_equals
+        target: plans
+        networks: net-001
+        expected_count: 1
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 2
+
+final_checks:
+  - type: entity_fields_equal
+    entity: network
+    ref: net-001
+  - type: entity_reconciles
+    entity: site
+    ref: site-001
+  - type: entity_reconciles
+    entity: node
+    ref: tower-site-001-001
+  - type: entity_reconciles
+    entity: customer
+    ref: sub-000001
+  - type: package_fields_equal
+    package: daily_1gb

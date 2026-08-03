@@ -1,0 +1,67 @@
+version: 1
+name: p0-console-network-home
+description: Verify the selected network, site, node, customer, plan, and SIM list counts plus list/detail identities all reconcile through current direct BFF queries.
+seed: 4801
+suite: p0
+priority: p0
+tags: [virtual, console, network-home, lists, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 2
+packages:
+  - ref: home_plan
+    name: Network Home Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_network_home_sources
+    checks:
+      - type: list_count_equals
+        target: sites
+        networks: net-001
+        expected_count: 2
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 6
+      - type: list_count_equals
+        target: customers
+        networks: net-001
+        expected_count: 2
+      - type: list_count_equals
+        target: plans
+        networks: net-001
+        expected_count: 1
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 2
+      - type: entity_fields_equal
+        entity: network
+        ref: net-001
+      - type: entity_reconciles
+        entity: site
+        ref: site-001
+      - type: entity_reconciles
+        entity: node
+        ref: tower-site-001-001
+      - type: entity_reconciles
+        entity: customer
+        ref: sub-000001
+      - type: package_fields_equal
+        package: home_plan

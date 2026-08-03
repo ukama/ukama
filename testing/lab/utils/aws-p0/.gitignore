@@ -1,0 +1,4 @@
+config.env
+credentials.env
+.state.env
+*.tmp

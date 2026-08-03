@@ -68,6 +68,8 @@ typedef enum {
     EVT_CREATE_UES,
     EVT_START_UES,
     EVT_WAIT_UES_ATTACHED,
+    EVT_WAIT_UE_SESSIONS,
+    EVT_FINALIZE_UE_SESSIONS,
     EVT_WAIT,
     EVT_RESTART_NODES,
     EVT_WAIT_NODE_CONNECTIVITY,
@@ -81,8 +83,10 @@ typedef enum {
     EVT_SET_PACKAGE_ACTIVE,
     EVT_REMOVE_PACKAGE_FROM_SIM,
     EVT_SET_SIM_STATUS,
+    EVT_WAIT_SIM_STATUS,
     EVT_TOGGLE_SERVICE,
     EVT_TOGGLE_RADIO,
+    EVT_TOGGLE_INTERNET_SWITCH,
     EVT_RESTART_SITE,
     EVT_PROMOTE_RELEASE,
     EVT_SOFTWARE_UPDATE,
@@ -90,6 +94,7 @@ typedef enum {
     EVT_RECONNECT_NODES,
     EVT_MARK_NODE_OFFLINE,
     EVT_RESTORE_NODE,
+    EVT_FAILURE_CONTROL,
     EVT_CHECK
 } event_type_t;
 
@@ -100,6 +105,7 @@ typedef enum {
     CHECK_STATUS_EQUALS,
     CHECK_TRAFFIC_ALLOWED,
     CHECK_TRAFFIC_BLOCKED,
+    CHECK_TRAFFIC_UNAVAILABLE,
     CHECK_NODE_READY,
     CHECK_UE_ATTACHED,
     CHECK_USAGE_PER_SIM,
@@ -136,6 +142,16 @@ typedef enum {
     CHECK_NODE_VERSION_EQUALS,
     CHECK_NODE_HEALTH_OK,
     CHECK_RELEASE_UNAVAILABLE,
+    CHECK_LIST_COUNT_EQUALS,
+    CHECK_ENTITY_FIELDS_EQUAL,
+    CHECK_ENTITY_RECONCILES,
+    CHECK_NODE_STATUS_EQUALS,
+    CHECK_SOFTWARE_STATUS_EQUALS,
+    CHECK_SOFTWARE_COUNT_EQUALS,
+    CHECK_NODE_OPERATION_STATUS_EQUALS,
+    CHECK_SITE_OPERATION_STATUS_EQUALS,
+    CHECK_KPI_STATE_EQUALS,
+    CHECK_KPI_TIMESERIES,
     CHECK_HISTORY_PRESERVED,
     CHECK_AUDIT_EVENT_EXISTS,
     CHECK_RELATIONSHIP_EXISTS,
@@ -171,13 +187,33 @@ typedef struct {
     char         trend_direction[ULAB_MAX_REF];
     char         currency[ULAB_MAX_REF];
     char         payment_method[ULAB_MAX_REF];
+    char         connectivity[ULAB_MAX_REF];
+    char         lifecycle_state[ULAB_MAX_REF];
+    char         current_version[ULAB_MAX_REF];
+    char         desired_version[ULAB_MAX_REF];
+    char         operation_type[ULAB_MAX_REF];
+    char         operation_status[ULAB_MAX_REF];
+    char         value_state[ULAB_MAX_REF];
+    char         from[ULAB_MAX_REF];
+    char         to[ULAB_MAX_REF];
     double       expected_value;
     double       tolerance_value;
     uint32_t     expected_count;
     int          has_expected_count;
     uint32_t     timeout_seconds;
     uint32_t     poll_seconds;
+    uint32_t     max_age_seconds;
     int          has_expected_value;
+    int          expected_busy;
+    int          has_expected_busy;
+    int          expected_degraded;
+    int          has_expected_degraded;
+    int          expected_restart_available;
+    int          has_expected_restart_available;
+    int          expected_rf_available;
+    int          has_expected_rf_available;
+    int          expected_service_available;
+    int          has_expected_service_available;
     int          expected_partial;
     int          has_expected_partial;
     int          require_computed_at;
@@ -199,6 +235,7 @@ typedef struct {
     uint64_t     amount_mb;
     int64_t      offset_seconds;
     char         profile[ULAB_MAX_REF];
+    char         target[ULAB_MAX_REF];
     char         expect_result[ULAB_MAX_REF];
     char         error_contains[ULAB_MAX_ERR];
     char         status[ULAB_MAX_REF];
@@ -212,6 +249,8 @@ typedef struct {
     char         variant[ULAB_MAX_REF];
     double       amount;
     int          has_amount;
+    uint32_t     port;
+    int          has_port;
     int          active;
     int          has_active;
     uint32_t     count_per_site;

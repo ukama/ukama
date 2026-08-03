@@ -41,30 +41,54 @@ const char *BFF_GET_PACKAGE =
 
 const char *BFF_GET_PACKAGES =
 "query GetPackages($networkId: String) {"
-" getPackages(networkId: $networkId) { packages { uuid } } }";
+" getPackages(networkId: $networkId) { packages { uuid name active "
+" networkId } } }";
 
 const char *BFF_PACKAGE_NAME_AVAILABLE =
 "query IsPackageNameAvailable($name: String!) {"
 " isPackageNameAvailable(name: $name) { isAvailable name } }";
 
-const char *BFF_PACKAGES_DASHBOARD =
-"query PackagesDashboard($networkId: String) {"
-" commerceView(networkId: $networkId) { plans {"
-" mrr arpu plans { packageId revenue attachCount } } } }";
+const char *BFF_GET_NETWORK =
+"query GetNetwork($networkId: String!) {"
+" getNetwork(networkId: $networkId) { id name } }";
 
-const char *BFF_REVENUE_OVERVIEW =
-"query RevenueOverview($networkId: String) {"
-" commerceView(networkId: $networkId) { revenue { totalPaid totalPending "
-" monthPaid prevMonthPaid momPct } } }";
+const char *BFF_GET_NETWORKS =
+"query GetNetworks { getNetworks { networks { id name } } }";
 
-const char *BFF_NETWORK_HOME =
-"query NetworkHome($networkId: String!) {"
-" networkOverview(networkId: $networkId) { subscriberStats { total active "
-" inactive } siteStats { sites { id } } nodeStats { total online offline } } }";
+const char *BFF_GET_SITES =
+"query GetSites($data: SitesInputDto!) { getSites(data: $data) {"
+" sites { id name networkId latitude longitude isDeactivated } } }";
 
-const char *BFF_NODES_LIST =
-"query NodesList($networkId: String) { nodesView(networkId: $networkId) {"
-" nodes { nodes { id } } } }";
+const char *BFF_GET_SITE =
+"query GetSite($siteId: String!) { getSite(siteId: $siteId) {"
+" id name networkId latitude longitude isDeactivated } }";
+
+const char *BFF_GET_NODES =
+"query GetNodes($data: NodesFilterInput!) {"
+" getNodes(data: $data) { nodes { id name type latitude longitude "
+" site { nodeId siteId networkId addedAt } "
+" status { state connectivity } } } }";
+
+const char *BFF_GET_NODES_FOR_SITE =
+"query GetNodesForSite($siteId: String!) { getNodesForSite(siteId: $siteId) {"
+" nodes { id name type latitude longitude status { state connectivity } } } }";
+
+const char *BFF_GET_SUBSCRIBERS_BY_NETWORK =
+"query GetSubscribersByNetwork($networkId: String!) {"
+" getSubscribersByNetwork(networkId: $networkId) { subscribers {"
+" uuid name email phone networkId sim { id status networkId package {"
+" package_id is_active } } } } }";
+
+const char *BFF_GET_SUBSCRIBER =
+"query GetSubscriber($subscriberId: String!) {"
+" getSubscriber(subscriberId: $subscriberId) {"
+" uuid name email phone networkId sim { id status networkId package {"
+" package_id is_active } } } }";
+
+const char *BFF_GET_SIMS_BY_NETWORK =
+"query GetSimsByNetwork($networkId: String!) {"
+" getSimsByNetwork(networkId: $networkId) { sims {"
+" id subscriberId networkId status package { package_id is_active } } } }";
 
 const char *BFF_INVENTORY_OVERVIEW =
 "query InventoryOverview { inventoryView { components { total byCategory {"
@@ -74,11 +98,6 @@ const char *BFF_SIM_POOL_OVERVIEW =
 "query SimPoolOverview($simType: String!, $limit: Int!) {"
 " simPoolView(simType: $simType) { stats { total available consumed } "
 " sims(limit: $limit) { sims { id } } } }";
-
-const char *BFF_SUBSCRIBER_DETAIL =
-"query SubscriberDetail($subscriberId: String!) {"
-" subscriberView(subscriberId: $subscriberId) { billing { payments {"
-" id amount currency status paidAt paymentMethod } } } }";
 
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"
@@ -125,7 +144,8 @@ const char *BFF_GET_PERFORMANCE_REPORT =
 
 const char *BFF_GET_NODE =
 "query GetNode($data: NodeInput!) {"
-" getNode(data: $data) { id status { connectivity state } } }";
+" getNode(data: $data) { id name type site { nodeId siteId networkId addedAt } "
+" status { connectivity state } } }";
 
 const char *BFF_GET_RELEASE_CATALOG =
 "query GetReleaseCatalog($name: String!, $type: String!) {"
@@ -146,38 +166,30 @@ const char *BFF_GET_APPS =
 "query GetApps($data: GetAppsInputDto!) {"
 " getApps(data: $data) { apps { name version tag status } } }";
 
-const char *BFF_NETWORK_OVERVIEW =
-"query NetworkOverview($networkId: String!) {"
-" networkOverview(networkId: $networkId) {"
-" network { network { id name } error } sites { sites { id name } error } } }";
+const char *BFF_GET_SOFTWARES =
+"query GetSoftwares($data: GetSoftwaresInput!) {"
+" getSoftwares(data: $data) { software { id releaseDate nodeId status "
+" currentVersion desiredVersion name createdAt updatedAt } } }";
 
-const char *BFF_SITE_VIEW =
-"query SiteView($siteId: String!) {"
-" siteView(siteId: $siteId) { site { site { id name } error } "
-" nodes { nodes { id name status { state connectivity } } error } } }";
+const char *BFF_GET_NODE_OPERATION_STATUS =
+"query GetNodeOperationStatus($nodeId: String!) {"
+" getNodeOperationStatus(data: { nodeId: $nodeId }) { nodeId type busy "
+" operation { id type status requestedBy startedAt leaseExpiresAt } } }";
 
-const char *BFF_GET_NETWORKS =
-"query GetNetworks { getNetworks { networks { id name } } }";
+const char *BFF_GET_SITE_OPERATION_STATUS =
+"query GetSiteOperationStatus($siteId: String!) {"
+" getSiteOperationStatus(data: { siteId: $siteId }) { siteId busy degraded "
+" nodes { nodeId type busy operation { id type status requestedBy startedAt "
+" leaseExpiresAt } } actions { restartSite { available reason } "
+" rf { available reason } service { available reason } } } }";
 
-const char *BFF_GET_SITES =
-"query GetSites($data: SitesInputDto!) { getSites(data: $data) {"
-" sites { id name } } }";
-
-const char *BFF_GET_SITES_LEGACY =
-"query GetSites($networkId: String!) { getSites(networkId: $networkId) {"
-" sites { id name } } }";
-
-const char *BFF_GET_NODES_FOR_SITE =
-"query GetNodesForSite($siteId: String!) { getNodesForSite(siteId: $siteId) {"
-" nodes { id name type } } }";
+const char *BFF_GET_KPI_TIMESERIES =
+"query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {"
+" getKpiTimeSeries(data: $data) { values { kpi value span op from to unit "
+" symbol isPartial computedAt scope { key value } trend { direction "
+" changePct changeAbs prevValue hasPrevious } } } }";
 
 const char *BFF_GET_COMPONENTS_BY_USER_ID =
 "query GetComponentsByUserId($data: ComponentTypeInputDto!) {"
 " getComponentsByUserId(data: $data) {"
 " components { id category type description partNumber } } }";
-
-const char *BFF_GET_NODES =
-"query GetNodes($data: NodesFilterInput!) {"
-" getNodes(data: $data) { nodes { id name type latitude longitude "
-" site { nodeId siteId networkId addedAt } "
-" status { state connectivity } } } }";

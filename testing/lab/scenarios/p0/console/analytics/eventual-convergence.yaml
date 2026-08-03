@@ -1,0 +1,59 @@
+version: 1
+name: p0-console-kpi-eventual-convergence
+description: Generate traffic and poll only through GraphQL until the scoped network usage reaches the model value and exposes a non-empty computedAt timestamp.
+seed: 4719
+suite: p0
+priority: p0
+tags: [virtual, console, analytics, convergence, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: convergence_plan
+    name: KPI Convergence Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: wait_for_convergence
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 3
+    checks:
+      - type: usage_aggregate
+        target: network
+        networks: net-001
+        timeout_seconds: 600
+        poll_seconds: 5
+      - type: kpi_contract
+        key: USAGE_BY_NETWORK
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        require_computed_at: true
+        require_scope: true
+        timeout_seconds: 600
+        poll_seconds: 5

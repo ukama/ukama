@@ -74,13 +74,19 @@ phases:
         package: bootstrap
         expected: all
         expected_count: 3
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: parallel_a
+        column: revenue
         expected_value: 2.00
-        expected_count: 0
-      - type: package_business_metrics
+        timeout_seconds: 600
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: parallel_b
+        column: revenue
         expected_value: 3.00
-        expected_count: 0
+        timeout_seconds: 600

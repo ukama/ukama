@@ -23,8 +23,9 @@ RUN_DIR="$8"
 
 UE_DIR="$REPO/testing/ue"
 NET_STATE="$RUN_DIR/runtime-net/net.env"
-SITE_STATE="$RUN_DIR/runtime-sites/$(printf "%s" "$SITE_REF" | tr -c 'A-Za-z0-9_.-' '-').env"
-MEDIA_STATE="$RUN_DIR/runtime-media/media.env"
+SAFE_SITE_REF="$(printf "%s" "$SITE_REF" | tr -c 'A-Za-z0-9_.-' '-')"
+SITE_STATE="$RUN_DIR/runtime-sites/$SAFE_SITE_REF.env"
+MEDIA_STATE="$RUN_DIR/runtime-media/$SAFE_SITE_REF.env"
 UE_STATE_DIR="$RUN_DIR/runtime-ues"
 
 UE_IMAGE="ukama/ue:dev"
@@ -155,10 +156,29 @@ need_file "$MEDIA_STATE"
 
 # shellcheck disable=SC1090
 . "$NET_STATE"
-# shellcheck disable=SC1090
-. "$SITE_STATE"
+# Load the site-specific media state first, then the site state. This ensures
+# TNODE_CONTAINER always comes from the UE's site and cannot be overwritten by
+# a shared media.env from another site.
 # shellcheck disable=SC1090
 . "$MEDIA_STATE"
+MEDIA_TNODE_CONTAINER="${TNODE_CONTAINER:-}"
+MEDIA_TNODE_IP="${TNODE_IP:-}"
+# shellcheck disable=SC1090
+. "$SITE_STATE"
+
+if [ -n "$MEDIA_TNODE_CONTAINER" ] && \
+   [ "$MEDIA_TNODE_CONTAINER" != "$TNODE_CONTAINER" ]; then
+    echo "media/site tower mismatch for $SITE_REF: " \
+         "media=$MEDIA_TNODE_CONTAINER site=$TNODE_CONTAINER" >&2
+    exit 1
+fi
+
+if [ -n "$MEDIA_TNODE_IP" ] && [ -n "${TNODE_IP:-}" ] && \
+   [ "$MEDIA_TNODE_IP" != "$TNODE_IP" ]; then
+    echo "media/site tower IP mismatch for $SITE_REF: " \
+         "media=$MEDIA_TNODE_IP site=$TNODE_IP" >&2
+    exit 1
+fi
 
 if [ -z "${LAB_NET:-}" ]; then
     echo "LAB_NET missing in $NET_STATE" >&2

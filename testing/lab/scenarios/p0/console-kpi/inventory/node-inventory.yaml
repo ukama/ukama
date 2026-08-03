@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-node-inventory
-description: Verify NetworkHome node totals reconcile with NodesList and with the online-plus-offline breakdown for the selected network.
+description: Verify the Nodes page count and direct node detail records reconcile for all six nodes in the selected network.
 seed: 4715
 suite: p0
 priority: p0
@@ -24,7 +24,20 @@ runtime:
 phases:
   - name: reconcile_node_inventory
     checks:
-      - type: console_inventory_reconciles
-        target: node
+      - type: list_count_equals
+        target: nodes
         networks: net-001
-
+        expected_count: 6
+      - type: entity_reconciles
+        entity: node
+        ref: tower-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: amplifier-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: controller-site-001-001
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        timeout_seconds: 120

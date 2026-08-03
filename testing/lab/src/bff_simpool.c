@@ -989,6 +989,10 @@ int bff_toggle_sim_status(bff_client_t *c,
     char status_esc[ULAB_MAX_REF * 2];
     char query[ULAB_MAX_QUERY];
     json_t *root;
+    json_t *obj;
+    json_t *success;
+    json_t *message;
+    const char *reason;
 
     root = NULL;
 
@@ -1007,10 +1011,73 @@ int bff_toggle_sim_status(bff_client_t *c,
 
     snprintf(query, sizeof(query),
              "mutation { toggleSimStatus(data:{sim_id:\"%s\",status:\"%s\"}) "
-             "{ success } }",
+             "{ success message } }",
              sim_esc, status_esc);
 
     if (sim_graphql_call(c, "toggleSimStatus", query, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = sim_dig(root, "data", "toggleSimStatus");
+    success = obj ? json_object_get(obj, "success") : NULL;
+    if (success == NULL || !json_is_boolean(success)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleSimStatus missing boolean success");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    if (!json_is_true(success)) {
+        message = json_object_get(obj, "message");
+        reason = message && json_is_string(message) ?
+            json_string_value(message) : NULL;
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleSimStatus failed%s%.512s",
+                 reason && reason[0] ? ": " : "",
+                 reason && reason[0] ? reason : "");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_sim_status(bff_client_t *c,
+                       const ue_t *ue,
+                       char *status,
+                       size_t status_len,
+                       ulab_error_t *err) {
+    char sim_esc[ULAB_MAX_ID * 2];
+    char query[ULAB_MAX_QUERY];
+    json_t *root;
+    json_t *obj;
+
+    root = NULL;
+
+    if (ue == NULL || ue->bff_id[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg), "getSim missing SIM id");
+        return ULAB_ERR;
+    }
+    if (status == NULL || status_len == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSim missing status output");
+        return ULAB_ERR;
+    }
+
+    ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
+    snprintf(query, sizeof(query),
+             "query { getSim(data:{simId:\"%s\"}) { id status } }",
+             sim_esc);
+
+    if (sim_graphql_call(c, "getSim", query, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = sim_dig(root, "data", "getSim");
+    if (obj == NULL || sim_json_get_str(obj, "status", status, status_len)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSim missing SIM status");
+        json_decref(root);
         return ULAB_ERR;
     }
 

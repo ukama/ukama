@@ -870,6 +870,7 @@ static int is_live_runtime_check(const check_spec_t *check) {
         (check->immediate ||
          check->type == CHECK_TRAFFIC_ALLOWED ||
          check->type == CHECK_TRAFFIC_BLOCKED ||
+         check->type == CHECK_TRAFFIC_UNAVAILABLE ||
          check->type == CHECK_NODE_VERSION_EQUALS ||
          check->type == CHECK_NODE_HEALTH_OK);
 }
@@ -908,7 +909,19 @@ static int run_checks_mode(check_ctx_t *ctx,
             continue;
         }
 
+        memset(&result, 0, sizeof(result));
+        err->msg[0] = '\0';
         if (check_run(ctx, &checks[i], &result, err)) {
+            result.passed = 0;
+            result.skipped = 0;
+            if (result.name[0] == '\0') {
+                ulab_copy(result.name, sizeof(result.name),
+                          scenario_check_name(checks[i].type));
+            }
+            snprintf(result.detail, sizeof(result.detail),
+                     "execution error: %.900s",
+                     err->msg[0] ? err->msg : "unknown checker error");
+            report_check(report, &result);
             return ULAB_ERR;
         }
 
@@ -963,13 +976,13 @@ static unsigned int cdr_wait_seconds(void) {
 
     v = getenv("ULAB_CDR_WAIT_SEC");
     if (v == NULL || v[0] == '\0') {
-        return 5u;
+        return 60u;
     }
 
     end = NULL;
     sec = strtoul(v, &end, 10);
     if (end == v || sec > 300ul) {
-        return 5u;
+        return 60u;
     }
 
     return (unsigned int)sec;

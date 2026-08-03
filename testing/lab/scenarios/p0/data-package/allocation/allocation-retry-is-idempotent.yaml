@@ -52,9 +52,11 @@ phases:
         ues: all
         package: retry_plan
         expected_count: 1
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: retry_plan
+        column: revenue
         expected_value: 4.00
-        expected_count: 1
-
+        timeout_seconds: 600

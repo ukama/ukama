@@ -1,10 +1,10 @@
 version: 1
 name: p0-purchase-additional-package-with-cash
-description: Verify a subsequent cash package purchase increases only that package's revenue and creates exactly one queued entitlement for the selected SIM.
+description: Verify a console top-up uses the selected plan price, creates one settled payment and one queued entitlement, and updates revenue and package sales once.
 seed: 4201
 suite: p0
 priority: p0
-tags: [virtual, data-package, purchase, cash, revenue]
+tags: [virtual, data-package, purchase, cash, console, revenue]
 status: active
 provider:
   type: virtual
@@ -30,19 +30,12 @@ packages:
     amount: 5.00
     assign_percent: 0
 setup:
-  create_via_bff:
-    - networks
-    - sites
-    - nodes
-    - node_site_links
-    - packages
-    - subscribers
-    - sims
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
 runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: purchase_with_cash
+  - name: purchase_with_console_price
     events:
       - type: purchase_package
         ues: all
@@ -62,14 +55,38 @@ phases:
         ues: all
         package: next_plan
         expected_count: 1
-      - type: package_assignment_chain
+      - type: payment_equals
         ues: all
         package: next_plan
-        after_package: current_plan
-        expected_count: 1
-      - type: package_business_metrics
-        networks: all
-        package: next_plan
+        status: settled
+        payment_method: cash
         expected_value: 5.00
-        expected_count: 0
-
+        currency: USD
+      - type: payment_entitlement_reconciles
+        ues: all
+        package: next_plan
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: next_plan
+        column: revenue
+        expected_value: 5.00
+        tolerance: 0.001
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 6.00
+        tolerance: 0.001
+        timeout_seconds: 600
+      - type: kpi_value
+        key: PACKAGE_SALES
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        expected_value: 2
+        timeout_seconds: 600

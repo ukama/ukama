@@ -1,0 +1,115 @@
+version: 1
+name: software_update_controller_update_in_progress
+description: Verify the console reports update available and update in progress, rejects a competing target, then reports the first target up to date and healthy.
+seed: 1744158697
+suite: p0
+priority: p0
+tags: [p0, virtual, software_update, controller, concurrency, console]
+status: active
+entity: software_update
+action: reject_competing_update
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_current_software
+    checks:
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+
+  - name: expose_update_available
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
+    checks:
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: update_available
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 120
+
+  - name: start_first_update
+    events:
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: update_in_progress
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 60
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: true
+        timeout_seconds: 60
+
+  - name: reject_competing_target
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+        expect:
+          result: failure
+    checks:
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: update_available
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        desired_version: ${ULAB_SOFTWARE_NEXT_VERSION}
+        timeout_seconds: 300
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: false
+        timeout_seconds: 300

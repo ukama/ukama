@@ -1,0 +1,43 @@
+version: 1
+name: p0-console-nodes-list-detail
+description: Verify the Nodes page count, node identity/site fields, and online connectivity reconcile with Node detail for every node type.
+seed: 4804
+suite: p0
+priority: p0
+tags: [virtual, console, nodes, list-detail, graphql]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: verify_node_list_and_detail
+    checks:
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 3
+      - type: entity_reconciles
+        entity: node
+        ref: tower-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: amplifier-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: controller-site-001-001
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        timeout_seconds: 120

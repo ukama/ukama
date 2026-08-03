@@ -57,8 +57,9 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
-      - type: wait
-        seconds: 5
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
     checks:
       - type: package_state
         ues: all
@@ -72,6 +73,10 @@ phases:
         immediate: true
   - name: use_successor
     events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
       - type: traffic
         ues: all
         amount_mb: 1
@@ -80,11 +85,14 @@ phases:
         ues: all
         package: next_plan
         after_package: current_plan
-      - type: package_business_metrics
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
         networks: all
         package: next_plan
+        column: revenue
         expected_value: 2.00
-        expected_count: 1
+        timeout_seconds: 600
       - type: usage_per_sim
         ues: all
         expected: from_model

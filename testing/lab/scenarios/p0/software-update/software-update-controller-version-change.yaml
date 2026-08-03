@@ -1,0 +1,104 @@
+version: 1
+name: software_update_controller_version_change
+description: Verify the controller can change the example app from its current version to one exact release and then to a second exact release, regardless of semantic version ordering.
+seed: 1744158696
+suite: p0
+priority: p0
+tags: [p0, virtual, software_update, controller, version_change]
+status: active
+entity: software_update
+action: change_exact_app_versions
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_app_before_version_changes
+    checks:
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+
+  - name: change_to_first_exact_version
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+
+  - name: change_to_second_exact_version
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+      - type: wait
+        seconds: 30
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+    checks:
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_NEXT_VERSION}
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: up_to_date
+        current_version: ${ULAB_SOFTWARE_NEXT_VERSION}
+        timeout_seconds: 300
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: false
+        timeout_seconds: 300

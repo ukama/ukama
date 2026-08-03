@@ -25,8 +25,10 @@ static int run_script(runtime_t *rt,
     char cmd[ULAB_MAX_QUERY];
     char script[ULAB_MAX_PATH];
     char log_path[ULAB_MAX_PATH];
+    char latest_path[ULAB_MAX_PATH];
     int rc;
     int n;
+    unsigned long invocation;
 
     n = snprintf(script, sizeof(script), "%s/%s", rt->script_dir, name);
     if (n < 0 || (size_t)n >= sizeof(script)) {
@@ -34,25 +36,32 @@ static int run_script(runtime_t *rt,
         return ULAB_ERR;
     }
 
-    n = snprintf(log_path, sizeof(log_path), "%s/%s.log",
-                 rt->run_dir, name);
+    invocation = ++rt->script_invocation_seq;
+    n = snprintf(log_path, sizeof(log_path), "%s/%04lu-%s.log",
+                 rt->run_dir, invocation, name);
     if (n < 0 || (size_t)n >= sizeof(log_path)) {
         snprintf(err->msg, sizeof(err->msg), "script log path too long");
         return ULAB_ERR;
     }
 
+    n = snprintf(latest_path, sizeof(latest_path), "%s/%s.log",
+                 rt->run_dir, name);
+    if (n < 0 || (size_t)n >= sizeof(latest_path)) {
+        snprintf(err->msg, sizeof(err->msg), "script latest log path too long");
+        return ULAB_ERR;
+    }
+
     /*
-     * Keep script output in its run log. Do not print scrolling RUNNING lines.
-     * When stderr is interactive, show a tiny single-line spinner instead.
+     * Every invocation receives an immutable numbered log. Keep the historical
+     * Keep the historical <script>.log path as a symlink to the latest
+     * invocation for compatibility.
      */
     n = snprintf(cmd, sizeof(cmd),
                  "mkdir -p '%s' >/dev/null 2>&1; "
-                 ": > '%s'; "
-                 "('%s' %s >> '%s' 2>&1) & "
+                 "('%s' %s > '%s' 2>&1) & "
                  "pid=$!; "
                  "start=$(date +%%s); "
                  "interval=${ULAB_SCRIPT_PROGRESS_INTERVAL:-1}; "
-                 "spin='|/-\\'; "
                  "idx=0; "
                  "printed=0; "
                  "while kill -0 $pid 2>/dev/null; do "
@@ -69,20 +78,24 @@ static int run_script(runtime_t *rt,
                  "fi; "
                  "done; "
                  "if [ \"$printed\" = 1 ]; then printf '\\r\\033[K' >&2; fi; "
-                 "wait $pid",
+                 "wait $pid; status=$?; "
+                 "ln -sfn '%s' '%s'; "
+                 "exit $status",
                  rt->run_dir,
-                 log_path,
                  script,
                  args ? args : "",
                  log_path,
-                 name);
+                 name,
+                 log_path,
+                 latest_path);
     if (n < 0 || (size_t)n >= sizeof(cmd)) {
         snprintf(err->msg, sizeof(err->msg), "script command too long");
         return ULAB_ERR;
     }
 
     if (rt->logf) {
-        fprintf(rt->logf, "--- script %s ---\n", name);
+        fprintf(rt->logf, "--- script %s invocation=%04lu ---\n",
+                name, invocation);
         fprintf(rt->logf, "%s\n", cmd);
         fprintf(rt->logf, "log=%s\n", log_path);
         fflush(rt->logf);
@@ -91,7 +104,7 @@ static int run_script(runtime_t *rt,
     rc = system(cmd);
     if (rc != 0) {
         snprintf(err->msg, sizeof(err->msg),
-                 "script failed: %s; see runtime log", name);
+                 "script failed: %.240s; see %.740s", name, log_path);
 
         if (rt->logf) {
             fprintf(rt->logf, "script failed: %s\n", name);
@@ -362,6 +375,8 @@ int runtime_init(runtime_t *rt,
     rt->service_enabled = 0;
     rt->radio_enabled = 1;
     rt->node_offline = 0;
+    rt->payment_failure_active = 0;
+    rt->software_failure_active = 0;
     snprintf(rt->node_version, sizeof(rt->node_version), "current");
 
     snprintf(path, sizeof(path), "%s/runtime.log", run_dir);
@@ -662,6 +677,61 @@ int runtime_wait_ues_attached(runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_verify_ue_sessions(runtime_t *rt,
+                               const world_t *w,
+                               const selector_result_t *ues,
+                               ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue;
+        char args[ULAB_MAX_ARGS];
+        int rc;
+
+        ue = &w->ues[ues->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s", ue->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "verify UE session args too long for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (run_script(rt, "verify-ue-session.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
+int runtime_verify_ue_policy_blocks(runtime_t *rt,
+                                    const world_t *w,
+                                    const selector_result_t *ues,
+                                    ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue;
+        char args[ULAB_MAX_ARGS];
+        int rc;
+
+        ue = &w->ues[ues->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s", ue->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "verify UE policy block args too long for ue %s",
+                     ue->id);
+            return ULAB_ERR;
+        }
+
+        if (run_script(rt, "verify-ue-policy-block.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_generate_traffic(runtime_t *rt,
                              const world_t *w,
                              const selector_result_t *ues,
@@ -794,11 +864,13 @@ static int cleanup_script(runtime_t *rt,
     return ULAB_OK;
 }
 
-static int runtime_ue_script(runtime_t *rt,
-                             const world_t *w,
-                             const char *script,
-                             const char *failure_label,
-                             ulab_error_t *err) {
+static int runtime_selected_ue_script(runtime_t *rt,
+                                      world_t *w,
+                                      const selector_result_t *ues,
+                                      const char *script,
+                                      const char *failure_label,
+                                      int mark_detached,
+                                      ulab_error_t *err) {
     char args[ULAB_MAX_ARGS];
     size_t i;
     int failures;
@@ -806,16 +878,20 @@ static int runtime_ue_script(runtime_t *rt,
 
     failures = 0;
 
-    if (rt == NULL || rt->run_dir[0] == '\0' || w == NULL) {
+    if (rt == NULL || rt->run_dir[0] == '\0' || w == NULL || ues == NULL) {
         return ULAB_OK;
     }
 
-    for (i = 0; i < w->ue_count; i++) {
-        rc = snprintf(args, sizeof(args), "%s %s",
-                      w->ues[i].id, rt->run_dir);
+    for (i = 0; i < ues->count; i++) {
+        ue_t *ue;
+
+        ue = &w->ues[ues->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s", ue->id, rt->run_dir);
         if (rc >= 0 && (size_t)rc < sizeof(args)) {
             if (cleanup_script(rt, script, args)) {
                 failures++;
+            } else if (mark_detached) {
+                ue->attached = 0;
             }
         } else {
             failures++;
@@ -832,14 +908,65 @@ static int runtime_ue_script(runtime_t *rt,
     return ULAB_OK;
 }
 
+static int runtime_all_ue_script(runtime_t *rt,
+                                 const world_t *w,
+                                 const char *script,
+                                 const char *failure_label,
+                                 ulab_error_t *err) {
+    selector_result_t all;
+    size_t *idx;
+    size_t i;
+    int rc;
+
+    if (w == NULL || w->ue_count == 0) {
+        return ULAB_OK;
+    }
+
+    idx = calloc(w->ue_count, sizeof(*idx));
+    if (idx == NULL) {
+        if (err != NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "%s selector allocation failed",
+                     failure_label ? failure_label : script);
+        }
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < w->ue_count; i++) {
+        idx[i] = i;
+    }
+
+    memset(&all, 0, sizeof(all));
+    all.idx = idx;
+    all.count = w->ue_count;
+    rc = runtime_selected_ue_script(rt, (world_t *)w, &all, script,
+                                    failure_label, 0, err);
+    free(idx);
+    return rc;
+}
+
+int runtime_detach_selected_ues(runtime_t *rt,
+                                world_t *w,
+                                const selector_result_t *ues,
+                                ulab_error_t *err) {
+    return runtime_selected_ue_script(rt, w, ues, "detach-ue.sh",
+                                      "UE detach", 1, err);
+}
+
+int runtime_cleanup_selected_ues(runtime_t *rt,
+                                 world_t *w,
+                                 const selector_result_t *ues,
+                                 ulab_error_t *err) {
+    return runtime_selected_ue_script(rt, w, ues, "cleanup-ue.sh",
+                                      "UE cleanup", 1, err);
+}
+
 int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
-    return runtime_ue_script(rt, w, "detach-ue.sh",
-                             "UE detach", err);
+    return runtime_all_ue_script(rt, w, "detach-ue.sh", "UE detach", err);
 }
 
 int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
-    return runtime_ue_script(rt, w, "cleanup-ue.sh",
-                             "UE cleanup", err);
+    return runtime_all_ue_script(rt, w, "cleanup-ue.sh", "UE cleanup", err);
 }
 
 static int runtime_collect_diagnostics(runtime_t *rt,
@@ -983,6 +1110,11 @@ int runtime_cleanup(runtime_t *rt, const world_t *w, ulab_error_t *err) {
     failures = 0;
     memset(&tmp, 0, sizeof(tmp));
 
+    if (runtime_restore_failure_controls(rt, &tmp)) {
+        failures++;
+    }
+
+    memset(&tmp, 0, sizeof(tmp));
     if (runtime_stop_ues(rt, w, &tmp)) {
         failures++;
     }
@@ -1029,6 +1161,79 @@ int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err) {
     rt->service_enabled = 1;
     rt->radio_enabled = 1;
     ulab_status("NODE", "restored");
+    return ULAB_OK;
+}
+
+int runtime_set_failure_control(runtime_t *rt,
+                                const char *target,
+                                int enabled,
+                                ulab_error_t *err) {
+    char args[ULAB_MAX_ARGS];
+    int *active;
+    int rc;
+
+    if (rt == NULL || target == NULL || target[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failure control requires target");
+        return ULAB_ERR;
+    }
+
+    if (ulab_streq(target, "payment")) {
+        active = &rt->payment_failure_active;
+    } else if (ulab_streq(target, "software")) {
+        active = &rt->software_failure_active;
+    } else {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unsupported failure control target: %.64s", target);
+        return ULAB_ERR;
+    }
+
+    rc = snprintf(args, sizeof(args), "%s %s", target,
+                  enabled ? "on" : "off");
+    if (rc < 0 || (size_t)rc >= sizeof(args)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failure control arguments too long");
+        return ULAB_ERR;
+    }
+
+    ulab_status("FAULT", "%s failure %s", target,
+                enabled ? "on" : "off");
+    if (run_script(rt, "test-control.sh", args, err)) {
+        return ULAB_ERR;
+    }
+
+    *active = enabled ? 1 : 0;
+    return ULAB_OK;
+}
+
+int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err) {
+    ulab_error_t tmp;
+    int failures;
+
+    if (rt == NULL) {
+        return ULAB_OK;
+    }
+
+    failures = 0;
+    if (rt->payment_failure_active) {
+        memset(&tmp, 0, sizeof(tmp));
+        if (runtime_set_failure_control(rt, "payment", 0, &tmp)) {
+            failures++;
+        }
+    }
+    if (rt->software_failure_active) {
+        memset(&tmp, 0, sizeof(tmp));
+        if (runtime_set_failure_control(rt, "software", 0, &tmp)) {
+            failures++;
+        }
+    }
+
+    if (failures > 0 && err != NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failed to restore %d test control(s)", failures);
+        return ULAB_ERR;
+    }
+
     return ULAB_OK;
 }
 

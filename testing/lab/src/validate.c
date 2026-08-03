@@ -174,6 +174,18 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->type == EVT_WAIT_UE_SESSIONS ||
+                event->type == EVT_FINALIZE_UE_SESSIONS) {
+                if (event->ues.kind == SEL_NONE) {
+                    return fail(err,
+                                "UE session event requires UE selector");
+                }
+                if (event->amount_mb > 300) {
+                    return fail(err,
+                                "UE session event exceeds 300 seconds");
+                }
+            }
+
             if (event->type == EVT_WAIT_NODE_CONNECTIVITY) {
                 if (event->nodes.kind == SEL_NONE) {
                     return fail(err,
@@ -271,6 +283,62 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                     return fail(err,
                                 "set_package_active requires package and "
                                 "active");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_WAIT_SIM_STATUS) {
+                if (event->ues.kind == SEL_NONE ||
+                    event->status[0] == '\0') {
+                    return fail(err,
+                                "wait_sim_status requires ues and status");
+                }
+                if (event->amount_mb > 900) {
+                    return fail(err,
+                                "wait_sim_status exceeds 900 seconds");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_RESTART_SITE) {
+                if (event->sites.kind == SEL_NONE &&
+                    event->nodes.kind == SEL_NONE) {
+                    return fail(err,
+                                "restart_site requires site selector");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_TOGGLE_INTERNET_SWITCH) {
+                if (event->sites.kind == SEL_NONE &&
+                    event->nodes.kind == SEL_NONE) {
+                    return fail(err,
+                                "toggle_internet_switch requires site "
+                                "selector");
+                }
+                if (!event->has_port || event->port == 0) {
+                    return fail(err,
+                                "toggle_internet_switch requires port > 0");
+                }
+                if (event->status[0] == '\0') {
+                    return fail(err,
+                                "toggle_internet_switch requires state");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_FAILURE_CONTROL) {
+                if ((!ulab_streq(event->target, "payment") &&
+                     !ulab_streq(event->target, "software")) ||
+                    (!ulab_streq(event->status, "on") &&
+                     !ulab_streq(event->status, "off") &&
+                     !ulab_streq(event->status, "enabled") &&
+                     !ulab_streq(event->status, "disabled") &&
+                     !ulab_streq(event->status, "true") &&
+                     !ulab_streq(event->status, "false"))) {
+                    return fail(err,
+                                "failure_control requires target "
+                                "payment|software and state on|off");
                 }
                 continue;
             }

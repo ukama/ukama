@@ -54,7 +54,7 @@ phases:
         sites: all
         state: off
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: all
         amount_mb: 1
 

@@ -1,0 +1,83 @@
+version: 1
+name: p0-two-packages-small
+description: Verify the selected network exposes two exact plan records and four SIMs split across them while usage and package balances remain correct.
+seed: 307
+suite: p0
+priority: p0
+tags: [virtual, console, package, sim]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 4
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 50
+  - ref: weekly_10gb
+    name: Weekly 10GB
+    data_mb: 10240
+    duration_days: 7
+    amount: 7.00
+    assign_percent: 50
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: package_mix_usage
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 15
+    checks:
+      - type: usage_sample
+        sample_per_site: 2
+        expected: from_model
+        tolerance_percent: 5
+
+final_checks:
+  - type: list_count_equals
+    target: plans
+    networks: net-001
+    expected_count: 2
+  - type: list_count_equals
+    target: sims
+    networks: net-001
+    expected_count: 4
+  - type: package_fields_equal
+    package: daily_1gb
+  - type: package_fields_equal
+    package: weekly_10gb
+  - type: balance_non_negative
+    ues: all

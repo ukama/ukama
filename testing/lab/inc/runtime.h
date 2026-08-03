@@ -19,9 +19,12 @@ typedef struct {
     char run_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
     FILE *logf;
+    unsigned long script_invocation_seq;
     int service_enabled;
     int radio_enabled;
     int node_offline;
+    int payment_failure_active;
+    int software_failure_active;
     char node_version[ULAB_MAX_REF];
 } runtime_t;
 
@@ -48,6 +51,12 @@ int runtime_build_and_start_ues(const char *repo,
 int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
+int runtime_verify_ue_sessions(runtime_t *rt, const world_t *w,
+                               const selector_result_t *ues,
+                               ulab_error_t *err);
+int runtime_verify_ue_policy_blocks(runtime_t *rt, const world_t *w,
+                                    const selector_result_t *ues,
+                                    ulab_error_t *err);
 int runtime_generate_traffic(runtime_t *rt, const world_t *w,
                              const selector_result_t *ues,
                              uint64_t amount_mb, ulab_error_t *err);
@@ -55,6 +64,11 @@ int runtime_set_service(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err);
 int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err);
+int runtime_set_failure_control(runtime_t *rt,
+                                const char *target,
+                                int enabled,
+                                ulab_error_t *err);
+int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err);
 int runtime_set_node_version(runtime_t *rt, const char *version,
                              ulab_error_t *err);
 int runtime_node_health_ok(const runtime_t *rt);
@@ -68,6 +82,12 @@ int runtime_disconnect_nodes(runtime_t *rt, const world_t *w,
 int runtime_reconnect_nodes(runtime_t *rt, const world_t *w,
                             const selector_result_t *nodes,
                             ulab_error_t *err);
+int runtime_detach_selected_ues(runtime_t *rt, world_t *w,
+                                const selector_result_t *ues,
+                                ulab_error_t *err);
+int runtime_cleanup_selected_ues(runtime_t *rt, world_t *w,
+                                 const selector_result_t *ues,
+                                 ulab_error_t *err);
 int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err);
 int runtime_collect_cdr_diagnostics(runtime_t *rt, const world_t *w,

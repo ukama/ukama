@@ -1,0 +1,88 @@
+version: 1
+name: p0-site-restart-recovers
+description: Enable service, pass traffic, restart the site through BFF, observe the site operation, wait for every node to return online, and confirm traffic works again.
+seed: 4810
+suite: p0
+priority: p0
+tags: [virtual, console, site, restart, recovery]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: restart_plan
+    name: Site Restart Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: establish_service
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 5
+    checks:
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+
+  - name: restart_site
+    events:
+      - type: restart_site
+        sites: all
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        timeout_seconds: 60
+
+  - name: wait_for_site_recovery
+    events:
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Offline
+        seconds: 180
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 300
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 5
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        timeout_seconds: 120
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300

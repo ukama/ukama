@@ -1,0 +1,117 @@
+version: 1
+name: p0-two-networks-isolation-small
+description: Verify selecting either network returns only that network's sites, nodes, customers, plans, SIMs, and usage through current BFF queries.
+seed: 305
+suite: p0
+priority: p0
+tags: [virtual, console, multi-network, isolation]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 2
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 2
+
+packages:
+  - ref: daily_1gb
+    name: Daily 1GB
+    data_mb: 1024
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: generate_usage_in_both_networks
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 10
+    checks:
+      - type: usage_sample
+        sample_per_site: 1
+        expected: from_model
+        tolerance_percent: 5
+
+  - name: network_one_console_scope
+    checks:
+      - type: list_count_equals
+        target: sites
+        networks: net-001
+        expected_count: 1
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 3
+      - type: list_count_equals
+        target: customers
+        networks: net-001
+        expected_count: 2
+      - type: list_count_equals
+        target: plans
+        networks: net-001
+        expected_count: 1
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 2
+
+  - name: network_two_console_scope
+    checks:
+      - type: list_count_equals
+        target: sites
+        networks: net-002
+        expected_count: 1
+      - type: list_count_equals
+        target: nodes
+        networks: net-002
+        expected_count: 3
+      - type: list_count_equals
+        target: customers
+        networks: net-002
+        expected_count: 2
+      - type: list_count_equals
+        target: plans
+        networks: net-002
+        expected_count: 1
+      - type: list_count_equals
+        target: sims
+        networks: net-002
+        expected_count: 2
+
+final_checks:
+  - type: entity_reconciles
+    entity: site
+    ref: site-001
+  - type: entity_reconciles
+    entity: site
+    ref: site-002
+  - type: balance_non_negative
+    ues: all

@@ -1,10 +1,10 @@
 version: 1
 name: p0-revenue-by-network
-description: Allocate a SIM in a unique network and verify RevenueOverview with that networkId attributes the mandatory package payment to the selected network.
+description: Verify the selected network's settled plan payment is attributed to that network by both getPayments and the REVENUE KPI.
 seed: 4530
 suite: p0
 priority: p0
-tags: [virtual, billing, revenue, network, graphql]
+tags: [virtual, billing, revenue, network, console, graphql]
 status: active
 provider:
   type: virtual
@@ -31,9 +31,18 @@ runtime:
 phases:
   - name: verify_network_revenue
     checks:
-      - type: revenue_summary
+      - type: payment_equals
+        ues: all
+        package: network_plan
+        status: settled
+        expected_value: 5.00
+        currency: USD
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: network_id
         networks: net-001
-        column: total_paid
         expected_value: 5.00
         tolerance: 0.001
-
+        timeout_seconds: 600
