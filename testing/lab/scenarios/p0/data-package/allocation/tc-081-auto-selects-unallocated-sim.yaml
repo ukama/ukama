@@ -1,0 +1,46 @@
+version: 1
+name: p0-tc-081-auto-selects-unallocated-sim
+description: Leave the scenario SIM unallocated, request automatic allocation, and verify an available pool SIM becomes allocated exactly once with the selected package.
+seed: 5081
+suite: p0
+priority: p0
+tags: [virtual, data-package, allocation, auto, tc-081]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: allocation_plan
+    name: Explicit Allocation Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: allocate_first_available_sim
+    events:
+      - type: allocate_sim
+        ues: all
+        package: allocation_plan
+        variant: auto
+    checks:
+      - type: sim_unallocated
+        ues: all
+        expected: allocated
+      - type: package_assignment_count
+        ues: all
+        package: allocation_plan
+        expected_count: 1

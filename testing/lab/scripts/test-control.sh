@@ -8,35 +8,38 @@
 set -eu
 
 if [ "$#" -ne 2 ]; then
-    echo "usage: $0 <payment|software> <on|off>" >&2
+    echo "usage: $0 <target> <on|off>" >&2
     exit 2
 fi
 
 TARGET="$1"
 STATE="$2"
 
-case "$TARGET:$STATE" in
-    payment:on)
-        VAR=ULAB_PAYMENT_FAILURE_ON_CMD
-        ;;
-    payment:off)
-        VAR=ULAB_PAYMENT_FAILURE_OFF_CMD
-        ;;
-    software:on)
-        VAR=ULAB_SOFTWARE_FAILURE_ON_CMD
-        ;;
-    software:off)
-        VAR=ULAB_SOFTWARE_FAILURE_OFF_CMD
+case "$TARGET" in
+    payment|software|site_restart|node_restart|software_timeout)
         ;;
     *)
-        echo "unsupported test control: target=$TARGET state=$STATE" >&2
+        echo "unsupported test control target: $TARGET" >&2
         exit 2
         ;;
 esac
 
-# Resolve the allow-listed environment variable without eval. The command
-# itself is deliberately run through a shell because test environments may
-# need kubectl, podman, compose, or another deployment-specific control.
+case "$STATE" in
+    on|off)
+        ;;
+    *)
+        echo "unsupported test control state: $STATE" >&2
+        exit 2
+        ;;
+esac
+
+TARGET_UPPER="$(printf '%s' "$TARGET" | tr '[:lower:]' '[:upper:]')"
+STATE_UPPER="$(printf '%s' "$STATE" | tr '[:lower:]' '[:upper:]')"
+VAR="ULAB_${TARGET_UPPER}_FAILURE_${STATE_UPPER}_CMD"
+
+# Resolve only an allow-listed variable name. The command is intentionally
+# run through a shell because test deployments may use kubectl, podman,
+# compose, or another environment-specific control.
 CMD="$(printenv "$VAR" 2>/dev/null || true)"
 if [ -z "$CMD" ]; then
     echo "test control command is not configured: $VAR" >&2

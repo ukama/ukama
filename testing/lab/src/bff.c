@@ -1040,12 +1040,18 @@ int bff_add_site(bff_client_t *c,
     }
 
     obj = dig(root, "data", "addSite");
-    if (obj == NULL || json_get_str(obj, "id", s->bff_id,
-        sizeof(s->bff_id))) {
+    if (obj == NULL ||
+        json_get_str(obj, "id", s->bff_id, sizeof(s->bff_id))) {
         snprintf(err->msg, sizeof(err->msg), "addSite missing id");
         json_decref(root);
         return ULAB_ERR;
     }
+    json_get_optional_str(obj, "createdAt", s->created_at,
+                          sizeof(s->created_at));
+    json_get_optional_str(obj, "installDate", s->install_date,
+                          sizeof(s->install_date));
+    json_get_optional_str(obj, "location", s->location,
+                          sizeof(s->location));
 
     json_decref(root);
 
@@ -1155,6 +1161,54 @@ int bff_set_package_active(bff_client_t *c,
     }
 
     p->active = active != 0;
+    json_decref(root);
+    return ULAB_OK;
+}
+
+
+int bff_update_package_name(bff_client_t *c,
+                            package_t *p,
+                            const char *name,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char id_esc[ULAB_MAX_ID * 2];
+    char name_esc[ULAB_MAX_NAME * 2];
+    json_t *root;
+    json_t *obj;
+    char actual_name[ULAB_MAX_NAME];
+
+    if (p == NULL || p->bff_id[0] == '\0' || name == NULL ||
+        name[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updatePackage requires package id and name");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(p->bff_id, id_esc, sizeof(id_esc));
+    ulab_json_escape(name, name_esc, sizeof(name_esc));
+    snprintf(vars, sizeof(vars),
+             "{\"packageId\":\"%s\",\"data\":{\"name\":\"%s\","
+             "\"active\":%s}}",
+             id_esc, name_esc, p->active ? "true" : "false");
+    root = NULL;
+    if (bff_call(c, "updatePackage", BFF_UPDATE_PACKAGE, vars,
+                 &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "updatePackage");
+    if (obj == NULL ||
+        json_get_str(obj, "name", actual_name, sizeof(actual_name)) ||
+        !ulab_streq(actual_name, name)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updatePackage returned unexpected name");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    if (ulab_copy(p->name, sizeof(p->name), name)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "updated package name is too long");
+        json_decref(root);
+        return ULAB_ERR;
+    }
     json_decref(root);
     return ULAB_OK;
 }
@@ -1272,25 +1326,21 @@ int bff_package_visible_for_network(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_invalid_package_name_available(bff_client_t *c,
-                                       const package_t *pkg,
-                                       const char *variant,
-                                       int *available,
-                                       ulab_error_t *err) {
+int bff_package_name_available(bff_client_t *c,
+                               const char *name,
+                               int *available,
+                               ulab_error_t *err) {
     char vars[ULAB_MAX_QUERY];
-    char name[ULAB_MAX_NAME];
     char name_esc[ULAB_MAX_NAME * 2];
     json_t *root;
     json_t *obj;
     json_t *value;
 
-    if (pkg == NULL || variant == NULL || variant[0] == '\0' ||
-        available == NULL) {
+    if (name == NULL || name[0] == '\0' || available == NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "package name availability requires package and variant");
+                 "package name availability requires name");
         return ULAB_ERR;
     }
-    invalid_package_name(pkg, variant, name, sizeof(name));
     ulab_json_escape(name, name_esc, sizeof(name_esc));
     snprintf(vars, sizeof(vars), "{\"name\":\"%s\"}", name_esc);
     root = NULL;
@@ -1309,6 +1359,22 @@ int bff_invalid_package_name_available(bff_client_t *c,
     *available = json_is_true(value);
     json_decref(root);
     return ULAB_OK;
+}
+
+int bff_invalid_package_name_available(bff_client_t *c,
+                                       const package_t *pkg,
+                                       const char *variant,
+                                       int *available,
+                                       ulab_error_t *err) {
+    char name[ULAB_MAX_NAME];
+
+    if (pkg == NULL || variant == NULL || variant[0] == '\0') {
+        snprintf(err->msg, sizeof(err->msg),
+                 "package name availability requires package and variant");
+        return ULAB_ERR;
+    }
+    invalid_package_name(pkg, variant, name, sizeof(name));
+    return bff_package_name_available(c, name, available, err);
 }
 
 int bff_add_invalid_package(bff_client_t *c,
@@ -2733,9 +2799,11 @@ int bff_allocate_sim(bff_client_t *c, ue_t *ue, const subscriber_t *sub,
     }
 
     obj = dig(root, "data", "allocateSim");
-    if (obj == NULL || json_get_str(obj, "id", ue->bff_id,
-        sizeof(ue->bff_id))) {
-        snprintf(err->msg, sizeof(err->msg), "allocateSim missing id");
+    if (obj == NULL ||
+        json_get_str(obj, "id", ue->bff_id, sizeof(ue->bff_id)) ||
+        json_get_str(obj, "iccid", ue->iccid, sizeof(ue->iccid))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "allocateSim missing id or iccid");
         json_decref(root);
         return ULAB_ERR;
     }
@@ -3355,6 +3423,89 @@ static int parse_action_availability(json_t *obj,
     return ULAB_OK;
 }
 
+int bff_get_software_list(bff_client_t *c,
+                          const node_t *node,
+                          bff_software_t software[],
+                          size_t max_software,
+                          size_t *software_count,
+                          ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char node_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+    int n;
+
+    if (node == NULL || node->bff_id[0] == '\0' ||
+        software == NULL || max_software == 0 || software_count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSoftwares list requires node and output storage");
+        return ULAB_ERR;
+    }
+    ulab_json_escape(node->bff_id, node_esc, sizeof(node_esc));
+    n = snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"name\":\"\",\"nodeId\":\"%s\","
+                 "\"status\":\"unknown\"}}", node_esc);
+    if (n < 0 || (size_t)n >= sizeof(vars)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSoftwares variables too long");
+        return ULAB_ERR;
+    }
+    root = NULL;
+    if (bff_call(c, "getSoftwares", BFF_GET_SOFTWARES, vars,
+                 &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getSoftwares");
+    arr = obj ? json_object_get(obj, "software") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSoftwares missing software list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *software_count = json_array_size(arr);
+    if (*software_count > max_software) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getSoftwares returned %zu rows; maximum is %zu",
+                 *software_count, max_software);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    for (i = 0; i < *software_count; i++) {
+        json_t *item;
+        bff_software_t *row;
+
+        item = json_array_get(arr, i);
+        row = &software[i];
+        memset(row, 0, sizeof(*row));
+        if (json_get_str(item, "id", row->id, sizeof(row->id)) ||
+            json_get_str(item, "releaseDate", row->release_date,
+                         sizeof(row->release_date)) ||
+            json_get_str(item, "nodeId", row->node_id,
+                         sizeof(row->node_id)) ||
+            json_get_str(item, "status", row->status,
+                         sizeof(row->status)) ||
+            json_get_str(item, "currentVersion", row->current_version,
+                         sizeof(row->current_version)) ||
+            json_get_str(item, "desiredVersion", row->desired_version,
+                         sizeof(row->desired_version)) ||
+            json_get_str(item, "name", row->name, sizeof(row->name))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getSoftwares returned incomplete software row");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        json_get_optional_str(item, "createdAt", row->created_at,
+                              sizeof(row->created_at));
+        json_get_optional_str(item, "updatedAt", row->updated_at,
+                              sizeof(row->updated_at));
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
 int bff_get_software(bff_client_t *c,
                      const node_t *node,
                      const char *app,
@@ -3837,6 +3988,119 @@ int bff_get_list_count(bff_client_t *c,
 }
 
 
+static const char *node_kind_filter(const char *node_type) {
+    if (node_type == NULL || node_type[0] == '\0') return "";
+    if (ulab_streq(node_type, ULAB_NODE_TOWER)) {
+        return ULAB_NODE_KIND_TOWER;
+    }
+    if (ulab_streq(node_type, ULAB_NODE_AMPLIFIER)) {
+        return ULAB_NODE_KIND_AMPLIFIER;
+    }
+    if (ulab_streq(node_type, ULAB_NODE_CONTROLLER)) {
+        return ULAB_NODE_KIND_CONTROLLER;
+    }
+    return node_type;
+}
+
+int bff_get_node_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *node_type,
+                            size_t *count,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    char type_esc[ULAB_MAX_REF * 2];
+    const char *kind;
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+
+    if (network == NULL || network->bff_id[0] == '\0' || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "node list count requires network");
+        return ULAB_ERR;
+    }
+    kind = node_kind_filter(node_type);
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    ulab_json_escape(kind, type_esc, sizeof(type_esc));
+    if (kind[0] != '\0') {
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"networkId\":\"%s\","
+                 "\"type\":\"%s\"}}", network_esc, type_esc);
+    } else {
+        snprintf(vars, sizeof(vars),
+                 "{\"data\":{\"networkId\":\"%s\"}}",
+                 network_esc);
+    }
+    root = NULL;
+    if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getNodes");
+    arr = obj ? json_object_get(obj, "nodes") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getNodes missing nodes list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *count = json_array_size(arr);
+    json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_site_node_count(bff_client_t *c,
+                            const site_t *site,
+                            const char *node_type,
+                            size_t *count,
+                            ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char site_esc[ULAB_MAX_ID * 2];
+    const char *kind;
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+
+    if (site == NULL || site->bff_id[0] == '\0' || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site node count requires configured site");
+        return ULAB_ERR;
+    }
+    kind = node_kind_filter(node_type);
+    ulab_json_escape(site->bff_id, site_esc, sizeof(site_esc));
+    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
+    root = NULL;
+    if (bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", "getNodesForSite");
+    arr = obj ? json_object_get(obj, "nodes") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getNodesForSite missing nodes list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    *count = 0;
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *item;
+        char actual_type[ULAB_MAX_REF];
+
+        item = json_array_get(arr, i);
+        actual_type[0] = '\0';
+        json_get_optional_str(item, "type", actual_type,
+                              sizeof(actual_type));
+        if (kind[0] == '\0' || ulab_streq(actual_type, kind)) {
+            (*count)++;
+        }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
+
 typedef struct {
     char id[ULAB_MAX_ID];
     char name[ULAB_MAX_NAME];
@@ -3845,6 +4109,9 @@ typedef struct {
     char type[ULAB_MAX_REF];
     char latitude[ULAB_MAX_REF];
     char longitude[ULAB_MAX_REF];
+    char location[ULAB_MAX_NAME];
+    char created_at[ULAB_MAX_REF];
+    char install_date[ULAB_MAX_REF];
     char email[ULAB_MAX_NAME];
     char phone[ULAB_MAX_REF];
     char connectivity[ULAB_MAX_REF];
@@ -3933,6 +4200,12 @@ static int parse_entity_snapshot(const char *entity,
                           sizeof(snapshot->latitude));
     json_get_optional_str(obj, "longitude", snapshot->longitude,
                           sizeof(snapshot->longitude));
+    json_get_optional_str(obj, "location", snapshot->location,
+                          sizeof(snapshot->location));
+    json_get_optional_str(obj, "createdAt", snapshot->created_at,
+                          sizeof(snapshot->created_at));
+    json_get_optional_str(obj, "installDate", snapshot->install_date,
+                          sizeof(snapshot->install_date));
     json_get_optional_str(obj, "email", snapshot->email,
                           sizeof(snapshot->email));
     json_get_optional_str(obj, "phone", snapshot->phone,
@@ -3995,6 +4268,9 @@ static int snapshot_common_equal(const char *entity,
     if (ulab_streq(entity, "site")) {
         return ulab_streq(left->latitude, right->latitude) &&
             ulab_streq(left->longitude, right->longitude) &&
+            ulab_streq(left->location, right->location) &&
+            ulab_streq(left->created_at, right->created_at) &&
+            ulab_streq(left->install_date, right->install_date) &&
             left->has_deactivated == right->has_deactivated &&
             (!left->has_deactivated ||
              left->deactivated == right->deactivated);
@@ -4338,7 +4614,12 @@ int bff_entity_fields_match_world(bff_client_t *c,
             ulab_streq(actual.name, expected->name) &&
             ulab_streq(actual.network_id, network->bff_id) &&
             ulab_streq(actual.latitude, expected->latitude) &&
-            ulab_streq(actual.longitude, expected->longitude);
+            ulab_streq(actual.longitude, expected->longitude) &&
+            ulab_streq(actual.location, expected->location) &&
+            expected->created_at[0] != '\0' &&
+            ulab_streq(actual.created_at, expected->created_at) &&
+            expected->install_date[0] != '\0' &&
+            ulab_streq(actual.install_date, expected->install_date);
     } else if (ulab_streq(entity, "node")) {
         node_t *expected;
         site_t *site;

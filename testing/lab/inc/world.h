@@ -48,6 +48,9 @@ typedef struct {
     char anode_id[ULAB_MAX_ID];
     char latitude[ULAB_MAX_REF];
     char longitude[ULAB_MAX_REF];
+    char location[ULAB_MAX_NAME];
+    char created_at[ULAB_MAX_REF];
+    char install_date[ULAB_MAX_REF];
 
     char bff_id[ULAB_MAX_ID];
 } site_t;

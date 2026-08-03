@@ -1,0 +1,48 @@
+version: 1
+name: p0-tc-043-restart-operation-survives-refresh
+description: Start a node restart and query the operation repeatedly while it is active to verify a refreshed view still reports the same busy operation until completion.
+seed: 5043
+suite: p0
+priority: p0
+tags: [virtual, node, restart, operation-status, tc-043]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: start_restart
+    events:
+      - type: restart_nodes
+        type_selector: tower
+        count_per_network: 1
+    checks:
+      - type: node_operation_status_equals
+        type_selector: tower
+        count_per_network: 1
+        busy: true
+        timeout_seconds: 60
+      - type: node_operation_status_equals
+        type_selector: tower
+        count_per_network: 1
+        busy: true
+        timeout_seconds: 60
+  - name: verify_completion
+    checks:
+      - type: node_operation_status_equals
+        type_selector: tower
+        count_per_network: 1
+        busy: false
+        timeout_seconds: 300

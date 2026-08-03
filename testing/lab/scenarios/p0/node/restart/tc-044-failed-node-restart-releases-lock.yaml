@@ -1,0 +1,46 @@
+version: 1
+name: p0-tc-044-failed-node-restart-releases-lock
+description: Enable the deployment node-restart failure hook, issue a controller restart, and verify its operation lock eventually clears after failure or timeout.
+seed: 5044
+suite: p0
+priority: p0
+tags: [virtual, node, restart, failure-control, requires-node-restart-failure-control, tc-044]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: force_node_restart_failure
+    events:
+      - type: failure_control
+        target: node_restart
+        state: on
+      - type: restart_nodes
+        type_selector: controller
+        count_per_network: 1
+        expect:
+          result: any
+    checks:
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: false
+        timeout_seconds: 300
+  - name: restore_node_restart
+    events:
+      - type: failure_control
+        target: node_restart
+        state: off

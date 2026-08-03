@@ -1,0 +1,58 @@
+version: 1
+name: p0-tc-158-active-unsold-package-row
+description: Create an active package without assigning or selling it and verify the package-performance row remains present with zero sold and zero revenue.
+seed: 5158
+suite: p0
+priority: p0
+tags: [virtual, console, packages, performance, zero-sales, tc-158]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+packages:
+  - ref: unsold_plan
+    name: Active Unsold Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 3.00
+    active: true
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_unsold_active_row
+    checks:
+      - type: performance_report_row
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: unsold_plan
+        active: true
+        timeout_seconds: 600
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: unsold_plan
+        column: sold
+        expected_value: 0
+        timeout_seconds: 600
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: unsold_plan
+        column: revenue
+        expected_value: 0
+        timeout_seconds: 600

@@ -125,6 +125,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_PURCHASE_PACKAGES_PARALLEL:
         return "purchase_packages_parallel";
     case EVT_ALLOCATE_SIM: return "allocate_sim";
+    case EVT_UPDATE_PACKAGE: return "update_package";
     case EVT_CREATE_INVALID_PACKAGE: return "create_invalid_package";
     case EVT_WAIT_PACKAGE_BOUNDARY: return "wait_package_boundary";
     case EVT_SET_PACKAGE_ACTIVE: return "set_package_active";
@@ -135,6 +136,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_TOGGLE_RADIO: return "toggle_radio";
     case EVT_TOGGLE_INTERNET_SWITCH: return "toggle_internet_switch";
     case EVT_RESTART_SITE: return "restart_site";
+    case EVT_CONFIGURE_SITES: return "configure_sites";
     case EVT_PROMOTE_RELEASE: return "promote_release";
     case EVT_SOFTWARE_UPDATE: return "software_update";
     case EVT_DISCONNECT_NODES: return "disconnect_nodes";
@@ -165,7 +167,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_PACKAGE_STATE: return "package_state";
     case CHECK_PACKAGE_ASSIGNMENT_COUNT: return "package_assignment_count";
     case CHECK_PACKAGE_ASSIGNMENT_CHAIN: return "package_assignment_chain";
-    case CHECK_PACKAGE_CATALOG_EQUALS: return "package_fields_equal";
+    case CHECK_PACKAGE_FIELDS_EQUAL: return "package_fields_equal";
     case CHECK_PACKAGE_VISIBLE: return "package_visible";
     case CHECK_PACKAGE_HIDDEN: return "package_hidden";
     case CHECK_PACKAGE_NAME_AVAILABLE: return "package_name_available";
@@ -188,8 +190,8 @@ const char *scenario_check_name(check_type_t type) {
         return "payment_entitlement_reconciles";
     case CHECK_PACKAGE_DASHBOARD_METRIC:
         return "package_dashboard_metric";
-    case CHECK_NETWORK_OVERVIEW_METRIC:
-        return "network_overview_metric";
+    case CHECK_NETWORK_SUMMARY_METRIC:
+        return "network_summary_metric";
     case CHECK_CONSOLE_INVENTORY_RECONCILES:
         return "console_inventory_reconciles";
     case CHECK_USAGE_AGGREGATE: return "usage_aggregate";
@@ -248,6 +250,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_PURCHASE_PACKAGES_PARALLEL;
     } else if (ulab_streq(name, "allocate_sim")) {
         *out = EVT_ALLOCATE_SIM;
+    } else if (ulab_streq(name, "update_package")) {
+        *out = EVT_UPDATE_PACKAGE;
     } else if (ulab_streq(name, "create_invalid_package")) {
         *out = EVT_CREATE_INVALID_PACKAGE;
     } else if (ulab_streq(name, "wait_package_boundary")) {
@@ -269,6 +273,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_TOGGLE_INTERNET_SWITCH;
     } else if (ulab_streq(name, "restart_site")) {
         *out = EVT_RESTART_SITE;
+    } else if (ulab_streq(name, "configure_sites")) {
+        *out = EVT_CONFIGURE_SITES;
     } else if (ulab_streq(name, "promote_release")) {
         *out = EVT_PROMOTE_RELEASE;
     } else if (ulab_streq(name, "software_update")) {
@@ -319,9 +325,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_PACKAGE_ASSIGNMENT_COUNT;
     } else if (ulab_streq(name, "package_assignment_chain")) {
         *out = CHECK_PACKAGE_ASSIGNMENT_CHAIN;
-    } else if (ulab_streq(name, "package_fields_equal") ||
-               ulab_streq(name, "package_catalog_equals")) {
-        *out = CHECK_PACKAGE_CATALOG_EQUALS;
+    } else if (ulab_streq(name, "package_fields_equal")) {
+        *out = CHECK_PACKAGE_FIELDS_EQUAL;
     } else if (ulab_streq(name, "package_visible")) {
         *out = CHECK_PACKAGE_VISIBLE;
     } else if (ulab_streq(name, "package_hidden")) {
@@ -356,8 +361,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_PAYMENT_ENTITLEMENT_RECONCILES;
     } else if (ulab_streq(name, "package_dashboard_metric")) {
         *out = CHECK_PACKAGE_DASHBOARD_METRIC;
-    } else if (ulab_streq(name, "network_overview_metric")) {
-        *out = CHECK_NETWORK_OVERVIEW_METRIC;
+    } else if (ulab_streq(name, "network_summary_metric")) {
+        *out = CHECK_NETWORK_SUMMARY_METRIC;
     } else if (ulab_streq(name, "console_inventory_reconciles")) {
         *out = CHECK_CONSOLE_INVENTORY_RECONCILES;
     } else if (ulab_streq(name, "usage_aggregate")) {
@@ -626,6 +631,17 @@ static int apply_check_field(check_spec_t *c, const char *key,
     if (ulab_streq(key, "operation_status")) {
         return ulab_copy(c->operation_status,
                          sizeof(c->operation_status), val);
+    }
+    if (ulab_streq(key, "restart_reason")) {
+        return ulab_copy(c->restart_reason,
+                         sizeof(c->restart_reason), val);
+    }
+    if (ulab_streq(key, "rf_reason")) {
+        return ulab_copy(c->rf_reason, sizeof(c->rf_reason), val);
+    }
+    if (ulab_streq(key, "service_reason")) {
+        return ulab_copy(c->service_reason,
+                         sizeof(c->service_reason), val);
     }
     if (ulab_streq(key, "value_state")) {
         return ulab_copy(c->value_state, sizeof(c->value_state), val);

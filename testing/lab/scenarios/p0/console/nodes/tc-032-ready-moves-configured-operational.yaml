@@ -1,0 +1,50 @@
+version: 1
+name: p0-tc-032-ready-moves-configured-operational
+description: Configure a site while its nodes are held Offline, verify lifecycle Configured, then reconnect the nodes so their Ready events move lifecycle to Operational.
+seed: 5032
+suite: p0
+priority: p0
+tags: [virtual, console, nodes, lifecycle, ready-event, tc-032]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: create_configured_state
+    events:
+      - type: configure_sites
+        sites: all
+        state: hold
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Offline
+        state: Configured
+        timeout_seconds: 180
+  - name: publish_ready
+    events:
+      - type: reconnect_nodes
+        nodes: all
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 180
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
