@@ -190,7 +190,6 @@ func (this *DeleteRequest) Validate() error {
 	}
 	return nil
 }
-
 func (this *DeleteResponse) Validate() error {
 	return nil
 }

@@ -11,24 +11,24 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
-
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	ukama "github.com/ukama/ukama/systems/common/validation"
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	"github.com/ukama/ukama/systems/common/uuid"
-	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
-	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 	"github.com/ukama/ukama/systems/registry/site/pkg"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	ukama "github.com/ukama/ukama/systems/common/validation"
+	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
+	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 	providers "github.com/ukama/ukama/systems/registry/site/pkg/provider"
 )
 
@@ -315,7 +315,7 @@ func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
 		log.Errorf("failed to get site count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(s.pushGateway, pkg.SiteMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"network": networkId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(s.pushGateway, pkg.SiteMetric, pkg.NumberOfSites, float64(siteCount), map[string]string{"network": networkId.String()}, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
 	}
