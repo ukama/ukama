@@ -123,6 +123,10 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	case *prometheus.GaugeVec:
 		met.With(labels).Set(value)
 	case *prometheus.CounterVec:
+		if value < 0 {
+			return fmt.Errorf("invalid value (%f) for metric type %s: Value should always be greater than zero",
+				value, m.Type)
+		}
 		met.With(labels).Add(value)
 	case *prometheus.SummaryVec:
 		met.With(labels).Observe(value)
