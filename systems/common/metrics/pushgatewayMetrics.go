@@ -123,7 +123,7 @@ func (m *Metrics) SetMetric(value float64, labels prometheus.Labels) error {
 	case *prometheus.GaugeVec:
 		met.With(labels).Set(value)
 	case *prometheus.CounterVec:
-		met.With(labels).Inc()
+		met.With(labels).Add(value)
 	case *prometheus.SummaryVec:
 		met.With(labels).Observe(value)
 	case *prometheus.HistogramVec:
@@ -176,7 +176,7 @@ func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName st
 	}
 }
 
-func CollectAndPushSimMetrics(pushGateway string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
+func CollectAndPushSystemMetrics(pushGateway string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
 	log.Infof("Collecting and pushing metric %q on behalf of system %q", selectedMetric, systemName)
 
 	var selectedMetrics []MetricConfig

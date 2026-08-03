@@ -566,7 +566,7 @@ func pushDataUsageMetrics(value float64, labels map[string]string, pushGatewayHo
 	log.Infof("Collecting and pushing data usage metric (value: %v, labels: %v) to push gateway host: %s",
 		value, labels, pushGatewayHost)
 
-	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.UsageMetrics,
+	err := pmetric.CollectAndPushSystemMetrics(pushGatewayHost, pkg.UsageMetrics,
 		pkg.DataUsage, value, labels, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing data usage  metric to push gateway %s", err.Error())
