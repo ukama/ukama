@@ -57,7 +57,14 @@ func RegisterStatusEndpoint(f *fizz.Fizz, systemName string,
 		timeout = defaultStatusCheckTimeout
 	}
 
-	f.GET("/status", nil, tonic.Handler(func(c *gin.Context) (*StatusResponse, error) {
+	// fizz derives OpenAPI operation IDs from handler function names;
+	// anonymous handlers (like the /ping one) all reduce to "func1", so an
+	// explicit ID is required to avoid a duplicate-ID panic at startup.
+	f.GET("/status", []fizz.OperationOption{
+		fizz.ID("getSystemStatus"),
+		fizz.Summary("Get system status"),
+		fizz.Description("Health-checks all gRPC services of this system and reports each as available/unavailable."),
+	}, tonic.Handler(func(c *gin.Context) (*StatusResponse, error) {
 		return checkServices(c.Request.Context(), systemName, services, timeout), nil
 	}, http.StatusOK))
 }
