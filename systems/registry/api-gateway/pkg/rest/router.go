@@ -47,6 +47,7 @@ type Router struct {
 type RouterConfig struct {
 	metricsConfig config.Metrics
 	httpEndpoints *pkg.HttpEndpoints
+	grpcEndpoints *pkg.GrpcEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
@@ -141,6 +142,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
+		grpcEndpoints: &svcConf.Services,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -157,6 +159,17 @@ func (rt *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]string{
+			"network":    r.config.grpcEndpoints.Network,
+			"member":     r.config.grpcEndpoints.Member,
+			"node":       r.config.grpcEndpoints.Node,
+			"invitation": r.config.grpcEndpoints.Invitation,
+			"site":       r.config.grpcEndpoints.Site,
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "API gateway", "Registry system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
