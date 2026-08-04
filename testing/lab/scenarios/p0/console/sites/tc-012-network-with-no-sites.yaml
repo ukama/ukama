@@ -1,0 +1,28 @@
+version: 1
+name: p0-tc-012-network-with-no-sites
+description: Create a network without any site records and verify the BFF site list for that network is empty.
+seed: 5012
+suite: p0
+priority: p0
+tags: [virtual, console, sites, empty-topology, tc-012]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks]
+
+phases:
+  - name: verify_empty_site_list
+    checks:
+      - type: list_count_equals
+        target: sites
+        networks: net-001
+        expected_count: 0

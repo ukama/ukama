@@ -266,6 +266,16 @@ int bff_set_package_active(bff_client_t *c,
                            int active,
                            ulab_error_t *err);
 
+int bff_update_package_name(bff_client_t *c,
+                            package_t *p,
+                            const char *name,
+                            ulab_error_t *err);
+
+int bff_package_name_available(bff_client_t *c,
+                               const char *name,
+                               int *available,
+                               ulab_error_t *err);
+
 int bff_get_package(bff_client_t *c,
                     const package_t *pkg,
                     bff_package_t *actual,
@@ -528,6 +538,18 @@ int bff_get_list_count(bff_client_t *c,
                        size_t *count,
                        ulab_error_t *err);
 
+int bff_get_node_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *node_type,
+                            size_t *count,
+                            ulab_error_t *err);
+
+int bff_get_site_node_count(bff_client_t *c,
+                            const site_t *site,
+                            const char *node_type,
+                            size_t *count,
+                            ulab_error_t *err);
+
 int bff_entity_fields_match_world(bff_client_t *c,
                                   const char *entity,
                                   const char *ref,
@@ -557,6 +579,13 @@ int bff_get_software_count(bff_client_t *c,
                            const node_t *node,
                            size_t *count,
                            ulab_error_t *err);
+
+int bff_get_software_list(bff_client_t *c,
+                          const node_t *node,
+                          bff_software_t software[],
+                          size_t max_software,
+                          size_t *software_count,
+                          ulab_error_t *err);
 
 int bff_get_node_operation_status(
     bff_client_t *c,

@@ -1,0 +1,97 @@
+version: 1
+name: p0-tc-192-action-availability-reasons
+description: Verify site action availability follows healthy, degraded, offline, and busy node conditions and that unavailable actions return a non-empty reason.
+seed: 5192
+suite: p0
+priority: p0
+tags: [virtual, site, operations, availability, reasons, tc-192]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: healthy_actions_available
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        degraded: false
+        restart_available: true
+        rf_available: true
+        service_available: true
+  - name: degraded_site_reported
+    events:
+      - type: disconnect_nodes
+        type_selector: amplifier
+        count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        degraded: true
+        timeout_seconds: 120
+  - name: offline_actions_unavailable_with_reasons
+    events:
+      - type: disconnect_nodes
+        type_selector: tower
+        count_per_network: 1
+      - type: disconnect_nodes
+        type_selector: controller
+        count_per_network: 1
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Offline
+        seconds: 120
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        restart_available: false
+        rf_available: false
+        service_available: false
+        restart_reason: present
+        rf_reason: present
+        service_reason: present
+        timeout_seconds: 120
+  - name: recover_and_verify_busy_reasons
+    events:
+      - type: reconnect_nodes
+        nodes: all
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 180
+      - type: restart_nodes
+        type_selector: controller
+        count_per_network: 1
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        restart_available: false
+        rf_available: false
+        service_available: false
+        restart_reason: present
+        rf_reason: present
+        service_reason: present
+        timeout_seconds: 60
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300

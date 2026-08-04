@@ -375,8 +375,7 @@ int runtime_init(runtime_t *rt,
     rt->service_enabled = 0;
     rt->radio_enabled = 1;
     rt->node_offline = 0;
-    rt->payment_failure_active = 0;
-    rt->software_failure_active = 0;
+    rt->failure_controls = 0;
     snprintf(rt->node_version, sizeof(rt->node_version), "current");
 
     snprintf(path, sizeof(path), "%s/runtime.log", run_dir);
@@ -1164,12 +1163,38 @@ int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err) {
     return ULAB_OK;
 }
 
+typedef struct {
+    const char *name;
+    unsigned int bit;
+} failure_control_def_t;
+
+static const failure_control_def_t FAILURE_CONTROLS[] = {
+    { "payment",         1u << 0 },
+    { "software",        1u << 1 },
+    { "site_restart",    1u << 2 },
+    { "node_restart",    1u << 3 },
+    { "software_timeout",1u << 4 }
+};
+
+static const failure_control_def_t *failure_control_def(
+    const char *target) {
+    size_t i;
+
+    for (i = 0; i < sizeof(FAILURE_CONTROLS) /
+         sizeof(FAILURE_CONTROLS[0]); i++) {
+        if (ulab_streq(target, FAILURE_CONTROLS[i].name)) {
+            return &FAILURE_CONTROLS[i];
+        }
+    }
+    return NULL;
+}
+
 int runtime_set_failure_control(runtime_t *rt,
                                 const char *target,
                                 int enabled,
                                 ulab_error_t *err) {
+    const failure_control_def_t *def;
     char args[ULAB_MAX_ARGS];
-    int *active;
     int rc;
 
     if (rt == NULL || target == NULL || target[0] == '\0') {
@@ -1178,11 +1203,8 @@ int runtime_set_failure_control(runtime_t *rt,
         return ULAB_ERR;
     }
 
-    if (ulab_streq(target, "payment")) {
-        active = &rt->payment_failure_active;
-    } else if (ulab_streq(target, "software")) {
-        active = &rt->software_failure_active;
-    } else {
+    def = failure_control_def(target);
+    if (def == NULL) {
         snprintf(err->msg, sizeof(err->msg),
                  "unsupported failure control target: %.64s", target);
         return ULAB_ERR;
@@ -1202,28 +1224,32 @@ int runtime_set_failure_control(runtime_t *rt,
         return ULAB_ERR;
     }
 
-    *active = enabled ? 1 : 0;
+    if (enabled) {
+        rt->failure_controls |= def->bit;
+    } else {
+        rt->failure_controls &= ~def->bit;
+    }
     return ULAB_OK;
 }
 
 int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err) {
     ulab_error_t tmp;
     int failures;
+    size_t i;
 
     if (rt == NULL) {
         return ULAB_OK;
     }
 
     failures = 0;
-    if (rt->payment_failure_active) {
-        memset(&tmp, 0, sizeof(tmp));
-        if (runtime_set_failure_control(rt, "payment", 0, &tmp)) {
-            failures++;
+    for (i = 0; i < sizeof(FAILURE_CONTROLS) /
+         sizeof(FAILURE_CONTROLS[0]); i++) {
+        if ((rt->failure_controls & FAILURE_CONTROLS[i].bit) == 0) {
+            continue;
         }
-    }
-    if (rt->software_failure_active) {
         memset(&tmp, 0, sizeof(tmp));
-        if (runtime_set_failure_control(rt, "software", 0, &tmp)) {
+        if (runtime_set_failure_control(
+                rt, FAILURE_CONTROLS[i].name, 0, &tmp)) {
             failures++;
         }
     }

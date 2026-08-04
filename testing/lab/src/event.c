@@ -40,6 +40,7 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
         return event_bff(ctx, event, err);
     case EVT_PURCHASE_PACKAGES_PARALLEL:
     case EVT_ALLOCATE_SIM:
+    case EVT_UPDATE_PACKAGE:
     case EVT_CREATE_INVALID_PACKAGE:
     case EVT_WAIT_PACKAGE_BOUNDARY:
         return event_data_package(ctx, event, err);
@@ -55,6 +56,7 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_TOGGLE_RADIO:
     case EVT_TOGGLE_INTERNET_SWITCH:
     case EVT_RESTART_SITE:
+    case EVT_CONFIGURE_SITES:
     case EVT_SOFTWARE_UPDATE:
     case EVT_DISCONNECT_NODES:
     case EVT_RECONNECT_NODES:

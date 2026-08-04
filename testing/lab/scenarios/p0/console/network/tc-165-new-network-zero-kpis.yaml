@@ -1,0 +1,56 @@
+version: 1
+name: p0-tc-165-new-network-zero-kpis
+description: Create a new network with no sites, customers, or usage and verify supported Network Home KPIs return zero or the documented no-data state rather than stale values.
+seed: 5165
+suite: p0
+priority: p0
+tags: [virtual, console, network-home, empty-topology, tc-165]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks]
+
+phases:
+  - name: verify_empty_network_kpis
+    checks:
+      - type: kpi_state_equals
+        key: NETWORK_UPTIME
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        value_state: no_data
+        timeout_seconds: 120
+      - type: kpi_state_equals
+        key: ACTIVE_CUSTOMERS
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        value_state: zero
+        timeout_seconds: 300
+      - type: kpi_state_equals
+        key: USAGE_BY_NETWORK
+        span: daily
+        op: SUM
+        scope_key: network_id
+        networks: net-001
+        value_state: zero
+        timeout_seconds: 300
+      - type: kpi_state_equals
+        key: SITES_ONLINE
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        value_state: zero
+        timeout_seconds: 300

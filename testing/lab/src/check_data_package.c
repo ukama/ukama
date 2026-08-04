@@ -166,6 +166,9 @@ static int package_name_available(check_ctx_t *ctx,
                                   check_result_t *res,
                                   ulab_error_t *err) {
     package_t *pkg;
+    package_t *other;
+    const char *name;
+    int expected;
     int available;
 
     pkg = world_package_by_base_ref(ctx->world, check->package_ref);
@@ -174,16 +177,42 @@ static int package_name_available(check_ctx_t *ctx,
                  "unknown package %.128s", check->package_ref);
         return ULAB_ERR;
     }
+    other = NULL;
+    name = NULL;
+    if (ulab_streq(check->variant, "current") ||
+        check->variant[0] == '\0') {
+        name = pkg->name;
+    } else if (ulab_streq(check->variant, "other_package")) {
+        other = world_package_by_base_ref(ctx->world,
+                                          check->other_package_ref);
+        if (other == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "unknown other package %.128s",
+                     check->other_package_ref);
+            return ULAB_ERR;
+        }
+        name = other->name;
+    }
     available = 0;
-    if (bff_invalid_package_name_available(ctx->bff, pkg, check->variant,
-                                           &available, err)) {
+    if (name != NULL) {
+        if (bff_package_name_available(ctx->bff, name, &available, err)) {
+            return ULAB_ERR;
+        }
+    } else if (bff_invalid_package_name_available(
+                   ctx->bff, pkg, check->variant, &available, err)) {
         return ULAB_ERR;
     }
-    res->passed = available;
+    expected = check->expected[0] == '\0' ||
+        ulab_streq(check->expected, "true") ||
+        ulab_streq(check->expected, "available") ||
+        ulab_streq(check->expected, "1");
+    res->passed = available == expected;
     snprintf(res->detail, sizeof(res->detail),
-             "package=%s invalid_variant=%s name_available=%s",
-             check->package_ref, check->variant,
-             available ? "true" : "false");
+             "package=%s variant=%s expected=%s actual=%s",
+             check->package_ref,
+             check->variant[0] ? check->variant : "current",
+             expected ? "available" : "unavailable",
+             available ? "available" : "unavailable");
     return ULAB_OK;
 }
 
@@ -424,11 +453,16 @@ static int sim_unallocated(check_ctx_t *ctx,
     selector_result_t ues;
     size_t i;
     size_t matched;
+    int expected;
 
     memset(&ues, 0, sizeof(ues));
     if (selector_resolve_ues(ctx->world, &check->ues, &ues, err)) {
         return ULAB_ERR;
     }
+    expected = check->expected[0] == '\0' ||
+        ulab_streq(check->expected, "true") ||
+        ulab_streq(check->expected, "unallocated") ||
+        ulab_streq(check->expected, "1");
     matched = 0;
     for (i = 0; i < ues.count; i++) {
         int unallocated;
@@ -440,13 +474,12 @@ static int sim_unallocated(check_ctx_t *ctx,
             selector_result_free(&ues);
             return ULAB_ERR;
         }
-        if (unallocated) {
-            matched++;
-        }
+        if (unallocated == expected) matched++;
     }
     res->passed = matched == ues.count;
     snprintf(res->detail, sizeof(res->detail),
-             "unallocated=%zu/%zu sim_type=%s", matched, ues.count,
+             "expected=%s matched=%zu/%zu sim_type=%s",
+             expected ? "unallocated" : "allocated", matched, ues.count,
              ctx->sim_type ? ctx->sim_type : "");
     selector_result_free(&ues);
     return ULAB_OK;
@@ -455,7 +488,7 @@ static int sim_unallocated(check_ctx_t *ctx,
 int check_data_package(check_ctx_t *ctx, const check_spec_t *check,
                        check_result_t *res, ulab_error_t *err) {
     switch (check->type) {
-    case CHECK_PACKAGE_CATALOG_EQUALS:
+    case CHECK_PACKAGE_FIELDS_EQUAL:
         return package_fields_equal(ctx, check, res, err);
     case CHECK_PACKAGE_VISIBLE:
     case CHECK_PACKAGE_HIDDEN:

@@ -23,6 +23,16 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     size_t assertion_count = 0;
     size_t i;
     size_t j;
+    int has_configure_sites;
+
+    has_configure_sites = 0;
+    for (i = 0; i < s->phase_count; i++) {
+        for (j = 0; j < s->phases[i].event_count; j++) {
+            if (s->phases[i].events[j].type == EVT_CONFIGURE_SITES) {
+                has_configure_sites = 1;
+            }
+        }
+    }
 
     if (s->version != ULAB_SCHEMA_VER) {
         return fail(err, "unsupported scenario version");
@@ -43,12 +53,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "unsupported provider type");
     }
 
-    if (s->world.networks == 0 || s->world.sites_per_network == 0) {
-        return fail(err, "world must include networks and sites");
+    if (s->world.networks == 0) {
+        return fail(err, "world must include at least one network");
     }
 
-    if (s->world.tower_per_site == 0) {
-        return fail(err, "world.nodes_per_site must include tower node");
+    if (s->world.sites_per_network > 0 &&
+        s->world.tower_per_site == 0) {
+        return fail(err, "world sites require a tower anchor");
     }
 
     if (s->world.ues_per_site > 0 && s->world.ues_per_site >
@@ -62,9 +73,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                     "world.sims_per_subscriber cannot exceed ues_per_site");
     }
 
-    if (s->world.tower_per_site + s->world.amplifier_per_site +
+    if (s->world.ues_per_site > 0 &&
+        s->world.tower_per_site + s->world.amplifier_per_site +
         s->world.controller_per_site == 0) {
-        return fail(err, "world.nodes_per_site must include nodes");
+        return fail(err, "UE scenarios require site nodes");
     }
 
     if (s->world.ues_per_site > 0 && s->package_count == 0) {
@@ -124,9 +136,20 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "package assign_percent values must add to 100");
     }
 
-    if (!s->setup.create_networks || !s->setup.create_sites ||
+    if (!s->setup.create_networks) {
+        return fail(err,
+                    "setup.create_via_bff must include networks");
+    }
+    if (s->world.sites_per_network > 0 && !s->setup.create_sites &&
+        !has_configure_sites) {
+        return fail(err,
+                    "world sites require setup sites or configure_sites");
+    }
+    if (s->world.tower_per_site + s->world.amplifier_per_site +
+        s->world.controller_per_site > 0 &&
         !s->setup.create_nodes) {
-        return fail(err, "setup.create_via_bff missing required entries");
+        return fail(err,
+                    "world nodes require setup.create_via_bff nodes");
     }
 
     if (s->package_count > 0 && !s->setup.create_packages) {
@@ -251,6 +274,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if (event->type == EVT_UPDATE_PACKAGE) {
+                if (event->package_ref[0] == '\0' ||
+                    event->name[0] == '\0') {
+                    return fail(err,
+                                "update_package requires package and name");
+                }
+                continue;
+            }
+
             if (event->type == EVT_CREATE_INVALID_PACKAGE) {
                 if (event->package_ref[0] == '\0' ||
                     event->variant[0] == '\0') {
@@ -309,6 +341,20 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if (event->type == EVT_CONFIGURE_SITES) {
+                if (event->sites.kind == SEL_NONE) {
+                    return fail(err,
+                                "configure_sites requires site selector");
+                }
+                if (event->status[0] != '\0' &&
+                    !ulab_streq(event->status, "hold") &&
+                    !ulab_streq(event->status, "ready")) {
+                    return fail(err,
+                                "configure_sites state must be hold or ready");
+                }
+                continue;
+            }
+
             if (event->type == EVT_TOGGLE_INTERNET_SWITCH) {
                 if (event->sites.kind == SEL_NONE &&
                     event->nodes.kind == SEL_NONE) {
@@ -329,7 +375,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
             if (event->type == EVT_FAILURE_CONTROL) {
                 if ((!ulab_streq(event->target, "payment") &&
-                     !ulab_streq(event->target, "software")) ||
+                     !ulab_streq(event->target, "software") &&
+                     !ulab_streq(event->target, "site_restart") &&
+                     !ulab_streq(event->target, "node_restart") &&
+                     !ulab_streq(event->target, "software_timeout")) ||
                     (!ulab_streq(event->status, "on") &&
                      !ulab_streq(event->status, "off") &&
                      !ulab_streq(event->status, "enabled") &&
@@ -337,8 +386,8 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                      !ulab_streq(event->status, "true") &&
                      !ulab_streq(event->status, "false"))) {
                     return fail(err,
-                                "failure_control requires target "
-                                "payment|software and state on|off");
+                                "failure_control requires a supported "
+                                "target and state on|off");
                 }
                 continue;
             }
@@ -409,7 +458,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             }
             if ((check->type == CHECK_REVENUE_SUMMARY ||
                  check->type == CHECK_PACKAGE_DASHBOARD_METRIC ||
-                 check->type == CHECK_NETWORK_OVERVIEW_METRIC) &&
+                 check->type == CHECK_NETWORK_SUMMARY_METRIC) &&
                 (check->column[0] == '\0' ||
                  !check->has_expected_value)) {
                 return fail(err,
@@ -437,7 +486,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 check->target[0] == '\0') {
                 return fail(err, "usage_aggregate requires target");
             }
-            if ((check->type == CHECK_PACKAGE_CATALOG_EQUALS ||
+            if ((check->type == CHECK_PACKAGE_FIELDS_EQUAL ||
                  check->type == CHECK_PACKAGE_VISIBLE ||
                  check->type == CHECK_PACKAGE_HIDDEN ||
                  check->type == CHECK_PACKAGE_BUSINESS_METRICS ||
@@ -473,12 +522,21 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                             "variant");
             }
             if (check->type == CHECK_PACKAGE_NAME_AVAILABLE &&
+                !ulab_streq(check->variant, "current") &&
+                !ulab_streq(check->variant, "other_package") &&
                 !ulab_streq(check->variant, "allowance") &&
                 !ulab_streq(check->variant, "duration") &&
                 !ulab_streq(check->variant, "price") &&
                 !ulab_streq(check->variant, "currency")) {
                 return fail(err,
                             "unsupported package name variant");
+            }
+            if (check->type == CHECK_PACKAGE_NAME_AVAILABLE &&
+                ulab_streq(check->variant, "other_package") &&
+                check->other_package_ref[0] == '\0') {
+                return fail(err,
+                            "package_name_available other_package variant "
+                            "requires other_package");
             }
             if (check->type == CHECK_SIM_UNALLOCATED &&
                 check->ues.kind == SEL_NONE) {

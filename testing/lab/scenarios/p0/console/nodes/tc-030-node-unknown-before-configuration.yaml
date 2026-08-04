@@ -1,0 +1,43 @@
+version: 1
+name: p0-tc-030-node-unknown-before-configuration
+description: Start nodes before creating their site, verify they are Online with lifecycle Unknown, then configure the site and verify they become Operational.
+seed: 5030
+suite: p0
+priority: p0
+tags: [virtual, console, nodes, lifecycle, unknown, tc-030]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_unknown
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Unknown
+        timeout_seconds: 120
+  - name: complete_configuration
+    events:
+      - type: configure_sites
+        sites: all
+        state: ready
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

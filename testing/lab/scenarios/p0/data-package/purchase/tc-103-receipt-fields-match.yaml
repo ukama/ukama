@@ -1,0 +1,43 @@
+version: 1
+name: p0-tc-103-receipt-fields-match
+description: Allocate a SIM with a paid package and verify the resulting payment receipt identifies the package, amount, currency, status, payment method, paid time, and customer email and phone.
+seed: 5103
+suite: p0
+priority: p0
+tags: [virtual, data-package, payment, receipt, tc-103]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: receipt_plan
+    name: Receipt Contract Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 5.00
+    currency: USD
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_receipt_contract
+    checks:
+      - type: payment_equals
+        ues: all
+        package: receipt_plan
+        status: settled
+        expected_value: 5.00
+        currency: USD
+        payment_method: cash
+        required: true
