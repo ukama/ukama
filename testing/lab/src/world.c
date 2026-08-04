@@ -42,14 +42,17 @@ static int alloc_world(const scenario_t *s, world_t *w) {
     }
 
     memset(w, 0, sizeof(*w));
-    w->networks = calloc(s->world.networks, sizeof(network_t));
-    w->sites = calloc(sites, sizeof(site_t));
-    w->nodes = calloc(nodes, sizeof(node_t));
+    w->networks = s->world.networks ?
+        calloc(s->world.networks, sizeof(network_t)) : NULL;
+    w->sites = sites ? calloc(sites, sizeof(site_t)) : NULL;
+    w->nodes = nodes ? calloc(nodes, sizeof(node_t)) : NULL;
     w->subscribers = subscribers ?
         calloc(subscribers, sizeof(subscriber_t)) : NULL;
     w->ues = ues ? calloc(ues, sizeof(ue_t)) : NULL;
     w->packages = packages ? calloc(packages, sizeof(package_t)) : NULL;
-    if (w->networks == NULL || w->sites == NULL || w->nodes == NULL ||
+    if ((s->world.networks > 0 && w->networks == NULL) ||
+        (sites > 0 && w->sites == NULL) ||
+        (nodes > 0 && w->nodes == NULL) ||
         (ues > 0 && (w->subscribers == NULL || w->ues == NULL)) ||
         (packages > 0 && w->packages == NULL)) {
         return ULAB_ERR;
@@ -239,6 +242,7 @@ int world_generate(const scenario_t *s,
             snprintf(site->name, sizeof(site->name), "%.255s", site->id);
             snprintf(site->network_ref, sizeof(site->network_ref), "%s",
                      net->ref);
+            snprintf(site->location, sizeof(site->location), "Lab");
 
             for (k = 0; k < s->world.tower_per_site; k++) {
                 add_node(w, &node_idx, ULAB_NODE_TOWER, site, k + 1);

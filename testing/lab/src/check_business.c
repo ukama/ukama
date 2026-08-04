@@ -199,7 +199,7 @@ static int check_package_dashboard(check_ctx_t *ctx,
     return ULAB_OK;
 }
 
-static int check_network_overview(check_ctx_t *ctx,
+static int check_network_summary(check_ctx_t *ctx,
                                   const check_spec_t *check,
                                   check_result_t *res,
                                   ulab_error_t *err) {
@@ -447,8 +447,8 @@ int check_business(check_ctx_t *ctx, const check_spec_t *check,
         return check_payment_entitlements(ctx, check, res, err);
     case CHECK_PACKAGE_DASHBOARD_METRIC:
         return check_package_dashboard(ctx, check, res, err);
-    case CHECK_NETWORK_OVERVIEW_METRIC:
-        return check_network_overview(ctx, check, res, err);
+    case CHECK_NETWORK_SUMMARY_METRIC:
+        return check_network_summary(ctx, check, res, err);
     case CHECK_CONSOLE_INVENTORY_RECONCILES:
         return check_inventory(ctx, check, res, err);
     default:

@@ -1554,7 +1554,7 @@ system:
     metric: data_usage
     needRate: false
     rateInterval: ""
-    unit: "GB"
+    unit: "B"
     format: "number"
     tickInterval: 10
     tickPositions: []

@@ -1,0 +1,53 @@
+version: 1
+name: p0-tc-194-package-revenue-reconciles
+description: Sell a known package and verify its package-scoped REVENUE KPI and package-performance revenue cell both return the same settled amount.
+seed: 5194
+suite: p0
+priority: p0
+tags: [virtual, console, cross-screen, package-revenue, tc-194]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: package_a
+    name: Cross Screen Package A
+    data_mb: 100
+    duration_days: 1
+    amount: 3.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: reconcile_package_revenue
+    checks:
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: package_a
+        column: revenue
+        expected_value: 3.00
+        tolerance: 0.001
+        timeout_seconds: 600
+      - type: kpi_value
+        key: REVENUE
+        span: daily
+        op: SUM
+        scope_key: package_id
+        scope_value: package_a
+        networks: net-001
+        expected_value: 3.00
+        tolerance: 0.001
+        timeout_seconds: 600

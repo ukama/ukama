@@ -57,11 +57,13 @@ const char *BFF_GET_NETWORKS =
 
 const char *BFF_GET_SITES =
 "query GetSites($data: SitesInputDto!) { getSites(data: $data) {"
-" sites { id name networkId latitude longitude isDeactivated } } }";
+" sites { id name networkId latitude longitude isDeactivated "
+" installDate createdAt location } } }";
 
 const char *BFF_GET_SITE =
 "query GetSite($siteId: String!) { getSite(siteId: $siteId) {"
-" id name networkId latitude longitude isDeactivated } }";
+" id name networkId latitude longitude isDeactivated "
+" installDate createdAt location } }";
 
 const char *BFF_GET_NODES =
 "query GetNodes($data: NodesFilterInput!) {"

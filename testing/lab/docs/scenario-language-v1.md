@@ -56,6 +56,7 @@ Supported events:
 - `purchase_package`
 - `purchase_packages_parallel`
 - `allocate_sim`
+- `update_package`
 - `create_invalid_package`
 - `wait_package_boundary`
 - `set_package_active`
@@ -66,6 +67,7 @@ Supported events:
 - `toggle_radio`
 - `toggle_internet_switch`
 - `restart_site`
+- `configure_sites`
 - `promote_release`
 - `software_update`
 - `disconnect_nodes`
@@ -91,7 +93,7 @@ Supported checks:
 - `package_state`
 - `package_assignment_count`
 - `package_assignment_chain`
-- `package_fields_equal` (`package_catalog_equals` remains an alias)
+- `package_fields_equal`
 - `package_visible`
 - `package_hidden`
 - `package_name_available`
@@ -109,7 +111,7 @@ Supported checks:
 - `subscriber_billing_summary`
 - `payment_entitlement_reconciles`
 - `package_dashboard_metric`
-- `network_overview_metric`
+- `network_summary_metric`
 - `console_inventory_reconciles`
 - `usage_aggregate`
 - `node_state`
@@ -322,6 +324,12 @@ accepts a `nodes:` selector and derives the unique sites from those nodes.
 responses include the BFF failure message, so operation-lock scenarios can
 assert the reason with `expect.error_contains`.
 
+`configure_sites` is only for node lifecycle acceptance tests. The scenario
+creates the network and starts its nodes without creating the site, then calls
+`configure_sites` to run the normal `addSite` path. `state: hold` disconnects
+the site's nodes before the site is added so the intermediate `Configured`
+state can be observed; `state: ready` leaves them connected.
+
 Subsequent cash package sale:
 
 ```yaml
@@ -345,8 +353,13 @@ Data-package edge-case events:
 - type: allocate_sim
   ues: all
   package: initial_plan
+  variant: auto
   expect:
     result: any
+
+- type: update_package
+  package: initial_plan
+  name: Renamed plan
 
 - type: purchase_packages_parallel
   ues: all
@@ -366,9 +379,13 @@ Data-package edge-case events:
 ```
 
 `allocate_sim` exercises an explicit allocation attempt using a SIM selected
-from the factory pool. `result: any` is useful for retry/idempotency scenarios:
-the mutation may return the original allocation or reject the duplicate, while
-the following GraphQL checks remain authoritative. `purchase_packages_parallel`
+from the factory pool. `variant: auto` chooses the first available unallocated
+SIM; any other value uses the scenario UE's exact ICCID and verifies that the
+BFF returns the same ICCID. `result: any` is useful for retry/idempotency
+scenarios: the mutation may return the original allocation or reject the
+duplicate, while the following GraphQL checks remain authoritative.
+`update_package` changes only the package name through `updatePackage`; `name`
+is the exact replacement name. `purchase_packages_parallel`
 submits the two cash sales concurrently. `create_invalid_package` supports
 the `allowance`, `duration`, `price`, and `currency` variants, which submit a
 negative allowance, zero duration, negative price, and empty currency.
@@ -427,7 +444,8 @@ Data-package GraphQL effect checks:
   network: net-001
 ```
 
-`package_fields_equal` compares the direct `getPackage` fields with the scenario plan. `package_catalog_equals` remains accepted as a temporary alias for existing scenarios.
+`package_fields_equal` compares the direct `getPackage` fields with
+the scenario plan.
 `package_assignment_chain` reads `getPackagesForSim`, verifies the expected
 assignment count and ordering, and rejects overlapping ranges; `expected: all`
 checks the full returned chain. `package_business_metrics` polls the BFF
@@ -590,7 +608,7 @@ GraphQL contract:
   `SubscriberDetail.billing`; `payment_entitlement_reconciles` compares
   `GetPayments` with `getPackagesForSim`.
 - `package_dashboard_metric` checks `mrr`, `arpu`, `revenue`, or
-  `attach_count`; `network_overview_metric` checks the subscriber, site, and
+  `attach_count`; `network_summary_metric` checks the subscriber, site, and
   node summary fields shown by `NetworkHome`.
 - `console_inventory_reconciles` compares the console's composite GraphQL
   views with one another for `component`, `node`, or `sim` inventory.
@@ -651,15 +669,21 @@ hard-coding Kubernetes, Podman, or Compose commands into ukama-lab:
   state: off
 ```
 
-Supported targets are `payment` and `software`. Configure the commands used by
-the environment before running the scenario:
+Supported targets are `payment`, `software`, `site_restart`, `node_restart`,
+and `software_timeout`. Configure the deployment-specific on/off commands
+before running a scenario. The variable name is derived from the target:
 
 ```sh
-export ULAB_PAYMENT_FAILURE_ON_CMD='kubectl ...'
-export ULAB_PAYMENT_FAILURE_OFF_CMD='kubectl ...'
-export ULAB_SOFTWARE_FAILURE_ON_CMD='kubectl ...'
-export ULAB_SOFTWARE_FAILURE_OFF_CMD='kubectl ...'
+export ULAB_SITE_RESTART_FAILURE_ON_CMD='kubectl ...'
+export ULAB_SITE_RESTART_FAILURE_OFF_CMD='kubectl ...'
+export ULAB_NODE_RESTART_FAILURE_ON_CMD='kubectl ...'
+export ULAB_NODE_RESTART_FAILURE_OFF_CMD='kubectl ...'
+export ULAB_SOFTWARE_TIMEOUT_FAILURE_ON_CMD='kubectl ...'
+export ULAB_SOFTWARE_TIMEOUT_FAILURE_OFF_CMD='kubectl ...'
 ```
+
+The existing payment and software controls use the same naming convention,
+for example `ULAB_PAYMENT_FAILURE_ON_CMD`.
 
 The commands are executed by `scripts/test-control.sh`. Active controls are
 restored automatically during runtime cleanup, including after a failed

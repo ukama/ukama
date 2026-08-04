@@ -44,6 +44,7 @@ static int payment_identity_matches(const bff_payment_t *payment,
 static int payment_matches(const bff_payment_t *payment,
                            const ue_t *ue,
                            const subscriber_t *subscriber,
+                           const package_t *pkg,
                            const check_spec_t *check) {
     double actual_amount;
     double tolerance;
@@ -60,6 +61,15 @@ static int payment_matches(const bff_payment_t *payment,
     }
     if (check->payment_method[0] != '\0' &&
         !ulab_streq(payment->payment_method, check->payment_method)) {
+        return 0;
+    }
+    if (check->required &&
+        (pkg == NULL || !ulab_streq(payment->item_id, pkg->bff_id) ||
+         !ulab_streq(payment->item_type, "package") ||
+         payment->paid_at[0] == '\0' ||
+         subscriber == NULL ||
+         !ulab_streq(payment->payer_email, subscriber->email) ||
+         !ulab_streq(payment->payer_phone, subscriber->phone))) {
         return 0;
     }
     if (!check->has_expected_value) {
@@ -130,7 +140,8 @@ int check_payment(check_ctx_t *ctx, const check_spec_t *check,
                            sizeof(observed_payment));
                     have_observed_payment = 1;
                 }
-                if (payment_matches(&payments[j], ue, subscriber, check)) {
+                if (payment_matches(&payments[j], ue, subscriber, pkg,
+                                    check)) {
                     matching++;
                 }
             }

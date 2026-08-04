@@ -83,7 +83,7 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_BALANCE_NON_NEGATIVE:
         return check_package(ctx, check, res, err);
     case CHECK_PACKAGE_ASSIGNMENT_CHAIN:
-    case CHECK_PACKAGE_CATALOG_EQUALS:
+    case CHECK_PACKAGE_FIELDS_EQUAL:
     case CHECK_PACKAGE_VISIBLE:
     case CHECK_PACKAGE_HIDDEN:
     case CHECK_PACKAGE_NAME_AVAILABLE:
@@ -104,7 +104,7 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_SUBSCRIBER_BILLING_SUMMARY:
     case CHECK_PAYMENT_ENTITLEMENT_RECONCILES:
     case CHECK_PACKAGE_DASHBOARD_METRIC:
-    case CHECK_NETWORK_OVERVIEW_METRIC:
+    case CHECK_NETWORK_SUMMARY_METRIC:
     case CHECK_CONSOLE_INVENTORY_RECONCILES:
         return check_business(ctx, check, res, err);
     case CHECK_USAGE_AGGREGATE:

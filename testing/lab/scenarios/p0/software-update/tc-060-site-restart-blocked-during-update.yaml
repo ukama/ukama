@@ -1,0 +1,53 @@
+version: 1
+name: p0-tc-060-site-restart-blocked-during-update
+description: Start a controller software update and verify a site restart is rejected while that node operation is active, then verify the site unlocks.
+seed: 5060
+suite: p0
+priority: p0
+tags: [virtual, software-update, site, operation-lock, tc-060]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: start_update
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        timeout_seconds: 60
+  - name: reject_site_restart
+    events:
+      - type: restart_site
+        sites: all
+        expect:
+          result: failure
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300

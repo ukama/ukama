@@ -1635,7 +1635,7 @@ func NewMetricsPusher(host string) MetricsPusher {
 
 func (m *metricsPusher) CollectAndPushSimMetrics(configMetrics []pmetric.MetricConfig,
 	selectedMetric string, value float64, labels map[string]string, systemName string) error {
-	return pmetric.CollectAndPushSimMetrics(m.pushMetricHost, configMetrics, selectedMetric,
+	return pmetric.CollectAndPushSystemMetrics(m.pushMetricHost, configMetrics, selectedMetric,
 		value, labels, systemName)
 
 }

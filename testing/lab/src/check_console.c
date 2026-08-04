@@ -73,7 +73,31 @@ static int check_list_count(check_ctx_t *ctx,
     }
 
     actual = 0;
-    if (ulab_streq(check->target, "networks")) {
+    if (ulab_streq(check->target, "site_nodes")) {
+        selector_result_t sites;
+
+        if (selector_resolve_sites(ctx->world, &check->sites,
+                                   &sites, err)) {
+            return ULAB_ERR;
+        }
+        for (i = 0; i < sites.count; i++) {
+            size_t site_count;
+
+            site_count = 0;
+            if (bff_get_site_node_count(
+                    ctx->bff, &ctx->world->sites[sites.idx[i]],
+                    check->nodes.kind == SEL_NODE_TYPE ||
+                    check->nodes.kind ==
+                        SEL_NODE_TYPE_COUNT_PER_NETWORK ?
+                        check->nodes.value : NULL,
+                    &site_count, err)) {
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            actual += site_count;
+        }
+        selector_result_free(&sites);
+    } else if (ulab_streq(check->target, "networks")) {
         if (bff_get_list_count(ctx->bff, check->target, NULL,
                                &actual, err)) {
             return ULAB_ERR;
@@ -92,9 +116,18 @@ static int check_list_count(check_ctx_t *ctx,
             return ULAB_ERR;
         }
         i = networks.idx[0];
-        if (bff_get_list_count(ctx->bff, check->target,
-                               &ctx->world->networks[i],
-                               &actual, err)) {
+        if (ulab_streq(check->target, "nodes") &&
+            (check->nodes.kind == SEL_NODE_TYPE ||
+             check->nodes.kind == SEL_NODE_TYPE_COUNT_PER_NETWORK)) {
+            if (bff_get_node_list_count(
+                    ctx->bff, &ctx->world->networks[i],
+                    check->nodes.value, &actual, err)) {
+                selector_result_free(&networks);
+                return ULAB_ERR;
+            }
+        } else if (bff_get_list_count(
+                       ctx->bff, check->target,
+                       &ctx->world->networks[i], &actual, err)) {
             selector_result_free(&networks);
             return ULAB_ERR;
         }
@@ -220,9 +253,15 @@ static int check_node_status_equals(check_ctx_t *ctx,
 
 static int software_matches(const bff_software_t *software,
                             const check_spec_t *check) {
-    if (check->status[0] != '\0' &&
-        strcasecmp(software->status, check->status) != 0) {
-        return 0;
+    if (check->status[0] != '\0') {
+        if (ulab_streq(check->status, "terminal")) {
+            if (strcasecmp(software->status, "up_to_date") != 0 &&
+                strcasecmp(software->status, "update_failed") != 0) {
+                return 0;
+            }
+        } else if (strcasecmp(software->status, check->status) != 0) {
+            return 0;
+        }
     }
     if (check->current_version[0] != '\0' &&
         !ulab_streq(software->current_version,
@@ -237,6 +276,13 @@ static int software_matches(const bff_software_t *software,
     return 1;
 }
 
+static int software_required_fields(const bff_software_t *software) {
+    return software->name[0] != '\0' &&
+        software->current_version[0] != '\0' &&
+        software->release_date[0] != '\0' &&
+        software->status[0] != '\0';
+}
+
 static int check_software_status(check_ctx_t *ctx,
                                  const check_spec_t *check,
                                  check_result_t *res,
@@ -249,12 +295,16 @@ static int check_software_status(check_ctx_t *ctx,
     bff_software_t last;
     int last_found;
 
-    if (check->app[0] == '\0' ||
-        (check->status[0] == '\0' &&
-         check->current_version[0] == '\0' &&
-         check->desired_version[0] == '\0')) {
+    if (check->app[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "software_status_equals requires app and expected fields");
+                 "software_status_equals requires app");
+        return ULAB_ERR;
+    }
+    if (check->status[0] == '\0' &&
+        check->current_version[0] == '\0' &&
+        check->desired_version[0] == '\0' && !check->required) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "software_status_equals requires expected fields");
         return ULAB_ERR;
     }
     if (selector_resolve_nodes(ctx->world, &check->nodes, &nodes, err)) {
@@ -267,36 +317,62 @@ static int check_software_status(check_ctx_t *ctx,
     do {
         matched = 0;
         for (i = 0; i < nodes.count; i++) {
-            bff_software_t software;
-            int found;
+            node_t *node;
+            int ok;
 
-            memset(&software, 0, sizeof(software));
-            found = 0;
-            if (bff_get_software(ctx->bff,
-                                 &ctx->world->nodes[nodes.idx[i]],
-                                 check->app, &software, &found, err)) {
-                selector_result_free(&nodes);
-                return ULAB_ERR;
+            node = &ctx->world->nodes[nodes.idx[i]];
+            ok = 0;
+            if (ulab_streq(check->app, "all")) {
+                bff_software_t rows[ULAB_MAX_LIST];
+                size_t count;
+                size_t j;
+
+                memset(rows, 0, sizeof(rows));
+                count = 0;
+                if (bff_get_software_list(ctx->bff, node, rows,
+                                          ULAB_MAX_LIST, &count, err)) {
+                    selector_result_free(&nodes);
+                    return ULAB_ERR;
+                }
+                ok = count > 0;
+                for (j = 0; ok && j < count; j++) {
+                    ok = software_matches(&rows[j], check) &&
+                        (!check->required ||
+                         software_required_fields(&rows[j]));
+                    last = rows[j];
+                }
+                last_found = count > 0;
+            } else {
+                bff_software_t software;
+                int found;
+
+                memset(&software, 0, sizeof(software));
+                found = 0;
+                if (bff_get_software(ctx->bff, node, check->app,
+                                     &software, &found, err)) {
+                    selector_result_free(&nodes);
+                    return ULAB_ERR;
+                }
+                ok = found && software_matches(&software, check) &&
+                    (!check->required ||
+                     software_required_fields(&software));
+                last = software;
+                last_found = found;
             }
-            if (found && software_matches(&software, check)) {
-                matched++;
-            }
-            last = software;
-            last_found = found;
+            if (ok) matched++;
         }
-        if (matched == nodes.count || time(NULL) >= deadline) {
-            break;
-        }
+        if (matched == nodes.count || time(NULL) >= deadline) break;
         sleep(poll > 60u ? 60u : poll);
     } while (1);
 
     res->passed = nodes.count > 0 && matched == nodes.count;
     snprintf(res->detail, sizeof(res->detail),
              "app=%.96s matched=%zu/%zu found=%s status=%.32s "
-             "current=%.64s desired=%.64s",
+             "current=%.64s release=%.48s required=%s",
              check->app, matched, nodes.count,
              last_found ? "true" : "false", last.status,
-             last.current_version, last.desired_version);
+             last.current_version, last.release_date,
+             check->required ? "true" : "false");
     selector_result_free(&nodes);
     return ULAB_OK;
 }
@@ -446,6 +522,26 @@ static int check_node_operation(check_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int contains_nocase(const char *text, const char *needle) {
+    size_t len;
+
+    if (needle == NULL || needle[0] == '\0') return 1;
+    if (ulab_streq(needle, "present") ||
+        ulab_streq(needle, "nonempty")) {
+        return text != NULL && text[0] != '\0';
+    }
+    if (ulab_streq(needle, "absent") || ulab_streq(needle, "empty")) {
+        return text == NULL || text[0] == '\0';
+    }
+    if (text == NULL) return 0;
+    len = strlen(needle);
+    while (*text != '\0') {
+        if (strncasecmp(text, needle, len) == 0) return 1;
+        text++;
+    }
+    return 0;
+}
+
 static int site_operation_matches(
     const bff_site_operation_status_t *status,
     const check_spec_t *check) {
@@ -474,6 +570,13 @@ static int site_operation_matches(
     if (check->has_expected_service_available &&
         bool_text(status->service.available) !=
         bool_text(check->expected_service_available)) {
+        return 0;
+    }
+    if (!contains_nocase(status->restart_site.reason,
+                         check->restart_reason) ||
+        !contains_nocase(status->rf.reason, check->rf_reason) ||
+        !contains_nocase(status->service.reason,
+                         check->service_reason)) {
         return 0;
     }
 
@@ -520,6 +623,9 @@ static int check_site_operation(check_ctx_t *ctx,
         !check->has_expected_restart_available &&
         !check->has_expected_rf_available &&
         !check->has_expected_service_available &&
+        check->restart_reason[0] == '\0' &&
+        check->rf_reason[0] == '\0' &&
+        check->service_reason[0] == '\0' &&
         check->operation_type[0] == '\0' &&
         check->operation_status[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
@@ -558,13 +664,15 @@ static int check_site_operation(check_ctx_t *ctx,
     res->passed = sites.count > 0 && matched == sites.count;
     snprintf(res->detail, sizeof(res->detail),
              "matched=%zu/%zu busy=%s degraded=%s restart=%s rf=%s "
-             "service=%s nodes=%zu",
+             "service=%s nodes=%zu reasons={restart=%.96s rf=%.96s "
+             "service=%.96s}",
              matched, sites.count, last.busy ? "true" : "false",
              last.degraded ? "true" : "false",
              last.restart_site.available ? "true" : "false",
              last.rf.available ? "true" : "false",
              last.service.available ? "true" : "false",
-             last.node_count);
+             last.node_count, last.restart_site.reason, last.rf.reason,
+             last.service.reason);
     selector_result_free(&sites);
     return ULAB_OK;
 }

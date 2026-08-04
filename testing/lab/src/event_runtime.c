@@ -570,6 +570,95 @@ static int event_toggle_internet_switch(event_ctx_t *ctx,
     return ULAB_OK;
 }
 
+
+static int site_node_selection(const world_t *world,
+                               const site_t *site,
+                               selector_result_t *nodes,
+                               ulab_error_t *err) {
+    size_t i;
+    size_t count;
+
+    memset(nodes, 0, sizeof(*nodes));
+    count = 0;
+    for (i = 0; i < world->node_count; i++) {
+        if (ulab_streq(world->nodes[i].site_ref, site->ref)) {
+            count++;
+        }
+    }
+    if (count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site %.96s has no nodes", site->ref);
+        return ULAB_ERR;
+    }
+    nodes->idx = calloc(count, sizeof(size_t));
+    if (nodes->idx == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "out of memory selecting site nodes");
+        return ULAB_ERR;
+    }
+    for (i = 0; i < world->node_count; i++) {
+        if (ulab_streq(world->nodes[i].site_ref, site->ref)) {
+            nodes->idx[nodes->count++] = i;
+        }
+    }
+    return ULAB_OK;
+}
+
+static int event_configure_sites(event_ctx_t *ctx,
+                                 const event_spec_t *event,
+                                 ulab_error_t *err) {
+    selector_result_t sites;
+    size_t i;
+
+    memset(&sites, 0, sizeof(sites));
+    if (selector_resolve_sites(ctx->world, &event->sites, &sites, err)) {
+        return ULAB_ERR;
+    }
+    for (i = 0; i < sites.count; i++) {
+        site_t *site;
+        network_t *network;
+        selector_result_t nodes;
+
+        site = &ctx->world->sites[sites.idx[i]];
+        network = world_network_by_ref(ctx->world, site->network_ref);
+        if (network == NULL || network->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site %.96s has no configured network", site->ref);
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+        if (site->bff_id[0] != '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site %.96s is already configured", site->ref);
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+        if (bff_wait_site_anchor_online(ctx->bff, site, err)) {
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+        memset(&nodes, 0, sizeof(nodes));
+        if (ulab_streq(event->status, "hold")) {
+            if (site_node_selection(ctx->world, site, &nodes, err) ||
+                runtime_disconnect_nodes(ctx->runtime, ctx->world,
+                                         &nodes, err)) {
+                selector_result_free(&nodes);
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            selector_result_free(&nodes);
+        }
+        ulab_status("SITE", "configure %s state=%s", site->ref,
+                    event->status[0] ? event->status : "ready");
+        if (bff_add_site(ctx->bff, site, network, err)) {
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+    }
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
 static int event_failure_control(event_ctx_t *ctx,
                                  const event_spec_t *event,
                                  ulab_error_t *err) {
@@ -710,6 +799,9 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_RESTORE_NODE:
         return runtime_restore_nodes(ctx->runtime, err);
+
+    case EVT_CONFIGURE_SITES:
+        return event_configure_sites(ctx, event, err);
 
     case EVT_FAILURE_CONTROL:
         return event_failure_control(ctx, event, err);

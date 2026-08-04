@@ -1,0 +1,63 @@
+version: 1
+name: p0-tc-040-amplifier-restart-recovers-traffic
+description: Enable service, establish UE traffic, restart the amplifier, and verify the UE reattaches and traffic succeeds after recovery.
+seed: 5040
+suite: p0
+priority: p0
+tags: [virtual, node, restart, amplifier, traffic, tc-040]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: recovery_plan
+    name: Node Restart Recovery Plan
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: establish_traffic
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+    checks:
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1
+  - name: restart_and_recover
+    events:
+      - type: restart_nodes
+        type_selector: amplifier
+        count_per_network: 1
+      - type: wait_nodes_ready
+        nodes: all
+      - type: wait_ues_attached
+        ues: all
+    checks:
+      - type: node_status_equals
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        timeout_seconds: 180
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1

@@ -23,8 +23,7 @@ typedef struct {
     int service_enabled;
     int radio_enabled;
     int node_offline;
-    int payment_failure_active;
-    int software_failure_active;
+    unsigned int failure_controls;
     char node_version[ULAB_MAX_REF];
 } runtime_t;
 

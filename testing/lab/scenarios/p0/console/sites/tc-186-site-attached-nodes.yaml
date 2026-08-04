@@ -1,0 +1,51 @@
+version: 1
+name: p0-tc-186-site-attached-nodes
+description: Open the site data contract and verify exactly one tower, one amplifier, and one controller are attached to the site and each node reconciles with its detail record.
+seed: 5186
+suite: p0
+priority: p0
+tags: [virtual, console, sites, attached-nodes, tc-186]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_site_node_membership
+    checks:
+      - type: list_count_equals
+        target: site_nodes
+        sites: site-001
+        type_selector: tower
+        expected_count: 1
+      - type: list_count_equals
+        target: site_nodes
+        sites: site-001
+        type_selector: amplifier
+        expected_count: 1
+      - type: list_count_equals
+        target: site_nodes
+        sites: site-001
+        type_selector: controller
+        expected_count: 1
+      - type: entity_reconciles
+        entity: node
+        ref: tower-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: amplifier-site-001-001
+      - type: entity_reconciles
+        entity: node
+        ref: controller-site-001-001

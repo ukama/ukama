@@ -1,0 +1,46 @@
+version: 1
+name: p0-tc-026-node-totals-by-type
+description: Create two sites and verify the total node count and the separate tower, amplifier, and controller counts equal the detailed rows returned by the BFF.
+seed: 5026
+suite: p0
+priority: p0
+tags: [virtual, console, nodes, type-counts, tc-026]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_counts_by_type
+    checks:
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 6
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        type_selector: tower
+        expected_count: 2
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        type_selector: amplifier
+        expected_count: 2
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        type_selector: controller
+        expected_count: 2

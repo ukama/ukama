@@ -233,7 +233,7 @@ func pushUpdatedNodeMetrics(value float64, labels map[string]string, pushGateway
 	log.Infof("Collecting and pushing node active subscribers metric to push gateway host: %s",
 		pushGatewayHost)
 
-	err := pmetric.CollectAndPushSimMetrics(pushGatewayHost, pkg.NodeActiveSubscribersMetric,
+	err := pmetric.CollectAndPushSystemMetrics(pushGatewayHost, pkg.NodeActiveSubscribersMetric,
 		pkg.NodeActiveSubscribers, float64(value), labels, pkg.SystemName)
 	if err != nil {
 		log.Errorf("Error while pushing node active subscribers metric to push gateway %s",

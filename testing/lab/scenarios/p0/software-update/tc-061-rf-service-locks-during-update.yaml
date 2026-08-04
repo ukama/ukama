@@ -1,0 +1,61 @@
+version: 1
+name: p0-tc-061-rf-service-locks-during-update
+description: Start a controller software update and verify conflicting RF and cellular-service changes are rejected while the related site operation is busy.
+seed: 5061
+suite: p0
+priority: p0
+tags: [virtual, software-update, rf, service, operation-lock, tc-061]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: start_update
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        rf_available: false
+        service_available: false
+        timeout_seconds: 60
+  - name: reject_conflicting_actions
+    events:
+      - type: toggle_radio
+        sites: all
+        state: off
+        expect:
+          result: failure
+      - type: toggle_service
+        sites: all
+        state: off
+        expect:
+          result: failure
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300

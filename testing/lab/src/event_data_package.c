@@ -61,12 +61,14 @@ static int event_allocate_sim(event_ctx_t *ctx,
         subscriber_t *subscriber;
         network_t *network;
         package_t *pkg;
+        char requested_iccid[ULAB_MAX_ID];
 
         ue = &ctx->world->ues[ues.idx[i]];
         subscriber = world_subscriber_by_ref(ctx->world,
                                              ue->subscriber_ref);
         network = world_network_by_ref(ctx->world, ue->network_ref);
         pkg = event_package_for_ue(ctx, event->package_ref, ue, err);
+        ulab_copy(requested_iccid, sizeof(requested_iccid), ue->iccid);
         if (subscriber == NULL || network == NULL || pkg == NULL) {
             selector_result_free(&ues);
             if (err->msg[0] == '\0') {
@@ -75,14 +77,59 @@ static int event_allocate_sim(event_ctx_t *ctx,
             }
             return ULAB_ERR;
         }
+        if (ulab_streq(event->variant, "auto")) {
+            char iccids[ULAB_MAX_LIST][ULAB_MAX_ID];
+            char pool_ids[ULAB_MAX_LIST][ULAB_MAX_ID];
+            size_t count;
+
+            memset(iccids, 0, sizeof(iccids));
+            memset(pool_ids, 0, sizeof(pool_ids));
+            count = 0;
+            if (bff_get_sims_from_pool(ctx->bff, ctx->sim_type,
+                                       iccids, pool_ids, ULAB_MAX_LIST,
+                                       &count, err) || count == 0) {
+                selector_result_free(&ues);
+                if (err->msg[0] == '\0') {
+                    snprintf(err->msg, sizeof(err->msg),
+                             "auto allocation found no available SIM");
+                }
+                return ULAB_ERR;
+            }
+            ulab_copy(ue->iccid, sizeof(ue->iccid), iccids[0]);
+            ulab_copy(ue->pool_sim_id, sizeof(ue->pool_sim_id),
+                      pool_ids[0]);
+        }
         if (bff_allocate_sim(ctx->bff, ue, subscriber, network, pkg,
                              ctx->sim_type, err)) {
+            selector_result_free(&ues);
+            return ULAB_ERR;
+        }
+        if (!ulab_streq(event->variant, "auto") &&
+            !ulab_streq(ue->iccid, requested_iccid)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "specific SIM allocation requested %.64s got %.64s",
+                     requested_iccid, ue->iccid);
             selector_result_free(&ues);
             return ULAB_ERR;
         }
     }
     selector_result_free(&ues);
     return ULAB_OK;
+}
+
+
+static int event_update_package(event_ctx_t *ctx,
+                                const event_spec_t *event,
+                                ulab_error_t *err) {
+    package_t *pkg;
+
+    pkg = world_package_by_base_ref(ctx->world, event->package_ref);
+    if (pkg == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unknown package %.128s", event->package_ref);
+        return ULAB_ERR;
+    }
+    return bff_update_package_name(ctx->bff, pkg, event->name, err);
 }
 
 static int event_create_invalid_package(event_ctx_t *ctx,
@@ -327,6 +374,8 @@ int event_data_package(event_ctx_t *ctx, const event_spec_t *event,
     switch (event->type) {
     case EVT_ALLOCATE_SIM:
         return event_allocate_sim(ctx, event, err);
+    case EVT_UPDATE_PACKAGE:
+        return event_update_package(ctx, event, err);
     case EVT_CREATE_INVALID_PACKAGE:
         return event_create_invalid_package(ctx, event, err);
     case EVT_WAIT_PACKAGE_BOUNDARY:
