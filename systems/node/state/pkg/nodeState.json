@@ -160,6 +160,8 @@
         "fault",
         "online",
         "config",
+        "upgrade",
+        "downgrade",
         "ready"
       ],
       "transition": [
@@ -169,7 +171,7 @@
         },
         {
           "to_state": "Configured",
-          "trigger": ["config"]
+          "trigger": ["config", "upgrade", "downgrade"]
         },
         {
           "to_state": "Operational",
