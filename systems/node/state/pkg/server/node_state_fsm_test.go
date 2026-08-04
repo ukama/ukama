@@ -11,9 +11,11 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
+	"github.com/ukama/ukama/systems/node/state/mocks"
 )
 
 const nodeStateConfigPath = "../nodeState.json"
@@ -161,11 +163,16 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 }
 
 func TestNodeStateFsm_ReadyBeforeOnboardingIsLatched(t *testing.T) {
+	repo := &mocks.StateRepo{}
+	repo.On("SetLatchedEvent", mock.Anything, mock.Anything).Return(nil).Maybe()
+	repo.On("TakeLatchedEvent", mock.Anything).Return("", nil).Maybe()
+
 	srv := &StateEventServer{
 		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
 		configPath:    nodeStateConfigPath,
 		instances:     make(map[string]*stm.StateMachineInstance),
 		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
 	}
 
 	nodeId := "test-node-ready-race"

@@ -39,6 +39,14 @@ type StateServer struct {
 	msgbus          mb.MsgBusServiceClient
 }
 
+func (s *StateServer) SetLatchedEvent(nodeId, event string) error {
+	return s.sRepo.SetLatchedEvent(nodeId, event)
+}
+
+func (s *StateServer) TakeLatchedEvent(nodeId string) (string, error) {
+	return s.sRepo.TakeLatchedEvent(nodeId)
+}
+
 func NewStateServer(orgName string, orgId string, sRepo db.StateRepo, msgBus mb.MsgBusServiceClient) *StateServer {
 
 	ns := &StateServer{

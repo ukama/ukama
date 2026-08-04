@@ -62,7 +62,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.State{})
+	err := d.Init(&db.State{}, &db.LatchedEvent{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}

@@ -479,6 +479,11 @@ import (
 	 defer n.latchedMu.Unlock()
  
 	 n.latchedHealth[nodeID] = eventName
+ 
+	 if err := n.s.SetLatchedEvent(nodeID, eventName); err != nil {
+		 log.Warnf("Failed to persist latched %s event for node %s, it will be lost on restart: %v",
+			 eventName, nodeID, err)
+	 }
  }
  
  func (n *StateEventServer) takeLatchedHealthEvent(nodeID string) (string, bool) {
@@ -488,6 +493,17 @@ import (
 	 eventName, ok := n.latchedHealth[nodeID]
 	 if ok {
 		 delete(n.latchedHealth, nodeID)
+	 }
+ 
+	 stored, err := n.s.TakeLatchedEvent(nodeID)
+	 if err != nil {
+		 log.Warnf("Failed to read latched event for node %s: %v", nodeID, err)
+ 
+		 return eventName, ok
+	 }
+ 
+	 if !ok && stored != "" {
+		 return stored, true
 	 }
  
 	 return eventName, ok
