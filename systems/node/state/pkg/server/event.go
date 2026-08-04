@@ -32,6 +32,7 @@ import (
 
  const (
 	 NodeNotifyEventReady  = "ready"
+	 NodeNotifyEventFault  = "fault"
 	 NodeNotifyEventReboot = "reboot"
 	 NodeNotifyEventOnline = "Node Online"
 	 NodeNotifyEventAdded  = "Node added"
@@ -55,6 +56,8 @@ import (
 	 baseRoutingKey msgbus.RoutingKeyBuilder
 	 eventBuffer    map[string][]string
 	 bufferMu       sync.RWMutex
+	 latchedHealth  map[string]string
+	 latchedMu      sync.Mutex
 	 processingMutex sync.Map
  }
  
@@ -69,6 +72,7 @@ import (
 		 msgbus:         msgBus,
 		 baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		 eventBuffer:    make(map[string][]string),
+		 latchedHealth:  make(map[string]string),
 		 processingMutex: sync.Map{},
 	 }
  
@@ -395,42 +399,98 @@ import (
 		 return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	 }
  
+	 changed, err := n.applyEvent(ctx, instance, nodeId, eventName)
+	 if err != nil {
+		 return err
+	 }
+ 
+	 if !changed {
+		 if isHealthEvent(eventName) {
+			 n.latchHealthEvent(nodeId, eventName)
+			 log.Infof("Node %s cannot accept %s in state %s, latching it until the node transitions",
+				 nodeId, eventName, instance.CurrentState)
+		 }
+ 
+		 return nil
+	 }
+ 
+	 latched, ok := n.takeLatchedHealthEvent(nodeId)
+	 if !ok {
+		 return nil
+	 }
+ 
+	 log.Infof("Replaying latched %s event for node %s now in state %s", latched, nodeId, instance.CurrentState)
+ 
+	 if _, err := n.applyEvent(ctx, instance, nodeId, latched); err != nil {
+		 return fmt.Errorf("failed to replay latched %s event for node %s: %w", latched, nodeId, err)
+	 }
+ 
+	 return nil
+ }
+ 
+ func (n *StateEventServer) applyEvent(ctx context.Context, instance *stm.StateMachineInstance,
+	 nodeId, eventName string) (bool, error) {
 	 prevState := instance.CurrentState
  
 	 if err := instance.Transition(eventName); err != nil {
-		 return fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
+		 return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
 	 }
  
-	 _, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+	 _, err := n.s.UpdateState(ctx, &pb.UpdateStateRequest{
 		 NodeId:   nodeId,
-		 SubState: []string{instance.CurrentSubstate}, 
+		 SubState: []string{instance.CurrentSubstate},
 		 Events:   []string{eventName},
 	 })
 	 if err != nil {
-		 return fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
+		 return false, fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
 	 }
  
-	 if instance.CurrentState != prevState {
-		 log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
-		 
-		 stateValue, ok := npb.NodeState_value[instance.CurrentState]
-		 if !ok {
-			 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
-			 stateValue = int32(npb.NodeState_Unknown)
-		 }
-		 
-		 _, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState(stateValue),
-			 SubState:     []string{instance.CurrentSubstate},
-			 Events:       []string{},
-		 })
-		 if err != nil {
-			 return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
-		 }
+	 if instance.CurrentState == prevState {
+		 return false, nil
 	 }
-	 
-	 return nil
+ 
+	 log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
+ 
+	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	 if !ok {
+		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		 stateValue = int32(npb.NodeState_Unknown)
+	 }
+ 
+	 _, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
+		 NodeId:       nodeId,
+		 CurrentState: npb.NodeState(stateValue),
+		 SubState:     []string{instance.CurrentSubstate},
+		 Events:       []string{},
+	 })
+	 if err != nil {
+		 return false, fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
+	 }
+ 
+	 return true, nil
+ }
+ 
+ func isHealthEvent(eventName string) bool {
+	 return eventName == NodeNotifyEventReady || eventName == NodeNotifyEventFault
+ }
+ 
+ func (n *StateEventServer) latchHealthEvent(nodeID, eventName string) {
+	 n.latchedMu.Lock()
+	 defer n.latchedMu.Unlock()
+ 
+	 n.latchedHealth[nodeID] = eventName
+ }
+ 
+ func (n *StateEventServer) takeLatchedHealthEvent(nodeID string) (string, bool) {
+	 n.latchedMu.Lock()
+	 defer n.latchedMu.Unlock()
+ 
+	 eventName, ok := n.latchedHealth[nodeID]
+	 if ok {
+		 delete(n.latchedHealth, nodeID)
+	 }
+ 
+	 return eventName, ok
  }
  
 

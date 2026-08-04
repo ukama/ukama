@@ -53,6 +53,16 @@ func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
 		require.NoError(t, instance.Transition("config"))
 		assert.Equal(t, "Configured", instance.CurrentState)
 	})
+
+	t.Run("faulty node reaches configured on upgrade and downgrade", func(t *testing.T) {
+		for _, trigger := range []string{"upgrade", "downgrade"} {
+			instance := newNodeInstance(t, "faulty-"+trigger, "Faulty")
+
+			require.NoError(t, instance.Transition(trigger))
+			assert.Equal(t, "Configured", instance.CurrentState,
+				"%s must recover a faulty node to Configured", trigger)
+		}
+	})
 }
 
 func TestNodeStateFsm_RepeatReadyInOperational(t *testing.T) {
@@ -148,4 +158,54 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 		assert.Equal(t, "Operational", resynced.CurrentState,
 			"resynced instance must transition from the stored state")
 	})
+}
+
+func TestNodeStateFsm_ReadyBeforeOnboardingIsLatched(t *testing.T) {
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+	}
+
+	nodeId := "test-node-ready-race"
+
+	t.Run("ready in Unknown is latched rather than dropped", func(t *testing.T) {
+		instance, err := srv.getOrCreateInstance(nodeId, "Unknown", "on")
+		require.NoError(t, err)
+
+		require.NoError(t, instance.Transition(NodeNotifyEventReady))
+		assert.Equal(t, "Unknown", instance.CurrentState,
+			"ready must not move a node out of Unknown")
+
+		srv.latchHealthEvent(nodeId, NodeNotifyEventReady)
+
+		latched, ok := srv.takeLatchedHealthEvent(nodeId)
+		require.True(t, ok)
+		assert.Equal(t, NodeNotifyEventReady, latched)
+	})
+
+	t.Run("latched ready is consumed only once", func(t *testing.T) {
+		_, ok := srv.takeLatchedHealthEvent(nodeId)
+		assert.False(t, ok, "latch must be cleared after being taken")
+	})
+
+	t.Run("replaying the latched ready after onboarding reaches Operational", func(t *testing.T) {
+		instance, err := srv.getOrCreateInstance("test-node-replay", "Unknown", "on")
+		require.NoError(t, err)
+
+		require.NoError(t, instance.Transition("onboarding"))
+		require.Equal(t, "Configured", instance.CurrentState)
+
+		require.NoError(t, instance.Transition(NodeNotifyEventReady))
+		assert.Equal(t, "Operational", instance.CurrentState,
+			"the latched ready replayed after onboarding must reach Operational")
+	})
+}
+
+func TestIsHealthEvent(t *testing.T) {
+	assert.True(t, isHealthEvent(NodeNotifyEventReady))
+	assert.True(t, isHealthEvent(NodeNotifyEventFault))
+	assert.False(t, isHealthEvent("online"))
+	assert.False(t, isHealthEvent("onboarding"))
 }
