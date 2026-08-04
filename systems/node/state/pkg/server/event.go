@@ -506,8 +506,16 @@ import (
 		 return fmt.Errorf("failed to create state machine instance: %w", err)
 	 }
 	 
+	 prevState := instance.CurrentState
+	 
 	 if err := instance.Transition(eventName); err != nil {
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
+	 }
+	 
+	 if instance.CurrentState == prevState && isHealthEvent(eventName) {
+		 n.latchHealthEvent(nodeId, eventName)
+		 log.Infof("Node %s cannot accept %s in state %s, latching it until the node transitions",
+			 nodeId, eventName, instance.CurrentState)
 	 }
 	 
 	 if instance.CurrentSubstate == "" {
