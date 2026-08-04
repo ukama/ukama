@@ -99,8 +99,8 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Connectivity: ukama.NodeConnectivityUndefined,
 			State:        ukama.NodeStateUnknown,
 		},
-		Type:      ukama.NodeType(nId.GetNodeType()),
-		Name:      req.Name,
+		Type: ukama.NodeType(nId.GetNodeType()),
+		Name: req.Name,
 	}
 
 	err = n.nodeRepo.Add(node, nil)
@@ -112,9 +112,9 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 		route := n.baseRoutingKey.SetActionCreate().SetObject("node").MustBuild()
 
 		evt := &epb.EventRegistryNodeCreate{
-			NodeId:    nId.StringLowercase(),
-			Name:      node.Name,
-			Type:      node.Type.String(),
+			NodeId: nId.StringLowercase(),
+			Name:   node.Name,
+			Type:   node.Type.String(),
 		}
 		log.Infof("Publishing event %+v with key %+v", evt, route)
 		err = n.msgbus.PublishRequest(route, evt)
@@ -652,13 +652,13 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 	for _, arg := range args {
 		switch arg {
 		case pkg.NumberOfNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
+			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
 				pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOnlineNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
+			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
 				pkg.NumberOfOnlineNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOfflineNodes:
-			err = metric.CollectAndPushSimMetrics(n.pushGateway, pkg.NodeMetric,
+			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
 				pkg.NumberOfOfflineNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}

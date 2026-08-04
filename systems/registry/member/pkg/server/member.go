@@ -248,13 +248,15 @@ func (m *MemberServer) PushOrgMemberCountMetric(orgId uuid.UUID) error {
 	labels := make(map[string]string)
 	labels["org"] = orgId.String()
 
-	err = metric.CollectAndPushSimMetrics(m.pushGateway, pkg.MemberMetric, pkg.NumberOfActiveMembers, float64(actMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(m.pushGateway, pkg.MemberMetric, pkg.NumberOfActiveMembers,
+		float64(actMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing active members of Org metric to pushgateway %s", err.Error())
 		return err
 	}
 
-	err = metric.CollectAndPushSimMetrics(m.pushGateway, pkg.MemberMetric, pkg.NumberOfInactiveMembers, float64(inactMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(m.pushGateway, pkg.MemberMetric, pkg.NumberOfInactiveMembers,
+		float64(inactMemOrg), labels, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing inactive members Org metric to pushgateway %s", err.Error())
 		return err

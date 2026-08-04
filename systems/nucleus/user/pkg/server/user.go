@@ -12,26 +12,24 @@ import (
 	"context"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/nucleus/user/pkg/db"
-
-	"github.com/ukama/ukama/systems/common/grpc"
-	metric "github.com/ukama/ukama/systems/common/metrics"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
-	"github.com/ukama/ukama/systems/nucleus/user/pkg"
-
-	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
-
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	pkgP "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/nucleus/user/pkg"
+	"github.com/ukama/ukama/systems/nucleus/user/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	orgpb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
+	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
+	pkgP "github.com/ukama/ukama/systems/nucleus/user/pkg/providers"
 )
 
 const uuidParsingError = "Error parsing UUID"
@@ -112,12 +110,14 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers,
+		float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers,
+		float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
@@ -335,12 +335,14 @@ func (u *UserService) pushUserCountMetrics() {
 		log.Errorf("failed to get User count: %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers, float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfActiveUsers,
+		float64(userCount-inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
 
-	err = metric.CollectAndPushSimMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers, float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
+	err = metric.CollectAndPushSystemMetrics(u.pushGateway, pkg.UserMetric, pkg.NumberOfInactiveUsers,
+		float64(inActiveUser), nil, pkg.SystemName+"-"+pkg.ServiceName)
 	if err != nil {
 		log.Errorf("Error while pushing subscriberCount metric to pushgaway %s", err.Error())
 	}
