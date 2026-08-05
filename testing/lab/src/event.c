@@ -46,6 +46,7 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
         return event_data_package(ctx, event, err);
     case EVT_START_UES:
     case EVT_WAIT_UES_ATTACHED:
+    case EVT_WAIT_UES_DETACHED:
     case EVT_WAIT_UE_SESSIONS:
     case EVT_FINALIZE_UE_SESSIONS:
     case EVT_WAIT:
