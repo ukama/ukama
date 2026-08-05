@@ -12,6 +12,7 @@ import (
 	"context"
 	"net/http"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -24,6 +25,7 @@ import (
 
 const (
 	ServiceStatusAvailable   = "available"
+	ServiceStatusDegraded    = "degraded"
 	ServiceStatusUnavailable = "unavailable"
 
 	SystemStatusOk       = "ok"
@@ -103,9 +105,17 @@ func checkServices(ctx context.Context, systemName string,
 				Status:      ServiceStatusAvailable,
 			}
 
-			if err := ugrpc.CheckServiceHealth(cctx, target.Host); err != nil {
+			report := ugrpc.CheckServiceHealthDetailed(cctx, target.Host)
+			switch {
+			case report.Err != nil:
 				s.Status = ServiceStatusUnavailable
-				s.Error = err.Error()
+				s.Error = report.Err.Error()
+				if len(report.DegradedDeps) > 0 {
+					s.Error += " (dependencies: " + strings.Join(report.DegradedDeps, ", ") + ")"
+				}
+			case len(report.DegradedDeps) > 0:
+				s.Status = ServiceStatusDegraded
+				s.Error = "dependency " + strings.Join(report.DegradedDeps, ", dependency ")
 			}
 
 			mu.Lock()
@@ -120,10 +130,13 @@ func checkServices(ctx context.Context, systemName string,
 		return results[i].Name < results[j].Name
 	})
 
-	unavailable := 0
+	unavailable, degraded := 0, 0
 	for _, s := range results {
-		if s.Status == ServiceStatusUnavailable {
+		switch s.Status {
+		case ServiceStatusUnavailable:
 			unavailable++
+		case ServiceStatusDegraded:
+			degraded++
 		}
 	}
 
@@ -131,7 +144,7 @@ func checkServices(ctx context.Context, systemName string,
 	switch {
 	case len(results) > 0 && unavailable == len(results):
 		systemStatus = SystemStatusDown
-	case unavailable > 0:
+	case unavailable > 0 || degraded > 0:
 		systemStatus = SystemStatusDegraded
 	}
 

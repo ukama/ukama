@@ -35,6 +35,10 @@ type UkamaGrpcServer struct {
 	ExtraUnaryInterceptors  []grpc.UnaryServerInterceptor
 	ExtraStreamInterceptors []grpc.StreamServerInterceptor
 
+	// dependencyState carries opt-in dependency checks registered via
+	// RegisterDependency and the background monitor driving them.
+	dependencyState
+
 	// GrpcHealth is the standard grpc.health.v1 health service
 	// (google.golang.org/grpc/health). It is registered on every server so
 	// that grpc_health_probe and Kubernetes native gRPC probes work out of
@@ -102,6 +106,15 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	healthpb.RegisterHealthServer(server, g.GrpcHealth)
 	g.GrpcHealth.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
+	// Static liveness target: always SERVING while the process is up, so
+	// liveness probes (grpc service: "live") never react to dependency
+	// failures. Only the default "" status above is dependency-aware.
+	g.GrpcHealth.SetServingStatus(LivenessService, healthpb.HealthCheckResponse_SERVING)
+
+	// Monitors registered dependency checks (no-op when none registered)
+	// and keeps the "" status in sync with critical dependencies.
+	g.startDependencyMonitor()
+
 	reflection.Register(server)
 	g.server = server
 	if err := server.Serve(listener); err != nil {
@@ -111,6 +124,8 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 
 func (g *UkamaGrpcServer) StopServer() {
 	log.Infof("Stoping gRpc server.")
+
+	g.stopDependencyMonitor()
 
 	if g.GrpcHealth != nil {
 		// Flip all services to NOT_SERVING so readiness probes fail fast
