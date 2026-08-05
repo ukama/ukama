@@ -102,36 +102,6 @@ func (_m *site) List(networkId string, isDeactivate bool) (*gen.ListResponse, er
 	return r0, r1
 }
 
-// UpdateSite provides a mock function with given fields: siteId, name
-func (_m *site) UpdateSite(siteId string, name string) (*gen.UpdateResponse, error) {
-	ret := _m.Called(siteId, name)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateSite")
-	}
-
-	var r0 *gen.UpdateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.UpdateResponse, error)); ok {
-		return rf(siteId, name)
-	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.UpdateResponse); ok {
-		r0 = rf(siteId, name)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.UpdateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(siteId, name)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RemoveSite provides a mock function with given fields: siteId
 func (_m *site) RemoveSite(siteId string) (*gen.DeleteResponse, error) {
 	ret := _m.Called(siteId)
@@ -155,6 +125,36 @@ func (_m *site) RemoveSite(siteId string) (*gen.DeleteResponse, error) {
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
 		r1 = rf(siteId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UpdateSite provides a mock function with given fields: siteId, name
+func (_m *site) UpdateSite(siteId string, name string) (*gen.UpdateResponse, error) {
+	ret := _m.Called(siteId, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateSite")
+	}
+
+	var r0 *gen.UpdateResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string) (*gen.UpdateResponse, error)); ok {
+		return rf(siteId, name)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) *gen.UpdateResponse); ok {
+		r0 = rf(siteId, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(siteId, name)
 	} else {
 		r1 = ret.Error(1)
 	}

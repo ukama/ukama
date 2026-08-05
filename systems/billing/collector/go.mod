@@ -1,8 +1,6 @@
 module github.com/ukama/ukama/systems/billing/collector
 
-go 1.23.0
-
-replace github.com/ukama/ukama/systems/common => ../../common
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
@@ -10,20 +8,20 @@ replace github.com/ukama/ukama/systems/subscriber/registry => ../../subscriber/r
 
 replace github.com/ukama/ukama/systems/subscriber/sim-manager => ../../subscriber/sim-manager
 
-replace github.com/ukama/ukama/systems/common/pb/gen/events => ../../common/pb/events
-
 replace github.com/ukama/ukama/systems/billing/collector => ./
 
+replace github.com/ukama/ukama/systems/common => ../../common
+
 require (
-	github.com/getlago/lago-go-client v1.15.0
+	github.com/getlago/lago-go-client v1.50.0
 	github.com/google/uuid v1.6.0
 	github.com/num30/config v0.1.3
-	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.10.0
+	github.com/sirupsen/logrus v1.9.4
+	github.com/stretchr/testify v1.11.1
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.73.0
-	google.golang.org/protobuf v1.36.6
+	google.golang.org/grpc v1.83.0
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -44,11 +42,11 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
-	github.com/go-resty/resty/v2 v2.13.1 // indirect
+	github.com/go-resty/resty/v2 v2.16.5 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.0.0 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.2 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
@@ -105,14 +103,14 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/crypto v0.39.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.41.0 // indirect
-	golang.org/x/sync v0.15.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/text v0.26.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/postgres v1.6.0 // indirect
