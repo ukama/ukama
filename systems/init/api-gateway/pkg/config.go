@@ -19,10 +19,11 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type Kratos struct {
@@ -32,6 +33,14 @@ type Kratos struct {
 type GrpcEndpoints struct {
 	Timeout time.Duration
 	Lookup  string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Lookup string
 }
 
 type HttpEndpoints struct {
@@ -52,6 +61,9 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout: 3 * time.Second,
 			Lookup:  "lookup:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Lookup: "System lookup: resolving organizations, systems and nodes to their endpoints",
 		},
 		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,

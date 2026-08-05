@@ -20,14 +20,27 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout    time.Duration
 	Aggregator string
+	Ingest     string
+	Analysis   string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Aggregator string
+	Ingest     string
+	Analysis   string
 }
 
 func NewConfig() *Config {
@@ -39,6 +52,13 @@ func NewConfig() *Config {
 		Services: GrpcEndpoints{
 			Timeout:    20 * time.Second,
 			Aggregator: "aggregator:9090",
+			Ingest:     "ingest:9090",
+			Analysis:   "analysis:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Aggregator: "Analytics aggregation: aggregating platform analytics",
+			Ingest:     "Analytics ingestion: receiving and storing incoming analytics data",
+			Analysis:   "Analytics analysis: running analysis over collected analytics data",
 		},
 		Server: rest.HttpConfig{
 			Port: 8080,

@@ -45,6 +45,8 @@ type RouterConfig struct {
 	debugMode     bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -124,6 +126,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
 	}
@@ -139,6 +143,23 @@ func (rt *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"controller":        {Host: r.config.grpcEndpoints.Controller, Description: desc.Controller},
+			"configurator":      {Host: r.config.grpcEndpoints.Configurator, Description: desc.Configurator},
+			"software":          {Host: r.config.grpcEndpoints.Software, Description: desc.Software},
+			"state":             {Host: r.config.grpcEndpoints.State, Description: desc.State},
+			"site-controller":   {Host: r.config.grpcEndpoints.SiteController, Description: desc.SiteController},
+			"operation-monitor": {Host: r.config.grpcEndpoints.OperationMonitor, Description: desc.OperationMonitor},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "API gateway", "node system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")

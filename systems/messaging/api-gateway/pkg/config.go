@@ -19,11 +19,12 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
-	NodeMetricsPort   int32          `default:"10250"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
+	NodeMetricsPort   int32               `default:"10250"`
 }
 
 type Kratos struct {
@@ -31,8 +32,20 @@ type Kratos struct {
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
-	Nns     string
+	Timeout     time.Duration
+	Nns         string
+	Broadcaster string
+	NodeFeeder  string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Nns         string
+	Broadcaster string
+	NodeFeeder  string
 }
 
 type HttpEndpoints struct {
@@ -51,8 +64,15 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 5 * time.Second,
-			Nns:     "nns:9090",
+			Timeout:     5 * time.Second,
+			Nns:         "nns:9090",
+			Broadcaster: "broadcaster:9090",
+			NodeFeeder:  "node-feeder:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Nns:         "Node naming service: node DNS and IP resolution",
+			Broadcaster: "Event broadcasting: broadcasting system events to nodes",
+			NodeFeeder:  "Node feeder: delivering queued requests and commands to nodes",
 		},
 		Http: HttpEndpoints{
 			Timeout:     5 * time.Second,
