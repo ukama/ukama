@@ -1,6 +1,6 @@
 module github.com/ukama/ukama/systems/init/bootstrap
 
-go 1.24.0
+go 1.25.0
 
 replace github.com/ukama/ukama/systems/common => ../../common
 
@@ -12,11 +12,11 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.9.4
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/init/lookup v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.78.0
-	google.golang.org/protobuf v1.36.10
+	google.golang.org/grpc v1.83.0
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.4
 	k8s.io/apimachinery v0.31.4
@@ -66,7 +66,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.6.0 // indirect
+	github.com/jackc/pgx/v5 v5.10.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -113,23 +113,23 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
-	golang.org/x/crypto v0.44.0 // indirect
+	golang.org/x/crypto v0.51.0 // indirect
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/oauth2 v0.32.0 // indirect
-	golang.org/x/sync v0.18.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/term v0.37.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/oauth2 v0.36.0 // indirect
+	golang.org/x/sync v0.20.0 // indirect
+	golang.org/x/sys v0.45.0 // indirect
+	golang.org/x/term v0.43.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20251029180050-ab9386a59fda // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gorm.io/driver/postgres v1.6.0 // indirect
-	gorm.io/gorm v1.31.1 // indirect
+	gorm.io/driver/postgres v1.6.2 // indirect
+	gorm.io/gorm v1.31.2 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
 	k8s.io/utils v0.0.0-20240711033017-18e509b52bc8 // indirect
