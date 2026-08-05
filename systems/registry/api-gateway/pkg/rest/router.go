@@ -48,6 +48,7 @@ type RouterConfig struct {
 	metricsConfig config.Metrics
 	httpEndpoints *pkg.HttpEndpoints
 	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 	debugMode     bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
@@ -143,6 +144,7 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
 		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		serverConf:    &svcConf.Server,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
@@ -160,13 +162,18 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
 
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
 	if r.config.grpcEndpoints != nil {
-		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]string{
-			"network":    r.config.grpcEndpoints.Network,
-			"member":     r.config.grpcEndpoints.Member,
-			"node":       r.config.grpcEndpoints.Node,
-			"invitation": r.config.grpcEndpoints.Invitation,
-			"site":       r.config.grpcEndpoints.Site,
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"network":    {Host: r.config.grpcEndpoints.Network, Description: desc.Network},
+			"member":     {Host: r.config.grpcEndpoints.Member, Description: desc.Member},
+			"node":       {Host: r.config.grpcEndpoints.Node, Description: desc.Node},
+			"invitation": {Host: r.config.grpcEndpoints.Invitation, Description: desc.Invitation},
+			"site":       {Host: r.config.grpcEndpoints.Site, Description: desc.Site},
 		}, r.config.grpcEndpoints.Timeout)
 	}
 
@@ -185,7 +192,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		const mem = "/members"
-		member := auth.Group(mem, "Members", "Operations on Members")
+		member := auth.Group(mem, "Members", desc.Member)
 		member.GET("", formatDoc("Get Members", "Get all members of an organization"), tonic.Handler(r.getMembersHandler, http.StatusOK))
 		member.GET("/user/:user_id", formatDoc("Get Member", "Get member by user id"), tonic.Handler(r.getMemberByUserIdHandler, http.StatusOK))
 		member.POST("", formatDoc("Add Member", "Add a new member to an organization"), tonic.Handler(r.postMemberHandler, http.StatusCreated))
@@ -195,7 +202,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		// Invitation routes
 		const inv = "/invitations"
-		invitations := auth.Group(inv, "Invitations", "Operations on Invitations")
+		invitations := auth.Group(inv, "Invitations", desc.Invitation)
 		invitations.POST("", formatDoc("Add Invitation", "Add a new invitation to an organization"), tonic.Handler(r.postInvitationHandler, http.StatusCreated))
 		invitations.GET("/:invitation_id", formatDoc("Get Invitation", "Get a specific invitation"), tonic.Handler(r.getInvitationHandler, http.StatusOK))
 		invitations.PATCH("/:invitation_id", formatDoc("Update Invitation", "Update a specific invitation"), tonic.Handler(r.patchInvitationHandler, http.StatusOK))
@@ -206,7 +213,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Network routes
 		// Networks
 		const net = "/networks"
-		networks := auth.Group(net, "Networks", "Operations on Networks")
+		networks := auth.Group(net, "Networks", desc.Network)
 		networks.GET("", formatDoc("Get Networks", "Get all Networks of an organization"), tonic.Handler(r.getNetworksHandler, http.StatusOK))
 		networks.GET("/default", formatDoc("Get Default Network", "Get default Networks of an organization"), tonic.Handler(r.getDefaultNetworkHandler, http.StatusOK))
 		networks.POST("", formatDoc("Add Network", "Add a new network to an organization"), tonic.Handler(r.postNetworkHandler, http.StatusCreated))
@@ -219,7 +226,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		// Sites
 
 		const site = "/sites"
-		sites := auth.Group(site, "Sites", "Operations on sites")
+		sites := auth.Group(site, "Sites", desc.Site)
 		sites.GET("", formatDoc("Get Sites", "Get all sites of a network"), tonic.Handler(r.getSitesHandler, http.StatusOK))
 		sites.POST("", formatDoc("Add Site", "Add a new site to a network"), tonic.Handler(r.postSiteHandler, http.StatusCreated))
 		sites.GET("/:site_id", formatDoc("Get Site", "Get a site of a network"), tonic.Handler(r.getSiteHandler, http.StatusOK))
@@ -228,7 +235,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		// Node routes
 		const node = "/nodes"
-		nodes := auth.Group(node, "Nodes", "Operations on Nodes")
+		nodes := auth.Group(node, "Nodes", desc.Node)
 		/** Deprecated: Use List API instead */
 		nodes.GET("", formatDoc("Get Nodes", "Get all or free Nodes"), tonic.Handler(r.getNodes, http.StatusOK))
 		nodes.GET("/state", formatDoc("Get Nodes by state", "Get all nodes by state"), tonic.Handler(r.getNodesByState, http.StatusOK))

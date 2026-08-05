@@ -33,11 +33,21 @@ const (
 	defaultStatusCheckTimeout = 5 * time.Second
 )
 
+// StatusTarget describes one gRPC service to health-check: where to reach
+// it and a human-readable description of the features it powers, so /status
+// consumers know what is affected when it goes down. The description is
+// meant to come from service config (env overridable), not be hardcoded.
+type StatusTarget struct {
+	Host        string
+	Description string
+}
+
 type ServiceStatus struct {
-	Name   string `json:"name"`
-	Host   string `json:"host"`
-	Status string `json:"status"`
-	Error  string `json:"error,omitempty"`
+	Name        string `json:"name"`
+	Host        string `json:"host"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status"`
+	Error       string `json:"error,omitempty"`
 }
 
 type StatusResponse struct {
@@ -52,7 +62,7 @@ type StatusResponse struct {
 // and reports each one as available/unavailable, plus an aggregated system
 // status: ok (all up), degraded (some up), or down (all down).
 func RegisterStatusEndpoint(f *fizz.Fizz, systemName string,
-	services map[string]string, timeout time.Duration) {
+	services map[string]StatusTarget, timeout time.Duration) {
 	if timeout <= 0 {
 		timeout = defaultStatusCheckTimeout
 	}
@@ -70,29 +80,30 @@ func RegisterStatusEndpoint(f *fizz.Fizz, systemName string,
 }
 
 func checkServices(ctx context.Context, systemName string,
-	services map[string]string, timeout time.Duration) *StatusResponse {
+	services map[string]StatusTarget, timeout time.Duration) *StatusResponse {
 	var (
 		mu      sync.Mutex
 		wg      sync.WaitGroup
 		results = make([]ServiceStatus, 0, len(services))
 	)
 
-	for name, host := range services {
+	for name, target := range services {
 		wg.Add(1)
 
-		go func(name, host string) {
+		go func(name string, target StatusTarget) {
 			defer wg.Done()
 
 			cctx, cancel := context.WithTimeout(ctx, timeout)
 			defer cancel()
 
 			s := ServiceStatus{
-				Name:   name,
-				Host:   host,
-				Status: ServiceStatusAvailable,
+				Name:        name,
+				Host:        target.Host,
+				Description: target.Description,
+				Status:      ServiceStatusAvailable,
 			}
 
-			if err := ugrpc.CheckServiceHealth(cctx, host); err != nil {
+			if err := ugrpc.CheckServiceHealth(cctx, target.Host); err != nil {
 				s.Status = ServiceStatusUnavailable
 				s.Error = err.Error()
 			}
@@ -100,7 +111,7 @@ func checkServices(ctx context.Context, systemName string,
 			mu.Lock()
 			results = append(results, s)
 			mu.Unlock()
-		}(name, host)
+		}(name, target)
 	}
 
 	wg.Wait()
