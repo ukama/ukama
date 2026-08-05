@@ -32,7 +32,7 @@ type Config struct {
 	Metrics           *config.Metrics   `default:"{}"`
 	Timeout           time.Duration     `default:"3s"`
 	MsgClient         *config.MsgClient `default:"{}"`
-	PushMetricHost    string            `default:"http://localhost:9091"`
+	PushGateway       string            `default:"http://localhost:9091"`
 	SimPool           string            `default:"simpool:9090"`
 	Registry          string            `default:"registry:9090"`
 	TestAgent         string            `default:"testagent:9090"`
