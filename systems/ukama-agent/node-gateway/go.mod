@@ -17,8 +17,8 @@ require (
 	github.com/loopfz/gadgeto v0.11.6
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	github.com/ukama/ukama/systems/common v0.0.0-20260804140135-c87a73fa12eb
-	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260804140135-c87a73fa12eb
+	github.com/ukama/ukama/systems/common v0.0.0-20260805133052-c73d432393b6
+	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260805133052-c73d432393b6
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.23.0
 	google.golang.org/grpc v1.83.0
@@ -81,6 +81,7 @@ require (
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect

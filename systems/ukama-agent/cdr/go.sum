@@ -487,10 +487,8 @@ github.com/ugorji/go/codec v1.1.7/go.mod h1:Ax+UKWsSmolVDwsd+7N3ZtXu+yMGCf907BLY
 github.com/ugorji/go/codec v1.2.6/go.mod h1:V6TCNZ4PHqoHGFZuSG1W8nrCzzdgA2DozYxWFFpvxTw=
 github.com/ugorji/go/codec v1.3.0 h1:Qd2W2sQawAfG8XSvzwhBeoGq71zXOC/Q1E9y/wUcsUA=
 github.com/ugorji/go/codec v1.3.0/go.mod h1:pRBVtBSKl77K30Bv8R2P+cLSGaTtex6fsA2Wjqmfxj4=
-github.com/ukama/ukama/systems/common v0.0.0-20260804140135-c87a73fa12eb h1:ZTaiQS/x/bUWE5ww8WQihjltJ7bo5WWSNB/g+UMWSTU=
-github.com/ukama/ukama/systems/common v0.0.0-20260804140135-c87a73fa12eb/go.mod h1:Phq7rueDH3VIWLI2B60cb5EL6K5xOESW3jM1xjSHY9A=
-github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260804140135-c87a73fa12eb h1:OVOtyGcP4+pgrdTrNp9RmvK6CK+9vnf5N8SK3+5Q8W8=
-github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260804140135-c87a73fa12eb/go.mod h1:+GW/Mvj+ON5IJAxw9kt1RxMXJNDahJoFz4VmCbU0/8I=
+github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260805133052-c73d432393b6 h1:H/649GvHi5RAnkG3h0i6blw64+g12tGp6mUDiMzXXig=
+github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260805133052-c73d432393b6/go.mod h1:+GW/Mvj+ON5IJAxw9kt1RxMXJNDahJoFz4VmCbU0/8I=
 github.com/wI2L/fizz v0.22.0 h1:mgRA+uUdESvgsIeBFkMSS/MEIQ4EZ4I2xyRxnCqkhJY=
 github.com/wI2L/fizz v0.22.0/go.mod h1:CMxMR1amz8id9wr2YUpONf+F/F9hW1cqRXxVNNuWVxE=
 github.com/wagslane/go-rabbitmq v0.14.2 h1:3l75Unsy0b8sb3ILqJxMTXkQLUPI67BOuubV9YBjGLE=

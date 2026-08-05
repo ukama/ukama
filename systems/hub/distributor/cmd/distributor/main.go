@@ -107,6 +107,8 @@ func startChunkRequestServer() *ugrpc.UkamaGrpcServer {
 		generated.RegisterChunkerServiceServer(s, chunkerServer)
 	})
 
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go grpcServer.StartServer()
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)

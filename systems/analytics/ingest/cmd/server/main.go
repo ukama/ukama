@@ -116,6 +116,9 @@ func run(sDb sql.Db) {
 	// Health/reflection-only gRPC server (repo convention; admin RPCs later).
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(sDb))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go grpcServer.StartServer()
 	go msgBusListener(mbClient)
 	go eng.Start()

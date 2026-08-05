@@ -100,6 +100,8 @@ func runGrpcServer() {
 		mc.RegisterGrpcService(s)
 	})
 
+	rpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	mc.StartMetricServer(serviceConfig.Metrics)
 
 	if serviceConfig.IsMsgBus {

@@ -4,6 +4,8 @@ go 1.25.0
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
+replace github.com/ukama/ukama/systems/common => ../../common
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
@@ -11,8 +13,8 @@ require (
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	github.com/ukama/ukama/systems/common v0.0.0-20260804140135-c87a73fa12eb
-	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260804140135-c87a73fa12eb
+	github.com/ukama/ukama/systems/common v0.0.0-20260730183946-e72067da775f
+	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-20260805133052-c73d432393b6
 	google.golang.org/grpc v1.83.0
 	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.6.2
 	google.golang.org/protobuf v1.36.11

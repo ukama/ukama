@@ -16,7 +16,7 @@ require (
 	github.com/loopfz/gadgeto v0.11.6
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
+	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
