@@ -18,7 +18,6 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
-	pbhealth "github.com/ukama/ukama/systems/common/pb/gen/health"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -27,9 +26,7 @@ import (
 
 // Basic GrpcServer with the set of middlewares
 type UkamaGrpcServer struct {
-	// replace with custom implementation if needed
 	server                  *grpc.Server
-	healthChecker           pbhealth.HealthServer
 	config                  config.Grpc
 	serviceRegistrar        func(s *grpc.Server)
 	ExtraUnaryInterceptors  []grpc.UnaryServerInterceptor
@@ -48,13 +45,8 @@ type UkamaGrpcServer struct {
 }
 
 func NewGrpcServer(config config.Grpc, serviceRegistrar func(s *grpc.Server)) *UkamaGrpcServer {
-	return &UkamaGrpcServer{healthChecker: NewDefaultHealthChecker(), config: config,
+	return &UkamaGrpcServer{config: config,
 		serviceRegistrar: serviceRegistrar, GrpcHealth: health.NewServer()}
-}
-
-func NewGrpcServerWithCustomHealthcheck(healthChecker *HealthChecker, config config.Grpc, serviceRegistrator func(s *grpc.Server)) *UkamaGrpcServer {
-	return &UkamaGrpcServer{healthChecker: healthChecker, config: config,
-		serviceRegistrar: serviceRegistrator, GrpcHealth: health.NewServer()}
 }
 
 func (g *UkamaGrpcServer) StartServer() {
@@ -93,10 +85,6 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	)
 
 	g.serviceRegistrar(server)
-
-	// Legacy custom health service (ukama.health.v1), kept for backward
-	// compatibility with existing clients.
-	pbhealth.RegisterHealthServer(server, g.healthChecker)
 
 	// Standard health service (grpc.health.v1), used by Kubernetes native
 	// gRPC probes and grpc_health_probe.
