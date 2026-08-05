@@ -17,6 +17,7 @@ jobs:
       with:
         registry-name: {{SYSTEM_NAME}}/{{SERVICE_NAME}}
         working-directory: ${{ env.working-directory }}
+        project-key: ukama_systems_{{SYSTEM_NAME}}_{{SERVICE_NAME}}
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}
