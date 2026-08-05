@@ -15,7 +15,7 @@ require (
 	github.com/loopfz/gadgeto v0.11.6
 	github.com/sirupsen/logrus v1.9.4
 	github.com/stretchr/testify v1.11.1
-	github.com/ukama/ukama/systems/common v0.0.0-20260730183946-e72067da775f
+	github.com/ukama/ukama/systems/common v0.0.0-20260803195617-287151d3243f
 	github.com/ukama/ukama/systems/ukama-agent/asr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.23.0
 	google.golang.org/grpc v1.83.0
@@ -53,7 +53,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.3 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
-	github.com/jackc/pgx/v5 v5.6.0 // indirect
+	github.com/jackc/pgx/v5 v5.10.0 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
@@ -105,7 +105,7 @@ require (
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/postgres v1.6.0 // indirect
+	gorm.io/driver/postgres v1.6.2 // indirect
 	gorm.io/gorm v1.31.2 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
