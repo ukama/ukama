@@ -58,6 +58,7 @@ typedef struct {
 
 void ue_store_init(void);
 void ue_store_destroy(void);
+void ue_clear_all(void);
 
 int ue_attach_start(const char *imsi,
                     const char *iccid,

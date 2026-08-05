@@ -339,7 +339,12 @@ cleanup:
 }
 
 
-int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode) {
+static int wc_post_service(Config *config,
+                           const char *host,
+                           int port,
+                           const char *service,
+                           ControlState desired,
+                           int *retCode) {
 
     int ret;
     char url[128];
@@ -354,12 +359,13 @@ int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode) 
     httpResp = NULL;
     httpReq = NULL;
 
-    if (!config || !retCode) return STATUS_NOK;
-    if (config->pcrfPort <= 0) return STATUS_NOK;
+    if (!config || !host || !service || !retCode || port <= 0) {
+        return STATUS_NOK;
+    }
 
-    snprintf(url, sizeof(url), "http://%s:%d/v1/service",
-             DEF_PCRF_HOST,
-             config->pcrfPort);
+    *retCode = -1;
+
+    snprintf(url, sizeof(url), "http://%s:%d/v1/service", host, port);
 
     json = build_state_body(desired);
     if (!json) return STATUS_NOK;
@@ -371,13 +377,17 @@ int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode) 
     }
 
     jsonStr = json_dumps(json, 0);
-    usys_log_debug("Sending PCRF service state. URL: %s method: POST, json: %s",
-                   url, jsonStr ? jsonStr : "");
+    usys_log_debug("Sending %s service state. URL: %s method: POST, json: %s",
+                   service,
+                   url,
+                   jsonStr ? jsonStr : "");
     if (jsonStr) free(jsonStr);
 
     ret = wc_send_http_request(httpReq, &httpResp);
     if (ret != STATUS_OK || !httpResp) {
-        usys_log_error("Failed sending PCRF service state. URL: %s", url);
+        usys_log_error("Failed sending %s service state. URL: %s",
+                       service,
+                       url);
         ret = STATUS_NOK;
         goto cleanup;
     }
@@ -385,7 +395,8 @@ int wc_post_service_to_pcrf(Config *config, ControlState desired, int *retCode) 
     *retCode = httpResp->status;
     if (httpResp->status != HttpStatus_Accepted &&
         httpResp->status != HttpStatus_OK) {
-        usys_log_error("PCRF service state failed. URL: %s Code: %d Str: %s",
+        usys_log_error("%s service state failed. URL: %s Code: %d Str: %s",
+                       service,
                        url,
                        httpResp->status,
                        HttpStatusStr(httpResp->status));
@@ -405,7 +416,36 @@ cleanup:
         ulfius_clean_response(httpResp);
         usys_free(httpResp);
     }
+
     return ret;
+}
+
+int wc_post_service_to_pcrf(Config *config,
+                            ControlState desired,
+                            int *retCode) {
+
+    if (!config) return STATUS_NOK;
+
+    return wc_post_service(config,
+                           DEF_PCRF_HOST,
+                           config->pcrfPort,
+                           "PCRF",
+                           desired,
+                           retCode);
+}
+
+int wc_post_service_to_epcemu(Config *config,
+                              ControlState desired,
+                              int *retCode) {
+
+    if (!config) return STATUS_NOK;
+
+    return wc_post_service(config,
+                           DEF_EPCEMU_HOST,
+                           config->epcemuPort,
+                           "EPCEMU",
+                           desired,
+                           retCode);
 }
 
 int wc_send_radio_to_client(Config *config, ControlState desired, int *retCode) {

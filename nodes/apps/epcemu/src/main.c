@@ -154,6 +154,8 @@ int main(int argc, char **argv) {
 
     ctx.config = &config;
     ctx.status = &status;
+    ctx.serviceOn = true;
+    pthread_mutex_init(&ctx.serviceMutex, NULL);
 
     usys_log_debug("Starting %s", EPCEMU_SERVICE_NAME);
 
@@ -191,6 +193,7 @@ int main(int argc, char **argv) {
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
     data_plane_stop(&gDataPlane);
+    pthread_mutex_destroy(&ctx.serviceMutex);
     status_destroy(&status);
     ue_store_destroy();
     curl_global_cleanup();
@@ -202,6 +205,7 @@ failed:
     usys_log_error("%s failed to start", EPCEMU_SERVICE_NAME);
 
     data_plane_stop(&gDataPlane);
+    pthread_mutex_destroy(&ctx.serviceMutex);
     status_destroy(&status);
     ue_store_destroy();
     curl_global_cleanup();

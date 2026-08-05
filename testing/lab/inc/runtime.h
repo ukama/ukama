@@ -50,6 +50,9 @@ int runtime_build_and_start_ues(const char *repo,
 int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
+int runtime_wait_ues_detached(runtime_t *rt, world_t *w,
+                              const selector_result_t *ues,
+                              ulab_error_t *err);
 int runtime_verify_ue_sessions(runtime_t *rt, const world_t *w,
                                const selector_result_t *ues,
                                ulab_error_t *err);
