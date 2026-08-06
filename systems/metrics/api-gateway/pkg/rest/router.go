@@ -47,6 +47,8 @@ type RouterConfig struct {
 	serverConf          *rest.HttpConfig
 	metricsConf         *pkg.MetricsConfig
 	auth                *config.Auth
+	grpcEndpoints       *pkg.GrpcEndpoints
+	descriptions        *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -109,6 +111,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsServerConfig: svcConf.MetricsServer,
 		httpEndpoints:       &svcConf.Http,
 		serverConf:          &svcConf.Server,
+		grpcEndpoints:       &svcConf.Services,
+		descriptions:        &svcConf.Descriptions,
 		metricsConf:         svcConf.MetricsConfig,
 		debugMode:           svcConf.DebugMode,
 		auth:                svcConf.Auth,
@@ -126,6 +130,20 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"exporter":  {Host: r.config.grpcEndpoints.Exporter, Description: desc.Exporter},
+			"sanitizer": {Host: r.config.grpcEndpoints.Sanitizer, Description: desc.Sanitizer},
+			"reasoning": {Host: r.config.grpcEndpoints.Reasoning, Description: desc.Reasoning},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "metrics system", "metrics system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
