@@ -676,6 +676,35 @@ int runtime_wait_ues_attached(runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_wait_ues_detached(runtime_t *rt,
+                              world_t *w,
+                              const selector_result_t *ues,
+                              ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        ue_t *ue;
+        char args[4096];
+        int rc;
+
+        ue = &w->ues[ues->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s", ue->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "wait-ue-detached args too long for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (run_script(rt, "wait-ues-detached.sh", args, err)) {
+            return ULAB_ERR;
+        }
+
+        ue->attached = 0;
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_verify_ue_sessions(runtime_t *rt,
                                const world_t *w,
                                const selector_result_t *ues,

@@ -102,6 +102,64 @@ static int event_wait_ues_attached(event_ctx_t *ctx,
     return rc;
 }
 
+static int event_wait_ues_detached(event_ctx_t *ctx,
+                                    const event_spec_t *event,
+                                    ulab_error_t *err) {
+    selector_result_t res;
+    const char *current;
+    char *previous;
+    char timeout[32];
+    int rc;
+
+    previous = NULL;
+    if (event->amount_mb > 300) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "UE detach wait exceeds 300 seconds");
+        return ULAB_ERR;
+    }
+
+    if (event->amount_mb > 0) {
+        current = getenv("ULAB_UE_DETACH_TIMEOUT");
+        if (current != NULL) {
+            previous = strdup(current);
+            if (previous == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "failed to save UE detach timeout");
+                return ULAB_ERR;
+            }
+        }
+
+        snprintf(timeout, sizeof(timeout), "%llu",
+                 (unsigned long long)event->amount_mb);
+        if (setenv("ULAB_UE_DETACH_TIMEOUT", timeout, 1) != 0) {
+            free(previous);
+            snprintf(err->msg, sizeof(err->msg),
+                     "failed to set UE detach timeout");
+            return ULAB_ERR;
+        }
+    }
+
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc == ULAB_OK) {
+        rc = runtime_wait_ues_detached(ctx->runtime,
+                                       ctx->world,
+                                       &res,
+                                       err);
+    }
+    selector_result_free(&res);
+
+    if (event->amount_mb > 0) {
+        if (previous != NULL) {
+            setenv("ULAB_UE_DETACH_TIMEOUT", previous, 1);
+        } else {
+            unsetenv("ULAB_UE_DETACH_TIMEOUT");
+        }
+    }
+    free(previous);
+
+    return rc;
+}
+
 static int event_wait_ue_sessions(event_ctx_t *ctx,
                                   const event_spec_t *event,
                                   ulab_error_t *err) {
@@ -851,6 +909,9 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_WAIT_UES_ATTACHED:
         return event_wait_ues_attached(ctx, event, err);
+
+    case EVT_WAIT_UES_DETACHED:
+        return event_wait_ues_detached(ctx, event, err);
 
     case EVT_WAIT_UE_SESSIONS:
         return event_wait_ue_sessions(ctx, event, err);
