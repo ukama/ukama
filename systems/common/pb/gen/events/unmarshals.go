@@ -293,6 +293,16 @@ func UnmarshalEventOrgRegisterUser(msg *anypb.Any, emsg string) (*EventOrgRegist
 	return p, nil
 }
 
+func UnmarshalEventReceiptGenerated(msg *anypb.Any, emsg string) (*EventReceiptGenerated, error) {
+	p := &EventReceiptGenerated{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalEventRegistryNodeAssign(msg *anypb.Any, emsg string) (*EventRegistryNodeAssign, error) {
 	p := &EventRegistryNodeAssign{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
@@ -993,12 +1003,3 @@ func UnmarshalWebhookDeletedEvent(msg *anypb.Any, emsg string) (*WebhookDeletedE
 	return p, nil
 }
 
-func UnmarshalEventReceiptGenerated(msg *anypb.Any, emsg string) (*EventReceiptGenerated, error) {
-	p := &EventReceiptGenerated{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
