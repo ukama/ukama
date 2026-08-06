@@ -20,16 +20,29 @@ import (
 	usql "github.com/ukama/ukama/systems/common/sql"
 )
 
-// LivenessService is the grpc.health.v1 service name that always reports
-// SERVING while the process is up. Point Kubernetes liveness probes at it
-// (grpc: {port: 9090, service: "live"}) so dependency failures never cause
-// pod restarts; only readiness (the default "" service) reflects them.
+// LivenessService is the grpc.health.v1 service name for Kubernetes
+// liveness probes (grpc: {port: 9090, service: "live"}). It reports SERVING
+// while the process is healthy and, unlike the default "" service, does NOT
+// react to short dependency outages — only readiness does. It escalates to
+// NOT_SERVING when a critical dependency stays down for
+// DependencyRestartThreshold consecutive checks, so kubelet restarts a
+// container that has been degraded for a prolonged period (fresh
+// connections often fix wedged pools/consumers), while brief blips never
+// cause restarts.
 const LivenessService = "live"
 
 const (
 	defaultDependencyInterval      = 15 * time.Second
 	defaultDependencyTimeout       = 3 * time.Second
 	defaultDependencyFailThreshold = 3
+
+	// defaultDependencyRestartThreshold is the number of consecutive
+	// failed checks of a critical dependency after which the "live"
+	// status also flips to NOT_SERVING, asking kubelet to restart the
+	// container. With the default 15s interval: readiness fails at
+	// ~45s (3 failures), liveness at ~60s (4 failures). Must be greater
+	// than the fail threshold.
+	defaultDependencyRestartThreshold = 4
 )
 
 // dependency is one registered dependency check with its flap state.
@@ -72,6 +85,14 @@ type dependencyState struct {
 	DependencyInterval      time.Duration
 	DependencyTimeout       time.Duration
 	DependencyFailThreshold int
+
+	// DependencyRestartThreshold is the number of consecutive failures of
+	// a critical dependency after which the LivenessService ("live")
+	// status flips to NOT_SERVING so kubelet restarts the container.
+	// Zero uses defaultDependencyRestartThreshold. Values <= the fail
+	// threshold are raised to failThreshold+1 so readiness always fails
+	// before liveness does.
+	DependencyRestartThreshold int
 }
 
 func (g *UkamaGrpcServer) startDependencyMonitor() {
@@ -95,6 +116,13 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 	if threshold <= 0 {
 		threshold = defaultDependencyFailThreshold
 	}
+	restartThreshold := g.DependencyRestartThreshold
+	if restartThreshold <= 0 {
+		restartThreshold = defaultDependencyRestartThreshold
+	}
+	if restartThreshold <= threshold {
+		restartThreshold = threshold + 1
+	}
 
 	g.depStop = make(chan struct{})
 
@@ -102,7 +130,7 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 
 	go func() {
 		// Run once immediately so status is meaningful right after boot.
-		g.runDependencyChecks(timeout, threshold)
+		g.runDependencyChecks(timeout, threshold, restartThreshold)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -110,7 +138,7 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 		for {
 			select {
 			case <-ticker.C:
-				g.runDependencyChecks(timeout, threshold)
+				g.runDependencyChecks(timeout, threshold, restartThreshold)
 			case <-g.depStop:
 				return
 			}
@@ -125,11 +153,12 @@ func (g *UkamaGrpcServer) stopDependencyMonitor() {
 	}
 }
 
-func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold int) {
+func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold, restartThreshold int) {
 	g.depMu.Lock()
 	defer g.depMu.Unlock()
 
 	criticalDown := false
+	criticalRestart := false
 
 	for _, d := range g.deps {
 		ctx, cancel := context.WithTimeout(context.Background(), timeout)
@@ -143,6 +172,11 @@ func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold i
 				d.down = true
 				log.Errorf("Dependency %q is DOWN after %d consecutive failures: %v",
 					d.name, d.failures, err)
+			}
+			if d.critical && d.failures == restartThreshold {
+				log.Errorf("Critical dependency %q still down after %d consecutive failures: "+
+					"flipping liveness (%q) to NOT_SERVING to request a container restart",
+					d.name, d.failures, LivenessService)
 			}
 		} else {
 			if d.down {
@@ -158,6 +192,9 @@ func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold i
 			st = healthpb.HealthCheckResponse_NOT_SERVING
 			if d.critical {
 				criticalDown = true
+				if d.failures >= restartThreshold {
+					criticalRestart = true
+				}
 			}
 		}
 		g.GrpcHealth.SetServingStatus(d.name, st)
@@ -168,6 +205,15 @@ func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold i
 		overall = healthpb.HealthCheckResponse_NOT_SERVING
 	}
 	g.GrpcHealth.SetServingStatus("", overall)
+
+	// Escalation: a critical dependency down for restartThreshold
+	// consecutive checks flips liveness so kubelet recreates the
+	// container; recovery flips it back.
+	live := healthpb.HealthCheckResponse_SERVING
+	if criticalRestart {
+		live = healthpb.HealthCheckResponse_NOT_SERVING
+	}
+	g.GrpcHealth.SetServingStatus(LivenessService, live)
 }
 
 // DBCheck returns a dependency check that pings the service's database.
