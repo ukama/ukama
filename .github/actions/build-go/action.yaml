@@ -8,6 +8,9 @@ inputs:
   working-directory:
     description: The working directory for the application
     required: true
+  project-key:
+    description: Sonarcloud project key, used to name the code coverage artifact
+    required: true
   github-bot-token:
     description: The github bot token
     required: true
@@ -59,14 +62,14 @@ runs:
 
   - name: Test
     shell: bash
-    run: go test -v ./... -coverprofile=code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
+    run: go test -v ./... -coverprofile=code-coverage-${{ inputs.project-key }}-${{ github.run_number }}.out
     working-directory: ${{ inputs.working-directory }}
 
   - name: Archive code coverage results
     uses: actions/upload-artifact@v4
     with:
-      name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
-      path: ${{ inputs.working-directory }}/code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
+      name: code-coverage-${{ inputs.project-key }}-${{ github.run_number }}
+      path: ${{ inputs.working-directory }}/code-coverage-${{ inputs.project-key }}-${{ github.run_number }}.out
 
   - name: Configure AWS credentials
     uses: aws-actions/configure-aws-credentials@v1
