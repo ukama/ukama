@@ -1,8 +1,6 @@
 version: 1
 name: p0-tc-023-failed-site-operation-releases-lock
-description: >-
-  Hold a restarted virtual site offline and verify the backend releases its
-  site-operation lock after the restart times out.
+description: Hold a restarted virtual site offline and verify the backend releases its site-operation lock after the restart times out.
 seed: 5023
 suite: p0
 priority: p0
