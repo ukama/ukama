@@ -19,14 +19,27 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout    time.Duration
+	Network    string
+	Member     string
+	Node       string
+	Invitation string
+	Site       string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Each field is overridable via env vars
+// (DESCRIPTIONS_NETWORK, DESCRIPTIONS_MEMBER, ...) without a code change.
+type ServiceDescriptions struct {
 	Network    string
 	Member     string
 	Node       string
@@ -56,6 +69,13 @@ func NewConfig() *Config {
 			Node:       "node:9090",
 			Invitation: "invitation:9090",
 			Site:       "site:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Network:    "Network management: creating, listing and updating networks and their settings",
+			Member:     "Organization members: listing, adding, updating and removing members",
+			Node:       "Node management: node onboarding, state updates, attach/detach and site assignment",
+			Invitation: "User invitations: sending, accepting and managing organization invitations",
+			Site:       "Site management: creating, listing and updating sites of a network",
 		},
 		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,

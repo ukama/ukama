@@ -112,6 +112,9 @@ func runGrpcServer(d sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, nSrv)
 	})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(d))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
