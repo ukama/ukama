@@ -31,17 +31,35 @@ import (
 // cause restarts.
 const LivenessService = "live"
 
+// All dependency state transitions are driven by ATTEMPT COUNTS, never by
+// elapsed time: each tick every check is attempted once, a failed attempt
+// increments that dependency's consecutive-failure counter, and a
+// successful one resets it to zero. The thresholds below are counts of
+// consecutive failed attempts. Durations in comments are only the derived
+// worst case (count x interval) for Kubernetes probe tuning.
 const (
-	defaultDependencyInterval      = 15 * time.Second
-	defaultDependencyTimeout       = 3 * time.Second
+	// defaultDependencyCheckInterval is how often one check attempt runs
+	// for each registered dependency. This is the cadence the failure
+	// counters advance at; it is NOT a health criterion by itself.
+	defaultDependencyCheckInterval = 15 * time.Second
+
+	// defaultDependencyCheckTimeout is the deadline embedded in the
+	// context of ONE check attempt. It bounds a single call so a hung
+	// dependency cannot stall the monitor; it is NOT a health criterion.
+	// An attempt that exceeds it simply counts as one more failure.
+	defaultDependencyCheckTimeout = 3 * time.Second
+
+	// defaultDependencyFailThreshold is the count of consecutive failed
+	// attempts after which a dependency is marked down: its named status
+	// and, when critical, the default "" (readiness) status flip to
+	// NOT_SERVING (3 failures ~= 45s at the 15s interval).
 	defaultDependencyFailThreshold = 3
 
-	// defaultDependencyRestartThreshold is the number of consecutive
-	// failed checks of a critical dependency after which the "live"
+	// defaultDependencyRestartThreshold is the count of consecutive
+	// failed attempts of a critical dependency after which the "live"
 	// status also flips to NOT_SERVING, asking kubelet to restart the
-	// container. With the default 15s interval: readiness fails at
-	// ~45s (3 failures), liveness at ~60s (4 failures). Must be greater
-	// than the fail threshold.
+	// container (4 failures ~= 60s at the 15s interval). Must be greater
+	// than the fail threshold so readiness always fails before liveness.
 	defaultDependencyRestartThreshold = 4
 )
 
@@ -82,16 +100,25 @@ type dependencyState struct {
 	depStop chan struct{}
 
 	// Overridable before StartServer; zero values use defaults.
-	DependencyInterval      time.Duration
-	DependencyTimeout       time.Duration
+
+	// DependencyCheckInterval is how often one check attempt runs for
+	// each registered dependency.
+	DependencyCheckInterval time.Duration
+
+	// DependencyCheckTimeout is the per-attempt call deadline (embedded
+	// in each check's context). It is not a health criterion.
+	DependencyCheckTimeout time.Duration
+
+	// DependencyFailThreshold is the count of consecutive failed
+	// attempts after which a dependency is marked down (readiness).
 	DependencyFailThreshold int
 
-	// DependencyRestartThreshold is the number of consecutive failures of
-	// a critical dependency after which the LivenessService ("live")
-	// status flips to NOT_SERVING so kubelet restarts the container.
-	// Zero uses defaultDependencyRestartThreshold. Values <= the fail
-	// threshold are raised to failThreshold+1 so readiness always fails
-	// before liveness does.
+	// DependencyRestartThreshold is the count of consecutive failed
+	// attempts of a critical dependency after which the LivenessService
+	// ("live") status flips to NOT_SERVING so kubelet restarts the
+	// container. Zero uses defaultDependencyRestartThreshold. Values <=
+	// the fail threshold are raised to failThreshold+1 so readiness
+	// always fails before liveness does.
 	DependencyRestartThreshold int
 }
 
@@ -104,13 +131,13 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 		return
 	}
 
-	interval := g.DependencyInterval
+	interval := g.DependencyCheckInterval
 	if interval <= 0 {
-		interval = defaultDependencyInterval
+		interval = defaultDependencyCheckInterval
 	}
-	timeout := g.DependencyTimeout
-	if timeout <= 0 {
-		timeout = defaultDependencyTimeout
+	checkTimeout := g.DependencyCheckTimeout
+	if checkTimeout <= 0 {
+		checkTimeout = defaultDependencyCheckTimeout
 	}
 	threshold := g.DependencyFailThreshold
 	if threshold <= 0 {
@@ -130,7 +157,7 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 
 	go func() {
 		// Run once immediately so status is meaningful right after boot.
-		g.runDependencyChecks(timeout, threshold, restartThreshold)
+		g.runDependencyChecks(checkTimeout, threshold, restartThreshold)
 
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
@@ -138,7 +165,7 @@ func (g *UkamaGrpcServer) startDependencyMonitor() {
 		for {
 			select {
 			case <-ticker.C:
-				g.runDependencyChecks(timeout, threshold, restartThreshold)
+				g.runDependencyChecks(checkTimeout, threshold, restartThreshold)
 			case <-g.depStop:
 				return
 			}
@@ -153,7 +180,7 @@ func (g *UkamaGrpcServer) stopDependencyMonitor() {
 	}
 }
 
-func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold, restartThreshold int) {
+func (g *UkamaGrpcServer) runDependencyChecks(checkTimeout time.Duration, threshold, restartThreshold int) {
 	g.depMu.Lock()
 	defer g.depMu.Unlock()
 
@@ -161,7 +188,7 @@ func (g *UkamaGrpcServer) runDependencyChecks(timeout time.Duration, threshold, 
 	criticalRestart := false
 
 	for _, d := range g.deps {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		ctx, cancel := context.WithTimeout(context.Background(), checkTimeout)
 		err := d.check(ctx)
 		cancel()
 
