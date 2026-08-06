@@ -131,7 +131,7 @@ func TestRuleMatches(t *testing.T) {
 
 	assert.True(t, ruleMatches("substate=on", tr))
 	assert.True(t, ruleMatches("state=Configured,substate=on", tr))
-	assert.False(t, ruleMatches("state=Operational", tr))
+	assert.False(t, ruleMatches("state=Ready", tr))
 	assert.False(t, ruleMatches("", tr))
 	assert.False(t, ruleMatches("garbage", tr))
 }

@@ -290,7 +290,7 @@ func TestNode_List(t *testing.T) {
 		node := NewNodeFromClient(mockClient)
 
 		request := &pb.ListRequest{
-			State:        cpb.NodeState_Operational,
+			State:        cpb.NodeState_Ready,
 			Connectivity: cpb.NodeConnectivity_Online,
 		}
 

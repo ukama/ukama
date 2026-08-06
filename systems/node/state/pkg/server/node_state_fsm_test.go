@@ -36,17 +36,17 @@ func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
 		instance := newNodeInstance(t, "faulty-ready", "Faulty")
 
 		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+		assert.Equal(t, "Ready", instance.CurrentState)
 	})
 
 	t.Run("operational to faulty and back again", func(t *testing.T) {
-		instance := newNodeInstance(t, "fault-round-trip", "Operational")
+		instance := newNodeInstance(t, "fault-round-trip", "Ready")
 
 		require.NoError(t, instance.Transition("fault"))
 		assert.Equal(t, "Faulty", instance.CurrentState)
 
 		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+		assert.Equal(t, "Ready", instance.CurrentState)
 	})
 
 	t.Run("faulty node still reaches configured on config", func(t *testing.T) {
@@ -68,7 +68,7 @@ func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
 }
 
 func TestNodeStateFsm_RepeatReadyInOperational(t *testing.T) {
-	instance := newNodeInstance(t, "operational-repeat-ready", "Operational")
+	instance := newNodeInstance(t, "operational-repeat-ready", "Ready")
 
 	require.NoError(t, instance.Transition("online"))
 	assert.Equal(t, "on", instance.CurrentSubstate)
@@ -76,7 +76,7 @@ func TestNodeStateFsm_RepeatReadyInOperational(t *testing.T) {
 	err := instance.Transition("ready")
 
 	assert.NoError(t, err)
-	assert.Equal(t, "Operational", instance.CurrentState)
+	assert.Equal(t, "Ready", instance.CurrentState)
 	assert.Equal(t, "on", instance.CurrentSubstate)
 }
 
@@ -88,7 +88,7 @@ func TestNodeStateFsm_ConfiguredReadyKeepsSubstate(t *testing.T) {
 
 	require.NoError(t, instance.Transition("ready"))
 
-	assert.Equal(t, "Operational", instance.CurrentState)
+	assert.Equal(t, "Ready", instance.CurrentState)
 	assert.Equal(t, "on", instance.CurrentSubstate,
 		"ready must not move the substate into update")
 }
@@ -100,7 +100,7 @@ func TestNodeStateFsm_OnboardingFromUnknown(t *testing.T) {
 	assert.Equal(t, "Configured", instance.CurrentState)
 
 	require.NoError(t, instance.Transition("ready"))
-	assert.Equal(t, "Operational", instance.CurrentState)
+	assert.Equal(t, "Ready", instance.CurrentState)
 }
 
 func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
@@ -113,7 +113,7 @@ func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
 		published++
 	})
 
-	instance, err := sm.NewInstance(nodeStateConfigPath, "no-op-publish", "Operational")
+	instance, err := sm.NewInstance(nodeStateConfigPath, "no-op-publish", "Ready")
 	require.NoError(t, err)
 
 	require.NoError(t, instance.Transition("online"))
@@ -138,10 +138,10 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 	first, err := srv.getOrCreateInstance(nodeId, "Configured", "on")
 	require.NoError(t, err)
 	require.NoError(t, first.Transition("ready"))
-	require.Equal(t, "Operational", first.CurrentState)
+	require.Equal(t, "Ready", first.CurrentState)
 
 	t.Run("returns the cached instance when it matches stored state", func(t *testing.T) {
-		same, err := srv.getOrCreateInstance(nodeId, "Operational", "on")
+		same, err := srv.getOrCreateInstance(nodeId, "Ready", "on")
 
 		require.NoError(t, err)
 		assert.Same(t, first, same)
@@ -157,7 +157,7 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 			"stored substate must survive the rebuild")
 
 		require.NoError(t, resynced.Transition("ready"))
-		assert.Equal(t, "Operational", resynced.CurrentState,
+		assert.Equal(t, "Ready", resynced.CurrentState,
 			"resynced instance must transition from the stored state")
 	})
 }
@@ -205,7 +205,7 @@ func TestNodeStateFsm_ReadyBeforeOnboardingIsLatched(t *testing.T) {
 		require.Equal(t, "Configured", instance.CurrentState)
 
 		require.NoError(t, instance.Transition(NodeNotifyEventReady))
-		assert.Equal(t, "Operational", instance.CurrentState,
+		assert.Equal(t, "Ready", instance.CurrentState,
 			"the latched ready replayed after onboarding must reach Operational")
 	})
 }
@@ -215,4 +215,52 @@ func TestIsHealthEvent(t *testing.T) {
 	assert.True(t, isHealthEvent(NodeNotifyEventFault))
 	assert.False(t, isHealthEvent("online"))
 	assert.False(t, isHealthEvent("onboarding"))
+}
+
+func TestShouldLatch(t *testing.T) {
+	t.Run("latches health events only before onboarding", func(t *testing.T) {
+		assert.True(t, shouldLatch("Unknown", NodeNotifyEventReady))
+		assert.True(t, shouldLatch("Unknown", NodeNotifyEventFault))
+	})
+
+	t.Run("never latches once the node is known", func(t *testing.T) {
+		for _, state := range []string{"Configured", "Ready", "Faulty"} {
+			assert.False(t, shouldLatch(state, NodeNotifyEventReady),
+				"a duplicate ready in %s must not be latched", state)
+			assert.False(t, shouldLatch(state, NodeNotifyEventFault),
+				"a duplicate fault in %s must not be latched", state)
+		}
+	})
+
+	t.Run("never latches non health events", func(t *testing.T) {
+		assert.False(t, shouldLatch("Unknown", "online"))
+		assert.False(t, shouldLatch("Unknown", "onboarding"))
+	})
+}
+
+func TestNodeStateFsm_ReadyRequiresOnline(t *testing.T) {
+	t.Run("a node reaches Ready only through onboarding then configured", func(t *testing.T) {
+		instance := newNodeInstance(t, "ready-path", "Unknown")
+
+		require.NoError(t, instance.Transition("online"))
+		require.Equal(t, "on", instance.CurrentSubstate)
+
+		require.NoError(t, instance.Transition(NodeNotifyEventReady))
+		assert.Equal(t, "Unknown", instance.CurrentState,
+			"ready must not reach Ready before the node is onboarded")
+
+		require.NoError(t, instance.Transition("onboarding"))
+		require.Equal(t, "Configured", instance.CurrentState)
+
+		require.NoError(t, instance.Transition(NodeNotifyEventReady))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+
+	t.Run("an offline node keeps its substate off", func(t *testing.T) {
+		instance := newNodeInstance(t, "ready-offline", "Configured")
+
+		require.NoError(t, instance.Transition("offline"))
+		assert.Equal(t, "off", instance.CurrentSubstate,
+			"an offline node must not be treated as online")
+	})
 }

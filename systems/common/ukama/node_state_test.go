@@ -30,8 +30,8 @@ func TestNodeState(t *testing.T) {
 
 		assert.NotNil(t, operationalState)
 		assert.Equal(t, uint8(operationalState), uint8(2))
-		assert.Equal(t, operationalState.String(), ukama.NodeStateOperational.String())
-		assert.True(t, ukama.IsValidNodeState("operational"))
+		assert.Equal(t, operationalState.String(), ukama.NodeStateReady.String())
+		assert.True(t, ukama.IsValidNodeState("ready"))
 	})
 
 	t.Run("NodeStateNonValidString", func(tt *testing.T) {
