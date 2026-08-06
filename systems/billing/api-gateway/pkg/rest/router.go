@@ -40,9 +40,11 @@ type Router struct {
 }
 
 type RouterConfig struct {
-	debugMode  bool
-	serverConf *rest.HttpConfig
-	auth       *config.Auth
+	debugMode     bool
+	serverConf    *rest.HttpConfig
+	auth          *config.Auth
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -74,9 +76,11 @@ func NewRouter(clients *Clients, config *RouterConfig, authfunc func(*gin.Contex
 
 func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
-		serverConf: &svcConf.Server,
-		debugMode:  svcConf.DebugMode,
-		auth:       svcConf.Auth,
+		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
+		debugMode:     svcConf.DebugMode,
+		auth:          svcConf.Auth,
 	}
 }
 
@@ -92,6 +96,18 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName,
 		version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"report":    {Host: r.config.grpcEndpoints.Report, Description: desc.Report},
+			"collector": {Host: r.config.grpcEndpoints.Collector, Description: desc.Collector},
+		}, r.config.grpcEndpoints.Timeout)
+	}
 
 	auth := r.f.Group("/v1", "API GW ", "Payments system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
