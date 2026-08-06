@@ -21,6 +21,11 @@
 #define NODE_CONNECTIVITY_POLL_DEFAULT_SEC 2u
 #define NODE_CONNECTIVITY_POLL_MAX_SEC     30u
 
+static int site_node_selection(const world_t *world,
+                               const site_t *site,
+                               selector_result_t *nodes,
+                               ulab_error_t *err);
+
 static int event_state_enabled(const event_spec_t *event, int *enabled,
                                ulab_error_t *err) {
     if (ulab_streq(event->status, "on") ||
@@ -297,11 +302,23 @@ static int event_restart_nodes(event_ctx_t *ctx,
 
     for (i = 0; i < res.count; i++) {
         node_t *node;
+        selector_result_t selected;
 
         node = &ctx->world->nodes[res.idx[i]];
         if (bff_restart_node(ctx->bff, node, err)) {
             selector_result_free(&res);
             return ULAB_ERR;
+        }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "node_restart")) {
+            selected.idx = &res.idx[i];
+            selected.count = 1;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &selected,
+                                   "node_restart", err)) {
+                selector_result_free(&res);
+                return ULAB_ERR;
+            }
         }
     }
 
@@ -582,6 +599,21 @@ static int event_restart_site(event_ctx_t *ctx,
             selector_result_free(&sites);
             return ULAB_ERR;
         }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "site_restart")) {
+            selector_result_t nodes;
+
+            memset(&nodes, 0, sizeof(nodes));
+            if (site_node_selection(ctx->world, site, &nodes, err) ||
+                runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
+                                   "site_restart", err)) {
+                selector_result_free(&nodes);
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            selector_result_free(&nodes);
+        }
     }
 
     selector_result_free(&sites);
@@ -771,6 +803,19 @@ static int event_software_update(event_ctx_t *ctx,
                                 event->tag, err)) {
             selector_result_free(&res);
             return ULAB_ERR;
+        }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "software_timeout")) {
+            selector_result_t selected;
+
+            selected.idx = &res.idx[i];
+            selected.count = 1;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &selected,
+                                   "software_timeout", err)) {
+                selector_result_free(&res);
+                return ULAB_ERR;
+            }
         }
     }
 

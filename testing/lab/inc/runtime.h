@@ -70,6 +70,11 @@ int runtime_set_failure_control(runtime_t *rt,
                                 const char *target,
                                 int enabled,
                                 ulab_error_t *err);
+int runtime_failure_control_enabled(const runtime_t *rt,
+                                    const char *target);
+int runtime_hold_nodes(runtime_t *rt, const world_t *w,
+                       const selector_result_t *nodes,
+                       const char *target, ulab_error_t *err);
 int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err);
 int runtime_set_node_version(runtime_t *rt, const char *version,
                              ulab_error_t *err);
