@@ -57,7 +57,7 @@
           "trigger": ["config"]
         },
         {
-          "to_state": "Operational",
+          "to_state": "Ready",
           "trigger": ["ready"]
         }
       ],
@@ -107,7 +107,7 @@
       }
     },
     {
-      "name": "Operational",
+      "name": "Ready",
       "description": "Node is fully operational and part of a site",
       "events": [
         "online",
@@ -174,7 +174,7 @@
           "trigger": ["config", "upgrade", "downgrade"]
         },
         {
-          "to_state": "Operational",
+          "to_state": "Ready",
           "trigger": ["ready"]
         }
       ],

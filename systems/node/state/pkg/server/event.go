@@ -405,10 +405,10 @@ import (
 	 }
  
 	 if !changed {
-		 if isHealthEvent(eventName) {
+		 if shouldLatch(instance.CurrentState, eventName) {
 			 n.latchHealthEvent(nodeId, eventName)
-			 log.Infof("Node %s cannot accept %s in state %s, latching it until the node transitions",
-				 nodeId, eventName, instance.CurrentState)
+			 log.Infof("Node %s received %s before onboarding, latching it until the node transitions",
+				 nodeId, eventName)
 		 }
  
 		 return nil
@@ -416,6 +416,13 @@ import (
  
 	 latched, ok := n.takeLatchedHealthEvent(nodeId)
 	 if !ok {
+		 return nil
+	 }
+ 
+	 if latched == NodeNotifyEventReady && instance.CurrentSubstate != DefaultSubstate {
+		 log.Infof("Discarding latched ready for node %s: node is %s, not online",
+			 nodeId, instance.CurrentSubstate)
+ 
 		 return nil
 	 }
  
@@ -474,6 +481,14 @@ import (
 	 return eventName == NodeNotifyEventReady || eventName == NodeNotifyEventFault
  }
  
+ // shouldLatch reports whether an event that produced no transition is the pre-onboarding
+ // race worth replaying. Health events are only meaningful later while the node is still
+ // Unknown; in any other state they are a genuine no-op and latching them would let a stale
+ // event fire after a real transition.
+ func shouldLatch(currentState, eventName string) bool {
+	 return currentState == npb.NodeState_Unknown.String() && isHealthEvent(eventName)
+ }
+ 
  func (n *StateEventServer) latchHealthEvent(nodeID, eventName string) {
 	 n.latchedMu.Lock()
 	 defer n.latchedMu.Unlock()
@@ -528,10 +543,10 @@ import (
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
 	 }
 	 
-	 if instance.CurrentState == prevState && isHealthEvent(eventName) {
+	 if instance.CurrentState == prevState && shouldLatch(instance.CurrentState, eventName) {
 		 n.latchHealthEvent(nodeId, eventName)
-		 log.Infof("Node %s cannot accept %s in state %s, latching it until the node transitions",
-			 nodeId, eventName, instance.CurrentState)
+		 log.Infof("Node %s received %s before onboarding, latching it until the node transitions",
+			 nodeId, eventName)
 	 }
 	 
 	 if instance.CurrentSubstate == "" {

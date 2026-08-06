@@ -92,7 +92,7 @@ type ListNodesRequest struct {
 	NetworkId    string `json:"network_id" query:"network_id"`
 	SiteId       string `json:"site_id" query:"site_id"`
 	Connectivity string `json:"connectivity,omitempty" validate:"omitempty,eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" enums:"unknown,online,high,offline"`
-	State        string `json:"state,omitempty" validate:"omitempty,eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" enums:"unknown,configured,operational,faulty"`
+	State        string `json:"state,omitempty" validate:"omitempty,eq=unknown|eq=configured|eq=ready|eq=faulty" query:"state" enums:"unknown,configured,ready,faulty"`
 	NodeId       string `json:"node_id" query:"node_id"`
 	Type         string `json:"type" query:"type"`
 }
@@ -115,7 +115,7 @@ type GetNodeRequest struct {
 
 type GetNodesByStateRequest struct {
 	Connectivity string `form:"connectivity" json:"connectivity,omitempty" validate:"eq=unknown|eq=online|eq=high|eq=offline" query:"connectivity" binding:"required"`
-	State        string `form:"state" json:"state,omitempty" validate:"eq=unknown|eq=configured|eq=operational|eq=faulty" query:"state" binding:"required"`
+	State        string `form:"state" json:"state,omitempty" validate:"eq=unknown|eq=configured|eq=ready|eq=faulty" query:"state" binding:"required"`
 }
 
 type GetOrgNodesRequest struct {
