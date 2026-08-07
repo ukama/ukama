@@ -44,6 +44,13 @@ void ue_store_destroy(void) {
     pthread_mutex_destroy(&gLock);
 }
 
+void ue_clear_all(void) {
+
+    pthread_mutex_lock(&gLock);
+    memset(gUes, 0, sizeof(gUes));
+    pthread_mutex_unlock(&gLock);
+}
+
 static int find_idx_imsi_locked(const char *imsi) {
 
     int i;
