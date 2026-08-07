@@ -94,9 +94,12 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	healthpb.RegisterHealthServer(server, g.GrpcHealth)
 	g.GrpcHealth.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
 
-	// Static liveness target: always SERVING while the process is up, so
-	// liveness probes (grpc service: "live") never react to dependency
-	// failures. Only the default "" status above is dependency-aware.
+	// Liveness target: SERVING while the process is up. Liveness probes
+	// (grpc service: "live") do not react to short dependency failures —
+	// only the default "" status above does. The dependency monitor
+	// escalates "live" to NOT_SERVING when a critical dependency stays
+	// down past DependencyRestartThreshold, so kubelet restarts the
+	// container (see dependency.go).
 	g.GrpcHealth.SetServingStatus(LivenessService, healthpb.HealthCheckResponse_SERVING)
 
 	// Monitors registered dependency checks (no-op when none registered)

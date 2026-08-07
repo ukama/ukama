@@ -30,7 +30,7 @@ require (
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260805212116-e7020ae0e359
+	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260807072710-2f2cc710cf28
 	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v2 v2.4.0

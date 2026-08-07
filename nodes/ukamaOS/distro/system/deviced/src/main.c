@@ -149,6 +149,7 @@ int main(int argc, char **argv) {
     serviceConfig.notifydPort  = usys_find_service_port(SERVICE_NOTIFY);
     serviceConfig.femPort      = usys_find_service_port(SERVICE_FEM);
     serviceConfig.pcrfPort     = usys_find_service_port(SERVICE_PCRF);
+    serviceConfig.epcemuPort   = usys_find_service_port(SERVICE_EPCEMU);
     serviceConfig.nodeID       = NULL;
     serviceConfig.nodeType     = NULL;
     serviceConfig.clientMode   = clientMode;
@@ -200,6 +201,13 @@ int main(int argc, char **argv) {
         }
 
         if (node_is_tower(&serviceConfig)) {
+            if (serviceConfig.epcemuPort <= 0) {
+                usys_log_error("Unable to determine the service port for %s",
+                               SERVICE_EPCEMU);
+                exitCode = USYS_TRUE;
+                goto done;
+            }
+
             usys_log_info("Remote client reboot is %s",
                           serviceConfig.remoteClientRebootOptional ?
                           "optional" : "required");

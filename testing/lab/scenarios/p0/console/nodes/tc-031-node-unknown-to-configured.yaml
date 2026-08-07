@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-031-node-unknown-to-configured
-description: Start nodes without a site, verify Unknown, create the site while holding node readiness, and verify the nodes reach Configured while Offline before final recovery.
+description: Verify Node Pool reports Unknown before assignment, Nodes List reports Configured/Offline while readiness is held, and Operational/Online after recovery.
 seed: 5031
 suite: p0
 priority: p0
@@ -26,6 +26,7 @@ phases:
   - name: verify_unknown
     checks:
       - type: node_status_equals
+        view: node_pool
         nodes: all
         connectivity: Online
         state: Unknown
@@ -37,6 +38,7 @@ phases:
         state: hold
     checks:
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Offline
         state: Configured
@@ -49,3 +51,10 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 180
+    checks:
+      - type: node_status_equals
+        view: nodes_list
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

@@ -109,6 +109,8 @@ func runGrpcServer() {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)
 	})
 
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)

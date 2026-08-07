@@ -19,14 +19,24 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout   time.Duration
+	Bootstrap string
+	Reflector string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
 	Bootstrap string
 	Reflector string
 }
@@ -50,6 +60,10 @@ func NewConfig() *Config {
 			Timeout:   3 * time.Second,
 			Bootstrap: "bootstrap:9090",
 			Reflector: "reflector:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Bootstrap: "Node bootstrap: first-contact endpoint nodes use to join the network",
+			Reflector: "Reflector: reflecting incoming node requests to system endpoints",
 		},
 
 		Http: HttpEndpoints{
