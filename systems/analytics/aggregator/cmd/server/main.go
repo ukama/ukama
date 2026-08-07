@@ -128,6 +128,9 @@ func run(sDb sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, eventServer)
 	})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(sDb))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go grpcServer.StartServer()
 	go msgBusListener(mbClient)
 	go engine.StartSweeper()

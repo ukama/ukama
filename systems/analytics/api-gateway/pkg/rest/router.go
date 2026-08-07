@@ -39,6 +39,8 @@ type RouterConfig struct {
 	debugMode     bool
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 // aggregator is the interface the router needs; satisfied by client.Aggregator.
@@ -65,6 +67,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 	return &RouterConfig{
 		metricsConfig: svcConf.Metrics,
 		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
 	}
@@ -97,6 +101,19 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version,
 		r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"aggregator": {Host: r.config.grpcEndpoints.Aggregator, Description: desc.Aggregator},
+			"ingest":     {Host: r.config.grpcEndpoints.Ingest, Description: desc.Ingest},
+			"analysis":   {Host: r.config.grpcEndpoints.Analysis, Description: desc.Analysis},
+		}, r.config.grpcEndpoints.Timeout)
+	}
 
 	auth := r.f.Group("/v1", "Analytics API gateway", "Analytics system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {

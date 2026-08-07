@@ -89,6 +89,9 @@ func runGrpcServer(gormDb sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, eventServer)
 	})
 
+	grpcSrv.RegisterDependency("db", true, ugrpc.DBCheck(gormDb))
+	grpcSrv.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go server.NewSweeper(repo).Run(ctx)
