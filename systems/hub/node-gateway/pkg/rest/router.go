@@ -45,6 +45,8 @@ type RouterConfig struct {
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
 	distributor   string
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -91,6 +93,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
 		distributor:   svcConf.Http.Distributor,
@@ -107,6 +111,19 @@ func (r *Router) Run() {
 
 func (r *Router) init(f func(*gin.Context, string) error) {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, true, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"artifact-manager": {Host: r.config.grpcEndpoints.ArtifactManager, Description: desc.ArtifactManager},
+			"distributor":      {Host: r.config.grpcEndpoints.Distributor, Description: desc.Distributor},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "Node Gateway", "Hub system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
