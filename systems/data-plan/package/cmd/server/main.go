@@ -90,6 +90,9 @@ func runGrpcServer(gormdb sql.Db) {
 		generated.RegisterPackagesServiceServer(s, srv)
 	})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormdb))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()

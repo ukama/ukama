@@ -371,7 +371,7 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	return nil
 }
 
-func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscriber,
+func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.EventSubscriberAdded,
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -379,11 +379,11 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 	defer cancel()
 
 	customer := client.Customer{
-		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.Name,
-		Email:   subscriber.Subscriber.Email,
-		Address: subscriber.Subscriber.Address,
-		Phone:   subscriber.Subscriber.PhoneNumber,
+		Id:      subscriber.SubscriberId,
+		Name:    subscriber.Name,
+		Email:   subscriber.Email,
+		Address: subscriber.Address,
+		Phone:   subscriber.PhoneNumber,
 		Type:    client.IndividualCustomerType,
 	}
 
@@ -395,12 +395,12 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.AddSubscrib
 	}
 
 	log.Infof("New billing customer: %q", customerBillingId)
-	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.Subscriber.SubscriberId)
+	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.SubscriberId)
 
 	return nil
 }
 
-func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubscriber,
+func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.EventSubscriberUpdate,
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
@@ -408,11 +408,10 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 	defer cancel()
 
 	customer := client.Customer{
-		Id:      subscriber.Subscriber.SubscriberId,
-		Name:    subscriber.Subscriber.Name,
-		Email:   subscriber.Subscriber.Email,
-		Address: subscriber.Subscriber.Address,
-		Phone:   subscriber.Subscriber.PhoneNumber,
+		Id:      subscriber.SubscriberId,
+		Email:   subscriber.Email,
+		Address: subscriber.Address,
+		Phone:   subscriber.PhoneNumber,
 	}
 
 	log.Infof("Sending subscriber update event %v to billing", customer)
@@ -426,19 +425,19 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.UpdateSubsc
 		customerBillingId)
 
 	log.Infof("Successfuly updated subscriber %q",
-		subscriber.Subscriber.SubscriberId)
+		subscriber.SubscriberId)
 
 	return nil
 }
 
-func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.RemoveSubscriber,
+func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.EventSubscriberDeleted,
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
 	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
 	defer cancel()
 
-	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.Subscriber.SubscriberId)
+	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.SubscriberId)
 	if err != nil {
 		return fmt.Errorf("fail to delete subscriber: %w", err)
 	}
@@ -582,8 +581,8 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 	return p, nil
 }
 
-func unmarshalAddSubscriber(msg *anypb.Any) (*epb.AddSubscriber, error) {
-	p := &epb.AddSubscriber{}
+func unmarshalAddSubscriber(msg *anypb.Any) (*epb.EventSubscriberAdded, error) {
+	p := &epb.EventSubscriberAdded{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -596,8 +595,8 @@ func unmarshalAddSubscriber(msg *anypb.Any) (*epb.AddSubscriber, error) {
 	return p, nil
 }
 
-func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.UpdateSubscriber, error) {
-	p := &epb.UpdateSubscriber{}
+func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.EventSubscriberUpdate, error) {
+	p := &epb.EventSubscriberUpdate{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
@@ -610,8 +609,8 @@ func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.UpdateSubscriber, error) {
 	return p, nil
 }
 
-func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.RemoveSubscriber, error) {
-	p := &epb.RemoveSubscriber{}
+func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.EventSubscriberDeleted, error) {
+	p := &epb.EventSubscriberDeleted{}
 
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {

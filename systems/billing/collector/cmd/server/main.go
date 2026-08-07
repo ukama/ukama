@@ -94,6 +94,8 @@ func runGrpcServer() {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()
