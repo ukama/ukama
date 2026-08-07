@@ -10,6 +10,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -144,15 +145,21 @@ func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent
 		}
 	}
 
+	// Radio and service are independent actuators, so both are attempted even when one
+	// fails. Returning early on the radio error would leave a site stuck without service
+	// whenever its radio cannot be resolved.
+	var errs []error
+
 	if radioMismatch {
 		if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
-			return fmt.Errorf("radio action: %w", err)
+			errs = append(errs, fmt.Errorf("radio action: %w", err))
 		}
 	}
 	if serviceMismatch {
 		if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
-			return fmt.Errorf("service action: %w", err)
+			errs = append(errs, fmt.Errorf("service action: %w", err))
 		}
 	}
-	return nil
+
+	return errors.Join(errs...)
 }
