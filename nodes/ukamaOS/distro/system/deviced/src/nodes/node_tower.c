@@ -82,13 +82,41 @@ int node_tower_build_state(Config *config, JsonObj *json) {
 
 int node_tower_apply_service(Config *config, ControlState desired) {
 
-    int retCode = -1;
+    int retCode;
 
     if (!config) return STATUS_NOK;
 
     usys_log_info("service: %s", desired == CONTROL_STATE_ON ? "on" : "off");
 
-    return wc_post_service_to_pcrf(config, desired, &retCode);
+    if (desired == CONTROL_STATE_OFF) {
+        retCode = -1;
+        if (wc_post_service_to_epcemu(config, desired, &retCode) != STATUS_OK) {
+            usys_log_error("Unable to disable EPCEMU service");
+            return STATUS_NOK;
+        }
+
+        retCode = -1;
+        if (wc_post_service_to_pcrf(config, desired, &retCode) != STATUS_OK) {
+            usys_log_error("Unable to disable PCRF service");
+            return STATUS_NOK;
+        }
+
+        return STATUS_OK;
+    }
+
+    retCode = -1;
+    if (wc_post_service_to_pcrf(config, desired, &retCode) != STATUS_OK) {
+        usys_log_error("Unable to enable PCRF service");
+        return STATUS_NOK;
+    }
+
+    retCode = -1;
+    if (wc_post_service_to_epcemu(config, desired, &retCode) != STATUS_OK) {
+        usys_log_error("Unable to enable EPCEMU service");
+        return STATUS_NOK;
+    }
+
+    return STATUS_OK;
 }
 
 int node_tower_apply_radio(Config *config, ControlState desired) {

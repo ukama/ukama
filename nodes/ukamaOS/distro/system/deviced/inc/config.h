@@ -26,6 +26,7 @@ typedef struct {
     int   notifydPort;
     int   femPort;
     int   pcrfPort;
+    int   epcemuPort;
     char  *nodeID;
     char  *nodeType;
     bool  clientMode;

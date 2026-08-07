@@ -13,7 +13,6 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 #include <netinet/ip.h>
-#include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -24,13 +23,16 @@
 #include <sys/select.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
-#define UE_AGENT_MAX_STR 256
-#define UE_AGENT_PKT_MAX 4096
-#define UE_AGENT_DEF_APN "internet"
-#define UE_AGENT_DEF_TUN "tun0"
-#define UE_AGENT_DEF_PREFIX "22"
+#define UE_AGENT_MAX_STR        256
+#define UE_AGENT_PKT_MAX        4096
+#define UE_AGENT_DEF_APN        "internet"
+#define UE_AGENT_DEF_TUN        "tun0"
+#define UE_AGENT_DEF_PREFIX     "22"
+#define UE_AGENT_ATTACH_RETRY   3
+#define UE_AGENT_ATTACH_CHECK   2
 
 static volatile bool gRun = true;
 
@@ -38,7 +40,7 @@ typedef struct {
     char imsi[UE_AGENT_MAX_STR];
     char iccid[UE_AGENT_MAX_STR];
     char ip[UE_AGENT_MAX_STR];
-    char cidr[UE_AGENT_MAX_STR];
+    char cidr[UE_AGENT_MAX_STR + 8];
     char apn[UE_AGENT_MAX_STR];
     char epcemuUrl[UE_AGENT_MAX_STR];
     char epcemuDataHost[UE_AGENT_MAX_STR];
@@ -58,8 +60,11 @@ static void on_signal(int sig) {
 
 static const char *env_or(const char *name, const char *defv) {
 
-    const char *v = getenv(name);
+    const char *v;
+
+    v = getenv(name);
     if (v != NULL && v[0] != '\0') return v;
+
     return defv;
 }
 
@@ -97,7 +102,7 @@ static int run_cmd(const char *cmd, ...) {
         return -1;
     }
 
-    if (WIFEXITED(status))   return WEXITSTATUS(status);
+    if (WIFEXITED(status)) return WEXITSTATUS(status);
     if (WIFSIGNALED(status)) return 128 + WTERMSIG(status);
 
     return -1;
@@ -158,43 +163,56 @@ static int configure_tun(Config *cfg) {
     return fd;
 }
 
-static int http_json(const char *method, const char *url, const char *json) {
+static size_t discard_body(void *ptr, size_t size, size_t nmemb, void *data) {
+
+    (void)ptr;
+    (void)data;
+
+    return size * nmemb;
+}
+
+static long http_request(const char *method,
+                         const char *url,
+                         const char *json) {
 
     CURL *curl;
     CURLcode res;
-    struct curl_slist *headers = NULL;
-    long code = 0;
+    struct curl_slist *headers;
+    long code;
 
     curl = curl_easy_init();
     if (curl == NULL) return 0;
 
-    headers = curl_slist_append(headers, "Content-Type: application/json");
+    headers = NULL;
+    code = 0;
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
-    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
+    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discard_body);
+
+    if (json != NULL) {
+        headers = curl_slist_append(headers, "Content-Type: application/json");
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
+    }
 
     res = curl_easy_perform(curl);
-    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    if (res == CURLE_OK) {
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    }
 
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
 
-    if (res != CURLE_OK || code < 200 || code >= 300) {
-        fprintf(stderr, "%s %s failed curl=%d http=%ld\n", method, url, res,
-                code);
-        return 0;
-    }
-
-    return 1;
+    return code;
 }
 
-static int attach_ue(Config *cfg) {
+static long attach_ue(Config *cfg) {
 
-    char url[UE_AGENT_MAX_STR * 2];
-    char body[UE_AGENT_MAX_STR * 5];
+    char url[UE_AGENT_MAX_STR * 3];
+    char body[UE_AGENT_MAX_STR * 6];
 
     snprintf(url, sizeof(url), "%s/v1/ue/attach", cfg->epcemuUrl);
     snprintf(body, sizeof(body),
@@ -204,18 +222,45 @@ static int attach_ue(Config *cfg) {
              cfg->imsi, cfg->iccid, cfg->ip, cfg->apn,
              cfg->localDataHost, cfg->localDataPort);
 
-    return http_json("POST", url, body);
+    return http_request("POST", url, body);
 }
 
-static int detach_ue(Config *cfg) {
+static long detach_ue(Config *cfg) {
 
-    char url[UE_AGENT_MAX_STR * 2];
+    char url[UE_AGENT_MAX_STR * 3];
     char body[UE_AGENT_MAX_STR * 2];
 
-    snprintf(url,  sizeof(url),  "%s/v1/ue/detach", cfg->epcemuUrl);
+    snprintf(url, sizeof(url), "%s/v1/ue/detach", cfg->epcemuUrl);
     snprintf(body, sizeof(body), "{\"imsi\":\"%s\"}", cfg->imsi);
 
-    return http_json("DELETE", url, body);
+    return http_request("DELETE", url, body);
+}
+
+static bool ue_is_attached(Config *cfg) {
+
+    char url[UE_AGENT_MAX_STR * 3];
+    long code;
+
+    snprintf(url, sizeof(url), "%s/v1/ue/%s", cfg->epcemuUrl, cfg->imsi);
+    code = http_request("GET", url, NULL);
+
+    return code >= 200 && code < 300;
+}
+
+static bool wait_for_attach(Config *cfg) {
+
+    long code;
+
+    while (gRun) {
+        code = attach_ue(cfg);
+        if (code >= 200 && code < 300) return true;
+
+        fprintf(stderr, "attach pending imsi=%s ip=%s http=%ld\n",
+                cfg->imsi, cfg->ip, code);
+        sleep(UE_AGENT_ATTACH_RETRY);
+    }
+
+    return false;
 }
 
 static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
@@ -231,8 +276,8 @@ static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
     setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
     memset(&local, 0, sizeof(local));
-    local.sin_family      = AF_INET;
-    local.sin_port        = htons(cfg->localDataPort);
+    local.sin_family = AF_INET;
+    local.sin_port = htons(cfg->localDataPort);
     local.sin_addr.s_addr = htonl(INADDR_ANY);
 
     if (bind(fd, (struct sockaddr *)&local, sizeof(local)) < 0) {
@@ -244,7 +289,7 @@ static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
 
     memset(remote, 0, sizeof(*remote));
     remote->sin_family = AF_INET;
-    remote->sin_port   = htons(cfg->epcemuDataPort);
+    remote->sin_port = htons(cfg->epcemuDataPort);
     if (inet_pton(AF_INET, cfg->epcemuDataHost, &remote->sin_addr) != 1) {
         close(fd);
         return -1;
@@ -253,12 +298,20 @@ static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
     return fd;
 }
 
-static void packet_loop(int tunFd, int udpFd, struct sockaddr_in *remote) {
+static void packet_loop(Config *cfg,
+                        int tunFd,
+                        int udpFd,
+                        struct sockaddr_in *remote) {
 
     unsigned char buf[UE_AGENT_PKT_MAX];
+    struct timeval timeout;
+    time_t nextCheck;
     fd_set rfds;
     int maxFd;
+    int rc;
     ssize_t n;
+
+    nextCheck = time(NULL) + UE_AGENT_ATTACH_CHECK;
 
     while (gRun) {
         FD_ZERO(&rfds);
@@ -266,12 +319,16 @@ static void packet_loop(int tunFd, int udpFd, struct sockaddr_in *remote) {
         FD_SET(udpFd, &rfds);
         maxFd = (tunFd > udpFd) ? tunFd : udpFd;
 
-        if (select(maxFd + 1, &rfds, NULL, NULL, NULL) < 0) {
+        timeout.tv_sec = 1;
+        timeout.tv_usec = 0;
+
+        rc = select(maxFd + 1, &rfds, NULL, NULL, &timeout);
+        if (rc < 0) {
             if (errno == EINTR) continue;
-            break;
+            return;
         }
 
-        if (FD_ISSET(tunFd, &rfds)) {
+        if (rc > 0 && FD_ISSET(tunFd, &rfds)) {
             n = read(tunFd, buf, sizeof(buf));
             if (n > 0) {
                 sendto(udpFd, buf, n, 0,
@@ -279,48 +336,49 @@ static void packet_loop(int tunFd, int udpFd, struct sockaddr_in *remote) {
             }
         }
 
-        if (FD_ISSET(udpFd, &rfds)) {
+        if (rc > 0 && FD_ISSET(udpFd, &rfds)) {
             n = recvfrom(udpFd, buf, sizeof(buf), 0, NULL, NULL);
-            if (n > 0) {
-                write(tunFd, buf, n);
-            }
+            if (n > 0) write(tunFd, buf, n);
+        }
+
+        if (time(NULL) >= nextCheck) {
+            if (!ue_is_attached(cfg)) return;
+            nextCheck = time(NULL) + UE_AGENT_ATTACH_CHECK;
         }
     }
 }
 
 static void config_load(Config *cfg) {
 
+    char *slash;
+
     memset(cfg, 0, sizeof(*cfg));
 
-    snprintf(cfg->imsi,  sizeof(cfg->imsi),  "%s", env_or("UE_IMSI", ""));
+    snprintf(cfg->imsi, sizeof(cfg->imsi), "%s", env_or("UE_IMSI", ""));
     snprintf(cfg->iccid, sizeof(cfg->iccid), "%s", env_or("UE_ICCID", ""));
-    snprintf(cfg->ip,    sizeof(cfg->ip),    "%s", env_or("UE_IP", ""));
-    snprintf(cfg->apn,   sizeof(cfg->apn),   "%s", env_or("UE_APN", UE_AGENT_DEF_APN));
+    snprintf(cfg->ip, sizeof(cfg->ip), "%s", env_or("UE_IP", ""));
+    snprintf(cfg->apn, sizeof(cfg->apn), "%s",
+             env_or("UE_APN", UE_AGENT_DEF_APN));
 
-    
-    snprintf(cfg->epcemuUrl,
-             sizeof(cfg->epcemuUrl),
-             "%s", env_or("EPCEMU_URL", "http://127.0.0.1:18092"));
-    snprintf(cfg->epcemuDataHost,
-             sizeof(cfg->epcemuDataHost),
-             "%s", env_or("EPCEMU_DATA_HOST", "127.0.0.1"));
-    snprintf(cfg->localDataHost,
-             sizeof(cfg->localDataHost),
-             "%s", env_or("UE_DATA_HOST", "127.0.0.1"));
-    snprintf(cfg->mediaIp,
-             sizeof(cfg->mediaIp),
-             "%s", env_or("MEDIA_IP", ""));
-    snprintf(cfg->tunIf,
-             sizeof(cfg->tunIf),
-             "%s", env_or("UE_TUN", UE_AGENT_DEF_TUN));
+    snprintf(cfg->epcemuUrl, sizeof(cfg->epcemuUrl), "%s",
+             env_or("EPCEMU_URL", "http://127.0.0.1:18092"));
+    snprintf(cfg->epcemuDataHost, sizeof(cfg->epcemuDataHost), "%s",
+             env_or("EPCEMU_DATA_HOST", "127.0.0.1"));
+    snprintf(cfg->localDataHost, sizeof(cfg->localDataHost), "%s",
+             env_or("UE_DATA_HOST", "127.0.0.1"));
+    snprintf(cfg->mediaIp, sizeof(cfg->mediaIp), "%s",
+             env_or("MEDIA_IP", ""));
+    snprintf(cfg->tunIf, sizeof(cfg->tunIf), "%s",
+             env_or("UE_TUN", UE_AGENT_DEF_TUN));
 
     cfg->epcemuDataPort = atoi(env_or("EPCEMU_DATA_PORT", "18110"));
-    cfg->localDataPort  = atoi(env_or("UE_DATA_PORT", "41001"));
-    cfg->detachOnExit   = atoi(env_or("UE_DETACH_ON_EXIT", "1"));
+    cfg->localDataPort = atoi(env_or("UE_DATA_PORT", "41001"));
+    cfg->detachOnExit = atoi(env_or("UE_DETACH_ON_EXIT", "1"));
 
-    if (strchr(cfg->ip, '/') != NULL) {
+    slash = strchr(cfg->ip, '/');
+    if (slash != NULL) {
         snprintf(cfg->cidr, sizeof(cfg->cidr), "%s", cfg->ip);
-        *strchr(cfg->ip, '/') = '\0';
+        *slash = '\0';
     } else {
         snprintf(cfg->cidr, sizeof(cfg->cidr), "%s/%s", cfg->ip,
                  UE_AGENT_DEF_PREFIX);
@@ -331,6 +389,7 @@ int main(int argc, char **argv) {
 
     Config cfg;
     struct sockaddr_in remote;
+    bool attached;
     int tunFd;
     int udpFd;
 
@@ -345,30 +404,49 @@ int main(int argc, char **argv) {
 
     if (cfg.imsi[0] == '\0' || cfg.ip[0] == '\0') {
         fprintf(stderr, "UE_IMSI and UE_IP are required\n");
+        curl_global_cleanup();
         return 1;
     }
 
     tunFd = configure_tun(&cfg);
-    if (tunFd < 0) return 1;
-
-    udpFd = udp_setup(&cfg, &remote);
-    if (udpFd < 0) return 1;
-
-    if (!attach_ue(&cfg)) {
-        fprintf(stderr, "attach failed imsi=%s ip=%s\n", cfg.imsi, cfg.ip);
+    if (tunFd < 0) {
+        curl_global_cleanup();
         return 1;
     }
 
-    fprintf(stdout, "UE attached imsi=%s iccid=%s ip=%s data=%s:%d\n",
-            cfg.imsi,
-            cfg.iccid,
-            cfg.ip,
-            cfg.epcemuDataHost,
-            cfg.epcemuDataPort);
+    udpFd = udp_setup(&cfg, &remote);
+    if (udpFd < 0) {
+        close(tunFd);
+        curl_global_cleanup();
+        return 1;
+    }
 
-    packet_loop(tunFd, udpFd, &remote);
+    attached = false;
 
-    if (cfg.detachOnExit) detach_ue(&cfg);
+    while (gRun) {
+        if (!wait_for_attach(&cfg)) break;
+
+        attached = true;
+        fprintf(stdout, "UE attached imsi=%s iccid=%s ip=%s data=%s:%d\n",
+                cfg.imsi,
+                cfg.iccid,
+                cfg.ip,
+                cfg.epcemuDataHost,
+                cfg.epcemuDataPort);
+        fflush(stdout);
+
+        packet_loop(&cfg, tunFd, udpFd, &remote);
+        if (!gRun) break;
+
+        attached = false;
+        fprintf(stdout, "UE detached imsi=%s ip=%s; retrying attach\n",
+                cfg.imsi, cfg.ip);
+        fflush(stdout);
+    }
+
+    if (attached && cfg.detachOnExit) {
+        (void)detach_ue(&cfg);
+    }
 
     close(udpFd);
     close(tunFd);

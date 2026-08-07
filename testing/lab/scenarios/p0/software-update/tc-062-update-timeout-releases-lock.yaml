@@ -1,13 +1,15 @@
 version: 1
 name: p0-tc-062-update-timeout-releases-lock
-description: Enable the software-timeout hook, request a controller update, and verify the node operation lock clears after the timeout without relying on the existing WIP update-failure scenarios.
+description: Hold the controller offline after an update request and verify the backend releases its node-operation lock after timeout.
 seed: 5062
 suite: p0
 priority: p0
-tags: [virtual, software-update, timeout, failure-control, requires-software-timeout-failure-control, tc-062]
+tags: [virtual, software-update, timeout, failure-control, tc-062]
 status: active
+
 provider:
   type: virtual
+
 world:
   networks: 1
   sites_per_network: 1
@@ -16,8 +18,10 @@ world:
     amplifier: 1
     controller: 1
   ues_per_site: 0
+
 setup:
   create_via_bff: [networks, sites, nodes, node_site_links]
+
 runtime:
   start: [nodes]
   wait: [nodes_ready]
@@ -38,7 +42,8 @@ phases:
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
         timeout_seconds: 120
-  - name: force_timeout
+
+  - name: start_update_timeout
     events:
       - type: failure_control
         target: software_timeout
@@ -48,16 +53,25 @@ phases:
         count_per_network: 1
         app: example
         tag: ${ULAB_SOFTWARE_TARGET_VERSION}
-        expect:
-          result: any
+    checks:
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: true
+        timeout_seconds: 60
+
+  - name: wait_for_update_timeout
     checks:
       - type: node_operation_status_equals
         type_selector: controller
         count_per_network: 1
         busy: false
         timeout_seconds: 300
-  - name: restore_updates
+
+  - name: restore_controller
     events:
       - type: failure_control
         target: software_timeout
         state: off
+      - type: wait_nodes_ready
+        nodes: all
