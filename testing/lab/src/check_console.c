@@ -116,12 +116,15 @@ static int check_list_count(check_ctx_t *ctx,
             return ULAB_ERR;
         }
         i = networks.idx[0];
-        if (ulab_streq(check->target, "nodes") &&
-            (check->nodes.kind == SEL_NODE_TYPE ||
-             check->nodes.kind == SEL_NODE_TYPE_COUNT_PER_NETWORK)) {
+        if (ulab_streq(check->target, "nodes")) {
+            const char *node_type;
+
+            node_type = check->nodes.kind == SEL_NODE_TYPE ||
+                check->nodes.kind == SEL_NODE_TYPE_COUNT_PER_NETWORK ?
+                check->nodes.value : NULL;
             if (bff_get_node_list_count(
                     ctx->bff, &ctx->world->networks[i],
-                    check->nodes.value, &actual, err)) {
+                    node_type, check->view, &actual, err)) {
                 selector_result_free(&networks);
                 return ULAB_ERR;
             }
@@ -158,6 +161,7 @@ static int check_entity(check_ctx_t *ctx,
     if (check->type == CHECK_ENTITY_FIELDS_EQUAL) {
         if (bff_entity_fields_match_world(ctx->bff, check->entity,
                                           check->ref, ctx->world,
+                                          check->view,
                                           &matched, res->detail,
                                           sizeof(res->detail), err)) {
             return ULAB_ERR;
@@ -165,6 +169,7 @@ static int check_entity(check_ctx_t *ctx,
     } else {
         if (bff_entity_list_detail_reconciles(ctx->bff, check->entity,
                                               check->ref, ctx->world,
+                                              check->view,
                                               &matched, res->detail,
                                               sizeof(res->detail), err)) {
             return ULAB_ERR;
@@ -210,12 +215,16 @@ static int check_node_status_equals(check_ctx_t *ctx,
         matched = 0;
         for (i = 0; i < nodes.count; i++) {
             node_t *node;
+            network_t *network;
             bff_node_status_t status;
             int ok;
 
             node = &ctx->world->nodes[nodes.idx[i]];
+            network = world_network_by_ref(ctx->world,
+                                           node->network_ref);
             memset(&status, 0, sizeof(status));
-            if (bff_get_node_status(ctx->bff, node, &status, err)) {
+            if (bff_get_node_status_for_view(ctx->bff, network, node,
+                                             check->view, &status, err)) {
                 selector_result_free(&nodes);
                 return ULAB_ERR;
             }
@@ -329,7 +338,7 @@ static int check_software_status(check_ctx_t *ctx,
 
                 memset(rows, 0, sizeof(rows));
                 count = 0;
-                if (bff_get_software_list(ctx->bff, node, rows,
+                if (bff_get_software_list(ctx->bff, node, check->view, rows,
                                           ULAB_MAX_LIST, &count, err)) {
                     selector_result_free(&nodes);
                     return ULAB_ERR;
@@ -349,6 +358,7 @@ static int check_software_status(check_ctx_t *ctx,
                 memset(&software, 0, sizeof(software));
                 found = 0;
                 if (bff_get_software(ctx->bff, node, check->app,
+                                     check->view,
                                      &software, &found, err)) {
                     selector_result_free(&nodes);
                     return ULAB_ERR;

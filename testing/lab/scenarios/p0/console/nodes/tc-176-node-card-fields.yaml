@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-176-node-card-fields
-description: Verify tower, amplifier, and controller identity, type, site association, connectivity, and lifecycle fields match the world created for the test.
+description: Verify each Nodes List card identity, type, site association, connectivity, and lifecycle fields match the world created for the test.
 seed: 5176
 suite: p0
 priority: p0
@@ -26,15 +26,20 @@ phases:
   - name: verify_node_cards
     checks:
       - type: entity_fields_equal
+        view: nodes_list
         entity: node
         ref: tower-site-001-001
       - type: entity_fields_equal
+        view: nodes_list
         entity: node
         ref: amplifier-site-001-001
       - type: entity_fields_equal
+        view: nodes_list
         entity: node
         ref: controller-site-001-001
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Online
         state: Operational
+        timeout_seconds: 120

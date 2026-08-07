@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-028-node-row-connectivity-lifecycle
-description: Create one tower, amplifier, and controller and verify every BFF node row reports the expected Online connectivity and Operational lifecycle state.
+description: Create one tower, amplifier, and controller and verify every Console Nodes row reports Online connectivity and Operational lifecycle state.
 seed: 5028
 suite: p0
 priority: p0
@@ -26,6 +26,7 @@ phases:
   - name: verify_all_node_rows
     checks:
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Online
         state: Operational

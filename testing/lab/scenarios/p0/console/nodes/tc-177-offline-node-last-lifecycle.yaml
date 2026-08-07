@@ -1,7 +1,6 @@
 version: 1
 name: p0-tc-177-offline-node-last-lifecycle
-
-description: Take an operational controller offline and verify it remains visible with Offline connectivity and its last Operational lifecycle state, then restore it.
+description: Take an operational controller offline and verify it remains in Nodes List with Offline connectivity and its last Operational lifecycle state, then restore it.
 seed: 5177
 suite: p0
 priority: p0
@@ -34,7 +33,13 @@ phases:
         connectivity: Offline
         seconds: 120
     checks:
+      - type: list_count_equals
+        view: nodes_list
+        target: nodes
+        networks: net-001
+        expected_count: 3
       - type: node_status_equals
+        view: nodes_list
         type_selector: controller
         count_per_network: 1
         connectivity: Offline
@@ -52,6 +57,7 @@ phases:
         seconds: 180
     checks:
       - type: node_status_equals
+        view: nodes_list
         type_selector: controller
         count_per_network: 1
         connectivity: Online

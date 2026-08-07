@@ -71,6 +71,28 @@ const char *BFF_GET_NODES =
 " site { nodeId siteId networkId addedAt } "
 " status { state connectivity } } } }";
 
+const char *BFF_CONSOLE_NODES_LIST =
+"query NodesList($networkId: String) {"
+" nodesView(networkId: $networkId) { networkId nodes {"
+" error { section code message } nodes { id name type "
+" site { siteId networkId } status { connectivity state } } } "
+" health { error { section code message } } } }";
+
+const char *BFF_CONSOLE_NODE_POOL =
+"query NodePool { nodesView { networkId nodes {"
+" error { section code message } nodes { id name type "
+" site { siteId networkId } status { connectivity state } } } } }";
+
+const char *BFF_CONSOLE_NODE_DETAIL =
+"query NodeDetail($nodeId: String!) { nodeView(nodeId: $nodeId) {"
+" nodeId node { error { section code message } node {"
+" id name type latitude longitude attached { id name } "
+" site { siteId networkId } status { connectivity state } } }"
+" site { error { section code message } site { id name } }"
+" siblings { error { section code message } nodes { id name } }"
+" software { error { section code message } softwares { software {"
+" name status currentVersion desiredVersion releaseDate } } } } }";
+
 const char *BFF_GET_NODES_FOR_SITE =
 "query GetNodesForSite($siteId: String!) { getNodesForSite(siteId: $siteId) {"
 " nodes { id name type latitude longitude status { state connectivity } } } }";

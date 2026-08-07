@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-181-all-apps-up-to-date
-description: Without promoting a newer release, verify every installed application returned for the controller reports up_to_date and includes its required identity fields.
+description: Without promoting a newer release, verify every application shown by Node Detail reports up_to_date and includes its required identity fields.
 seed: 5181
 suite: p0
 priority: p0
@@ -26,6 +26,7 @@ phases:
   - name: verify_every_app_current
     checks:
       - type: software_status_equals
+        view: node_detail
         type_selector: controller
         count_per_network: 1
         app: all
