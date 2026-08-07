@@ -32,7 +32,7 @@ func TestNodeStateMachine(t *testing.T) {
 
 			err = instance.Transition("ready")
 			assert.NoError(t, err)
-			assert.Equal(t, "Operational", instance.CurrentState)
+			assert.Equal(t, "Ready", instance.CurrentState)
 		})
 
 		t.Run("config event", func(t *testing.T) {
@@ -153,7 +153,7 @@ const nodeStateConfig = `{
           "trigger": ["config"]
         },
         {
-          "to_state": "Operational",
+          "to_state": "Ready",
           "trigger": ["ready"]
         }
       ],
@@ -209,7 +209,7 @@ const nodeStateConfig = `{
       }
     },
     {
-      "name": "Operational",
+      "name": "Ready",
       "description": "Node is fully operational and part of a site",
       "events": [
         "online",

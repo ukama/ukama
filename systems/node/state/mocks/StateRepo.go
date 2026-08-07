@@ -244,6 +244,52 @@ func (_m *StateRepo) UpdateState(nodeId string, subStates []string, events []str
 	return r0, r1
 }
 
+// SetLatchedEvent provides a mock function with given fields: nodeId, event
+func (_m *StateRepo) SetLatchedEvent(nodeId string, event string) error {
+	ret := _m.Called(nodeId, event)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SetLatchedEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(nodeId, event)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// TakeLatchedEvent provides a mock function with given fields: nodeId
+func (_m *StateRepo) TakeLatchedEvent(nodeId string) (string, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TakeLatchedEvent")
+	}
+
+	var r0 string
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) string); ok {
+		r0 = rf(nodeId)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewStateRepo creates a new instance of StateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStateRepo(t interface {

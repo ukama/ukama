@@ -168,7 +168,7 @@ func BuildNodeRequest(nodeId string) string {
 	return fmt.Sprintf(`{
 		"node_id": "%s",
 		"name": "%s",
-		"state": "operational",
+		"state": "ready",
 		"latitude": %.4f,
 		"longitude": %.4f
 	}`, nodeId, TestNodeName, TestLatitude, TestLongitude)
@@ -1039,7 +1039,7 @@ func TestGetNodes(t *testing.T) {
 func TestGetNodesByState(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/nodes/state?connectivity=online&state=operational", nil)
+	req, _ := http.NewRequest("GET", "/v1/nodes/state?connectivity=online&state=ready", nil)
 	arc := &cmocks.AuthClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
@@ -1178,7 +1178,7 @@ func TestGetNetworkNodes(t *testing.T) {
 func TestListNodes(t *testing.T) {
 	// arrange
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/nodes/list?type=mesh&state=operational&connectivity=online", nil)
+	req, _ := http.NewRequest("GET", "/v1/nodes/list?type=mesh&state=ready&connectivity=online", nil)
 	arc := &cmocks.AuthClient{}
 	net := &netmocks.NetworkServiceClient{}
 	node := &nmocks.NodeServiceClient{}
