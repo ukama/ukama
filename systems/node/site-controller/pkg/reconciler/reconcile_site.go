@@ -95,6 +95,41 @@ func (r *Reconciler) finishReconcileAttempt(siteID string, intent *db.SiteIntent
 	return fmt.Errorf("site %s intent/state still out of sync (retry %d/%d)", siteID, flight.RetryCount, r.maxRetries)
 }
 
+// ResyncSite re-arms reconciliation for a site whose device-reported state has drifted
+// from its intent. Once a site reaches its desired state its flight is parked in a
+// terminal status, so the periodic worker alone would never correct drift introduced
+// later, such as a node restart bringing service back up disabled.
+func (r *Reconciler) ResyncSite(ctx context.Context, siteID string) error {
+	if siteID == "" {
+		return fmt.Errorf("site id is required")
+	}
+
+	intent, err := r.getIntent(siteID)
+	if err != nil {
+		return err
+	}
+	if intent.ID == uuid.Nil {
+		return nil
+	}
+
+	state, err := r.states.Get(siteID)
+	if err != nil {
+		return err
+	}
+	if intentMatchesState(intent, state) {
+		return nil
+	}
+
+	log.Infof("site-controller: site %s drifted from intent (service desired=%s observed=%s), re-arming reconcile",
+		siteID, intent.DesiredService, stateService(state))
+
+	if err := r.resetIntentReconcile(intent); err != nil {
+		return fmt.Errorf("reset reconcile: %w", err)
+	}
+
+	return r.ReconcileSite(ctx, siteID, true)
+}
+
 func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent, state *db.SiteState) error {
 	siteID := intent.SiteID
 	radioMismatch := !radioStateMatches(intent.DesiredRadio, stateRadio(state))

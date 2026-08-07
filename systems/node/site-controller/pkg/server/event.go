@@ -23,6 +23,7 @@ import (
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 )
 
 var defaultSiteIntent = db.SiteIntent{
@@ -155,8 +156,23 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_TOWERNODE:
-		// TODO: Handle tower node health report
-		return nil
+		if report.Interfaces.Cellular == nil {
+			return fmt.Errorf("no cellular interface found for node %s", nodeId)
+		}
+
+		serviceState := reconciler.StateOff
+		if report.Interfaces.Cellular.Available {
+			serviceState = reconciler.StateRunning
+		}
+
+		if err := c.s.dbStructs.SiteState.Upsert(&db.SiteState{
+			SiteID:       siteId,
+			ServiceState: serviceState,
+		}); err != nil {
+			return fmt.Errorf("failed to record service state for site %s: %w", siteId, err)
+		}
+
+		return c.s.reconciler.ResyncSite(ctx, siteId)
 
 	case ukama.NODE_ID_TYPE_AMPNODE:
 		if report.Interfaces.Radio == nil {
