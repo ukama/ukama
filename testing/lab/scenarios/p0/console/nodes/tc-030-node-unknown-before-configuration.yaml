@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-030-node-unknown-before-configuration
-description: Start nodes before creating their site, verify they are Online with lifecycle Unknown, then configure the site and verify they become Operational.
+description: Start nodes before creating their site, verify the Console Node Pool shows Online/Unknown, then configure the site and verify Nodes List shows Online/Operational.
 seed: 5030
 suite: p0
 priority: p0
@@ -26,6 +26,7 @@ phases:
   - name: verify_unknown
     checks:
       - type: node_status_equals
+        view: node_pool
         nodes: all
         connectivity: Online
         state: Unknown
@@ -37,6 +38,7 @@ phases:
         state: ready
     checks:
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Online
         state: Operational

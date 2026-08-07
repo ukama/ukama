@@ -26,6 +26,7 @@
 #define DEF_NOTIFY_HOST        "localhost"
 #define DEF_FEMD_HOST          "localhost"
 #define DEF_PCRF_HOST          "localhost"
+#define DEF_EPCEMU_HOST         "localhost"
 
 #define DEF_RADIO_EMU_FILE     "/tmp/ukama-radio-state"
 #define DEF_NODED_EP           "/v1/nodeinfo"

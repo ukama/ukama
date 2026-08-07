@@ -184,6 +184,9 @@ func runGrpcServer(gormDB sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, simManagerEventServer)
 	})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormDB))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	grpcServer.ExtraUnaryInterceptors = []grpc.UnaryServerInterceptor{
 		fsInterceptor.UnaryServerInterceptor}
 

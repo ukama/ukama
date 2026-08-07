@@ -61,6 +61,9 @@ phases:
       - type: toggle_service
         sites: all
         state: off
+      - type: wait_ues_detached
+        ues: ue-000001
+        seconds: 30
     checks:
       - type: traffic_unavailable
         ues: ue-000001

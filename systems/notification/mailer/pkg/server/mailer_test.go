@@ -8,9 +8,9 @@
 package server
 
 import (
-	"net/textproto"
 	"context"
 	"errors"
+	"net/textproto"
 	"testing"
 	"time"
 
@@ -30,8 +30,12 @@ import (
 
 // Test data constants
 const (
-	testSMTPHost     = "smtp.example.com"
-	testSMTPPort     = 587
+	// Use a loopback address with a closed port so SMTP connection attempts
+	// fail immediately (connection refused) instead of depending on external
+	// DNS/network behavior: smtp.example.com resolves on real networks and
+	// the dial can hang far longer than the test's wait window.
+	testSMTPHost     = "127.0.0.1"
+	testSMTPPort     = 19587
 	testSMTPUsername = "test@example.com"
 	testSMTPPassword = "password"
 	testSMTPFrom     = "from@example.com"
@@ -221,13 +225,22 @@ func TestProcessEmailQueue(t *testing.T) {
 		mockRepo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
 			return m.MailId == mailId && m.Status == ukama.MailStatusProcess
 		})).Return(nil).Once()
+		retryCalled := make(chan struct{})
 		mockRepo.On("UpdateEmailStatus", mock.MatchedBy(func(m *db.Mailing) bool {
 			return m.MailId == mailId && m.Status == ukama.MailStatusRetry && m.RetryCount == 1
-		})).Return(nil).Once()
+		})).Run(func(args mock.Arguments) {
+			close(retryCalled)
+		}).Return(nil).Once()
 
 		server.emailQueue <- payload
 
-		time.Sleep(testSleepDuration1)
+		// Wait for the retry-status update instead of sleeping a fixed
+		// duration; the send attempt's failure latency varies by machine.
+		select {
+		case <-retryCalled:
+		case <-time.After(10 * time.Second):
+			t.Fatal("timed out waiting for retry status update")
+		}
 
 		mockRepo.AssertExpectations(t)
 	})

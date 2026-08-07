@@ -96,6 +96,8 @@ func runGrpcServer() {
 		pb.RegisterReasoningServiceServer(s, reasoningServer)
 	})
 
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+
 	go msgBusListener(mbClient)
 
 	grpcServer.StartServer()

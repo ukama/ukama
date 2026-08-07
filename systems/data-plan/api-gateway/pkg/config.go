@@ -19,14 +19,25 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout  time.Duration
+	Package  string
+	Baserate string
+	Rate     string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
 	Package  string
 	Baserate string
 	Rate     string
@@ -50,6 +61,11 @@ func NewConfig() *Config {
 			Package:  "package:9090",
 			Baserate: "baserate:9090",
 			Rate:     "rate:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Package:  "Data packages: creating and managing data plans and packages",
+			Baserate: "Base rates: managing operator base rates",
+			Rate:     "Rates: computing subscriber rates and markups",
 		},
 		Http: HttpEndpoints{
 			Timeout: 5 * time.Second,

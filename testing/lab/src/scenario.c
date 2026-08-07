@@ -114,6 +114,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_CREATE_UES: return "create_ues";
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
+    case EVT_WAIT_UES_DETACHED: return "wait_ues_detached";
     case EVT_WAIT_UE_SESSIONS: return "wait_ue_sessions";
     case EVT_FINALIZE_UE_SESSIONS: return "finalize_ue_sessions";
     case EVT_WAIT: return "wait";
@@ -230,6 +231,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
     else if (ulab_streq(name, "start_ues")) *out = EVT_START_UES;
     else if (ulab_streq(name, "wait_ues_attached")) {
         *out = EVT_WAIT_UES_ATTACHED;
+    } else if (ulab_streq(name, "wait_ues_detached")) {
+        *out = EVT_WAIT_UES_DETACHED;
     } else if (ulab_streq(name, "wait_ue_sessions")) {
         *out = EVT_WAIT_UE_SESSIONS;
     } else if (ulab_streq(name, "finalize_ue_sessions")) {
