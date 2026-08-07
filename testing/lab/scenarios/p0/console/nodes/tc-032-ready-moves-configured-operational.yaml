@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-032-ready-moves-configured-operational
-description: Configure a site while its nodes are held Offline, verify lifecycle Configured, then reconnect the nodes so their Ready events move lifecycle to Operational.
+description: Configure a site while its nodes are held Offline, verify Nodes List reports Configured, then reconnect so Ready events move lifecycle to Operational.
 seed: 5032
 suite: p0
 priority: p0
@@ -30,6 +30,7 @@ phases:
         state: hold
     checks:
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Offline
         state: Configured
@@ -44,6 +45,7 @@ phases:
         seconds: 180
     checks:
       - type: node_status_equals
+        view: nodes_list
         nodes: all
         connectivity: Online
         state: Operational
