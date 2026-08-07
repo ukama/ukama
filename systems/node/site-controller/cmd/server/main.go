@@ -109,7 +109,7 @@ func runGrpcServer(gormdb sql.Db) {
 	regUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
-		log.Errorf("Failed to resolve registry address: %v", err)
+		log.Fatalf("Failed to resolve registry address: %v", err)
 	}
 
 	nodeClient := creg.NewNodeClient(regUrl.String())

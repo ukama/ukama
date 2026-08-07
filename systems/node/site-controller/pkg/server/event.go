@@ -23,6 +23,12 @@ import (
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
+)
+
+const (
+	pcrfAppName     = "pcrf"
+	appStatusActive = "Active"
 )
 
 var defaultSiteIntent = db.SiteIntent{
@@ -155,8 +161,31 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_TOWERNODE:
-		// TODO: Handle tower node health report
-		return nil
+		// Cellular.Available only reports that the interface exists, so the service
+		// state is taken from the pcrf app, which is what toggling service starts
+		// and stops on a tower.
+		apps, err := hClient.ListApps(ctx, &hpb.ListAppsRequest{NodeId: nodeId})
+		if err != nil {
+			return fmt.Errorf("failed to list apps for node %s: %w", nodeId, err)
+		}
+
+		serviceState := reconciler.StateOff
+		for _, app := range apps.GetApps() {
+			if app.GetName() == pcrfAppName && app.GetStatus() == appStatusActive {
+				serviceState = reconciler.StateRunning
+
+				break
+			}
+		}
+
+		if err := c.s.dbStructs.SiteState.Upsert(&db.SiteState{
+			SiteID:       siteId,
+			ServiceState: serviceState,
+		}); err != nil {
+			return fmt.Errorf("failed to record service state for site %s: %w", siteId, err)
+		}
+
+		return c.s.reconciler.ResyncSite(ctx, siteId)
 
 	case ukama.NODE_ID_TYPE_AMPNODE:
 		if report.Interfaces.Radio == nil {
