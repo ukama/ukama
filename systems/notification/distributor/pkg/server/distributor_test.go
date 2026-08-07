@@ -68,7 +68,7 @@ func TestDistributionServer_GetNotificationStream_Success(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -119,7 +119,7 @@ func TestDistributionServer_GetNotificationStream_InvalidOrgId(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  "invalid-org-id",
@@ -149,7 +149,7 @@ func TestDistributionServer_GetNotificationStream_InvalidUserId(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -180,7 +180,7 @@ func TestDistributionServer_GetNotificationStream_InvalidNetworkId(t *testing.T)
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:     testOrgId,
@@ -223,7 +223,7 @@ func TestDistributionServer_GetNotificationStream_InvalidSubscriberId(t *testing
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:        testOrgId,
@@ -254,7 +254,7 @@ func TestDistributionServer_GetNotificationStream_SubscriberRole(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:        testOrgId,
@@ -295,7 +295,7 @@ func TestDistributionServer_GetNotificationStream_InvalidRole(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId: testOrgId,
@@ -322,7 +322,7 @@ func TestDistributionServer_GetNotificationStream_ClientDisconnect(t *testing.T)
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -376,7 +376,7 @@ func TestDistributionServer_GetNotificationStream_QuitChannel(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -436,7 +436,7 @@ func TestDistributionServer_GetNotificationStream_SendError(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -504,7 +504,7 @@ func TestDistributionServer_GetNotificationStream_DeregisterError(t *testing.T) 
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -668,7 +668,7 @@ func TestDistributionServer_GetNotificationStream_InvalidScope(t *testing.T) {
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
@@ -722,7 +722,7 @@ func TestDistributionServer_GetNotificationStream_MixedValidInvalidScopes(t *tes
 	mc := &cmocks.MemberClient{}
 	sc := &cmocks.SubscriberClient{}
 	ndb := &mocks.NotifyHandler{}
-	sS := &pmocks.DistributorService_GetNotificationStreamServer{}
+	sS := &pmocks.DistributorService_GetNotificationStreamServer[pb.Notification]{}
 
 	req := &pb.NotificationStreamRequest{
 		OrgId:  testOrgId,
