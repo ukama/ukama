@@ -8,10 +8,21 @@
 import { VERSION } from "../../common/configs";
 import { BaseRESTDataSource } from "../../common/datasource";
 import { CBooleanResponse } from "../../common/types";
-import { AddNodeInput, AddNodeToSiteInput, DeleteNode, GetNodesByStateInput, Node, NodeInput, NodeStateRes, Nodes, NodesFilterInput, UpdateNodeInput, UpdateNodeStateInput } from "../resolvers/types";
+import {
+  AddNodeInput,
+  AddNodeToSiteInput,
+  DeleteNode,
+  GetNodesByStateInput,
+  Node,
+  NodeInput,
+  NodeStateRes,
+  Nodes,
+  NodesFilterInput,
+  UpdateNodeInput,
+  UpdateNodeStateInput,
+} from "../resolvers/types";
 import { AttachNodeInput } from "./../resolvers/types";
 import { getNodeState, parseNodeRes, parseNodesRes } from "./mapper";
-
 
 const NODES = "nodes";
 class NodeAPI extends BaseRESTDataSource {
