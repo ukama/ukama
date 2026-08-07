@@ -106,7 +106,8 @@ func runGrpcServer(d sql.Db) {
 	})
 
 	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(d))
-	grpcServer.RegisterDependency("rabbitmq", true, ugrpc.AmqpCheck(serviceConfig.Queue.Uri))
+
+	// grpcServer.RegisterDependency("rabbitmq", true, ugrpc.AmqpCheck(serviceConfig.Queue.Uri))
 
 	signalHandler(handler, grpcServer)
 	log.Infof("Message Bus Handler is %+v", handler)
