@@ -50,6 +50,8 @@ type RouterConfig struct {
 	httpEndpoints *pkg.HttpEndpoints
 	debugMode     bool
 	serverConf    *rest.HttpConfig
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -99,6 +101,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 	}
 }
@@ -113,6 +117,19 @@ func (r *Router) Run() {
 
 func (r *Router) init() {
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, "")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"health": {Host: r.config.grpcEndpoints.Health, Description: desc.Health},
+			"notify": {Host: r.config.grpcEndpoints.Notify, Description: desc.Notify},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	endpoint := r.f.Group("/v1", "API gateway", "node system version v1")
 	endpoint.GET("/ping", formatDoc("Ping the server", "Returns a response indicating that the server is running."), tonic.Handler(r.pingHandler, http.StatusOK))
 

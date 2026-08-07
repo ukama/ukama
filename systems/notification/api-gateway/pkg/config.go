@@ -18,10 +18,11 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 	Server            rest.HttpConfig
 }
 
@@ -32,6 +33,17 @@ type HttpEndpoints struct {
 
 type GrpcEndpoints struct {
 	Timeout           time.Duration
+	Mailer            string
+	Notify            string
+	EventNotification string
+	Distributor       string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
 	Mailer            string
 	Notify            string
 	EventNotification string
@@ -53,6 +65,12 @@ func NewConfig() *Config {
 			Mailer:            "mailer:9090",
 			EventNotification: "eventnotify:9090",
 			Distributor:       "distributor:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Mailer:            "Email delivery: outgoing system emails",
+			Notify:            "Notifications: delivery of user and system notifications",
+			EventNotification: "Event notifications: converting system events into user notifications",
+			Distributor:       "Notification distribution: real-time streaming of notifications to clients",
 		},
 
 		Server: rest.HttpConfig{

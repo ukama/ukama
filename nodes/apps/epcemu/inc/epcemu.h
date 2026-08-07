@@ -92,6 +92,8 @@ typedef struct {
 typedef struct {
     EpcemuConfig *config;
     EpcemuStatus *status;
+    bool serviceOn;
+    pthread_mutex_t serviceMutex;
 } ServiceContext;
 
 void status_init(EpcemuStatus *status);

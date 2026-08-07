@@ -143,7 +143,7 @@ if [[ "$UE_NETWORK_MODE" == "container" ]]; then
         -e PCRF_URL="http://127.0.0.1:${PCRF_PORT}" \
         -e MEDIA_IP="$MEDIA_IP" \
         -e UE_DETACH_ON_EXIT="$UE_DETACH_ON_EXIT" \
-        "$UE_IMAGE" /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null'
+        "$UE_IMAGE"
 else
     podman run -d \
         --name "$NAME" \
@@ -163,7 +163,7 @@ else
         -e PCRF_URL="http://${TOWER_IP}:${PCRF_PORT}" \
         -e MEDIA_IP="$MEDIA_IP" \
         -e UE_DETACH_ON_EXIT="$UE_DETACH_ON_EXIT" \
-        "$UE_IMAGE" /bin/sh -c '/opt/ukama/ue-agent/ue-agent || exit 1; tail -f /dev/null'
+        "$UE_IMAGE"
 fi
 
 echo "$NAME $IMSI $ICCID $UE_IP port=$UE_DATA_PORT mode=$UE_NETWORK_MODE"
