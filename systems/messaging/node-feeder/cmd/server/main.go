@@ -17,6 +17,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"google.golang.org/grpc"
 	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 )
@@ -56,6 +58,10 @@ func main() {
 	}
 
 	exposeMetrics()
+
+	healthSrv := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {})
+	healthSrv.RegisterDependency("rabbitmq", true, ugrpc.AmqpCheck(serviceConfig.Queue.Uri))
+	go healthSrv.StartServer()
 
 	log.Infof("Starting queue listening")
 	err = listener.StartQueueListening()

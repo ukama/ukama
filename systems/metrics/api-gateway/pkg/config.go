@@ -30,13 +30,14 @@ type NameUpdate struct {
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	MetricsServer     config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
-	Period            time.Duration  `default:"5s"`
-	MetricsStore      string         `default:"http://localhost:8080"`
-	MetricsKeyMapFile string         `default:"default-metrics.yaml"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	MetricsServer     config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
+	Period            time.Duration       `default:"5s"`
+	MetricsStore      string              `default:"http://localhost:8080"`
+	MetricsKeyMapFile string              `default:"default-metrics.yaml"`
 	Server            rest.HttpConfig
 	MetricsConfig     *MetricsConfig
 	OrgName           string
@@ -85,6 +86,16 @@ type GrpcEndpoints struct {
 	Reasoning string
 }
 
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Exporter  string
+	Sanitizer string
+	Reasoning string
+}
+
 type HttpEndpoints struct {
 	Timeout     time.Duration
 	NodeMetrics string
@@ -106,6 +117,11 @@ func NewConfig() *Config {
 			Exporter:  "exporter:9090",
 			Sanitizer: "sanitizer:9090",
 			Reasoning: "reasoning:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Exporter:  "Metrics exporter: exposing system metrics to Prometheus",
+			Sanitizer: "Metrics sanitizer: cleaning and enriching incoming metrics",
+			Reasoning: "Metrics reasoning: derived metrics and analysis",
 		},
 		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,

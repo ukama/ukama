@@ -19,15 +19,26 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
-	Timeout time.Duration
-	Report  string
+	Timeout   time.Duration
+	Report    string
+	Collector string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Report    string
+	Collector string
 }
 
 type HttpEndpoints struct {
@@ -46,8 +57,13 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout: 3 * time.Second,
-			Report:  "billing-report:9090",
+			Timeout:   3 * time.Second,
+			Report:    "billing-report:9090",
+			Collector: "collector:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Report:    "Billing reports: generating billing reports and invoices",
+			Collector: "Billing collection: collecting usage and billing events for invoicing",
 		},
 		Http: HttpEndpoints{
 			Timeout: 3 * time.Second,

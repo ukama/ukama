@@ -18,20 +18,35 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 	Server            rest.HttpConfig
 }
 
 type GrpcEndpoints struct {
-	Timeout        time.Duration
-	Controller     string
-	Configurator   string
-	Software       string
-	State          string
-	SiteController string
+	Timeout          time.Duration
+	Controller       string
+	Configurator     string
+	Software         string
+	State            string
+	SiteController   string
+	OperationMonitor string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
+	Controller       string
+	Configurator     string
+	Software         string
+	State            string
+	SiteController   string
+	OperationMonitor string
 }
 
 type HttpEndpoints struct {
@@ -49,12 +64,21 @@ func NewConfig() *Config {
 		},
 
 		Services: GrpcEndpoints{
-			Timeout:        3 * time.Second,
-			Controller:     "controller:9090",
-			Software:       "software:9090",
-			Configurator:   "configurator:9090",
-			State:          "state:9090",
-			SiteController: "site-controller:9090",
+			Timeout:          3 * time.Second,
+			Controller:       "controller:9090",
+			Software:         "software:9090",
+			Configurator:     "configurator:9090",
+			State:            "state:9090",
+			SiteController:   "site-controller:9090",
+			OperationMonitor: "operation-monitor:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Controller:       "Node controller: node lifecycle control operations",
+			Configurator:     "Node configuration: applying and versioning node configs",
+			Software:         "Node software: software and app rollout to nodes",
+			State:            "Node state: tracking node state transitions",
+			SiteController:   "Site controller: site-level control operations",
+			OperationMonitor: "Operation monitoring: tracking long-running node operations",
 		},
 		Http: HttpEndpoints{
 			Timeout: 3 * time.Second,
