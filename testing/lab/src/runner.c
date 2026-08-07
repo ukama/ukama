@@ -347,6 +347,44 @@ static int created_load(const char *run_dir, world_t *world) {
                          sizeof(world->packages[i].bff_id));
     }
 
+    /*
+     * The ledger may hold MORE package ids than the scenario world:
+     * events (e.g. create_invalid_package) append packages mid-run.
+     * Grow the world so cleanup can delete those too; the caller is
+     * responsible for restoring package_count before re-running setup.
+     */
+    arr = json_object_get(root, "packages");
+    if (arr != NULL && json_is_array(arr) &&
+        json_array_size(arr) > world->package_count) {
+        size_t ledger_count;
+        package_t *grown;
+
+        ledger_count = json_array_size(arr);
+        grown = realloc(world->packages,
+                        ledger_count * sizeof(package_t));
+        if (grown != NULL) {
+            world->packages = grown;
+            for (i = world->package_count; i < ledger_count; i++) {
+                package_t *extra;
+                json_t *v;
+
+                extra = &world->packages[i];
+                memset(extra, 0, sizeof(*extra));
+                snprintf(extra->ref, sizeof(extra->ref),
+                         "ledger-extra-%zu", i);
+                ulab_copy(extra->base_ref, sizeof(extra->base_ref),
+                          extra->ref);
+                v = json_array_get(arr, i);
+                if (v != NULL && json_is_string(v) &&
+                    json_string_value(v) != NULL) {
+                    ulab_copy(extra->bff_id, sizeof(extra->bff_id),
+                              json_string_value(v));
+                }
+            }
+            world->package_count = ledger_count;
+        }
+    }
+
     arr = json_object_get(root, "sims");
     if (arr != NULL && json_is_array(arr)) {
         for (i = 0; i < json_array_size(arr) && i < world->ue_count; i++) {
@@ -1045,6 +1083,16 @@ static int run_phase(scenario_t *scenario,
 
     for (i = 0; i < phase->event_count; i++) {
         rc = event_run(&event_ctx, &phase->events[i], err);
+        /*
+         * Persist the created-resource ledger after every event, even
+         * a failed one: events can create backend resources mid-phase
+         * (allocate_sim, create_invalid_package). Without this, a
+         * crash after such an event leaks resources that preclean
+         * cannot find, and they resurface as residue in later runs.
+         */
+        if (runtime->run_dir[0] != '\0') {
+            created_write(runtime->run_dir, world);
+        }
         report_event(report, phase->name, &phase->events[i],
                      rc == ULAB_OK, rc == ULAB_OK ? "ok" : err->msg);
         if (rc != ULAB_OK) {
@@ -1164,6 +1212,7 @@ static int preclean_existing_run(bff_client_t *bff,
                                  const char *run_dir,
                                  int *failure_logs_attempted,
                                  ulab_error_t *err) {
+    size_t scenario_package_count;
     int rc;
 
     if (!created_exists(run_dir)) {
@@ -1172,6 +1221,7 @@ static int preclean_existing_run(bff_client_t *bff,
 
     ulab_status("CLEANUP", "existing created.json found; cleaning run first");
 
+    scenario_package_count = world->package_count;
     if (created_load(run_dir, world)) {
         snprintf(err->msg, sizeof(err->msg),
                  "failed to load existing created.json for cleanup");
@@ -1181,6 +1231,11 @@ static int preclean_existing_run(bff_client_t *bff,
     rc = cleanup_run(bff, runtime, world, run_dir,
                      failure_logs_attempted);
     created_clear_ids(world);
+    /*
+     * Drop any ledger-extra packages appended by created_load so the
+     * upcoming setup_bff_world does not try to create them.
+     */
+    world->package_count = scenario_package_count;
 
     if (rc != ULAB_OK) {
         snprintf(err->msg, sizeof(err->msg),

@@ -390,6 +390,25 @@ package_t *world_package_by_ref(world_t *w, const char *ref) {
     return NULL;
 }
 
+/*
+ * Return 1 when the backend package id was created by this run.
+ * Used to ignore residue (stale sim assignments referencing packages
+ * from earlier runs) in run-scoped checks.
+ */
+int world_owns_package_id(const world_t *w, const char *package_id) {
+    size_t i;
+
+    if (w == NULL || package_id == NULL || package_id[0] == '\0') {
+        return 0;
+    }
+    for (i = 0; i < w->package_count; i++) {
+        if (ulab_streq(w->packages[i].bff_id, package_id)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 package_t *world_package_by_base_ref(world_t *w, const char *ref) {
     size_t i;
 

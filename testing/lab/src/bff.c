@@ -4189,6 +4189,87 @@ static int backend_get_nodes_for_site(bff_client_t *c, const char *site_id,
 }
 
 
+/*
+ * Return 1 when the backend id belongs to an entity this run created
+ * (present in the run's world), 0 otherwise. Used to run-scope list
+ * counts so residue left by earlier runs cannot affect assertions.
+ */
+static int world_owns_backend_id(const world_t *w, const char *target,
+                                 const char *id) {
+    size_t i;
+
+    if (w == NULL || target == NULL || id == NULL || id[0] == '\0') {
+        return 0;
+    }
+    if (ulab_streq(target, "networks")) {
+        for (i = 0; i < w->network_count; i++) {
+            if (ulab_streq(w->networks[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+    if (ulab_streq(target, "sites")) {
+        for (i = 0; i < w->site_count; i++) {
+            if (ulab_streq(w->sites[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+    if (ulab_streq(target, "nodes")) {
+        for (i = 0; i < w->node_count; i++) {
+            if (ulab_streq(w->nodes[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+    if (ulab_streq(target, "subscribers") ||
+        ulab_streq(target, "customers")) {
+        for (i = 0; i < w->subscriber_count; i++) {
+            if (ulab_streq(w->subscribers[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+    if (ulab_streq(target, "packages") || ulab_streq(target, "plans")) {
+        for (i = 0; i < w->package_count; i++) {
+            if (ulab_streq(w->packages[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+    if (ulab_streq(target, "sims") || ulab_streq(target, "ues")) {
+        for (i = 0; i < w->ue_count; i++) {
+            if (ulab_streq(w->ues[i].bff_id, id)) return 1;
+        }
+        return 0;
+    }
+
+    return 0;
+}
+
+static void scoped_array_count(json_t *arr, const world_t *w,
+                               const char *target, size_t *scoped,
+                               size_t *total) {
+    size_t i;
+
+    *scoped = 0;
+    *total = arr != NULL && json_is_array(arr) ? json_array_size(arr) : 0;
+
+    for (i = 0; i < *total; i++) {
+        json_t *it;
+        json_t *v;
+        const char *s;
+
+        it = json_array_get(arr, i);
+        if (it == NULL || !json_is_object(it)) {
+            continue;
+        }
+        v = json_object_get(it, "id");
+        if (v == NULL || !json_is_string(v)) {
+            v = json_object_get(it, "uuid");
+        }
+        s = v != NULL && json_is_string(v) ? json_string_value(v) : NULL;
+        if (s != NULL && world_owns_backend_id(w, target, s)) {
+            (*scoped)++;
+        }
+    }
+}
+
 static int direct_network_list_call(bff_client_t *c,
                                     const char *target,
                                     const network_t *network,
@@ -4272,13 +4353,16 @@ static int direct_network_list_call(bff_client_t *c,
 int bff_get_list_count(bff_client_t *c,
                        const char *target,
                        const network_t *network,
+                       const world_t *world,
                        size_t *count,
+                       size_t *backend_total,
                        ulab_error_t *err) {
     json_t *root;
     json_t *obj;
     json_t *arr;
     const char *envelope;
     const char *list_key;
+    size_t total;
 
     if (target == NULL || target[0] == '\0' || count == NULL) {
         snprintf(err->msg, sizeof(err->msg),
@@ -4301,7 +4385,15 @@ int bff_get_list_count(bff_client_t *c,
         json_decref(root);
         return ULAB_ERR;
     }
-    *count = json_array_size(arr);
+    if (world != NULL) {
+        scoped_array_count(arr, world, target, count, &total);
+    } else {
+        *count = json_array_size(arr);
+        total = *count;
+    }
+    if (backend_total != NULL) {
+        *backend_total = total;
+    }
     json_decref(root);
     return ULAB_OK;
 }

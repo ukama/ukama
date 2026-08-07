@@ -142,6 +142,7 @@ package_t *world_package_by_base_ref(world_t *w, const char *ref);
 package_t *world_package_for_network(world_t *w,
                                      const char *package_ref,
                                      const char *network_ref);
+int world_owns_package_id(const world_t *w, const char *package_id);
 int world_add_ues(world_t *w,
                   const scenario_t *s,
                   const char *phase,

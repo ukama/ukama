@@ -532,10 +532,18 @@ int bff_backend_count(bff_client_t *c,
                       size_t *count,
                       ulab_error_t *err);
 
+/*
+ * Count entries in a backend list. When world is non-NULL the returned
+ * count is RUN-SCOPED: only entries whose id/uuid belongs to this run's
+ * world are counted, so residue from earlier runs cannot inflate it.
+ * backend_total (optional) receives the raw list size for diagnostics.
+ */
 int bff_get_list_count(bff_client_t *c,
                        const char *target,
                        const network_t *network,
+                       const world_t *world,
                        size_t *count,
+                       size_t *backend_total,
                        ulab_error_t *err);
 
 int bff_get_node_list_count(bff_client_t *c,

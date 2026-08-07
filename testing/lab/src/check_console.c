@@ -56,6 +56,7 @@ static int check_list_count(check_ctx_t *ctx,
                             ulab_error_t *err) {
     selector_result_t networks;
     size_t actual;
+    size_t backend_total;
     size_t i;
     uint32_t expected;
 
@@ -73,6 +74,7 @@ static int check_list_count(check_ctx_t *ctx,
     }
 
     actual = 0;
+    backend_total = 0;
     if (ulab_streq(check->target, "site_nodes")) {
         selector_result_t sites;
 
@@ -97,9 +99,11 @@ static int check_list_count(check_ctx_t *ctx,
             actual += site_count;
         }
         selector_result_free(&sites);
+        backend_total = actual;
     } else if (ulab_streq(check->target, "networks")) {
         if (bff_get_list_count(ctx->bff, check->target, NULL,
-                               &actual, err)) {
+                               ctx->world, &actual, &backend_total,
+                               err)) {
             return ULAB_ERR;
         }
     } else {
@@ -128,9 +132,11 @@ static int check_list_count(check_ctx_t *ctx,
                 selector_result_free(&networks);
                 return ULAB_ERR;
             }
+            backend_total = actual;
         } else if (bff_get_list_count(
                        ctx->bff, check->target,
-                       &ctx->world->networks[i], &actual, err)) {
+                       &ctx->world->networks[i], ctx->world,
+                       &actual, &backend_total, err)) {
             selector_result_free(&networks);
             return ULAB_ERR;
         }
@@ -138,9 +144,17 @@ static int check_list_count(check_ctx_t *ctx,
     }
 
     res->passed = actual == (size_t)expected;
-    snprintf(res->detail, sizeof(res->detail),
-             "target=%s expected=%u actual=%zu",
-             check->target, expected, actual);
+    if (backend_total > actual) {
+        snprintf(res->detail, sizeof(res->detail),
+                 "target=%s expected=%u actual=%zu (run-scoped; "
+                 "backend_total=%zu foreign=%zu from other runs)",
+                 check->target, expected, actual, backend_total,
+                 backend_total - actual);
+    } else {
+        snprintf(res->detail, sizeof(res->detail),
+                 "target=%s expected=%u actual=%zu (run-scoped)",
+                 check->target, expected, actual);
+    }
     return ULAB_OK;
 }
 
