@@ -17,7 +17,7 @@ import (
 	"github.com/streadway/amqp"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	hpb "github.com/ukama/ukama/systems/common/pb/gen/health"
+	hpb "google.golang.org/grpc/health/grpc_health_v1"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -192,7 +192,10 @@ func (q *QueueListener) healthCheck() {
 		}
 	}
 
-	_, err := q.hClient.Check(ctx, &hpb.HealthCheckRequest{Service: q.serviceName})
+	// Heartbeat against the standard grpc.health.v1 "live" service: proves
+	// the process is up without failing when the service is merely
+	// dependency-degraded (default "" status reflects db/msgclient deps).
+	_, err := q.hClient.Check(ctx, &hpb.HealthCheckRequest{Service: "live"})
 	if err != nil {
 		dt := time.Now()
 		q.continuousMiss++
