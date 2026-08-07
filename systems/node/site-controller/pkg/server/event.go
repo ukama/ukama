@@ -26,6 +26,11 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 )
 
+const (
+	pcrfAppName     = "pcrf"
+	appStatusActive = "Active"
+)
+
 var defaultSiteIntent = db.SiteIntent{
 	DesiredService: "off",
 	DesiredRadio:   "off",
@@ -156,13 +161,21 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_TOWERNODE:
-		if report.Interfaces.Cellular == nil {
-			return fmt.Errorf("no cellular interface found for node %s", nodeId)
+		// Cellular.Available only reports that the interface exists, so the service
+		// state is taken from the pcrf app, which is what toggling service starts
+		// and stops on a tower.
+		apps, err := hClient.ListApps(ctx, &hpb.ListAppsRequest{NodeId: nodeId})
+		if err != nil {
+			return fmt.Errorf("failed to list apps for node %s: %w", nodeId, err)
 		}
 
 		serviceState := reconciler.StateOff
-		if report.Interfaces.Cellular.Available {
-			serviceState = reconciler.StateRunning
+		for _, app := range apps.GetApps() {
+			if app.GetName() == pcrfAppName && app.GetStatus() == appStatusActive {
+				serviceState = reconciler.StateRunning
+
+				break
+			}
 		}
 
 		if err := c.s.dbStructs.SiteState.Upsert(&db.SiteState{
