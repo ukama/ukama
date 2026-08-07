@@ -9,7 +9,6 @@ x-bff-env: &bff-env
   NUCLEUS_API_GW: http://api-gateway-nucleus:8080
   INIT_API_GW: http://api-gateway-init:8080
   INVENTORY_API_GW: http://api-gateway-inventory:8080
-  ENCRYPTION_KEY: the-key-has-to-be-32-bytes-long!
   JWT_SECRET: H2as2xtF/chrTxVbffKpZBvmEwkmBF1nG5MAbXC4bmQ=
   # Local stack only — lets `pnpm codegen` introspect the schema.
   # Keep OFF (omit) in real production deployments.
