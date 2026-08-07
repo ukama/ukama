@@ -50,7 +50,7 @@ static const char *app_readiness_str(AppReadinessState state) {
     case APP_READINESS_IGNORED: return "ignored";
     case APP_READINESS_PENDING: return "pending";
     case APP_READINESS_READY:   return "ready";
-    case APP_READINESS_FAULTY:  return "faulty";
+    case APP_READINESS_FAULT:  return "fault";
     default:                    return "unknown";
     }
 }
@@ -60,7 +60,7 @@ static const char *node_readiness_str(NodeReadinessState state) {
     switch (state) {
     case NODE_READINESS_PENDING: return "pending";
     case NODE_READINESS_READY:   return "ready";
-    case NODE_READINESS_FAULTY:  return "faulty";
+    case NODE_READINESS_FAULT:  return "fault";
     default:                     return "unknown";
     }
 }
@@ -122,10 +122,10 @@ static void app_update(ReadinessMonitor *monitor,
                     sizeof(app->readinessReason),
                     result->reason);
     } else if (result->status == 503) {
-        if (app->readinessState != APP_READINESS_FAULTY) {
+        if (app->readinessState != APP_READINESS_FAULT) {
             app->readinessSince = now;
         }
-        app->readinessState = APP_READINESS_FAULTY;
+        app->readinessState = APP_READINESS_FAULT;
         app->readinessHttpStatus = result->status;
         app->readinessCheckedAt = now;
         copy_reason(app->readinessReason,
@@ -165,7 +165,7 @@ static void aggregate(ReadinessMonitor *monitor) {
         monitor->readinessDeadline = 0;
     } else if (monitor->enabled) {
         space = monitor->spaceList;
-        while (space && state != NODE_READINESS_FAULTY) {
+        while (space && state != NODE_READINESS_FAULT) {
             app = space->appList;
             while (app) {
                 if (!app->readinessRequired) {
@@ -173,8 +173,8 @@ static void aggregate(ReadinessMonitor *monitor) {
                     continue;
                 }
 
-                if (app->readinessState == APP_READINESS_FAULTY) {
-                    state = NODE_READINESS_FAULTY;
+                if (app->readinessState == APP_READINESS_FAULT) {
+                    state = NODE_READINESS_FAULT;
                     snprintf(appReason,
                              sizeof(appReason),
                              "%.48s: %.140s",
@@ -201,7 +201,7 @@ static void aggregate(ReadinessMonitor *monitor) {
         }
 
         if (state == NODE_READINESS_READY ||
-            state == NODE_READINESS_FAULTY) {
+            state == NODE_READINESS_FAULT) {
             monitor->readinessDeadline = 0;
         } else {
             if (monitor->readinessDeadline == 0) {
@@ -210,7 +210,7 @@ static void aggregate(ReadinessMonitor *monitor) {
             }
 
             if (now >= monitor->readinessDeadline) {
-                state = NODE_READINESS_FAULTY;
+                state = NODE_READINESS_FAULT;
                 snprintf(appReason,
                          sizeof(appReason),
                          "%.48s: readiness timeout after %d seconds",
@@ -459,7 +459,7 @@ NodeReadinessState readiness_get(ReadinessMonitor *monitor,
 
     if (!monitor) {
         copy_reason(reason, reasonSize, "readiness monitor unavailable");
-        return NODE_READINESS_FAULTY;
+        return NODE_READINESS_FAULT;
     }
 
     pthread_mutex_lock(&monitor->mutex);
@@ -488,7 +488,7 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
 
     if (!monitor) {
         json_object_set_new(root, "enabled", json_false());
-        json_object_set_new(root, "state", json_string("faulty"));
+        json_object_set_new(root, "state", json_string("fault"));
         json_object_set_new(root,
                             "reason",
                             json_string("readiness monitor unavailable"));

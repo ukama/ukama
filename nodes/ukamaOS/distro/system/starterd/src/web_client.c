@@ -575,6 +575,8 @@ bool wc_notify_node_state(Config *config,
     URequest *req;
     UResponse *resp;
     JsonObj *json;
+    const char *eventState;
+    const char *eventSeverity;
     int notifyPort;
     bool ok;
 
@@ -585,6 +587,9 @@ bool wc_notify_node_state(Config *config,
     json = NULL;
     body = NULL;
     ok = false;
+
+    eventState = ready ? "ready" : "fault";
+    eventSeverity = ready ? "low" : "high";
 
     notifyPort = usys_find_service_port(SERVICE_NOTIFY);
     if (notifyPort <= 0) {
@@ -612,15 +617,15 @@ bool wc_notify_node_state(Config *config,
                         json_string(STARTERD_SERVICE_NAME));
     json_object_set_new(json,
                         "severity",
-                        json_string(ready ? "low" : "high"));
+                        json_string(eventSeverity));
     json_object_set_new(json, "time", json_integer(time(NULL)));
     json_object_set_new(json, "module", json_string("node"));
     json_object_set_new(json,
                         "name",
-                        json_string(ready ? "ready" : "faulty"));
+                        json_string(eventState));
     json_object_set_new(json,
                         "value",
-                        json_string(ready ? "READY" : "FAULTY"));
+                        json_string(eventState));
     json_object_set_new(json, "units", json_string(""));
     json_object_set_new(json,
                         "details",
@@ -645,9 +650,16 @@ bool wc_notify_node_state(Config *config,
         ok = true;
     }
 
-    if (!ok) {
+    if (ok) {
+        usys_log_info("readiness: notify.d accepted %s event",
+                      eventState);
+    } else if (resp) {
+        usys_log_warn("readiness: notify.d rejected %s event: HTTP %d",
+                      eventState,
+                      (int)resp->status);
+    } else {
         usys_log_warn("readiness: notify.d did not accept %s event",
-                      ready ? "READY" : "FAULTY");
+                      eventState);
     }
 
     free(body);
