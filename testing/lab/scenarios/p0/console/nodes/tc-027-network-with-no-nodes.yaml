@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-027-network-with-no-nodes
-description: Create a network without sites or node records and verify its BFF node list is empty.
+description: Create a network without sites or nodes and verify its network-scoped Console Nodes list is empty.
 seed: 5027
 suite: p0
 priority: p0
@@ -23,6 +23,7 @@ phases:
   - name: verify_empty_node_list
     checks:
       - type: list_count_equals
+        view: nodes_list
         target: nodes
         networks: net-001
         expected_count: 0
