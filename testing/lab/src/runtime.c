@@ -824,12 +824,12 @@ int runtime_restart_nodes(runtime_t *rt,
     return node_provider_restart(rt, w, nodes, err);
 }
 
-static int runtime_set_nodes_network(runtime_t *rt,
-                                     const world_t *w,
-                                     const selector_result_t *nodes,
-                                     const char *script,
-                                     const char *action,
-                                     ulab_error_t *err) {
+static int runtime_set_nodes_connection(runtime_t *rt,
+                                        const world_t *w,
+                                        const selector_result_t *nodes,
+                                        const char *script,
+                                        const char *action,
+                                        ulab_error_t *err) {
     size_t i;
 
     for (i = 0; i < nodes->count; i++) {
@@ -846,7 +846,7 @@ static int runtime_set_nodes_network(runtime_t *rt,
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "%s network %s", action, node->bff_id);
+        ulab_status("NODE", "%s %s", action, node->bff_id);
         if (run_script(rt, script, args, err)) {
             return ULAB_ERR;
         }
@@ -859,18 +859,18 @@ int runtime_disconnect_nodes(runtime_t *rt,
                              const world_t *w,
                              const selector_result_t *nodes,
                              ulab_error_t *err) {
-    return runtime_set_nodes_network(rt, w, nodes,
-                                     "disconnect-node.sh",
-                                     "disconnect", err);
+    return runtime_set_nodes_connection(rt, w, nodes,
+                                        "disconnect-node.sh",
+                                        "disconnect", err);
 }
 
 int runtime_reconnect_nodes(runtime_t *rt,
                             const world_t *w,
                             const selector_result_t *nodes,
                             ulab_error_t *err) {
-    return runtime_set_nodes_network(rt, w, nodes,
-                                     "reconnect-node.sh",
-                                     "reconnect", err);
+    return runtime_set_nodes_connection(rt, w, nodes,
+                                        "reconnect-node.sh",
+                                        "reconnect", err);
 }
 
 

@@ -709,6 +709,44 @@ static int console_site_detail_view(bff_client_t *c,
     return ULAB_OK;
 }
 
+static int console_site_detail_node_item(bff_client_t *c,
+                                         const char *site_id,
+                                         const char *node_id,
+                                         json_t **root,
+                                         json_t **item,
+                                         ulab_error_t *err) {
+    json_t *site_view;
+    json_t *section;
+    json_t *arr;
+
+    if (console_site_detail_view(c, site_id, root, &site_view, err)) {
+        return ULAB_ERR;
+    }
+    section = json_object_get(site_view, "nodes");
+    if (console_section_ok(section, "NetworkSiteDetail", "nodes", err)) {
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    arr = json_object_get(section, "nodes");
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail nodes section missing nodes list");
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    *item = console_find_id(arr, node_id);
+    if (*item == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "node id=%s is absent from NetworkSiteDetail", node_id);
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
 static int console_node_detail(bff_client_t *c,
                                const node_t *node,
                                json_t **root,
@@ -4392,6 +4430,38 @@ int bff_get_list_count(bff_client_t *c,
     return ULAB_OK;
 }
 
+int bff_get_site_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *view,
+                            size_t *count,
+                            ulab_error_t *err) {
+    json_t *root;
+    json_t *arr;
+
+    if (network == NULL || network->bff_id[0] == '\0' || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site list count requires network");
+        return ULAB_ERR;
+    }
+    if (view == NULL || view[0] == '\0') {
+        return bff_get_list_count(c, "sites", network, count, err);
+    }
+    if (!ulab_streq(view, "sites_list")) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unsupported console site list view: %s", view);
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    arr = NULL;
+    if (console_sites_array(c, network, &root, &arr, err)) {
+        return ULAB_ERR;
+    }
+    *count = arr != NULL ? json_array_size(arr) : 0;
+    json_decref(root);
+    return ULAB_OK;
+}
+
 
 static const char *node_kind_filter(const char *node_type) {
     if (node_type == NULL || node_type[0] == '\0') return "";
@@ -4854,7 +4924,8 @@ static int query_entity_detail(bff_client_t *c,
 
     if (ulab_streq(entity, "node") &&
         (ulab_streq(view, "nodes_list") ||
-         ulab_streq(view, "node_detail"))) {
+         ulab_streq(view, "node_detail") ||
+         ulab_streq(view, "site_detail"))) {
         json_t *node_view;
         json_t *section;
 
@@ -5076,8 +5147,27 @@ int bff_entity_list_detail_reconciles(bff_client_t *c,
     }
     list_root = NULL;
     detail_root = NULL;
-    if (query_entity_list_item(c, entity, id, network, view, &list_root,
-                               &list_item, err)) {
+    if (ulab_streq(entity, "node") && ulab_streq(view, "site_detail")) {
+        world_t *mutable_world;
+        node_t *expected_node;
+        site_t *expected_site;
+
+        mutable_world = (world_t *)world;
+        expected_node = world_node_by_ref(mutable_world, ref);
+        expected_site = expected_node ?
+            world_site_by_ref(mutable_world, expected_node->site_ref) : NULL;
+        if (expected_node == NULL || expected_site == NULL ||
+            expected_site->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site_detail node reconciliation has unresolved site");
+            return ULAB_ERR;
+        }
+        if (console_site_detail_node_item(c, expected_site->bff_id, id,
+                                          &list_root, &list_item, err)) {
+            return ULAB_ERR;
+        }
+    } else if (query_entity_list_item(c, entity, id, network, view,
+                                      &list_root, &list_item, err)) {
         return ULAB_ERR;
     }
     if (parse_entity_snapshot(entity, list_item, &list_snapshot, err)) {
@@ -5151,8 +5241,26 @@ int bff_entity_fields_match_world(bff_client_t *c,
         return ULAB_ERR;
     }
     root = NULL;
-    if (ulab_streq(entity, "node") &&
-        ulab_streq(view, "nodes_list")) {
+    if (ulab_streq(entity, "node") && ulab_streq(view, "site_detail")) {
+        node_t *expected_node;
+        site_t *expected_site;
+
+        mutable_world = (world_t *)world;
+        expected_node = world_node_by_ref(mutable_world, ref);
+        expected_site = expected_node ?
+            world_site_by_ref(mutable_world, expected_node->site_ref) : NULL;
+        if (expected_node == NULL || expected_site == NULL ||
+            expected_site->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site_detail node field check has unresolved site");
+            return ULAB_ERR;
+        }
+        if (console_site_detail_node_item(c, expected_site->bff_id, id,
+                                          &root, &item, err)) {
+            return ULAB_ERR;
+        }
+    } else if (ulab_streq(entity, "node") &&
+               ulab_streq(view, "nodes_list")) {
         if (query_entity_list_item(c, entity, id, network, view,
                                    &root, &item, err)) {
             return ULAB_ERR;

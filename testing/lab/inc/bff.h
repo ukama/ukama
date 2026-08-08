@@ -538,6 +538,12 @@ int bff_get_list_count(bff_client_t *c,
                        size_t *count,
                        ulab_error_t *err);
 
+int bff_get_site_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *view,
+                            size_t *count,
+                            ulab_error_t *err);
+
 int bff_get_node_list_count(bff_client_t *c,
                             const network_t *network,
                             const char *node_type,
