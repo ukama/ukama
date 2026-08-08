@@ -14,7 +14,9 @@
 #
 # Usage:
 #   ./utils/run-p0-scenarios.sh
-#   ./utils/run-p0-scenarios.sh software-update console site
+#   ./utils/run-p0-scenarios.sh console sites
+#   ./utils/run-p0-scenarios.sh console/sites data-package/allocation
+#   ./utils/run-p0-scenarios.sh software-update/tc-045-software-app-fields.yaml
 #   ./utils/run-p0-scenarios.sh --factory-nodes auto
 #   ./utils/run-p0-scenarios.sh --list
 
@@ -36,11 +38,17 @@ export ULAB_CDR_DIAG_DISABLE="${ULAB_CDR_DIAG_DISABLE:-1}"
 
 usage() {
     cat <<EOF_USAGE
-usage: $0 [options] [category ...]
+usage: $0 [options] [selector ...]
 
-With no categories, every P0 category below SCENARIO_ROOT is run.
-Categories are top-level directories such as billing, console,
-console-kpi, data-package, node, sim, site, software-update, ue and usage.
+With no selectors, every P0 scenario below SCENARIO_ROOT is run.
+Selectors are paths relative to SCENARIO_ROOT and may name a top-level
+category, a nested directory, or one scenario YAML file. Examples:
+  console
+  console/sites
+  data-package/allocation
+  site/operations
+  software-update/tc-045-software-app-fields.yaml
+Use "all" to select the complete P0 suite.
 
 Options:
   --factory-nodes auto       Ensure enough complete bundles for runnable scenarios
@@ -97,7 +105,7 @@ SCENARIO_LIST_FILE=""
 BATCH_ID_OVERRIDE=""
 STATUS_FILE="${P0_STATUS_FILE:-}"
 
-requested_categories=()
+requested_selectors=()
 while (($#)); do
     case "$1" in
         --factory-nodes)
@@ -154,7 +162,7 @@ while (($#)); do
             ;;
         --)
             shift
-            requested_categories+=("$@")
+            requested_selectors+=("$@")
             break
             ;;
         -*)
@@ -163,7 +171,7 @@ while (($#)); do
             exit 2
             ;;
         *)
-            requested_categories+=("$1")
+            requested_selectors+=("$1")
             shift
             ;;
     esac
@@ -198,10 +206,36 @@ fi
 
 categories=()
 selected_scenarios=()
+selected_selectors=()
+
+add_scenario() {
+    local scenario="$1"
+
+    if [[ -z "${seen_scenarios[$scenario]+x}" ]]; then
+        selected_scenarios+=("$scenario")
+        seen_scenarios[$scenario]=1
+    fi
+}
+
+add_category_for_scenario() {
+    local scenario="$1"
+    local scenario_abs relative category
+
+    scenario_abs="$(readlink -f -- "$scenario")"
+    relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
+    category="${relative%%/*}"
+    if [[ -n "$category" && -z "${seen_categories[$category]+x}" ]]; then
+        categories+=("$category")
+        seen_categories[$category]=1
+    fi
+}
+
+declare -A seen_scenarios=()
+declare -A seen_categories=()
 
 if [[ -n "$SCENARIO_LIST_FILE" ]]; then
-    if ((${#requested_categories[@]} > 0)); then
-        printf 'error: categories cannot be combined with --scenario-list\n' >&2
+    if ((${#requested_selectors[@]} > 0)); then
+        printf 'error: selectors cannot be combined with --scenario-list\n' >&2
         exit 2
     fi
     if [[ ! -r "$SCENARIO_LIST_FILE" ]]; then
@@ -210,8 +244,6 @@ if [[ -n "$SCENARIO_LIST_FILE" ]]; then
         exit 2
     fi
 
-    declare -A seen_scenarios=()
-    declare -A seen_categories=()
     while IFS= read -r scenario || [[ -n "$scenario" ]]; do
         scenario="${scenario%%#*}"
         scenario="$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<<"$scenario")"
@@ -224,54 +256,68 @@ if [[ -n "$SCENARIO_LIST_FILE" ]]; then
                 "$SCENARIO_LIST_FILE" "$scenario" >&2
             exit 2
         fi
-        if [[ -z "${seen_scenarios[$scenario]+x}" ]]; then
-            selected_scenarios+=("$scenario")
-            seen_scenarios[$scenario]=1
-        fi
-
-        scenario_abs="$(readlink -f -- "$scenario")"
-        relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
-        category="${relative%%/*}"
-        if [[ -n "$category" && -z "${seen_categories[$category]+x}" ]]; then
-            categories+=("$category")
-            seen_categories[$category]=1
-        fi
+        add_scenario "$scenario"
     done <"$SCENARIO_LIST_FILE"
+
+    selected_selectors+=("scenario-list:$SCENARIO_LIST_FILE")
 else
-    if ((${#requested_categories[@]} == 0)); then
-        categories=("${available_categories[@]}")
+    selectors=()
+    if ((${#requested_selectors[@]} == 0)); then
+        selectors=("all")
     else
-        declare -A seen_categories=()
-        for category in "${requested_categories[@]}"; do
-            if [[ "$category" == "all" ]]; then
-                categories=("${available_categories[@]}")
-                seen_categories=()
-                break
-            fi
-            if [[ ! "$category" =~ ^[a-z0-9-]+$ ||
-                  ! -d "${SCENARIO_ROOT%/}/${category}" ]]; then
-                printf 'error: unknown or missing P0 category: %s\n' \
-                    "$category" >&2
-                exit 2
-            fi
-            if [[ -z "${seen_categories[$category]+x}" ]]; then
-                categories+=("$category")
-                seen_categories[$category]=1
-            fi
-        done
+        selectors=("${requested_selectors[@]}")
     fi
 
-    for category in "${categories[@]}"; do
-        category_dir="${SCENARIO_ROOT%/}/${category}"
-        while IFS= read -r -d '' scenario; do
-            selected_scenarios+=("$scenario")
-        done < <(
-            find "$category_dir" -type f \
-                \( -name '*.yaml' -o -name '*.yml' \) \
-                -print0 | sort -z
-        )
+    for selector in "${selectors[@]}"; do
+        if [[ "$selector" == "all" ]]; then
+            selected_selectors=("all")
+            selected_scenarios=()
+            seen_scenarios=()
+            while IFS= read -r -d '' scenario; do
+                add_scenario "$scenario"
+            done < <(
+                find "$SCENARIO_ROOT" -type f \
+                    \( -name '*.yaml' -o -name '*.yml' \) \
+                    -print0 | sort -z
+            )
+            break
+        fi
+
+        # Selectors are always relative to SCENARIO_ROOT. Reject path traversal
+        # rather than allowing a selector to escape the P0 tree.
+        selector="${selector#./}"
+        if [[ -z "$selector" || "$selector" == /* ||
+              "$selector" == ".." || "$selector" == ../* ||
+              "$selector" == */../* || "$selector" == */.. ]]; then
+            printf 'error: invalid P0 selector: %s\n' "$selector" >&2
+            exit 2
+        fi
+
+        target="${SCENARIO_ROOT%/}/$selector"
+        if [[ -d "$target" ]]; then
+            selected_selectors+=("$selector")
+            while IFS= read -r -d '' scenario; do
+                add_scenario "$scenario"
+            done < <(
+                find "$target" -type f \
+                    \( -name '*.yaml' -o -name '*.yml' \) \
+                    -print0 | sort -z
+            )
+        elif [[ -f "$target" && "$target" =~ \.ya?ml$ ]]; then
+            selected_selectors+=("$selector")
+            add_scenario "$target"
+        else
+            printf 'error: unknown or missing P0 selector: %s\n' \
+                "$selector" >&2
+            exit 2
+        fi
     done
 fi
+
+# Derive top-level categories from the final de-duplicated scenario set.
+for scenario in "${selected_scenarios[@]}"; do
+    add_category_for_scenario "$scenario"
+done
 
 if ((${#selected_scenarios[@]} == 0)); then
     printf 'error: no scenario YAML files selected\n' >&2
@@ -335,7 +381,9 @@ PY
 }
 
 if ((LIST_ONLY)); then
-    printf 'P0 categories:'
+    printf 'P0 selectors:'
+    printf ' %s' "${selected_selectors[@]}"
+    printf '\nP0 categories:'
     printf ' %s' "${categories[@]}"
     printf '\n\n'
     list_scenarios
@@ -696,7 +744,9 @@ PY_STATUS
 
 printf '\n============================================================\n'
 printf 'P0 batch: %s\n' "$BATCH_STAMP"
-printf 'Categories (%s):' "${#categories[@]}"
+printf 'Selectors (%s):' "${#selected_selectors[@]}"
+printf ' %s' "${selected_selectors[@]}"
+printf '\nCategories (%s):' "${#categories[@]}"
 printf ' %s' "${categories[@]}"
 printf '\nScenarios selected: %s\n' "${#selected_scenarios[@]}"
 printf '============================================================\n'
