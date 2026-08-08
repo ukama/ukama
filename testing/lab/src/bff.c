@@ -31,6 +31,7 @@ extern const char *BFF_GET_NETWORK;
 extern const char *BFF_GET_SITE;
 extern const char *BFF_GET_SITES;
 extern const char *BFF_CONSOLE_SITES_LIST;
+extern const char *BFF_CONSOLE_SITE_NODE_COUNTS;
 extern const char *BFF_CONSOLE_SITE_DETAIL;
 extern const char *BFF_GET_NODES;
 extern const char *BFF_CONSOLE_NODES_LIST;
@@ -4635,6 +4636,90 @@ int bff_get_site_node_count(bff_client_t *c,
     }
     json_decref(root);
     return ULAB_OK;
+}
+
+
+int bff_get_console_site_node_counts(bff_client_t *c,
+                                     const network_t *network,
+                                     const site_t *site,
+                                     bff_site_node_counts_t *counts,
+                                     ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *sites_view;
+    json_t *section;
+    json_t *arr;
+    size_t i;
+
+    if (network == NULL || network->bff_id[0] == '\0' ||
+        site == NULL || site->bff_id[0] == '\0' || counts == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site node counts require configured network and site");
+        return ULAB_ERR;
+    }
+    memset(counts, 0, sizeof(*counts));
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    root = NULL;
+    if (bff_call(c, "SitesList", BFF_CONSOLE_SITE_NODE_COUNTS,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    sites_view = dig(root, "data", "sitesView");
+    section = sites_view ? json_object_get(sites_view, "nodeCounts") : NULL;
+    if (console_section_ok(section, "SitesList", "nodeCounts", err)) {
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    arr = json_object_get(section, "counts");
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList nodeCounts section missing counts list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *item;
+        const char *site_id;
+        long long total;
+        long long online;
+        long long offline;
+
+        item = json_array_get(arr, i);
+        site_id = json_string_value(json_object_get(item, "siteId"));
+        if (site_id == NULL || !ulab_streq(site_id, site->bff_id)) {
+            continue;
+        }
+        if (!json_is_integer(json_object_get(item, "total")) ||
+            !json_is_integer(json_object_get(item, "online")) ||
+            !json_is_integer(json_object_get(item, "offline"))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "SitesList nodeCounts contains invalid values");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        total = json_integer_value(json_object_get(item, "total"));
+        online = json_integer_value(json_object_get(item, "online"));
+        offline = json_integer_value(json_object_get(item, "offline"));
+        if (total < 0 || online < 0 || offline < 0) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "SitesList nodeCounts contains negative values");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        counts->total = (size_t)total;
+        counts->online = (size_t)online;
+        counts->offline = (size_t)offline;
+        json_decref(root);
+        return ULAB_OK;
+    }
+    snprintf(err->msg, sizeof(err->msg),
+             "site id=%s is absent from SitesList nodeCounts",
+             site->bff_id);
+    json_decref(root);
+    return ULAB_ERR;
 }
 
 

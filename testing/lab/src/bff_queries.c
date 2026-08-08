@@ -71,6 +71,12 @@ const char *BFF_CONSOLE_SITES_LIST =
 " error { section code message } sites { id name networkId latitude "
 " longitude location isDeactivated installDate createdAt } } } }";
 
+const char *BFF_CONSOLE_SITE_NODE_COUNTS =
+"query SitesList($networkId: String!) {"
+" sitesView(networkId: $networkId) { networkId nodeCounts {"
+" error { section code message } counts {"
+" siteId total online offline } } } }";
+
 const char *BFF_CONSOLE_SITE_DETAIL =
 "query NetworkSiteDetail($siteId: String!) {"
 " siteView(siteId: $siteId) { siteId site {"

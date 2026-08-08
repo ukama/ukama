@@ -212,6 +212,8 @@ const char *scenario_check_name(check_type_t type) {
         return "node_operation_status_equals";
     case CHECK_SITE_OPERATION_STATUS_EQUALS:
         return "site_operation_status_equals";
+    case CHECK_SITE_NODE_COUNTS_EQUALS:
+        return "site_node_counts_equals";
     case CHECK_KPI_STATE_EQUALS: return "kpi_state_equals";
     case CHECK_KPI_TIMESERIES: return "kpi_timeseries";
     case CHECK_HISTORY_PRESERVED: return "history_preserved";
@@ -397,6 +399,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_OPERATION_STATUS_EQUALS;
     } else if (ulab_streq(name, "site_operation_status_equals")) {
         *out = CHECK_SITE_OPERATION_STATUS_EQUALS;
+    } else if (ulab_streq(name, "site_node_counts_equals")) {
+        *out = CHECK_SITE_NODE_COUNTS_EQUALS;
     } else if (ulab_streq(name, "kpi_state_equals")) {
         *out = CHECK_KPI_STATE_EQUALS;
     } else if (ulab_streq(name, "kpi_timeseries")) {
@@ -545,7 +549,8 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
     } else if (c->type == CHECK_SOFTWARE_STATUS_EQUALS ||
                c->type == CHECK_SOFTWARE_COUNT_EQUALS ||
                c->type == CHECK_NODE_OPERATION_STATUS_EQUALS ||
-               c->type == CHECK_SITE_OPERATION_STATUS_EQUALS) {
+               c->type == CHECK_SITE_OPERATION_STATUS_EQUALS ||
+               c->type == CHECK_SITE_NODE_COUNTS_EQUALS) {
         c->timeout_seconds = 180;
         c->poll_seconds = 2;
     } else if (c->type == CHECK_KPI_STATE_EQUALS ||
@@ -665,6 +670,21 @@ static int apply_check_field(check_spec_t *c, const char *key,
         c->expected_degraded = ulab_streq(val, "true") ||
             ulab_streq(val, "1");
         c->has_expected_degraded = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "total")) {
+        if (ulab_parse_u32(val, &c->expected_total)) return ULAB_ERR;
+        c->has_expected_total = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "online")) {
+        if (ulab_parse_u32(val, &c->expected_online)) return ULAB_ERR;
+        c->has_expected_online = 1;
+        return ULAB_OK;
+    }
+    if (ulab_streq(key, "offline")) {
+        if (ulab_parse_u32(val, &c->expected_offline)) return ULAB_ERR;
+        c->has_expected_offline = 1;
         return ULAB_OK;
     }
     if (ulab_streq(key, "restart_available")) {

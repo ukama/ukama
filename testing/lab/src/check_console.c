@@ -694,6 +694,94 @@ static int check_site_operation(check_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int site_node_counts_match(const bff_site_node_counts_t *actual,
+                                  const check_spec_t *check) {
+    if (check->has_expected_total &&
+        actual->total != check->expected_total) {
+        return 0;
+    }
+    if (check->has_expected_online &&
+        actual->online != check->expected_online) {
+        return 0;
+    }
+    if (check->has_expected_offline &&
+        actual->offline != check->expected_offline) {
+        return 0;
+    }
+    return 1;
+}
+
+static int check_site_node_counts(check_ctx_t *ctx,
+                                  const check_spec_t *check,
+                                  check_result_t *res,
+                                  ulab_error_t *err) {
+    selector_result_t sites;
+    time_t deadline;
+    unsigned int poll;
+    size_t matched;
+    size_t i;
+    bff_site_node_counts_t last;
+
+    if (!check->has_expected_total && !check->has_expected_online &&
+        !check->has_expected_offline) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site_node_counts_equals has no expected fields");
+        return ULAB_ERR;
+    }
+    if (selector_resolve_sites(ctx->world, &check->sites, &sites, err)) {
+        return ULAB_ERR;
+    }
+    deadline = time(NULL) + (time_t)check->timeout_seconds;
+    poll = check->poll_seconds ? check->poll_seconds : 2u;
+    memset(&last, 0, sizeof(last));
+    do {
+        matched = 0;
+        for (i = 0; i < sites.count; i++) {
+            site_t *site;
+            network_t *network;
+            bff_site_node_counts_t actual;
+
+            site = &ctx->world->sites[sites.idx[i]];
+            network = world_network_by_ref(ctx->world, site->network_ref);
+            if (network == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "site %s references unknown network %s",
+                         site->ref, site->network_ref);
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            memset(&actual, 0, sizeof(actual));
+            if (bff_get_console_site_node_counts(ctx->bff, network, site,
+                                                 &actual, err)) {
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            if (site_node_counts_match(&actual, check)) {
+                matched++;
+            }
+            last = actual;
+        }
+        if (matched == sites.count || time(NULL) >= deadline) {
+            break;
+        }
+        sleep(poll > 60u ? 60u : poll);
+    } while (1);
+
+    res->passed = sites.count > 0 && matched == sites.count;
+    snprintf(res->detail, sizeof(res->detail),
+             "matched=%zu/%zu total=%zu online=%zu offline=%zu "
+             "expected={total=%s%u online=%s%u offline=%s%u}",
+             matched, sites.count, last.total, last.online, last.offline,
+             check->has_expected_total ? "" : "unset/",
+             check->expected_total,
+             check->has_expected_online ? "" : "unset/",
+             check->expected_online,
+             check->has_expected_offline ? "" : "unset/",
+             check->expected_offline);
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
 static network_t *one_network(check_ctx_t *ctx,
                               const check_spec_t *check,
                               ulab_error_t *err) {
@@ -1317,6 +1405,8 @@ int check_console(check_ctx_t *ctx, const check_spec_t *check,
         return check_node_operation(ctx, check, res, err);
     case CHECK_SITE_OPERATION_STATUS_EQUALS:
         return check_site_operation(ctx, check, res, err);
+    case CHECK_SITE_NODE_COUNTS_EQUALS:
+        return check_site_node_counts(ctx, check, res, err);
     case CHECK_KPI_STATE_EQUALS:
         return check_kpi_state(ctx, check, res, err);
     case CHECK_KPI_TIMESERIES:

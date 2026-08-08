@@ -153,6 +153,7 @@ typedef enum {
     CHECK_SOFTWARE_COUNT_EQUALS,
     CHECK_NODE_OPERATION_STATUS_EQUALS,
     CHECK_SITE_OPERATION_STATUS_EQUALS,
+    CHECK_SITE_NODE_COUNTS_EQUALS,
     CHECK_KPI_STATE_EQUALS,
     CHECK_KPI_TIMESERIES,
     CHECK_HISTORY_PRESERVED,
@@ -214,6 +215,12 @@ typedef struct {
     int          has_expected_busy;
     int          expected_degraded;
     int          has_expected_degraded;
+    uint32_t     expected_total;
+    int          has_expected_total;
+    uint32_t     expected_online;
+    int          has_expected_online;
+    uint32_t     expected_offline;
+    int          has_expected_offline;
     int          expected_restart_available;
     int          has_expected_restart_available;
     int          expected_rf_available;
