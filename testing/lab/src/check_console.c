@@ -90,7 +90,7 @@ static int check_list_count(check_ctx_t *ctx,
                     check->nodes.kind ==
                         SEL_NODE_TYPE_COUNT_PER_NETWORK ?
                         check->nodes.value : NULL,
-                    &site_count, err)) {
+                    check->view, &site_count, err)) {
                 selector_result_free(&sites);
                 return ULAB_ERR;
             }

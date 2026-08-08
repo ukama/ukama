@@ -65,6 +65,20 @@ const char *BFF_GET_SITE =
 " id name networkId latitude longitude isDeactivated "
 " installDate createdAt location } }";
 
+const char *BFF_CONSOLE_SITES_LIST =
+"query SitesList($networkId: String!) {"
+" sitesView(networkId: $networkId) { networkId sites {"
+" error { section code message } sites { id name networkId latitude "
+" longitude location isDeactivated installDate createdAt } } } }";
+
+const char *BFF_CONSOLE_SITE_DETAIL =
+"query NetworkSiteDetail($siteId: String!) {"
+" siteView(siteId: $siteId) { siteId site {"
+" error { section code message } site { id name networkId latitude "
+" longitude location isDeactivated installDate createdAt } }"
+" nodes { error { section code message } nodes { id name type "
+" site { siteId networkId } status { connectivity state } } } } }";
+
 const char *BFF_GET_NODES =
 "query GetNodes($data: NodesFilterInput!) {"
 " getNodes(data: $data) { nodes { id name type latitude longitude "

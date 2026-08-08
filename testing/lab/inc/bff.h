@@ -548,6 +548,7 @@ int bff_get_node_list_count(bff_client_t *c,
 int bff_get_site_node_count(bff_client_t *c,
                             const site_t *site,
                             const char *node_type,
+                            const char *view,
                             size_t *count,
                             ulab_error_t *err);
 

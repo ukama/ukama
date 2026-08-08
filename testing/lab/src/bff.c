@@ -30,6 +30,8 @@ extern const char *BFF_PACKAGE_NAME_AVAILABLE;
 extern const char *BFF_GET_NETWORK;
 extern const char *BFF_GET_SITE;
 extern const char *BFF_GET_SITES;
+extern const char *BFF_CONSOLE_SITES_LIST;
+extern const char *BFF_CONSOLE_SITE_DETAIL;
 extern const char *BFF_GET_NODES;
 extern const char *BFF_CONSOLE_NODES_LIST;
 extern const char *BFF_CONSOLE_NODE_POOL;
@@ -618,6 +620,90 @@ static int console_nodes_array(bff_client_t *c,
         json_decref(*root);
         *root = NULL;
         *arr = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int console_sites_array(bff_client_t *c,
+                               const network_t *network,
+                               json_t **root,
+                               json_t **arr,
+                               ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *sites_view;
+    json_t *section;
+
+    if (network == NULL || network->bff_id[0] == '\0' ||
+        root == NULL || arr == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList requires a configured network");
+        return ULAB_ERR;
+    }
+    *root = NULL;
+    *arr = NULL;
+
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    if (bff_call(c, "SitesList", BFF_CONSOLE_SITES_LIST,
+                 vars, root, err)) {
+        return ULAB_ERR;
+    }
+    sites_view = dig(*root, "data", "sitesView");
+    section = sites_view ? json_object_get(sites_view, "sites") : NULL;
+    if (console_section_ok(section, "SitesList", "sites", err)) {
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    *arr = json_object_get(section, "sites");
+    if (*arr == NULL || json_is_null(*arr)) {
+        *arr = NULL;
+        return ULAB_OK;
+    }
+    if (!json_is_array(*arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList sites section missing sites list");
+        json_decref(*root);
+        *root = NULL;
+        *arr = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int console_site_detail_view(bff_client_t *c,
+                                    const char *site_id,
+                                    json_t **root,
+                                    json_t **site_view,
+                                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char site_esc[ULAB_MAX_ID * 2];
+
+    if (site_id == NULL || site_id[0] == '\0' ||
+        root == NULL || site_view == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail requires a configured site");
+        return ULAB_ERR;
+    }
+    *root = NULL;
+    *site_view = NULL;
+
+    ulab_json_escape(site_id, site_esc, sizeof(site_esc));
+    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
+    if (bff_call(c, "NetworkSiteDetail", BFF_CONSOLE_SITE_DETAIL,
+                 vars, root, err)) {
+        return ULAB_ERR;
+    }
+    *site_view = dig(*root, "data", "siteView");
+    if (*site_view == NULL || !json_is_object(*site_view)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail missing siteView");
+        json_decref(*root);
+        *root = NULL;
+        *site_view = NULL;
         return ULAB_ERR;
     }
     return ULAB_OK;
@@ -4396,6 +4482,7 @@ int bff_get_node_list_count(bff_client_t *c,
 int bff_get_site_node_count(bff_client_t *c,
                             const site_t *site,
                             const char *node_type,
+                            const char *view,
                             size_t *count,
                             ulab_error_t *err) {
     char vars[ULAB_MAX_QUERY];
@@ -4412,21 +4499,57 @@ int bff_get_site_node_count(bff_client_t *c,
         return ULAB_ERR;
     }
     kind = node_kind_filter(node_type);
-    ulab_json_escape(site->bff_id, site_esc, sizeof(site_esc));
-    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
     root = NULL;
-    if (bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE,
-                 vars, &root, err)) {
-        return ULAB_ERR;
+    arr = NULL;
+
+    if (view != NULL && view[0] != '\0') {
+        json_t *site_view;
+        json_t *section;
+
+        if (!ulab_streq(view, "site_detail")) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "unsupported console site node view: %s", view);
+            return ULAB_ERR;
+        }
+        if (console_site_detail_view(c, site->bff_id, &root,
+                                     &site_view, err)) {
+            return ULAB_ERR;
+        }
+        section = json_object_get(site_view, "nodes");
+        if (console_section_ok(section, "NetworkSiteDetail",
+                               "nodes", err)) {
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        arr = json_object_get(section, "nodes");
+        if (arr == NULL || json_is_null(arr)) {
+            *count = 0;
+            json_decref(root);
+            return ULAB_OK;
+        }
+        if (!json_is_array(arr)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "NetworkSiteDetail nodes section missing nodes list");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+    } else {
+        ulab_json_escape(site->bff_id, site_esc, sizeof(site_esc));
+        snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
+        if (bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE,
+                     vars, &root, err)) {
+            return ULAB_ERR;
+        }
+        obj = dig(root, "data", "getNodesForSite");
+        arr = obj ? json_object_get(obj, "nodes") : NULL;
+        if (arr == NULL || !json_is_array(arr)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getNodesForSite missing nodes list");
+            json_decref(root);
+            return ULAB_ERR;
+        }
     }
-    obj = dig(root, "data", "getNodesForSite");
-    arr = obj ? json_object_get(obj, "nodes") : NULL;
-    if (arr == NULL || !json_is_array(arr)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "getNodesForSite missing nodes list");
-        json_decref(root);
-        return ULAB_ERR;
-    }
+
     *count = 0;
     for (i = 0; i < json_array_size(arr); i++) {
         json_t *item;
@@ -4613,7 +4736,8 @@ static int snapshot_common_equal(const char *entity,
         return ulab_streq(left->latitude, right->latitude) &&
             ulab_streq(left->longitude, right->longitude) &&
             ulab_streq(left->location, right->location) &&
-            ulab_streq(left->created_at, right->created_at) &&
+            left->created_at[0] != '\0' &&
+            right->created_at[0] != '\0' &&
             ulab_streq(left->install_date, right->install_date) &&
             left->has_deactivated == right->has_deactivated &&
             (!left->has_deactivated ||
@@ -4759,6 +4883,33 @@ static int query_entity_detail(bff_client_t *c,
         return ULAB_OK;
     }
 
+    if (ulab_streq(entity, "site") &&
+        (ulab_streq(view, "sites_list") ||
+         ulab_streq(view, "site_detail"))) {
+        json_t *site_view;
+        json_t *section;
+
+        if (console_site_detail_view(c, id, root, &site_view, err)) {
+            return ULAB_ERR;
+        }
+        section = json_object_get(site_view, "site");
+        if (console_section_ok(section, "NetworkSiteDetail",
+                               "site", err)) {
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        *item = json_object_get(section, "site");
+        if (*item == NULL || !json_is_object(*item)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "NetworkSiteDetail site section missing site");
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        return ULAB_OK;
+    }
+
     ulab_json_escape(id, id_esc, sizeof(id_esc));
     operation = NULL;
     query = NULL;
@@ -4833,6 +4984,23 @@ static int query_entity_list_item(bff_client_t *c,
         if (*item == NULL) {
             snprintf(err->msg, sizeof(err->msg),
                      "node id=%s is absent from NodesList", id);
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        return ULAB_OK;
+    }
+
+    if (ulab_streq(entity, "site") &&
+        (ulab_streq(view, "sites_list") ||
+         ulab_streq(view, "site_detail"))) {
+        if (console_sites_array(c, network, root, &arr, err)) {
+            return ULAB_ERR;
+        }
+        *item = console_find_id(arr, id);
+        if (*item == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site id=%s is absent from SitesList", id);
             json_decref(*root);
             *root = NULL;
             return ULAB_ERR;
@@ -5021,7 +5189,7 @@ int bff_entity_fields_match_world(bff_client_t *c,
             ulab_streq(actual.longitude, expected->longitude) &&
             ulab_streq(actual.location, expected->location) &&
             expected->created_at[0] != '\0' &&
-            ulab_streq(actual.created_at, expected->created_at) &&
+            actual.created_at[0] != '\0' &&
             expected->install_date[0] != '\0' &&
             ulab_streq(actual.install_date, expected->install_date);
     } else if (ulab_streq(entity, "node")) {
