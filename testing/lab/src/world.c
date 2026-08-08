@@ -173,6 +173,19 @@ static void add_package_for_network(world_t *w,
     p->active = spec->active;
 }
 
+static const char *node_display_name(const char *type) {
+    if (ulab_streq(type, ULAB_NODE_TOWER)) {
+        return "Tower node";
+    }
+    if (ulab_streq(type, ULAB_NODE_AMPLIFIER)) {
+        return "Amplifier node";
+    }
+    if (ulab_streq(type, ULAB_NODE_CONTROLLER)) {
+        return "Controller node";
+    }
+    return type;
+}
+
 static void add_node(world_t *w, size_t *idx, const char *type,
                      const site_t *site, size_t n) {
     node_t *node = &w->nodes[(*idx)++];
@@ -181,7 +194,8 @@ static void add_node(world_t *w, size_t *idx, const char *type,
              site->ref, n);
     snprintf(node->id, sizeof(node->id), "%.240s-%.120s", w->run_id,
              node->ref);
-    snprintf(node->name, sizeof(node->name), "%.255s", node->id);
+    snprintf(node->name, sizeof(node->name), "%s",
+             node_display_name(type));
     snprintf(node->type, sizeof(node->type), "%s", type);
     snprintf(node->site_ref, sizeof(node->site_ref), "%s", site->ref);
     snprintf(node->network_ref, sizeof(node->network_ref), "%s",
