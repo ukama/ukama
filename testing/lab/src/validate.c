@@ -276,9 +276,23 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
 
             if (event->type == EVT_UPDATE_PACKAGE) {
                 if (event->package_ref[0] == '\0' ||
-                    event->name[0] == '\0') {
+                    (event->name[0] == '\0' &&
+                     event->other_package_ref[0] == '\0')) {
                     return fail(err,
-                                "update_package requires package and name");
+                                "update_package requires package and name "
+                                "or other_package");
+                }
+                if (event->name[0] != '\0' &&
+                    event->other_package_ref[0] != '\0') {
+                    return fail(err,
+                                "update_package accepts name or "
+                                "other_package, not both");
+                }
+                if (event->other_package_ref[0] != '\0' &&
+                    ulab_streq(event->package_ref,
+                               event->other_package_ref)) {
+                    return fail(err,
+                                "update_package packages must differ");
                 }
                 continue;
             }

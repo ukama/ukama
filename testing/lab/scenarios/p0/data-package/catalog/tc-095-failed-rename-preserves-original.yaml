@@ -44,7 +44,7 @@ phases:
     events:
       - type: update_package
         package: first_plan
-        name: Existing Duplicate Plan
+        other_package: second_plan
         expect:
           result: failure
     checks:
