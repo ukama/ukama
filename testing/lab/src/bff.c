@@ -5788,6 +5788,15 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     for (i = 0; i < count; i++) {
 
         n = snprintf(query, sizeof(query),
+                     "mutation { setInactivePackageForSim(data: {"
+                     "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                     package_record_ids[i], ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+            (*failures)++;
+        }
+
+        n = snprintf(query, sizeof(query),
                      "mutation { removePackageForSim(data: {"
                      "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
                      package_record_ids[i], ue->bff_id);
