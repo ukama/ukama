@@ -853,7 +853,7 @@ int bff_clear_sim_packages(bff_client_t *c,
                            ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char query[ULAB_MAX_QUERY];
-    char package_ids[32][ULAB_MAX_ID];
+    char package_record_ids[32][ULAB_MAX_ID];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -869,7 +869,7 @@ int bff_clear_sim_packages(bff_client_t *c,
     ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
     snprintf(query, sizeof(query),
              "query { getPackagesForSim(data:{sim_id:\"%s\"}) { "
-             "sim_id packages { package_id is_active } } }",
+             "sim_id packages { id package_id is_active } } }",
              sim_esc);
 
     root = NULL;
@@ -884,11 +884,17 @@ int bff_clear_sim_packages(bff_client_t *c,
     if (arr != NULL && json_is_array(arr)) {
         for (i = 0; i < json_array_size(arr) && count < 32; i++) {
             it = json_array_get(arr, i);
-            pid = it ? json_object_get(it, "package_id") : NULL;
+            pid = it ? json_object_get(it, "id") : NULL;
+            if (pid == NULL || !json_is_string(pid) ||
+                json_string_value(pid) == NULL ||
+                json_string_value(pid)[0] == '\0') {
+                pid = it ? json_object_get(it, "package_id") : NULL;
+            }
             if (pid != NULL && json_is_string(pid) &&
                 json_string_value(pid) != NULL &&
                 json_string_value(pid)[0] != '\0') {
-                ulab_copy(package_ids[count], sizeof(package_ids[count]),
+                ulab_copy(package_record_ids[count],
+                          sizeof(package_record_ids[count]),
                           json_string_value(pid));
                 count++;
             }
@@ -898,7 +904,7 @@ int bff_clear_sim_packages(bff_client_t *c,
     json_decref(root);
 
     for (i = 0; i < count; i++) {
-        if (sim_remove_package_from_sim(c, ue, package_ids[i], err)) {
+        if (sim_remove_package_from_sim(c, ue, package_record_ids[i], err)) {
             return ULAB_ERR;
         }
     }
@@ -1084,4 +1090,3 @@ int bff_get_sim_status(bff_client_t *c,
     json_decref(root);
     return ULAB_OK;
 }
-

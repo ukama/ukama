@@ -54,28 +54,37 @@ if ! podman exec "$UE_CONTAINER" test -d /sys/class/net/tun0; then
     exit 1
 fi
 
-# Media is now on the tower user-plane bridge (for example 10.10.10.100).
-# That IP is outside the UE subscriber subnet, so force only the media target
-# through the UE tunnel. Without this route, iperf may use the UE container's
-# podman eth0 path and never enter EPCEMU/PCRF.
+# Force only the media target through the UE tunnel. Without this route,
+# traffic may use the UE container's podman eth0 path and never enter
+# EPCEMU/PCRF.
 podman exec "$UE_CONTAINER" \
     ip route replace "$MEDIA_IP/32" dev tun0
 
 echo "traffic route ue=$UE_KEY media=$MEDIA_IP via=tun0"
 podman exec "$UE_CONTAINER" ip route get "$MEDIA_IP" || true
 
-echo "traffic precheck http ue=$UE_KEY media=$MEDIA_IP"
-if ! MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
-    "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode http; then
-    echo "traffic HTTP precheck failed; dumping datapath state" >&2
-    podman exec "$TNODE_CONTAINER" sh -lc 'curl -sS http://127.0.0.1:18028/v1/status || true' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc 'curl -sS http://127.0.0.1:18030/v1/status || true' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc 'ip rule; ip route show table 2000; ip route show table 1000; iptables -S FORWARD' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc 'ovs-ofctl -O OpenFlow15 dump-meters br0 || true; ovs-ofctl -O OpenFlow15 dump-flows br0 || true' >&2 || true
-    exit 1
-fi
+dump_datapath() {
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'curl -sS http://127.0.0.1:18028/v1/status || true' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'curl -sS http://127.0.0.1:18030/v1/status || true' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'ip rule; ip route show table 2000; ip route show table 1000; \
+         iptables -S FORWARD' >&2 || true
+    podman exec "$TNODE_CONTAINER" sh -lc \
+        'ovs-ofctl -O OpenFlow15 dump-meters br0 || true; \
+         ovs-ofctl -O OpenFlow15 dump-flows br0 || true' >&2 || true
+    if [ -n "${MEDIA_CONTAINER:-}" ]; then
+        podman logs --tail 120 "$MEDIA_CONTAINER" >&2 || true
+    fi
+}
 
 echo "traffic ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB media=$MEDIA_IP"
-MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
-    "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode iperf --mb "$AMOUNT_MB"
+if ! MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
+    "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode iperf \
+    --mb "$AMOUNT_MB"; then
+    echo "traffic transfer failed; dumping datapath state" >&2
+    dump_datapath
+    exit 1
+fi
 echo "traffic-complete ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB"

@@ -5728,7 +5728,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
                                          int *failures) {
     char vars[ULAB_MAX_QUERY];
     char query[ULAB_MAX_QUERY];
-    char package_ids[32][ULAB_MAX_ID];
+    char package_record_ids[32][ULAB_MAX_ID];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -5766,11 +5766,17 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     if (arr != NULL && json_is_array(arr)) {
         for (i = 0; i < json_array_size(arr) && count < 32; i++) {
             it = json_array_get(arr, i);
-            pid = it ? json_object_get(it, "package_id") : NULL;
+            pid = it ? json_object_get(it, "id") : NULL;
+            if (pid == NULL || !json_is_string(pid) ||
+                json_string_value(pid) == NULL ||
+                json_string_value(pid)[0] == '\0') {
+                pid = it ? json_object_get(it, "package_id") : NULL;
+            }
             if (pid != NULL && json_is_string(pid) &&
                 json_string_value(pid) != NULL &&
                 json_string_value(pid)[0] != '\0') {
-                ulab_copy(package_ids[count], sizeof(package_ids[count]),
+                ulab_copy(package_record_ids[count],
+                          sizeof(package_record_ids[count]),
                           json_string_value(pid));
                 count++;
             }
@@ -5784,7 +5790,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
         n = snprintf(query, sizeof(query),
                      "mutation { removePackageForSim(data: {"
                      "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
-                     package_ids[i], ue->bff_id);
+                     package_record_ids[i], ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "removePackageForSim", query)) {
             (*failures)++;
