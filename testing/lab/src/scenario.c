@@ -546,6 +546,9 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
      */
     if (c->type == CHECK_PACKAGE_STATE) {
         c->timeout_seconds = 30;
+    } else if (c->type == CHECK_USAGE_PER_SIM) {
+        c->timeout_seconds = 120;
+        c->poll_seconds = 5;
     } else if (c->type == CHECK_SOFTWARE_STATUS_EQUALS ||
                c->type == CHECK_SOFTWARE_COUNT_EQUALS ||
                c->type == CHECK_NODE_OPERATION_STATUS_EQUALS ||

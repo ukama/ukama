@@ -290,6 +290,8 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
     size_t ok;
     uint32_t lower_tol;
     uint32_t upper_tol;
+    unsigned int poll;
+    time_t deadline;
     char first_fail[512];
 
     if (check->type == CHECK_USAGE_AGGREGATE) {
@@ -301,6 +303,9 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
 
     lower_tol = check->tolerance_percent ? check->tolerance_percent : 2;
     upper_tol = max_u32(lower_tol, ULAB_DEFAULT_OVERHEAD_PERCENT);
+    poll = check->poll_seconds ? check->poll_seconds : 5u;
+    deadline = time(NULL) + (time_t)(check->timeout_seconds ?
+                                    check->timeout_seconds : 120u);
 
     if (selector_resolve_ues(ctx->world, &check->ues, &ues, err)) {
         return ULAB_ERR;
@@ -315,6 +320,7 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
         uint64_t actual_bytes;
         uint64_t lower_bytes;
         uint64_t upper_bytes;
+        int matched;
 
         ue = &ctx->world->ues[ues.idx[i]];
         network = world_network_by_ref(ctx->world, ue->network_ref);
@@ -333,20 +339,29 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
         actual_bytes = 0;
         lower_bytes = 0;
         upper_bytes = 0;
+        matched = 0;
 
-        if (network == NULL ||
-            bff_get_sim_usage(ctx->bff, ue, network, &actual_bytes, err)) {
-            selector_result_free(&ues);
-            return ULAB_ERR;
-        }
+        do {
+            if (network == NULL ||
+                bff_get_sim_usage(ctx->bff, ue, network,
+                                  &actual_bytes, err)) {
+                selector_result_free(&ues);
+                return ULAB_ERR;
+            }
+            matched = usage_within_range(expected_bytes, actual_bytes,
+                                         lower_tol, upper_tol,
+                                         &lower_bytes, &upper_bytes);
+            if (!matched && time(NULL) < deadline) {
+                sleep(poll > 60u ? 60u : poll);
+            }
+        } while (!matched && time(NULL) < deadline);
 
-        if (usage_within_range(expected_bytes, actual_bytes,
-                               lower_tol, upper_tol,
-                               &lower_bytes, &upper_bytes)) {
+        if (matched) {
             ok++;
         } else if (first_fail[0] == '\0') {
             snprintf(first_fail, sizeof(first_fail),
-                     " first_fail=%.64s iccid=%.32s expected=%lluB actual=%lluB "
+                     " first_fail=%.64s iccid=%.32s expected=%lluB "
+                     "actual=%lluB "
                      "range=%llu..%lluB",
                      ue->ref,
                      ue->iccid,
@@ -359,8 +374,10 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
 
     res->passed = ok == ues.count;
     snprintf(res->detail, sizeof(res->detail),
-             "usage=%zu/%zu tol=%u%% upper=%u%%%s",
-             ok, ues.count, lower_tol, upper_tol, first_fail);
+             "usage=%zu/%zu tol=%u%% upper=%u%% timeout=%us poll=%us%s",
+             ok, ues.count, lower_tol, upper_tol,
+             check->timeout_seconds ? check->timeout_seconds : 120u,
+             poll, first_fail);
 
     selector_result_free(&ues);
     return ULAB_OK;
