@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-revenue
-description: Create one settled package sale and verify both RevenueOverview and the network-scoped REVENUE KPI report the same five-dollar value through GraphQL.
+description: Allocate one SIM with a paid package and verify its automatic settled payment feeds both monthly and daily REVENUE Console KPIs.
 seed: 4701
 suite: p0
 priority: p0
@@ -25,6 +25,8 @@ packages:
     assign_percent: 100
 setup:
   create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+# Initial SIM allocation is the sale under test. Do not replace it with a
+# purchase_package event; that would mask a missing allocation payment record.
 runtime:
   start: [nodes]
   wait: [nodes_ready]
@@ -49,4 +51,3 @@ phases:
         expected_value: 5.00
         tolerance: 0.001
         timeout_seconds: 120
-

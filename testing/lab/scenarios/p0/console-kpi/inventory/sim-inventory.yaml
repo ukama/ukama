@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-sim-inventory
-description: Verify InventoryOverview SIM stock reconciles with SimPoolOverview for total, available, consumed, and total-equals-available-plus-consumed.
+description: Query the Console SIM inventory with SimPoolOverview and verify its total, available, and consumed statistics reconcile.
 seed: 4714
 suite: p0
 priority: p0

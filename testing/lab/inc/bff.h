@@ -177,9 +177,7 @@ typedef struct {
     uint32_t sim_total;
     uint32_t sim_available;
     uint32_t sim_consumed;
-    uint32_t sim_pool_total;
-    uint32_t sim_pool_available;
-    uint32_t sim_pool_consumed;
+    uint32_t sim_failed;
 } bff_inventory_summary_t;
 
 typedef struct {
@@ -328,10 +326,15 @@ int bff_get_nodes_count(bff_client_t *c,
                         uint32_t *count,
                         ulab_error_t *err);
 
-int bff_get_inventory_summary(bff_client_t *c,
-                              const char *sim_type,
-                              bff_inventory_summary_t *summary,
-                              ulab_error_t *err);
+int bff_get_component_inventory_summary(
+    bff_client_t *c,
+    bff_inventory_summary_t *summary,
+    ulab_error_t *err);
+
+int bff_get_sim_pool_summary(bff_client_t *c,
+                             const char *sim_type,
+                             bff_inventory_summary_t *summary,
+                             ulab_error_t *err);
 
 int bff_get_subscriber_payment_summary(
     bff_client_t *c,

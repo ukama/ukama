@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Switch the site radio off and back on, verifying SITE_UPTIME records down windows through MIN and drags AVG below 100, then recovers.
+description: Switch RF off and back on through the Console and verify intentional maintenance is excluded from SITE_UPTIME while the site recovers online.
 seed: 4712
 suite: p0
 priority: p0
@@ -27,22 +27,21 @@ phases:
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
-        op: MAX
+        op: AVG
         scope_key: site_id
         scope_value: site-001
         networks: net-001
         expected_value: 100
         tolerance: 0.001
+        immediate: true
         timeout_seconds: 120
         poll_seconds: 20
-  - name: radio_off_drives_downtime
+  - name: intentional_radio_off_is_excluded
     events:
       - type: toggle_radio
         sites: site-001
         state: off
-      # The toggle reconciles cloud -> node, the node reports health on its own
-      # cadence, then the ingest window (~10s) and rollup follow. Allow the
-      # round trip before asserting; the checks poll on top of this.
+      # Allow the controller state and the next analytics windows to settle.
       - type: wait
         seconds: 120
     checks:
@@ -53,19 +52,9 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 0
-        tolerance: 0.001
-        timeout_seconds: 120
-        poll_seconds: 20
-      - type: kpi_value
-        key: SITE_UPTIME
-        span: daily
-        op: AVG
-        scope_key: site_id
-        scope_value: site-001
-        networks: net-001
-        comparator: less_than
         expected_value: 100
+        tolerance: 0.001
+        immediate: true
         timeout_seconds: 120
         poll_seconds: 20
   - name: radio_on_restores_service
@@ -84,9 +73,10 @@ phases:
         scope_key: network_id
         networks: net-001
         expected_value: 1
+        immediate: true
         timeout_seconds: 120
         poll_seconds: 20
-      # The site has been up in at least one window across the day.
+      # Planned RF-off time must not lower the availability percentage.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -96,5 +86,6 @@ phases:
         networks: net-001
         expected_value: 100
         tolerance: 0.001
+        immediate: true
         timeout_seconds: 120
         poll_seconds: 20

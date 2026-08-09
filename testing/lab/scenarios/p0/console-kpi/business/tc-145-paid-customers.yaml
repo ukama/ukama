@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-paid-customers
-description: Create two paying subscribers, add a second purchase for one of them, and verify PAID_CUSTOMERS remains two distinct subscribers rather than three payments.
+description: Allocate paid packages to two subscribers, add a repeat purchase for one, and verify PAID_CUSTOMERS remains two distinct subscribers rather than three payments.
 seed: 4706
 suite: p0
 priority: p0
@@ -31,6 +31,8 @@ packages:
     assign_percent: 0
 setup:
   create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+# Both initial allocations must create payment records. Explicitly purchasing
+# the bootstrap package here would hide a broken allocation-payment contract.
 runtime:
   start: [nodes]
   wait: [nodes_ready]
@@ -51,4 +53,3 @@ phases:
         networks: net-001
         expected_value: 2
         timeout_seconds: 600
-

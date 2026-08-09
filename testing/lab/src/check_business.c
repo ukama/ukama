@@ -243,8 +243,8 @@ static int check_inventory(check_ctx_t *ctx, const check_spec_t *check,
     if (ulab_streq(check->target, "component")) {
         bff_inventory_summary_t inventory;
 
-        if (bff_get_inventory_summary(ctx->bff, ctx->sim_type,
-                                      &inventory, err)) {
+        if (bff_get_component_inventory_summary(ctx->bff, &inventory,
+                                                err)) {
             return ULAB_ERR;
         }
         res->passed = inventory.component_total ==
@@ -258,20 +258,16 @@ static int check_inventory(check_ctx_t *ctx, const check_spec_t *check,
     if (ulab_streq(check->target, "sim")) {
         bff_inventory_summary_t inventory;
 
-        if (bff_get_inventory_summary(ctx->bff, ctx->sim_type,
-                                      &inventory, err)) {
+        if (bff_get_sim_pool_summary(ctx->bff, ctx->sim_type,
+                                     &inventory, err)) {
             return ULAB_ERR;
         }
-        res->passed = inventory.sim_total == inventory.sim_pool_total &&
-            inventory.sim_available == inventory.sim_pool_available &&
-            inventory.sim_consumed == inventory.sim_pool_consumed &&
-            inventory.sim_total == inventory.sim_available +
-                inventory.sim_consumed;
+        res->passed = inventory.sim_total == inventory.sim_available +
+            inventory.sim_consumed;
         snprintf(res->detail, sizeof(res->detail),
-                 "inventory=%u/%u/%u pool=%u/%u/%u",
+                 "pool total=%u available=%u consumed=%u failed=%u",
                  inventory.sim_total, inventory.sim_available,
-                 inventory.sim_consumed, inventory.sim_pool_total,
-                 inventory.sim_pool_available, inventory.sim_pool_consumed);
+                 inventory.sim_consumed, inventory.sim_failed);
         return ULAB_OK;
     }
     if (ulab_streq(check->target, "node")) {

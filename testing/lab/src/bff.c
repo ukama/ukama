@@ -40,7 +40,6 @@ extern const char *BFF_CONSOLE_NODE_DETAIL;
 extern const char *BFF_GET_SUBSCRIBERS_BY_NETWORK;
 extern const char *BFF_GET_SUBSCRIBER;
 extern const char *BFF_GET_SIMS_BY_NETWORK;
-extern const char *BFF_INVENTORY_OVERVIEW;
 extern const char *BFF_SIM_POOL_OVERVIEW;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
@@ -2179,62 +2178,73 @@ int bff_get_nodes_count(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_get_inventory_summary(bff_client_t *c,
-                              const char *sim_type,
-                              bff_inventory_summary_t *summary,
-                              ulab_error_t *err) {
-    char vars[ULAB_MAX_QUERY];
-    char sim_type_esc[ULAB_MAX_REF * 2];
+int bff_get_component_inventory_summary(
+    bff_client_t *c,
+    bff_inventory_summary_t *summary,
+    ulab_error_t *err) {
     json_t *root;
-    json_t *view;
+    json_t *obj;
     json_t *components;
-    json_t *categories;
-    json_t *stock;
-    json_t *pool;
-    json_t *pool_stats;
     size_t i;
 
-    if (sim_type == NULL || sim_type[0] == '\0' || summary == NULL) {
+    if (summary == NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "inventory reconciliation requires SIM type and output");
+                 "component inventory requires output storage");
         return ULAB_ERR;
     }
     memset(summary, 0, sizeof(*summary));
     root = NULL;
-    if (bff_call(c, "InventoryOverview", BFF_INVENTORY_OVERVIEW,
-                 "{}", &root, err)) {
+    if (bff_component_query(c, "all", &root, err)) {
         return ULAB_ERR;
     }
-    view = dig(root, "data", "inventoryView");
-    components = view ? json_object_get(view, "components") : NULL;
-    categories = components ? json_object_get(components, "byCategory") :
-        NULL;
-    stock = view ? json_object_get(view, "simStock") : NULL;
-    if (components == NULL || stock == NULL ||
-        section_has_error(components) || section_has_error(stock) ||
-        categories == NULL || !json_is_array(categories) ||
-        json_u32_field(components, "total", &summary->component_total) ||
-        json_u32_field(stock, "total", &summary->sim_total) ||
-        json_u32_field(stock, "available", &summary->sim_available) ||
-        json_u32_field(stock, "consumed", &summary->sim_consumed)) {
+    obj = dig(root, "data", "getComponentsByUserId");
+    components = obj ? json_object_get(obj, "components") : NULL;
+    if (components == NULL || !json_is_array(components)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "InventoryOverview returned incomplete inventory sections");
+                 "GetComponentsByUserId returned no components list");
         json_decref(root);
         return ULAB_ERR;
     }
-    for (i = 0; i < json_array_size(categories); i++) {
-        uint32_t count;
+    summary->component_total = (uint32_t)json_array_size(components);
+    for (i = 0; i < json_array_size(components); i++) {
+        json_t *component;
+        json_t *category_value;
+        const char *category;
 
-        count = 0;
-        if (json_u32_field(json_array_get(categories, i), "count", &count)) {
-            snprintf(err->msg, sizeof(err->msg),
-                     "InventoryOverview returned an invalid category count");
-            json_decref(root);
-            return ULAB_ERR;
+        component = json_array_get(components, i);
+        category_value = component ?
+            json_object_get(component, "category") : NULL;
+        category = category_value && json_is_string(category_value) ?
+            json_string_value(category_value) : NULL;
+        if (category != NULL &&
+            (ulab_streq(category, "access") ||
+             ulab_streq(category, "backhaul") ||
+             ulab_streq(category, "power") ||
+             ulab_streq(category, "switch") ||
+             ulab_streq(category, "spectrum"))) {
+            summary->component_category_total++;
         }
-        summary->component_category_total += count;
     }
     json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_sim_pool_summary(bff_client_t *c,
+                             const char *sim_type,
+                             bff_inventory_summary_t *summary,
+                             ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char sim_type_esc[ULAB_MAX_REF * 2];
+    json_t *root;
+    json_t *pool;
+    json_t *pool_stats;
+
+    if (sim_type == NULL || sim_type[0] == '\0' || summary == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SIM pool summary requires SIM type and output storage");
+        return ULAB_ERR;
+    }
+    memset(summary, 0, sizeof(*summary));
 
     ulab_json_escape(sim_type, sim_type_esc, sizeof(sim_type_esc));
     snprintf(vars, sizeof(vars),
@@ -2247,11 +2257,12 @@ int bff_get_inventory_summary(bff_client_t *c,
     pool = dig(root, "data", "simPoolView");
     pool_stats = pool ? json_object_get(pool, "stats") : NULL;
     if (pool_stats == NULL || section_has_error(pool_stats) ||
-        json_u32_field(pool_stats, "total", &summary->sim_pool_total) ||
+        json_u32_field(pool_stats, "total", &summary->sim_total) ||
         json_u32_field(pool_stats, "available",
-                       &summary->sim_pool_available) ||
+                       &summary->sim_available) ||
         json_u32_field(pool_stats, "consumed",
-                       &summary->sim_pool_consumed)) {
+                       &summary->sim_consumed) ||
+        json_u32_field(pool_stats, "failed", &summary->sim_failed)) {
         snprintf(err->msg, sizeof(err->msg),
                  "SimPoolOverview returned an incomplete stats section");
         json_decref(root);

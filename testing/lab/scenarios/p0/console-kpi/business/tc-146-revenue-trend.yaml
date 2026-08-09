@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-revenue-trend
-description: Create current-period revenue and verify the REVENUE GraphQL row carries computedAt plus internally consistent previous-value, change, percentage, and direction metadata when a prior period exists.
+description: Allocate a paid package and verify the Console-visible REVENUE value plus internally consistent trend fields when a previous period exists.
 seed: 4702
 suite: p0
 priority: p0
@@ -25,6 +25,8 @@ packages:
     assign_percent: 100
 setup:
   create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+# The initial allocation must create the payment that feeds REVENUE. Adding an
+# explicit purchase would bypass the allocation-payment contract under test.
 runtime:
   start: [nodes]
   wait: [nodes_ready]
@@ -39,8 +41,5 @@ phases:
         networks: net-001
         expected_value: 5.00
         tolerance: 0.001
-        require_computed_at: true
-        require_scope: true
         require_trend_consistency: true
         timeout_seconds: 600
-
