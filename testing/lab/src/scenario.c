@@ -1041,6 +1041,8 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_parse_u32(val, &s->world.sites_per_network)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
                 if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
+            } else if (ind == 2 && ulab_streq(key, "sims_per_network")) {
+                if (ulab_parse_u32(val, &s->world.sims_per_network)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
                 if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {
                     goto bad;
@@ -1059,6 +1061,9 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 if (ulab_parse_u32(val, &s->world.controller_per_site)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
                 if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
+                sec = SEC_WORLD;
+            } else if (ind == 2 && ulab_streq(key, "sims_per_network")) {
+                if (ulab_parse_u32(val, &s->world.sims_per_network)) goto bad;
                 sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
                 if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {

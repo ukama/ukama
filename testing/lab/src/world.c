@@ -20,12 +20,17 @@ static int alloc_world(const scenario_t *s, world_t *w) {
         s->world.amplifier_per_site +
         s->world.controller_per_site;
     size_t nodes    = sites * nodes_per;
-    size_t ues      = sites * s->world.ues_per_site;
+    size_t site_ues = sites * s->world.ues_per_site;
+    size_t network_sims = s->world.networks * s->world.sims_per_network;
+    size_t ues      = site_ues + network_sims;
     size_t sims_per_subscriber = s->world.sims_per_subscriber ?
         s->world.sims_per_subscriber : 1u;
     size_t subscribers_per_site = (s->world.ues_per_site +
         sims_per_subscriber - 1u) / sims_per_subscriber;
-    size_t subscribers = sites * subscribers_per_site;
+    size_t subscribers_per_network = (s->world.sims_per_network +
+        sims_per_subscriber - 1u) / sims_per_subscriber;
+    size_t subscribers = sites * subscribers_per_site +
+        s->world.networks * subscribers_per_network;
     size_t packages = 0;
     size_t package_idx;
 
@@ -338,6 +343,75 @@ int world_generate(const scenario_t *s,
                 ue_ip_for_site_index(k, ue->ip, sizeof(ue->ip));
                 ue_idx++;
             }
+        }
+
+        /*
+         * Backend-only SIM fixtures are deliberately network-scoped. They
+         * reuse ue_t so existing `ues:` selectors and SIM/payment helpers do
+         * not need a second object model, but they have no site, node, IP, or
+         * runtime UE process.
+         */
+        for (k = 0; k < s->world.sims_per_network; k++) {
+            subscriber_t *sub;
+            ue_t *ue;
+            size_t num;
+
+            if (k % sims_per_subscriber == 0) {
+                uint32_t phone;
+                size_t sub_num;
+
+                sub = &w->subscribers[subscriber_idx];
+                sub_num = subscriber_idx + 1;
+                phone = seeded_u32(s, "phone", subscriber_idx, i,
+                                   s->world.sites_per_network) % 10000000u;
+                snprintf(sub->ref, sizeof(sub->ref), "sub-%06zu", sub_num);
+                snprintf(sub->id, sizeof(sub->id), "%.240s-%.120s", run_id,
+                         sub->ref);
+                snprintf(sub->name, sizeof(sub->name), "Lab User %zu",
+                         sub_num);
+                snprintf(sub->email, sizeof(sub->email),
+                         "ulab-%08x-%06zu@ukama.com",
+                         ulab_hash32(run_id, s->seed), sub_num);
+                snprintf(sub->phone, sizeof(sub->phone), "+1555%07u",
+                         phone);
+                snprintf(sub->network_ref, sizeof(sub->network_ref), "%s",
+                         net->ref);
+                subscriber_idx++;
+            }
+
+            sub = &w->subscribers[subscriber_idx - 1];
+            ue = &w->ues[ue_idx];
+            num = ue_idx + 1;
+            snprintf(ue->ref, sizeof(ue->ref), "ue-%06zu", num);
+            snprintf(ue->id, sizeof(ue->id), "%.240s-%.120s", run_id,
+                     ue->ref);
+            snprintf(ue->iccid, sizeof(ue->iccid), "890100%013zu", num);
+            snprintf(ue->imsi, sizeof(ue->imsi), "001010%09zu", num);
+            snprintf(ue->subscriber_ref, sizeof(ue->subscriber_ref), "%s",
+                     sub->ref);
+            snprintf(ue->network_ref, sizeof(ue->network_ref), "%s",
+                     net->ref);
+            {
+                const char *picked;
+                const package_spec_t *picked_spec;
+                size_t pidx;
+
+                picked = pick_package(s, ue_idx);
+                picked_spec = NULL;
+                for (pidx = 0; pidx < s->package_count; pidx++) {
+                    if (ulab_streq(s->packages[pidx].ref, picked)) {
+                        picked_spec = &s->packages[pidx];
+                        break;
+                    }
+                }
+                make_package_ref(ue->package_ref,
+                                 sizeof(ue->package_ref), picked,
+                                 picked_spec != NULL &&
+                                 ulab_streq(picked_spec->scope,
+                                            "organization") ?
+                                 "org" : net->ref);
+            }
+            ue_idx++;
         }
     }
     return ULAB_OK;

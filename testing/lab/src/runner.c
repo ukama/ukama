@@ -101,6 +101,46 @@ static int scenario_has_software_updates(const scenario_t *scenario) {
     return 0;
 }
 
+static int event_uses_ue_runtime(event_type_t type) {
+    return type == EVT_TRAFFIC ||
+        type == EVT_TRAFFIC_BY_PROFILE ||
+        type == EVT_CREATE_UES ||
+        type == EVT_START_UES ||
+        type == EVT_WAIT_UES_ATTACHED ||
+        type == EVT_WAIT_UES_DETACHED ||
+        type == EVT_WAIT_UE_SESSIONS ||
+        type == EVT_FINALIZE_UE_SESSIONS;
+}
+
+static int scenario_uses_ue_runtime(const scenario_t *scenario) {
+    size_t i;
+    size_t j;
+
+    if (scenario == NULL) {
+        return 0;
+    }
+    if (scenario->runtime.start_ues ||
+        scenario->runtime.wait_ues_attached) {
+        return 1;
+    }
+    for (i = 0; i < scenario->phase_count; i++) {
+        for (j = 0; j < scenario->phases[i].event_count; j++) {
+            if (event_uses_ue_runtime(
+                    scenario->phases[i].events[j].type)) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static int scenario_uses_virtual_network(const scenario_t *scenario) {
+    return scenario != NULL &&
+        (scenario->runtime.start_nodes ||
+         scenario->runtime.wait_nodes_ready ||
+         scenario_uses_ue_runtime(scenario));
+}
+
 static int preflight_software_updates(bff_client_t *bff,
                                       const scenario_t *scenario,
                                       ulab_error_t *err) {
@@ -1108,29 +1148,32 @@ static int cleanup_run(bff_client_t *bff,
                        runtime_t *runtime,
                        world_t *world,
                        const char *run_dir,
-                       int *failure_logs_attempted) {
+                       int *failure_logs_attempted,
+                       int cleanup_runtime) {
 
     ulab_error_t cleanup_err;
     int failures;
 
     failures = 0;
 
-    memset(&cleanup_err, 0, sizeof(cleanup_err));
-    ulab_status("CLEANUP", "detach UE sessions");
-    if (runtime_detach_ues(runtime, world, &cleanup_err)) {
-        failures++;
-        ulab_log_error("%s", cleanup_err.msg);
-        collect_failure_logs_once(runtime, world,
-                                  failure_logs_attempted);
-    }
+    if (cleanup_runtime) {
+        memset(&cleanup_err, 0, sizeof(cleanup_err));
+        ulab_status("CLEANUP", "detach UE sessions");
+        if (runtime_detach_ues(runtime, world, &cleanup_err)) {
+            failures++;
+            ulab_log_error("%s", cleanup_err.msg);
+            collect_failure_logs_once(runtime, world,
+                                      failure_logs_attempted);
+        }
 
-    memset(&cleanup_err, 0, sizeof(cleanup_err));
-    ulab_status("CLEANUP", "cleanup UE containers");
-    if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
-        failures++;
-        ulab_log_error("%s", cleanup_err.msg);
-        collect_failure_logs_once(runtime, world,
-                                  failure_logs_attempted);
+        memset(&cleanup_err, 0, sizeof(cleanup_err));
+        ulab_status("CLEANUP", "cleanup UE containers");
+        if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
+            failures++;
+            ulab_log_error("%s", cleanup_err.msg);
+            collect_failure_logs_once(runtime, world,
+                                      failure_logs_attempted);
+        }
     }
 
     memset(&cleanup_err, 0, sizeof(cleanup_err));
@@ -1142,13 +1185,15 @@ static int cleanup_run(bff_client_t *bff,
                                   failure_logs_attempted);
     }
 
-    memset(&cleanup_err, 0, sizeof(cleanup_err));
-    ulab_status("CLEANUP", "stop media/nodes/network");
-    if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
-        failures++;
-        ulab_log_error("%s", cleanup_err.msg);
-        collect_failure_logs_once(runtime, world,
-                                  failure_logs_attempted);
+    if (cleanup_runtime) {
+        memset(&cleanup_err, 0, sizeof(cleanup_err));
+        ulab_status("CLEANUP", "stop media/nodes/network");
+        if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
+            failures++;
+            ulab_log_error("%s", cleanup_err.msg);
+            collect_failure_logs_once(runtime, world,
+                                      failure_logs_attempted);
+        }
     }
 
     if (failures == 0) {
@@ -1179,7 +1224,7 @@ static int preclean_existing_run(bff_client_t *bff,
     }
 
     rc = cleanup_run(bff, runtime, world, run_dir,
-                     failure_logs_attempted);
+                     failure_logs_attempted, 1);
     created_clear_ids(world);
 
     if (rc != ULAB_OK) {
@@ -1289,13 +1334,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    rc = runtime_ensure_network(&runtime, &err);
-    if (rc != ULAB_OK) {
-        rc = ULAB_ERUNTIME;
-        goto done;
+    if (scenario_uses_virtual_network(scenario)) {
+        rc = runtime_ensure_network(&runtime, &err);
+        if (rc != ULAB_OK) {
+            rc = ULAB_ERUNTIME;
+            goto done;
+        }
+        ulab_status("SITE", "factory/build/start site node bundles");
     }
-
-    ulab_status("SITE", "factory/build/start site node bundles");
     rc = start_runtime_sites(opts->repo, scenario, &world, &runtime, &err);
     if (rc != ULAB_OK) {
         goto done;
@@ -1347,7 +1393,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    if (world.ue_count > 0) {
+    if (scenario_uses_ue_runtime(scenario)) {
         unsigned int wait_sec;
 
         ulab_status("UE", "detach sessions before validation checks");
@@ -1395,8 +1441,9 @@ done:
         ulab_status("CLEANUP", "skip cleanup (ULAB_NO_CLEANUP=%s)",
                     getenv("ULAB_NO_CLEANUP"));
     } else if (!skip_cleanup) {
-        cleanup_rc = cleanup_run(&bff, &runtime, &world, runDir,
-                                 &failure_logs_attempted);
+        cleanup_rc = cleanup_run(
+            &bff, &runtime, &world, runDir, &failure_logs_attempted,
+            scenario_uses_virtual_network(scenario));
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
         if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
             rc = ULAB_ERR;

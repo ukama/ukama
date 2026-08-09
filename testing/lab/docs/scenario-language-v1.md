@@ -32,6 +32,21 @@ provider:
 
 Only `virtual` is supported in this build.
 
+Backend-only SIM and payment scenarios can provision network-scoped SIM
+fixtures without creating sites, nodes, or UE processes:
+
+```yaml
+world:
+  networks: 1
+  sites_per_network: 0
+  sims_per_network: 1
+```
+
+The fixtures are addressable through existing `ues:` selectors because those
+selectors carry the SIM's ICCID/IMSI and subscriber relationship. They are not
+started as UE containers. Use `ues_per_site` only when the scenario exercises
+radio attachment, traffic, PCRF policy, or node recovery.
+
 Scenario status values:
 
 - `active` runs normally

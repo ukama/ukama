@@ -67,10 +67,12 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "world.ues_per_site exceeds 500 UEs per tower");
     }
 
-    if (s->world.sims_per_subscriber > s->world.ues_per_site &&
-        s->world.ues_per_site > 0) {
+    if ((s->world.ues_per_site > 0 &&
+         s->world.sims_per_subscriber > s->world.ues_per_site) ||
+        (s->world.sims_per_network > 0 &&
+         s->world.sims_per_subscriber > s->world.sims_per_network)) {
         return fail(err,
-                    "world.sims_per_subscriber cannot exceed ues_per_site");
+                    "world.sims_per_subscriber exceeds available SIMs");
     }
 
     if (s->world.ues_per_site > 0 &&
@@ -79,7 +81,8 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "UE scenarios require site nodes");
     }
 
-    if (s->world.ues_per_site > 0 && s->package_count == 0) {
+    if ((s->world.ues_per_site > 0 ||
+         s->world.sims_per_network > 0) && s->package_count == 0) {
         return fail(err, "at least one package is required");
     }
 
@@ -156,10 +159,11 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "setup.create_via_bff missing packages");
     }
 
-    if (s->world.ues_per_site > 0 &&
+    if ((s->world.ues_per_site > 0 ||
+         s->world.sims_per_network > 0) &&
         (!s->setup.create_packages || !s->setup.create_subscribers)) {
         return fail(err,
-                    "UE scenarios require packages and subscribers");
+                    "SIM scenarios require packages and subscribers");
     }
 
     if (s->world.ues_per_site > 0 && !s->setup.create_sims &&

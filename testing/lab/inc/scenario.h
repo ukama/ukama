@@ -287,6 +287,7 @@ typedef struct {
     uint32_t amplifier_per_site;
     uint32_t controller_per_site;
     uint32_t ues_per_site;
+    uint32_t sims_per_network;
     uint32_t sims_per_subscriber;
 } world_spec_t;
 
