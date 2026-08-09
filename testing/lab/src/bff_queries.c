@@ -65,6 +65,26 @@ const char *BFF_GET_SITE =
 " id name networkId latitude longitude isDeactivated "
 " installDate createdAt location } }";
 
+const char *BFF_CONSOLE_SITES_LIST =
+"query SitesList($networkId: String!) {"
+" sitesView(networkId: $networkId) { networkId sites {"
+" error { section code message } sites { id name networkId latitude "
+" longitude location isDeactivated installDate createdAt } } } }";
+
+const char *BFF_CONSOLE_SITE_NODE_COUNTS =
+"query SitesList($networkId: String!) {"
+" sitesView(networkId: $networkId) { networkId nodeCounts {"
+" error { section code message } counts {"
+" siteId total online offline } } } }";
+
+const char *BFF_CONSOLE_SITE_DETAIL =
+"query NetworkSiteDetail($siteId: String!) {"
+" siteView(siteId: $siteId) { siteId site {"
+" error { section code message } site { id name networkId latitude "
+" longitude location isDeactivated installDate createdAt } }"
+" nodes { error { section code message } nodes { id name type "
+" site { siteId networkId } status { connectivity state } } } } }";
+
 const char *BFF_GET_NODES =
 "query GetNodes($data: NodesFilterInput!) {"
 " getNodes(data: $data) { nodes { id name type latitude longitude "
@@ -114,14 +134,13 @@ const char *BFF_GET_SIMS_BY_NETWORK =
 " getSimsByNetwork(networkId: $networkId) { sims {"
 " id subscriberId networkId status package { package_id is_active } } } }";
 
-const char *BFF_INVENTORY_OVERVIEW =
-"query InventoryOverview { inventoryView { components { total byCategory {"
-" category count } } simStock { total available consumed } } }";
-
 const char *BFF_SIM_POOL_OVERVIEW =
 "query SimPoolOverview($simType: String!, $limit: Int!) {"
-" simPoolView(simType: $simType) { stats { total available consumed } "
-" sims(limit: $limit) { sims { id } } } }";
+" simPoolView(simType: $simType) { simType stats {"
+" error { section code message } total available consumed failed esim"
+" physical pctAssigned lowStock } sims(limit: $limit) {"
+" error { section code message } sims { id iccid msisdn isAllocated"
+" isFailed simType isPhysical createdAt } } } }";
 
 const char *BFF_ADD_SUBSCRIBER =
 "mutation AddSubscriber($data: SubscriberInputDto!) {"
@@ -146,9 +165,9 @@ const char *BFF_GET_SIM_PACKAGES =
 " id package_id start_date end_date is_active } } }";
 
 const char *BFF_ADD_PAYMENT =
-"mutation RecordCashPackageSale($data: AddPaymentInputDto!) {"
+"mutation addPayment($data: AddPaymentInputDto!) {"
 " addPayment(data: $data) { id itemId itemType amount currency paymentMethod "
-" status paidAt payerEmail payerPhone metadata } }";
+" status } }";
 
 const char *BFF_GET_PAYMENTS =
 "query GetPayments($data: GetPaymentsInputDto!) {"

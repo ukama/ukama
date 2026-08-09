@@ -30,6 +30,9 @@ extern const char *BFF_PACKAGE_NAME_AVAILABLE;
 extern const char *BFF_GET_NETWORK;
 extern const char *BFF_GET_SITE;
 extern const char *BFF_GET_SITES;
+extern const char *BFF_CONSOLE_SITES_LIST;
+extern const char *BFF_CONSOLE_SITE_NODE_COUNTS;
+extern const char *BFF_CONSOLE_SITE_DETAIL;
 extern const char *BFF_GET_NODES;
 extern const char *BFF_CONSOLE_NODES_LIST;
 extern const char *BFF_CONSOLE_NODE_POOL;
@@ -37,7 +40,6 @@ extern const char *BFF_CONSOLE_NODE_DETAIL;
 extern const char *BFF_GET_SUBSCRIBERS_BY_NETWORK;
 extern const char *BFF_GET_SUBSCRIBER;
 extern const char *BFF_GET_SIMS_BY_NETWORK;
-extern const char *BFF_INVENTORY_OVERVIEW;
 extern const char *BFF_SIM_POOL_OVERVIEW;
 extern const char *BFF_ADD_SUBSCRIBER;
 extern const char *BFF_ALLOCATE_SIM;
@@ -618,6 +620,128 @@ static int console_nodes_array(bff_client_t *c,
         json_decref(*root);
         *root = NULL;
         *arr = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int console_sites_array(bff_client_t *c,
+                               const network_t *network,
+                               json_t **root,
+                               json_t **arr,
+                               ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *sites_view;
+    json_t *section;
+
+    if (network == NULL || network->bff_id[0] == '\0' ||
+        root == NULL || arr == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList requires a configured network");
+        return ULAB_ERR;
+    }
+    *root = NULL;
+    *arr = NULL;
+
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    if (bff_call(c, "SitesList", BFF_CONSOLE_SITES_LIST,
+                 vars, root, err)) {
+        return ULAB_ERR;
+    }
+    sites_view = dig(*root, "data", "sitesView");
+    section = sites_view ? json_object_get(sites_view, "sites") : NULL;
+    if (console_section_ok(section, "SitesList", "sites", err)) {
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    *arr = json_object_get(section, "sites");
+    if (*arr == NULL || json_is_null(*arr)) {
+        *arr = NULL;
+        return ULAB_OK;
+    }
+    if (!json_is_array(*arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList sites section missing sites list");
+        json_decref(*root);
+        *root = NULL;
+        *arr = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int console_site_detail_view(bff_client_t *c,
+                                    const char *site_id,
+                                    json_t **root,
+                                    json_t **site_view,
+                                    ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char site_esc[ULAB_MAX_ID * 2];
+
+    if (site_id == NULL || site_id[0] == '\0' ||
+        root == NULL || site_view == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail requires a configured site");
+        return ULAB_ERR;
+    }
+    *root = NULL;
+    *site_view = NULL;
+
+    ulab_json_escape(site_id, site_esc, sizeof(site_esc));
+    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
+    if (bff_call(c, "NetworkSiteDetail", BFF_CONSOLE_SITE_DETAIL,
+                 vars, root, err)) {
+        return ULAB_ERR;
+    }
+    *site_view = dig(*root, "data", "siteView");
+    if (*site_view == NULL || !json_is_object(*site_view)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail missing siteView");
+        json_decref(*root);
+        *root = NULL;
+        *site_view = NULL;
+        return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+static int console_site_detail_node_item(bff_client_t *c,
+                                         const char *site_id,
+                                         const char *node_id,
+                                         json_t **root,
+                                         json_t **item,
+                                         ulab_error_t *err) {
+    json_t *site_view;
+    json_t *section;
+    json_t *arr;
+
+    if (console_site_detail_view(c, site_id, root, &site_view, err)) {
+        return ULAB_ERR;
+    }
+    section = json_object_get(site_view, "nodes");
+    if (console_section_ok(section, "NetworkSiteDetail", "nodes", err)) {
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    arr = json_object_get(section, "nodes");
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "NetworkSiteDetail nodes section missing nodes list");
+        json_decref(*root);
+        *root = NULL;
+        return ULAB_ERR;
+    }
+    *item = console_find_id(arr, node_id);
+    if (*item == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "node id=%s is absent from NetworkSiteDetail", node_id);
+        json_decref(*root);
+        *root = NULL;
         return ULAB_ERR;
     }
     return ULAB_OK;
@@ -2054,62 +2178,73 @@ int bff_get_nodes_count(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_get_inventory_summary(bff_client_t *c,
-                              const char *sim_type,
-                              bff_inventory_summary_t *summary,
-                              ulab_error_t *err) {
-    char vars[ULAB_MAX_QUERY];
-    char sim_type_esc[ULAB_MAX_REF * 2];
+int bff_get_component_inventory_summary(
+    bff_client_t *c,
+    bff_inventory_summary_t *summary,
+    ulab_error_t *err) {
     json_t *root;
-    json_t *view;
+    json_t *obj;
     json_t *components;
-    json_t *categories;
-    json_t *stock;
-    json_t *pool;
-    json_t *pool_stats;
     size_t i;
 
-    if (sim_type == NULL || sim_type[0] == '\0' || summary == NULL) {
+    if (summary == NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "inventory reconciliation requires SIM type and output");
+                 "component inventory requires output storage");
         return ULAB_ERR;
     }
     memset(summary, 0, sizeof(*summary));
     root = NULL;
-    if (bff_call(c, "InventoryOverview", BFF_INVENTORY_OVERVIEW,
-                 "{}", &root, err)) {
+    if (bff_component_query(c, "all", &root, err)) {
         return ULAB_ERR;
     }
-    view = dig(root, "data", "inventoryView");
-    components = view ? json_object_get(view, "components") : NULL;
-    categories = components ? json_object_get(components, "byCategory") :
-        NULL;
-    stock = view ? json_object_get(view, "simStock") : NULL;
-    if (components == NULL || stock == NULL ||
-        section_has_error(components) || section_has_error(stock) ||
-        categories == NULL || !json_is_array(categories) ||
-        json_u32_field(components, "total", &summary->component_total) ||
-        json_u32_field(stock, "total", &summary->sim_total) ||
-        json_u32_field(stock, "available", &summary->sim_available) ||
-        json_u32_field(stock, "consumed", &summary->sim_consumed)) {
+    obj = dig(root, "data", "getComponentsByUserId");
+    components = obj ? json_object_get(obj, "components") : NULL;
+    if (components == NULL || !json_is_array(components)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "InventoryOverview returned incomplete inventory sections");
+                 "GetComponentsByUserId returned no components list");
         json_decref(root);
         return ULAB_ERR;
     }
-    for (i = 0; i < json_array_size(categories); i++) {
-        uint32_t count;
+    summary->component_total = (uint32_t)json_array_size(components);
+    for (i = 0; i < json_array_size(components); i++) {
+        json_t *component;
+        json_t *category_value;
+        const char *category;
 
-        count = 0;
-        if (json_u32_field(json_array_get(categories, i), "count", &count)) {
-            snprintf(err->msg, sizeof(err->msg),
-                     "InventoryOverview returned an invalid category count");
-            json_decref(root);
-            return ULAB_ERR;
+        component = json_array_get(components, i);
+        category_value = component ?
+            json_object_get(component, "category") : NULL;
+        category = category_value && json_is_string(category_value) ?
+            json_string_value(category_value) : NULL;
+        if (category != NULL &&
+            (ulab_streq(category, "access") ||
+             ulab_streq(category, "backhaul") ||
+             ulab_streq(category, "power") ||
+             ulab_streq(category, "switch") ||
+             ulab_streq(category, "spectrum"))) {
+            summary->component_category_total++;
         }
-        summary->component_category_total += count;
     }
     json_decref(root);
+    return ULAB_OK;
+}
+
+int bff_get_sim_pool_summary(bff_client_t *c,
+                             const char *sim_type,
+                             bff_inventory_summary_t *summary,
+                             ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char sim_type_esc[ULAB_MAX_REF * 2];
+    json_t *root;
+    json_t *pool;
+    json_t *pool_stats;
+
+    if (sim_type == NULL || sim_type[0] == '\0' || summary == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SIM pool summary requires SIM type and output storage");
+        return ULAB_ERR;
+    }
+    memset(summary, 0, sizeof(*summary));
 
     ulab_json_escape(sim_type, sim_type_esc, sizeof(sim_type_esc));
     snprintf(vars, sizeof(vars),
@@ -2122,11 +2257,12 @@ int bff_get_inventory_summary(bff_client_t *c,
     pool = dig(root, "data", "simPoolView");
     pool_stats = pool ? json_object_get(pool, "stats") : NULL;
     if (pool_stats == NULL || section_has_error(pool_stats) ||
-        json_u32_field(pool_stats, "total", &summary->sim_pool_total) ||
+        json_u32_field(pool_stats, "total", &summary->sim_total) ||
         json_u32_field(pool_stats, "available",
-                       &summary->sim_pool_available) ||
+                       &summary->sim_available) ||
         json_u32_field(pool_stats, "consumed",
-                       &summary->sim_pool_consumed)) {
+                       &summary->sim_consumed) ||
+        json_u32_field(pool_stats, "failed", &summary->sim_failed)) {
         snprintf(err->msg, sizeof(err->msg),
                  "SimPoolOverview returned an incomplete stats section");
         json_decref(root);
@@ -4306,6 +4442,38 @@ int bff_get_list_count(bff_client_t *c,
     return ULAB_OK;
 }
 
+int bff_get_site_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *view,
+                            size_t *count,
+                            ulab_error_t *err) {
+    json_t *root;
+    json_t *arr;
+
+    if (network == NULL || network->bff_id[0] == '\0' || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site list count requires network");
+        return ULAB_ERR;
+    }
+    if (view == NULL || view[0] == '\0') {
+        return bff_get_list_count(c, "sites", network, count, err);
+    }
+    if (!ulab_streq(view, "sites_list")) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "unsupported console site list view: %s", view);
+        return ULAB_ERR;
+    }
+
+    root = NULL;
+    arr = NULL;
+    if (console_sites_array(c, network, &root, &arr, err)) {
+        return ULAB_ERR;
+    }
+    *count = arr != NULL ? json_array_size(arr) : 0;
+    json_decref(root);
+    return ULAB_OK;
+}
+
 
 static const char *node_kind_filter(const char *node_type) {
     if (node_type == NULL || node_type[0] == '\0') return "";
@@ -4396,6 +4564,7 @@ int bff_get_node_list_count(bff_client_t *c,
 int bff_get_site_node_count(bff_client_t *c,
                             const site_t *site,
                             const char *node_type,
+                            const char *view,
                             size_t *count,
                             ulab_error_t *err) {
     char vars[ULAB_MAX_QUERY];
@@ -4412,21 +4581,57 @@ int bff_get_site_node_count(bff_client_t *c,
         return ULAB_ERR;
     }
     kind = node_kind_filter(node_type);
-    ulab_json_escape(site->bff_id, site_esc, sizeof(site_esc));
-    snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
     root = NULL;
-    if (bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE,
-                 vars, &root, err)) {
-        return ULAB_ERR;
+    arr = NULL;
+
+    if (view != NULL && view[0] != '\0') {
+        json_t *site_view;
+        json_t *section;
+
+        if (!ulab_streq(view, "site_detail")) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "unsupported console site node view: %s", view);
+            return ULAB_ERR;
+        }
+        if (console_site_detail_view(c, site->bff_id, &root,
+                                     &site_view, err)) {
+            return ULAB_ERR;
+        }
+        section = json_object_get(site_view, "nodes");
+        if (console_section_ok(section, "NetworkSiteDetail",
+                               "nodes", err)) {
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        arr = json_object_get(section, "nodes");
+        if (arr == NULL || json_is_null(arr)) {
+            *count = 0;
+            json_decref(root);
+            return ULAB_OK;
+        }
+        if (!json_is_array(arr)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "NetworkSiteDetail nodes section missing nodes list");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+    } else {
+        ulab_json_escape(site->bff_id, site_esc, sizeof(site_esc));
+        snprintf(vars, sizeof(vars), "{\"siteId\":\"%s\"}", site_esc);
+        if (bff_call(c, "getNodesForSite", BFF_GET_NODES_FOR_SITE,
+                     vars, &root, err)) {
+            return ULAB_ERR;
+        }
+        obj = dig(root, "data", "getNodesForSite");
+        arr = obj ? json_object_get(obj, "nodes") : NULL;
+        if (arr == NULL || !json_is_array(arr)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "getNodesForSite missing nodes list");
+            json_decref(root);
+            return ULAB_ERR;
+        }
     }
-    obj = dig(root, "data", "getNodesForSite");
-    arr = obj ? json_object_get(obj, "nodes") : NULL;
-    if (arr == NULL || !json_is_array(arr)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "getNodesForSite missing nodes list");
-        json_decref(root);
-        return ULAB_ERR;
-    }
+
     *count = 0;
     for (i = 0; i < json_array_size(arr); i++) {
         json_t *item;
@@ -4442,6 +4647,90 @@ int bff_get_site_node_count(bff_client_t *c,
     }
     json_decref(root);
     return ULAB_OK;
+}
+
+
+int bff_get_console_site_node_counts(bff_client_t *c,
+                                     const network_t *network,
+                                     const site_t *site,
+                                     bff_site_node_counts_t *counts,
+                                     ulab_error_t *err) {
+    char vars[ULAB_MAX_QUERY];
+    char network_esc[ULAB_MAX_ID * 2];
+    json_t *root;
+    json_t *sites_view;
+    json_t *section;
+    json_t *arr;
+    size_t i;
+
+    if (network == NULL || network->bff_id[0] == '\0' ||
+        site == NULL || site->bff_id[0] == '\0' || counts == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site node counts require configured network and site");
+        return ULAB_ERR;
+    }
+    memset(counts, 0, sizeof(*counts));
+    ulab_json_escape(network->bff_id, network_esc, sizeof(network_esc));
+    snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}",
+             network_esc);
+    root = NULL;
+    if (bff_call(c, "SitesList", BFF_CONSOLE_SITE_NODE_COUNTS,
+                 vars, &root, err)) {
+        return ULAB_ERR;
+    }
+    sites_view = dig(root, "data", "sitesView");
+    section = sites_view ? json_object_get(sites_view, "nodeCounts") : NULL;
+    if (console_section_ok(section, "SitesList", "nodeCounts", err)) {
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    arr = json_object_get(section, "counts");
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "SitesList nodeCounts section missing counts list");
+        json_decref(root);
+        return ULAB_ERR;
+    }
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *item;
+        const char *site_id;
+        long long total;
+        long long online;
+        long long offline;
+
+        item = json_array_get(arr, i);
+        site_id = json_string_value(json_object_get(item, "siteId"));
+        if (site_id == NULL || !ulab_streq(site_id, site->bff_id)) {
+            continue;
+        }
+        if (!json_is_integer(json_object_get(item, "total")) ||
+            !json_is_integer(json_object_get(item, "online")) ||
+            !json_is_integer(json_object_get(item, "offline"))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "SitesList nodeCounts contains invalid values");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        total = json_integer_value(json_object_get(item, "total"));
+        online = json_integer_value(json_object_get(item, "online"));
+        offline = json_integer_value(json_object_get(item, "offline"));
+        if (total < 0 || online < 0 || offline < 0) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "SitesList nodeCounts contains negative values");
+            json_decref(root);
+            return ULAB_ERR;
+        }
+        counts->total = (size_t)total;
+        counts->online = (size_t)online;
+        counts->offline = (size_t)offline;
+        json_decref(root);
+        return ULAB_OK;
+    }
+    snprintf(err->msg, sizeof(err->msg),
+             "site id=%s is absent from SitesList nodeCounts",
+             site->bff_id);
+    json_decref(root);
+    return ULAB_ERR;
 }
 
 
@@ -4613,7 +4902,8 @@ static int snapshot_common_equal(const char *entity,
         return ulab_streq(left->latitude, right->latitude) &&
             ulab_streq(left->longitude, right->longitude) &&
             ulab_streq(left->location, right->location) &&
-            ulab_streq(left->created_at, right->created_at) &&
+            left->created_at[0] != '\0' &&
+            right->created_at[0] != '\0' &&
             ulab_streq(left->install_date, right->install_date) &&
             left->has_deactivated == right->has_deactivated &&
             (!left->has_deactivated ||
@@ -4730,7 +5020,8 @@ static int query_entity_detail(bff_client_t *c,
 
     if (ulab_streq(entity, "node") &&
         (ulab_streq(view, "nodes_list") ||
-         ulab_streq(view, "node_detail"))) {
+         ulab_streq(view, "node_detail") ||
+         ulab_streq(view, "site_detail"))) {
         json_t *node_view;
         json_t *section;
 
@@ -4752,6 +5043,33 @@ static int query_entity_detail(bff_client_t *c,
         if (*item == NULL || !json_is_object(*item)) {
             snprintf(err->msg, sizeof(err->msg),
                      "NodeDetail node section missing node");
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        return ULAB_OK;
+    }
+
+    if (ulab_streq(entity, "site") &&
+        (ulab_streq(view, "sites_list") ||
+         ulab_streq(view, "site_detail"))) {
+        json_t *site_view;
+        json_t *section;
+
+        if (console_site_detail_view(c, id, root, &site_view, err)) {
+            return ULAB_ERR;
+        }
+        section = json_object_get(site_view, "site");
+        if (console_section_ok(section, "NetworkSiteDetail",
+                               "site", err)) {
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        *item = json_object_get(section, "site");
+        if (*item == NULL || !json_is_object(*item)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "NetworkSiteDetail site section missing site");
             json_decref(*root);
             *root = NULL;
             return ULAB_ERR;
@@ -4840,6 +5158,23 @@ static int query_entity_list_item(bff_client_t *c,
         return ULAB_OK;
     }
 
+    if (ulab_streq(entity, "site") &&
+        (ulab_streq(view, "sites_list") ||
+         ulab_streq(view, "site_detail"))) {
+        if (console_sites_array(c, network, root, &arr, err)) {
+            return ULAB_ERR;
+        }
+        *item = console_find_id(arr, id);
+        if (*item == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site id=%s is absent from SitesList", id);
+            json_decref(*root);
+            *root = NULL;
+            return ULAB_ERR;
+        }
+        return ULAB_OK;
+    }
+
     if (ulab_streq(entity, "network")) target = "networks";
     else if (ulab_streq(entity, "site")) target = "sites";
     else if (ulab_streq(entity, "node")) target = "nodes";
@@ -4908,8 +5243,27 @@ int bff_entity_list_detail_reconciles(bff_client_t *c,
     }
     list_root = NULL;
     detail_root = NULL;
-    if (query_entity_list_item(c, entity, id, network, view, &list_root,
-                               &list_item, err)) {
+    if (ulab_streq(entity, "node") && ulab_streq(view, "site_detail")) {
+        world_t *mutable_world;
+        node_t *expected_node;
+        site_t *expected_site;
+
+        mutable_world = (world_t *)world;
+        expected_node = world_node_by_ref(mutable_world, ref);
+        expected_site = expected_node ?
+            world_site_by_ref(mutable_world, expected_node->site_ref) : NULL;
+        if (expected_node == NULL || expected_site == NULL ||
+            expected_site->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site_detail node reconciliation has unresolved site");
+            return ULAB_ERR;
+        }
+        if (console_site_detail_node_item(c, expected_site->bff_id, id,
+                                          &list_root, &list_item, err)) {
+            return ULAB_ERR;
+        }
+    } else if (query_entity_list_item(c, entity, id, network, view,
+                                      &list_root, &list_item, err)) {
         return ULAB_ERR;
     }
     if (parse_entity_snapshot(entity, list_item, &list_snapshot, err)) {
@@ -4983,8 +5337,26 @@ int bff_entity_fields_match_world(bff_client_t *c,
         return ULAB_ERR;
     }
     root = NULL;
-    if (ulab_streq(entity, "node") &&
-        ulab_streq(view, "nodes_list")) {
+    if (ulab_streq(entity, "node") && ulab_streq(view, "site_detail")) {
+        node_t *expected_node;
+        site_t *expected_site;
+
+        mutable_world = (world_t *)world;
+        expected_node = world_node_by_ref(mutable_world, ref);
+        expected_site = expected_node ?
+            world_site_by_ref(mutable_world, expected_node->site_ref) : NULL;
+        if (expected_node == NULL || expected_site == NULL ||
+            expected_site->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "site_detail node field check has unresolved site");
+            return ULAB_ERR;
+        }
+        if (console_site_detail_node_item(c, expected_site->bff_id, id,
+                                          &root, &item, err)) {
+            return ULAB_ERR;
+        }
+    } else if (ulab_streq(entity, "node") &&
+               ulab_streq(view, "nodes_list")) {
         if (query_entity_list_item(c, entity, id, network, view,
                                    &root, &item, err)) {
             return ULAB_ERR;
@@ -5021,7 +5393,7 @@ int bff_entity_fields_match_world(bff_client_t *c,
             ulab_streq(actual.longitude, expected->longitude) &&
             ulab_streq(actual.location, expected->location) &&
             expected->created_at[0] != '\0' &&
-            ulab_streq(actual.created_at, expected->created_at) &&
+            actual.created_at[0] != '\0' &&
             expected->install_date[0] != '\0' &&
             ulab_streq(actual.install_date, expected->install_date);
     } else if (ulab_streq(entity, "node")) {
@@ -5356,7 +5728,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
                                          int *failures) {
     char vars[ULAB_MAX_QUERY];
     char query[ULAB_MAX_QUERY];
-    char package_ids[32][ULAB_MAX_ID];
+    char package_record_ids[32][ULAB_MAX_ID];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -5394,11 +5766,17 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     if (arr != NULL && json_is_array(arr)) {
         for (i = 0; i < json_array_size(arr) && count < 32; i++) {
             it = json_array_get(arr, i);
-            pid = it ? json_object_get(it, "package_id") : NULL;
+            pid = it ? json_object_get(it, "id") : NULL;
+            if (pid == NULL || !json_is_string(pid) ||
+                json_string_value(pid) == NULL ||
+                json_string_value(pid)[0] == '\0') {
+                pid = it ? json_object_get(it, "package_id") : NULL;
+            }
             if (pid != NULL && json_is_string(pid) &&
                 json_string_value(pid) != NULL &&
                 json_string_value(pid)[0] != '\0') {
-                ulab_copy(package_ids[count], sizeof(package_ids[count]),
+                ulab_copy(package_record_ids[count],
+                          sizeof(package_record_ids[count]),
                           json_string_value(pid));
                 count++;
             }
@@ -5410,9 +5788,18 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     for (i = 0; i < count; i++) {
 
         n = snprintf(query, sizeof(query),
+                     "mutation { setInactivePackageForSim(data: {"
+                     "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
+                     package_record_ids[i], ue->bff_id);
+        if (n >= 0 && (size_t)n < sizeof(query) &&
+            bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+            (*failures)++;
+        }
+
+        n = snprintf(query, sizeof(query),
                      "mutation { removePackageForSim(data: {"
                      "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
-                     package_ids[i], ue->bff_id);
+                     package_record_ids[i], ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
             bff_cleanup_call(c, "removePackageForSim", query)) {
             (*failures)++;

@@ -44,9 +44,9 @@ runtime:
 phases:
   - name: direct_console_lists
     checks:
-      - type: list_count_equals
+      - type: backend_count
         target: networks
-        expected_count: 1
+        expected: from_world
       - type: list_count_equals
         target: sites
         networks: net-001

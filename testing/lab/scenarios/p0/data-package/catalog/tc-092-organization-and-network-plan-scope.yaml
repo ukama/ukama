@@ -10,11 +10,7 @@ provider:
   type: virtual
 world:
   networks: 2
-  sites_per_network: 1
-  nodes_per_site:
-    tower: 1
-    amplifier: 1
-    controller: 1
+  sites_per_network: 0
   ues_per_site: 0
 packages:
   - ref: organization_plan
@@ -43,13 +39,7 @@ packages:
 setup:
   create_via_bff:
     - networks
-    - sites
-    - nodes
-    - node_site_links
     - packages
-runtime:
-  start: [nodes]
-  wait: [nodes_ready]
 phases:
   - name: verify_plan_scope
     checks:
@@ -71,4 +61,3 @@ phases:
       - type: package_hidden
         networks: net-001
         package: network_b_plan
-

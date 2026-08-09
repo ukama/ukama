@@ -16,38 +16,41 @@ NODE_KEY="$1"
 RUN_DIR="$2"
 STATE_NAME="$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-')"
 STATE_FILE="$RUN_DIR/runtime-nodes/$STATE_NAME.env"
-NETWORKS_TEMPLATE='{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}'
 
 if [ ! -f "$STATE_FILE" ]; then
     echo "disconnect-node: state not found $STATE_FILE" >&2
     exit 1
 fi
 
-# shellcheck
+# shellcheck disable=SC1090
 . "$STATE_FILE"
 
-if [ -z "${LAB_NET:-}" ] && [ -f "$RUN_DIR/runtime-net/net.env" ]; then
-    # shellcheck disable=SC1090
-    . "$RUN_DIR/runtime-net/net.env"
+if [ -z "${CONTAINER_NAME:-}" ]; then
+    echo "disconnect-node: container missing in $STATE_FILE" >&2
+    exit 1
 fi
 
-if [ -z "${CONTAINER_NAME:-}" ] || [ -z "${LAB_NET:-}" ]; then
-    echo "disconnect-node: container or network missing in $STATE_FILE" >&2
+if ! podman container exists "$CONTAINER_NAME" >/dev/null 2>&1; then
+    echo "disconnect-node: container not found: $CONTAINER_NAME" >&2
     exit 1
 fi
 
 if ! podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
     grep -q '^true$'; then
-    echo "disconnect-node: container is not running: $CONTAINER_NAME" >&2
+    echo "node-already-disconnected node=$NODE_KEY container=$CONTAINER_NAME"
+    exit 0
+fi
+
+# Stop the virtual node process rather than only removing its Podman network
+# interface.  This deterministically closes the backend WebSocket so the
+# production offline path is exercised immediately.  An explicit podman stop
+# suppresses the container's --restart policy until reconnect-node.sh starts it.
+podman stop "$CONTAINER_NAME" >/dev/null
+
+if podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
+    grep -q '^true$'; then
+    echo "disconnect-node: container is still running: $CONTAINER_NAME" >&2
     exit 1
 fi
 
-if podman inspect -f "$NETWORKS_TEMPLATE" \
-    "$CONTAINER_NAME" 2>/dev/null | grep -Fxq "$LAB_NET"; then
-    podman network disconnect "$LAB_NET" "$CONTAINER_NAME"
-    echo "node-network-disconnected node=$NODE_KEY" \
-        "container=$CONTAINER_NAME network=$LAB_NET"
-else
-    echo "node-network-already-disconnected node=$NODE_KEY" \
-        "container=$CONTAINER_NAME network=$LAB_NET"
-fi
+echo "node-disconnected node=$NODE_KEY container=$CONTAINER_NAME"

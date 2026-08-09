@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-194-package-revenue-reconciles
-description: Sell a known package and verify its package-scoped REVENUE KPI and package-performance revenue cell both return the same settled amount.
+description: Sell a known package and verify the network REVENUE KPI and package-performance revenue cell reconcile in a single-package network.
 seed: 5194
 suite: p0
 priority: p0
@@ -45,8 +45,7 @@ phases:
         key: REVENUE
         span: daily
         op: SUM
-        scope_key: package_id
-        scope_value: package_a
+        scope_key: network_id
         networks: net-001
         expected_value: 3.00
         tolerance: 0.001

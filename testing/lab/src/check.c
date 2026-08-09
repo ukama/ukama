@@ -70,6 +70,7 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_SOFTWARE_COUNT_EQUALS:
     case CHECK_NODE_OPERATION_STATUS_EQUALS:
     case CHECK_SITE_OPERATION_STATUS_EQUALS:
+    case CHECK_SITE_NODE_COUNTS_EQUALS:
     case CHECK_KPI_STATE_EQUALS:
     case CHECK_KPI_TIMESERIES:
         return check_console(ctx, check, res, err);

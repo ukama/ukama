@@ -24,5 +24,6 @@ phases:
     checks:
       - type: list_count_equals
         target: sites
+        view: sites_list
         networks: net-001
         expected_count: 0

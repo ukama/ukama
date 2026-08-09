@@ -63,15 +63,19 @@ phases:
 final_checks:
   - type: list_count_equals
     target: sites
+    view: sites_list
     networks: net-001
     expected_count: 2
   - type: list_count_equals
     target: nodes
+    view: nodes_list
     networks: net-001
     expected_count: 6
   - type: entity_reconciles
     entity: site
     ref: site-001
+    view: sites_list
   - type: entity_reconciles
     entity: site
     ref: site-002
+    view: sites_list

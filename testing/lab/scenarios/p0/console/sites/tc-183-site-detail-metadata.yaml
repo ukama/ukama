@@ -28,3 +28,4 @@ phases:
       - type: entity_fields_equal
         entity: site
         ref: site-001
+        view: site_detail

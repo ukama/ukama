@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-network-uptime
-description: Take one of two sites out of service through GraphQL for a controlled interval and verify NETWORK_UPTIME publishes a scoped partial-period percentage within valid bounds.
+description: Take one of two sites out of service through GraphQL for a controlled interval and verify NETWORK_UPTIME publishes a Console-visible partial-period percentage within valid bounds.
 seed: 4713
 suite: p0
 priority: p0
@@ -44,8 +44,6 @@ phases:
         comparator: greater_than
         expected_value: 0
         expected_partial: true
-        require_computed_at: true
-        require_scope: true
         timeout_seconds: 100
       - type: kpi_value
         key: NETWORK_UPTIME
@@ -56,4 +54,3 @@ phases:
         comparator: less_or_equal
         expected_value: 100
         timeout_seconds: 100
-

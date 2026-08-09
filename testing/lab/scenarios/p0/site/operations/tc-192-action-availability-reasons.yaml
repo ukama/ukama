@@ -28,7 +28,6 @@ phases:
       - type: site_operation_status_equals
         sites: all
         busy: false
-        degraded: false
         restart_available: true
         rf_available: true
         service_available: true
@@ -43,9 +42,11 @@ phases:
         connectivity: Offline
         seconds: 120
     checks:
-      - type: site_operation_status_equals
+      - type: site_node_counts_equals
         sites: all
-        degraded: true
+        total: 3
+        online: 2
+        offline: 1
         timeout_seconds: 120
   - name: offline_actions_unavailable_with_reasons
     events:

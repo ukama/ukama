@@ -19,19 +19,19 @@
 
 static const char *BFF_RESTART_NODE =
 "mutation RestartNode($data: RestartNodeInputDto!) {"
-" restartNode(data: $data) { success message } }";
+" restartNode(data: $data) { success } }";
 
 static const char *BFF_RESTART_SITE =
 "mutation RestartSite($data: RestartSiteInputDto!) {"
-" restartSite(data: $data) { success message } }";
+" restartSite(data: $data) { success } }";
 
 static const char *BFF_TOGGLE_SERVICE =
 "mutation ToggleService($data: ToggleSiteStatusInputDto!) {"
-" toggleService(data: $data) { success message } }";
+" toggleService(data: $data) { success } }";
 
 static const char *BFF_TOGGLE_RADIO =
 "mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {"
-" toggleRFStatus(data: $data) { success message } }";
+" toggleRFStatus(data: $data) { success } }";
 
 static const char *BFF_TOGGLE_INTERNET_SWITCH =
 "mutation ToggleInternetSwitch($data: ToggleInternetSwitchInputDto!) {"

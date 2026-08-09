@@ -829,6 +829,7 @@ static int event_toggle_service(event_ctx_t *ctx,
     selector_result_t res;
     size_t i;
     int enabled;
+    int rc;
 
     if (event_state_enabled(event, &enabled, err)) {
         return ULAB_ERR;
@@ -848,8 +849,14 @@ static int event_toggle_service(event_ctx_t *ctx,
         }
     }
 
+    rc = runtime_set_service(ctx->runtime, enabled, err);
+    if (rc == ULAB_OK) {
+        rc = runtime_wait_service_state(ctx->runtime, ctx->world,
+                                        &res, enabled, err);
+    }
+
     selector_result_free(&res);
-    return runtime_set_service(ctx->runtime, enabled, err);
+    return rc;
 }
 
 static int event_toggle_radio(event_ctx_t *ctx,

@@ -28,10 +28,13 @@ phases:
       - type: entity_fields_equal
         entity: site
         ref: site-001
+        view: site_detail
       - type: entity_reconciles
         entity: site
         ref: site-001
+        view: sites_list
       - type: list_count_equals
         target: site_nodes
+        view: site_detail
         sites: site-001
         expected_count: 3

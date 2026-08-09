@@ -16,7 +16,6 @@ NODE_KEY="$1"
 RUN_DIR="$2"
 STATE_NAME="$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-')"
 STATE_FILE="$RUN_DIR/runtime-nodes/$STATE_NAME.env"
-NETWORKS_TEMPLATE='{{range $name, $_ := .NetworkSettings.Networks}}{{println $name}}{{end}}'
 
 if [ ! -f "$STATE_FILE" ]; then
     echo "reconnect-node: state not found $STATE_FILE" >&2
@@ -26,28 +25,31 @@ fi
 # shellcheck disable=SC1090
 . "$STATE_FILE"
 
-if [ -z "${LAB_NET:-}" ] && [ -f "$RUN_DIR/runtime-net/net.env" ]; then
-    # shellcheck disable=SC1090
-    . "$RUN_DIR/runtime-net/net.env"
-fi
-
-if [ -z "${CONTAINER_NAME:-}" ] || [ -z "${LAB_NET:-}" ]; then
-    echo "reconnect-node: container or network missing in $STATE_FILE" >&2
+if [ -z "${CONTAINER_NAME:-}" ]; then
+    echo "reconnect-node: container missing in $STATE_FILE" >&2
     exit 1
 fi
+
+if ! podman container exists "$CONTAINER_NAME" >/dev/null 2>&1; then
+    echo "reconnect-node: container not found: $CONTAINER_NAME" >&2
+    exit 1
+fi
+
+if podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
+    grep -q '^true$'; then
+    echo "node-already-connected node=$NODE_KEY container=$CONTAINER_NAME"
+    exit 0
+fi
+
+# Start the same stopped container.  Podman preserves its network attachment,
+# filesystem and node identity, so the normal backend WebSocket reconnect path
+# is exercised without rebuilding or replacing the virtual node.
+podman start "$CONTAINER_NAME" >/dev/null
 
 if ! podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
     grep -q '^true$'; then
-    echo "reconnect-node: container is not running: $CONTAINER_NAME" >&2
+    echo "reconnect-node: container failed to start: $CONTAINER_NAME" >&2
     exit 1
 fi
 
-if podman inspect -f "$NETWORKS_TEMPLATE" \
-    "$CONTAINER_NAME" 2>/dev/null | grep -Fxq "$LAB_NET"; then
-    echo "node-network-already-connected node=$NODE_KEY" \
-        "container=$CONTAINER_NAME network=$LAB_NET"
-else
-    podman network connect "$LAB_NET" "$CONTAINER_NAME"
-    echo "node-network-reconnected node=$NODE_KEY" \
-        "container=$CONTAINER_NAME network=$LAB_NET"
-fi
+echo "node-reconnected node=$NODE_KEY container=$CONTAINER_NAME"
