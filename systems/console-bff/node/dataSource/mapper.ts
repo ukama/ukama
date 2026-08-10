@@ -9,7 +9,7 @@ import { NODE_STATE } from "../../common/enums";
 import { Node, NodeSite, NodeStateRes, Nodes } from "../resolvers/types";
 
 export const parseNodesRes = (res: any): Nodes => {
-  const nodes = res.nodes.map((node: any) => {
+  const nodes = (res?.nodes ?? []).map((node: any) => {
     return parseNodeRes(node);
   });
   return {
