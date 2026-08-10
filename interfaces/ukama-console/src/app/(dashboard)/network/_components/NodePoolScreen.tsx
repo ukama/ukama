@@ -42,9 +42,10 @@ interface PoolRow {
   state: string;
 }
 
+/** The Available column answers "is this node free to install?". */
 const NP_LABEL: Record<PoolStatus, string> = {
-  available: 'Available',
-  assigned: 'Assigned',
+  available: 'Yes',
+  assigned: 'No',
 };
 
 /** Sortable columns and the value each row sorts by. */
@@ -144,7 +145,7 @@ export default function NodePoolScreen() {
   const avail = pool.filter((n) => n.status === 'available').length;
   const deployed = pool.length - avail;
 
-  // Click-to-sort on Type / Connectivity / Status (toggles asc → desc → off).
+  // Click-to-sort on Type / Connectivity / Available (toggles asc → desc → off).
   const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
     null,
   );
@@ -216,7 +217,7 @@ export default function NodePoolScreen() {
                     [
                       ['type', 'Type'],
                       ['connectivity', 'Connectivity'],
-                      ['status', 'Status'],
+                      ['status', 'Available'],
                     ] as [SortKey, string][]
                   ).map(([key, label]) => (
                     <TableCell
