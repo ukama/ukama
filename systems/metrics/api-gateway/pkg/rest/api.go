@@ -62,6 +62,24 @@ type GetMetricsInput struct {
 	Metric string `path:"metric" validate:"required"`
 }
 
+// GetMetricsLastInput is the instant ("latest value") counterpart of
+// GetMetricsRangeInput: the same filter set, but a lookback window instead of
+// a from/to/step interval. There is no `operation` — the endpoint does not
+// aggregate, it returns every matching series as Prometheus reports it.
+type GetMetricsLastInput struct {
+	Metric     string `path:"metric" validate:"required"`
+	Network    string `query:"network"`
+	Subscriber string `query:"subscriber"`
+	Sim        string `query:"sim"`
+	User       string `query:"user"`
+	Site       string `query:"site"`
+	NodeID     string `query:"node"`
+	Package    string `query:"package"`
+	Iccid      string `query:"iccid"`
+	// Prometheus duration to look back over for the last sample, e.g. 30m, 24h, 7d.
+	Lookback string `query:"lookback" default:"7d"`
+}
+
 type GetSimMetricsInput struct {
 	FilterBase
 	Metric     string `path:"metric" validate:"required"`

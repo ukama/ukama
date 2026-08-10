@@ -16,6 +16,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,6 +30,24 @@ import (
 // NodeTypeSystem is the fallback node-type bucket used when no hardware node ID is present in a request
 // (e.g. platform-level endpoints for org, network, subscriber, SIM stats).
 const NodeTypeSystem = "system"
+
+// DefaultLastLookback is the window GetMetricLast searches for the most recent
+// sample when the caller doesn't supply one. Sized for sparsely pushed series
+// such as data_usage, which the CDR service only writes on session close.
+const DefaultLastLookback = "7d"
+
+// promDuration matches a Prometheus duration literal ("30m", "24h", "1h30m").
+// The lookback is interpolated into the query unquoted, so it is validated
+// rather than escaped.
+var promDuration = regexp.MustCompile(`^([0-9]+(ms|s|m|h|d|w|y))+$`)
+
+// ValidateLookback reports whether l is a usable Prometheus range-selector duration.
+func ValidateLookback(l string) error {
+	if !promDuration.MatchString(l) {
+		return errors.Errorf("invalid lookback %q: expected a Prometheus duration such as 30m, 24h or 7d", l)
+	}
+	return nil
+}
 
 // ExtractNodeType parses a node ID such as "uk-sa2602-tnode-v0-344c" and returns the embedded
 // node type token ("tnode", "anode", or "cnode"). Returns NodeTypeSystem when the ID is empty
@@ -187,6 +206,37 @@ func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilte
 	data.Set("query", metric.getQuery(metricFilter, m.conf.DefaultRateInterval, metricFilter.operation))
 
 	log.Infof("GetMetricRange query: %s", data.Encode())
+
+	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
+}
+
+// GetMetricLast returns the most recent sample of a metric within the lookback
+// window, for every series matching the filters. It is the instant counterpart
+// of GetMetricRange: same filters, one data point per series, no aggregation —
+// the Prometheus vector response is passed through as-is.
+// nodeType is one of "tnode", "anode", "cnode", or "system".
+func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter *Filter, lookback string, w io.Writer) (httpStatus int, err error) {
+	metric, ok := m.resolveMetric(metricType, nodeType)
+	if !ok {
+		return http.StatusNotFound, errors.New("metric type not found for node type")
+	}
+
+	if lookback == "" {
+		lookback = DefaultLastLookback
+	}
+	if err := ValidateLookback(lookback); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
+	defer cancel()
+
+	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
+
+	data := url.Values{}
+	data.Set("query", metric.getLastQuery(metricFilter, lookback))
+
+	log.Infof("GetMetricLast query: %s", data.Encode())
 
 	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
@@ -496,6 +546,14 @@ func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggre
 	}
 
 	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, metricFilter.GetFilter(), getExcludeStatements())
+}
+
+// getLastQuery builds the instant KPI query: the last sample each matching
+// series reported within the lookback window. Deliberately unaggregated — the
+// caller gets every series Prometheus returns, narrowed only by the filters.
+func (m Metric) getLastQuery(metricFilter *Filter, lookback string) string {
+	return fmt.Sprintf("last_over_time(%s {%s}[%s])", m.Metric,
+		metricFilter.GetFilter(), lookback)
 }
 
 func (m Metric) getAggregateQuery(filter *Filter, aggregateFunc string) string {
