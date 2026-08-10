@@ -85,10 +85,9 @@ export class SitesViewResolver {
   ): Promise<SiteNodeCountsSection> {
     const { value, error } = await runSection("nodeCounts", async () => {
       const url = await root._urls.url("node");
-      const res = await ctx.dataSources.node.getNodesByNetwork(
-        url,
-        root.networkId
-      );
+      const res = await ctx.dataSources.node.getNodes(url, {
+        networkId: root.networkId,
+      });
       return groupNodeCountsBySite(res.nodes);
     });
     return { counts: value, error };
@@ -158,7 +157,9 @@ export class SiteViewResolver {
     if (!root._cnodeId) {
       root._cnodeId = root._urls
         .url("node")
-        .then(url => ctx.dataSources.node.getNodesForSite(url, root.siteId))
+        .then(url =>
+          ctx.dataSources.node.getNodes(url, { siteId: root.siteId })
+        )
         .then(
           res => res.nodes.find(n => n.id?.toLowerCase().includes("cnode"))?.id
         )
@@ -185,7 +186,9 @@ export class SiteViewResolver {
   ): Promise<NodesSection> {
     const { value, error } = await runSection("nodes", async () => {
       const url = await root._urls.url("node");
-      const res = await ctx.dataSources.node.getNodesForSite(url, root.siteId);
+      const res = await ctx.dataSources.node.getNodes(url, {
+        siteId: root.siteId,
+      });
       return res.nodes;
     });
     return { nodes: value, error };

@@ -62,6 +62,8 @@ type Filter struct {
 	subscriber string
 	sim        string
 	site       string
+	packageId  string
+	iccid      string
 	operation  string
 }
 
@@ -76,6 +78,20 @@ func (f *Filter) WithNodeId(nodeId string) *Filter {
 
 func (f *Filter) WithSite(site string) *Filter {
 	f.site = site
+	return f
+}
+
+// WithPackage filters on the `package` label (the sim's package id), pushed
+// alongside data_usage by the CDR service.
+func (f *Filter) WithPackage(packageId string) *Filter {
+	f.packageId = packageId
+	return f
+}
+
+// WithIccid filters on the `iccid` label, pushed alongside data_usage by the
+// CDR service.
+func (f *Filter) WithIccid(iccid string) *Filter {
+	f.iccid = iccid
 	return f
 }
 
@@ -132,6 +148,12 @@ func (f *Filter) GetFilter() string {
 	}
 	if f.site != "" {
 		filter = append(filter, fmt.Sprintf("site='%s'", f.site))
+	}
+	if f.packageId != "" {
+		filter = append(filter, fmt.Sprintf("package='%s'", f.packageId))
+	}
+	if f.iccid != "" {
+		filter = append(filter, fmt.Sprintf("iccid='%s'", f.iccid))
 	}
 	return strings.Join(filter, ",")
 }

@@ -45,7 +45,6 @@ class PaymentAPI extends BaseRESTDataSource {
         payer_email: req.payerEmail,
         payer_phone: req.payerPhone,
         country: req.country,
-        description: req.description,
         metadata,
       },
     }).then(res => dtoToPaymentDto(res));

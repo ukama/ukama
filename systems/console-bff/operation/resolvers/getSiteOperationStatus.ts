@@ -41,7 +41,7 @@ export class GetSiteOperationStatusResolver {
     const opURL = await ctx.urls.url("operation");
 
     const nodesRes = await ctx.dataSources.node
-      .getNodesForSite(nodeURL, data.siteId)
+      .getNodes(nodeURL, { siteId: data.siteId })
       .catch(() => ({ nodes: [] }));
     const nodes = nodesRes.nodes ?? [];
 

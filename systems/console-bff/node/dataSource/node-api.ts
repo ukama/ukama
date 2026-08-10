@@ -35,9 +35,9 @@ class NodeAPI extends BaseRESTDataSource {
   async getNodes(baseURL: string, args: NodesFilterInput): Promise<Nodes> {
     this.baseURL = baseURL;
     const query = new URLSearchParams();
-    if (args.id) query.set("id", args.id);
-    if (args.siteId) query.set("siteId", args.siteId);
-    if (args.networkId) query.set("networkId", args.networkId);
+    if (args.id) query.set("node_id", args.id);
+    if (args.siteId) query.set("site_id", args.siteId);
+    if (args.networkId) query.set("network_id", args.networkId);
     if (args.type) query.set("type", args.type.toLowerCase());
     if (args.state) query.set("state", args.state.toLowerCase());
     if (args.connectivity)

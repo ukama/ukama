@@ -322,7 +322,9 @@ func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
 }
 
 func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) error {
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase,
+		pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation).
+			WithPackage(in.Package).WithIccid(in.Iccid))
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
@@ -376,7 +378,9 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 }
 
 func (r *Router) wsMetricHandler(w io.Writer, in *GetWsMetricInput) error {
-	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation), true)
+	return r.requestMetricInternal(w, in.Metric,
+		pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation).
+			WithPackage(in.Package).WithIccid(in.Iccid), true)
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {
