@@ -46,6 +46,45 @@ func TestGetQuery(t *testing.T) {
 
 }
 
+func TestGetLastQuery(t *testing.T) {
+	// Unaggregated: every matching series comes back, exactly as a direct
+	// `last_over_time(data_usage[7d])` against Prometheus would return it.
+	t.Run("NoFilters", func(t *testing.T) {
+		m := Metric{Metric: "data_usage"}
+		r := m.getLastQuery(NewFilter(), "7d")
+
+		assert.Equal(t, "last_over_time(data_usage {}[7d])", r)
+	})
+
+	t.Run("Filtered", func(t *testing.T) {
+		m := Metric{Metric: "data_usage"}
+		f := NewFilter().WithNetwork("net-1").WithPackage("pkg-1").WithIccid("8910309414559836625")
+		r := m.getLastQuery(f, "24h")
+
+		assert.Equal(t,
+			"last_over_time(data_usage {network='net-1',package='pkg-1',iccid='8910309414559836625'}[24h])",
+			r)
+	})
+
+	// NeedRate is a range-vector concern; the instant KPI query never rates.
+	t.Run("IgnoresNeedRate", func(t *testing.T) {
+		m := Metric{Metric: "data_usage", NeedRate: true, RateInterval: "1m"}
+		r := m.getLastQuery(NewFilter(), "7d")
+
+		assert.Equal(t, "last_over_time(data_usage {}[7d])", r)
+	})
+}
+
+func TestValidateLookback(t *testing.T) {
+	for _, ok := range []string{"30s", "5m", "24h", "7d", "2w", "1y", "1h30m", "500ms"} {
+		assert.NoError(t, ValidateLookback(ok), ok)
+	}
+
+	for _, bad := range []string{"", "7", "d", "7 d", "-7d", "7x", "7d]) or vector(1) (", "1h30"} {
+		assert.Error(t, ValidateLookback(bad), bad)
+	}
+}
+
 func TestGetFilter(t *testing.T) {
 	t.Run("Package", func(t *testing.T) {
 		assert.Equal(t, "package='pkg-1'", NewFilter().WithPackage("pkg-1").GetFilter())

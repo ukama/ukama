@@ -201,6 +201,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics range for a time period. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.metricRangeHandler, http.StatusOK))
 
+		auth.GET("/last/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get the latest value (KPI) of a metric, using the same filters as the range endpoint. " +
+					"Returns the last sample each matching series reported within the lookback window, unaggregated. " +
+					"Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries"
+			}}, tonic.Handler(r.metricLastHandler, http.StatusOK))
+
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 
@@ -325,6 +332,26 @@ func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) er
 	return r.requestMetricRangeInternal(c.Writer, in.FilterBase,
 		pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation).
 			WithPackage(in.Package).WithIccid(in.Iccid))
+}
+
+func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) error {
+	// Empty operation: this endpoint never aggregates, so the filter's
+	// operation is unused.
+	filter := pkg.NewFilter().
+		WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, "").
+		WithPackage(in.Package).WithIccid(in.Iccid)
+
+	nodeType := pkg.ExtractNodeType(in.NodeID)
+	if !r.m.MetricsExist(in.Metric, nodeType) {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s", filter, nodeType, in.Lookback)
+	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter, in.Lookback, c.Writer)
+
+	return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
