@@ -596,8 +596,8 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 		Status: ukama.SimStatusTerminated,
 	}
 
-	err = s.simRepo.Update(simUpdates, func(pckg *sims.Sim, tx *gorm.DB) error {
-		pckg.TerminatedAt = time.Now().UTC()
+	err = s.simRepo.Update(simUpdates, func(sim *sims.Sim, tx *gorm.DB) error {
+		sim.TerminatedAt = time.Now().UTC()
 
 		return nil
 	})

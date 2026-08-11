@@ -41,15 +41,17 @@ type Sim struct {
 }
 
 type Package struct {
-	Id              uuid.UUID `gorm:"primaryKey;type:uuid"`
-	SimId           uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true and deleted_at is null;not null;type:uuid"`
-	StartDate       time.Time
-	EndDate         time.Time
-	DefaultDuration uint64    // in minutes, cannot be more than 1000 years
-	PackageId       uuid.UUID `gorm:"not null;type:uuid"`
-	IsActive        bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true and deleted_at is null;default:false"`
-	AsExpired       bool      `gorm:"default:false"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       gorm.DeletedAt `gorm:"index"`
+	Id               uuid.UUID `gorm:"primaryKey;type:uuid"`
+	SimId            uuid.UUID `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true and deleted_at is null;not null;type:uuid"`
+	InitialData      uint64
+	StartDate        time.Time
+	EndDate          time.Time
+	DefaultDuration  uint64    // in minutes, cannot be more than 1000 years
+	PackageId        uuid.UUID `gorm:"not null;type:uuid"`
+	IsActive         bool      `gorm:"uniqueIndex:unique_sim_package_is_active,where:is_active is true and deleted_at is null;default:false"`
+	AsExpired        bool      `gorm:"default:false"`
+	UsedDataAtExpiry uint64    `gorm:"default:0"`
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+	DeletedAt        gorm.DeletedAt `gorm:"index"`
 }
