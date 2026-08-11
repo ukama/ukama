@@ -28,8 +28,7 @@ type ScopeParams struct {
 	Iccid        string `form:"iccid" query:"iccid"`
 }
 
-// QueryRequest is the single question shape (preferred over the older
-// values/timeseries/breakdown endpoints): KPIs + filters + dimensions +
+// QueryRequest is the single question shape: KPIs + filters + dimensions +
 // range + granularity. Aggregation comes from each KPI's kind — no op to
 // pick. Filters always fold: DATA_USAGE?network_id=X&range=this_month is
 // ONE number; add group_by=package_id for a per-package breakdown; add

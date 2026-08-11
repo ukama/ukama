@@ -194,6 +194,36 @@ func (_m *AggregatorServiceServer) ListReports(_a0 context.Context, _a1 *gen.Lis
 	return r0, r1
 }
 
+// Query provides a mock function with given fields: _a0, _a1
+func (_m *AggregatorServiceServer) Query(_a0 context.Context, _a1 *gen.QueryRequest) (*gen.QueryResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Query")
+	}
+
+	var r0 *gen.QueryResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryRequest) (*gen.QueryResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.QueryRequest) *gen.QueryResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.QueryRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // mustEmbedUnimplementedAggregatorServiceServer provides a mock function with no fields
 func (_m *AggregatorServiceServer) mustEmbedUnimplementedAggregatorServiceServer() {
 	_m.Called()

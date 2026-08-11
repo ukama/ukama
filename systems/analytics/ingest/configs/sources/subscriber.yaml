@@ -42,8 +42,3 @@ pulls:
       is_active: $.is_active
       as_expired: $.as_expired
       created_at: $.created_at
-
-  # NOTE: data usage is NOT pulled from sim-manager anymore. The DATA_USAGE
-  # KPI reads the metrics system's data_usage counter via
-  # metrics.data_usage.last (see metrics.yaml) — one unfiltered pull per
-  # window instead of a per-sim fan-out.

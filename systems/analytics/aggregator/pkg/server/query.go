@@ -22,8 +22,8 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Query is THE read API: one question shape for latest values, time series
-// and top-N breakdowns (see docs/read-api-simplification-plan.md, Phase 2).
+// Query is the primary read API: one question shape for latest values,
+// time series and top-N breakdowns.
 //
 //	kpis + filters + group_by + range + granularity (+ sort/top)
 //

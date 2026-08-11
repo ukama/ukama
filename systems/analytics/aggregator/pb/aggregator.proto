@@ -18,10 +18,9 @@ service AggregatorService {
     // ListKpis returns the KPI registry (self-describing catalog).
     rpc ListKpis(ListKpisRequest) returns (ListKpisResponse);
 
-    // Query is THE read API: one question shape for latest values, time
-    // series and top-N breakdowns. Aggregation is derived from each KPI's
-    // kind (flow|gauge) — callers never pick a fold function. The legacy
-    // GetKpis/GetKpiTimeSeries/GetKpiBreakdown RPCs predate it.
+    // Query is the primary read API: one question shape for latest values,
+    // time series and top-N breakdowns. Aggregation is derived from each
+    // KPI's kind (flow|gauge) — callers never pick a fold function.
     rpc Query(QueryRequest) returns (QueryResponse);
 
     // GetKpis returns the latest rollup value per KPI/scope for a span.
@@ -101,9 +100,9 @@ message KpiInfo {
     string scope_agg = 10; // gauges: sum|avg across scopes
 }
 
-// QueryRequest is the single question shape (see docs/read-api-simplification-plan.md):
-// KPIs + filters + dimensions + time range + granularity. Filters ALWAYS
-// fold: the answer's grain is exactly (filter keys ∪ group_by keys).
+// QueryRequest is the single question shape: KPIs + filters + dimensions +
+// time range + granularity. Filters ALWAYS fold: the answer's grain is
+// exactly (filter keys ∪ group_by keys).
 message QueryRequest {
     repeated string kpis = 1;       // required
     map<string, string> filter = 2; // scope filters; unknown keys -> InvalidArgument

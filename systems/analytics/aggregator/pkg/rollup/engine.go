@@ -81,9 +81,9 @@ func (e *Engine) OnKpiComputed(kpiKey string, windowID int64) {
 }
 
 // StartSweeper first backfills every span covered by existing kpi_windows
-// (heals pre-components rows and gaps after downtime — cheap and
-// idempotent), then periodically recomputes the current spans to cover lost
-// events and keep partial spans fresh.
+// (heals stale rows and gaps after downtime — cheap and idempotent), then
+// periodically recomputes the current spans to cover lost events and keep
+// partial spans fresh.
 func (e *Engine) StartSweeper() {
 	e.backfillOnce()
 

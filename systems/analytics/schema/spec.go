@@ -164,8 +164,6 @@ type OutputSpec struct {
 }
 
 // Read-time aggregations, all computable from a rollup row's components.
-// DELTA is gone: it existed to derive span usage from cumulative snapshots,
-// and DATA_USAGE stores per-window increments now (SUM is exact).
 var ValidOps = map[string]bool{
 	"SUM": true, "AVG": true, "MIN": true, "MAX": true, "COUNT": true, "LAST": true,
 }

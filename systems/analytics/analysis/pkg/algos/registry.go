@@ -73,7 +73,7 @@ func Default() *Registry {
 	// filters status=active in-algo — one sims pull feeds all sim KPIs.
 	r.Register("active_customers@v3", ActiveCustomers)
 	// v1: per-series increments from the metrics system's cumulative
-	// data_usage counter (replaces the per-sim usage_by_network design).
+	// data_usage counter.
 	r.Register("data_usage@v1", DataUsage)
 
 	// Package KPIs (see docs/packages-kpi-plan.md).

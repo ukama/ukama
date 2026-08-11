@@ -28,9 +28,8 @@ import (
 
 // AggregatorServer is the KPI read API over the components rollups plus the
 // performance-report composer. Query (query.go) is the primary read path;
-// the legacy GetKpis/GetKpiTimeSeries/GetKpiBreakdown RPCs are thin
-// ADAPTERS over the same planner — one semantics, two request shapes —
-// kept until their consumers move to Query (plan Phase 4).
+// GetKpis/GetKpiTimeSeries/GetKpiBreakdown are thin adapters over the same
+// planner — one semantics, two request shapes.
 type AggregatorServer struct {
 	org      string
 	kpis     []schema.KpiSpec
@@ -201,10 +200,9 @@ func (s *AggregatorServer) ListKpis(ctx context.Context, req *pb.ListKpisRequest
 
 // --- legacy adapters over the Query planner ---
 
-// legacyAgg maps a legacy op param to a planner aggregation. Empty, LAST
-// and the retired DELTA all resolve to the KPI's kind default (LAST *is*
-// the additive-gauge default; DELTA's only consumer stored increments where
-// SUM is now exact). Component ops pass through as overrides.
+// legacyAgg maps this endpoint family's op param to a planner aggregation:
+// empty, LAST and DELTA resolve to the KPI's kind default; component ops
+// pass through as overrides.
 func legacyAgg(kpi schema.KpiSpec, op string) (string, error) {
 	op = strings.ToUpper(strings.TrimSpace(op))
 
@@ -221,9 +219,9 @@ func legacyAgg(kpi schema.KpiSpec, op string) (string, error) {
 	return op, nil
 }
 
-// legacyGrain keeps the legacy row shape: an unfiltered, ungrouped read
-// returns one row per full KPI scope (as the old endpoints always did);
-// anything else folds to filter ∪ group_by, exactly like Query.
+// legacyGrain keeps this endpoint family's row shape: an unfiltered,
+// ungrouped read returns one row per full KPI scope; anything else folds
+// to filter ∪ group_by, exactly like Query.
 func legacyGrain(kpi schema.KpiSpec, filter map[string]string, groupBy []string) []string {
 	if len(filter) == 0 && len(groupBy) == 0 {
 		return kpi.Scope
@@ -457,8 +455,8 @@ func queryRowToKpiValue(row *pb.QueryRow, span, op string) *pb.KpiValue {
 
 // knownKpis filters requested keys down to the ones this deployment actually
 // has a spec for. An unknown key is SKIPPED, not fatal: a caller asks for one
-// list of keys to fill a whole tile row, so failing the request over a KPI that
-// has not shipped yet (or was retired) would blank every other tile alongside
+// list of keys to fill a whole tile row, so failing the request over a KPI
+// that is not deployed here would blank every other tile alongside
 // it. Consumers already degrade a missing value to "—", which is the intended
 // contract. Single-key endpoints keep the NotFound — there, the unknown key is
 // the entire answer.

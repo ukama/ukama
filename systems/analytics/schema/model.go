@@ -94,13 +94,9 @@ type KpiWindow struct {
 	ComputedAt  time.Time
 }
 
-// RollupRowOp marks the single components row the engine materializes per
-// (kpi, org, scope, span, span_start). Historically one row existed PER OP
-// (SUM/AVG/... with a precomputed Value); every aggregation is now computed
-// at read time from the components, so exactly one row is written, tagged
-// with this marker. The column stays in the unique index so old per-op rows
-// coexist harmlessly (reads filter on the marker; the boot backfill
-// re-materializes history).
+// RollupRowOp tags the single components row the engine materializes per
+// (kpi, org, scope, span, span_start). Reads filter on this marker; rows
+// with any other tag are ignored and superseded by the boot backfill.
 const RollupRowOp = "VAL"
 
 // KpiRollup is the rollup zone: ONE components row per (kpi, org, scope,

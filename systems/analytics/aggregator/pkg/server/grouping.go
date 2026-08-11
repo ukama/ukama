@@ -238,25 +238,3 @@ func latestGroups(grouped map[string]map[time.Time]*scopeGroup) []*scopeGroup {
 
 	return out
 }
-
-// allGroups flattens every (group, span_start) bucket, ordered by span_start
-// then group key (time-series shape).
-func allGroups(grouped map[string]map[time.Time]*scopeGroup) []*scopeGroup {
-	out := make([]*scopeGroup, 0, len(grouped))
-
-	for _, bySpan := range grouped {
-		for _, g := range bySpan {
-			out = append(out, g)
-		}
-	}
-
-	sort.Slice(out, func(i, j int) bool {
-		if !out[i].spanStart.Equal(out[j].spanStart) {
-			return out[i].spanStart.Before(out[j].spanStart)
-		}
-
-		return out[i].scope < out[j].scope
-	})
-
-	return out
-}

@@ -626,9 +626,9 @@ func (x *KpiInfo) GetScopeAgg() string {
 	return ""
 }
 
-// QueryRequest is the single question shape (see docs/read-api-simplification-plan.md):
-// KPIs + filters + dimensions + time range + granularity. Filters ALWAYS
-// fold: the answer's grain is exactly (filter keys ∪ group_by keys).
+// QueryRequest is the single question shape: KPIs + filters + dimensions +
+// time range + granularity. Filters ALWAYS fold: the answer's grain is
+// exactly (filter keys ∪ group_by keys).
 type QueryRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

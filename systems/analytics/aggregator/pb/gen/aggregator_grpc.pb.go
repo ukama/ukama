@@ -24,10 +24,9 @@ const _ = grpc.SupportPackageIsVersion7
 type AggregatorServiceClient interface {
 	// ListKpis returns the KPI registry (self-describing catalog).
 	ListKpis(ctx context.Context, in *ListKpisRequest, opts ...grpc.CallOption) (*ListKpisResponse, error)
-	// Query is THE read API: one question shape for latest values, time
-	// series and top-N breakdowns. Aggregation is derived from each KPI's
-	// kind (flow|gauge) — callers never pick a fold function. The legacy
-	// GetKpis/GetKpiTimeSeries/GetKpiBreakdown RPCs predate it.
+	// Query is the primary read API: one question shape for latest values,
+	// time series and top-N breakdowns. Aggregation is derived from each
+	// KPI's kind (flow|gauge) — callers never pick a fold function.
 	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 	// GetKpis returns the latest rollup value per KPI/scope for a span.
 	GetKpis(ctx context.Context, in *GetKpisRequest, opts ...grpc.CallOption) (*GetKpisResponse, error)
@@ -119,10 +118,9 @@ func (c *aggregatorServiceClient) GetPerformanceReport(ctx context.Context, in *
 type AggregatorServiceServer interface {
 	// ListKpis returns the KPI registry (self-describing catalog).
 	ListKpis(context.Context, *ListKpisRequest) (*ListKpisResponse, error)
-	// Query is THE read API: one question shape for latest values, time
-	// series and top-N breakdowns. Aggregation is derived from each KPI's
-	// kind (flow|gauge) — callers never pick a fold function. The legacy
-	// GetKpis/GetKpiTimeSeries/GetKpiBreakdown RPCs predate it.
+	// Query is the primary read API: one question shape for latest values,
+	// time series and top-N breakdowns. Aggregation is derived from each
+	// KPI's kind (flow|gauge) — callers never pick a fold function.
 	Query(context.Context, *QueryRequest) (*QueryResponse, error)
 	// GetKpis returns the latest rollup value per KPI/scope for a span.
 	GetKpis(context.Context, *GetKpisRequest) (*GetKpisResponse, error)
