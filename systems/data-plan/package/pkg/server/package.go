@@ -413,12 +413,17 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 		}
 	}
 
-	_package := &db.Package{
-		Name:   name,
-		Active: req.Active,
+	// active is always applied: the request carries a plain bool, so an absent value
+	// and false are indistinguishable on the wire and the field is declared required.
+	updates := map[string]interface{}{
+		"active": req.Active,
 	}
 
-	err = p.packageRepo.Update(packageID, _package)
+	if name != "" {
+		updates["name"] = name
+	}
+
+	err = p.packageRepo.Update(packageID, updates)
 	if err != nil {
 		log.Error("error while getting updating a package" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "package")
