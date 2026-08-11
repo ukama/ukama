@@ -82,17 +82,26 @@ func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 				}
 			}
 
+			// Entity key: single mapped field, or a composite ("a,b,c") whose
+			// component values are joined with "|" in spec order.
 			entity := ""
-			if pull.Entity != "" {
-				v, ok := fields[pull.Entity]
-				if !ok || v == nil || fmt.Sprintf("%v", v) == "" {
-					// A snapshot row without its entity key would collapse
-					// the change-log — fail loudly instead of storing junk.
-					return 0, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
-						pull.Key, win.ID, pull.Entity)
+
+			if entityFields := pull.EntityFields(); len(entityFields) > 0 {
+				parts := make([]string, 0, len(entityFields))
+
+				for _, ef := range entityFields {
+					v, ok := fields[ef]
+					if !ok || v == nil || fmt.Sprintf("%v", v) == "" {
+						// A snapshot row without its entity key would collapse
+						// the change-log — fail loudly instead of storing junk.
+						return 0, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
+							pull.Key, win.ID, ef)
+					}
+
+					parts = append(parts, fmt.Sprintf("%v", v))
 				}
 
-				entity = fmt.Sprintf("%v", v)
+				entity = strings.Join(parts, "|")
 			}
 
 			hash := HashFields(fields)

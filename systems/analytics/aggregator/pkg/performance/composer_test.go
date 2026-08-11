@@ -23,6 +23,11 @@ func rollup(net, pkg string, value float64, spanStart time.Time) schema.KpiRollu
 	return schema.KpiRollup{
 		Scope:     schema.CanonicalScope(map[string]string{"network_id": net, "package_id": pkg}),
 		Value:     value,
+		Sum:       value,
+		Count:     1,
+		Min:       value,
+		Max:       value,
+		Last:      value,
 		SpanStart: spanStart,
 	}
 }

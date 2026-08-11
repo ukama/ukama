@@ -22,6 +22,9 @@ type KpiWindowReader interface {
 	// WindowsInRange returns kpi_windows rows for a KPI with window_id in
 	// [fromID, toID).
 	WindowsInRange(orgID, kpiKey string, fromID, toID int64) ([]schema.KpiWindow, error)
+	// WindowBounds returns the min/max window_id a KPI has rows for
+	// (ok=false when it has none) — drives the boot backfill.
+	WindowBounds(orgID, kpiKey string) (minID, maxID int64, ok bool, err error)
 }
 
 // RawStateReader is aggregator's read-only view of the ingest zone's
@@ -32,18 +35,15 @@ type RawStateReader interface {
 	LatestState(orgID, datasetKey string) ([]schema.RawRecord, error)
 }
 
-// RollupRepo owns the rollup zone.
+// RollupRepo owns the rollup zone. Reads return the single components row
+// per (scope, span_start) — schema.RollupRowOp; there is no per-op storage.
 type RollupRepo interface {
 	Upsert(rows []schema.KpiRollup) error
-	// Get returns the rollup row for exact (kpi, scope, span, spanStart, op).
-	Get(orgID, kpiKey, scope, span string, spanStart time.Time, op string) (*schema.KpiRollup, error)
-	// Latest returns the newest span rows per scope for a KPI (optionally
-	// scope-filtered with jsonb key/values).
-	Latest(orgID, kpiKey, span, op string, scopeFilter map[string]string) ([]schema.KpiRollup, error)
+	// Latest returns the newest span row per scope for a KPI (optionally
+	// scope-filtered).
+	Latest(orgID, kpiKey, span string, scopeFilter map[string]string) ([]schema.KpiRollup, error)
 	// Range returns rows ordered by span_start within [from, to).
-	Range(orgID, kpiKey, span, op string, from, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error)
-	// ScopesSeen returns the distinct scopes with rollups for (kpi, span).
-	ScopesSeen(orgID, kpiKey, span string) ([]string, error)
+	Range(orgID, kpiKey, span string, from, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error)
 }
 
 type repo struct {
@@ -99,31 +99,13 @@ func (r *repo) Upsert(rows []schema.KpiRollup) error {
 			{Name: "span"}, {Name: "span_start"}, {Name: "op"},
 		},
 		DoUpdates: clause.AssignmentColumns([]string{
-			"span_end", "value", "value_type", "unit", "symbol", "is_partial",
-			"prev_value", "change_abs", "change_pct", "trend", "computed_at",
+			"span_end", "value", "sum", "count", "min", "max", "last",
+			"value_type", "unit", "symbol", "is_partial", "computed_at",
 		}),
 	}).Create(&rows).Error
 }
 
-func (r *repo) Get(orgID, kpiKey, scope, span string, spanStart time.Time, op string) (*schema.KpiRollup, error) {
-	row := schema.KpiRollup{}
-
-	err := r.db.GetGormDb().
-		Where("org_id = ? AND kpi_key = ? AND scope = ? AND span = ? AND span_start = ? AND op = ?",
-			orgID, kpiKey, scope, span, spanStart, op).
-		First(&row).Error
-	if err != nil {
-		if sql.IsNotFoundError(err) {
-			return nil, nil
-		}
-
-		return nil, err
-	}
-
-	return &row, nil
-}
-
-func (r *repo) Latest(orgID, kpiKey, span, op string, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
+func (r *repo) Latest(orgID, kpiKey, span string, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
 	rows := []schema.KpiRollup{}
 
 	q := r.db.GetGormDb().Raw(`
@@ -131,7 +113,7 @@ func (r *repo) Latest(orgID, kpiKey, span, op string, scopeFilter map[string]str
 		FROM kpi_rollups
 		WHERE org_id = ? AND kpi_key = ? AND span = ? AND op = ?
 		ORDER BY scope, span_start DESC`,
-		orgID, kpiKey, span, op)
+		orgID, kpiKey, span, schema.RollupRowOp)
 
 	if err := q.Scan(&rows).Error; err != nil {
 		return nil, err
@@ -140,12 +122,12 @@ func (r *repo) Latest(orgID, kpiKey, span, op string, scopeFilter map[string]str
 	return filterScope(rows, scopeFilter), nil
 }
 
-func (r *repo) Range(orgID, kpiKey, span, op string, from, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
+func (r *repo) Range(orgID, kpiKey, span string, from, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
 	rows := []schema.KpiRollup{}
 
 	err := r.db.GetGormDb().
 		Where("org_id = ? AND kpi_key = ? AND span = ? AND op = ? AND span_start >= ? AND span_start < ?",
-			orgID, kpiKey, span, op, from, to).
+			orgID, kpiKey, span, schema.RollupRowOp, from, to).
 		Order("span_start").
 		Find(&rows).Error
 	if err != nil {
@@ -155,18 +137,25 @@ func (r *repo) Range(orgID, kpiKey, span, op string, from, to time.Time, scopeFi
 	return filterScope(rows, scopeFilter), nil
 }
 
-func (r *repo) ScopesSeen(orgID, kpiKey, span string) ([]string, error) {
-	scopes := []string{}
-
-	err := r.db.GetGormDb().Model(&schema.KpiRollup{}).
-		Distinct("scope").
-		Where("org_id = ? AND kpi_key = ? AND span = ?", orgID, kpiKey, span).
-		Pluck("scope", &scopes).Error
-	if err != nil {
-		return nil, err
+func (r *repo) WindowBounds(orgID, kpiKey string) (int64, int64, bool, error) {
+	var bounds struct {
+		MinID *int64
+		MaxID *int64
 	}
 
-	return scopes, nil
+	err := r.db.GetGormDb().Model(&schema.KpiWindow{}).
+		Select("MIN(window_id) AS min_id, MAX(window_id) AS max_id").
+		Where("org_id = ? AND kpi_key = ?", orgID, kpiKey).
+		Scan(&bounds).Error
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	if bounds.MinID == nil || bounds.MaxID == nil {
+		return 0, 0, false, nil
+	}
+
+	return *bounds.MinID, *bounds.MaxID, true, nil
 }
 
 // filterScope keeps rows whose canonical scope JSON contains all requested

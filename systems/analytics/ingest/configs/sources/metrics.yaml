@@ -1,0 +1,45 @@
+# Metrics source spec: the metrics system's api-gateway is the source of
+# truth for data usage (cdr pushes the data_usage counter to pushgateway;
+# Prometheus scrapes it; /v1/last re-exposes the latest sample per series).
+#
+# ONE unfiltered pull per window — never fan out per network/sim/filter.
+# /v1/last/metrics/data_usage returns an instant vector: every series'
+# last sample within the lookback, unaggregated, labels intact
+# (network/site/package/dataplan/iccid). Pushgateway re-exposure means idle
+# sims still report their last value, so zero-fill comes free.
+#
+# The counter is CUMULATIVE — analysis derives per-window increments by
+# comparing against the previous window's state (mode: state_prev), so this
+# stays a full_snapshot change-log: a new row only when a series' value
+# moves, tombstones when a series disappears from Prometheus.
+#
+# Label semantics (set by ukama-agent/cdr on push) — note the rename on map:
+#   cdr label `dataplan` = the CATALOG package id -> mapped to package_id,
+#     matching what package_id means everywhere else in analytics
+#     (PACKAGE_SALES, reports, dataplan.package.getAll).
+#   cdr label `package` = the sim's package ASSIGNMENT id (sim_package_id).
+version: 1
+source: metrics
+system: metrics
+
+pulls:
+  - key: metrics.data_usage.last
+    endpoint: /v1/last/metrics/data_usage
+    strategy: full_snapshot
+    items: $.data.result
+    # Composite entity: one Prometheus series = one change-log entity. iccid
+    # alone would collapse series when a sim's traffic spans assignments or
+    # sites.
+    entity: iccid,sim_package_id,site_id
+    params:
+      # 30m >> the 5m window W: survives scrape gaps without resurrecting
+      # long-dead series the way the 7d default would after a residue wipe.
+      lookback: 30m
+    map:
+      network_id: $.metric.network
+      site_id: $.metric.site
+      package_id: $.metric.dataplan
+      sim_package_id: $.metric.package
+      iccid: $.metric.iccid
+      # Prometheus sample pair [ts, "value"] — parsed by the data_usage algo.
+      value: $.value

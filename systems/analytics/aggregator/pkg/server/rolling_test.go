@@ -28,6 +28,24 @@ func (s stubWindows) WindowsInRange(_ string, _ string, _ int64, _ int64) ([]sch
 	return s.rows, nil
 }
 
+func (s stubWindows) WindowBounds(_ string, _ string) (int64, int64, bool, error) {
+	if len(s.rows) == 0 {
+		return 0, 0, false, nil
+	}
+
+	minID, maxID := s.rows[0].WindowID, s.rows[0].WindowID
+	for _, r := range s.rows[1:] {
+		if r.WindowID < minID {
+			minID = r.WindowID
+		}
+		if r.WindowID > maxID {
+			maxID = r.WindowID
+		}
+	}
+
+	return minID, maxID, true, nil
+}
+
 func TestRollingOpValue(t *testing.T) {
 	a := &windowAgg{sum: 300, count: 3, min: 50, max: 200, lastValue: 200}
 
@@ -63,37 +81,15 @@ func TestScopeMatches(t *testing.T) {
 	assert.False(t, scopeMatches(netA, map[string]string{"network_id": "net-b"}))
 }
 
-func TestRollingTrend(t *testing.T) {
-	sum := func(v float64) *windowAgg { return &windowAgg{sum: v, count: 1} }
-
-	// no previous window
-	assert.Equal(t, "new", rollingTrend("SUM", sum(10), nil).Direction)
-
-	// up / down / flat
-	assert.Equal(t, "up", rollingTrend("SUM", sum(12), sum(10)).Direction)
-	assert.Equal(t, "down", rollingTrend("SUM", sum(8), sum(10)).Direction)
-	assert.Equal(t, "flat", rollingTrend("SUM", sum(10), sum(10)).Direction)
-
-	// prev zero: percent undefined
-	assert.Equal(t, "na", rollingTrend("SUM", sum(5), sum(0)).Direction)
-	assert.Equal(t, "flat", rollingTrend("SUM", sum(0), sum(0)).Direction)
-
-	// change fields populated
-	tr := rollingTrend("SUM", sum(12), sum(10))
-	assert.True(t, tr.HasPrevious)
-	assert.Equal(t, float64(10), tr.PrevValue)
-	assert.Equal(t, float64(2), tr.ChangeAbs)
-	assert.InDelta(t, 20, tr.ChangePct, 1e-9)
-}
-
 func TestGetKpisRolling_SumNetworkScope(t *testing.T) {
 	netA := schema.CanonicalScope(map[string]string{"network_id": "net-a"})
-	srv := NewAggregatorServer(
+	srv := mustServer(t,
+
 		"org",
 		[]schema.KpiSpec{{
-			Kpi:       "REVENUE",
-			Output:    schema.OutputSpec{Type: "int", Unit: "cents", Symbol: "$"},
-			RollupOps: []string{"SUM", "COUNT", "AVG", "MAX"},
+			Kpi:    "REVENUE",
+			Scope:  []string{"network_id"},
+			Output: schema.OutputSpec{Type: "int", Unit: "cents", Symbol: "$"},
 		}},
 		nil, // rollups (unused on the rolling path)
 		nil, // composer (unused)

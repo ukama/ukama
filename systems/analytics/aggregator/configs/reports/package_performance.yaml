@@ -17,7 +17,10 @@ row_scope: package_id
 columns:
   - { name: sold,      kpi: PACKAGE_SALES,     op: SUM }
   - { name: revenue,   kpi: PACKAGE_REVENUE,   op: SUM, format: money }
-  - { name: data_used, kpi: PACKAGE_DATA_USED, op: SUM, format: bytes }
+  # DATA_USAGE rows are per-series (iccid x assignment x site); the composer's
+  # SUM fold across scopes sharing this row's package_id yields the package
+  # total exactly (per-window increments are additive).
+  - { name: data_used, kpi: DATA_USAGE, op: SUM, format: bytes }
 status:
   - { when: "active == false", label: Inactive }
   - { when: "sold == 0",       label: No sales }

@@ -72,7 +72,9 @@ func Default() *Registry {
 	// v3: reads the shared all-sims dataset (subscriber.sim.list) and
 	// filters status=active in-algo — one sims pull feeds all sim KPIs.
 	r.Register("active_customers@v3", ActiveCustomers)
-	r.Register("usage_by_network@v2", UsageByNetwork)
+	// v1: per-series increments from the metrics system's cumulative
+	// data_usage counter (replaces the per-sim usage_by_network design).
+	r.Register("data_usage@v1", DataUsage)
 
 	// Package KPIs (see docs/packages-kpi-plan.md).
 	r.Register("package_sales@v1", PackageSales)
@@ -82,7 +84,6 @@ func Default() *Registry {
 	r.Register("arpu@v1", Arpu)
 	r.Register("customers_on_plan@v1", CustomersOnPlan)
 	r.Register("active_plans@v1", ActivePlans)
-	r.Register("package_data_used@v1", PackageDataUsed)
 
 	// Revenue KPIs (settled payments; org-wide scope).
 	r.Register("revenue@v1", Revenue)

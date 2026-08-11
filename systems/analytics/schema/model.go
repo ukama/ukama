@@ -94,8 +94,24 @@ type KpiWindow struct {
 	ComputedAt  time.Time
 }
 
-// KpiRollup is the rollup zone: one row per (kpi, org, scope, span,
-// span_start, op), including first-class trend fields.
+// RollupRowOp marks the single components row the engine materializes per
+// (kpi, org, scope, span, span_start). Historically one row existed PER OP
+// (SUM/AVG/... with a precomputed Value); every aggregation is now computed
+// at read time from the components, so exactly one row is written, tagged
+// with this marker. The column stays in the unique index so old per-op rows
+// coexist harmlessly (reads filter on the marker; the boot backfill
+// re-materializes history).
+const RollupRowOp = "VAL"
+
+// KpiRollup is the rollup zone: ONE components row per (kpi, org, scope,
+// span, span_start).
+//
+// Sum/Count/Min/Max/Last are the span's aggregated components (folded from
+// the span's kpi_windows): any read-time aggregation — including exact
+// weighted AVG and cross-scope group_by folds — derives from them. Value
+// caches the KPI's kind-default aggregation for debugging/BI convenience.
+// Trend is computed at read time (same question over the previous period),
+// not stored.
 type KpiRollup struct {
 	ID         uint64    `gorm:"primaryKey;autoIncrement"`
 	KpiKey     string    `gorm:"size:64;uniqueIndex:uq_rollup,priority:1;index"`
@@ -104,16 +120,17 @@ type KpiRollup struct {
 	Span       string    `gorm:"size:16;uniqueIndex:uq_rollup,priority:4"` // daily|weekly|monthly
 	SpanStart  time.Time `gorm:"uniqueIndex:uq_rollup,priority:5;index"`
 	SpanEnd    time.Time
-	Op         string `gorm:"size:16;uniqueIndex:uq_rollup,priority:6"` // SUM|AVG|MIN|MAX|COUNT|LAST
+	Op         string `gorm:"size:16;uniqueIndex:uq_rollup,priority:6"` // always RollupRowOp
 	Value      float64
-	ValueType  string `gorm:"size:16"`
-	Unit       string `gorm:"size:16"`
-	Symbol     string `gorm:"size:16"`
+	Sum        float64
+	Count      float64
+	Min        float64
+	Max        float64
+	Last       float64 // latest window's value in the span (gauge level)
+	ValueType  string  `gorm:"size:16"`
+	Unit       string  `gorm:"size:16"`
+	Symbol     string  `gorm:"size:16"`
 	IsPartial  bool
-	PrevValue  *float64
-	ChangeAbs  *float64
-	ChangePct  *float64
-	Trend      string `gorm:"size:8"` // up|down|flat|new|na
 	ComputedAt time.Time
 }
 

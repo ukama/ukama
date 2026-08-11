@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -25,28 +26,44 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// AggregatorServer is the generic KPI read API over kpi_rollups plus the
-// performance-report composer. No per-KPI/per-report code: adding either
-// requires no changes here.
+// AggregatorServer is the KPI read API over the components rollups plus the
+// performance-report composer. Query (query.go) is the primary read path;
+// the legacy GetKpis/GetKpiTimeSeries/GetKpiBreakdown RPCs are thin
+// ADAPTERS over the same planner — one semantics, two request shapes —
+// kept until their consumers move to Query (plan Phase 4).
 type AggregatorServer struct {
 	org      string
 	kpis     []schema.KpiSpec
 	byKey    map[string]schema.KpiSpec
 	rollups  db.RollupRepo
 	composer *performance.Composer
-	// grid + windows back the rolling-window read path (last_24h/7d/30d),
-	// which aggregates kpi_windows on read instead of reading precomputed
-	// calendar-span rollups. See rolling.go.
+	// grid + windows back the rolling-range reads, which fold raw
+	// kpi_windows components instead of calendar rollups.
 	grid    schema.Grid
 	windows db.KpiWindowReader
+	// loc anchors calendar range tokens (today/this_week/this_month) —
+	// same timezone the rollup engine uses for span boundaries.
+	loc *time.Location
 	pb.UnimplementedAggregatorServiceServer
 }
 
 func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRepo,
-	composer *performance.Composer, grid schema.Grid, windows db.KpiWindowReader) *AggregatorServer {
+	composer *performance.Composer, grid schema.Grid, windows db.KpiWindowReader,
+	timezone string) (*AggregatorServer, error) {
 	byKey := map[string]schema.KpiSpec{}
 	for _, k := range kpis {
 		byKey[k.Kpi] = k
+	}
+
+	loc := time.UTC
+
+	if timezone != "" {
+		parsed, err := time.LoadLocation(timezone)
+		if err != nil {
+			return nil, fmt.Errorf("loading aggregator timezone %q: %w", timezone, err)
+		}
+
+		loc = parsed
 	}
 
 	return &AggregatorServer{
@@ -57,7 +74,8 @@ func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRep
 		composer: composer,
 		grid:     grid,
 		windows:  windows,
-	}
+		loc:      loc,
+	}, nil
 }
 
 func (s *AggregatorServer) ListReports(ctx context.Context, req *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
@@ -167,11 +185,12 @@ func (s *AggregatorServer) ListKpis(ctx context.Context, req *pb.ListKpisRequest
 			Kpi:               k.Kpi,
 			Domain:            k.Domain,
 			Scope:             k.Scope,
-			RollupOps:         k.RollupOps,
 			Type:              k.Output.Type,
 			Unit:              k.Output.Unit,
 			Symbol:            k.Output.Symbol,
 			PositiveDirection: k.PositiveDirection,
+			Kind:              k.Kind,
+			ScopeAgg:          k.ScopeAgg,
 		})
 	}
 
@@ -180,33 +199,97 @@ func (s *AggregatorServer) ListKpis(ctx context.Context, req *pb.ListKpisRequest
 	return &pb.ListKpisResponse{Kpis: infos}, nil
 }
 
-func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) (*pb.GetKpisResponse, error) {
-	// Rolling windows (last_24h/7d/30d) are computed on read from kpi_windows;
-	// calendar spans (daily/weekly/monthly) read precomputed rollups below.
-	if isRollingSpan(req.Span) {
-		return s.getKpisRolling(req)
+// --- legacy adapters over the Query planner ---
+
+// legacyAgg maps a legacy op param to a planner aggregation. Empty, LAST
+// and the retired DELTA all resolve to the KPI's kind default (LAST *is*
+// the additive-gauge default; DELTA's only consumer stored increments where
+// SUM is now exact). Component ops pass through as overrides.
+func legacyAgg(kpi schema.KpiSpec, op string) (string, error) {
+	op = strings.ToUpper(strings.TrimSpace(op))
+
+	switch op {
+	case "", "LAST", "DELTA":
+		return kpi.DefaultReadOp(), nil
 	}
 
-	span, err := validateSpan(req.Span)
+	if !componentOps[op] {
+		return "", status.Errorf(codes.InvalidArgument,
+			"unknown op %s (use SUM, AVG, MIN, MAX, COUNT — or omit it: the KPI's kind picks the right one)", op)
+	}
+
+	return op, nil
+}
+
+// legacyGrain keeps the legacy row shape: an unfiltered, ungrouped read
+// returns one row per full KPI scope (as the old endpoints always did);
+// anything else folds to filter ∪ group_by, exactly like Query.
+func legacyGrain(kpi schema.KpiSpec, filter map[string]string, groupBy []string) []string {
+	if len(filter) == 0 && len(groupBy) == 0 {
+		return kpi.Scope
+	}
+
+	return grainKeys(kpi, filter, groupBy)
+}
+
+// legacyRangeToken maps a legacy span to a Query range token.
+var legacyRangeToken = map[string]string{
+	rollup.SpanDaily:   "today",
+	rollup.SpanWeekly:  "this_week",
+	rollup.SpanMonthly: "this_month",
+}
+
+func (s *AggregatorServer) legacyRange(span string) (queryRange, string, error) {
+	span = strings.ToLower(span)
+
+	if isRollingSpan(span) {
+		rng, err := s.resolveQueryRange(span, "", "", time.Now().UTC())
+
+		return rng, span, err
+	}
+
+	validated, err := validateSpan(span)
+	if err != nil {
+		return queryRange{}, "", err
+	}
+
+	rng, err := s.resolveQueryRange(legacyRangeToken[validated], "", "", time.Now().UTC())
+
+	return rng, validated, err
+}
+
+func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) (*pb.GetKpisResponse, error) {
+	kpis := s.knownKpis(req.Keys)
+
+	if err := validateScopeKeys(kpis, req.Scope); err != nil {
+		return nil, err
+	}
+
+	if err := validateGroupBy(kpis, req.GroupBy); err != nil {
+		return nil, err
+	}
+
+	rng, span, err := s.legacyRange(req.Span)
 	if err != nil {
 		return nil, err
 	}
 
+	now := time.Now().UTC()
 	values := make([]*pb.KpiValue, 0)
 
-	for _, kpi := range s.knownKpis(req.Keys) {
-		op, err := s.resolveOp(kpi, req.Op)
+	for _, kpi := range kpis {
+		op, err := legacyAgg(kpi, req.Op)
 		if err != nil {
 			return nil, err
 		}
 
-		rows, err := s.rollups.Latest(s.org, kpi.Kpi, span, op, req.Scope)
+		rows, err := s.queryTotal(kpi, op, legacyGrain(kpi, req.Scope, req.GroupBy), req.Scope, rng, now)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "reading rollups: %v", err)
+			return nil, err
 		}
 
 		for _, row := range rows {
-			values = append(values, toKpiValue(row))
+			values = append(values, queryRowToKpiValue(row, span, op))
 		}
 	}
 
@@ -224,21 +307,55 @@ func (s *AggregatorServer) GetKpiTimeSeries(ctx context.Context, req *pb.GetKpiT
 		return nil, err
 	}
 
+	kpis := s.knownKpis(req.Keys)
+
+	if err := validateScopeKeys(kpis, req.Scope); err != nil {
+		return nil, err
+	}
+
+	if err := validateGroupBy(kpis, req.GroupBy); err != nil {
+		return nil, err
+	}
+
+	gran := map[string]string{
+		rollup.SpanDaily:   granDay,
+		rollup.SpanWeekly:  granWeek,
+		rollup.SpanMonthly: granMonth,
+	}[span]
+
+	rng := queryRange{from: from, to: to}
+	now := time.Now().UTC()
 	values := make([]*pb.KpiValue, 0)
 
-	for _, kpi := range s.knownKpis(req.Keys) {
-		op, err := s.resolveOp(kpi, req.Op)
+	for _, kpi := range kpis {
+		op, err := legacyAgg(kpi, req.Op)
 		if err != nil {
 			return nil, err
 		}
 
-		rows, err := s.rollups.Range(s.org, kpi.Kpi, span, op, from, to, req.Scope)
+		rows, err := s.querySeries(kpi, op, legacyGrain(kpi, req.Scope, req.GroupBy), req.Scope, gran, rng, now)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "reading rollups: %v", err)
+			return nil, err
 		}
 
 		for _, row := range rows {
-			values = append(values, toKpiValue(row))
+			for _, pt := range row.Points {
+				values = append(values, &pb.KpiValue{
+					Kpi:        row.Kpi,
+					Value:      pt.Value,
+					Span:       span,
+					Op:         op,
+					From:       pt.From,
+					To:         pt.To,
+					Type:       row.Type,
+					Unit:       row.Unit,
+					Symbol:     row.Symbol,
+					IsPartial:  pt.IsPartial,
+					Scope:      row.Dims,
+					Trend:      pt.Trend,
+					ComputedAt: now.Format(time.RFC3339),
+				})
+			}
 		}
 	}
 
@@ -246,23 +363,36 @@ func (s *AggregatorServer) GetKpiTimeSeries(ctx context.Context, req *pb.GetKpiT
 }
 
 func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBreakdownRequest) (*pb.GetKpiBreakdownResponse, error) {
-	span, err := validateSpan(req.Span)
-	if err != nil {
-		return nil, err
-	}
-
-	kpi, op, err := s.resolveKpiOp(req.Key, req.Op)
-	if err != nil {
-		return nil, err
+	kpi, ok := s.byKey[req.Key]
+	if !ok {
+		return nil, status.Errorf(codes.NotFound, "unknown kpi %q", req.Key)
 	}
 
 	if req.By == "" {
 		return nil, status.Error(codes.InvalidArgument, "breakdown dimension 'by' is required")
 	}
 
-	rows, err := s.rollups.Latest(s.org, kpi.Kpi, span, op, nil)
+	if err := validateGroupBy([]schema.KpiSpec{kpi}, []string{req.By}); err != nil {
+		return nil, err
+	}
+
+	if err := validateScopeKeys([]schema.KpiSpec{kpi}, req.Scope); err != nil {
+		return nil, err
+	}
+
+	op, err := legacyAgg(kpi, req.Op)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "reading rollups: %v", err)
+		return nil, err
+	}
+
+	rng, span, err := s.legacyRange(req.Span)
+	if err != nil {
+		return nil, err
+	}
+
+	rows, err := s.queryTotal(kpi, op, grainKeys(kpi, req.Scope, []string{req.By}), req.Scope, rng, time.Now().UTC())
+	if err != nil {
+		return nil, err
 	}
 
 	out := make([]*pb.BreakdownRow, 0, len(rows))
@@ -270,20 +400,17 @@ func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBr
 	var from, to string
 
 	for _, row := range rows {
-		scope := schema.ParseScope(row.Scope)
-
-		v, ok := scope[req.By]
-		if !ok {
+		if len(row.Points) == 0 {
 			continue
 		}
 
-		from = row.SpanStart.UTC().Format(time.RFC3339)
-		to = row.SpanEnd.UTC().Format(time.RFC3339)
+		pt := row.Points[0]
+		from, to = pt.From, pt.To
 
 		out = append(out, &pb.BreakdownRow{
-			ScopeValue: v,
-			Value:      row.Value,
-			Trend:      toTrend(row),
+			ScopeValue: row.Dims[req.By],
+			Value:      pt.Value,
+			Trend:      pt.Trend,
 		})
 	}
 
@@ -303,6 +430,31 @@ func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBr
 	}, nil
 }
 
+// queryRowToKpiValue flattens a single-point Query row into the legacy
+// KpiValue shape.
+func queryRowToKpiValue(row *pb.QueryRow, span, op string) *pb.KpiValue {
+	v := &pb.KpiValue{
+		Kpi:    row.Kpi,
+		Span:   span,
+		Op:     op,
+		Type:   row.Type,
+		Unit:   row.Unit,
+		Symbol: row.Symbol,
+		Scope:  row.Dims,
+	}
+
+	if len(row.Points) > 0 {
+		pt := row.Points[0]
+		v.Value = pt.Value
+		v.From = pt.From
+		v.To = pt.To
+		v.IsPartial = pt.IsPartial
+		v.Trend = pt.Trend
+	}
+
+	return v
+}
+
 // knownKpis filters requested keys down to the ones this deployment actually
 // has a spec for. An unknown key is SKIPPED, not fatal: a caller asks for one
 // list of keys to fill a whole tile row, so failing the request over a KPI that
@@ -316,7 +468,7 @@ func (s *AggregatorServer) knownKpis(keys []string) []schema.KpiSpec {
 	for _, key := range keys {
 		kpi, ok := s.byKey[key]
 		if !ok {
-			log.Warnf("skipping unknown kpi %q — no spec deployed in this configs/kpis (check the key, or whether it is still in temp_config)", key)
+			log.Warnf("skipping unknown kpi %q — no spec deployed in this configs/kpis (check the key)", key)
 
 			continue
 		}
@@ -325,51 +477,6 @@ func (s *AggregatorServer) knownKpis(keys []string) []schema.KpiSpec {
 	}
 
 	return out
-}
-
-// resolveKpiOp resolves a key to its spec plus the op to read it with, for the
-// single-key endpoints where an unknown key means the whole request cannot be
-// answered.
-func (s *AggregatorServer) resolveKpiOp(key, op string) (schema.KpiSpec, string, error) {
-	kpi, ok := s.byKey[key]
-	if !ok {
-		return schema.KpiSpec{}, "", status.Errorf(codes.NotFound, "unknown kpi %q", key)
-	}
-
-	resolved, err := s.resolveOp(kpi, op)
-	if err != nil {
-		return schema.KpiSpec{}, "", err
-	}
-
-	return kpi, resolved, nil
-}
-
-// resolveOp validates op against a known KPI's allowed rollup ops. An op the
-// spec does not allow stays a hard error: unlike an unknown key, it is a caller
-// mistake that silently returning nothing would hide.
-func (s *AggregatorServer) resolveOp(kpi schema.KpiSpec, op string) (string, error) {
-	allowed := map[string]bool{}
-	for _, o := range kpi.RollupOps {
-		allowed[strings.ToUpper(o)] = true
-	}
-
-	if op == "" {
-		// Default op: LAST when allowed (most intuitive "current value"),
-		// otherwise the spec's first op.
-		if allowed["LAST"] {
-			return "LAST", nil
-		}
-
-		return strings.ToUpper(kpi.RollupOps[0]), nil
-	}
-
-	op = strings.ToUpper(op)
-	if !allowed[op] {
-		return "", status.Errorf(codes.InvalidArgument,
-			"op %s not allowed for kpi %s (allowed: %s)", op, kpi.Kpi, strings.Join(kpi.RollupOps, ","))
-	}
-
-	return op, nil
 }
 
 func validateSpan(span string) (string, error) {
@@ -410,41 +517,4 @@ func parseRange(fromStr, toStr string) (time.Time, time.Time, error) {
 	}
 
 	return from, to, nil
-}
-
-func toKpiValue(row schema.KpiRollup) *pb.KpiValue {
-	return &pb.KpiValue{
-		Kpi:        row.KpiKey,
-		Value:      row.Value,
-		Span:       row.Span,
-		Op:         row.Op,
-		From:       row.SpanStart.UTC().Format(time.RFC3339),
-		To:         row.SpanEnd.UTC().Format(time.RFC3339),
-		Type:       row.ValueType,
-		Unit:       row.Unit,
-		Symbol:     row.Symbol,
-		IsPartial:  row.IsPartial,
-		Scope:      schema.ParseScope(row.Scope),
-		Trend:      toTrend(row),
-		ComputedAt: row.ComputedAt.UTC().Format(time.RFC3339),
-	}
-}
-
-func toTrend(row schema.KpiRollup) *pb.Trend {
-	t := &pb.Trend{Direction: row.Trend}
-
-	if row.PrevValue != nil {
-		t.HasPrevious = true
-		t.PrevValue = *row.PrevValue
-	}
-
-	if row.ChangeAbs != nil {
-		t.ChangeAbs = *row.ChangeAbs
-	}
-
-	if row.ChangePct != nil {
-		t.ChangePct = *row.ChangePct
-	}
-
-	return t
 }

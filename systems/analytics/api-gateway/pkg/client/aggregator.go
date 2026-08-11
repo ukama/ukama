@@ -46,6 +46,13 @@ func (a *Aggregator) Close() {
 	}
 }
 
+func (a *Aggregator) Query(req *pb.QueryRequest) (*pb.QueryResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
+	defer cancel()
+
+	return a.client.Query(ctx, req)
+}
+
 func (a *Aggregator) ListKpis() (*pb.ListKpisResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
@@ -53,29 +60,31 @@ func (a *Aggregator) ListKpis() (*pb.ListKpisResponse, error) {
 	return a.client.ListKpis(ctx, &pb.ListKpisRequest{})
 }
 
-func (a *Aggregator) GetKpis(keys []string, span, op string, scope map[string]string) (*pb.GetKpisResponse, error) {
+func (a *Aggregator) GetKpis(keys []string, span, op string, scope map[string]string, groupBy []string) (*pb.GetKpisResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
 	return a.client.GetKpis(ctx, &pb.GetKpisRequest{
-		Keys:  keys,
-		Span:  span,
-		Op:    op,
-		Scope: scope,
+		Keys:    keys,
+		Span:    span,
+		Op:      op,
+		Scope:   scope,
+		GroupBy: groupBy,
 	})
 }
 
-func (a *Aggregator) GetKpiTimeSeries(keys []string, span, op, from, to string, scope map[string]string) (*pb.GetKpiTimeSeriesResponse, error) {
+func (a *Aggregator) GetKpiTimeSeries(keys []string, span, op, from, to string, scope map[string]string, groupBy []string) (*pb.GetKpiTimeSeriesResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
 	return a.client.GetKpiTimeSeries(ctx, &pb.GetKpiTimeSeriesRequest{
-		Keys:  keys,
-		Span:  span,
-		Op:    op,
-		From:  from,
-		To:    to,
-		Scope: scope,
+		Keys:    keys,
+		Span:    span,
+		Op:      op,
+		From:    from,
+		To:      to,
+		Scope:   scope,
+		GroupBy: groupBy,
 	})
 }
 
@@ -98,15 +107,16 @@ func (a *Aggregator) GetPerformanceReport(report, span string, scope map[string]
 	})
 }
 
-func (a *Aggregator) GetKpiBreakdown(key, span, op, by string, top int32) (*pb.GetKpiBreakdownResponse, error) {
+func (a *Aggregator) GetKpiBreakdown(key, span, op, by string, top int32, scope map[string]string) (*pb.GetKpiBreakdownResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
 	return a.client.GetKpiBreakdown(ctx, &pb.GetKpiBreakdownRequest{
-		Key:  key,
-		Span: span,
-		Op:   op,
-		By:   by,
-		Top:  top,
+		Key:   key,
+		Span:  span,
+		Op:    op,
+		By:    by,
+		Top:   top,
+		Scope: scope,
 	})
 }
