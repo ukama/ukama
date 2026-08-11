@@ -287,7 +287,7 @@ func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) 
 		}
 
 		for _, row := range rows {
-			values = append(values, queryRowToKpiValue(row, span, op))
+			values = append(values, queryRowToKpiValue(row, span, op, now))
 		}
 	}
 
@@ -430,15 +430,16 @@ func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBr
 
 // queryRowToKpiValue flattens a single-point Query row into the legacy
 // KpiValue shape.
-func queryRowToKpiValue(row *pb.QueryRow, span, op string) *pb.KpiValue {
+func queryRowToKpiValue(row *pb.QueryRow, span, op string, now time.Time) *pb.KpiValue {
 	v := &pb.KpiValue{
-		Kpi:    row.Kpi,
-		Span:   span,
-		Op:     op,
-		Type:   row.Type,
-		Unit:   row.Unit,
-		Symbol: row.Symbol,
-		Scope:  row.Dims,
+		Kpi:        row.Kpi,
+		Span:       span,
+		Op:         op,
+		Type:       row.Type,
+		Unit:       row.Unit,
+		Symbol:     row.Symbol,
+		Scope:      row.Dims,
+		ComputedAt: now.UTC().Format(time.RFC3339),
 	}
 
 	if len(row.Points) > 0 {
