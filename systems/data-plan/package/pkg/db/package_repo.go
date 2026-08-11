@@ -24,7 +24,7 @@ type PackageRepo interface {
 	GetByName(name string) (*Package, error)
 	Delete(uuid uuid.UUID) error
 	GetAll() ([]Package, error)
-	Update(uuid uuid.UUID, pkg *Package) error
+	Update(uuid uuid.UUID, updates map[string]interface{}) error
 }
 
 type packageRepo struct {
@@ -127,13 +127,20 @@ func (r *packageRepo) Delete(uuid uuid.UUID) error {
 	})
 }
 
-func (b *packageRepo) Update(uuid uuid.UUID, pkg *Package) error {
+// Update applies the supplied columns. A map is used rather than a struct because
+// gorm skips zero-value struct fields, which silently dropped active=false and made
+// it impossible to deactivate a package.
+func (b *packageRepo) Update(uuid uuid.UUID, updates map[string]interface{}) error {
+	if len(updates) == 0 {
+		return nil
+	}
+
 	tx := b.Db.GetGormDb().Begin()
 	if tx.Error != nil {
 		return tx.Error
 	}
 
-	result := tx.Clauses(clause.Returning{}).Where("uuid = ?", uuid).Updates(pkg)
+	result := tx.Clauses(clause.Returning{}).Model(&Package{}).Where("uuid = ?", uuid).Updates(updates)
 	if result.Error != nil {
 		tx.Rollback()
 		return result.Error
