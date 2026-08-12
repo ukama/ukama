@@ -17,6 +17,7 @@ extern "C" {
 #define SERVICE_BOOTSTRAP        "bootstrap"
 #define SERVICE_NODE             "node"
 #define SERVICE_STARTER          "starter"
+#define SERVICE_LIFECYCLE        "lifecycle"
 #define SERVICE_MESH             "mesh"
 #define SERVICE_DEVICE           "device"
 #define SERVICE_DEVICE_CLIENT    "device-client"
