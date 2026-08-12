@@ -162,6 +162,11 @@ static int manifest_add_app(json_t *apps, Config *config) {
     json_object_set_new(japp, "name", json_string(name));
     json_object_set_new(japp, "tag",  json_string(tag));
     json_object_set_new(japp, "cmd",  json_string(cmd));
+    if (config->capp->service) {
+        json_object_set_new(japp,
+                            "service",
+                            json_string(config->capp->service));
+    }
     if (config->capp->readiness) {
         json_object_set_new(japp,
                             "readiness",
@@ -229,7 +234,8 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
         "init-network",
         "noded",
         "bootstrap",
-        "meshd"
+        "meshd",
+        "lifecycled"
     };
 
     size_t i = 0;
@@ -264,7 +270,8 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
         if (streq(ptr->config->capp->name, "init-network") ||
             streq(ptr->config->capp->name, "noded")        ||
             streq(ptr->config->capp->name, "bootstrap")    ||
-            streq(ptr->config->capp->name, "meshd")) {
+            streq(ptr->config->capp->name, "meshd")        ||
+            streq(ptr->config->capp->name, "lifecycled")) {
             continue;
         }
 

@@ -16,6 +16,7 @@
     
 [app-exec]
 	name="femd"
+	service="fem"
 	version="latest"
 	bin="fem.d"
 	path="/sbin"

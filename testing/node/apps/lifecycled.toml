@@ -3,21 +3,20 @@
 	version="latest"
 
 [build-compile]
-	version="latest"
+	version="0.1"
 	static="false"
-	source="/nodes/apps/pcrf"
+	source="/nodes/ukamaOS/distro/system/lifecycled"
 	cmd="make"
-	bin_from="/nodes/apps/pcrf/bin/pcrf"
+	bin_from="/nodes/ukamaOS/distro/system/lifecycled/lifecycle.d"
 	bin_to="/sbin"
 
 [app-exec]
-	name="pcrf"
-	service="pcrf"
+	name="lifecycled"
+	service="lifecycle"
 	version="latest"
-	bin="pcrf"
+	bin="lifecycle.d"
 	path="/sbin"
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	readiness=true
-        group="service"
+	group="on-boot"

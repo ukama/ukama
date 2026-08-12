@@ -12,6 +12,7 @@
 
 [app-exec]
 	name="switch"
+	service="switch"
 	version="latest"
 	bin="switch.d"
 	path="/sbin"

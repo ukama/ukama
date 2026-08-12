@@ -16,6 +16,7 @@
 
 [app-exec]
 	name="init-network"
+	service="init-network"
 	version="latest"
 	bin="init-network"
 	path="/sbin"
