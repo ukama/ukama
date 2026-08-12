@@ -31,12 +31,15 @@ STARTER_HOST="127.0.0.1"
 STARTER_PORT="18001"
 WIMC_HOST="127.0.0.1"
 WIMC_PORT="18006"
+LIFECYCLE_HOST="127.0.0.1"
+LIFECYCLE_PORT="18097"
 APP_PORT="18110"
 MANIFEST="$TMP/manifest.json"
 READY_FILE="$TMP/starter.ready"
 STATUS_URL="http://${STARTER_HOST}:${STARTER_PORT}/v1/status"
 APP_URL="http://127.0.0.1:${APP_PORT}"
 WIMC_LOG="$LOG_DIR/mock_wimc.log"
+LIFECYCLE_LOG="$LOG_DIR/mock_lifecycle.log"
 STARTER_LOG="$LOG_DIR/starterd.log"
 
 show_debug() {
@@ -54,6 +57,9 @@ show_debug() {
 
     echo "===== mock_wimc.log =====" >&2
     [[ -f "$WIMC_LOG" ]] && tail -n 200 "$WIMC_LOG" >&2 || true
+
+    echo "===== mock_lifecycle.log =====" >&2
+    [[ -f "$LIFECYCLE_LOG" ]] && tail -n 200 "$LIFECYCLE_LOG" >&2 || true
 }
 
 cleanup() {
@@ -66,8 +72,10 @@ cleanup() {
     set +e
     [[ -n "${STARTER_PID:-}" ]] && kill "$STARTER_PID" >/dev/null 2>&1 || true
     [[ -n "${WIMC_PID:-}" ]] && kill "$WIMC_PID" >/dev/null 2>&1 || true
+    [[ -n "${LIFECYCLE_PID:-}" ]] && kill "$LIFECYCLE_PID" >/dev/null 2>&1 || true
     wait "${STARTER_PID:-}" >/dev/null 2>&1 || true
     wait "${WIMC_PID:-}" >/dev/null 2>&1 || true
+    wait "${LIFECYCLE_PID:-}" >/dev/null 2>&1 || true
     rm -rf "$TMP"
 
     exit "$rc"
@@ -162,7 +170,7 @@ cat > "$MANIFEST" <<JSON
 {
   "spaces": [
     {
-      "name": "boot",
+      "name": "services",
       "apps": [
         {
           "name": "example_app",
@@ -188,6 +196,14 @@ WIMC_PID=$!
 wait_for_http_ok "http://${WIMC_HOST}:${WIMC_PORT}/does-not-exist" 1 >/dev/null 2>&1 || true
 sleep 0.2
 
+python3 "$SCRIPT_DIR/mock_lifecycle.py" \
+    --host "$LIFECYCLE_HOST" \
+    --port "$LIFECYCLE_PORT" \
+    --gate-delay 5 \
+    >"$LIFECYCLE_LOG" 2>&1 &
+LIFECYCLE_PID=$!
+wait_for_http_ok "http://${LIFECYCLE_HOST}:${LIFECYCLE_PORT}/v1/ping" 10
+
 export STARTERD_MANIFEST="$MANIFEST"
 export STARTERD_LOG_PATH="$STARTER_LOG"
 export STARTERD_READY_FILE="$READY_FILE"
@@ -199,6 +215,8 @@ export STARTERD_HTTP_PORT="$STARTER_PORT"
 export STARTERD_WIMC_HOST="$WIMC_HOST"
 export STARTERD_WIMC_PORT="$WIMC_PORT"
 export STARTERD_WIMC_PATH_TEMPLATE="/v1/apps/%s/%s/pkg"
+export STARTERD_LIFECYCLE_HOST="$LIFECYCLE_HOST"
+export STARTERD_LIFECYCLE_PORT="$LIFECYCLE_PORT"
 export STARTERD_COMMIT_TIMEOUT_SEC=10
 export STARTERD_PING_TIMEOUT_SEC=2
 export STARTERD_TERM_GRACE_SEC=3
@@ -212,16 +230,26 @@ STARTER_PID=$!
 
 wait_for_http_ok "http://${STARTER_HOST}:${STARTER_PORT}/v1/ping" 20
 wait_for_file "$READY_FILE" 20
+wait_for_json_condition \
+    "http://${LIFECYCLE_HOST}:${LIFECYCLE_PORT}/test/status" \
+    "data.get('checkins') == 1 and data.get('bootResult') == 'ready'" \
+    20
+
+if curl -fsS "$APP_URL/v1/ping" >/dev/null 2>&1; then
+    echo "service application started before lifecycle gate opened" >&2
+    exit 1
+fi
+
 wait_for_example_version v1
 
-echo "[ok] example_app booted with v1"
+echo "[ok] lifecycle gate held services, then example_app booted with v1"
 
 curl -fsS \
     -X POST \
     "http://${STARTER_HOST}:${STARTER_PORT}/v1/update" \
     -H 'Content-Type: application/json' \
     -d '{
-        "space":"boot",
+        "space":"services",
         "name":"example_app",
         "tag":"v2"
     }' \
@@ -229,6 +257,42 @@ curl -fsS \
 
 wait_for_example_version v2
 echo "[ok] example_app updated to v2 and is reachable"
+
+OLD_PID="$(curl -fsS "$STATUS_URL" | python3 -c '
+import json, sys
+data = json.load(sys.stdin)
+for space in data.get("spaces", []):
+    if space.get("name") != "services":
+        continue
+    for app in space.get("apps", []):
+        if app.get("name") == "example_app":
+            print(app.get("pid", 0))
+            raise SystemExit(0)
+raise SystemExit(1)
+')"
+
+curl -fsS \
+    -X POST \
+    "http://${STARTER_HOST}:${STARTER_PORT}/v1/restart" \
+    -H 'Content-Type: application/json' \
+    -d '{"space":"services","name":"example_app"}' \
+    >/dev/null
+
+wait_for_json_condition \
+    "$STATUS_URL" \
+    "any(
+        space.get('name') == 'services' and
+        any(
+            app.get('name') == 'example_app' and
+            app.get('state') == 'running' and
+            app.get('pid', 0) != ${OLD_PID}
+            for app in space.get('apps', [])
+        )
+        for space in data.get('spaces', [])
+    )" \
+    20
+wait_for_http_ok "$APP_URL/v1/ping" 20
+echo "[ok] example_app restart completed"
 
 sleep 5
 curl -X GET \

@@ -41,6 +41,10 @@ struct Supervisor {
 
     bool running;
     bool bootDone;
+    bool bootHealthy;
+    bool lifecycleCheckedIn;
+    bool applicationsStarted;
+    LifecycleGateState lifecycleGate;
 };
 
 static void action_free(Action *a) {
@@ -175,6 +179,25 @@ static bool app_stop(Config *config, App *app, AppReason reason) {
     }
 
     return ok;
+}
+
+static bool app_restart(Config *config, App *app) {
+
+    if (!config || !app) return false;
+
+    if (!app_stop(config, app, APP_REASON_RESTART)) {
+        app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_RESTART_FAILED;
+        return false;
+    }
+
+    if (!app_start(config, app)) {
+        app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_RESTART_FAILED;
+        return false;
+    }
+
+    return true;
 }
 
 static bool app_is_self(const App *app) {
@@ -606,6 +629,74 @@ static bool update_app(Supervisor *s,
     return ok;
 }
 
+static void run_all_spaces(Supervisor *s) {
+
+    Space *space;
+
+    if (!s || s->applicationsStarted) return;
+
+    space = s->spaceList;
+    while (space) {
+        if (strcmp(space->name, s->config->bootSpace) != 0) {
+            run_space(s->config, s->spaceList, space->name, false);
+        }
+        space = space->next;
+    }
+
+    s->applicationsStarted = true;
+    if (s->ctx) s->ctx->bootCompleted = 1;
+    usys_log_info("lifecycle: startup gate released");
+}
+
+static const char *lifecycle_gate_str(LifecycleGateState state) {
+
+    switch (state) {
+    case LIFECYCLE_GATE_WAITING: return "waiting";
+    case LIFECYCLE_GATE_OPEN:    return "open";
+    case LIFECYCLE_GATE_FAULTY:  return "faulty";
+    default:                     return "unavailable";
+    }
+}
+
+static void drive_lifecycle_gate(Supervisor *s) {
+
+    LifecycleGateState state;
+
+    if (!s || !s->bootDone || s->applicationsStarted) return;
+    if (s->ctx && s->ctx->switchRequested) return;
+
+    if (!s->lifecycleCheckedIn) {
+        if (!wc_lifecycle_check_in(s->config, s->bootHealthy)) {
+            if (s->lifecycleGate != LIFECYCLE_GATE_UNAVAILABLE) {
+                s->lifecycleGate = LIFECYCLE_GATE_UNAVAILABLE;
+                usys_log_warn("lifecycle: check-in unavailable");
+            }
+            return;
+        }
+
+        s->lifecycleCheckedIn = true;
+        usys_log_info("lifecycle: check-in accepted boot=%s",
+                      s->bootHealthy ? "ready" : "degraded");
+    }
+
+    if (s->ctx && s->ctx->updateInProgress) return;
+
+    state = wc_lifecycle_gate(s->config);
+    if (state != s->lifecycleGate) {
+        s->lifecycleGate = state;
+        if (state == LIFECYCLE_GATE_FAULTY) {
+            usys_log_error("lifecycle: startup gate faulty");
+        } else {
+            usys_log_info("lifecycle: startup gate %s",
+                          lifecycle_gate_str(state));
+        }
+    }
+
+    if (state == LIFECYCLE_GATE_OPEN) {
+        run_all_spaces(s);
+    }
+}
+
 static void* supervisor_thread(void *arg) {
 
     Supervisor *s;
@@ -622,6 +713,11 @@ static void* supervisor_thread(void *arg) {
         a = actions_dequeue(s->queue);
         if (!a) {
             struct timespec ts;
+
+            pthread_mutex_unlock(&s->mu);
+            drive_lifecycle_gate(s);
+            pthread_mutex_lock(&s->mu);
+
             clock_gettime(CLOCK_REALTIME, &ts);
             ts.tv_sec += 1;
             pthread_cond_timedwait(&s->cv, &s->mu, &ts);
@@ -631,10 +727,11 @@ static void* supervisor_thread(void *arg) {
         pthread_mutex_unlock(&s->mu);
 
         if (a->type == ACTION_RUN_BOOT) {
-            if (!run_space(s->config,
-                           s->spaceList,
-                           s->config->bootSpace,
-                           true)) {
+            s->bootHealthy = run_space(s->config,
+                                       s->spaceList,
+                                       s->config->bootSpace,
+                                       true);
+            if (!s->bootHealthy) {
                 usys_log_warn("boot: degraded");
             } else {
                 usys_log_info("boot: ready");
@@ -649,18 +746,7 @@ static void* supervisor_thread(void *arg) {
             state_store_save(s->config, s->spaceList);
 
         } else if (a->type == ACTION_RUN_ALL) {
-            Space *sp;
-
-            sp = s->spaceList;
-            while (sp) {
-                if (strcmp(sp->name, s->config->bootSpace) != 0) {
-                    run_space(s->config, s->spaceList, sp->name, false);
-                }
-                sp = sp->next;
-            }
-            if (s->ctx) {
-                s->ctx->bootCompleted = 1;
-            }
+            run_all_spaces(s);
         } else if (a->type == ACTION_TERMINATE_APP) {
             App *app;
 
@@ -673,6 +759,21 @@ static void* supervisor_thread(void *arg) {
             if (s->ctx) {
                 s->ctx->terminateRequested = 0;
             }
+        } else if (a->type == ACTION_RESTART_APP) {
+            App *app;
+
+            app = app_find(s->spaceList, a->space, a->name);
+            if (!app || !app_restart(s->config, app)) {
+                usys_log_error("restart: failed %s/%s",
+                               a->space ? a->space : "(null)",
+                               a->name ? a->name : "(null)");
+            } else {
+                usys_log_info("restart: completed %s/%s",
+                              a->space,
+                              a->name);
+            }
+            state_store_save(s->config, s->spaceList);
+            if (s->ctx) s->ctx->restartRequested = 0;
         } else if (a->type == ACTION_UPDATE_APP) {
             if (!update_app(s, a->space, a->name, a->tag, a->hub)) {
                 usys_log_error("update: failed %s/%s -> %s",
@@ -720,6 +821,10 @@ Supervisor* supervisor_start(Config *config,
 
     s->running = true;
     s->bootDone = false;
+    s->bootHealthy = false;
+    s->lifecycleCheckedIn = false;
+    s->applicationsStarted = false;
+    s->lifecycleGate = LIFECYCLE_GATE_UNAVAILABLE;
 
     if (pthread_create(&s->thread, NULL, supervisor_thread, s) != 0) {
         pthread_mutex_destroy(&s->mu);

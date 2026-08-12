@@ -31,10 +31,6 @@ struct ReadinessMonitor {
     bool enabled;
 
     NodeReadinessState state;
-    NodeReadinessState reportedState;
-    NodeReadinessState pendingEvent;
-    bool haveReportedState;
-    bool eventPending;
     time_t readinessDeadline;
     char reason[STARTERD_READY_REASON_LEN];
 
@@ -138,6 +134,11 @@ static void app_update(ReadinessMonitor *monitor,
                         now);
     }
 
+    snprintf(app->readinessRequestId,
+             sizeof(app->readinessRequestId),
+             "%s",
+             responded ? result->requestId : "");
+
     pthread_mutex_unlock(&monitor->mutex);
 }
 
@@ -223,19 +224,6 @@ static void aggregate(ReadinessMonitor *monitor) {
 
     monitor->state = state;
     copy_reason(monitor->reason, sizeof(monitor->reason), reason);
-
-    if (monitor->enabled && state != NODE_READINESS_PENDING &&
-        (!monitor->haveReportedState ||
-         monitor->reportedState != state)) {
-        monitor->pendingEvent = state;
-        monitor->eventPending = true;
-    } else if (state == NODE_READINESS_PENDING) {
-        monitor->eventPending = false;
-    } else if (state != NODE_READINESS_PENDING &&
-               monitor->haveReportedState &&
-               monitor->reportedState == state) {
-        monitor->eventPending = false;
-    }
     pthread_mutex_unlock(&monitor->mutex);
 }
 
@@ -311,36 +299,6 @@ static void poll_mesh(ReadinessMonitor *monitor) {
     pthread_mutex_unlock(&monitor->mutex);
 }
 
-static void send_pending_event(ReadinessMonitor *monitor) {
-
-    NodeReadinessState pending;
-    char reason[STARTERD_READY_REASON_LEN];
-    bool deliver;
-
-    pthread_mutex_lock(&monitor->mutex);
-    deliver = monitor->eventPending;
-    pending = monitor->pendingEvent;
-    copy_reason(reason, sizeof(reason), monitor->reason);
-    pthread_mutex_unlock(&monitor->mutex);
-
-    if (!deliver) return;
-
-    if (!wc_notify_node_state(monitor->config,
-                              pending == NODE_READINESS_READY,
-                              reason)) {
-        return;
-    }
-
-    pthread_mutex_lock(&monitor->mutex);
-    if (monitor->eventPending &&
-        monitor->pendingEvent == pending) {
-        monitor->reportedState = pending;
-        monitor->haveReportedState = true;
-        monitor->eventPending = false;
-    }
-    pthread_mutex_unlock(&monitor->mutex);
-}
-
 static bool wait_for_next_poll(ReadinessMonitor *monitor) {
 
     struct timespec deadline;
@@ -371,7 +329,6 @@ static void *readiness_thread(void *arg) {
         poll_apps(monitor);
         poll_mesh(monitor);
         aggregate(monitor);
-        send_pending_event(monitor);
     } while (wait_for_next_poll(monitor));
 
     return NULL;
@@ -394,8 +351,6 @@ ReadinessMonitor *readiness_start(Config *config,
     monitor->spaceList = spaceList;
     monitor->ctx = ctx;
     monitor->state = NODE_READINESS_PENDING;
-    monitor->reportedState = NODE_READINESS_PENDING;
-    monitor->pendingEvent = NODE_READINESS_PENDING;
     monitor->running = true;
     copy_reason(monitor->reason,
                 sizeof(monitor->reason),
@@ -515,16 +470,6 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
                         monitor->readinessDeadline > 0 ?
                         json_integer(monitor->readinessDeadline) :
                         json_null());
-    json_object_set_new(root,
-                        "lastReportedState",
-                        monitor->haveReportedState ?
-                        json_string(node_readiness_str(
-                            monitor->reportedState)) :
-                        json_null());
-    json_object_set_new(root,
-                        "eventPending",
-                        json_boolean(monitor->eventPending));
-
     space = monitor->spaceList;
     while (space) {
         app = space->appList;
@@ -551,6 +496,11 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
             json_object_set_new(entry,
                                 "reason",
                                 json_string(app->readinessReason));
+            json_object_set_new(entry,
+                                "requestId",
+                                app->readinessRequestId[0] ?
+                                json_string(app->readinessRequestId) :
+                                json_null());
             json_object_set_new(entry,
                                 "since",
                                 json_integer(app->readinessSince));

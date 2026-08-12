@@ -11,7 +11,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#define STARTERD_SERVICE_NAME          "starter"
+#include "usys_services.h"
+
+#define STARTERD_SERVICE_NAME          SERVICE_STARTER
 #define STARTERD_DEFAULT_MANIFEST_FILE "/ukama/manifest.json"
 #define STARTERD_DEFAULT_READY_FILE    "/ukama/init/starter/ready"
 #define STARTERD_DEFAULT_RLOG_SOCKET \
@@ -24,7 +26,9 @@
 #define STARTERD_DEFAULT_LOG_RECONNECT_MS 1000
 #define STARTERD_DEFAULT_READY_TIMEOUT_SEC 600
 #define STARTERD_DEFAULT_READY_POLL_SEC 5
+#define STARTERD_DEFAULT_LIFECYCLE_PORT 8097
 #define STARTERD_READY_REASON_LEN 192
+#define STARTERD_REQUEST_ID_LEN 96
 
 typedef enum {
     APP_STATE_STOPPED = 0,
