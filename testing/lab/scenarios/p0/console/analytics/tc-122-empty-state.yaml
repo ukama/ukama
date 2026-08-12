@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-empty-state
-description: Create a network with no subscribers, SIMs, packages, or traffic and verify its network-scoped usage KPI returns the defined zero rather than another network's data.
+description: Create a network with no subscribers, SIMs, packages, or traffic and verify its network-scoped usage KPI reports no data rather than another network's data.
 seed: 4722
 suite: p0
 priority: p0
@@ -24,11 +24,13 @@ runtime:
 phases:
   - name: verify_empty_network
     checks:
-      - type: kpi_value
-        key: USAGE_BY_NETWORK
+      # DATA_USAGE is per Prometheus series: a network with no SIMs has no
+      # series, so the read returns NO ROW — not a row valued 0. Any row here
+      # would mean another network's usage leaked through the filter.
+      - type: kpi_state_equals
+        key: DATA_USAGE
         span: daily
-        op: SUM
         scope_key: network_id
         networks: net-001
-        expected_value: 0
+        value_state: no_data
         timeout_seconds: 600

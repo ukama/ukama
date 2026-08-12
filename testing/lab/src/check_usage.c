@@ -231,7 +231,9 @@ static int check_usage_aggregate(check_ctx_t *ctx,
                                           network->ref);
         ulab_copy(scope_value, sizeof(scope_value), network->bff_id);
         scope_key = "network_id";
-        if (key[0] == '\0') key = "USAGE_BY_NETWORK";
+        /* DATA_USAGE is the single generic usage KPI; "by network" is the
+         * network_id filter folding its per-iccid scope, not a separate key. */
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else {
         snprintf(err->msg, sizeof(err->msg),
                  "unsupported usage aggregate target %.64s", check->target);
@@ -253,9 +255,13 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         double expected;
         double tolerance;
 
+        /* op is passed through only when the scenario pins one. Left empty the
+         * gateway derives the aggregation from the KPI's kind (flow -> SUM),
+         * which is the contract the scenarios should be exercising; hardcoding
+         * SUM here would hide a wrong kind in the spec. */
         if (bff_get_kpi_value(ctx->bff, key,
                               check->span[0] ? check->span : "daily",
-                              check->op[0] ? check->op : "SUM",
+                              check->op[0] ? check->op : NULL,
                               network->bff_id, scope_key, scope_value,
                               &value, &found, err)) {
             return ULAB_ERR;

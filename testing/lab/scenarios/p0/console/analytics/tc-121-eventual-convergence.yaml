@@ -47,10 +47,12 @@ phases:
         networks: net-001
         timeout_seconds: 600
         poll_seconds: 5
+      # No op: kind=flow resolves to SUM server-side. require_scope + the
+      # network_id scope_key assert the filter FOLDED the per-iccid scope to a
+      # single network row rather than returning one row per SIM.
       - type: kpi_contract
-        key: USAGE_BY_NETWORK
+        key: DATA_USAGE
         span: daily
-        op: SUM
         scope_key: network_id
         networks: net-001
         require_computed_at: true

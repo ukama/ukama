@@ -55,7 +55,7 @@ phases:
         value_state: zero
         timeout_seconds: 600
       - type: kpi_state_equals
-        key: USAGE_BY_NETWORK
+        key: DATA_USAGE
         networks: net-001
         span: daily
         value_state: no_data
