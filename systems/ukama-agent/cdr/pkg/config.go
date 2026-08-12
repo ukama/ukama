@@ -18,7 +18,7 @@ import (
 
 const (
 	DataUsage = "data_usage"
-	CountType = "counter"
+	GaugeType = "gauge"
 )
 
 type Config struct {
@@ -67,7 +67,7 @@ func NewConfig(name string) *Config {
 var UsageMetrics = []pmetric.MetricConfig{
 	{
 		Name:   DataUsage,
-		Type:   CountType,
+		Type:   GaugeType,
 		Labels: map[string]string{"package": "", "dataplan": "", "network": "", "site": "", "iccid": "", "session": ""},
 		Value:  0,
 	},
