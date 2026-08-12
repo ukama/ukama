@@ -257,7 +257,10 @@ func (s *AggregatorServer) legacyRange(span string) (queryRange, string, error) 
 }
 
 func (s *AggregatorServer) GetKpis(ctx context.Context, req *pb.GetKpisRequest) (*pb.GetKpisResponse, error) {
-	kpis := s.knownKpis(req.Keys)
+	kpis, err := s.knownKpis(req.Keys)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := validateScopeKeys(kpis, req.Scope); err != nil {
 		return nil, err
@@ -305,7 +308,10 @@ func (s *AggregatorServer) GetKpiTimeSeries(ctx context.Context, req *pb.GetKpiT
 		return nil, err
 	}
 
-	kpis := s.knownKpis(req.Keys)
+	kpis, err := s.knownKpis(req.Keys)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := validateScopeKeys(kpis, req.Scope); err != nil {
 		return nil, err
@@ -361,9 +367,10 @@ func (s *AggregatorServer) GetKpiTimeSeries(ctx context.Context, req *pb.GetKpiT
 }
 
 func (s *AggregatorServer) GetKpiBreakdown(ctx context.Context, req *pb.GetKpiBreakdownRequest) (*pb.GetKpiBreakdownResponse, error) {
-	kpi, ok := s.byKey[req.Key]
+	kpi, ok := s.lookupKpi(req.Key)
 	if !ok {
-		return nil, status.Errorf(codes.NotFound, "unknown kpi %q", req.Key)
+		return nil, status.Errorf(codes.NotFound, "unknown kpi %q (deployed: %s)",
+			req.Key, strings.Join(s.kpiKeys(), ","))
 	}
 
 	if req.By == "" {
@@ -454,6 +461,19 @@ func queryRowToKpiValue(row *pb.QueryRow, span, op string, now time.Time) *pb.Kp
 	return v
 }
 
+// lookupKpi resolves a requested key to its spec. Keys are case-insensitive:
+// specs declare them upper-case (DATA_USAGE) while callers commonly send the
+// lower-case form.
+func (s *AggregatorServer) lookupKpi(key string) (schema.KpiSpec, bool) {
+	if kpi, ok := s.byKey[key]; ok {
+		return kpi, true
+	}
+
+	kpi, ok := s.byKey[strings.ToUpper(strings.TrimSpace(key))]
+
+	return kpi, ok
+}
+
 // knownKpis filters requested keys down to the ones this deployment actually
 // has a spec for. An unknown key is SKIPPED, not fatal: a caller asks for one
 // list of keys to fill a whole tile row, so failing the request over a KPI
@@ -461,11 +481,15 @@ func queryRowToKpiValue(row *pb.QueryRow, span, op string, now time.Time) *pb.Kp
 // it. Consumers already degrade a missing value to "—", which is the intended
 // contract. Single-key endpoints keep the NotFound — there, the unknown key is
 // the entire answer.
-func (s *AggregatorServer) knownKpis(keys []string) []schema.KpiSpec {
+//
+// If NO key resolves there is nothing to degrade to, and every later check
+// (scope validation above all) would report the empty spec set as if the
+// caller's filters were wrong — so that case is an explicit error.
+func (s *AggregatorServer) knownKpis(keys []string) ([]schema.KpiSpec, error) {
 	out := make([]schema.KpiSpec, 0, len(keys))
 
 	for _, key := range keys {
-		kpi, ok := s.byKey[key]
+		kpi, ok := s.lookupKpi(key)
 		if !ok {
 			log.Warnf("skipping unknown kpi %q — no spec deployed in this configs/kpis (check the key)", key)
 
@@ -475,7 +499,25 @@ func (s *AggregatorServer) knownKpis(keys []string) []schema.KpiSpec {
 		out = append(out, kpi)
 	}
 
-	return out
+	if len(out) == 0 {
+		return nil, status.Errorf(codes.NotFound,
+			"no known kpi among %q — deployed keys: %s",
+			strings.Join(keys, ","), strings.Join(s.kpiKeys(), ","))
+	}
+
+	return out, nil
+}
+
+// kpiKeys lists the deployed KPI keys, sorted, for error messages.
+func (s *AggregatorServer) kpiKeys() []string {
+	keys := make([]string, 0, len(s.byKey))
+	for k := range s.byKey {
+		keys = append(keys, k)
+	}
+
+	sort.Strings(keys)
+
+	return keys
 }
 
 func validateSpan(span string) (string, error) {

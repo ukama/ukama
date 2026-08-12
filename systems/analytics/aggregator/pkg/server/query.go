@@ -46,7 +46,10 @@ func (s *AggregatorServer) Query(ctx context.Context, req *pb.QueryRequest) (*pb
 		return nil, status.Error(codes.InvalidArgument, "at least one kpi is required")
 	}
 
-	kpis := s.knownKpis(req.Kpis)
+	kpis, err := s.knownKpis(req.Kpis)
+	if err != nil {
+		return nil, err
+	}
 
 	if err := validateScopeKeys(kpis, req.Filter); err != nil {
 		return nil, err

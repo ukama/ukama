@@ -248,3 +248,56 @@ func TestQuery_Validation(t *testing.T) {
 		assert.Error(t, err, "case %d should be rejected", i)
 	}
 }
+
+func TestQuery_KpiKeysAreCaseInsensitive(t *testing.T) {
+	srv := mustServer(t, "org", []schema.KpiSpec{flowUsageSpec()},
+		stubRollups{}, nil, schema.Grid{W: 5 * time.Minute}, stubWindows{})
+
+	// A lower-case key used to resolve to NO spec, and the empty spec set then
+	// made every scope filter look invalid — the caller was told their filter
+	// was wrong when the key was what did not match.
+	for _, key := range []string{"DATA_USAGE", "data_usage", "Data_Usage", " data_usage "} {
+		_, err := srv.Query(context.TODO(), &pb.QueryRequest{
+			Kpis:   []string{key},
+			Filter: map[string]string{"iccid": "8910303228701258322"},
+		})
+		assert.NoError(t, err, "key %q should resolve", key)
+	}
+}
+
+func TestQuery_EveryScopeDimensionIsAcceptedAsAFilter(t *testing.T) {
+	srv := mustServer(t, "org", []schema.KpiSpec{flowUsageSpec()},
+		stubRollups{}, nil, schema.Grid{W: 5 * time.Minute}, stubWindows{})
+
+	for _, dim := range flowUsageSpec().Scope {
+		_, err := srv.Query(context.TODO(), &pb.QueryRequest{
+			Kpis:   []string{"data_usage"},
+			Filter: map[string]string{dim: "x"},
+		})
+		assert.NoError(t, err, "filter %q is a DATA_USAGE scope dimension", dim)
+
+		_, err = srv.Query(context.TODO(), &pb.QueryRequest{
+			Kpis:    []string{"data_usage"},
+			GroupBy: []string{dim},
+		})
+		assert.NoError(t, err, "group_by %q is a DATA_USAGE scope dimension", dim)
+	}
+}
+
+func TestQuery_UnknownKpiIsNotBlamedOnTheFilter(t *testing.T) {
+	srv := mustServer(t, "org", []schema.KpiSpec{flowUsageSpec()},
+		stubRollups{}, nil, schema.Grid{W: 5 * time.Minute}, stubWindows{})
+
+	_, err := srv.Query(context.TODO(), &pb.QueryRequest{
+		Kpis:   []string{"NO_SUCH_KPI"},
+		Filter: map[string]string{"iccid": "x"},
+	})
+	assert.ErrorContains(t, err, "no known kpi")
+
+	// A known key alongside an unknown one still answers.
+	_, err = srv.Query(context.TODO(), &pb.QueryRequest{
+		Kpis:   []string{"NO_SUCH_KPI", "DATA_USAGE"},
+		Filter: map[string]string{"iccid": "x"},
+	})
+	assert.NoError(t, err)
+}
