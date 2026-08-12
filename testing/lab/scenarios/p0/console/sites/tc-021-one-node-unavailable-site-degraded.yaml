@@ -39,6 +39,7 @@ phases:
         total: 3
         online: 2
         offline: 1
+        immediate: true
         timeout_seconds: 120
   - name: recover_site
     events:
@@ -56,4 +57,5 @@ phases:
         total: 3
         online: 3
         offline: 0
+        immediate: true
         timeout_seconds: 180

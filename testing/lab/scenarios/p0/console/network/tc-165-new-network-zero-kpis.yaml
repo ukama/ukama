@@ -44,7 +44,6 @@ phases:
         value_state: zero
         timeout_seconds: 300
 
-      # No op: kind=flow derives SUM.
       - type: kpi_state_equals
         key: DATA_USAGE
         span: daily
