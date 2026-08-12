@@ -37,6 +37,7 @@ APP_PORT="18110"
 MANIFEST="$TMP/manifest.json"
 READY_FILE="$TMP/starter.ready"
 STATUS_URL="http://${STARTER_HOST}:${STARTER_PORT}/v1/status"
+READY_URL="http://${STARTER_HOST}:${STARTER_PORT}/v1/ready"
 APP_URL="http://127.0.0.1:${APP_PORT}"
 WIMC_LOG="$LOG_DIR/mock_wimc.log"
 LIFECYCLE_LOG="$LOG_DIR/mock_lifecycle.log"
@@ -110,6 +111,12 @@ class Handler(BaseHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(VERSION.encode())
             return
+        if self.path == "/v1/ready":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            self.wfile.write(json.dumps({"ready": True}).encode())
+            return
         if self.path == "/v1/status":
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
@@ -174,9 +181,11 @@ cat > "$MANIFEST" <<JSON
       "apps": [
         {
           "name": "example_app",
+          "service": "example_app",
           "tag": "v1",
           "cmd": "example_app.py",
           "port": ${APP_PORT},
+          "readiness": "yes",
           "env": {
             "APP_PORT": "${APP_PORT}"
           }
@@ -241,8 +250,23 @@ if curl -fsS "$APP_URL/v1/ping" >/dev/null 2>&1; then
 fi
 
 wait_for_example_version v1
+wait_for_json_condition \
+    "$READY_URL" \
+    "data.get('ready') is True" \
+    20
+wait_for_json_condition \
+    "$STATUS_URL" \
+    "any(
+        app.get('name') == 'example_app' and
+        app.get('service') == 'example_app' and
+        app.get('state') == 'ready'
+        for app in data.get('starterd', {})
+            .get('readiness', {})
+            .get('apps', [])
+    )" \
+    20
 
-echo "[ok] lifecycle gate held services, then example_app booted with v1"
+echo "[ok] lifecycle gate held services; example_app v1 became ready"
 
 curl -fsS \
     -X POST \

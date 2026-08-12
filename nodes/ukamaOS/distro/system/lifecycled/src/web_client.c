@@ -153,6 +153,7 @@ static bool parse_starter_status(const char *body,
     const char *state;
     const char *reason;
     const char *name;
+    const char *service;
     size_t index;
 
     if (!body || !snapshot) return false;
@@ -181,7 +182,9 @@ static bool parse_starter_status(const char *body,
     if (json_is_array(apps)) {
         json_array_foreach(apps, index, entry) {
             name = json_string_or_null(entry, "name");
-            if (name && strcmp(name, SERVICE_CONFIG) == 0) {
+            service = json_string_or_null(entry, "service");
+            if (!service) service = name;
+            if (service && strcmp(service, SERVICE_CONFIG) == 0) {
                 parse_config_entry(entry, snapshot);
                 break;
             }

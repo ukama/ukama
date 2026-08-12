@@ -18,6 +18,7 @@
 typedef struct App {
     char *space;
     char *name;
+    char *service;
     char *tag;
 
     char *cmd;

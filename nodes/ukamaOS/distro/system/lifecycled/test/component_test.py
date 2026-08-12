@@ -25,8 +25,9 @@ class HarnessState:
     def starter_status(self):
         with self.lock:
             entry = {
-                "space": "boot",
-                "name": "config.d",
+                "space": "services",
+                "name": "configd",
+                "service": "config",
                 "state": (
                     "pending"
                     if self.config_phase == "configuration_in_progress"
@@ -338,4 +339,3 @@ def run():
 
 if __name__ == "__main__":
     run()
-

@@ -18,6 +18,7 @@
 #include "web_client.h"
 
 #include "usys_log.h"
+#include "usys_services.h"
 
 struct ReadinessMonitor {
     Config *config;
@@ -63,11 +64,9 @@ static const char *node_readiness_str(NodeReadinessState state) {
 
 static bool app_is_mesh(const App *app) {
 
-    if (!app || !app->name) return false;
+    if (!app || !app->service) return false;
 
-    return strcmp(app->name, "meshd") == 0 ||
-           strcmp(app->name, "mesh") == 0 ||
-           strcmp(app->name, "mesh.d") == 0;
+    return strcmp(app->service, SERVICE_MESH) == 0;
 }
 
 static void copy_reason(char *dst, size_t size, const char *reason) {
@@ -486,6 +485,9 @@ json_t *readiness_status_json(ReadinessMonitor *monitor) {
             json_object_set_new(entry,
                                 "name",
                                 json_string(app->name));
+            json_object_set_new(entry,
+                                "service",
+                                json_string(app->service));
             json_object_set_new(entry,
                                 "state",
                                 json_string(app_readiness_str(
