@@ -248,14 +248,14 @@ bool notify_client_send_event(const Config *config,
              "http://%s:%d/v1/event/%s",
              config->notifyHost,
              config->notifyPort,
-             LIFECYCLED_SERVICE_NAME);
+             SERVICE_LIFECYCLE);
 
     json = json_object();
     if (!json) return false;
 
     json_object_set_new(json,
                         "service_name",
-                        json_string(LIFECYCLED_SERVICE_NAME));
+                        json_string(SERVICE_LIFECYCLE));
     json_object_set_new(json,
                         "severity",
                         json_string(event->state ==

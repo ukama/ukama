@@ -18,6 +18,7 @@
 #include "web_service.h"
 
 #include "usys_log.h"
+#include "usys_services.h"
 
 static volatile sig_atomic_t gTerminate = 0;
 
@@ -64,7 +65,7 @@ int main(int argc, char **argv) {
 
     result = 1;
     setup_signals();
-    usys_log_set_service(LIFECYCLED_SERVICE_NAME);
+    usys_log_set_service(SERVICE_LIFECYCLE);
     usys_log_set_level(log_level());
 
     if (!config_load(&config)) {

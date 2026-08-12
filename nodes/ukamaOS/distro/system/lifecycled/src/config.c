@@ -15,6 +15,7 @@
 #include "config.h"
 #include "lifecycled.h"
 
+#include "usys_file.h"
 #include "usys_log.h"
 #include "usys_services.h"
 
@@ -66,7 +67,7 @@ static int cfg_service_port(const char *envName,
     port = cfg_integer(envName, 0);
     if (port > 0) return port;
 
-    port = usys_find_service_port(service);
+    port = usys_find_service_port((char *)service);
     return port > 0 ? port : fallback;
 }
 
@@ -107,7 +108,7 @@ bool config_load(Config *config) {
 
     config->httpAddr = cfg_string("LIFECYCLED_HTTP_ADDR", "127.0.0.1");
     config->httpPort = cfg_service_port("LIFECYCLED_HTTP_PORT",
-                                        LIFECYCLED_SERVICE_NAME,
+                                        SERVICE_LIFECYCLE,
                                         DEFAULT_HTTP_PORT);
 
     config->starterHost =

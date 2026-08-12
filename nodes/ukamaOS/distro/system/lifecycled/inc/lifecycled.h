@@ -17,7 +17,6 @@
 #include "config.h"
 #include "fsm.h"
 
-#define LIFECYCLED_SERVICE_NAME "lifecycle"
 #define LIFECYCLED_REASON_LEN   192
 #define LIFECYCLED_ID_LEN       96
 #define LIFECYCLED_EVENT_QUEUE  32
@@ -73,4 +72,3 @@ LifecycleConfigureResult lifecycle_context_configure(
 void lifecycle_context_snapshot(LifecycleContext *ctx,
                                 LifecycleFsm *fsm,
                                 StarterSnapshot *starter);
-
