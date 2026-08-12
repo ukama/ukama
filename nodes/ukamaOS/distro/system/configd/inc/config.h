@@ -9,18 +9,30 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#define CONFIG_REQUEST_ID_LEN 96
+
+typedef enum {
+    CONFIG_APPLY_AWAITING = 0,
+    CONFIG_APPLY_IN_PROGRESS,
+    CONFIG_APPLY_APPLIED,
+    CONFIG_APPLY_FAILED
+} ConfigApplyState;
+
 /* Service configuration */
 typedef struct {
-	char  *serviceName;
-	int   servicePort;
-	char* nodedHost;
-	int   nodedPort;
-	char  *nodedEP;
-	char* starterHost;
-	int   starterPort;
-	char  *starterEP;
-	char  *nodeId;
-	void  *updateSession;
+    char *serviceName;
+    int servicePort;
+    char *nodedHost;
+    int nodedPort;
+    char *nodedEP;
+    char *starterHost;
+    int starterPort;
+    char *starterEP;
+    char *nodeId;
+    void *updateSession;
+
+    ConfigApplyState applyState;
+    char requestId[CONFIG_REQUEST_ID_LEN];
 } Config;
 
 #endif /* CONFIG_H_ */

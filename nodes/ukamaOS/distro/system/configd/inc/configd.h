@@ -9,6 +9,8 @@
 #ifndef INC_CONFIGD_H_
 #define INC_CONFIGD_H_
 
+#include <stddef.h>
+
 #include "jserdes.h"
 #include "session.h"
 
@@ -22,6 +24,14 @@
 #define MAX_PATH               512
 #define MAX_URL                512
 #define MAX_FILE_PATH          1024
+
+#define CONFIG_REASON_AWAITING    "awaiting_configuration"
+#define CONFIG_REASON_IN_PROGRESS "configuration_in_progress"
+#define CONFIG_REASON_APPLIED     "configuration_applied"
+#define CONFIG_REASON_FAILED      "configuration_failed"
+
+#define CONFIG_RESTART_TIMEOUT_SEC 30
+#define CONFIG_RESTART_POLL_MS    200
 
 #define DEF_LOG_LEVEL          "TRACE"
 #define DEF_SPACE_NAME         "services"
@@ -43,5 +53,10 @@
 
 bool process_received_config(JsonObj *json, Config *config);
 void free_session_data(SessionData *d);
+void config_session_clear(Config *config);
+void config_status_snapshot(Config *config,
+                            ConfigApplyState *state,
+                            char *requestId,
+                            size_t requestIdSize);
 
 #endif /* INC_CONFIGD_H_ */

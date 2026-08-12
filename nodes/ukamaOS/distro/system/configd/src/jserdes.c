@@ -64,6 +64,27 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
     return USYS_TRUE;
 }
 
+static bool get_optional_json_string(json_t *json,
+                                     const char *key,
+                                     char **value) {
+
+    json_t *entry;
+    const char *text;
+
+    if (!json || !key || !value) return USYS_FALSE;
+
+    *value = NULL;
+    entry = json_object_get(json, key);
+    if (!entry || json_is_null(entry)) return USYS_TRUE;
+    if (!json_is_string(entry)) return USYS_FALSE;
+
+    text = json_string_value(entry);
+    if (!text || !*text) return USYS_TRUE;
+
+    *value = strdup(text);
+    return *value ? USYS_TRUE : USYS_FALSE;
+}
+
 /*
  * deserialize_node_info --
  *
@@ -151,6 +172,8 @@ bool json_deserialize_session_data(JsonObj *json, SessionData **sd) {
                           &(*sd)->version, NULL, NULL);
     ret &= get_json_entry(json, JTAG_FILE_COUNT, JSON_INTEGER,
                           NULL, &(*sd)->fileCount, NULL);
+    ret &= get_optional_json_string(json, JTAG_REQUEST_ID,
+                                    &(*sd)->requestId);
 
     if (ret == USYS_FALSE) {
         usys_log_error("Error deserializing the config JSON");
@@ -161,5 +184,4 @@ bool json_deserialize_session_data(JsonObj *json, SessionData **sd) {
 
     return USYS_TRUE;
 }
-
 

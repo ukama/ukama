@@ -136,6 +136,7 @@ typedef  json_error_t   JsonErrObj;
 #define JTAG_TIME_STAMP            "timestamp"
 #define JTAG_REASON                "reason"
 #define JTAG_FILE_COUNT            "file_count"
+#define JTAG_REQUEST_ID            "requestId"
 
 typedef enum {
     TYPE_NULL = 0,
