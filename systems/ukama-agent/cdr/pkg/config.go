@@ -68,7 +68,7 @@ var UsageMetrics = []pmetric.MetricConfig{
 	{
 		Name:   DataUsage,
 		Type:   CountType,
-		Labels: map[string]string{"package": "", "dataplan": "", "network": "", "site": ""},
+		Labels: map[string]string{"package": "", "dataplan": "", "network": "", "site": "", "iccid": "", "session": ""},
 		Value:  0,
 	},
 }

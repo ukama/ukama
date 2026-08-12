@@ -1183,8 +1183,8 @@ func TestPackageServer_Update(t *testing.T) {
 			Name: "Daily-pack-updated",
 		}
 		packageRepo.On("GetByName", "Daily-pack-updated").Return(nil, gorm.ErrRecordNotFound).Once()
-		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
-			return p.Active == true && p.Name == "Daily-pack-updated"
+		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(u map[string]interface{}) bool {
+			return u["active"] == true && u["name"] == "Daily-pack-updated"
 		})).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -1274,8 +1274,8 @@ func TestPackageServer_Update(t *testing.T) {
 		packageUUID := uuid.NewV4()
 
 		packageRepo.On("GetByName", "NameOnly").Return(nil, gorm.ErrRecordNotFound).Once()
-		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
-			return p.Name == "NameOnly" && p.Active == false
+		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(u map[string]interface{}) bool {
+			return u["name"] == "NameOnly" && u["active"] == false
 		})).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -1300,8 +1300,8 @@ func TestPackageServer_Update(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageUUID := uuid.NewV4()
 
-		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
-			return p.Active == false
+		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(u map[string]interface{}) bool {
+			return u["active"] == false
 		})).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
@@ -1373,8 +1373,10 @@ func TestPackageServer_Update(t *testing.T) {
 		s := NewPackageServer(OrgName, packageRepo, nil, nil, OrgId)
 		packageUUID := uuid.NewV4()
 
-		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(p *db.Package) bool {
-			return p.Name == "" && p.Active == true
+		packageRepo.On("Update", packageUUID, mock.MatchedBy(func(u map[string]interface{}) bool {
+			_, hasName := u["name"]
+
+			return !hasName && u["active"] == true
 		})).Return(nil).Once()
 
 		packageRepo.On("Get", packageUUID).Return(&db.Package{
