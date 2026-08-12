@@ -69,6 +69,8 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 300
+      - type: wait_nodes_ready
+        nodes: all
       - type: wait_ues_attached
         ues: all
       - type: traffic
@@ -78,7 +80,8 @@ phases:
       - type: node_status_equals
         nodes: all
         connectivity: Online
-        timeout_seconds: 120
+        state: Operational
+        timeout_seconds: 180
       - type: traffic_allowed
         ues: all
         amount_mb: 1

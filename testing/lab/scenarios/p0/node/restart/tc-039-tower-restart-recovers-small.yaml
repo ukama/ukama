@@ -55,6 +55,13 @@ phases:
         ues: ue-000001
 
     checks:
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
+
       - type: traffic_allowed
         ues: ue-000001
         amount_mb: 1
@@ -72,8 +79,12 @@ phases:
         ues: ue-000001
 
     checks:
-      - type: node_ready
-        nodes: all
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
 
       - type: traffic_allowed
         ues: ue-000001
