@@ -90,15 +90,19 @@ func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 				parts := make([]string, 0, len(entityFields))
 
 				for _, ef := range entityFields {
-					v, ok := fields[ef]
-					if !ok || v == nil || fmt.Sprintf("%v", v) == "" {
+					value := ""
+					if v, ok := fields[ef.Name]; ok && v != nil {
+						value = fmt.Sprintf("%v", v)
+					}
+
+					if value == "" && !ef.Optional {
 						// A snapshot row without its entity key would collapse
 						// the change-log — fail loudly instead of storing junk.
 						return 0, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
-							pull.Key, win.ID, ef)
+							pull.Key, win.ID, ef.Name)
 					}
 
-					parts = append(parts, fmt.Sprintf("%v", v))
+					parts = append(parts, value)
 				}
 
 				entity = strings.Join(parts, "|")

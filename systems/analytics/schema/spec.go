@@ -53,7 +53,9 @@ type PullSpec struct {
 	// Entity is the mapped field used as the entity key (snapshots). A
 	// comma-separated list builds a composite key (field values joined with
 	// "|") for sources where no single field identifies the entity — e.g. one
-	// Prometheus series per iccid×package×site.
+	// Prometheus series per iccid×package×site. A component suffixed with
+	// "?" is optional: it contributes an empty component when absent rather
+	// than failing the pull.
 	Entity    string            `yaml:"entity"`
 	ForEach   *ForEachSpec      `yaml:"for_each"`
 	Map       map[string]string `yaml:"map"` // field -> $.path into each item
@@ -126,6 +128,9 @@ type KpiSpec struct {
 	Output            OutputSpec           `yaml:"output"`
 	PositiveDirection string               `yaml:"positive_direction"` // up|down (console polarity)
 	Lookback          string               `yaml:"lookback"`           // optional, e.g. "30d"
+	// Params are optional algo-specific tuning knobs, validated by the algo
+	// that consumes them.
+	Params map[string]string `yaml:"params"`
 }
 
 // DefaultReadOp is the aggregation the query planner computes for this KPI
@@ -233,14 +238,14 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 				return fmt.Errorf("dataset %s: full_snapshot requires an entity field", p.Key)
 			}
 			for _, ef := range p.EntityFields() {
-				if _, mapped := p.Map[ef]; mapped {
+				if _, mapped := p.Map[ef.Name]; mapped {
 					continue
 				}
 
 				bound := false
 				if p.ForEach != nil {
 					for _, b := range p.ForEach.Bind {
-						if b == ef {
+						if b == ef.Name {
 							bound = true
 
 							break
@@ -249,7 +254,7 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 				}
 
 				if !bound {
-					return fmt.Errorf("dataset %s: entity field %q is neither mapped nor bound", p.Key, ef)
+					return fmt.Errorf("dataset %s: entity field %q is neither mapped nor bound", p.Key, ef.Name)
 				}
 			}
 			if p.Gateway != "" && p.Gateway != "api" && p.Gateway != "node" {
@@ -398,20 +403,37 @@ func LoadKpiSpecs(dir string) ([]KpiSpec, error) {
 	return specs, nil
 }
 
+// EntityField is one component of a (possibly composite) entity key.
+type EntityField struct {
+	Name string
+	// Optional components (declared with a trailing "?") may be absent from
+	// a row; they contribute an empty component instead of failing the pull.
+	Optional bool
+}
+
 // EntityFields returns the entity key's component fields (one for a simple
 // key, several for a composite "a,b,c" key).
-func (p PullSpec) EntityFields() []string {
+func (p PullSpec) EntityFields() []EntityField {
 	if p.Entity == "" {
 		return nil
 	}
 
 	parts := strings.Split(p.Entity, ",")
-	out := make([]string, 0, len(parts))
+	out := make([]EntityField, 0, len(parts))
 
 	for _, part := range parts {
-		if part = strings.TrimSpace(part); part != "" {
-			out = append(out, part)
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
 		}
+
+		field := EntityField{Name: part}
+		if strings.HasSuffix(part, "?") {
+			field.Name = strings.TrimSuffix(part, "?")
+			field.Optional = true
+		}
+
+		out = append(out, field)
 	}
 
 	return out

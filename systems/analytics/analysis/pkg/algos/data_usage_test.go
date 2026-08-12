@@ -17,12 +17,17 @@ import (
 )
 
 func usageRow(iccid, simPkg, pkg, network, site string, value interface{}) map[string]interface{} {
+	return sessionRow(iccid, simPkg, pkg, network, site, "", value)
+}
+
+func sessionRow(iccid, simPkg, pkg, network, site, session string, value interface{}) map[string]interface{} {
 	return map[string]interface{}{
 		"iccid":          iccid,
 		"sim_package_id": simPkg,
 		"package_id":     pkg,
 		"network_id":     network,
 		"site_id":        site,
+		"session_id":     session,
 		"value":          value,
 	}
 }
@@ -34,7 +39,6 @@ func TestDataUsage(t *testing.T) {
 	t.Run("increment is cur minus prev per series", func(t *testing.T) {
 		in := Datasets{
 			"usage": {
-				// Prometheus sample pair: [ts, "value-as-string"].
 				usageRow("icc1", "sp1", "pkg1", "net1", "site1", []interface{}{1.7e9, "400"}),
 				usageRow("icc2", "sp2", "pkg1", "net1", "site1", []interface{}{1.7e9, "1000"}),
 			},
@@ -59,7 +63,6 @@ func TestDataUsage(t *testing.T) {
 		assert.Equal(t, 1.0, byIccid["icc1"].Count)
 		assert.Equal(t, 0.0, byIccid["icc2"].Value)
 
-		// Full 5-key scope on every row.
 		assert.Equal(t, map[string]string{
 			"network_id":     "net1",
 			"site_id":        "site1",
@@ -69,7 +72,7 @@ func TestDataUsage(t *testing.T) {
 		}, byIccid["icc1"].Scope)
 	})
 
-	t.Run("first appearance is baseline only", func(t *testing.T) {
+	t.Run("first appearance is baseline by default", func(t *testing.T) {
 		in := Datasets{
 			"usage": {
 				usageRow("icc1", "sp1", "pkg1", "net1", "site1", []interface{}{1.7e9, "5000"}),
@@ -80,9 +83,24 @@ func TestDataUsage(t *testing.T) {
 		results, err := DataUsage(win, in, spec)
 		assert.NoError(t, err)
 		assert.Len(t, results, 1)
-		// The pre-history consumption is unknowable — counting the whole
-		// counter would double-count everything consumed before ingest began.
 		assert.Equal(t, 0.0, results[0].Value)
+	})
+
+	t.Run("first appearance counts with first_value count", func(t *testing.T) {
+		countSpec := spec
+		countSpec.Params = map[string]string{"first_value": "count"}
+
+		in := Datasets{
+			"usage": {
+				usageRow("icc1", "sp1", "pkg1", "net1", "site1", []interface{}{1.7e9, "5000"}),
+			},
+			"usage_prev": {},
+		}
+
+		results, err := DataUsage(win, in, countSpec)
+		assert.NoError(t, err)
+		assert.Len(t, results, 1)
+		assert.Equal(t, 5000.0, results[0].Value)
 	})
 
 	t.Run("counter reset clamps to zero", func(t *testing.T) {
@@ -137,6 +155,49 @@ func TestDataUsage(t *testing.T) {
 		}
 
 		assert.Equal(t, 800.0, total)
+	})
+
+	t.Run("concurrent sessions sum into one scope row", func(t *testing.T) {
+		// Two sessions of one sim share every scope key: they must fold into
+		// ONE row or collide on the (kpi, scope, window) unique index.
+		in := Datasets{
+			"usage": {
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "1", []interface{}{1.7e9, "500"}),
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "2", []interface{}{1.7e9, "300"}),
+			},
+			"usage_prev": {
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "1", []interface{}{1.7e9, "200"}),
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "2", []interface{}{1.7e9, "100"}),
+			},
+		}
+
+		results, err := DataUsage(win, in, spec)
+		assert.NoError(t, err)
+		assert.Len(t, results, 1, "one row per scope, not per session")
+		assert.Equal(t, 500.0, results[0].Value, "300 (session 1) + 200 (session 2)")
+		assert.NotContains(t, results[0].Scope, "session_id", "session is series identity, not a KPI dimension")
+	})
+
+	t.Run("a session restarting its counter does not bleed into another", func(t *testing.T) {
+		// session 2 is new (no baseline) while session 1 continues.
+		countSpec := spec
+		countSpec.Params = map[string]string{"first_value": "count"}
+
+		in := Datasets{
+			"usage": {
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "1", []interface{}{1.7e9, "500"}),
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "2", []interface{}{1.7e9, "70"}),
+			},
+			"usage_prev": {
+				sessionRow("icc1", "sp1", "pkg1", "net1", "site1", "1", []interface{}{1.7e9, "450"}),
+			},
+		}
+
+		results, err := DataUsage(win, in, countSpec)
+		assert.NoError(t, err)
+		assert.Len(t, results, 1)
+		// 50 from session 1's delta + 70 as session 2's first value.
+		assert.Equal(t, 120.0, results[0].Value)
 	})
 
 	t.Run("missing inputs error", func(t *testing.T) {

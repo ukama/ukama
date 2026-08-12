@@ -104,12 +104,10 @@ func (e *Engine) runOnce() {
 // high-water mark are retried too. Cheap: completed windows short-circuit on
 // a ledger status read.
 //
-// A window that fails ABORTS the dataset's scan for this tick: a broken
-// source fails every remaining window the same way, and each failure burns
-// the full retry budget (with backoff sleeps). Walking a large catchup
-// range through those failures serially would stall the whole engine for
-// hours — one bad source must not starve every healthy dataset. The failed
-// windows stay unpulled in the ledger and are retried next tick.
+// A window that fails ABORTS the dataset's scan for this tick: every
+// remaining window would fail the same way and burn its full retry budget,
+// starving healthy datasets. Failed windows stay unpulled in the ledger and
+// are retried next tick.
 func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 	newest := e.grid.NewestEligible(now)
 
