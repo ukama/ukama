@@ -46,7 +46,7 @@ export default function NetworkHomeScreen() {
         keys: [
           KPI_KEYS.networkUptime,
           KPI_KEYS.activeCustomers,
-          KPI_KEYS.usageByNetwork,
+          KPI_KEYS.dataUsage,
           KPI_KEYS.sitesOnline,
         ],
         span: rangeToSpan(range),
@@ -140,7 +140,7 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) =>
+              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) =>
                 formatBytes(v),
               ),
             },
