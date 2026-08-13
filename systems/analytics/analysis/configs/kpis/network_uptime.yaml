@@ -8,6 +8,8 @@
 kpi: NETWORK_UPTIME
 domain: network
 algo: network_uptime@v2
+kind: gauge
+scope_agg: avg
 scope: [network_id]
 inputs:
   health:
@@ -20,5 +22,4 @@ output:
   type: float
   unit: percent
   symbol: "%"
-rollup_ops: [AVG, MIN, MAX]
 positive_direction: up

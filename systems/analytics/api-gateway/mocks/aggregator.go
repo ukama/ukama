@@ -12,9 +12,9 @@ type aggregator struct {
 	mock.Mock
 }
 
-// GetKpiBreakdown provides a mock function with given fields: key, span, op, by, top
-func (_m *aggregator) GetKpiBreakdown(key string, span string, op string, by string, top int32) (*gen.GetKpiBreakdownResponse, error) {
-	ret := _m.Called(key, span, op, by, top)
+// GetKpiBreakdown provides a mock function with given fields: key, span, op, by, top, scope
+func (_m *aggregator) GetKpiBreakdown(key string, span string, op string, by string, top int32, scope map[string]string) (*gen.GetKpiBreakdownResponse, error) {
+	ret := _m.Called(key, span, op, by, top, scope)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetKpiBreakdown")
@@ -22,19 +22,19 @@ func (_m *aggregator) GetKpiBreakdown(key string, span string, op string, by str
 
 	var r0 *gen.GetKpiBreakdownResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, int32) (*gen.GetKpiBreakdownResponse, error)); ok {
-		return rf(key, span, op, by, top)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, int32, map[string]string) (*gen.GetKpiBreakdownResponse, error)); ok {
+		return rf(key, span, op, by, top, scope)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, int32) *gen.GetKpiBreakdownResponse); ok {
-		r0 = rf(key, span, op, by, top)
+	if rf, ok := ret.Get(0).(func(string, string, string, string, int32, map[string]string) *gen.GetKpiBreakdownResponse); ok {
+		r0 = rf(key, span, op, by, top, scope)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetKpiBreakdownResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, int32) error); ok {
-		r1 = rf(key, span, op, by, top)
+	if rf, ok := ret.Get(1).(func(string, string, string, string, int32, map[string]string) error); ok {
+		r1 = rf(key, span, op, by, top, scope)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +42,9 @@ func (_m *aggregator) GetKpiBreakdown(key string, span string, op string, by str
 	return r0, r1
 }
 
-// GetKpiTimeSeries provides a mock function with given fields: keys, span, op, from, to, scope
-func (_m *aggregator) GetKpiTimeSeries(keys []string, span string, op string, from string, to string, scope map[string]string) (*gen.GetKpiTimeSeriesResponse, error) {
-	ret := _m.Called(keys, span, op, from, to, scope)
+// GetKpiTimeSeries provides a mock function with given fields: keys, span, op, from, to, scope, groupBy
+func (_m *aggregator) GetKpiTimeSeries(keys []string, span string, op string, from string, to string, scope map[string]string, groupBy []string) (*gen.GetKpiTimeSeriesResponse, error) {
+	ret := _m.Called(keys, span, op, from, to, scope, groupBy)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetKpiTimeSeries")
@@ -52,19 +52,19 @@ func (_m *aggregator) GetKpiTimeSeries(keys []string, span string, op string, fr
 
 	var r0 *gen.GetKpiTimeSeriesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]string, string, string, string, string, map[string]string) (*gen.GetKpiTimeSeriesResponse, error)); ok {
-		return rf(keys, span, op, from, to, scope)
+	if rf, ok := ret.Get(0).(func([]string, string, string, string, string, map[string]string, []string) (*gen.GetKpiTimeSeriesResponse, error)); ok {
+		return rf(keys, span, op, from, to, scope, groupBy)
 	}
-	if rf, ok := ret.Get(0).(func([]string, string, string, string, string, map[string]string) *gen.GetKpiTimeSeriesResponse); ok {
-		r0 = rf(keys, span, op, from, to, scope)
+	if rf, ok := ret.Get(0).(func([]string, string, string, string, string, map[string]string, []string) *gen.GetKpiTimeSeriesResponse); ok {
+		r0 = rf(keys, span, op, from, to, scope, groupBy)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetKpiTimeSeriesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]string, string, string, string, string, map[string]string) error); ok {
-		r1 = rf(keys, span, op, from, to, scope)
+	if rf, ok := ret.Get(1).(func([]string, string, string, string, string, map[string]string, []string) error); ok {
+		r1 = rf(keys, span, op, from, to, scope, groupBy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +72,9 @@ func (_m *aggregator) GetKpiTimeSeries(keys []string, span string, op string, fr
 	return r0, r1
 }
 
-// GetKpis provides a mock function with given fields: keys, span, op, scope
-func (_m *aggregator) GetKpis(keys []string, span string, op string, scope map[string]string) (*gen.GetKpisResponse, error) {
-	ret := _m.Called(keys, span, op, scope)
+// GetKpis provides a mock function with given fields: keys, span, op, scope, groupBy
+func (_m *aggregator) GetKpis(keys []string, span string, op string, scope map[string]string, groupBy []string) (*gen.GetKpisResponse, error) {
+	ret := _m.Called(keys, span, op, scope, groupBy)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetKpis")
@@ -82,19 +82,19 @@ func (_m *aggregator) GetKpis(keys []string, span string, op string, scope map[s
 
 	var r0 *gen.GetKpisResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]string, string, string, map[string]string) (*gen.GetKpisResponse, error)); ok {
-		return rf(keys, span, op, scope)
+	if rf, ok := ret.Get(0).(func([]string, string, string, map[string]string, []string) (*gen.GetKpisResponse, error)); ok {
+		return rf(keys, span, op, scope, groupBy)
 	}
-	if rf, ok := ret.Get(0).(func([]string, string, string, map[string]string) *gen.GetKpisResponse); ok {
-		r0 = rf(keys, span, op, scope)
+	if rf, ok := ret.Get(0).(func([]string, string, string, map[string]string, []string) *gen.GetKpisResponse); ok {
+		r0 = rf(keys, span, op, scope, groupBy)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetKpisResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]string, string, string, map[string]string) error); ok {
-		r1 = rf(keys, span, op, scope)
+	if rf, ok := ret.Get(1).(func([]string, string, string, map[string]string, []string) error); ok {
+		r1 = rf(keys, span, op, scope, groupBy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -185,6 +185,36 @@ func (_m *aggregator) ListReports() (*gen.ListReportsResponse, error) {
 
 	if rf, ok := ret.Get(1).(func() error); ok {
 		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Query provides a mock function with given fields: req
+func (_m *aggregator) Query(req *gen.QueryRequest) (*gen.QueryResponse, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Query")
+	}
+
+	var r0 *gen.QueryResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.QueryRequest) (*gen.QueryResponse, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.QueryRequest) *gen.QueryResponse); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.QueryResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.QueryRequest) error); ok {
+		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
 	}

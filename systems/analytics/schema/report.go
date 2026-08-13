@@ -111,19 +111,14 @@ func LoadReportSpecs(dir string, kpis []KpiSpec) ([]ReportSpec, error) {
 			}
 
 			op := strings.ToUpper(col.Op)
+			if op == "" {
+				op = kpi.DefaultReadOp() // kind-derived, like the query API
+			}
 			s.Columns[i].Op = op
 
-			allowed := false
-			for _, o := range kpi.RollupOps {
-				if strings.EqualFold(o, op) {
-					allowed = true
-
-					break
-				}
-			}
-
-			if !allowed {
-				return nil, fmt.Errorf("report %s column %s: op %s not allowed for kpi %s", s.Report, col.Name, op, col.Kpi)
+			if !ValidOps[op] {
+				return nil, fmt.Errorf("report %s column %s: unknown op %s (valid: SUM, AVG, MIN, MAX, COUNT, LAST)",
+					s.Report, col.Name, op)
 			}
 
 			scoped := false

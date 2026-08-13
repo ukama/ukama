@@ -6,6 +6,8 @@
 kpi: SITES_ONLINE
 domain: network
 algo: sites_online@v3
+kind: gauge
+scope_agg: sum
 scope: [network_id]
 inputs:
   nodes:
@@ -18,5 +20,4 @@ output:
   type: int
   unit: count
   symbol: ""
-rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

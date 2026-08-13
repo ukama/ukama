@@ -67,6 +67,39 @@ func (this *GetPerformanceReportResponse) Validate() error {
 func (this *KpiInfo) Validate() error {
 	return nil
 }
+func (this *QueryRequest) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
+	return nil
+}
+func (this *QueryPoint) Validate() error {
+	if this.Trend != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Trend); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Trend", err)
+		}
+	}
+	return nil
+}
+func (this *QueryRow) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
+	for _, item := range this.Points {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Points", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *QueryResponse) Validate() error {
+	for _, item := range this.Rows {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Rows", err)
+			}
+		}
+	}
+	return nil
+}
 func (this *ListKpisRequest) Validate() error {
 	return nil
 }
@@ -121,6 +154,7 @@ func (this *GetKpiTimeSeriesResponse) Validate() error {
 	return nil
 }
 func (this *GetKpiBreakdownRequest) Validate() error {
+	// Validation of proto3 map<> fields is unsupported.
 	return nil
 }
 func (this *BreakdownRow) Validate() error {

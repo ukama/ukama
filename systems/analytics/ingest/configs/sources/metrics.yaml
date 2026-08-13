@@ -1,0 +1,43 @@
+# Metrics source spec: the metrics system's api-gateway is the source of truth
+# for data usage (cdr pushes data_usage to pushgateway; Prometheus scrapes it;
+# /v1/last re-exposes the latest sample per series).
+#
+# ONE unfiltered pull per window — never fan out per network/sim. /v1/last
+# returns an instant vector: every series' last sample within the lookback,
+# unaggregated, labels intact. Idle sims still report their last value, so
+# zero-fill comes free.
+#
+# The counter is CUMULATIVE; analysis derives per-window increments against
+# the previous window's state (mode: state_prev).
+#
+# Label rename on map: cdr's `dataplan` is the CATALOG package id -> package_id
+# (what package_id means everywhere else in analytics), while cdr's `package`
+# is the sim's package ASSIGNMENT id -> sim_package_id.
+version: 1
+source: metrics
+system: metrics
+
+pulls:
+  - key: metrics.data_usage.last
+    endpoint: /v1/last/metrics/data_usage
+    strategy: full_snapshot
+    items: $.data.result
+    # One Prometheus series = one change-log entity; iccid alone would
+    # collapse series spanning assignments, sites or concurrent sessions.
+    # session_id is optional (`?`) for series pushed without the label.
+    entity: iccid,sim_package_id,site_id,session_id?
+    params:
+      # 30m >> the 5m window W: survives scrape gaps without resurrecting
+      # long-dead series the way the 7d default would.
+      lookback: 30m
+    map:
+      network_id: $.metric.network
+      site_id: $.metric.site
+      package_id: $.metric.dataplan
+      sim_package_id: $.metric.package
+      iccid: $.metric.iccid
+      # Series identity only: the algo sums sessions into the scope, and
+      # session is never a KPI dimension.
+      session_id: $.metric.session
+      # Prometheus sample pair [ts, "value"].
+      value: $.value

@@ -46,9 +46,10 @@ type RouterConfig struct {
 // aggregator is the interface the router needs; satisfied by client.Aggregator.
 type aggregator interface {
 	ListKpis() (*pb.ListKpisResponse, error)
-	GetKpis(keys []string, span, op string, scope map[string]string) (*pb.GetKpisResponse, error)
-	GetKpiTimeSeries(keys []string, span, op, from, to string, scope map[string]string) (*pb.GetKpiTimeSeriesResponse, error)
-	GetKpiBreakdown(key, span, op, by string, top int32) (*pb.GetKpiBreakdownResponse, error)
+	Query(req *pb.QueryRequest) (*pb.QueryResponse, error)
+	GetKpis(keys []string, span, op string, scope map[string]string, groupBy []string) (*pb.GetKpisResponse, error)
+	GetKpiTimeSeries(keys []string, span, op, from, to string, scope map[string]string, groupBy []string) (*pb.GetKpiTimeSeriesResponse, error)
+	GetKpiBreakdown(key, span, op, by string, top int32, scope map[string]string) (*pb.GetKpiBreakdownResponse, error)
 	ListReports() (*pb.ListReportsResponse, error)
 	GetPerformanceReport(report, span string, scope map[string]string, top int32) (*pb.GetPerformanceReportResponse, error)
 }
@@ -133,8 +134,13 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 	auth.Use()
 	{
-		kpis := auth.Group("/analytics/kpis", "KPIs", "Generic KPI read API")
-		kpis.GET("", formatDoc("List KPIs", "Self-describing KPI registry: keys, domains, units, scopes, ops"),
+		query := auth.Group("/analytics/query", "Query", "The KPI read API: one question shape")
+		query.GET("", formatDoc("Query KPIs",
+			"kpis + filters + group_by + range + granularity. Aggregation derives from each KPI's kind; filters always fold to the asked grain"),
+			tonic.Handler(r.queryHandler, http.StatusOK))
+
+		kpis := auth.Group("/analytics/kpis", "KPIs", "Generic KPI read API (legacy shape; prefer /analytics/query)")
+		kpis.GET("", formatDoc("List KPIs", "Self-describing KPI registry: keys, domains, units, scopes, kinds"),
 			tonic.Handler(r.listKpisHandler, http.StatusOK))
 		kpis.GET("/values", formatDoc("Get KPI values", "Latest rollup value per KPI/scope for a span, with trend"),
 			tonic.Handler(r.getKpisHandler, http.StatusOK))
@@ -164,17 +170,34 @@ func (r *Router) listKpisHandler(c *gin.Context) (*pb.ListKpisResponse, error) {
 	return r.clients.Aggregator.ListKpis()
 }
 
+func (r *Router) queryHandler(c *gin.Context, req *QueryRequest) (*pb.QueryResponse, error) {
+	return r.clients.Aggregator.Query(&pb.QueryRequest{
+		Kpis:        splitKeys(req.Kpis),
+		Filter:      scopeFilter(req.ScopeParams),
+		GroupBy:     splitKeys(req.GroupBy),
+		Range:       req.Range,
+		From:        req.From,
+		To:          req.To,
+		Granularity: req.Granularity,
+		Sort:        req.Sort,
+		Top:         req.Top,
+		Agg:         req.Agg,
+	})
+}
+
 func (r *Router) getKpisHandler(c *gin.Context, req *GetKpisRequest) (*pb.GetKpisResponse, error) {
-	return r.clients.Aggregator.GetKpis(splitKeys(req.Keys), req.Span, req.Op, scopeFilter(req.NetworkId, req.SiteId))
+	return r.clients.Aggregator.GetKpis(splitKeys(req.Keys), req.Span, req.Op,
+		scopeFilter(req.ScopeParams), splitKeys(req.GroupBy))
 }
 
 func (r *Router) getKpiTimeSeriesHandler(c *gin.Context, req *GetKpiTimeSeriesRequest) (*pb.GetKpiTimeSeriesResponse, error) {
 	return r.clients.Aggregator.GetKpiTimeSeries(splitKeys(req.Keys), req.Span, req.Op,
-		req.From, req.To, scopeFilter(req.NetworkId, req.SiteId))
+		req.From, req.To, scopeFilter(req.ScopeParams), splitKeys(req.GroupBy))
 }
 
 func (r *Router) getKpiBreakdownHandler(c *gin.Context, req *GetKpiBreakdownRequest) (*pb.GetKpiBreakdownResponse, error) {
-	return r.clients.Aggregator.GetKpiBreakdown(req.Key, req.Span, req.Op, req.By, req.Top)
+	return r.clients.Aggregator.GetKpiBreakdown(req.Key, req.Span, req.Op, req.By, req.Top,
+		scopeFilter(req.ScopeParams))
 }
 
 func (r *Router) listReportsHandler(c *gin.Context) (*pb.ListReportsResponse, error) {
@@ -182,7 +205,8 @@ func (r *Router) listReportsHandler(c *gin.Context) (*pb.ListReportsResponse, er
 }
 
 func (r *Router) getPerformanceReportHandler(c *gin.Context, req *GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
-	return r.clients.Aggregator.GetPerformanceReport(req.Report, req.Span, scopeFilter(req.NetworkId, ""), req.Top)
+	return r.clients.Aggregator.GetPerformanceReport(req.Report, req.Span,
+		scopeFilter(ScopeParams{NetworkId: req.NetworkId}), req.Top)
 }
 
 func splitKeys(csv string) []string {
@@ -199,14 +223,23 @@ func splitKeys(csv string) []string {
 	return out
 }
 
-func scopeFilter(networkID, siteID string) map[string]string {
+// scopeFilter builds the aggregator scope filter from the generic scope
+// params: every non-empty param becomes a filter key. Key validity against
+// each KPI's scope dimensions is enforced by the aggregator (InvalidArgument
+// -> 400), not here — the gateway has no KPI registry.
+func scopeFilter(p ScopeParams) map[string]string {
 	scope := map[string]string{}
-	if networkID != "" {
-		scope["network_id"] = networkID
-	}
 
-	if siteID != "" {
-		scope["site_id"] = siteID
+	for key, value := range map[string]string{
+		"network_id":     p.NetworkId,
+		"site_id":        p.SiteId,
+		"package_id":     p.PackageId,
+		"sim_package_id": p.SimPackageId,
+		"iccid":          p.Iccid,
+	} {
+		if value != "" {
+			scope[key] = value
+		}
 	}
 
 	if len(scope) == 0 {

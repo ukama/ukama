@@ -2,6 +2,8 @@
 kpi: CUSTOMERS_ON_PLAN
 domain: business
 algo: customers_on_plan@v1
+kind: gauge
+scope_agg: sum
 scope: [network_id]
 inputs:
   sim_packages:
@@ -11,5 +13,4 @@ inputs:
     dataset: registry.network.getAll
     fields: [network_id]
 output: { type: int, unit: count, symbol: "" }
-rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

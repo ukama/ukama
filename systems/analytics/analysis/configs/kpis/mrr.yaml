@@ -3,6 +3,8 @@
 kpi: MRR
 domain: business
 algo: mrr@v1
+kind: gauge
+scope_agg: sum
 scope: [network_id]
 inputs:
   sim_packages:
@@ -15,5 +17,4 @@ inputs:
     dataset: registry.network.getAll
     fields: [network_id]
 output: { type: int, unit: cents, symbol: "$" }
-rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

@@ -103,6 +103,11 @@ func (e *Engine) runOnce() {
 // newest pulled window) so failed or crashed-in-flight windows behind the
 // high-water mark are retried too. Cheap: completed windows short-circuit on
 // a ledger status read.
+//
+// A window that fails ABORTS the dataset's scan for this tick: every
+// remaining window would fail the same way and burn its full retry budget,
+// starving healthy datasets. Failed windows stay unpulled in the ledger and
+// are retried next tick.
 func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 	newest := e.grid.NewestEligible(now)
 
@@ -117,7 +122,10 @@ func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 		}
 
 		if err := e.processWindow(pull, w); err != nil {
-			log.Errorf("dataset %s window %d: %v", pull.Key, w, err)
+			log.Errorf("dataset %s window %d: %v (skipping the dataset's remaining catchup windows this tick)",
+				pull.Key, w, err)
+
+			return nil
 		}
 	}
 

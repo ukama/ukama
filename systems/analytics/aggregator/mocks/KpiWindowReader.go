@@ -12,6 +12,48 @@ type KpiWindowReader struct {
 	mock.Mock
 }
 
+// WindowBounds provides a mock function with given fields: orgID, kpiKey
+func (_m *KpiWindowReader) WindowBounds(orgID string, kpiKey string) (int64, int64, bool, error) {
+	ret := _m.Called(orgID, kpiKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WindowBounds")
+	}
+
+	var r0 int64
+	var r1 int64
+	var r2 bool
+	var r3 error
+	if rf, ok := ret.Get(0).(func(string, string) (int64, int64, bool, error)); ok {
+		return rf(orgID, kpiKey)
+	}
+	if rf, ok := ret.Get(0).(func(string, string) int64); ok {
+		r0 = rf(orgID, kpiKey)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string) int64); ok {
+		r1 = rf(orgID, kpiKey)
+	} else {
+		r1 = ret.Get(1).(int64)
+	}
+
+	if rf, ok := ret.Get(2).(func(string, string) bool); ok {
+		r2 = rf(orgID, kpiKey)
+	} else {
+		r2 = ret.Get(2).(bool)
+	}
+
+	if rf, ok := ret.Get(3).(func(string, string) error); ok {
+		r3 = rf(orgID, kpiKey)
+	} else {
+		r3 = ret.Error(3)
+	}
+
+	return r0, r1, r2, r3
+}
+
 // WindowsInRange provides a mock function with given fields: orgID, kpiKey, fromID, toID
 func (_m *KpiWindowReader) WindowsInRange(orgID string, kpiKey string, fromID int64, toID int64) ([]schema.KpiWindow, error) {
 	ret := _m.Called(orgID, kpiKey, fromID, toID)

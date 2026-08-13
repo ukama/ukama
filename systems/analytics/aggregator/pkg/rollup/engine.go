@@ -11,7 +11,6 @@ package rollup
 import (
 	"fmt"
 	"math"
-	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -20,9 +19,13 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Engine recomputes span rollups from kpi_windows components. All ops are
-// exact: AVG is weighted (sum of sums / sum of counts) — never an average of
-// window averages. Recomputation is idempotent (upserts).
+// Engine materializes calendar-span rollups from kpi_windows components.
+//
+// One row per (kpi, scope, span, span_start) — schema.RollupRowOp — carrying
+// the folded components (Sum/Count/Min/Max/Last). Every aggregation,
+// group_by fold and trend is computed at READ time from these components;
+// nothing is precomputed per op and no trend state is stored. Recomputation
+// is idempotent (upserts).
 type Engine struct {
 	grid    schema.Grid
 	kpis    map[string]schema.KpiSpec
@@ -30,13 +33,12 @@ type Engine struct {
 	rollups db.RollupRepo
 	org     string
 	loc     *time.Location
-	flatPct float64
 	sweep   time.Duration
 	stop    chan struct{}
 }
 
 func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowReader,
-	rollups db.RollupRepo, org, timezone string, flatPct float64, sweep time.Duration) (*Engine, error) {
+	rollups db.RollupRepo, org, timezone string, sweep time.Duration) (*Engine, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		return nil, fmt.Errorf("loading rollup timezone %q: %w", timezone, err)
@@ -54,7 +56,6 @@ func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowRead
 		rollups: rollups,
 		org:     org,
 		loc:     loc,
-		flatPct: flatPct,
 		sweep:   sweep,
 		stop:    make(chan struct{}),
 	}, nil
@@ -79,9 +80,13 @@ func (e *Engine) OnKpiComputed(kpiKey string, windowID int64) {
 	}
 }
 
-// StartSweeper periodically recomputes the current spans for every KPI:
-// covers lost events and keeps partial (current) spans fresh.
+// StartSweeper first backfills every span covered by existing kpi_windows
+// (heals stale rows and gaps after downtime — cheap and idempotent), then
+// periodically recomputes the current spans to cover lost events and keep
+// partial spans fresh.
 func (e *Engine) StartSweeper() {
+	e.backfillOnce()
+
 	ticker := time.NewTicker(e.sweep)
 	defer ticker.Stop()
 
@@ -99,6 +104,52 @@ func (e *Engine) StartSweeper() {
 
 func (e *Engine) Stop() {
 	close(e.stop)
+}
+
+// backfillOnce re-materializes all spans intersecting each KPI's kpi_windows
+// history. Runs at boot: after this, every historical span carries the
+// current components-row shape regardless of what an older engine wrote.
+func (e *Engine) backfillOnce() {
+	now := time.Now().UTC()
+
+	for _, kpi := range e.kpis {
+		minID, _, ok, err := e.windows.WindowBounds(e.org, kpi.Kpi)
+		if err != nil {
+			log.Errorf("backfill: window bounds for %s: %v", kpi.Kpi, err)
+
+			continue
+		}
+
+		if !ok {
+			continue // no windows yet
+		}
+
+		start := e.grid.Window(minID).Start
+
+		for _, span := range Spans {
+			t := start
+
+			for {
+				spanStart, err := SpanStart(span, t, e.loc)
+				if err != nil {
+					break
+				}
+
+				if err := e.RecomputeSpan(kpi, span, spanStart); err != nil {
+					log.Errorf("backfill: recompute %s %s @ %s: %v", kpi.Kpi, span, spanStart, err)
+				}
+
+				next, err := SpanEnd(span, spanStart)
+				if err != nil || !next.Before(now) {
+					break
+				}
+
+				t = next
+			}
+		}
+
+		log.Infof("backfill: %s rollups re-materialized from %s", kpi.Kpi, start)
+	}
 }
 
 // sweepOnce recomputes the current AND previous span for every KPI: current
@@ -130,9 +181,8 @@ func (e *Engine) sweepOnce() {
 	}
 }
 
-// RecomputeSpan rebuilds all rollup rows (every scope, every allowed op) for
-// the span containing t, then refreshes the following span's trend (a
-// corrected span dirties its successor's comparison).
+// RecomputeSpan rebuilds the components row for every scope of the span
+// containing t.
 func (e *Engine) RecomputeSpan(kpi schema.KpiSpec, span string, t time.Time) error {
 	spanStart, err := SpanStart(span, t, e.loc)
 	if err != nil {
@@ -188,170 +238,53 @@ func (e *Engine) RecomputeSpan(kpi schema.KpiSpec, span string, t time.Time) err
 		a.meta = row
 	}
 
-	upserts := make([]schema.KpiRollup, 0, len(byScope)*len(kpi.RollupOps))
+	upserts := make([]schema.KpiRollup, 0, len(byScope))
 
 	for scope, a := range byScope {
-		for _, op := range kpi.RollupOps {
-			op = strings.ToUpper(op)
-
-			value, ok := opValue(op, a.sum, a.count, a.min, a.max, a.lastValue)
-			if !ok {
-				continue
-			}
-
-			row := schema.KpiRollup{
-				KpiKey:     kpi.Kpi,
-				OrgID:      e.org,
-				Scope:      scope,
-				Span:       span,
-				SpanStart:  spanStart.UTC(),
-				SpanEnd:    spanEnd.UTC(),
-				Op:         op,
-				Value:      value,
-				ValueType:  a.meta.ValueType,
-				Unit:       a.meta.Unit,
-				Symbol:     a.meta.Symbol,
-				IsPartial:  isPartial,
-				ComputedAt: now,
-			}
-
-			if err := e.applyTrend(&row, spanStart); err != nil {
-				return err
-			}
-
-			upserts = append(upserts, row)
-		}
+		upserts = append(upserts, schema.KpiRollup{
+			KpiKey:     kpi.Kpi,
+			OrgID:      e.org,
+			Scope:      scope,
+			Span:       span,
+			SpanStart:  spanStart.UTC(),
+			SpanEnd:    spanEnd.UTC(),
+			Op:         schema.RollupRowOp,
+			Value:      defaultValue(kpi, a.sum, a.count, a.lastValue),
+			Sum:        a.sum,
+			Count:      a.count,
+			Min:        a.min,
+			Max:        a.max,
+			Last:       a.lastValue,
+			ValueType:  a.meta.ValueType,
+			Unit:       a.meta.Unit,
+			Symbol:     a.meta.Symbol,
+			IsPartial:  isPartial,
+			ComputedAt: now,
+		})
 	}
 
-	if err := e.rollups.Upsert(upserts); err != nil {
-		return err
-	}
-
-	// A recomputed span invalidates its successor's trend comparison.
-	return e.refreshNextTrend(kpi, span, spanStart)
+	return e.rollups.Upsert(upserts)
 }
 
 func (e *Engine) windowRange(spanStart, spanEnd time.Time) (int64, int64) {
 	return e.grid.WindowAt(spanStart.UTC()).ID, e.grid.WindowAt(spanEnd.UTC()).ID
 }
 
-func opValue(op string, sum, count, min, max, last float64) (float64, bool) {
-	switch op {
-	case "SUM":
-		return sum, true
-	case "COUNT":
-		return count, true
-	case "AVG":
-		if count == 0 {
-			return 0, false
-		}
-
-		return sum / count, true
-	case "MIN":
-		return min, true
-	case "MAX":
-		return max, true
-	case "LAST":
-		return last, true
-	case "DELTA":
-		// span usage from a cumulative counter; clamp resets to 0
-		if d := max - min; d > 0 {
-			return d, true
-		}
-
-		return 0, true
-	default:
-		return 0, false
-	}
-}
-
-// applyTrend fills the trend fields by comparing with the previous same-span
-// row (same kpi/scope/op): up|down|flat|new|na.
-func (e *Engine) applyTrend(row *schema.KpiRollup, spanStart time.Time) error {
-	prevStart, err := PrevSpanStart(row.Span, spanStart)
-	if err != nil {
-		return err
-	}
-
-	prev, err := e.rollups.Get(row.OrgID, row.KpiKey, row.Scope, row.Span, prevStart.UTC(), row.Op)
-	if err != nil {
-		return err
-	}
-
-	if prev == nil {
-		row.Trend = "new"
-
-		return nil
-	}
-
-	prevValue := prev.Value
-	changeAbs := row.Value - prevValue
-
-	row.PrevValue = &prevValue
-	row.ChangeAbs = &changeAbs
-
-	if prevValue == 0 {
-		if row.Value == 0 {
-			row.Trend = "flat"
-		} else {
-			row.Trend = "na" // percent undefined; change_abs still served
-		}
-
-		return nil
-	}
-
-	changePct := changeAbs / math.Abs(prevValue) * 100
-	row.ChangePct = &changePct
-
-	switch {
-	case math.Abs(changePct) < e.flatPct:
-		row.Trend = "flat"
-	case changePct > 0:
-		row.Trend = "up"
-	default:
-		row.Trend = "down"
-	}
-
-	return nil
-}
-
-// refreshNextTrend re-applies trend fields on the following span's rows so a
-// corrected previous value cascades forward.
-func (e *Engine) refreshNextTrend(kpi schema.KpiSpec, span string, spanStart time.Time) error {
-	nextStart, err := SpanEnd(span, spanStart)
-	if err != nil {
-		return err
-	}
-
-	scopes, err := e.rollups.ScopesSeen(e.org, kpi.Kpi, span)
-	if err != nil {
-		return err
-	}
-
-	updates := make([]schema.KpiRollup, 0)
-
-	for _, scope := range scopes {
-		for _, op := range kpi.RollupOps {
-			op = strings.ToUpper(op)
-
-			next, err := e.rollups.Get(e.org, kpi.Kpi, scope, span, nextStart.UTC(), op)
-			if err != nil {
-				return err
+// defaultValue caches the KPI's kind-default aggregation on the row: flows
+// sum over the span; ratio gauges take the weighted average; additive
+// gauges take the latest level.
+func defaultValue(kpi schema.KpiSpec, sum, count, last float64) float64 {
+	if kpi.Kind == schema.KindGauge {
+		if kpi.ScopeAgg == schema.ScopeAggAvg {
+			if count == 0 {
+				return 0
 			}
 
-			if next == nil {
-				continue
-			}
-
-			next.PrevValue, next.ChangeAbs, next.ChangePct = nil, nil, nil
-
-			if err := e.applyTrend(next, nextStart); err != nil {
-				return err
-			}
-
-			updates = append(updates, *next)
+			return sum / count
 		}
+
+		return last
 	}
 
-	return e.rollups.Upsert(updates)
+	return sum
 }

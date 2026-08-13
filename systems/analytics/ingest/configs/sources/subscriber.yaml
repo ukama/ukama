@@ -42,29 +42,3 @@ pulls:
       is_active: $.is_active
       as_expired: $.as_expired
       created_at: $.created_at
-
-  # Per-sim CUMULATIVE data usage counter (strategy: full_snapshot — the
-  # lifetime counter is state, change-logged). NO from/to: /v1/usages returns
-  # the cumulative counter and always 200s; the windowed CDR path errors on
-  # idle windows. Fans out over sims; sim_id/network_id lineage comes from the
-  # binds. Input for USAGE_BY_NETWORK (span usage = read-time DELTA).
-  # - key: subscriber.usage.getBySim
-  #   endpoint: /v1/usages
-  #   strategy: full_snapshot
-  #   items: $
-  #   entity: sim_id
-  #   # on_error: record — a per-sim usage failure (e.g. the CDR service 500s on
-  #   # a sim whose CDRs sum to 0) must NOT fail the whole window and blank the
-  #   # network's KPI. The failed sim records unreachable:true (no usage field ->
-  #   # counted as 0 bytes); sims that return usage are summed normally.
-  #   on_error: record
-  #   for_each:
-  #     dataset: subscriber.sim.list
-  #     bind: [sim_id, network_id]
-  #   params:
-  #     sim_id: "{{.sim_id}}"
-  #     sim_type: ukama_data
-  #     cdr_type: DATA
-  #   map:
-  #     usage: $.usage
-  #     cost: $.cost

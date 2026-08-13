@@ -3,6 +3,7 @@
 kpi: PACKAGE_REVENUE
 domain: business
 algo: package_revenue@v1
+kind: flow
 scope: [network_id, package_id]
 inputs:
   sim_packages:
@@ -12,5 +13,4 @@ inputs:
     dataset: dataplan.package.getAll
     fields: [package_id, network_id, amount, duration, active]
 output: { type: int, unit: cents, symbol: "$" }
-rollup_ops: [SUM, AVG, MAX]
 positive_direction: up
