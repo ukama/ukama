@@ -13,25 +13,18 @@
  * pins, and optional per-marker popup content. Render via the dynamic
  * `UkamaMap` wrapper (ssr:false) so Leaflet never runs on the server.
  *
- * The base layer comes from the shared `useUiPrefs().mapView` preference, and
- * switching layers in-map updates it, so every console map shows one view.
+ * The base layer comes from the shared `useUiPrefs().mapView` preference —
+ * Settings is the only place it changes, so every console map shows one view
+ * and no map carries its own layer switcher.
  */
 import 'leaflet/dist/leaflet.css';
 
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import L from 'leaflet';
 import { useColorScheme } from '@mui/material/styles';
-import {
-  LayersControl,
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  useMap,
-  useMapEvent,
-} from 'react-leaflet';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
 import { useUiPrefs } from '@/lib/store';
-import { MAP_VIEWS, basemapUrl, viewFromLabel, type MapView } from './basemaps';
+import { basemapUrl } from './basemaps';
 
 export interface UkamaMapMarker {
   id: string;
@@ -55,8 +48,6 @@ export interface UkamaMapProps {
   interactive?: boolean;
   /** Zoom on mouse-wheel scroll. Off by default so page scroll isn't trapped. */
   scrollWheelZoom?: boolean;
-  /** Show the in-map base layer switcher (off for small previews). */
-  layersControl?: boolean;
   /** Marker click handler (e.g. select a site on the home map). */
   onSelect?: (id: string) => void;
 }
@@ -122,62 +113,6 @@ function ViewSync({
   return null;
 }
 
-/** Base layers bound to the shared `mapView` preference. The switcher writes
- *  the choice back to the store; a change from Settings swaps the active tile
- *  layer in place, with no remount. */
-function BaseLayers({
-  view,
-  dark,
-  withControl,
-}: {
-  view: MapView;
-  dark: boolean;
-  withControl: boolean;
-}) {
-  const map = useMap();
-  const setMapView = useUiPrefs((s) => s.setMapView);
-  const layers = useRef<Partial<Record<MapView, L.TileLayer>>>({});
-
-  useMapEvent('baselayerchange', (e) => {
-    const next = viewFromLabel(e.name);
-    if (next) setMapView(next);
-  });
-
-  useEffect(() => {
-    const target = layers.current[view];
-    if (!target || map.hasLayer(target)) return;
-    MAP_VIEWS.forEach((v) => {
-      const layer = layers.current[v.id];
-      if (layer && layer !== target && map.hasLayer(layer)) {
-        map.removeLayer(layer);
-      }
-    });
-    map.addLayer(target);
-  }, [map, view]);
-
-  // Previews without the switcher only ever mount the selected layer.
-  if (!withControl) return <TileLayer url={basemapUrl(view, dark)} />;
-
-  return (
-    <LayersControl position="topright">
-      {MAP_VIEWS.map((v) => (
-        <LayersControl.BaseLayer
-          key={v.id}
-          name={v.label}
-          checked={v.id === view}
-        >
-          <TileLayer
-            url={basemapUrl(v.id, dark)}
-            ref={(layer) => {
-              layers.current[v.id] = layer ?? undefined;
-            }}
-          />
-        </LayersControl.BaseLayer>
-      ))}
-    </LayersControl>
-  );
-}
-
 const DEFAULT_CENTER: [number, number] = [0, 20];
 
 export default function UkamaMapImpl({
@@ -188,7 +123,6 @@ export default function UkamaMapImpl({
   fitToMarkers = true,
   interactive = true,
   scrollWheelZoom = false,
-  layersControl = true,
   onSelect,
 }: UkamaMapProps) {
   const { mode, systemMode } = useColorScheme();
@@ -215,7 +149,7 @@ export default function UkamaMapImpl({
       doubleClickZoom={interactive}
       attributionControl={false}
     >
-      <BaseLayers view={mapView} dark={dark} withControl={layersControl} />
+      <TileLayer url={basemapUrl(mapView, dark)} />
 
       {markers.map((m) => (
         <Marker

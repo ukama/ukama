@@ -19,7 +19,7 @@ export type MapView = 'street' | 'satellite' | 'terrain';
 
 export interface Basemap {
   id: MapView;
-  /** Layer name shown in the in-map switcher and in Settings. */
+  /** Layer name shown in the Settings picker. */
   label: string;
   /** One-line description for the Settings picker. */
   hint: string;
@@ -56,9 +56,4 @@ export const DEFAULT_MAP_VIEW: MapView = 'terrain';
 export function basemapUrl(view: MapView, dark: boolean): string {
   const base = MAP_VIEWS.find((v) => v.id === view) ?? MAP_VIEWS[0]!;
   return (dark && base.darkUrl) || base.url;
-}
-
-/** Map a switcher layer name back to its view id (Leaflet reports names). */
-export function viewFromLabel(label: string): MapView | undefined {
-  return MAP_VIEWS.find((v) => v.label === label)?.id;
 }

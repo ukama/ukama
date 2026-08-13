@@ -8,8 +8,7 @@
 
 /**
  * Small location preview for the site name step: a pin at the tower's
- * coordinates on the shared console base map. Static — no pan/zoom and no
- * layer switcher at this size.
+ * coordinates on the shared console base map. Static — no pan/zoom.
  */
 'use client';
 
@@ -38,7 +37,6 @@ export default function SiteLocationMap({
         zoom={16}
         height="100%"
         interactive={false}
-        layersControl={false}
         fitToMarkers={false}
       />
     </div>

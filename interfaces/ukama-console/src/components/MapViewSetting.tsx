@@ -77,7 +77,6 @@ export default function MapViewSetting() {
           zoom={12}
           height="100%"
           interactive={false}
-          layersControl={false}
           fitToMarkers={false}
         />
       </div>
