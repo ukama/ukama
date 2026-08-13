@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-by-sim
-description: Generate different traffic totals for two SIMs and verify both direct GraphQL usage rows and the SIM-scoped KPI preserve their individual attribution.
+description: Generate different traffic totals for two SIMs and verify both direct GraphQL usage rows and DATA_USAGE filtered by iccid preserve each SIM's individual attribution at the finest scope grain.
 seed: 4518
 suite: p0
 priority: p0
@@ -47,6 +47,9 @@ phases:
       - type: wait
         seconds: 60
     checks:
+      # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
+      # The target's dimension is sent as a scope FILTER, so the gateway folds
+      # the per-SIM series to that grain and returns it in the row's scope.
       - type: usage_per_sim
         ues: all
         expected: from_model
@@ -54,13 +57,11 @@ phases:
         target: sim
         ues: ue-000001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600
       - type: usage_aggregate
         target: sim
         ues: ue-000002
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

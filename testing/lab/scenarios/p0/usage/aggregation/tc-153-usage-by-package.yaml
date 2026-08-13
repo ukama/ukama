@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-by-package
-description: Generate usage on two assignments of one package and verify the package-scoped GraphQL KPI equals the sum of those SIMs.
+description: Generate usage on two assignments of one package and verify DATA_USAGE filtered by package_id folds both SIMs into one catalog-package total.
 seed: 4520
 suite: p0
 priority: p0
@@ -44,11 +44,13 @@ phases:
       - type: wait
         seconds: 60
     checks:
+      # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
+      # The target's dimension is sent as a scope FILTER, so the gateway folds
+      # the per-SIM series to that grain and returns it in the row's scope.
       - type: usage_aggregate
         target: package
         package: shared_plan
         networks: net-001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

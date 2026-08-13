@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-network-isolation
-description: Generate traffic only in network one and verify GraphQL reports that usage for network one while the newly created network two remains at zero.
+description: Generate traffic only in network one and verify the network_id filter isolates it, so network one reports the usage while network two reports none of it.
 seed: 4523
 suite: p0
 priority: p0
@@ -44,17 +44,18 @@ phases:
       - type: wait
         seconds: 60
     checks:
+      # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
+      # The target's dimension is sent as a scope FILTER, so the gateway folds
+      # the per-SIM series to that grain and returns it in the row's scope.
       - type: usage_aggregate
         target: network
         networks: net-001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600
       - type: usage_aggregate
         target: network
         networks: net-002
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

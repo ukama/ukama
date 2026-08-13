@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-by-subscriber
-description: Allocate two SIMs to one subscriber, generate four megabytes on each, and verify the subscriber-scoped GraphQL KPI equals their combined usage.
+description: Allocate SIMs to one subscriber, generate four megabytes on each, and verify the subscriber total equals the sum of its SIMs' iccid-scoped DATA_USAGE rows (subscriber is not a KPI dimension; usage is per SIM).
 seed: 4519
 suite: p0
 priority: p0
@@ -45,6 +45,9 @@ phases:
       - type: wait
         seconds: 60
     checks:
+      # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
+      # The target's dimension is sent as a scope FILTER, so the gateway folds
+      # the per-SIM series to that grain and returns it in the row's scope.
       - type: usage_per_sim
         ues: all
         expected: from_model
@@ -52,6 +55,5 @@ phases:
         target: subscriber
         ref: sub-000001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

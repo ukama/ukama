@@ -2640,6 +2640,28 @@ static int parse_kpi_value(json_t *obj, bff_kpi_value_t *value,
     return ULAB_OK;
 }
 
+/* GraphQL KpiValuesInput field for a KPI scope dimension, or NULL when the
+ * dimension is not a filter the gateway accepts. Sending an unknown filter is
+ * an InvalidArgument, so an unmapped scope_key stays match-only. */
+static const char *kpi_scope_filter_field(const char *scope_key) {
+    if (scope_key == NULL || scope_key[0] == '\0') {
+        return NULL;
+    }
+    if (ulab_streq(scope_key, "site_id")) {
+        return "siteId";
+    }
+    if (ulab_streq(scope_key, "package_id")) {
+        return "packageId";
+    }
+    if (ulab_streq(scope_key, "sim_package_id")) {
+        return "simPackageId";
+    }
+    if (ulab_streq(scope_key, "iccid")) {
+        return "iccid";
+    }
+    return NULL;
+}
+
 int bff_get_kpi_value(bff_client_t *c,
                       const char *key,
                       const char *span,
@@ -2655,6 +2677,8 @@ int bff_get_kpi_value(bff_client_t *c,
     char span_esc[ULAB_MAX_REF * 2];
     char op_esc[ULAB_MAX_REF * 2];
     char network_esc[ULAB_MAX_ID * 2];
+    char scope_esc[ULAB_MAX_ID * 2];
+    const char *scope_field;
     char optional[ULAB_MAX_QUERY / 2];
     json_t *root;
     json_t *obj;
@@ -2682,6 +2706,17 @@ int bff_get_kpi_value(bff_client_t *c,
         snprintf(optional + strlen(optional),
                  sizeof(optional) - strlen(optional),
                  ",\"networkId\":\"%s\"", network_esc);
+    }
+    /* Send the scope dimension as a FILTER, not just as a match predicate.
+     * The gateway folds the answer to the filtered grain, so without this a
+     * site/package/sim read comes back folded to the network and its own
+     * dimension is absent from the response scope. */
+    scope_field = kpi_scope_filter_field(scope_key);
+    if (scope_field != NULL && scope_value != NULL && scope_value[0] != '\0') {
+        ulab_json_escape(scope_value, scope_esc, sizeof(scope_esc));
+        snprintf(optional + strlen(optional),
+                 sizeof(optional) - strlen(optional),
+                 ",\"%s\":\"%s\"", scope_field, scope_esc);
     }
     n = snprintf(vars, sizeof(vars),
                  "{\"data\":{\"keys\":[\"%s\"],\"span\":\"%s\"%s}}",
