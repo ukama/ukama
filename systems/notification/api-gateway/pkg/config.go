@@ -34,18 +34,12 @@ type HttpEndpoints struct {
 type GrpcEndpoints struct {
 	Timeout           time.Duration
 	Mailer            string
-	Notify            string
 	EventNotification string
 	Distributor       string
 }
 
-// ServiceDescriptions holds a human-readable description per gRPC service,
-// returned by GET /status so consumers know which features are affected
-// when a service is unavailable. Overridable via env vars
-// (DESCRIPTIONS_<SERVICE>) without a code change.
 type ServiceDescriptions struct {
 	Mailer            string
-	Notify            string
 	EventNotification string
 	Distributor       string
 }
@@ -68,7 +62,6 @@ func NewConfig() *Config {
 		},
 		Descriptions: ServiceDescriptions{
 			Mailer:            "Email delivery: outgoing system emails",
-			Notify:            "Notifications: delivery of user and system notifications",
 			EventNotification: "Event notifications: converting system events into user notifications",
 			Distributor:       "Notification distribution: real-time streaming of notifications to clients",
 		},
