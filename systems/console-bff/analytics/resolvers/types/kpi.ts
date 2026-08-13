@@ -7,7 +7,6 @@
  */
 import { Field, Float, InputType, ObjectType } from "type-graphql";
 
-
 /**
  * GraphQL types for the analytics gateway's generic KPI read API
  * (`GET /v1/analytics/kpis/values`). The gateway renders protobuf responses
