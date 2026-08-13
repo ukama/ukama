@@ -32,6 +32,7 @@ import LocationOnRounded from '@mui/icons-material/LocationOnRounded';
 import ManageAccountsRounded from '@mui/icons-material/ManageAccountsRounded';
 import SellRounded from '@mui/icons-material/SellRounded';
 import MonetizationOnRounded from '@mui/icons-material/MonetizationOnRounded';
+import MonitorHeartRounded from '@mui/icons-material/MonitorHeartRounded';
 import NetworkCheckRounded from '@mui/icons-material/NetworkCheckRounded';
 import NotificationsRounded from '@mui/icons-material/NotificationsRounded';
 import PaymentsRounded from '@mui/icons-material/PaymentsRounded';
@@ -70,6 +71,7 @@ const REGISTRY: Record<string, React.ComponentType<SvgIconProps>> = {
   bolt: BoltRounded,
   light_mode: LightModeRounded,
   settings_input_antenna: SettingsInputAntennaRounded,
+  monitor_heart: MonitorHeartRounded,
   network_check: NetworkCheckRounded,
   sync: SyncRounded,
   error: ErrorRounded,

@@ -21,6 +21,12 @@ export interface NavItem {
   icon: string;
   /** exact match only (e.g. lens home) instead of prefix matching */
   exact?: boolean;
+  /**
+   * Opens outside the console (new tab, no active-state matching). The
+   * Sidebar builds the real URL at render time — for the backend-status
+   * item it appends ?org={orgName} to NEXT_PUBLIC_STATUS_APP_URL.
+   */
+  external?: boolean;
 }
 
 export interface NavGroup {
@@ -97,11 +103,20 @@ export function lensFromPath(pathname: string): Lens {
 }
 
 /** Support is hidden in the agent lens (prototype shell.jsx). */
+/** Sidebar sentinel: external link to the status app (URL built in Sidebar). */
+export const BACKEND_STATUS_ITEM: NavItem = {
+  href: '/backend-status',
+  label: 'Backend status',
+  icon: 'monitor_heart',
+  external: true,
+};
+
 export function bottomNav(lens: Lens): NavItem[] {
   const settings = { href: `/${lens}/settings`, label: 'Settings', icon: 'settings' };
-  if (lens === 'customer') return [settings];
+  if (lens === 'customer') return [BACKEND_STATUS_ITEM, settings];
   return [
     { href: `/${lens}/support`, label: 'Support', icon: 'support_agent' },
+    BACKEND_STATUS_ITEM,
     settings,
   ];
 }
