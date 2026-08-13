@@ -49,9 +49,5 @@ phases:
         networks: net-001
         key: DATA_USAGE
         span: daily
-        # No op: DATA_USAGE is kind=flow, so the gateway derives SUM from the
-        # KPI's kind. The stored value is a per-window INCREMENT, so summing
-        # the window is the total consumed — LAST would report only the final
-        # window's increment. Omitting op is what exercises that default.
         tolerance_percent: 15
         timeout_seconds: 600

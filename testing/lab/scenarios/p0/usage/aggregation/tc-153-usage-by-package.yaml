@@ -44,9 +44,6 @@ phases:
       - type: wait
         seconds: 60
     checks:
-      # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
-      # The target's dimension is sent as a scope FILTER, so the gateway folds
-      # the per-SIM series to that grain and returns it in the row's scope.
       - type: usage_aggregate
         target: package
         package: shared_plan

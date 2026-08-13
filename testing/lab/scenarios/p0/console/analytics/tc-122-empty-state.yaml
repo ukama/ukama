@@ -24,9 +24,6 @@ runtime:
 phases:
   - name: verify_empty_network
     checks:
-      # DATA_USAGE is per Prometheus series: a network with no SIMs has no
-      # series, so the read returns NO ROW — not a row valued 0. Any row here
-      # would mean another network's usage leaked through the filter.
       - type: kpi_state_equals
         key: DATA_USAGE
         span: daily
