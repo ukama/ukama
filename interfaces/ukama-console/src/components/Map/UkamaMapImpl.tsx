@@ -12,10 +12,13 @@
  * Street / Satellite / Terrain base layers (free, no API key), colored status
  * pins, and optional per-marker popup content. Render via the dynamic
  * `UkamaMap` wrapper (ssr:false) so Leaflet never runs on the server.
+ *
+ * The base layer comes from the shared `useUiPrefs().mapView` preference, and
+ * switching layers in-map updates it, so every console map shows one view.
  */
 import 'leaflet/dist/leaflet.css';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useColorScheme } from '@mui/material/styles';
 import {
@@ -25,14 +28,10 @@ import {
   Popup,
   TileLayer,
   useMap,
+  useMapEvent,
 } from 'react-leaflet';
-
-/** Free, no-key basemaps. Street follows the app theme (CARTO dark in dark
- *  mode); satellite/terrain are naturally dark and stay the same. */
-const STREET_LIGHT =
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
-const STREET_DARK =
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+import { useUiPrefs } from '@/lib/store';
+import { MAP_VIEWS, basemapUrl, viewFromLabel, type MapView } from './basemaps';
 
 export interface UkamaMapMarker {
   id: string;
@@ -56,6 +55,8 @@ export interface UkamaMapProps {
   interactive?: boolean;
   /** Zoom on mouse-wheel scroll. Off by default so page scroll isn't trapped. */
   scrollWheelZoom?: boolean;
+  /** Show the in-map base layer switcher (off for small previews). */
+  layersControl?: boolean;
   /** Marker click handler (e.g. select a site on the home map). */
   onSelect?: (id: string) => void;
 }
@@ -121,6 +122,62 @@ function ViewSync({
   return null;
 }
 
+/** Base layers bound to the shared `mapView` preference. The switcher writes
+ *  the choice back to the store; a change from Settings swaps the active tile
+ *  layer in place, with no remount. */
+function BaseLayers({
+  view,
+  dark,
+  withControl,
+}: {
+  view: MapView;
+  dark: boolean;
+  withControl: boolean;
+}) {
+  const map = useMap();
+  const setMapView = useUiPrefs((s) => s.setMapView);
+  const layers = useRef<Partial<Record<MapView, L.TileLayer>>>({});
+
+  useMapEvent('baselayerchange', (e) => {
+    const next = viewFromLabel(e.name);
+    if (next) setMapView(next);
+  });
+
+  useEffect(() => {
+    const target = layers.current[view];
+    if (!target || map.hasLayer(target)) return;
+    MAP_VIEWS.forEach((v) => {
+      const layer = layers.current[v.id];
+      if (layer && layer !== target && map.hasLayer(layer)) {
+        map.removeLayer(layer);
+      }
+    });
+    map.addLayer(target);
+  }, [map, view]);
+
+  // Previews without the switcher only ever mount the selected layer.
+  if (!withControl) return <TileLayer url={basemapUrl(view, dark)} />;
+
+  return (
+    <LayersControl position="topright">
+      {MAP_VIEWS.map((v) => (
+        <LayersControl.BaseLayer
+          key={v.id}
+          name={v.label}
+          checked={v.id === view}
+        >
+          <TileLayer
+            url={basemapUrl(v.id, dark)}
+            ref={(layer) => {
+              layers.current[v.id] = layer ?? undefined;
+            }}
+          />
+        </LayersControl.BaseLayer>
+      ))}
+    </LayersControl>
+  );
+}
+
 const DEFAULT_CENTER: [number, number] = [0, 20];
 
 export default function UkamaMapImpl({
@@ -131,11 +188,12 @@ export default function UkamaMapImpl({
   fitToMarkers = true,
   interactive = true,
   scrollWheelZoom = false,
+  layersControl = true,
   onSelect,
 }: UkamaMapProps) {
   const { mode, systemMode } = useColorScheme();
   const dark = (mode === 'system' ? systemMode : mode) === 'dark';
-  const streetUrl = dark ? STREET_DARK : STREET_LIGHT;
+  const mapView = useUiPrefs((s) => s.mapView);
 
   // With no sites and no explicit center, open on the whole-world view so the
   // first paint isn't an empty ocean at a tight zoom.
@@ -157,17 +215,7 @@ export default function UkamaMapImpl({
       doubleClickZoom={interactive}
       attributionControl={false}
     >
-      <LayersControl position="topright">
-        <LayersControl.BaseLayer checked name="Street">
-          <TileLayer url={streetUrl} />
-        </LayersControl.BaseLayer>
-        <LayersControl.BaseLayer name="Satellite">
-          <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-        </LayersControl.BaseLayer>
-        <LayersControl.BaseLayer name="Terrain">
-          <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
-        </LayersControl.BaseLayer>
-      </LayersControl>
+      <BaseLayers view={mapView} dark={dark} withControl={layersControl} />
 
       {markers.map((m) => (
         <Marker

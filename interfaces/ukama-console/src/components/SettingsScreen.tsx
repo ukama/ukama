@@ -15,6 +15,7 @@ import { useAuth } from '@/lib/auth/context';
 import { useCurrency } from '@/lib/currency';
 import { countryLabel, initials } from '@/lib/format';
 import { roleLabel } from '@/lib/roles';
+import MapViewSetting from './MapViewSetting';
 import PageHeader from './PageHeader';
 
 function ReadField({ label, value }: { label: string; value: string }) {
@@ -29,6 +30,7 @@ function ReadField({ label, value }: { label: string; value: string }) {
 const TABS = [
   ['account', 'My account'],
   ['org', 'Organization'],
+  ['prefs', 'Preferences'],
 ] as const;
 
 export default function SettingsScreen() {
@@ -85,6 +87,12 @@ export default function SettingsScreen() {
             label="Currency"
             value={code ? `${code}${symbol ? ` (${symbol})` : ''}` : '—'}
           />
+        </div>
+      )}
+
+      {tab === 'prefs' && (
+        <div className="tile-grid" style={{ gridTemplateColumns: '1fr', maxWidth: 760 }}>
+          <MapViewSetting />
         </div>
       )}
     </div>
