@@ -7,6 +7,7 @@
  */
 import { Field, Float, InputType, ObjectType } from "type-graphql";
 
+
 /**
  * GraphQL types for the analytics gateway's generic KPI read API
  * (`GET /v1/analytics/kpis/values`). The gateway renders protobuf responses
@@ -125,6 +126,20 @@ export class KpiValuesInput {
 
   @Field({ nullable: true })
   networkId?: string;
+
+  @Field({ nullable: true })
+  siteId?: string;
+
+  /** Catalog package (data plan), not a sim's assignment of it. */
+  @Field({ nullable: true })
+  packageId?: string;
+
+  /** A sim's package ASSIGNMENT instance. */
+  @Field({ nullable: true })
+  simPackageId?: string;
+
+  @Field({ nullable: true })
+  iccid?: string;
 }
 
 /**
