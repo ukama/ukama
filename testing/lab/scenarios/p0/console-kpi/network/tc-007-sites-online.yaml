@@ -52,7 +52,7 @@ phases:
         connectivity: Offline
         seconds: 120
       - type: wait
-        seconds: 160
+        seconds: 90
     checks:
       - type: kpi_value
         key: SITES_ONLINE
@@ -73,7 +73,7 @@ phases:
         connectivity: Offline
         seconds: 120
       - type: wait
-        seconds: 160
+        seconds: 90
     checks:
       - type: kpi_value
         key: SITES_ONLINE
@@ -100,7 +100,7 @@ phases:
         connectivity: Online
         seconds: 120
       - type: wait
-        seconds: 160
+        seconds: 90
     checks:
       - type: kpi_value
         key: SITES_ONLINE
