@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-by-site
-description: Generate usage through two SIMs at one site and verify the site-scoped GraphQL KPI equals their combined traffic.
+description: Generate usage through two SIMs at one site and verify DATA_USAGE filtered by site_id folds both SIMs into one site total.
 seed: 4521
 suite: p0
 priority: p0
@@ -48,6 +48,5 @@ phases:
         target: site
         sites: site-001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

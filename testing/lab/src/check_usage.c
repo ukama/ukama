@@ -19,6 +19,8 @@
 
 #define ULAB_BYTES_PER_MB              1048576ULL
 #define ULAB_DEFAULT_OVERHEAD_PERCENT  15u
+/* Cap on the SIMs one subscriber-scoped usage check fans out over. */
+#define ULAB_MAX_SUBSCRIBER_SIMS       16
 
 static uint64_t mb_to_bytes(uint64_t mb) {
     return mb * ULAB_BYTES_PER_MB;
@@ -125,6 +127,11 @@ static int check_usage_aggregate(check_ctx_t *ctx,
     unsigned int poll;
     int found;
     int matched;
+    /* A subscriber is not a DATA_USAGE dimension: usage is per SIM, so a
+     * subscriber total is the sum of its SIMs' iccid-scoped rows. */
+    char sum_iccids[ULAB_MAX_SUBSCRIBER_SIMS][ULAB_MAX_ID];
+    size_t sum_count;
+    size_t s_i;
 
     memset(&selected, 0, sizeof(selected));
     memset(&value, 0, sizeof(value));
@@ -133,6 +140,7 @@ static int check_usage_aggregate(check_ctx_t *ctx,
     network = NULL;
     key = check->key;
     scope_key = NULL;
+    sum_count = 0;
 
     if (ulab_streq(check->target, "sim")) {
         ue_t *ue;
@@ -149,9 +157,9 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         network = world_network_by_ref(ctx->world, ue->network_ref);
         model_ue_value = model_ue_const(ctx->model, ue->ref);
         expected_mb = model_ue_value ? model_ue_value->used_mb : 0;
-        ulab_copy(scope_value, sizeof(scope_value), ue->bff_id);
-        scope_key = "sim_id";
-        if (key[0] == '\0') key = "USAGE_BY_SIM";
+        ulab_copy(scope_value, sizeof(scope_value), ue->iccid);
+        scope_key = "iccid";
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else if (ulab_streq(check->target, "subscriber")) {
         subscriber_t *subscriber;
 
@@ -174,9 +182,33 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         network = world_network_by_ref(ctx->world,
                                        subscriber->network_ref);
         expected_mb = model_subscriber_usage(ctx, subscriber->ref);
+        for (s_i = 0; s_i < ctx->world->ue_count; s_i++) {
+            const ue_t *sim = &ctx->world->ues[s_i];
+
+            if (!ulab_streq(sim->subscriber_ref, subscriber->ref) ||
+                sim->iccid[0] == '\0') {
+                continue;
+            }
+            if (sum_count >= ULAB_MAX_SUBSCRIBER_SIMS) {
+                selector_result_free(&selected);
+                snprintf(err->msg, sizeof(err->msg),
+                         "subscriber %.32s has more than %d sims",
+                         subscriber->ref, ULAB_MAX_SUBSCRIBER_SIMS);
+                return ULAB_ERR;
+            }
+            ulab_copy(sum_iccids[sum_count], ULAB_MAX_ID, sim->iccid);
+            sum_count++;
+        }
+        if (sum_count == 0) {
+            selector_result_free(&selected);
+            snprintf(err->msg, sizeof(err->msg),
+                     "subscriber %.32s has no sim with an iccid",
+                     subscriber->ref);
+            return ULAB_ERR;
+        }
         ulab_copy(scope_value, sizeof(scope_value), subscriber->bff_id);
-        scope_key = "subscriber_id";
-        if (key[0] == '\0') key = "USAGE_BY_SUBSCRIBER";
+        scope_key = "iccid";
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else if (ulab_streq(check->target, "package")) {
         package_t *pkg;
 
@@ -200,7 +232,7 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         expected_mb = model_package_usage(ctx, pkg);
         ulab_copy(scope_value, sizeof(scope_value), pkg->bff_id);
         scope_key = "package_id";
-        if (key[0] == '\0') key = "USAGE_BY_PACKAGE";
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else if (ulab_streq(check->target, "site")) {
         site_t *site;
 
@@ -216,7 +248,7 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         expected_mb = model_site_usage(ctx->model, ctx->world, site->ref);
         ulab_copy(scope_value, sizeof(scope_value), site->bff_id);
         scope_key = "site_id";
-        if (key[0] == '\0') key = "USAGE_BY_SITE";
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else if (ulab_streq(check->target, "network")) {
         if (selector_resolve_networks(ctx->world, &check->networks,
                                       &selected, err) ||
@@ -231,7 +263,9 @@ static int check_usage_aggregate(check_ctx_t *ctx,
                                           network->ref);
         ulab_copy(scope_value, sizeof(scope_value), network->bff_id);
         scope_key = "network_id";
-        if (key[0] == '\0') key = "USAGE_BY_NETWORK";
+        /* DATA_USAGE is the single generic usage KPI; "by network" is the
+         * network_id filter folding its per-iccid scope, not a separate key. */
+        if (key[0] == '\0') key = "DATA_USAGE";
     } else {
         snprintf(err->msg, sizeof(err->msg),
                  "unsupported usage aggregate target %.64s", check->target);
@@ -253,9 +287,37 @@ static int check_usage_aggregate(check_ctx_t *ctx,
         double expected;
         double tolerance;
 
-        if (bff_get_kpi_value(ctx->bff, key,
+        /* op is passed through only when the scenario pins one. Left empty the
+         * gateway derives the aggregation from the KPI's kind (flow -> SUM),
+         * which is the contract the scenarios should be exercising; hardcoding
+         * SUM here would hide a wrong kind in the spec. */
+        if (sum_count > 0) {
+            double total = 0.0;
+
+            found = 0;
+            for (s_i = 0; s_i < sum_count; s_i++) {
+                bff_kpi_value_t part;
+                int part_found = 0;
+
+                memset(&part, 0, sizeof(part));
+                if (bff_get_kpi_value(ctx->bff, key,
+                                      check->span[0] ? check->span : "daily",
+                                      check->op[0] ? check->op : NULL,
+                                      network->bff_id, "iccid",
+                                      sum_iccids[s_i], &part, &part_found,
+                                      err)) {
+                    return ULAB_ERR;
+                }
+                if (part_found) {
+                    total += part.value;
+                    value = part;
+                    found = 1;
+                }
+            }
+            value.value = total;
+        } else if (bff_get_kpi_value(ctx->bff, key,
                               check->span[0] ? check->span : "daily",
-                              check->op[0] ? check->op : "SUM",
+                              check->op[0] ? check->op : NULL,
                               network->bff_id, scope_key, scope_value,
                               &value, &found, err)) {
             return ULAB_ERR;

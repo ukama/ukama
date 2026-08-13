@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-data-volume
-description: Generate known traffic on two SIMs and verify the cumulative USAGE_BY_NETWORK Console KPI equals their GraphQL-visible usage.
+description: Generate known traffic on two SIMs and verify the DATA_USAGE Console KPI, folded to the network by a network_id filter, equals their GraphQL-visible usage.
 seed: 4710
 suite: p0
 priority: p0
@@ -47,10 +47,7 @@ phases:
       - type: usage_aggregate
         target: network
         networks: net-001
-        key: USAGE_BY_NETWORK
+        key: DATA_USAGE
         span: daily
-        # USAGE_BY_NETWORK is a cumulative counter; the Console tile reads
-        # the latest rollup rather than summing cumulative samples again.
-        op: LAST
         tolerance_percent: 15
         timeout_seconds: 600
