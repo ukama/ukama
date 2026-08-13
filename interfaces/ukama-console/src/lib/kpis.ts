@@ -28,7 +28,11 @@ export const KPI_KEYS = {
   revenue: 'REVENUE',
   mrr: 'MRR',
   arpu: 'ARPU',
-  usageByNetwork: 'USAGE_BY_NETWORK',
+  // DATA_USAGE is the single generic usage KPI (it replaced USAGE_BY_NETWORK).
+  // It is scoped per network×site×package×assignment×iccid; passing a
+  // networkId filter folds it to one per-network total, so "by network" is a
+  // read-time filter rather than a separate key.
+  dataUsage: 'DATA_USAGE',
   dataSold: 'DATA_SOLD',
   packageSales: 'PACKAGE_SALES',
 } as const;
