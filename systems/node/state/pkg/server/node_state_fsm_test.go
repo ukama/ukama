@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
+	"github.com/ukama/ukama/systems/node/state/mocks"
 )
 
 const nodeStateConfigPath = "../nodeState.json"
@@ -215,4 +217,103 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 		assert.Equal(t, "Initializing", resynced.CurrentState,
 			"resynced instance must transition from the stored state")
 	})
+}
+
+func TestIsHealthEvent(t *testing.T) {
+	assert.True(t, isHealthEvent(NodeStateEventPlatformReady))
+	assert.True(t, isHealthEvent(NodeStateEventFault))
+	assert.False(t, isHealthEvent("online"))
+	assert.False(t, isHealthEvent("assign"))
+	assert.False(t, isHealthEvent(""))
+}
+
+func TestShouldLatch(t *testing.T) {
+	t.Run("latches health events only while the node is Unknown", func(t *testing.T) {
+		assert.True(t, shouldLatch("Unknown", NodeStateEventPlatformReady))
+		assert.True(t, shouldLatch("Unknown", NodeStateEventFault))
+	})
+
+	t.Run("never latches non health events", func(t *testing.T) {
+		assert.False(t, shouldLatch("Unknown", "online"))
+		assert.False(t, shouldLatch("Unknown", "assign"))
+	})
+
+	t.Run("never latches once the node has come up", func(t *testing.T) {
+		for _, state := range []string{
+			"Initializing", "Ready", "Configuring",
+			"Operational", "Updating", "Faulty", "Offboarded",
+		} {
+			assert.False(t, shouldLatch(state, NodeStateEventPlatformReady),
+				"a duplicate platformready in %s must not be latched", state)
+			assert.False(t, shouldLatch(state, NodeStateEventFault),
+				"a duplicate fault in %s must not be latched", state)
+		}
+	})
+}
+
+func TestNodeStateFsm_PlatformReadyBeforeNodeIsUpIsLatched(t *testing.T) {
+	repo := &mocks.StateRepo{}
+	repo.On("SetLatchedEvent", mock.Anything, mock.Anything).Return(nil).Maybe()
+	repo.On("TakeLatchedEvent", mock.Anything).Return("", nil).Maybe()
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	nodeId := "test-node-ready-race"
+
+	t.Run("platformready in Unknown is latched rather than dropped", func(t *testing.T) {
+		instance, err := srv.getOrCreateInstance(nodeId, "Unknown", "on")
+		require.NoError(t, err)
+
+		require.NoError(t, instance.Transition(NodeStateEventPlatformReady))
+		assert.Equal(t, "Unknown", instance.CurrentState,
+			"platformready must not move a node out of Unknown")
+
+		srv.latchHealthEvent(nodeId, NodeStateEventPlatformReady)
+
+		latched, ok := srv.takeLatchedHealthEvent(nodeId)
+		require.True(t, ok)
+		assert.Equal(t, NodeStateEventPlatformReady, latched)
+	})
+
+	t.Run("latched event is consumed only once", func(t *testing.T) {
+		_, ok := srv.takeLatchedHealthEvent(nodeId)
+		assert.False(t, ok, "latch must be cleared after being taken")
+	})
+
+	t.Run("replaying the latched platformready reaches Ready", func(t *testing.T) {
+		instance, err := srv.getOrCreateInstance("test-node-replay", "Unknown", "on")
+		require.NoError(t, err)
+
+		require.NoError(t, instance.Transition("online"))
+		require.Equal(t, "Initializing", instance.CurrentState)
+
+		require.NoError(t, instance.Transition(NodeStateEventPlatformReady))
+		assert.Equal(t, "Ready", instance.CurrentState,
+			"the latched platformready replayed after the node came up must reach Ready")
+	})
+}
+
+func TestNodeStateFsm_LatchSurvivesRestart(t *testing.T) {
+	repo := &mocks.StateRepo{}
+	repo.On("TakeLatchedEvent", "restarted-node").Return(NodeStateEventPlatformReady, nil).Once()
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	latched, ok := srv.takeLatchedHealthEvent("restarted-node")
+
+	require.True(t, ok, "a latch persisted before the restart must still be found")
+	assert.Equal(t, NodeStateEventPlatformReady, latched)
+	repo.AssertExpectations(t)
 }
