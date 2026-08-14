@@ -12,8 +12,12 @@ enum NodeConnectivity {
 
 enum NodeState {
     Unknown =  0;
-    Configured = 1;
+    Configuring = 1;
     Operational     = 2;
     Faulty = 3;
+    Initializing = 4;
+    Ready = 5;
+    Updating = 6;
+    Offboarded = 7;
 }
 
