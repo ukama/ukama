@@ -1630,7 +1630,7 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SimActivePackageStillExists", func(t *testing.T) {
+	t.Run("SimInUsePackageStillExists", func(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 		simRepo := &mocks.SimRepo{}
 

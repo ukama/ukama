@@ -1212,7 +1212,7 @@ func subscriberNameAndEmail(ctx context.Context, subscriberId string,
 
 func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	log.Infof("Setting package %v as active for sim: %v", reqPackageId, reqSimId)
+	log.Infof("Setting package %v as in-use for sim: %v", reqPackageId, reqSimId)
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
@@ -1221,12 +1221,12 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot set active package on non active sim: sim's status is %s", sim.Status)
+			"cannot set package as in-use on an off-service sim: sim's status is %s", sim.Status)
 	}
 
 	if sim.Package.Id != uuid.Nil {
 		return status.Errorf(codes.FailedPrecondition,
-			"sim currently has package %v as active. This package needs to expire first",
+			"sim currently has package %v as in-use. This package needs to fully used first",
 			sim.Package.Id)
 	}
 
@@ -1249,12 +1249,12 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	if pkg.IsExpired {
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot set expired package (%s) as active", pkg.Id)
+			"cannot set expired package (%s) as in-use", pkg.Id)
 	}
 
 	if pkg.IsCurrentlyInUse {
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot set already active package (%s) as active", pkg.Id)
+			"cannot set already in-use package (%s) as in-use", pkg.Id)
 	}
 
 	// We validate package duration to make sure it is greater than 0 min and lesser than 1000 years
@@ -1282,7 +1282,7 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	if err != nil {
 		return status.Errorf(codes.Internal,
-			"failed to set package as active. Error %s", err.Error())
+			"failed to set package as in-use. Error %s", err.Error())
 	}
 
 	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
@@ -1337,6 +1337,8 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 }
 
 func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.PackageRepo) error {
+	log.Infof("Unsetting package %v as in-use for sim: %v", reqPackageId, reqSimId)
+
 	packageId, err := uuid.FromString(reqPackageId)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument,
@@ -1356,7 +1358,7 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 
 	if !pckg.IsCurrentlyInUse {
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot set inactive package (%s) as inactive", pckg.Id)
+			"cannot set not in-use package (%s) as not in-use", pckg.Id)
 	}
 
 	if pckg.IsExpired {
@@ -1364,20 +1366,20 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 			"package (%s) has already been marked as expired", pckg.Id)
 	}
 
-	packageToSetInactive := &sims.Package{
+	inUsePackageToUnset := &sims.Package{
 		Id:               pckg.Id,
 		IsCurrentlyInUse: false,
 	}
 
-	err = packageRepo.Update(packageToSetInactive, func(pckg *sims.Package, tx *gorm.DB) error {
-		packageToSetInactive.EndDate = time.Now().UTC()
+	err = packageRepo.Update(inUsePackageToUnset, func(pckg *sims.Package, tx *gorm.DB) error {
+		inUsePackageToUnset.EndDate = time.Now().UTC()
 
 		return nil
 	})
 
 	if err != nil {
 		return status.Errorf(codes.Internal,
-			"failed to set package as inactive. Error %s", err.Error())
+			"failed to unset in-use package as . Error %s", err.Error())
 	}
 
 	return nil
