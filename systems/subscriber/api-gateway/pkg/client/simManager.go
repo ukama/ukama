@@ -144,21 +144,21 @@ func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, erro
 }
 
 func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
-	toEndDate string, isActive, asExpired, sort bool, count uint32) (*pb.ListPackagesForSimResponse, error) {
+	toEndDate string, isCurrentlyInUse, isExpired, sort bool, count uint32) (*pb.ListPackagesForSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
 	return sm.client.ListPackagesForSim(ctx, &pb.ListPackagesForSimRequest{
-		SimId:         simId,
-		DataPlanId:    dataPlanId,
-		FromStartDate: fromStartDate,
-		ToStartDate:   toStartDate,
-		FromEndDate:   fromEndDate,
-		ToEndDate:     toEndDate,
-		IsActive:      isActive,
-		AsExpired:     asExpired,
-		Sort:          sort,
-		Count:         count,
+		SimId:            simId,
+		DataPlanId:       dataPlanId,
+		FromStartDate:    fromStartDate,
+		ToStartDate:      toStartDate,
+		FromEndDate:      fromEndDate,
+		ToEndDate:        toEndDate,
+		IsCurrentlyInUse: isCurrentlyInUse,
+		IsExpired:        isExpired,
+		Sort:             sort,
+		Count:            count,
 	})
 }
 

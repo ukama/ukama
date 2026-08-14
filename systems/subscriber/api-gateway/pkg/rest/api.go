@@ -201,16 +201,16 @@ type ListSimsReq struct {
 }
 
 type ListPackagesForSimReq struct {
-	SimId         string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
-	DataPlanId    string `form:"data_plan_id" json:"data_plan_id" query:"data_plan_id" binding:"required"`
-	FromStartDate string `form:"from_start_date" json:"from_start_date" query:"from_start_date" binding:"required"`
-	ToStartDate   string `form:"to_start_date" json:"to_start_date" query:"to_start_date" binding:"required"`
-	FromEndDate   string `form:"from_end_date" json:"from_end_date" query:"from_end_date" binding:"required"`
-	ToEndDate     string `form:"to_end_date" json:"to_end_date" query:"to_end_date" binding:"required"`
-	IsActive      bool   `form:"is_active" json:"is_active" query:"is_active" binding:"required"`
-	AsExpired     bool   `form:"as_expired" json:"as_expired" query:"as_expired" binding:"required"`
-	Count         uint32 `form:"count" json:"count" query:"count" binding:"required"`
-	Sort          bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
+	SimId            string `example:"{{SimUUID}}" form:"sim_id" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
+	DataPlanId       string `form:"data_plan_id" json:"data_plan_id" query:"data_plan_id" binding:"required"`
+	FromStartDate    string `form:"from_start_date" json:"from_start_date" query:"from_start_date" binding:"required"`
+	ToStartDate      string `form:"to_start_date" json:"to_start_date" query:"to_start_date" binding:"required"`
+	FromEndDate      string `form:"from_end_date" json:"from_end_date" query:"from_end_date" binding:"required"`
+	ToEndDate        string `form:"to_end_date" json:"to_end_date" query:"to_end_date" binding:"required"`
+	IsCurrentlyInUse bool   `form:"is_currently_in_use" json:"is_currently_in_use" query:"is_currently_in_use" binding:"required"`
+	IsExpired        bool   `form:"is_expired" json:"is_expired" query:"is_expired" binding:"required"`
+	Count            uint32 `form:"count" json:"count" query:"count" binding:"required"`
+	Sort             bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
 }
 
 type GetSimTokenReq struct {

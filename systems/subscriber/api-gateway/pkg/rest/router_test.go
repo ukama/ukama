@@ -111,11 +111,11 @@ const (
 
 // Test counts and flags
 const (
-	testCount         = 10
-	testSort          = true
-	testIsActive      = true
-	testIsPhysical    = false
-	testIsPhysicalSim = true
+	testCount            = 10
+	testSort             = true
+	testIsCurrentlyInUse = true
+	testIsPhysical       = false
+	testIsPhysicalSim    = true
 )
 
 var defaultCors = cors.Config{
@@ -985,7 +985,9 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 
 func TestRouter_listPackagesForSim(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/sim/"+testSimId+"/package?data_plan_id="+testDataPlanId+"&is_active="+strconv.FormatBool(testIsActive)+"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
+	req, _ := http.NewRequest("GET", "/v1/sim/"+testSimId+"/package?data_plan_id="+
+		testDataPlanId+"&is_currently_in_use="+strconv.FormatBool(testIsCurrentlyInUse)+
+		"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -1000,11 +1002,11 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 
 	// Mock the gRPC client call with the correct request structure
 	preq := &smPb.ListPackagesForSimRequest{
-		SimId:      testSimId,
-		DataPlanId: testDataPlanId,
-		IsActive:   testIsActive,
-		Count:      testCount,
-		Sort:       testSort,
+		SimId:            testSimId,
+		DataPlanId:       testDataPlanId,
+		IsCurrentlyInUse: testIsCurrentlyInUse,
+		Count:            testCount,
+		Sort:             testSort,
 	}
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)

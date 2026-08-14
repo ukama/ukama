@@ -74,7 +74,7 @@ type simManager interface {
 	RemovePackageForSim(req *simMangPb.RemovePackageRequest) (*simMangPb.RemovePackageResponse, error)
 	TerminateSim(simId string) (*simMangPb.TerminateSimResponse, error)
 	ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
-		toEndDate string, isActive, asExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
+		toEndDate string, isCurrentlyInUse, isExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
 	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
 	SetInactivePackageForSim(req *simMangPb.SetInactivePackageRequest) (*simMangPb.SetInactivePackageResponse, error)
 	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
@@ -401,7 +401,7 @@ func (r *Router) setInactivePackageForSim(c *gin.Context, req *RemovePkgFromSimR
 
 func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) (*simMangPb.ListPackagesForSimResponse, error) {
 	return r.clients.sm.ListPackagesForSim(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate, req.FromEndDate,
-		req.ToEndDate, req.IsActive, req.AsExpired, req.Sort, req.Count)
+		req.ToEndDate, req.IsCurrentlyInUse, req.IsExpired, req.Sort, req.Count)
 }
 
 // Deprecated: Use pkg.rest.Router.listPackagesForSim instead.
