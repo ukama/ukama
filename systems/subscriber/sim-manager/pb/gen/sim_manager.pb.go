@@ -953,19 +953,19 @@ func (*AddPackageResponse) Descriptor() ([]byte, []int) {
 }
 
 type ListPackagesForSimRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	DataPlanId    string                 `protobuf:"bytes,2,opt,name=dataPlanId,json=data_plan_id,proto3" json:"dataPlanId,omitempty"`
-	FromStartDate string                 `protobuf:"bytes,3,opt,name=fromStartDate,json=from_start_date,proto3" json:"fromStartDate,omitempty"`
-	ToStartDate   string                 `protobuf:"bytes,4,opt,name=toStartDate,json=to_start_date,proto3" json:"toStartDate,omitempty"`
-	FromEndDate   string                 `protobuf:"bytes,5,opt,name=fromEndDate,json=from_end_date,proto3" json:"fromEndDate,omitempty"`
-	ToEndDate     string                 `protobuf:"bytes,6,opt,name=toEndDate,json=to_end_date,proto3" json:"toEndDate,omitempty"`
-	IsActive      bool                   `protobuf:"varint,7,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
-	AsExpired     bool                   `protobuf:"varint,8,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
-	Count         uint32                 `protobuf:"varint,9,opt,name=count,proto3" json:"count,omitempty"`
-	Sort          bool                   `protobuf:"varint,10,opt,name=sort,proto3" json:"sort,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	SimId            string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
+	DataPlanId       string                 `protobuf:"bytes,2,opt,name=dataPlanId,json=data_plan_id,proto3" json:"dataPlanId,omitempty"`
+	FromStartDate    string                 `protobuf:"bytes,3,opt,name=fromStartDate,json=from_start_date,proto3" json:"fromStartDate,omitempty"`
+	ToStartDate      string                 `protobuf:"bytes,4,opt,name=toStartDate,json=to_start_date,proto3" json:"toStartDate,omitempty"`
+	FromEndDate      string                 `protobuf:"bytes,5,opt,name=fromEndDate,json=from_end_date,proto3" json:"fromEndDate,omitempty"`
+	ToEndDate        string                 `protobuf:"bytes,6,opt,name=toEndDate,json=to_end_date,proto3" json:"toEndDate,omitempty"`
+	IsCurrentlyInUse bool                   `protobuf:"varint,7,opt,name=isCurrentlyInUse,json=is_currently_in_use,proto3" json:"isCurrentlyInUse,omitempty"`
+	IsExpired        bool                   `protobuf:"varint,8,opt,name=isExpired,json=is_expired,proto3" json:"isExpired,omitempty"`
+	Count            uint32                 `protobuf:"varint,9,opt,name=count,proto3" json:"count,omitempty"`
+	Sort             bool                   `protobuf:"varint,10,opt,name=sort,proto3" json:"sort,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ListPackagesForSimRequest) Reset() {
@@ -1040,16 +1040,16 @@ func (x *ListPackagesForSimRequest) GetToEndDate() string {
 	return ""
 }
 
-func (x *ListPackagesForSimRequest) GetIsActive() bool {
+func (x *ListPackagesForSimRequest) GetIsCurrentlyInUse() bool {
 	if x != nil {
-		return x.IsActive
+		return x.IsCurrentlyInUse
 	}
 	return false
 }
 
-func (x *ListPackagesForSimRequest) GetAsExpired() bool {
+func (x *ListPackagesForSimRequest) GetIsExpired() bool {
 	if x != nil {
-		return x.AsExpired
+		return x.IsExpired
 	}
 	return false
 }
@@ -1705,8 +1705,8 @@ type Package struct {
 	InitialData      uint64                 `protobuf:"varint,5,opt,name=initialData,json=initial_data,proto3" json:"initialData,omitempty"`
 	UsedDataAtExpiry uint64                 `protobuf:"varint,6,opt,name=usedDataAtExpiry,json=used_data_at_expiry,proto3" json:"usedDataAtExpiry,omitempty"`
 	DefaultDuration  uint64                 `protobuf:"varint,7,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
-	IsActive         bool                   `protobuf:"varint,8,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
-	AsExpired        bool                   `protobuf:"varint,9,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
+	IsCurrentlyInUse bool                   `protobuf:"varint,8,opt,name=isCurrentlyInUse,json=is_currently_in_use,proto3" json:"isCurrentlyInUse,omitempty"`
+	IsExpired        bool                   `protobuf:"varint,9,opt,name=isExpired,json=is_expired,proto3" json:"isExpired,omitempty"`
 	CreatedAt        string                 `protobuf:"bytes,10,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
 	UpdatedAt        string                 `protobuf:"bytes,11,opt,name=updatedAt,json=updated_at,proto3" json:"updatedAt,omitempty"`
 	unknownFields    protoimpl.UnknownFields
@@ -1792,16 +1792,16 @@ func (x *Package) GetDefaultDuration() uint64 {
 	return 0
 }
 
-func (x *Package) GetIsActive() bool {
+func (x *Package) GetIsCurrentlyInUse() bool {
 	if x != nil {
-		return x.IsActive
+		return x.IsCurrentlyInUse
 	}
 	return false
 }
 
-func (x *Package) GetAsExpired() bool {
+func (x *Package) GetIsExpired() bool {
 	if x != nil {
-		return x.AsExpired
+		return x.IsExpired
 	}
 	return false
 }
@@ -2058,7 +2058,7 @@ const file_sim_manager_proto_rawDesc = "" +
 	"package_id\x12\x1d\n" +
 	"\tstartDate\x18\x03 \x01(\tR\n" +
 	"start_date\"\x14\n" +
-	"\x12AddPackageResponse\"\xd5\x02\n" +
+	"\x12AddPackageResponse\"\xe7\x02\n" +
 	"\x19ListPackagesForSimRequest\x12 \n" +
 	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12 \n" +
 	"\n" +
@@ -2066,10 +2066,10 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\rfromStartDate\x18\x03 \x01(\tR\x0ffrom_start_date\x12\"\n" +
 	"\vtoStartDate\x18\x04 \x01(\tR\rto_start_date\x12\"\n" +
 	"\vfromEndDate\x18\x05 \x01(\tR\rfrom_end_date\x12\x1e\n" +
-	"\ttoEndDate\x18\x06 \x01(\tR\vto_end_date\x12\x1b\n" +
-	"\bisActive\x18\a \x01(\bR\tis_active\x12\x1d\n" +
-	"\tasExpired\x18\b \x01(\bR\n" +
-	"as_expired\x12\x14\n" +
+	"\ttoEndDate\x18\x06 \x01(\tR\vto_end_date\x12-\n" +
+	"\x10isCurrentlyInUse\x18\a \x01(\bR\x13is_currently_in_use\x12\x1d\n" +
+	"\tisExpired\x18\b \x01(\bR\n" +
+	"is_expired\x12\x14\n" +
 	"\x05count\x18\t \x01(\rR\x05count\x12\x12\n" +
 	"\x04sort\x18\n" +
 	" \x01(\bR\x04sort\"b\n" +
@@ -2109,7 +2109,7 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x06region\x18\x06 \x01(\tR\x06region\"k\n" +
 	"\rUsageResponse\x12-\n" +
 	"\x05usage\x18\x01 \x01(\v2\x17.google.protobuf.StructR\x05usage\x12+\n" +
-	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\xff\x02\n" +
+	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\x91\x03\n" +
 	"\aPackage\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12(\n" +
 	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
@@ -2119,10 +2119,10 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\aendDate\x18\x04 \x01(\tR\bend_date\x12!\n" +
 	"\vinitialData\x18\x05 \x01(\x04R\finitial_data\x12-\n" +
 	"\x10usedDataAtExpiry\x18\x06 \x01(\x04R\x13used_data_at_expiry\x12)\n" +
-	"\x0fdefaultDuration\x18\a \x01(\x04R\x10default_duration\x12\x1b\n" +
-	"\bisActive\x18\b \x01(\bR\tis_active\x12\x1d\n" +
-	"\tasExpired\x18\t \x01(\bR\n" +
-	"as_expired\x12\x1d\n" +
+	"\x0fdefaultDuration\x18\a \x01(\x04R\x10default_duration\x12-\n" +
+	"\x10isCurrentlyInUse\x18\b \x01(\bR\x13is_currently_in_use\x12\x1d\n" +
+	"\tisExpired\x18\t \x01(\bR\n" +
+	"is_expired\x12\x1d\n" +
 	"\tcreatedAt\x18\n" +
 	" \x01(\tR\n" +
 	"created_at\x12\x1d\n" +

@@ -151,8 +151,8 @@ message ListPackagesForSimRequest{
    string toStartDate = 4 [json_name = "to_start_date"];
    string fromEndDate = 5 [json_name = "from_end_date"];
    string toEndDate = 6 [json_name = "to_end_date"];
-   bool isActive = 7 [json_name = "is_active"];
-   bool asExpired = 8 [json_name = "as_expired"];
+   bool isCurrentlyInUse = 7 [json_name = "is_currently_in_use"];
+   bool isExpired = 8 [json_name = "is_expired"];
    uint32 count = 9;
    bool sort = 10;
 }
@@ -231,8 +231,8 @@ message Package {
     uint64 initialData = 5 [json_name="initial_data"];
     uint64 usedDataAtExpiry = 6 [json_name="used_data_at_expiry"];
     uint64 defaultDuration = 7 [json_name = "default_duration"]; /// in minutes, cannot be more than 1000 years
-    bool isActive = 8  [json_name = "is_active"];
-    bool asExpired = 9  [json_name = "as_expired"];
+    bool isCurrentlyInUse = 8  [json_name = "is_currently_in_use"];
+    bool isExpired = 9  [json_name = "is_expired"];
     string createdAt = 10 [json_name = "created_at"];
     string updatedAt = 11 [json_name = "updated_at"];
 }
