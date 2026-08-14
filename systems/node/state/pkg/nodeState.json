@@ -6,11 +6,11 @@
     {
       "name": "Unknown",
       "description": "Node is registered but nothing has been heard from it yet",
-      "events": ["online", "offline", "reboot", "hello", "offboard"],
+      "events": ["online", "offline", "reboot", "offboard"],
       "transition": [
         {
           "to_state": "Initializing",
-          "trigger": ["hello"]
+          "trigger": ["online"]
         },
         {
           "to_state": "Offboarded",

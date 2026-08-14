@@ -43,6 +43,7 @@ func NewConfig(name string) *Config {
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign],
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete],
 			},
 		},
 	}

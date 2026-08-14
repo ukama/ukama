@@ -35,11 +35,17 @@ import (
 	 NodeNotifyEventReboot = "reboot"
 	 NodeNotifyEventOnline = "Node Online"
 	 NodeNotifyEventAdded  = "Node added"
-	 
+
+	 NodeStateEventPlatformReady = "platformready"
+
 	 DefaultSubstate = "on"
      ForceTransitionRoutingKeyTemplate = "event.cloud.local.{{ .Org}}.node.state.node.force"
 	 NotifyEventRoutingKeyTemplate     = "event.cloud.local.{{ .Org}}.node.notify.notification.store"
  )
+
+ var notifyEventToStateEvent = map[string]string{
+	 NodeNotifyEventReady: NodeStateEventPlatformReady,
+ }
  
 
  type StateEventServer struct {
@@ -190,7 +196,10 @@ import (
  
 	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
 		 return n.handleNodeReleaseEvent(ctx, e)
- 
+
+	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
+		 return n.handleNodeDeleteEvent(ctx, e)
+
 	 case msgbus.PrepareRoute(n.orgName, ForceTransitionRoutingKeyTemplate):
 		 return n.handleForceTransitionEvent(ctx, e)
 		 
@@ -251,6 +260,18 @@ import (
 	 return &epb.EventResponse{}, nil
  }
  
+ func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	 msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	 if err != nil {
+		 return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
+	 }
+	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventDelete].Name
+	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		 return nil, fmt.Errorf("failed to process node delete event: %w", err)
+	 }
+	 return &epb.EventResponse{}, nil
+ }
+
  func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	 msg, err := n.UnmarshalTransitionEvent(e.Msg)
 	 if err != nil {
@@ -334,9 +355,14 @@ import (
 		 return nil
 	 }
 	 
-	 log.Infof("Processing notification event %s for node %s", valueStr, msg.NodeId)
-	 
-	 if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
+	 eventName := valueStr
+	 if mapped, ok := notifyEventToStateEvent[valueStr]; ok {
+		 eventName = mapped
+	 }
+
+	 log.Infof("Processing notification event %s as %s for node %s", valueStr, eventName, msg.NodeId)
+
+	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
 		 return fmt.Errorf("failed to process %s notification event: %w", valueStr, err)
 	 }
 	 
