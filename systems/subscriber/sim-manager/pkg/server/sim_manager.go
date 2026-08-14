@@ -261,8 +261,20 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			"failed to allocate sim to subscriber. Error %s", err.Error())
 	}
 
+	// totalData is in bytes and packageInfo.DataVolume depends on pack.DataUnit
+	dataUnit := ukama.ParseDataUnitType(packageInfo.DataUnit)
+	if dataUnit == ukama.DataUnitTypeUnknown {
+		log.Errorf("Invalid data unit type (%s) for data package (%s)", packageInfo.DataUnit, packageInfo.Id)
+
+		return nil, fmt.Errorf("invalid data unit type (%s) for data package (%s)", packageInfo.DataUnit, packageInfo.Id)
+	}
+
+	dataUnitInBytes := ukama.ReturnDataUnitsInBytes(dataUnit)
+	totalData := packageInfo.DataVolume * dataUnitInBytes
+
 	firstPackage := &sims.Package{
 		PackageId:       packageId,
+		InitialData:     totalData,
 		IsActive:        true,
 		DefaultDuration: packageInfo.Duration,
 	}
@@ -1067,9 +1079,21 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 			sim.Type, pkgInfoSimType.String())
 	}
 
+	// totalData is in bytes and pkgInfo.DataVolume depends on pack.DataUnit
+	dataUnit := ukama.ParseDataUnitType(pkgInfo.DataUnit)
+	if dataUnit == ukama.DataUnitTypeUnknown {
+		log.Errorf("Invalid data unit type (%s) for data package (%s)", pkgInfo.DataUnit, pkgInfo.Id)
+
+		return fmt.Errorf("invalid data unit type (%s) for data package (%s)", pkgInfo.DataUnit, pkgInfo.Id)
+	}
+
+	dataUnitInBytes := ukama.ReturnDataUnitsInBytes(dataUnit)
+	totalData := pkgInfo.DataVolume * dataUnitInBytes
+
 	pkg := &sims.Package{
 		SimId:           sim.Id,
 		PackageId:       packageUuid,
+		InitialData:     totalData,
 		IsActive:        false,
 		DefaultDuration: pkgInfo.Duration,
 	}
@@ -1587,13 +1611,15 @@ func dbSimsToPbSims(sims []sims.Sim) []*pb.Sim {
 
 func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 	res := &pb.Package{
-		Id:              pkg.Id.String(),
-		PackageId:       pkg.PackageId.String(),
-		IsActive:        pkg.IsActive,
-		DefaultDuration: pkg.DefaultDuration,
-		AsExpired:       pkg.AsExpired,
-		CreatedAt:       pkg.CreatedAt.Format(time.RFC3339),
-		UpdatedAt:       pkg.UpdatedAt.Format(time.RFC3339),
+		Id:               pkg.Id.String(),
+		PackageId:        pkg.PackageId.String(),
+		InitialData:      pkg.InitialData,
+		UsedDataAtExpiry: pkg.UsedDataAtExpiry,
+		IsActive:         pkg.IsActive,
+		DefaultDuration:  pkg.DefaultDuration,
+		AsExpired:        pkg.AsExpired,
+		CreatedAt:        pkg.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:        pkg.UpdatedAt.Format(time.RFC3339),
 	}
 
 	if !pkg.EndDate.IsZero() {

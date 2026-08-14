@@ -1004,6 +1004,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		pkg := &sims.Package{
 			SimId:           sim.Id,
 			PackageId:       packageId,
+			InitialData:     10737418240,
 			IsActive:        true,
 			DefaultDuration: 3600,
 		}

@@ -78,9 +78,13 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 
 		packageClient.On("Get", mock.Anything).
 			Return(&cdplan.PackageInfo{
-				Duration: 1,
-				IsActive: true,
-				SimType:  ukama.SimTypeUkamaData.String(),
+				Duration:   1,
+				IsActive:   true,
+				SimType:    ukama.SimTypeUkamaData.String(),
+				DataVolume: 10,
+				DataUnit:   "GB",
+				Name:       "Ukama Package",
+				Amount:     100,
 			}, nil)
 
 		orgClient.On("Get", mock.Anything).
