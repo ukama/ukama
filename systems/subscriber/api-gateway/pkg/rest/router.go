@@ -71,21 +71,21 @@ type simManager interface {
 		isPhysical, sort bool, count uint32) (*simMangPb.ListSimsResponse, error)
 	ToggleSimStatus(simId string, status string) (*simMangPb.ToggleSimStatusResponse, error)
 	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.AddPackageResponse, error)
-	RemovePackageForSim(req *simMangPb.RemovePackageRequest) (*simMangPb.RemovePackageResponse, error)
+	RemovePackageForSim(req *simMangPb.PackageRequest) (*simMangPb.PackageResponse, error)
 	TerminateSim(simId string) (*simMangPb.TerminateSimResponse, error)
 	ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
 		toEndDate string, isCurrentlyInUse, isExpired, sort bool, count uint32) (*simMangPb.ListPackagesForSimResponse, error)
-	SetActivePackageForSim(req *simMangPb.SetActivePackageRequest) (*simMangPb.SetActivePackageResponse, error)
-	SetInactivePackageForSim(req *simMangPb.SetInactivePackageRequest) (*simMangPb.SetInactivePackageResponse, error)
+	SetPackageInUseForSim(req *simMangPb.PackageRequest) (*simMangPb.PackageResponse, error)
+	UnsetPackageInUseForSim(req *simMangPb.PackageRequest) (*simMangPb.PackageResponse, error)
 	GetUsages(iccid, simType, cdrType, from, to, region string) (*simMangPb.UsageResponse, error)
+	GetPackagesForSim(simId string) (*simMangPb.GetPackagesForSimResponse, error)
+	GetSimToken(iccid string) (*simMangPb.SimTokenResponse, error)
 
 	// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
 	GetSimsBySub(subscriberId string) (*simMangPb.GetSimsBySubscriberResponse, error)
 	// Deprecated: Use pkg.client.SimManager.ListSims with networkId as filtering param instead.
 	GetSimsByNetwork(networkId string) (*simMangPb.GetSimsByNetworkResponse, error)
 	// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
-	GetPackagesForSim(simId string) (*simMangPb.GetPackagesForSimResponse, error)
-	GetSimToken(iccid string) (*simMangPb.SimTokenResponse, error)
 }
 
 type subscriber interface {
@@ -189,9 +189,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.DELETE(simIdKey, formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
 		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
-		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setActivePackageForSim, http.StatusOK))
-		sim.PATCH(simIdKey+"/package/:package_id/inactive", formatDoc("Set inactive package for a given SIM", ""), tonic.Handler(r.setInactivePackageForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setPackageInUseForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id/inactive", formatDoc("Set inactive package for a given SIM", ""), tonic.Handler(r.unsetPackageInUseForSim, http.StatusOK))
 		sim.DELETE(simIdKey+"/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
+
 		// Deprecated: Use GET /v1/sim with subscriberId as query param instead.
 		sim.GET("/subscriber"+subscriberIdKey, formatDoc("Get the list of SIMs for a given subscriber", ""), tonic.Handler(r.getSimsBySub, http.StatusOK))
 		// Deprecated: Use GET /v1/sim/:sim_id/package with query params  for filtering instead.
@@ -391,12 +392,12 @@ func (r *Router) postPkgForSim(c *gin.Context, req *PostPkgToSimReq) error {
 	return nil
 }
 
-func (r *Router) setInactivePackageForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.SetInactivePackageResponse, error) {
-	payload := simMangPb.SetInactivePackageRequest{
+func (r *Router) unsetPackageInUseForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.PackageResponse, error) {
+	payload := simMangPb.PackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,
 	}
-	return r.clients.sm.SetInactivePackageForSim(&payload)
+	return r.clients.sm.UnsetPackageInUseForSim(&payload)
 }
 
 func (r *Router) listPackagesForSim(c *gin.Context, req *ListPackagesForSimReq) (*simMangPb.ListPackagesForSimResponse, error) {
@@ -409,17 +410,17 @@ func (r *Router) getPackagesForSim(c *gin.Context, req *SimReq) (*simMangPb.GetP
 	return r.clients.sm.GetPackagesForSim(req.SimId)
 }
 
-func (r *Router) setActivePackageForSim(c *gin.Context, req *SetActivePackageForSimReq) (*simMangPb.SetActivePackageResponse, error) {
-	payload := simMangPb.SetActivePackageRequest{
+func (r *Router) setPackageInUseForSim(c *gin.Context, req *SetPackageInUseForSimReq) (*simMangPb.PackageResponse, error) {
+	payload := simMangPb.PackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,
 	}
 
-	return r.clients.sm.SetActivePackageForSim(&payload)
+	return r.clients.sm.SetPackageInUseForSim(&payload)
 }
 
-func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.RemovePackageResponse, error) {
-	payload := simMangPb.RemovePackageRequest{
+func (r *Router) removePkgForSim(c *gin.Context, req *RemovePkgFromSimReq) (*simMangPb.PackageResponse, error) {
+	payload := simMangPb.PackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,
 	}

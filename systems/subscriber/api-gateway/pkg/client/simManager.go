@@ -92,22 +92,6 @@ func (sm *SimManager) ListSims(iccid, imsi, subscriberId, networkId, simType, si
 	})
 }
 
-// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
-func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberId: subscriberId})
-}
-
-// Deprecated: Use pkg.client.SimManager.ListSims with networkId as filtering param instead.
-func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkId: networkId})
-}
-
 func (sm *SimManager) ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
@@ -120,27 +104,6 @@ func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackage
 	defer cancel()
 
 	return sm.client.AddPackageForSim(ctx, req)
-}
-
-func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.RemovePackageForSim(ctx, req)
-}
-
-func (sm *SimManager) SetInactivePackageForSim(req *pb.SetInactivePackageRequest) (*pb.SetInactivePackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.SetInactivePackageForSim(ctx, req)
-}
-
-func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.TerminateSim(ctx, &pb.TerminateSimRequest{SimId: simId})
 }
 
 func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
@@ -162,19 +125,32 @@ func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toSta
 	})
 }
 
-// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
-func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesForSimResponse, error) {
+func (sm *SimManager) RemovePackageForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.GetPackagesForSim(ctx, &pb.GetPackagesForSimRequest{SimId: simId})
+	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) SetActivePackageForSim(req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
+func (sm *SimManager) SetPackageInUseForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.SetActivePackageForSim(ctx, req)
+	return sm.client.SetPackageInUseForSim(ctx, req)
+}
+
+func (sm *SimManager) UnsetPackageInUseForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.UnsetPackageInUseForSim(ctx, req)
+}
+
+func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.TerminateSim(ctx, &pb.TerminateSimRequest{SimId: simId})
 }
 
 func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string) (*pb.UsageResponse, error) {
@@ -206,4 +182,28 @@ func (sm *SimManager) GetSimToken(iccid string) (*pb.SimTokenResponse, error) {
 		&pb.SimTokenRequest{
 			Iccid: iccid,
 		})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
+func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesForSimResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetPackagesForSim(ctx, &pb.GetPackagesForSimRequest{SimId: simId})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
+func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberId: subscriberId})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListSims with networkId as filtering param instead.
+func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkId: networkId})
 }

@@ -631,6 +631,7 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("updateSimStatus", func(t *testing.T) {
 		p := ActivateDeactivateSimReq{
 			Status: testStatus,
@@ -657,19 +658,20 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
-	t.Run("setActivePackageForSim", func(t *testing.T) {
+
+	t.Run("setPackageInUseForSim", func(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("PATCH", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.SetActivePackageRequest{
+		preq := &smPb.PackageRequest{
 			SimId:     sim.Id,
 			PackageId: sim.Package.Id,
 		}
 
-		csm.On("SetActivePackageForSim", mock.Anything, preq).Return(&smPb.SetActivePackageResponse{}, nil)
+		csm.On("SetPackageInUseForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -677,18 +679,19 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("removePkgForSim", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.RemovePackageRequest{
+		preq := &smPb.PackageRequest{
 			SimId:     sim.Id,
 			PackageId: sim.Package.Id,
 		}
 
-		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.RemovePackageResponse{}, nil)
+		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -696,6 +699,7 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("deleteSim", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id,

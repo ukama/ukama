@@ -139,7 +139,7 @@ type AllocateSimReq struct {
 	TrafficPolicy uint32 `json:"traffic_policy"`
 }
 
-type SetActivePackageForSimReq struct {
+type SetPackageInUseForSimReq struct {
 	SimId     string `example:"{{SimUUID}}" path:"sim_id" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" path:"package_id" validate:"required"`
 }
@@ -167,7 +167,6 @@ type PostPkgToSimReq struct {
 }
 
 type AddPkgToSimReq struct {
-	// SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" binding:"required" validate:"required"`
 	SimId     string `example:"{{SimUUID}}" json:"sim_id" path:"sim_id" validate:"required"`
 	PackageId string `example:"{{PackageUUID}}" json:"package_id" validate:"required"`
 	StartDate string `example:"" json:"start_date" validate:"required"`

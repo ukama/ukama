@@ -313,27 +313,27 @@ func (_m *simManager) ListSims(iccid string, imsi string, subscriberId string, n
 }
 
 // RemovePackageForSim provides a mock function with given fields: req
-func (_m *simManager) RemovePackageForSim(req *gen.RemovePackageRequest) (*gen.RemovePackageResponse, error) {
+func (_m *simManager) RemovePackageForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemovePackageForSim")
 	}
 
-	var r0 *gen.RemovePackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.RemovePackageRequest) (*gen.RemovePackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.RemovePackageRequest) *gen.RemovePackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RemovePackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.RemovePackageRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
@@ -342,58 +342,28 @@ func (_m *simManager) RemovePackageForSim(req *gen.RemovePackageRequest) (*gen.R
 	return r0, r1
 }
 
-// SetActivePackageForSim provides a mock function with given fields: req
-func (_m *simManager) SetActivePackageForSim(req *gen.SetActivePackageRequest) (*gen.SetActivePackageResponse, error) {
+// SetPackageInUseForSim provides a mock function with given fields: req
+func (_m *simManager) SetPackageInUseForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetActivePackageForSim")
+		panic("no return value specified for SetPackageInUseForSim")
 	}
 
-	var r0 *gen.SetActivePackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.SetActivePackageRequest) (*gen.SetActivePackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.SetActivePackageRequest) *gen.SetActivePackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetActivePackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.SetActivePackageRequest) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// SetInactivePackageForSim provides a mock function with given fields: req
-func (_m *simManager) SetInactivePackageForSim(req *gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error) {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetInactivePackageForSim")
-	}
-
-	var r0 *gen.SetInactivePackageResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error)); ok {
-		return rf(req)
-	}
-	if rf, ok := ret.Get(0).(func(*gen.SetInactivePackageRequest) *gen.SetInactivePackageResponse); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetInactivePackageResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(*gen.SetInactivePackageRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
@@ -455,6 +425,36 @@ func (_m *simManager) ToggleSimStatus(simId string, status string) (*gen.ToggleS
 
 	if rf, ok := ret.Get(1).(func(string, string) error); ok {
 		r1 = rf(simId, status)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UnsetPackageInUseForSim provides a mock function with given fields: req
+func (_m *simManager) UnsetPackageInUseForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnsetPackageInUseForSim")
+	}
+
+	var r0 *gen.PackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
+		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
 	}
