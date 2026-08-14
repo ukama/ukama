@@ -392,8 +392,9 @@ bool web_service_start(LifecycleContext *ctx) {
 
     if (ulfius_init_instance(ctx->uInstance,
                              ctx->config->httpPort,
-                             ctx->config->httpAddr,
+                             NULL,
                              NULL) != U_OK) {
+        usys_log_error("web: init failed");
         free(ctx->uInstance);
         ctx->uInstance = NULL;
         return false;
@@ -422,6 +423,7 @@ bool web_service_start(LifecycleContext *ctx) {
                                &configure_cb, ctx);
 
     if (ulfius_start_framework(ctx->uInstance) != U_OK) {
+        usys_log_error("web: start failed");
         ulfius_clean_instance(ctx->uInstance);
         free(ctx->uInstance);
         ctx->uInstance = NULL;
