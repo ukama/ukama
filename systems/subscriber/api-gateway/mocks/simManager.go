@@ -252,9 +252,9 @@ func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, fr
 	return r0, r1
 }
 
-// ListPackagesForSim provides a mock function with given fields: simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isActive, asExpired, sort, count
-func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromStartDate string, toStartDate string, fromEndDate string, toEndDate string, isActive bool, asExpired bool, sort bool, count uint32) (*gen.ListPackagesForSimResponse, error) {
-	ret := _m.Called(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isActive, asExpired, sort, count)
+// ListPackagesForSim provides a mock function with given fields: simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count
+func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromStartDate string, toStartDate string, fromEndDate string, toEndDate string, isCurrentlyInUse bool, isExpired bool, sort bool, count uint32) (*gen.ListPackagesForSimResponse, error) {
+	ret := _m.Called(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPackagesForSim")
@@ -263,10 +263,10 @@ func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromSt
 	var r0 *gen.ListPackagesForSimResponse
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, bool, uint32) (*gen.ListPackagesForSimResponse, error)); ok {
-		return rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isActive, asExpired, sort, count)
+		return rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	}
 	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, bool, uint32) *gen.ListPackagesForSimResponse); ok {
-		r0 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isActive, asExpired, sort, count)
+		r0 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListPackagesForSimResponse)
@@ -274,7 +274,7 @@ func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromSt
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, bool, uint32) error); ok {
-		r1 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isActive, asExpired, sort, count)
+		r1 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	} else {
 		r1 = ret.Error(1)
 	}
