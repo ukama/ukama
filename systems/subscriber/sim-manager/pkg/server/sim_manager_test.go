@@ -1515,7 +1515,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 	})
 }
 
-func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
+func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 	t.Run("SimAndPackageFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		packageRepo := &mocks.PackageRepo{}
@@ -1565,7 +1565,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1593,7 +1593,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, tokCodec, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1620,7 +1620,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1651,7 +1651,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1680,7 +1680,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: "lol",
 		})
@@ -1712,7 +1712,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1748,7 +1748,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -1785,7 +1785,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.SetActivePackageForSim(context.TODO(), &pb.SetActivePackageRequest{
+		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: packageId.String(),
 		})
@@ -2110,7 +2110,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 			nil, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
+		resp, err := s.RemovePackageForSim(context.TODO(), &pb.PackageRequest{
 			PackageId: packageId.String(),
 			SimId:     simId.String(),
 		})
@@ -2149,7 +2149,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
+		resp, err := s.RemovePackageForSim(context.TODO(), &pb.PackageRequest{
 			PackageId: packageId.String(),
 			SimId:     simId.String(),
 		})
@@ -2167,7 +2167,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
+		resp, err := s.RemovePackageForSim(context.TODO(), &pb.PackageRequest{
 			PackageId: packageId})
 
 		assert.Error(t, err)
@@ -2198,7 +2198,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.RemovePackageForSim(context.TODO(), &pb.RemovePackageRequest{
+		resp, err := s.RemovePackageForSim(context.TODO(), &pb.PackageRequest{
 			PackageId: packageId.String(),
 			SimId:     uuid.NewV4().String(),
 		})
@@ -2251,7 +2251,7 @@ func TestSimManagerServer_TerminatePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
 			nil, nil, nil, nil, orgId.String(), "", nil, nil, nil, nil)
 
-		resp, err := s.TerminatePackageForSim(context.TODO(), &pb.TerminatePackageRequest{
+		resp, err := s.TerminatePackageForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: "lol",
 		})

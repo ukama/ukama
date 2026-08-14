@@ -368,7 +368,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 
 			log.Infof("activating package %s on sim %s", nextPackage.Id.String(), sim.Id.String())
 
-			err = setActivePackageForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
+			err = setPackageInUseForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
 				es.agentFactory, es.msgbus, es.baseRoutingKey)
 			if err != nil {
 				log.Errorf("Failed to activate next package %s for sim %s. Error: %v",

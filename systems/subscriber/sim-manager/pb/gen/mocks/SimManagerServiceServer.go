@@ -315,27 +315,27 @@ func (_m *SimManagerServiceServer) ListSims(_a0 context.Context, _a1 *gen.ListSi
 }
 
 // RemovePackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 *gen.RemovePackageRequest) (*gen.RemovePackageResponse, error) {
+func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemovePackageForSim")
 	}
 
-	var r0 *gen.RemovePackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemovePackageRequest) (*gen.RemovePackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RemovePackageRequest) *gen.RemovePackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RemovePackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RemovePackageRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -344,58 +344,28 @@ func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 
 	return r0, r1
 }
 
-// SetActivePackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) SetActivePackageForSim(_a0 context.Context, _a1 *gen.SetActivePackageRequest) (*gen.SetActivePackageResponse, error) {
+// SetPackageInUseForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) SetPackageInUseForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetActivePackageForSim")
+		panic("no return value specified for SetPackageInUseForSim")
 	}
 
-	var r0 *gen.SetActivePackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetActivePackageRequest) (*gen.SetActivePackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetActivePackageRequest) *gen.SetActivePackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetActivePackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetActivePackageRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// SetInactivePackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) SetInactivePackageForSim(_a0 context.Context, _a1 *gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SetInactivePackageForSim")
-	}
-
-	var r0 *gen.SetInactivePackageResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetInactivePackageRequest) (*gen.SetInactivePackageResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.SetInactivePackageRequest) *gen.SetInactivePackageResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.SetInactivePackageResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.SetInactivePackageRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -405,27 +375,27 @@ func (_m *SimManagerServiceServer) SetInactivePackageForSim(_a0 context.Context,
 }
 
 // TerminatePackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) TerminatePackageForSim(_a0 context.Context, _a1 *gen.TerminatePackageRequest) (*gen.TerminatePackageResponse, error) {
+func (_m *SimManagerServiceServer) TerminatePackageForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TerminatePackageForSim")
 	}
 
-	var r0 *gen.TerminatePackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminatePackageRequest) (*gen.TerminatePackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminatePackageRequest) *gen.TerminatePackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.TerminatePackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.TerminatePackageRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -486,6 +456,36 @@ func (_m *SimManagerServiceServer) ToggleSimStatus(_a0 context.Context, _a1 *gen
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSimStatusRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// UnsetPackageInUseForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) UnsetPackageInUseForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UnsetPackageInUseForSim")
+	}
+
+	var r0 *gen.PackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)

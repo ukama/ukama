@@ -752,7 +752,7 @@ func (s *SimManagerServer) GetPackagesForSim(ctx context.Context, req *pb.GetPac
 	return resp, nil
 }
 
-func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
+func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	log.Infof("Removing package %v for sim: %v", req.GetPackageId(), req.GetSimId())
 
 	packageId, err := uuid.FromString(req.GetPackageId())
@@ -803,31 +803,31 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	return &pb.RemovePackageResponse{}, nil
+	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) SetActivePackageForSim(ctx context.Context, req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	if err := setActivePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory, s.msgbus, s.baseRoutingKey); err != nil {
+func (s *SimManagerServer) SetPackageInUseForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
+	if err := setPackageInUseForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
-	return &pb.SetActivePackageResponse{}, nil
+	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) SetInactivePackageForSim(ctx context.Context, req *pb.SetInactivePackageRequest) (*pb.SetInactivePackageResponse, error) {
-	if err := setInactivePackageForSim(req.SimId, req.PackageId, s.packageRepo); err != nil {
+func (s *SimManagerServer) UnsetPackageInUseForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
+	if err := unsetPackageInuseForSim(req.SimId, req.PackageId, s.packageRepo); err != nil {
 		return nil, err
 	}
 
-	return &pb.SetInactivePackageResponse{}, nil
+	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.TerminatePackageRequest) (*pb.TerminatePackageResponse, error) {
+func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	if err := terminatePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
-	return &pb.TerminatePackageResponse{}, nil
+	return &pb.PackageResponse{}, nil
 }
 
 func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
@@ -1210,7 +1210,7 @@ func subscriberNameAndEmail(ctx context.Context, subscriberId string,
 	return remoteSubResp.Subscriber.Name, remoteSubResp.Subscriber.Email
 }
 
-func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	log.Infof("Setting package %v as active for sim: %v", reqPackageId, reqSimId)
 
@@ -1336,7 +1336,7 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	return nil
 }
 
-func setInactivePackageForSim(reqSimId, reqPackageId string, packageRepo sims.PackageRepo) error {
+func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.PackageRepo) error {
 	packageId, err := uuid.FromString(reqPackageId)
 	if err != nil {
 		return status.Errorf(codes.InvalidArgument,

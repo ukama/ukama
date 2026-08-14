@@ -160,8 +160,8 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("SetActivePackageForSim", func(t *testing.T) {
-		_, err := c.SetActivePackageForSim(ctx, &pb.SetActivePackageRequest{
+	t.Run("SetPackageInUseForSim", func(t *testing.T) {
+		_, err := c.SetPackageInUseForSim(ctx, &pb.PackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: pkgResp.Packages[0].Id,
 		})
@@ -170,7 +170,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("RemovePackageForSim", func(t *testing.T) {
-		_, err := c.RemovePackageForSim(ctx, &pb.RemovePackageRequest{
+		_, err := c.RemovePackageForSim(ctx, &pb.PackageRequest{
 			SimId:     simResp.Sim.Id,
 			PackageId: pkgResp.Packages[0].Id,
 		})
