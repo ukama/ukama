@@ -285,7 +285,7 @@ func TestSimRepo_List(t *testing.T) {
 
 		// Act
 		list, err := r.List(testIccid, testImsi, subId.String(), netId.String(),
-			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
+			ukama.SimTypeUkamaData, ukama.SimStatusServiceOn, 22, true, 1, true)
 
 		// Assert
 		assert.NoError(t, err)
@@ -311,7 +311,7 @@ func TestSimRepo_List(t *testing.T) {
 
 		// Act
 		list, err := r.List(testIccid, testImsi, subId.String(), netId.String(),
-			ukama.SimTypeUkamaData, ukama.SimStatusActive, 22, true, 1, true)
+			ukama.SimTypeUkamaData, ukama.SimStatusServiceOn, 22, true, 1, true)
 
 		// Assert
 		assert.Error(t, err)

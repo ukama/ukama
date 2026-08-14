@@ -244,7 +244,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		Iccid:         poolSim.Iccid,
 		Msisdn:        poolSim.Msisdn,
 		Type:          simType,
-		Status:        ukama.SimStatusInactive,
+		Status:        ukama.SimStatusServiceOff,
 		IsPhysical:    poolSim.IsPhysical,
 		TrafficPolicy: trafficPolicy,
 		SyncStatus:    ukama.StatusTypePending,
@@ -569,9 +569,9 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	simStatus := ukama.ParseSimStatus(strStatus)
 
 	switch simStatus {
-	case ukama.SimStatusActive:
+	case ukama.SimStatusServiceOn:
 		return s.activateSim(ctx, req.SimId)
-	case ukama.SimStatusInactive:
+	case ukama.SimStatusServiceOff:
 		return s.deactivateSim(ctx, req.SimId)
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
@@ -587,7 +587,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 		return nil, err
 	}
 
-	if sim.Status != ukama.SimStatusInactive {
+	if sim.Status != ukama.SimStatusServiceOff {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for deletion", sim.Status)
 	}
@@ -883,14 +883,14 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 		return err
 	}
 
-	if sim.Status != ukama.SimStatusInactive {
+	if sim.Status != ukama.SimStatusServiceOff {
 		return status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for activation", sim.Status)
 	}
 
 	simUpdates := &sims.Sim{
 		Id:               sim.Id,
-		Status:           ukama.SimStatusActive,
+		Status:           ukama.SimStatusServiceOn,
 		ActivationsCount: sim.ActivationsCount + 1,
 		LastActivatedOn:  time.Now(),
 	}
@@ -966,7 +966,7 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 		return err
 	}
 
-	if sim.Status != ukama.SimStatusActive {
+	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
 			"sim state: %s is invalid for deactivation", sim.Status)
 	}
@@ -979,7 +979,7 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 
 	simUpdates := &sims.Sim{
 		Id:                 sim.Id,
-		Status:             ukama.SimStatusInactive,
+		Status:             ukama.SimStatusServiceOff,
 		DeactivationsCount: sim.DeactivationsCount + 1}
 
 	err = simRepo.Update(simUpdates, nil)
@@ -1219,7 +1219,7 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	if sim.Status != ukama.SimStatusActive {
+	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot set active package on non active sim: sim's status is %s", sim.Status)
 	}
@@ -1421,7 +1421,7 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	if sim.Status != ukama.SimStatusActive {
+	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
 	}
@@ -1487,7 +1487,7 @@ func pushTotalSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId stri
 func pushActiveSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId string, metricsPusher MetricsPusher) error {
 	log.Infof("Collecting and pushing active sims count metric to push gateway host: %s", metricsPusher.GetPushMetricsHost())
 
-	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusActive, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusServiceOn, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting active sims count metric for network: %s. Error: %v",
 			networkId, err)
@@ -1510,7 +1510,7 @@ func pushActiveSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId str
 func pushInactiveSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId string, metricsPusher MetricsPusher) error {
 	log.Infof("Collecting and pushing inactive sims count metric to push gateway host: %s", metricsPusher.GetPushMetricsHost())
 
-	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusInactive, 0, false, 0, false)
+	sims, err := simRepo.List("", "", "", networkId, ukama.SimTypeUnknown, ukama.SimStatusServiceOff, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while collecting inactive sims count metric for network: %s. Error: %v",
 			networkId, err)

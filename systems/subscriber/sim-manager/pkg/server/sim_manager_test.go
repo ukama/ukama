@@ -312,7 +312,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 			SubscriberId: subscriberId,
 			NetworkId:    networkId,
 			Iccid:        testIccid,
-			Status:       ukama.SimStatusInactive,
+			Status:       ukama.SimStatusServiceOff,
 			Type:         ukama.SimTypeTest,
 			IsPhysical:   true,
 		}
@@ -320,7 +320,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 		resp[0] = simResp
 
 		simRepo.On("List", testIccid, testImsi, subscriberId.String(), networkId.String(),
-			ukama.SimTypeTest, ukama.SimStatusInactive, uint32(0), true,
+			ukama.SimTypeTest, ukama.SimStatusServiceOff, uint32(0), true,
 			uint32(0), false).Return(resp, nil)
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
@@ -331,7 +331,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			SimType:       ukama.SimTypeTest.String(),
-			SimStatus:     ukama.SimStatusInactive.String(),
+			SimStatus:     ukama.SimStatusServiceOff.String(),
 			TrafficPolicy: uint32(0),
 			IsPhysical:    true,
 			Count:         uint32(0),
@@ -358,7 +358,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 			SubscriberId:  "lol",
 			NetworkId:     networkId.String(),
 			SimType:       ukama.SimTypeTest.String(),
-			SimStatus:     ukama.SimStatusInactive.String(),
+			SimStatus:     ukama.SimStatusServiceOff.String(),
 			TrafficPolicy: uint32(0),
 			IsPhysical:    true,
 			Count:         uint32(0),
@@ -384,7 +384,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     "lol",
 			SimType:       ukama.SimTypeTest.String(),
-			SimStatus:     ukama.SimStatusInactive.String(),
+			SimStatus:     ukama.SimStatusServiceOff.String(),
 			TrafficPolicy: uint32(0),
 			IsPhysical:    true,
 			Count:         uint32(0),
@@ -411,7 +411,7 @@ func TestSimManagerServer_ListSims(t *testing.T) {
 			SubscriberId:  subscriberId.String(),
 			NetworkId:     networkId.String(),
 			SimType:       "lol",
-			SimStatus:     ukama.SimStatusInactive.String(),
+			SimStatus:     ukama.SimStatusServiceOff.String(),
 			TrafficPolicy: uint32(0),
 			IsPhysical:    true,
 			Count:         uint32(0),
@@ -475,7 +475,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -511,7 +511,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -539,7 +539,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -607,7 +607,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -979,7 +979,7 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			NetworkId:    networkId,
 			Iccid:        testIccid,
 			Type:         ukama.SimTypeTest,
-			Status:       ukama.SimStatusInactive,
+			Status:       ukama.SimStatusServiceOff,
 			IsPhysical:   simPoolResp.Sim.IsPhysical,
 			SyncStatus:   ukama.StatusTypePending,
 		}
@@ -1527,7 +1527,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		simd := &sims.Sim{Id: simId,
 			IsPhysical: false,
-			Status:     ukama.SimStatusActive,
+			Status:     ukama.SimStatusServiceOn,
 			Type:       ukama.SimTypeTest,
 		}
 
@@ -1641,7 +1641,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 				Package: sims.Package{
 					Id: packageId,
 				},
@@ -1673,7 +1673,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -1703,7 +1703,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -1734,7 +1734,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -1770,7 +1770,7 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -1835,7 +1835,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusActive.String(),
+			Status: ukama.SimStatusServiceOn.String(),
 		})
 
 		assert.Error(t, err)
@@ -1860,7 +1860,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.Error(t, err)
@@ -1880,7 +1880,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 			}, nil).
 			Once()
 
@@ -1889,7 +1889,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.Error(t, err)
@@ -1910,7 +1910,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -1923,7 +1923,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.Error(t, err)
@@ -1944,14 +1944,14 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 			Return(&sims.Sim{
 				Id:         simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
 		simRepo.On("Update",
 			&sims.Sim{
 				Id:                 simId,
-				Status:             ukama.SimStatusInactive,
+				Status:             ukama.SimStatusServiceOff,
 				DeactivationsCount: uint64(1),
 			},
 			mock.Anything).Return(errors.New("sim status update failure")).Once()
@@ -1965,7 +1965,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.Error(t, err)
@@ -1987,7 +1987,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 				Id:         simId,
 				Iccid:      testIccid,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 				Type:       ukama.SimTypeTest,
 			}, nil).
 			Once().
@@ -1996,7 +1996,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.On("Update",
 			&sims.Sim{
 				Id:                 simId,
-				Status:             ukama.SimStatusInactive,
+				Status:             ukama.SimStatusServiceOff,
 				DeactivationsCount: uint64(1),
 			},
 			mock.Anything).Return(nil).Once()
@@ -2014,7 +2014,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.Error(t, err)
@@ -2037,7 +2037,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 				Id:         simId,
 				Iccid:      testIccid,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 				Type:       ukama.SimTypeTest,
 			}, nil).
 			Once().
@@ -2046,7 +2046,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.On("Update",
 			&sims.Sim{
 				Id:                 simId,
-				Status:             ukama.SimStatusInactive,
+				Status:             ukama.SimStatusServiceOff,
 				DeactivationsCount: uint64(1),
 			},
 			mock.Anything).Return(nil).Once()
@@ -2069,7 +2069,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 
 		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusInactive.String(),
+			Status: ukama.SimStatusServiceOff.String(),
 		})
 
 		assert.NoError(t, err)
@@ -2099,7 +2099,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -2133,7 +2133,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -2185,7 +2185,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				IsPhysical: false,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 			}, nil).
 			Once()
 
@@ -2276,7 +2276,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -2324,7 +2324,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusActive,
+				Status:     ukama.SimStatusServiceOn,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
@@ -2352,7 +2352,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       100,
 				IsPhysical: false,
 			}, nil).
@@ -2385,7 +2385,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
-				Status:     ukama.SimStatusInactive,
+				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).

@@ -828,7 +828,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return([]sims.Sim{
 				sims.Sim{
 					Id:     simId,
-					Status: ukama.SimStatusActive,
+					Status: ukama.SimStatusServiceOn,
 					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
@@ -844,7 +844,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
 				Id:     simId,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
@@ -896,7 +896,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return([]sims.Sim{
 				sims.Sim{
 					Id:     simId,
-					Status: ukama.SimStatusActive,
+					Status: ukama.SimStatusServiceOn,
 					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
@@ -912,7 +912,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
 				Id:     simId,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
@@ -970,7 +970,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return([]sims.Sim{
 				sims.Sim{
 					Id:     simId,
-					Status: ukama.SimStatusActive,
+					Status: ukama.SimStatusServiceOn,
 					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
@@ -985,7 +985,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
 				Id:     simId,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
@@ -1030,7 +1030,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			Return([]sims.Sim{
 				sims.Sim{
 					Id:     simId,
-					Status: ukama.SimStatusActive,
+					Status: ukama.SimStatusServiceOn,
 					Type:   ukama.SimTypeUkamaData,
 				},
 			}, nil)
@@ -1045,7 +1045,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
 				Id:     simId,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
@@ -1098,7 +1098,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil)
 
 		evt := &epb.AsrInactivated{
