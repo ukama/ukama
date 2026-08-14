@@ -81,16 +81,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   from,
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      from,
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.NoError(t, err)
@@ -106,16 +106,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         "lol",
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   from,
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            "lol",
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      from,
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -131,16 +131,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   from,
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    "lol",
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      from,
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       "lol",
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -157,16 +157,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: "lol",
-			ToStartDate:   to,
-			FromEndDate:   from,
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    "lol",
+			ToStartDate:      to,
+			FromEndDate:      from,
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -183,16 +183,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   "lol",
-			FromEndDate:   from,
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      "lol",
+			FromEndDate:      from,
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -209,16 +209,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   "lol",
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      "lol",
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -235,16 +235,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   from,
-			ToEndDate:     "lol",
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      from,
+			ToEndDate:        "lol",
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)
@@ -261,16 +261,16 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		list, err := s.ListPackagesForSim(context.TODO(), &pb.ListPackagesForSimRequest{
-			SimId:         simId.String(),
-			FromStartDate: from,
-			ToStartDate:   to,
-			FromEndDate:   "lol",
-			ToEndDate:     to,
-			IsActive:      true,
-			AsExpired:     true,
-			DataPlanId:    dataplanId.String(),
-			Count:         uint32(0),
-			Sort:          false,
+			SimId:            simId.String(),
+			FromStartDate:    from,
+			ToStartDate:      to,
+			FromEndDate:      "lol",
+			ToEndDate:        to,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			DataPlanId:       dataplanId.String(),
+			Count:            uint32(0),
+			Sort:             false,
 		})
 
 		assert.Error(t, err)

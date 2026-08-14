@@ -715,7 +715,7 @@ func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListP
 	}
 
 	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate,
-		req.FromEndDate, req.ToEndDate, req.IsActive, req.AsExpired, req.Count, req.Sort)
+		req.FromEndDate, req.ToEndDate, req.IsCurrentlyInUse, req.IsExpired, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Error while getting list of packages present on sim (%s) matching the given filters: %v",
 			req.SimId, err)
@@ -775,7 +775,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 
 	if pckg.IsCurrentlyInUse {
 		return nil, status.Errorf(codes.FailedPrecondition,
-			"cannot remove active package (%s) from sim. Set package as not active first", pckg.Id)
+			"cannot remove currently in-use package (%s) from sim. Set package as not currently in-use first", pckg.Id)
 	}
 
 	sim, err := getSim(req.SimId, s.simRepo)
@@ -1615,9 +1615,9 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 		PackageId:        pkg.PackageId.String(),
 		InitialData:      pkg.InitialData,
 		UsedDataAtExpiry: pkg.UsedDataAtExpiry,
-		IsActive:         pkg.IsCurrentlyInUse,
+		IsCurrentlyInUse: pkg.IsCurrentlyInUse,
+		IsExpired:        pkg.IsExpired,
 		DefaultDuration:  pkg.DefaultDuration,
-		AsExpired:        pkg.IsExpired,
 		CreatedAt:        pkg.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:        pkg.UpdatedAt.Format(time.RFC3339),
 	}
