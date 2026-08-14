@@ -1697,18 +1697,20 @@ func (x *UsageResponse) GetCost() *structpb.Struct {
 }
 
 type Package struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PackageId       string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	StartDate       string                 `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
-	EndDate         string                 `protobuf:"bytes,4,opt,name=endDate,json=end_date,proto3" json:"endDate,omitempty"`
-	DefaultDuration uint64                 `protobuf:"varint,5,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
-	IsActive        bool                   `protobuf:"varint,6,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
-	AsExpired       bool                   `protobuf:"varint,7,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
-	CreatedAt       string                 `protobuf:"bytes,8,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
-	UpdatedAt       string                 `protobuf:"bytes,9,opt,name=updatedAt,json=updated_at,proto3" json:"updatedAt,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PackageId        string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	StartDate        string                 `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
+	EndDate          string                 `protobuf:"bytes,4,opt,name=endDate,json=end_date,proto3" json:"endDate,omitempty"`
+	InitialData      uint64                 `protobuf:"varint,5,opt,name=initialData,json=initial_data,proto3" json:"initialData,omitempty"`
+	UsedDataAtExpiry uint64                 `protobuf:"varint,6,opt,name=usedDataAtExpiry,json=used_data_at_expiry,proto3" json:"usedDataAtExpiry,omitempty"`
+	DefaultDuration  uint64                 `protobuf:"varint,7,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
+	IsActive         bool                   `protobuf:"varint,8,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
+	AsExpired        bool                   `protobuf:"varint,9,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
+	CreatedAt        string                 `protobuf:"bytes,10,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
+	UpdatedAt        string                 `protobuf:"bytes,11,opt,name=updatedAt,json=updated_at,proto3" json:"updatedAt,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Package) Reset() {
@@ -1767,6 +1769,20 @@ func (x *Package) GetEndDate() string {
 		return x.EndDate
 	}
 	return ""
+}
+
+func (x *Package) GetInitialData() uint64 {
+	if x != nil {
+		return x.InitialData
+	}
+	return 0
+}
+
+func (x *Package) GetUsedDataAtExpiry() uint64 {
+	if x != nil {
+		return x.UsedDataAtExpiry
+	}
+	return 0
 }
 
 func (x *Package) GetDefaultDuration() uint64 {
@@ -2093,21 +2109,24 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x06region\x18\x06 \x01(\tR\x06region\"k\n" +
 	"\rUsageResponse\x12-\n" +
 	"\x05usage\x18\x01 \x01(\v2\x17.google.protobuf.StructR\x05usage\x12+\n" +
-	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\xad\x02\n" +
+	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\xff\x02\n" +
 	"\aPackage\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12(\n" +
 	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"package_id\x12\x1d\n" +
 	"\tstartDate\x18\x03 \x01(\tR\n" +
 	"start_date\x12\x19\n" +
-	"\aendDate\x18\x04 \x01(\tR\bend_date\x12)\n" +
-	"\x0fdefaultDuration\x18\x05 \x01(\x04R\x10default_duration\x12\x1b\n" +
-	"\bisActive\x18\x06 \x01(\bR\tis_active\x12\x1d\n" +
-	"\tasExpired\x18\a \x01(\bR\n" +
+	"\aendDate\x18\x04 \x01(\tR\bend_date\x12!\n" +
+	"\vinitialData\x18\x05 \x01(\x04R\finitial_data\x12-\n" +
+	"\x10usedDataAtExpiry\x18\x06 \x01(\x04R\x13used_data_at_expiry\x12)\n" +
+	"\x0fdefaultDuration\x18\a \x01(\x04R\x10default_duration\x12\x1b\n" +
+	"\bisActive\x18\b \x01(\bR\tis_active\x12\x1d\n" +
+	"\tasExpired\x18\t \x01(\bR\n" +
 	"as_expired\x12\x1d\n" +
-	"\tcreatedAt\x18\b \x01(\tR\n" +
+	"\tcreatedAt\x18\n" +
+	" \x01(\tR\n" +
 	"created_at\x12\x1d\n" +
-	"\tupdatedAt\x18\t \x01(\tR\n" +
+	"\tupdatedAt\x18\v \x01(\tR\n" +
 	"updated_at\"\x9f\a\n" +
 	"\x03Sim\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +

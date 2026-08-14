@@ -228,11 +228,13 @@ message Package {
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     string startDate = 3 [json_name = "start_date"];
     string endDate = 4 [json_name = "end_date"];
-    uint64 defaultDuration = 5 [json_name = "default_duration"]; /// in minutes, cannot be more than 1000 years
-    bool isActive = 6  [json_name = "is_active"];
-    bool asExpired = 7  [json_name = "as_expired"];
-    string createdAt = 8 [json_name = "created_at"];
-    string updatedAt = 9 [json_name = "updated_at"];
+    uint64 initialData = 5 [json_name="initial_data"];
+    uint64 usedDataAtExpiry = 6 [json_name="used_data_at_expiry"];
+    uint64 defaultDuration = 7 [json_name = "default_duration"]; /// in minutes, cannot be more than 1000 years
+    bool isActive = 8  [json_name = "is_active"];
+    bool asExpired = 9  [json_name = "as_expired"];
+    string createdAt = 10 [json_name = "created_at"];
+    string updatedAt = 11 [json_name = "updated_at"];
 }
 
 
