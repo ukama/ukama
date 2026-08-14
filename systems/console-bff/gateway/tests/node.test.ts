@@ -282,7 +282,7 @@ describe("Node API integration tests", () => {
         variables: {
           data: {
             networkId: networkId,
-            nodeFilterState: NODE_STATE.Configured,
+            nodeFilterState: NODE_STATE.Configuring,
           },
         },
       },

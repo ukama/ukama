@@ -17,9 +17,13 @@ export enum API_METHOD_TYPE {
 }
 export enum NODE_STATE {
   Unknown = "Unknown",
-  Configured = "Configured",
+  Configuring = "Configuring",
   Operational = "Operational",
   Faulty = "Faulty",
+  Initializing = "Initializing",
+  Ready = "Ready",
+  Updating = "Updating",
+  Offboarded = "Offboarded",
 }
 registerEnumType(NODE_STATE, {
   name: "NodeStateEnum",

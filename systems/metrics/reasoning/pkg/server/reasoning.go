@@ -290,7 +290,7 @@ func (c *ReasoningServer) ReasoningJob(ctx context.Context) {
 
 	nodes, err := c.nodeClient.List(creg.ListNodesRequest{
 		Connectivity: ukama.NodeConnectivityOnline.String(),
-		State:        ukama.NodeStateConfigured.String(),
+		State:        ukama.NodeStateConfiguring.String(),
 		Type:         ukama.NodeType(ukama.NODE_ID_TYPE_TOWERNODE).String(),
 	})
 	if err != nil {
