@@ -9,6 +9,7 @@ package server
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -29,12 +30,60 @@ func newNodeInstance(t *testing.T, instanceID, initialState string) *stm.StateMa
 	return instance
 }
 
-func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
-	t.Run("faulty node returns to operational on ready", func(t *testing.T) {
-		instance := newNodeInstance(t, "faulty-ready", "Faulty")
+func TestNodeStateFsm_HappyPath(t *testing.T) {
+	instance := newNodeInstance(t, "happy-path", "Unknown")
 
-		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+	require.NoError(t, instance.Transition("online"))
+	assert.Equal(t, "Initializing", instance.CurrentState)
+	assert.Equal(t, "on", instance.CurrentSubstate,
+		"the first hello must also mark the node online")
+
+	require.NoError(t, instance.Transition("platformready"))
+	assert.Equal(t, "Ready", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("assign"))
+	assert.Equal(t, "Configuring", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("configapplied"))
+	assert.Equal(t, "Operational", instance.CurrentState)
+}
+
+func TestNodeStateFsm_AssignWithoutConfig(t *testing.T) {
+	instance := newNodeInstance(t, "assign-no-config", "Ready")
+
+	require.NoError(t, instance.Transition("assignnoconfig"))
+	assert.Equal(t, "Operational", instance.CurrentState)
+}
+
+func TestNodeStateFsm_ReleaseReturnsToReady(t *testing.T) {
+	t.Run("from configuring", func(t *testing.T) {
+		instance := newNodeInstance(t, "release-configuring", "Configuring")
+
+		require.NoError(t, instance.Transition("release"))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+
+	t.Run("from operational", func(t *testing.T) {
+		instance := newNodeInstance(t, "release-operational", "Operational")
+
+		require.NoError(t, instance.Transition("release"))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+}
+
+func TestNodeStateFsm_ReconfigureFromOperational(t *testing.T) {
+	instance := newNodeInstance(t, "reconfigure", "Operational")
+
+	require.NoError(t, instance.Transition("configchange"))
+	assert.Equal(t, "Configuring", instance.CurrentState)
+}
+
+func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
+	t.Run("faulty node recovers to initializing", func(t *testing.T) {
+		instance := newNodeInstance(t, "faulty-recover", "Faulty")
+
+		require.NoError(t, instance.Transition("recover"))
+		assert.Equal(t, "Initializing", instance.CurrentState)
 	})
 
 	t.Run("operational to faulty and back again", func(t *testing.T) {
@@ -43,52 +92,70 @@ func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
 		require.NoError(t, instance.Transition("fault"))
 		assert.Equal(t, "Faulty", instance.CurrentState)
 
-		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+		require.NoError(t, instance.Transition("recover"))
+		assert.Equal(t, "Initializing", instance.CurrentState)
 	})
 
-	t.Run("faulty node still reaches configured on config", func(t *testing.T) {
-		instance := newNodeInstance(t, "faulty-config", "Faulty")
+	t.Run("faulty node is reconfigurable", func(t *testing.T) {
+		instance := newNodeInstance(t, "faulty-assign", "Faulty")
 
-		require.NoError(t, instance.Transition("config"))
-		assert.Equal(t, "Configured", instance.CurrentState)
+		require.NoError(t, instance.Transition("assign"))
+		assert.Equal(t, "Configuring", instance.CurrentState)
 	})
 }
 
-func TestNodeStateFsm_RepeatReadyInOperational(t *testing.T) {
-	instance := newNodeInstance(t, "operational-repeat-ready", "Operational")
+func TestNodeStateFsm_Offboarding(t *testing.T) {
+	instance := newNodeInstance(t, "offboard-round-trip", "Operational")
 
-	require.NoError(t, instance.Transition("online"))
-	assert.Equal(t, "on", instance.CurrentSubstate)
-
-	err := instance.Transition("ready")
-
-	assert.NoError(t, err)
-	assert.Equal(t, "Operational", instance.CurrentState)
-	assert.Equal(t, "on", instance.CurrentSubstate)
-}
-
-func TestNodeStateFsm_ConfiguredReadyKeepsSubstate(t *testing.T) {
-	instance := newNodeInstance(t, "configured-ready", "Configured")
-
-	require.NoError(t, instance.Transition("online"))
-	require.Equal(t, "on", instance.CurrentSubstate)
-
-	require.NoError(t, instance.Transition("ready"))
-
-	assert.Equal(t, "Operational", instance.CurrentState)
-	assert.Equal(t, "on", instance.CurrentSubstate,
-		"ready must not move the substate into update")
-}
-
-func TestNodeStateFsm_OnboardingFromUnknown(t *testing.T) {
-	instance := newNodeInstance(t, "unknown-onboarding", "Unknown")
+	require.NoError(t, instance.Transition("offboard"))
+	assert.Equal(t, "Offboarded", instance.CurrentState)
 
 	require.NoError(t, instance.Transition("onboarding"))
-	assert.Equal(t, "Configured", instance.CurrentState)
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"an offboarded node must be able to come back")
+}
 
-	require.NoError(t, instance.Transition("ready"))
-	assert.Equal(t, "Operational", instance.CurrentState)
+func TestNodeStateFsm_UpdateReboots(t *testing.T) {
+	instance := newNodeInstance(t, "update-reboot", "Initializing")
+
+	require.NoError(t, instance.Transition("update"))
+	assert.Equal(t, "Updating", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("rebooted"))
+	assert.Equal(t, "Initializing", instance.CurrentState)
+}
+
+func TestNodeStateFsm_Timeouts(t *testing.T) {
+	enteredAt := time.Date(2026, time.August, 14, 10, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		from string
+		to   string
+	}{
+		{"Ready", "Configuring"},
+		{"Configuring", "Operational"},
+		{"Updating", "Initializing"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.from+" advances after 60s", func(t *testing.T) {
+			instance := newNodeInstance(t, "timeout-"+tc.from, tc.from)
+
+			_, due := instance.DueTransition(enteredAt, enteredAt.Add(59*time.Second))
+			assert.False(t, due, "must not advance before the window closes")
+
+			to, due := instance.DueTransition(enteredAt, enteredAt.Add(60*time.Second))
+			require.True(t, due)
+			assert.Equal(t, tc.to, to)
+		})
+	}
+
+	t.Run("Operational never times out", func(t *testing.T) {
+		instance := newNodeInstance(t, "timeout-operational", "Operational")
+
+		_, due := instance.DueTransition(enteredAt, enteredAt.Add(time.Hour))
+		assert.False(t, due)
+	})
 }
 
 func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
@@ -107,8 +174,8 @@ func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
 	require.NoError(t, instance.Transition("online"))
 	assert.Equal(t, 1, published, "online changes substate and must publish")
 
-	require.NoError(t, instance.Transition("ready"))
-	assert.Equal(t, 1, published, "repeat ready must not publish a state change")
+	require.NoError(t, instance.Transition("online"))
+	assert.Equal(t, 1, published, "repeat online must not publish a state change")
 
 	require.NoError(t, instance.Transition("fault"))
 	assert.Equal(t, 2, published, "fault must publish")
@@ -123,9 +190,9 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 
 	nodeId := "test-node-resync"
 
-	first, err := srv.getOrCreateInstance(nodeId, "Configured", "on")
+	first, err := srv.getOrCreateInstance(nodeId, "Configuring", "on")
 	require.NoError(t, err)
-	require.NoError(t, first.Transition("ready"))
+	require.NoError(t, first.Transition("configapplied"))
 	require.Equal(t, "Operational", first.CurrentState)
 
 	t.Run("returns the cached instance when it matches stored state", func(t *testing.T) {
@@ -144,8 +211,8 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 		assert.Equal(t, "off", resynced.CurrentSubstate,
 			"stored substate must survive the rebuild")
 
-		require.NoError(t, resynced.Transition("ready"))
-		assert.Equal(t, "Operational", resynced.CurrentState,
+		require.NoError(t, resynced.Transition("recover"))
+		assert.Equal(t, "Initializing", resynced.CurrentState,
 			"resynced instance must transition from the stored state")
 	})
 }

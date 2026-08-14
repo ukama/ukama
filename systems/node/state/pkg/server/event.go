@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -37,6 +38,7 @@ import (
 	 NodeNotifyEventAdded  = "Node added"
 
 	 NodeStateEventPlatformReady = "platformready"
+	 NodeStateEventFault         = "fault"
 
 	 DefaultSubstate = "on"
      ForceTransitionRoutingKeyTemplate = "event.cloud.local.{{ .Org}}.node.state.node.force"
@@ -44,7 +46,16 @@ import (
  )
 
  var notifyEventToStateEvent = map[string]string{
-	 NodeNotifyEventReady: NodeStateEventPlatformReady,
+	 "READY":  NodeStateEventPlatformReady,
+	 "FAULTY": NodeStateEventFault,
+ }
+
+ func stateEventForNotifyValue(value string) string {
+	 if mapped, ok := notifyEventToStateEvent[strings.ToUpper(value)]; ok {
+		 return mapped
+	 }
+
+	 return value
  }
  
 
@@ -355,10 +366,7 @@ import (
 		 return nil
 	 }
 	 
-	 eventName := valueStr
-	 if mapped, ok := notifyEventToStateEvent[valueStr]; ok {
-		 eventName = mapped
-	 }
+	 eventName := stateEventForNotifyValue(valueStr)
 
 	 log.Infof("Processing notification event %s as %s for node %s", valueStr, eventName, msg.NodeId)
 
