@@ -66,11 +66,11 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		dataplanId := uuid.NewV4()
 
 		pckgResp := sims.Package{
-			Id:        packageId,
-			SimId:     simId,
-			IsActive:  true,
-			AsExpired: true,
-			PackageId: dataplanId,
+			Id:               packageId,
+			SimId:            simId,
+			IsCurrentlyInUse: true,
+			IsExpired:        true,
+			PackageId:        dataplanId,
 		}
 
 		resp[0] = pckgResp
@@ -844,8 +844,8 @@ func TestSimManagerServer_GetPackagesForSim(t *testing.T) {
 		packageRepo.On("GetBySim", simId).Return(
 			[]sims.Package{
 				{Id: packageId,
-					SimId:    simId,
-					IsActive: false,
+					SimId:            simId,
+					IsCurrentlyInUse: false,
 				}}, nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo,
@@ -1002,11 +1002,11 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			mock.Anything).Return(nil).Once()
 
 		pkg := &sims.Package{
-			SimId:           sim.Id,
-			PackageId:       packageId,
-			InitialData:     10737418240,
-			IsActive:        true,
-			DefaultDuration: 3600,
+			SimId:            sim.Id,
+			PackageId:        packageId,
+			InitialData:      10737418240,
+			IsCurrentlyInUse: true,
+			DefaultDuration:  3600,
 		}
 
 		packageRepo.On("Add", pkg,
@@ -1537,16 +1537,16 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:           simId,
-				DefaultDuration: 1,
-				EndDate:         time.Now().UTC().AddDate(0, 1, 0), // next month
-				IsActive:        false,
+				SimId:            simId,
+				DefaultDuration:  1,
+				EndDate:          time.Now().UTC().AddDate(0, 1, 0), // next month
+				IsCurrentlyInUse: false,
 			}, nil).Once()
 
 		packageRepo.On("Update",
 			&sims.Package{
-				Id:       packageId,
-				IsActive: true,
+				Id:               packageId,
+				IsCurrentlyInUse: true,
 			},
 			mock.Anything).Return(nil).Once()
 
@@ -1740,9 +1740,9 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:    uuid.NewV4(),
-				EndDate:  time.Now().UTC().AddDate(0, 1, 0), // next month
-				IsActive: false,
+				SimId:            uuid.NewV4(),
+				EndDate:          time.Now().UTC().AddDate(0, 1, 0), // next month
+				IsCurrentlyInUse: false,
 			}, nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -1776,10 +1776,10 @@ func TestSimManagerServer_SetActivePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:     simId,
-				EndDate:   time.Now().UTC().AddDate(0, -1, 0), // one month ago
-				IsActive:  false,
-				AsExpired: true,
+				SimId:            simId,
+				EndDate:          time.Now().UTC().AddDate(0, -1, 0), // one month ago
+				IsCurrentlyInUse: false,
+				IsExpired:        true,
 			}, nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2092,8 +2092,8 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:    simId,
-				IsActive: false,
+				SimId:            simId,
+				IsCurrentlyInUse: false,
 			}, nil).Once()
 
 		simRepo.On("Get", simId).
@@ -2139,8 +2139,8 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:    simId,
-				IsActive: false,
+				SimId:            simId,
+				IsCurrentlyInUse: false,
 			}, nil).Once()
 
 		packageRepo.On("Delete", packageId,
@@ -2191,8 +2191,8 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
-				SimId:    simId,
-				IsActive: false,
+				SimId:            simId,
+				IsCurrentlyInUse: false,
 			}, nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,

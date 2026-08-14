@@ -273,10 +273,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	totalData := packageInfo.DataVolume * dataUnitInBytes
 
 	firstPackage := &sims.Package{
-		PackageId:       packageId,
-		InitialData:     totalData,
-		IsActive:        true,
-		DefaultDuration: packageInfo.Duration,
+		PackageId:        packageId,
+		InitialData:      totalData,
+		IsCurrentlyInUse: true,
+		DefaultDuration:  packageInfo.Duration,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -773,7 +773,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Remo
 
 	}
 
-	if pckg.IsActive {
+	if pckg.IsCurrentlyInUse {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"cannot remove active package (%s) from sim. Set package as not active first", pckg.Id)
 	}
@@ -1091,11 +1091,11 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 	totalData := pkgInfo.DataVolume * dataUnitInBytes
 
 	pkg := &sims.Package{
-		SimId:           sim.Id,
-		PackageId:       packageUuid,
-		InitialData:     totalData,
-		IsActive:        false,
-		DefaultDuration: pkgInfo.Duration,
+		SimId:            sim.Id,
+		PackageId:        packageUuid,
+		InitialData:      totalData,
+		IsCurrentlyInUse: false,
+		DefaultDuration:  pkgInfo.Duration,
 	}
 
 	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
@@ -1114,7 +1114,7 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 
 		pkg.StartDate = startDate
 		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
-		pkg.IsActive = true
+		pkg.IsCurrentlyInUse = true
 	} else {
 		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
@@ -1247,12 +1247,12 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 			reqPackageId, reqSimId)
 	}
 
-	if pkg.AsExpired {
+	if pkg.IsExpired {
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot set expired package (%s) as active", pkg.Id)
 	}
 
-	if pkg.IsActive {
+	if pkg.IsCurrentlyInUse {
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot set already active package (%s) as active", pkg.Id)
 	}
@@ -1265,8 +1265,8 @@ func setActivePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 
 	// Update package on sim manager
 	newPackageToActivate := &sims.Package{
-		Id:       pkg.Id,
-		IsActive: true,
+		Id:               pkg.Id,
+		IsCurrentlyInUse: true,
 	}
 
 	err = packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -1354,19 +1354,19 @@ func setInactivePackageForSim(reqSimId, reqPackageId string, packageRepo sims.Pa
 			reqPackageId, reqSimId)
 	}
 
-	if !pckg.IsActive {
+	if !pckg.IsCurrentlyInUse {
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot set inactive package (%s) as inactive", pckg.Id)
 	}
 
-	if pckg.AsExpired {
+	if pckg.IsExpired {
 		return status.Errorf(codes.FailedPrecondition,
 			"package (%s) has already been marked as expired", pckg.Id)
 	}
 
 	packageToSetInactive := &sims.Package{
-		Id:       pckg.Id,
-		IsActive: false,
+		Id:               pckg.Id,
+		IsCurrentlyInUse: false,
 	}
 
 	err = packageRepo.Update(packageToSetInactive, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -1404,14 +1404,14 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 			reqPackageId, reqSimId)
 	}
 
-	if !pckg.IsActive {
+	if !pckg.IsCurrentlyInUse {
 		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 
 		return status.Errorf(codes.FailedPrecondition,
 			"cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
 	}
 
-	if pckg.AsExpired {
+	if pckg.IsExpired {
 		return status.Errorf(codes.FailedPrecondition,
 			"package (%s) has already been marked as expired", pckg.Id)
 	}
@@ -1427,9 +1427,9 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	}
 
 	packageToTerminate := &sims.Package{
-		Id:        pckg.Id,
-		IsActive:  false,
-		AsExpired: true,
+		Id:               pckg.Id,
+		IsCurrentlyInUse: false,
+		IsExpired:        true,
 	}
 
 	err = packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -1615,9 +1615,9 @@ func dbPackageToPbPackage(pkg *sims.Package) *pb.Package {
 		PackageId:        pkg.PackageId.String(),
 		InitialData:      pkg.InitialData,
 		UsedDataAtExpiry: pkg.UsedDataAtExpiry,
-		IsActive:         pkg.IsActive,
+		IsActive:         pkg.IsCurrentlyInUse,
 		DefaultDuration:  pkg.DefaultDuration,
-		AsExpired:        pkg.AsExpired,
+		AsExpired:        pkg.IsExpired,
 		CreatedAt:        pkg.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:        pkg.UpdatedAt.Format(time.RFC3339),
 	}

@@ -835,10 +835,10 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				Id:        packageId,
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				Id:               packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -855,10 +855,10 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Package{
 				sims.Package{
-					Id:        packageId,
-					SimId:     simId,
-					IsActive:  false,
-					AsExpired: true,
+					Id:               packageId,
+					SimId:            simId,
+					IsCurrentlyInUse: false,
+					IsExpired:        true,
 				},
 			}, nil)
 
@@ -903,10 +903,10 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				Id:        packageId,
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				Id:               packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -923,16 +923,16 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Package{
 				sims.Package{
-					Id:        packageId,
-					SimId:     simId,
-					IsActive:  false,
-					AsExpired: true,
+					Id:               packageId,
+					SimId:            simId,
+					IsCurrentlyInUse: false,
+					IsExpired:        true,
 				},
 				sims.Package{
-					Id:        uuid.NewV4(),
-					SimId:     simId,
-					IsActive:  true,
-					AsExpired: false,
+					Id:               uuid.NewV4(),
+					SimId:            simId,
+					IsCurrentlyInUse: true,
+					IsExpired:        false,
 				},
 			}, nil)
 
@@ -977,9 +977,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -1037,9 +1037,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -1091,9 +1091,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -1140,9 +1140,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: false,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        false,
 			}, nil)
 
 		simRepo.On("Get", mock.Anything).
@@ -1187,9 +1187,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:     simId,
-				IsActive:  true,
-				AsExpired: true,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				IsExpired:        true,
 			}, nil)
 
 		evt := &epb.AsrInactivated{
@@ -1231,8 +1231,8 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).
 			Return(&sims.Package{
-				SimId:    simId,
-				IsActive: false,
+				SimId:            simId,
+				IsCurrentlyInUse: false,
 			}, nil)
 
 		evt := &epb.AsrInactivated{
