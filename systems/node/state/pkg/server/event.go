@@ -476,6 +476,11 @@ import (
 		 return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
 	 }
 
+	 return n.persistTransition(ctx, instance, nodeId, prevState, eventName)
+ }
+
+ func (n *StateEventServer) persistTransition(ctx context.Context, instance *stm.StateMachineInstance,
+	 nodeId, prevState, eventName string) (bool, error) {
 	 _, err := n.s.UpdateState(ctx, &pb.UpdateStateRequest{
 		 NodeId:   nodeId,
 		 SubState: []string{instance.CurrentSubstate},

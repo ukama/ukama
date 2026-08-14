@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/num30/config"
@@ -94,6 +95,11 @@ func runGrpcServer(gormdb sql.Db) {
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
+
+	timeoutCtx, stopTimeouts := context.WithCancel(context.Background())
+	defer stopTimeouts()
+
+	stateEventServer.StartTimeoutWorker(timeoutCtx, svcConf.StateTimeoutSweepInterval)
 
 	waitForExit()
 }

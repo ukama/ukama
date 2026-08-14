@@ -16,16 +16,17 @@ import (
 )
 
 type Config struct {
-	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database  `default:"{}"`
-	Grpc             *uconf.Grpc      `default:"{}"`
-	Queue            *uconf.Queue     `default:"{}"`
-	Timeout          time.Duration    `default:"20s"`
-	MsgClient        *uconf.MsgClient `default:"{}"`
-	Service          *uconf.Service
-	OrgName          string
-	OrgId            string
-	ConfigPath       string
+	uconf.BaseConfig          `mapstructure:",squash"`
+	DB                        *uconf.Database  `default:"{}"`
+	Grpc                      *uconf.Grpc      `default:"{}"`
+	Queue                     *uconf.Queue     `default:"{}"`
+	Timeout                   time.Duration    `default:"20s"`
+	MsgClient                 *uconf.MsgClient `default:"{}"`
+	Service                   *uconf.Service
+	OrgName                   string
+	OrgId                     string
+	ConfigPath                string
+	StateTimeoutSweepInterval time.Duration `default:"15s"`
 }
 
 func NewConfig(name string) *Config {

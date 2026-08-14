@@ -303,3 +303,33 @@ func NewStateRepo(t interface {
 
 	return mock
 }
+
+// ListLatestStates provides a mock function with given fields:
+func (_m *StateRepo) ListLatestStates() ([]db.State, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLatestStates")
+	}
+
+	var r0 []db.State
+	var r1 error
+	if rf, ok := ret.Get(0).(func() ([]db.State, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() []db.State); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.State)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}

@@ -47,6 +47,10 @@ func (s *StateServer) TakeLatchedEvent(nodeId string) (string, error) {
 	return s.sRepo.TakeLatchedEvent(nodeId)
 }
 
+func (s *StateServer) ListLatestStates() ([]db.State, error) {
+	return s.sRepo.ListLatestStates()
+}
+
 func NewStateServer(orgName string, orgId string, sRepo db.StateRepo, msgBus mb.MsgBusServiceClient) *StateServer {
 
 	ns := &StateServer{

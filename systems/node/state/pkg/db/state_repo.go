@@ -30,6 +30,7 @@ type StateRepo interface {
 	GetStateHistoryWithFilter(nodeId string, pageSize int, pageNumber int, startTime, endTime time.Time) ([]*State, error)
 	SetLatchedEvent(nodeId, event string) error
 	TakeLatchedEvent(nodeId string) (string, error)
+	ListLatestStates() ([]State, error)
 }
 
 type stateRepo struct {
@@ -106,6 +107,22 @@ func (r *stateRepo) GetLatestState(nodeId string) (*State, error) {
 
 	return &latestState, nil
 }
+func (r *stateRepo) ListLatestStates() ([]State, error) {
+	var states []State
+
+	result := r.Db.GetGormDb().
+		Where("deleted_at IS NULL").
+		Order("node_id, created_at DESC").
+		Distinct("ON (node_id) *").
+		Find(&states)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("error listing latest states: %w", result.Error)
+	}
+
+	return states, nil
+}
+
 func (r *stateRepo) AddState(newState *State, previousState *State) error {
 	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if previousState != nil {
