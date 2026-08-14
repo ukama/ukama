@@ -6,11 +6,27 @@
     {
       "name": "Unknown",
       "description": "Node is registered but nothing has been heard from it yet",
-      "events": ["online", "offline", "reboot", "offboard"],
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "assign",
+        "platformready",
+        "fault",
+        "offboard"
+      ],
       "transition": [
         {
-          "to_state": "Initializing",
-          "trigger": ["online"]
+          "to_state": "Configuring",
+          "trigger": ["assign"]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": ["platformready"]
+        },
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
         },
         {
           "to_state": "Offboarded",
@@ -45,6 +61,7 @@
         "reboot",
         "platformready",
         "update",
+        "assign",
         "fault",
         "offboard"
       ],
@@ -52,6 +69,10 @@
         {
           "to_state": "Ready",
           "trigger": ["platformready"]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": ["assign"]
         },
         {
           "to_state": "Updating",

@@ -36,9 +36,9 @@ func TestNodeStateFsm_HappyPath(t *testing.T) {
 	instance := newNodeInstance(t, "happy-path", "Unknown")
 
 	require.NoError(t, instance.Transition("online"))
-	assert.Equal(t, "Initializing", instance.CurrentState)
-	assert.Equal(t, "on", instance.CurrentSubstate,
-		"the first hello must also mark the node online")
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"connectivity must not move the lifecycle state")
+	assert.Equal(t, "on", instance.CurrentSubstate)
 
 	require.NoError(t, instance.Transition("platformready"))
 	assert.Equal(t, "Ready", instance.CurrentState)
@@ -266,14 +266,7 @@ func TestNodeStateFsm_PlatformReadyBeforeNodeIsUpIsLatched(t *testing.T) {
 
 	nodeId := "test-node-ready-race"
 
-	t.Run("platformready in Unknown is latched rather than dropped", func(t *testing.T) {
-		instance, err := srv.getOrCreateInstance(nodeId, "Unknown", "on")
-		require.NoError(t, err)
-
-		require.NoError(t, instance.Transition(NodeStateEventPlatformReady))
-		assert.Equal(t, "Unknown", instance.CurrentState,
-			"platformready must not move a node out of Unknown")
-
+	t.Run("a latched event is stored and handed back once", func(t *testing.T) {
 		srv.latchHealthEvent(nodeId, NodeStateEventPlatformReady)
 
 		latched, ok := srv.takeLatchedHealthEvent(nodeId)
@@ -291,7 +284,7 @@ func TestNodeStateFsm_PlatformReadyBeforeNodeIsUpIsLatched(t *testing.T) {
 		require.NoError(t, err)
 
 		require.NoError(t, instance.Transition("online"))
-		require.Equal(t, "Initializing", instance.CurrentState)
+		require.Equal(t, "Unknown", instance.CurrentState)
 
 		require.NoError(t, instance.Transition(NodeStateEventPlatformReady))
 		assert.Equal(t, "Ready", instance.CurrentState,
