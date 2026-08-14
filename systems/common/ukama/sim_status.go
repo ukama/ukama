@@ -18,8 +18,8 @@ type SimStatus uint8
 
 const (
 	SimStatusUnknown SimStatus = iota
-	SimStatusActive
-	SimStatusInactive
+	SimStatusServiceOn
+	SimStatusServiceOff
 	SimStatusTerminated
 )
 
@@ -33,7 +33,7 @@ func (s SimStatus) Value() (driver.Value, error) {
 }
 
 func (s SimStatus) String() string {
-	t := map[SimStatus]string{0: "unknown", 1: "active", 2: "inactive", 3: "terminated"}
+	t := map[SimStatus]string{0: "unknown", 1: "service_on", 2: "service_off", 3: "terminated"}
 
 	v, ok := t[s]
 	if !ok {
@@ -49,7 +49,7 @@ func ParseSimStatus(value string) SimStatus {
 		return SimStatus(i)
 	}
 
-	t := map[string]SimStatus{"unknown": 0, "active": 1, "inactive": 2, "terminated": 3}
+	t := map[string]SimStatus{"unknown": 0, "service_on": 1, "service_off": 2, "terminated": 3}
 
 	v, ok := t[strings.ToLower(value)]
 	if !ok {
