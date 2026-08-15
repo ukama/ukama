@@ -232,10 +232,10 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
 
     static const char *bootOrder[] = {
         "init-network",
+	"lifecycled",
         "noded",
         "bootstrap",
-        "meshd",
-        "lifecycled"
+        "meshd"
     };
 
     size_t i = 0;
