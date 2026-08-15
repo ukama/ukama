@@ -30,10 +30,16 @@ struct ReadinessMonitor {
     pthread_cond_t condition;
     bool running;
     bool enabled;
+    bool bootEnabled;
+    bool bootStarted;
 
     NodeReadinessState state;
     time_t readinessDeadline;
     char reason[STARTERD_READY_REASON_LEN];
+
+    NodeReadinessState bootState;
+    time_t bootDeadline;
+    char bootReason[STARTERD_READY_REASON_LEN];
 
     bool meshKnown;
     bool meshConnected;
@@ -97,9 +103,15 @@ static void app_update(ReadinessMonitor *monitor,
                        App *app,
                        const AppReadyResponse *result,
                        bool responded,
+                       uint32_t generation,
                        time_t now) {
 
     pthread_mutex_lock(&monitor->mutex);
+
+    if (app->readinessGeneration != generation) {
+        pthread_mutex_unlock(&monitor->mutex);
+        return;
+    }
 
     if (!responded) {
         app_set_pending(app,
@@ -138,6 +150,95 @@ static void app_update(ReadinessMonitor *monitor,
              "%s",
              responded ? result->requestId : "");
 
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+static void aggregate_boot(ReadinessMonitor *monitor) {
+
+    Space *space;
+    App *app;
+    App *pendingApp;
+    NodeReadinessState state;
+    const char *reason;
+    char appReason[STARTERD_READY_REASON_LEN];
+    time_t now;
+
+    state = NODE_READINESS_READY;
+    reason = "ready";
+    appReason[0] = '\0';
+    pendingApp = NULL;
+    now = time(NULL);
+
+    pthread_mutex_lock(&monitor->mutex);
+
+    if (!monitor->bootStarted) {
+        state = NODE_READINESS_PENDING;
+        reason = "starterd is starting boot applications";
+        monitor->bootDeadline = 0;
+    } else if (monitor->bootEnabled) {
+        space = space_find(monitor->spaceList,
+                           monitor->config->bootSpace);
+        app = space ? space->appList : NULL;
+
+        while (app && state != NODE_READINESS_FAULTY) {
+            if (!app->readinessRequired) {
+                app = app->next;
+                continue;
+            }
+
+            if (app->readinessState == APP_READINESS_FAULTY) {
+                state = NODE_READINESS_FAULTY;
+                snprintf(appReason,
+                         sizeof(appReason),
+                         "%.48s: %.140s",
+                         app->name,
+                         app->readinessReason);
+                reason = appReason;
+                break;
+            }
+
+            if (app->readinessState != APP_READINESS_READY &&
+                state == NODE_READINESS_READY) {
+                state = NODE_READINESS_PENDING;
+                pendingApp = app;
+                snprintf(appReason,
+                         sizeof(appReason),
+                         "%.48s: %.140s",
+                         app->name,
+                         app->readinessReason);
+                reason = appReason;
+            }
+
+            app = app->next;
+        }
+
+        if (state == NODE_READINESS_READY ||
+            state == NODE_READINESS_FAULTY) {
+            monitor->bootDeadline = 0;
+        } else {
+            if (monitor->bootDeadline == 0) {
+                monitor->bootDeadline =
+                    now + monitor->config->readyTimeoutSec;
+            }
+
+            if (now >= monitor->bootDeadline) {
+                state = NODE_READINESS_FAULTY;
+                snprintf(appReason,
+                         sizeof(appReason),
+                         "%.48s: readiness timeout after %d seconds",
+                         pendingApp ? pendingApp->name : "app",
+                         monitor->config->readyTimeoutSec);
+                reason = appReason;
+            }
+        }
+    } else {
+        monitor->bootDeadline = 0;
+    }
+
+    monitor->bootState = state;
+    copy_reason(monitor->bootReason,
+                sizeof(monitor->bootReason),
+                reason);
     pthread_mutex_unlock(&monitor->mutex);
 }
 
@@ -232,21 +333,55 @@ static void poll_apps(ReadinessMonitor *monitor) {
     App *app;
     AppReadyResponse result;
     bool responded;
+    bool bootStarted;
+    bool pollSpace;
+    bool appRunning;
+    uint32_t generation;
     time_t now;
 
-    if (!monitor->ctx->bootCompleted) return;
+    pthread_mutex_lock(&monitor->mutex);
+    bootStarted = monitor->bootStarted;
+    pthread_mutex_unlock(&monitor->mutex);
+
+    if (!bootStarted && !monitor->ctx->bootCompleted) return;
 
     space = monitor->spaceList;
     while (space) {
+        pollSpace = monitor->ctx->bootCompleted ||
+                    (bootStarted &&
+                     strcmp(space->name,
+                            monitor->config->bootSpace) == 0);
+
+        if (!pollSpace) {
+            space = space->next;
+            continue;
+        }
+
         app = space->appList;
         while (app) {
             if (app->readinessRequired) {
+                pthread_mutex_lock(&monitor->mutex);
+                generation = app->readinessGeneration;
+                appRunning = app->state == APP_STATE_RUNNING &&
+                             app->pid > 0;
+                pthread_mutex_unlock(&monitor->mutex);
+
+                if (!appRunning) {
+                    app = app->next;
+                    continue;
+                }
+
                 memset(&result, 0, sizeof(result));
                 responded = wc_app_ready(monitor->config,
                                          app,
                                          &result);
                 now = time(NULL);
-                app_update(monitor, app, &result, responded, now);
+                app_update(monitor,
+                           app,
+                           &result,
+                           responded,
+                           generation,
+                           now);
             }
             app = app->next;
         }
@@ -326,6 +461,7 @@ static void *readiness_thread(void *arg) {
 
     do {
         poll_apps(monitor);
+        aggregate_boot(monitor);
         poll_mesh(monitor);
         aggregate(monitor);
     } while (wait_for_next_poll(monitor));
@@ -350,10 +486,14 @@ ReadinessMonitor *readiness_start(Config *config,
     monitor->spaceList = spaceList;
     monitor->ctx = ctx;
     monitor->state = NODE_READINESS_PENDING;
+    monitor->bootState = NODE_READINESS_PENDING;
     monitor->running = true;
     copy_reason(monitor->reason,
                 sizeof(monitor->reason),
                 "starterd is starting applications");
+    copy_reason(monitor->bootReason,
+                sizeof(monitor->bootReason),
+                "starterd is starting boot applications");
     copy_reason(monitor->meshReason,
                 sizeof(monitor->meshReason),
                 "meshd status unavailable");
@@ -364,6 +504,9 @@ ReadinessMonitor *readiness_start(Config *config,
         while (app) {
             if (app->readinessRequired) {
                 monitor->enabled = true;
+                if (strcmp(space->name, config->bootSpace) == 0) {
+                    monitor->bootEnabled = true;
+                }
             }
             app = app->next;
         }
@@ -422,6 +565,75 @@ NodeReadinessState readiness_get(ReadinessMonitor *monitor,
     pthread_mutex_unlock(&monitor->mutex);
 
     return state;
+}
+
+NodeReadinessState readiness_get_boot(ReadinessMonitor *monitor,
+                                      char *reason,
+                                      size_t reasonSize) {
+
+    NodeReadinessState state;
+
+    if (!monitor) {
+        copy_reason(reason, reasonSize, "readiness monitor unavailable");
+        return NODE_READINESS_FAULTY;
+    }
+
+    pthread_mutex_lock(&monitor->mutex);
+    state = monitor->bootState;
+    copy_reason(reason, reasonSize, monitor->bootReason);
+    pthread_mutex_unlock(&monitor->mutex);
+
+    return state;
+}
+
+void readiness_boot_started(ReadinessMonitor *monitor) {
+
+    if (!monitor) return;
+
+    pthread_mutex_lock(&monitor->mutex);
+    monitor->bootStarted = true;
+    monitor->bootDeadline = 0;
+    pthread_cond_signal(&monitor->condition);
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+void readiness_app_started(ReadinessMonitor *monitor, App *app) {
+
+    time_t now;
+
+    if (!monitor || !app || !app->readinessRequired) return;
+
+    now = time(NULL);
+
+    pthread_mutex_lock(&monitor->mutex);
+    app->readinessGeneration = app->generation;
+    app_set_pending(app, 0, "waiting for startup", now);
+    app->readinessRequestId[0] = '\0';
+    pthread_cond_signal(&monitor->condition);
+    pthread_mutex_unlock(&monitor->mutex);
+}
+
+void readiness_app_exited(ReadinessMonitor *monitor, App *app) {
+
+    time_t now;
+
+    if (!monitor || !app || !app->readinessRequired) return;
+
+    now = time(NULL);
+
+    pthread_mutex_lock(&monitor->mutex);
+    if (app->readinessState != APP_READINESS_FAULTY) {
+        app->readinessSince = now;
+    }
+    app->readinessState = APP_READINESS_FAULTY;
+    app->readinessHttpStatus = 0;
+    app->readinessCheckedAt = now;
+    copy_reason(app->readinessReason,
+                sizeof(app->readinessReason),
+                "application exited; restart pending");
+    app->readinessRequestId[0] = '\0';
+    pthread_cond_signal(&monitor->condition);
+    pthread_mutex_unlock(&monitor->mutex);
 }
 
 json_t *readiness_status_json(ReadinessMonitor *monitor) {

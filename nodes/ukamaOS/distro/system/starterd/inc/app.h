@@ -50,10 +50,12 @@ typedef struct App {
     int restartCount;
     time_t restartWindowStart;
     int nextBackoffSec;
+    time_t restartAt;
 
     char *lastGoodTag;
 
     bool readinessRequired;
+    uint32_t readinessGeneration;
     AppReadinessState readinessState;
     int readinessHttpStatus;
     time_t readinessSince;
