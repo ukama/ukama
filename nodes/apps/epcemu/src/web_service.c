@@ -171,6 +171,60 @@ int web_service_cb_version(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *data) {
+
+    ServiceContext *ctx;
+    JsonObj *json;
+    EpcemuState state;
+    char reason[EPCEMU_MAX_REASON];
+    int status;
+
+    (void)request;
+
+    ctx = (ServiceContext *)data;
+    if (ctx == NULL || ctx->status == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    pthread_mutex_lock(&ctx->status->mutex);
+    state = ctx->status->state;
+    snprintf(reason, sizeof(reason), "%s", ctx->status->reason);
+    pthread_mutex_unlock(&ctx->status->mutex);
+
+    status = HttpStatus_Accepted;
+    if (state == EpcemuStateReady) {
+        status = HttpStatus_OK;
+    } else if (state == EpcemuStateFailed) {
+        status = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(state == EpcemuStateReady));
+    if (state != EpcemuStateReady) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    ulfius_set_json_body_response(response, status, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *data) {

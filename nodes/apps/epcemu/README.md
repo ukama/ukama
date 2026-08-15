@@ -20,12 +20,17 @@ forward user-plane traffic yet.
 ```text
 GET    /v1/ping
 GET    /v1/version
+GET    /v1/ready
 GET    /v1/status
 POST   /v1/ue/attach
 DELETE /v1/ue/detach
 GET    /v1/ue/:imsi
 GET    /v1/ues
 ```
+
+`GET /v1/ready` returns `202 {"ready":false,"reason":"..."}` while
+EPCEMU is starting, `200 {"ready":true}` when it is ready, and
+`503 {"ready":false,"reason":"..."}` if startup fails.
 
 ## /etc/services
 
