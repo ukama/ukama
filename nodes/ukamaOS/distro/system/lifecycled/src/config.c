@@ -21,7 +21,7 @@
 
 #define DEFAULT_HTTP_PORT                    8097
 #define DEFAULT_CHECK_IN_TIMEOUT_SEC           60
-#define DEFAULT_CONFIG_TIMEOUT_SEC             60
+#define DEFAULT_CONFIG_TIMEOUT_SEC             30
 #define DEFAULT_STARTER_UNAVAILABLE_SEC        15
 #define DEFAULT_POLL_INTERVAL_MS             1000
 #define DEFAULT_REQUEST_TIMEOUT_SEC             3

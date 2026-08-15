@@ -11,8 +11,8 @@ make unit
 They validate:
 
 - STARTING and CHECKING_IN timing.
-- Stable READY behavior.
-- No-config timeout to OPERATIONAL.
+- READY timeout to OPERATIONAL when no command arrives.
+- No-config and in-progress CONFIGURING timeouts.
 - Configuration progress, success and failure.
 - Configure command idempotency.
 - Starter fault and recovery.

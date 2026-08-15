@@ -114,6 +114,7 @@ LifecycleConfigureResult lifecycle_fsm_configure(
 bool lifecycle_fsm_tick(LifecycleFsm *fsm,
                         const StarterSnapshot *starter,
                         int starterUnavailableTimeoutSec,
+                        int configTimeoutSec,
                         int64_t nowMs,
                         int64_t epochSec);
 

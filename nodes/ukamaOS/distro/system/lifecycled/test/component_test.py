@@ -256,7 +256,7 @@ def run():
             wait_state(lifecycle_port, "READY")
 
             time.sleep(1.2)
-            wait_state(lifecycle_port, "READY")
+            wait_state(lifecycle_port, "OPERATIONAL")
 
             status, _ = request(
                 lifecycle_port,
@@ -306,6 +306,7 @@ def run():
                 "STARTING",
                 "CHECKING_IN",
                 "READY",
+                "OPERATIONAL",
                 "CONFIGURING",
                 "OPERATIONAL",
                 "CONFIGURING",

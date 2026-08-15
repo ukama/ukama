@@ -203,6 +203,7 @@ static void poll_and_reduce(LifecycleContext *ctx) {
     lifecycle_fsm_tick(&ctx->fsm,
                        &ctx->starter,
                        ctx->config->starterUnavailableTimeoutSec,
+                       ctx->config->configTimeoutSec,
                        lifecycle_boottime_ms(),
                        lifecycle_epoch_sec());
 

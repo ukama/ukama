@@ -327,6 +327,7 @@ static bool handle_unavailable_starter(
 
 static bool tick_checking_in(LifecycleFsm *fsm,
                              const StarterSnapshot *starter,
+                             int configTimeoutSec,
                              int64_t nowMs,
                              int64_t epochSec) {
 
@@ -341,9 +342,39 @@ static bool tick_checking_in(LifecycleFsm *fsm,
     }
 
     if (starter->aggregate == STARTER_AGGREGATE_READY) {
+        fsm->configDeadlineMs = nowMs +
+            ((int64_t)configTimeoutSec * 1000);
         return transition(fsm,
                           LIFECYCLE_STATE_READY,
                           "check-in complete; required applications ready",
+                          epochSec);
+    }
+
+    return false;
+}
+
+static bool tick_ready(LifecycleFsm *fsm,
+                       const StarterSnapshot *starter,
+                       int configTimeoutSec,
+                       int64_t nowMs,
+                       int64_t epochSec) {
+
+    if (handle_starter_fault(fsm, starter, epochSec)) {
+        return true;
+    }
+
+    if (fsm->configDeadlineMs == 0) {
+        fsm->configDeadlineMs = nowMs +
+            ((int64_t)configTimeoutSec * 1000);
+        return false;
+    }
+
+    if (nowMs >= fsm->configDeadlineMs &&
+        starter->aggregate == STARTER_AGGREGATE_READY) {
+        fsm->configDeadlineMs = 0;
+        return transition(fsm,
+                          LIFECYCLE_STATE_OPERATIONAL,
+                          "configuration window completed; no command received",
                           epochSec);
     }
 
@@ -410,6 +441,17 @@ static bool tick_configuring(LifecycleFsm *fsm,
                           epochSec);
     }
 
+    if (fsm->configurationSeen &&
+        !fsm->configurationApplied &&
+        nowMs >= fsm->configDeadlineMs) {
+        fsm->configDeadlineMs = 0;
+        return enter_fault(fsm,
+                           LIFECYCLE_FAULT_CONFIGURATION,
+                           LIFECYCLE_STATE_CONFIGURING,
+                           "configuration timed out before completion",
+                           epochSec);
+    }
+
     return false;
 }
 
@@ -444,10 +486,12 @@ static bool tick_faulty(LifecycleFsm *fsm,
 bool lifecycle_fsm_tick(LifecycleFsm *fsm,
                         const StarterSnapshot *starter,
                         int starterUnavailableTimeoutSec,
+                        int configTimeoutSec,
                         int64_t nowMs,
                         int64_t epochSec) {
 
-    if (!fsm || !starter || starterUnavailableTimeoutSec <= 0) {
+    if (!fsm || !starter || starterUnavailableTimeoutSec <= 0 ||
+        configTimeoutSec <= 0) {
         return false;
     }
 
@@ -463,9 +507,19 @@ bool lifecycle_fsm_tick(LifecycleFsm *fsm,
 
     switch (fsm->state) {
     case LIFECYCLE_STATE_CHECKING_IN:
-        return tick_checking_in(fsm, starter, nowMs, epochSec);
+        return tick_checking_in(fsm,
+                                starter,
+                                configTimeoutSec,
+                                nowMs,
+                                epochSec);
 
     case LIFECYCLE_STATE_READY:
+        return tick_ready(fsm,
+                          starter,
+                          configTimeoutSec,
+                          nowMs,
+                          epochSec);
+
     case LIFECYCLE_STATE_OPERATIONAL:
         return handle_starter_fault(fsm, starter, epochSec);
 

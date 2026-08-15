@@ -11,11 +11,14 @@ send periodic health reports.
 
 ```text
 STARTING -> CHECKING_IN -> READY -> CONFIGURING -> OPERATIONAL
+                                  \-> OPERATIONAL (no command)
                                   \-> FAULTY
 ```
 
-`READY` is stable. The node remains READY until an explicit CONFIGURING
-command is received.
+`READY` is the backend configuration-command window. The node enters
+`CONFIGURING` when a command is received, or moves to `OPERATIONAL` when the
+window expires without one. A command received later while `OPERATIONAL` is
+still accepted.
 
 `UNKNOWN` and online/offline availability are backend concepts. They are not
 local lifecycle states.
@@ -93,8 +96,10 @@ LIFECYCLED_REQUEST_TIMEOUT_SEC
 LIFECYCLED_LOG_LEVEL
 ```
 
-Production check-in and no-configuration defaults are both 60 seconds. Tests
-override them with one-second values.
+The production check-in default is 60 seconds. The configuration default is
+30 seconds and applies both while waiting in `READY` for a backend command and
+while waiting in `CONFIGURING` for configuration to finish. Tests override
+both with one-second values.
 
 ## Tests
 
