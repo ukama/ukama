@@ -28,9 +28,16 @@ GET    /v1/ue/:imsi
 GET    /v1/ues
 ```
 
-`GET /v1/ready` returns `202 {"ready":false,"reason":"..."}` while
-EPCEMU is starting, `200 {"ready":true}` when it is ready, and
-`503 {"ready":false,"reason":"..."}` if startup fails.
+EPCEMU starts its HTTP service before probing its startup dependencies. The
+readiness endpoint returns:
+
+- `202 Accepted` while waiting for `init-network`, the data plane, or route
+  reconciliation
+- `200 OK` after all required startup work completes
+- `503 Service Unavailable` after a terminal startup failure
+
+PCRF is started after the lifecycle boot gate, so PCRF availability does not
+block EPCEMU readiness. PCRF is still required when attaching a UE.
 
 ## /etc/services
 

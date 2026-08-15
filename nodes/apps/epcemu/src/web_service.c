@@ -74,6 +74,7 @@ static JsonObj *status_json(ServiceContext *ctx) {
     EpcemuState state;
     bool ready;
     bool serviceOn;
+    bool dataPlaneStarted;
     char reason[EPCEMU_MAX_REASON];
 
     if (ctx == NULL || ctx->config == NULL || ctx->status == NULL) return NULL;
@@ -86,6 +87,7 @@ static JsonObj *status_json(ServiceContext *ctx) {
 
     pthread_mutex_lock(&ctx->serviceMutex);
     serviceOn = ctx->serviceOn;
+    dataPlaneStarted = ctx->dataPlaneStarted;
     pthread_mutex_unlock(&ctx->serviceMutex);
 
     root = json_object();
@@ -97,7 +99,12 @@ static JsonObj *status_json(ServiceContext *ctx) {
     initNetwork = json_object();
     service = json_object();
     ues = ue_summary_json();
-    userPlane = data_plane_json(&gDataPlane, ctx->config);
+    userPlane = dataPlaneStarted ?
+        data_plane_json(&gDataPlane, ctx->config) : json_object();
+
+    if (userPlane != NULL && !dataPlaneStarted) {
+        json_object_set_new(userPlane, "enabled", json_false());
+    }
 
     json_object_set_new(root, "ready",  json_boolean(ready));
     json_object_set_new(root, "state",  json_string(status_state_str(state)));
@@ -179,7 +186,7 @@ int web_service_cb_ready(const URequest *request,
     JsonObj *json;
     EpcemuState state;
     char reason[EPCEMU_MAX_REASON];
-    int status;
+    int httpStatus;
 
     (void)request;
 
@@ -197,11 +204,11 @@ int web_service_cb_ready(const URequest *request,
     snprintf(reason, sizeof(reason), "%s", ctx->status->reason);
     pthread_mutex_unlock(&ctx->status->mutex);
 
-    status = HttpStatus_Accepted;
+    httpStatus = HttpStatus_Accepted;
     if (state == EpcemuStateReady) {
-        status = HttpStatus_OK;
+        httpStatus = HttpStatus_OK;
     } else if (state == EpcemuStateFailed) {
-        status = HttpStatus_ServiceUnavailable;
+        httpStatus = HttpStatus_ServiceUnavailable;
     }
 
     json = json_object();
@@ -220,7 +227,7 @@ int web_service_cb_ready(const URequest *request,
         json_object_set_new(json, "reason", json_string(reason));
     }
 
-    ulfius_set_json_body_response(response, status, json);
+    ulfius_set_json_body_response(response, httpStatus, json);
     json_decref(json);
     return U_CALLBACK_CONTINUE;
 }
