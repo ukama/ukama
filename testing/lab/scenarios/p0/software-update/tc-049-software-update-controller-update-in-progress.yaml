@@ -26,6 +26,12 @@ runtime:
 phases:
   - name: verify_current_software
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -77,6 +83,12 @@ phases:
         count_per_network: 1
         busy: true
         timeout_seconds: 60
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 60
 
   - name: reject_competing_target
     events:
@@ -113,3 +125,9 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

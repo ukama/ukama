@@ -18,6 +18,7 @@
 typedef struct App {
     char *space;
     char *name;
+    char *service;
     char *tag;
 
     char *cmd;
@@ -49,15 +50,18 @@ typedef struct App {
     int restartCount;
     time_t restartWindowStart;
     int nextBackoffSec;
+    time_t restartAt;
 
     char *lastGoodTag;
 
     bool readinessRequired;
+    uint32_t readinessGeneration;
     AppReadinessState readinessState;
     int readinessHttpStatus;
     time_t readinessSince;
     time_t readinessCheckedAt;
     char readinessReason[STARTERD_READY_REASON_LEN];
+    char readinessRequestId[STARTERD_REQUEST_ID_LEN];
 
     struct App *next;
 } App;

@@ -15,6 +15,7 @@
 #include "restart_policy.h"
 #include "app_runtime.h"
 #include "starterd.h"
+#include "readiness.h"
 
 #include <errno.h>
 #include <pthread.h>
@@ -41,6 +42,11 @@ struct Supervisor {
 
     bool running;
     bool bootDone;
+    bool bootLaunchHealthy;
+    bool lifecycleCheckedIn;
+    bool lifecycleBootHealthy;
+    bool applicationsStarted;
+    LifecycleGateState lifecycleGate;
 };
 
 static void action_free(Action *a) {
@@ -109,18 +115,21 @@ static char* app_exec_path(Config *config, App *app) {
     return p;
 }
 
-static bool app_start(Config *config, App *app) {
+static bool app_start(Supervisor *s, App *app) {
 
     char *execPath;
     bool ok;
     time_t now;
+    Config *config;
 
     execPath = NULL;
     ok = false;
 
-    if (!config || !app) {
+    if (!s || !s->config || !app) {
         return false;
     }
+
+    config = s->config;
 
     execPath = app_exec_path(config, app);
     if (!execPath) {
@@ -131,6 +140,7 @@ static bool app_start(Config *config, App *app) {
 
     app->state  = APP_STATE_STARTING;
     app->reason = APP_REASON_STARTED;
+    app->restartAt = 0;
 
     now = time(NULL);
     restart_policy_on_start(config, app, now);
@@ -142,6 +152,9 @@ static bool app_start(Config *config, App *app) {
     } else {
         app->state  = APP_STATE_RUNNING;
         app->reason = APP_REASON_NONE;
+        if (s->ctx) {
+            readiness_app_started(s->ctx->readiness, app);
+        }
     }
 
     free(execPath);
@@ -155,6 +168,8 @@ static bool app_stop(Config *config, App *app, AppReason reason) {
     if (!config || !app) {
         return false;
     }
+
+    app->restartAt = 0;
 
     if (app->pid <= 0 || app->pgid <= 0) {
         app->state = APP_STATE_STOPPED;
@@ -175,6 +190,25 @@ static bool app_stop(Config *config, App *app, AppReason reason) {
     }
 
     return ok;
+}
+
+static bool app_restart(Supervisor *s, App *app) {
+
+    if (!s || !s->config || !app) return false;
+
+    if (!app_stop(s->config, app, APP_REASON_RESTART)) {
+        app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_RESTART_FAILED;
+        return false;
+    }
+
+    if (!app_start(s, app)) {
+        app->state = APP_STATE_FAILED;
+        app->reason = APP_REASON_RESTART_FAILED;
+        return false;
+    }
+
+    return true;
 }
 
 static bool app_is_self(const App *app) {
@@ -240,6 +274,7 @@ static void supervisor_reap(Supervisor *s) {
 
                     if (a->state == APP_STATE_STOPPING ||
                         a->state == APP_STATE_STOPPED) {
+                        a->restartAt = 0;
                         a->state = APP_STATE_STOPPED;
                         if (a->reason == APP_REASON_NONE) {
                             a->reason = APP_REASON_TERMINATED;
@@ -257,11 +292,13 @@ static void supervisor_reap(Supervisor *s) {
                     }
 
                     delay = restart_policy_next_delay(s->config, a, now);
+                    a->restartAt = now + delay;
+                    if (s->ctx) {
+                        readiness_app_exited(s->ctx->readiness, a);
+                    }
                     usys_log_error("app: exited %s/%s reason=%d "
                                    "restart in %d sec",
                                    a->space, a->name, a->reason, delay);
-                    sleep(delay);
-                    app_start(s->config, a);
                     state_store_save(s->config, s->spaceList);
                     break;
                 }
@@ -269,6 +306,52 @@ static void supervisor_reap(Supervisor *s) {
             }
             sp = sp->next;
         }
+    }
+}
+
+static void supervisor_restart_due(Supervisor *s) {
+
+    Space *sp;
+    App *a;
+    time_t now;
+    int delay;
+
+    if (!s) return;
+
+    now = time(NULL);
+    sp = s->spaceList;
+
+    while (sp) {
+        a = sp->appList;
+        while (a) {
+            if (a->restartAt > 0 && now >= a->restartAt) {
+                a->restartAt = 0;
+                usys_log_info("app: restarting %s/%s",
+                              a->space,
+                              a->name);
+
+                if (!app_start(s, a)) {
+                    a->state = APP_STATE_FAILED;
+                    a->reason = APP_REASON_RESTART_FAILED;
+                    restart_policy_on_exit(s->config, a, now);
+                    delay = restart_policy_next_delay(s->config, a, now);
+                    a->restartAt = now + delay;
+                    if (s->ctx) {
+                        readiness_app_exited(s->ctx->readiness, a);
+                    }
+                    usys_log_error("app: restart failed %s/%s "
+                                   "retry in %d sec",
+                                   a->space,
+                                   a->name,
+                                   delay);
+                }
+
+                state_store_save(s->config, s->spaceList);
+            }
+
+            a = a->next;
+        }
+        sp = sp->next;
     }
 }
 
@@ -318,17 +401,21 @@ static bool app_wait_commit(Config *config, App *app) {
     return false;
 }
 
-static bool run_space(Config *config,
-                      Space *spaceList,
-                      const char *spaceName,
-                      bool gate) {
+static bool run_space(Supervisor *supervisor,
+                      const char *spaceName) {
 
     Space *s;
     App   *a;
     bool  ok;
     bool  allOk;
+    Config *config;
 
-    s = space_find(spaceList, spaceName);
+    if (!supervisor || !supervisor->config) {
+        return false;
+    }
+
+    config = supervisor->config;
+    s = space_find(supervisor->spaceList, spaceName);
     if (!s) {
         return true;
     }
@@ -357,10 +444,6 @@ static bool run_space(Config *config,
             a->installState = INSTALL_STATE_FAILED;
             usys_log_error("space: install failed %s/%s", a->space, a->name);
 
-            if (gate) {
-                return false;
-            }
-
             a = a->next;
             continue;
         }
@@ -370,34 +453,17 @@ static bool run_space(Config *config,
             usys_log_error("space: switch failed %s/%s", a->space, a->name);
             allOk = false;
 
-            if (gate) {
-                return false;
-            }
-
             a = a->next;
             continue;
         }
 
-        ok = app_start(config, a);
+        ok = app_start(supervisor, a);
         if (!ok) {
             usys_log_error("space: start failed %s/%s", a->space, a->name);
             allOk = false;
 
-            if (gate) {
-                return false;
-            }
-
             a = a->next;
             continue;
-        }
-
-        if (gate) {
-            ok = app_wait_commit(config, a);
-            if (!ok) {
-                usys_log_error("boot: gate failed %s/%s", a->space, a->name);
-                allOk = false;
-                return false;
-            }
         }
 
         a = a->next;
@@ -521,7 +587,7 @@ static bool update_one_app(Supervisor *s,
         usys_log_error("update: install failed %s/%s", space, name);
         free(a->tag);
         a->tag = oldTag;
-        app_start(s->config, a);
+        app_start(s, a);
         free(oldLastGood);
         return false;
     }
@@ -530,17 +596,17 @@ static bool update_one_app(Supervisor *s,
         usys_log_error("update: switch failed %s/%s", space, name);
         free(a->tag);
         a->tag = oldTag;
-        app_start(s->config, a);
+        app_start(s, a);
         free(oldLastGood);
         return false;
     }
 
-    if (!app_start(s->config, a)) {
+    if (!app_start(s, a)) {
         usys_log_error("update: start failed %s/%s", space, name);
         installer_revert_to_last_good(s->config, a);
         free(a->tag);
         a->tag = oldTag;
-        app_start(s->config, a);
+        app_start(s, a);
         free(oldLastGood);
         return false;
     }
@@ -551,7 +617,7 @@ static bool update_one_app(Supervisor *s,
         free(a->tag);
         a->tag = oldTag;
         installer_switch_current(s->config, a);
-        app_start(s->config, a);
+        app_start(s, a);
         free(oldLastGood);
         return false;
     }
@@ -606,6 +672,99 @@ static bool update_app(Supervisor *s,
     return ok;
 }
 
+static void run_all_spaces(Supervisor *s) {
+
+    Space *space;
+
+    if (!s || s->applicationsStarted) return;
+
+    space = s->spaceList;
+    while (space) {
+        if (strcmp(space->name, s->config->bootSpace) != 0) {
+            run_space(s, space->name);
+        }
+        space = space->next;
+    }
+
+    s->applicationsStarted = true;
+    if (s->ctx) s->ctx->bootCompleted = 1;
+    usys_log_info("lifecycle: startup gate released");
+}
+
+static const char *lifecycle_gate_str(LifecycleGateState state) {
+
+    switch (state) {
+    case LIFECYCLE_GATE_WAITING: return "waiting";
+    case LIFECYCLE_GATE_OPEN:    return "open";
+    case LIFECYCLE_GATE_FAULTY:  return "faulty";
+    default:                     return "unavailable";
+    }
+}
+
+static void drive_lifecycle_gate(Supervisor *s) {
+
+    LifecycleGateState state;
+    NodeReadinessState bootState;
+    bool bootHealthy;
+    bool bootResultAvailable;
+    char bootReason[STARTERD_READY_REASON_LEN];
+
+    if (!s || !s->bootDone || s->applicationsStarted) return;
+    if (s->ctx && s->ctx->switchRequested) return;
+
+    bootState = readiness_get_boot(s->ctx ? s->ctx->readiness : NULL,
+                                   bootReason,
+                                   sizeof(bootReason));
+    bootHealthy = false;
+    bootResultAvailable = false;
+
+    if (!s->bootLaunchHealthy || bootState == NODE_READINESS_FAULTY) {
+        bootResultAvailable = true;
+    } else if (bootState == NODE_READINESS_READY) {
+        bootHealthy = true;
+        bootResultAvailable = true;
+    }
+
+    if (bootResultAvailable &&
+        (!s->lifecycleCheckedIn ||
+         s->lifecycleBootHealthy != bootHealthy)) {
+        if (!wc_lifecycle_check_in(s->config, bootHealthy)) {
+            if (s->lifecycleGate != LIFECYCLE_GATE_UNAVAILABLE) {
+                s->lifecycleGate = LIFECYCLE_GATE_UNAVAILABLE;
+                usys_log_warn("lifecycle: check-in unavailable");
+            }
+            return;
+        }
+
+        s->lifecycleCheckedIn = true;
+        s->lifecycleBootHealthy = bootHealthy;
+        usys_log_info("lifecycle: check-in accepted boot=%s",
+                      bootHealthy ? "ready" : "degraded");
+        if (!bootHealthy) {
+            usys_log_warn("boot: degraded: %s", bootReason);
+        }
+    }
+
+    if (!s->lifecycleCheckedIn) return;
+
+    if (s->ctx && s->ctx->updateInProgress) return;
+
+    state = wc_lifecycle_gate(s->config);
+    if (state != s->lifecycleGate) {
+        s->lifecycleGate = state;
+        if (state == LIFECYCLE_GATE_FAULTY) {
+            usys_log_error("lifecycle: startup gate faulty");
+        } else {
+            usys_log_info("lifecycle: startup gate %s",
+                          lifecycle_gate_str(state));
+        }
+    }
+
+    if (state == LIFECYCLE_GATE_OPEN) {
+        run_all_spaces(s);
+    }
+}
+
 static void* supervisor_thread(void *arg) {
 
     Supervisor *s;
@@ -618,10 +777,16 @@ static void* supervisor_thread(void *arg) {
     while (s->running) {
 
         supervisor_reap(s);
+        supervisor_restart_due(s);
 
         a = actions_dequeue(s->queue);
         if (!a) {
             struct timespec ts;
+
+            pthread_mutex_unlock(&s->mu);
+            drive_lifecycle_gate(s);
+            pthread_mutex_lock(&s->mu);
+
             clock_gettime(CLOCK_REALTIME, &ts);
             ts.tv_sec += 1;
             pthread_cond_timedwait(&s->cv, &s->mu, &ts);
@@ -631,13 +796,13 @@ static void* supervisor_thread(void *arg) {
         pthread_mutex_unlock(&s->mu);
 
         if (a->type == ACTION_RUN_BOOT) {
-            if (!run_space(s->config,
-                           s->spaceList,
-                           s->config->bootSpace,
-                           true)) {
-                usys_log_warn("boot: degraded");
+            s->bootLaunchHealthy = run_space(s,
+                                             s->config->bootSpace);
+            if (!s->bootLaunchHealthy) {
+                usys_log_warn("boot: one or more applications "
+                              "failed to launch");
             } else {
-                usys_log_info("boot: ready");
+                usys_log_info("boot: applications launched");
             }
 
             /*
@@ -645,22 +810,14 @@ static void* supervisor_thread(void *arg) {
              * one managed app is missing or pending.
              */
             s->bootDone = true;
+            if (s->ctx) {
+                readiness_boot_started(s->ctx->readiness);
+            }
             ready_touch(s->config);
             state_store_save(s->config, s->spaceList);
 
         } else if (a->type == ACTION_RUN_ALL) {
-            Space *sp;
-
-            sp = s->spaceList;
-            while (sp) {
-                if (strcmp(sp->name, s->config->bootSpace) != 0) {
-                    run_space(s->config, s->spaceList, sp->name, false);
-                }
-                sp = sp->next;
-            }
-            if (s->ctx) {
-                s->ctx->bootCompleted = 1;
-            }
+            run_all_spaces(s);
         } else if (a->type == ACTION_TERMINATE_APP) {
             App *app;
 
@@ -673,6 +830,21 @@ static void* supervisor_thread(void *arg) {
             if (s->ctx) {
                 s->ctx->terminateRequested = 0;
             }
+        } else if (a->type == ACTION_RESTART_APP) {
+            App *app;
+
+            app = app_find(s->spaceList, a->space, a->name);
+            if (!app || !app_restart(s, app)) {
+                usys_log_error("restart: failed %s/%s",
+                               a->space ? a->space : "(null)",
+                               a->name ? a->name : "(null)");
+            } else {
+                usys_log_info("restart: completed %s/%s",
+                              a->space,
+                              a->name);
+            }
+            state_store_save(s->config, s->spaceList);
+            if (s->ctx) s->ctx->restartRequested = 0;
         } else if (a->type == ACTION_UPDATE_APP) {
             if (!update_app(s, a->space, a->name, a->tag, a->hub)) {
                 usys_log_error("update: failed %s/%s -> %s",
@@ -720,6 +892,11 @@ Supervisor* supervisor_start(Config *config,
 
     s->running = true;
     s->bootDone = false;
+    s->bootLaunchHealthy = false;
+    s->lifecycleCheckedIn = false;
+    s->lifecycleBootHealthy = false;
+    s->applicationsStarted = false;
+    s->lifecycleGate = LIFECYCLE_GATE_UNAVAILABLE;
 
     if (pthread_create(&s->thread, NULL, supervisor_thread, s) != 0) {
         pthread_mutex_destroy(&s->mu);

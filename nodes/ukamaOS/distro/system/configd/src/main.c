@@ -81,7 +81,7 @@ void free_config(Config *config) {
 	usys_free(config->nodedHost);
 	usys_free(config->starterEP);
 	usys_free(config->starterHost);
-	free_session_data((SessionData *)config->updateSession);
+    config_session_clear(config);
 }
 
 int main(int argc, char **argv) {
@@ -154,6 +154,7 @@ int main(int argc, char **argv) {
 	serviceConfig.starterEP    = usys_strdup(DEF_STARTER_EP);
     serviceConfig.starterHost  = usys_strdup(starterHost);
 	serviceConfig.starterPort  = usys_find_service_port(SERVICE_STARTER);
+    serviceConfig.applyState  = CONFIG_APPLY_AWAITING;
 
     if (!serviceConfig.servicePort ||
         !serviceConfig.nodedPort   ||

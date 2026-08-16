@@ -98,6 +98,10 @@ int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *epConfig);
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig);
+
 int web_service_cb_default(const URequest *request,
 						   UResponse *response,
                            void *epConfig);

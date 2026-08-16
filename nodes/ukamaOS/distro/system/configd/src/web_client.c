@@ -11,6 +11,11 @@
 #include "configd.h"
 #include "jserdes.h"
 
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
 #include "usys_log.h"
 #include "usys_mem.h"
 #include "usys_string.h"
@@ -155,91 +160,170 @@ int get_nodeid_from_noded(Config *config) {
 	return STATUS_OK;
 }
 
-static bool wc_send_app_request(Config *config,
-                                char *app,
-                                const char *action,
-                                const char *httpMethod,
-                                int expectedStatus) {
+static void wc_clean(URequest *request, UResponse *response) {
 
-    UResponse *httpResp = NULL;
-    URequest  *httpReq  = NULL;
-    char url[MAX_URL] = {0};
-    bool result;
-
-    if (strcasecmp(action, "exec") == 0) {
-        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s/latest",
-                 config->starterHost,
-                 config->starterPort,
-                 action,
-                 DEF_SPACE_NAME,
-                 app);
-    } else {
-        snprintf(url, sizeof(url), "http://%s:%d/v1/%s/%s/%s",
-                 config->starterHost,
-                 config->starterPort,
-                 action,
-                 DEF_SPACE_NAME,
-                 app);
+    if (request) {
+        ulfius_clean_request(request);
+        usys_free(request);
     }
 
-    httpReq = wc_create_http_request(url, httpMethod, NULL);
-    if (!httpReq) {
-        return USYS_FALSE;
+    if (response) {
+        ulfius_clean_response(response);
+        usys_free(response);
     }
-
-    if (wc_send_http_request(httpReq, &httpResp) == USYS_FALSE) {
-        usys_log_error("Failed to send http request.");
-        ulfius_clean_request(httpReq);
-        usys_free(httpReq);
-        return USYS_FALSE;
-    }
-
-    result = (httpResp->status == expectedStatus) ? USYS_TRUE : USYS_FALSE;
-
-    ulfius_clean_request(httpReq);
-    ulfius_clean_response(httpResp);
-    usys_free(httpReq);
-    usys_free(httpResp);
-
-    return result;
 }
 
-bool wc_send_app_restart_request(Config *config, char *app) {
+static JsonObj *wc_get_starter_status(Config *config) {
 
-    bool result;
+    UResponse *response;
+    URequest *request;
+    JsonObj *root;
+    JsonErrObj error;
+    char url[MAX_URL];
 
-    result = wc_send_app_request(config,
-                                 app,
-                                 "terminate",
-                                 "POST",
-                                 HttpStatus_Accepted);
+    if (!config) return NULL;
 
-    if (result) {
-        return  wc_send_app_request(config,
-                               app,
-                               "exec",
-                               "POST",
-                               HttpStatus_Accepted);
+    snprintf(url, sizeof(url), "http://%s:%d/v1/status",
+             config->starterHost,
+             config->starterPort);
+
+    request = wc_create_http_request(url, "GET", NULL);
+    if (!request) return NULL;
+
+    response = NULL;
+    root = NULL;
+
+    if (wc_send_http_request(request, &response) &&
+        response && response->status == HttpStatus_OK) {
+        root = ulfius_get_json_body_response(response, &error);
     }
+
+    wc_clean(request, response);
+    return root;
+}
+
+static JsonObj *wc_find_app(JsonObj *root, const char *app) {
+
+    JsonObj *spaces;
+    JsonObj *space;
+    JsonObj *apps;
+    JsonObj *entry;
+    const char *name;
+    size_t spaceIndex;
+    size_t appIndex;
+
+    if (!root || !app) return NULL;
+
+    spaces = json_object_get(root, "spaces");
+    if (!json_is_array(spaces)) return NULL;
+
+    json_array_foreach(spaces, spaceIndex, space) {
+        name = json_string_value(json_object_get(space, "name"));
+        if (!name || strcmp(name, DEF_SPACE_NAME) != 0) continue;
+
+        apps = json_object_get(space, "apps");
+        if (!json_is_array(apps)) return NULL;
+
+        json_array_foreach(apps, appIndex, entry) {
+            name = json_string_value(json_object_get(entry, "name"));
+            if (name && strcmp(name, app) == 0) return entry;
+        }
+
+        return NULL;
+    }
+
+    return NULL;
+}
+
+static bool wc_restart_completed(Config *config, const char *app) {
+
+    JsonObj *root;
+    JsonObj *starter;
+    JsonObj *restarting;
+    JsonObj *entry;
+    const char *state;
+    time_t deadline;
+    bool completed;
+
+    deadline = time(NULL) + CONFIG_RESTART_TIMEOUT_SEC;
+
+    do {
+        root = wc_get_starter_status(config);
+        completed = false;
+
+        if (root) {
+            starter = json_object_get(root, "starterd");
+            restarting = json_is_object(starter) ?
+                json_object_get(starter, "restartRequested") : NULL;
+            entry = wc_find_app(root, app);
+            state = entry ?
+                json_string_value(json_object_get(entry, "state")) : NULL;
+
+            completed = json_is_boolean(restarting) &&
+                !json_is_true(restarting) &&
+                state && strcmp(state, "running") == 0;
+            json_decref(root);
+        }
+
+        if (completed) return USYS_TRUE;
+        usleep(CONFIG_RESTART_POLL_MS * 1000);
+    } while (time(NULL) < deadline);
 
     return USYS_FALSE;
 }
 
-bool wc_is_app_valid(Config *config, char *app) {
+bool wc_send_app_restart_request(Config *config, const char *app) {
 
-    bool result;
+    UResponse *response;
+    URequest *request;
+    JsonObj *body;
+    char url[MAX_URL];
+    bool accepted;
 
-    result = wc_send_app_request(config,
-                                 app,
-                                 "status",
-                                 "GET",
-                                 HttpStatus_OK);
+    if (!config || !app) return USYS_FALSE;
 
-    if (result) {
+    snprintf(url, sizeof(url), "http://%s:%d/v1/restart",
+             config->starterHost,
+             config->starterPort);
+
+    body = json_pack("{s:s,s:s}",
+                     "space", DEF_SPACE_NAME,
+                     "name", app);
+    if (!body) return USYS_FALSE;
+
+    request = wc_create_http_request(url, "POST", body);
+    json_decref(body);
+    if (!request) return USYS_FALSE;
+
+    response = NULL;
+    accepted = wc_send_http_request(request, &response) &&
+        response && response->status == HttpStatus_Accepted;
+
+    wc_clean(request, response);
+    if (!accepted) return USYS_FALSE;
+
+    return wc_restart_completed(config, app);
+}
+
+bool wc_is_app_valid(Config *config, const char *app) {
+
+    JsonObj *root;
+    JsonObj *entry;
+    bool found;
+
+    if (!config || !app) return USYS_FALSE;
+
+    root = wc_get_starter_status(config);
+    entry = wc_find_app(root, app);
+    found = entry != NULL;
+
+    json_decref(root);
+
+    if (found) {
         usys_log_debug("App found by starter.d. Is valid: %s", app);
     } else {
         usys_log_error("App not found by starter.d: %s", app);
     }
 
-    return result;
+    return found;
 }

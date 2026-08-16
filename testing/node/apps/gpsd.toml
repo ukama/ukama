@@ -17,9 +17,9 @@
     args=""
     path="/sbin"
     autostart=false
+    readiness=true
     autorestart=true
     startretries=5
-    readiness=true
     group="service"
 
 [app-exec.env]

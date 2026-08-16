@@ -53,6 +53,19 @@ static char* cfg_get_str(const char *name, const char *defVal) {
     return NULL;
 }
 
+static int cfg_service_port(const char *envName,
+                            const char *serviceName,
+                            int fallback) {
+
+    int port;
+
+    port = cfg_get_int(envName, 0);
+    if (port > 0 && port <= 65535) return port;
+
+    port = usys_find_service_port((char *)serviceName);
+    return port > 0 ? port : fallback;
+}
+
 static void cfg_trim(char *s) {
 
     char *p;
@@ -136,6 +149,17 @@ static bool cfg_validate(Config *config) {
         return false;
     }
 
+    if (!config->lifecycleHost || !*config->lifecycleHost) {
+        usys_log_error("config: lifecycle host missing");
+        return false;
+    }
+
+    if (config->lifecyclePort <= 0 || config->lifecyclePort > 65535) {
+        usys_log_error("config: invalid lifecycle port %d",
+                       config->lifecyclePort);
+        return false;
+    }
+
     if (config->commitTimeoutSec <= 0)      config->commitTimeoutSec = 20;
     if (config->pingTimeoutSec <= 0)        config->pingTimeoutSec = 3;
     if (config->readyTimeoutSec <= 0) {
@@ -206,15 +230,18 @@ bool config_load(Config *config) {
 
     config->httpAddr     = cfg_get_str("STARTERD_HTTP_ADDR", "127.0.0.1");
 
-    /* starter.d port from service registry */
-    config->httpPort = usys_find_service_port(SERVICE_STARTER);
+    config->httpPort = cfg_service_port("STARTERD_HTTP_PORT",
+                                        SERVICE_STARTER,
+                                        0);
     if (config->httpPort <= 0) {
         usys_log_error("SERVICE_STARTER port not found in service registry");
         return false;
     }
 
     config->wimcHost = cfg_get_str("STARTERD_WIMC_HOST", "127.0.0.1");
-    config->wimcPort = usys_find_service_port(SERVICE_WIMC);
+    config->wimcPort = cfg_service_port("STARTERD_WIMC_PORT",
+                                        SERVICE_WIMC,
+                                        0);
     if (config->wimcPort <= 0) {
         usys_log_error("SERVICE_WIMC port not found in service registry");
         return false;
@@ -222,6 +249,13 @@ bool config_load(Config *config) {
 
     config->wimcPathTemplate =
         cfg_get_str("STARTERD_WIMC_PATH_TEMPLATE", "/v1/apps/%s/%s");
+
+    config->lifecycleHost =
+        cfg_get_str("STARTERD_LIFECYCLE_HOST", "127.0.0.1");
+    config->lifecyclePort =
+        cfg_service_port("STARTERD_LIFECYCLE_PORT",
+                         SERVICE_LIFECYCLE,
+                         STARTERD_DEFAULT_LIFECYCLE_PORT);
 
     config->commitTimeoutSec = cfg_get_int("STARTERD_COMMIT_TIMEOUT_SEC", 60);
     config->pingTimeoutSec   = cfg_get_int("STARTERD_PING_TIMEOUT_SEC",   3);
@@ -257,6 +291,7 @@ void config_free(Config *config) {
     free(config->httpAddr);
     free(config->wimcHost);
     free(config->wimcPathTemplate);
+    free(config->lifecycleHost);
     free(config->bootSpace);
 
     memset(config, 0, sizeof(*config));

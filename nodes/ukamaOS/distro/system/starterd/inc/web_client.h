@@ -26,7 +26,18 @@ typedef struct {
     int status;
     bool ready;
     char reason[STARTERD_READY_REASON_LEN];
+    char requestId[STARTERD_REQUEST_ID_LEN];
 } AppReadyResponse;
+
+typedef enum {
+    LIFECYCLE_GATE_UNAVAILABLE = 0,
+    LIFECYCLE_GATE_WAITING,
+    LIFECYCLE_GATE_OPEN,
+    LIFECYCLE_GATE_FAULTY
+} LifecycleGateState;
+
+bool wc_lifecycle_check_in(Config *config, bool bootHealthy);
+LifecycleGateState wc_lifecycle_gate(Config *config);
 
 bool wc_app_ping(Config *config, App *app);
 bool wc_app_version_matches(Config *config,
@@ -38,9 +49,6 @@ bool wc_mesh_status(Config *config,
                     bool *connected,
                     char *reason,
                     size_t reasonSize);
-bool wc_notify_node_state(Config *config,
-                          bool ready,
-                          const char *reason);
 bool wc_fetch_package(Config *config,
                       const char *appName,
                       const char *tag,

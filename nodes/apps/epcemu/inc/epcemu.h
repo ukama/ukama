@@ -93,6 +93,7 @@ typedef struct {
     EpcemuConfig *config;
     EpcemuStatus *status;
     bool serviceOn;
+    bool dataPlaneStarted;
     pthread_mutex_t serviceMutex;
 } ServiceContext;
 

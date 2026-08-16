@@ -12,9 +12,11 @@
 
 [app-exec]
 	name="configd"
+	service="config"
 	version="latest"
 	autostart="false"
 	autorestart="true"
 	startretries=5
+	readiness=true
 	bin="config.d"
 	path="/sbin"

@@ -15,6 +15,7 @@ typedef enum {
     ACTION_RUN_BOOT,
     ACTION_RUN_ALL,
     ACTION_TERMINATE_APP,
+    ACTION_RESTART_APP,
     ACTION_UPDATE_APP
 } ActionType;
 
