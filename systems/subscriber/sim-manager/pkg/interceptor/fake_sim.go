@@ -53,7 +53,7 @@ func NewFakeSimInterceptor(testAgentHost string, timeout time.Duration) *FakeSim
 func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any, info *grpc.UnaryServerInfo, rpcHandler grpc.UnaryHandler) (any, error) {
 	switch {
 	case strings.HasSuffix(info.FullMethod, getSimRPCSuffix):
-		if rq, ok := req.(*pb.GetSimRequest); ok {
+		if rq, ok := req.(*pb.SimRequest); ok {
 			if err := utils.ParseTestUUID(rq.SimId); err == nil {
 				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
@@ -62,7 +62,7 @@ func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any
 		}
 
 	case strings.HasSuffix(info.FullMethod, toggleSimStatusRPCSuffix):
-		if rq, ok := req.(*pb.ToggleSimStatusRequest); ok {
+		if rq, ok := req.(*pb.ToggleSimServiceStatusRequest); ok {
 			if err := utils.ParseTestUUID(rq.SimId); err == nil {
 				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
@@ -71,7 +71,7 @@ func (f *FakeSimInterceptor) UnaryServerInterceptor(ctx context.Context, req any
 		}
 
 	case strings.HasSuffix(info.FullMethod, terminateSimRPCSuffix):
-		if rq, ok := req.(*pb.TerminateSimRequest); ok {
+		if rq, ok := req.(*pb.SimRequest); ok {
 			if err := utils.ParseTestUUID(rq.SimId); err == nil {
 				log.Infof("Calling %q RPC for vSim: %q", info.FullMethod, rq.SimId)
 
@@ -95,7 +95,7 @@ func (f *FakeSimInterceptor) getSimHandler(ctx context.Context, simId string) (a
 	}
 
 	if simInfo, ok := resp.(*tapb.GetSimResponse); ok {
-		return &pb.GetSimResponse{Sim: &pb.Sim{
+		return &pb.SimResponse{Sim: &pb.Sim{
 			Id:     simId,
 			Iccid:  simInfo.SimInfo.Iccid,
 			Status: simInfo.SimInfo.Status,

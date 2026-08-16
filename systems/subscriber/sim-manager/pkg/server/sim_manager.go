@@ -119,7 +119,7 @@ func NewSimManagerServer(
 	return s
 }
 
-func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimRequest) (*pb.SimResponse, error) {
 	log.Infof("Allocating sim to subscriber: %v", req.GetSubscriberId())
 
 	subscriberId, err := uuid.FromString(req.GetSubscriberId())
@@ -368,10 +368,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 
 	log.Infof("Allocating sim to subscriber success: %v", req.GetSubscriberId())
 
-	return &pb.AllocateSimResponse{Sim: dbSimToPbSim(sim)}, nil
+	return &pb.SimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
-func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*pb.GetSimResponse, error) {
+func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.SimRequest) (*pb.SimResponse, error) {
 	log.Infof("Getting sim: %v", req.GetSimId())
 
 	sim, err := getSim(req.SimId, s.simRepo)
@@ -392,7 +392,7 @@ func (s *SimManagerServer) GetSim(ctx context.Context, req *pb.GetSimRequest) (*
 		log.Warnf("Please make sure sim %s is properly configured and allocated", sim.Iccid)
 	}
 
-	return &pb.GetSimResponse{Sim: dbSimToPbSim(sim)}, nil
+	return &pb.SimResponse{Sim: dbSimToPbSim(sim)}, nil
 }
 
 func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) (*pb.UsageResponse, error) {
@@ -562,7 +562,7 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 	return resp, nil
 }
 
-func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSimStatusRequest) (*pb.ToggleSimStatusResponse, error) {
+func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSimServiceStatusRequest) (*pb.ToggleSimServiceStatusResponse, error) {
 	log.Infof("Toggling status for sim: %v", req.GetSimId())
 
 	strStatus := strings.ToLower(req.Status)
@@ -579,7 +579,7 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 	}
 }
 
-func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSimRequest) (*pb.TerminateSimResponse, error) {
+func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest) (*pb.TerminateSimResponse, error) {
 	log.Infof("Terminating sim: %v", req.GetSimId())
 
 	sim, err := getSim(req.SimId, s.simRepo)
@@ -647,14 +647,14 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.TerminateSi
 	return &pb.TerminateSimResponse{}, nil
 }
 
-func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+func (s *SimManagerServer) AddPackageForSim(ctx context.Context, req *pb.AddPackageRequest) (*pb.PackageResponse, error) {
 	if err := addPackageForSim(ctx, req.SimId, req.PackageId, req.StartDate, s.simRepo, s.packageRepo, s.packageClient,
 		s.orgName, s.orgId, s.metricsPusher, s.nucleusOrgClient, s.nucleusUserClient, s.subscriberRegistryService,
 		s.networkClient, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
-	return &pb.AddPackageResponse{}, nil
+	return &pb.PackageResponse{}, nil
 }
 
 func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListPackagesForSimRequest) (*pb.ListPackagesForSimResponse, error) {
@@ -830,20 +830,20 @@ func (s *SimManagerServer) MarkPackageExpiredForSim(ctx context.Context, req *pb
 	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
 	if err := activateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
-	return &pb.ToggleSimStatusResponse{}, nil
+	return &pb.ToggleSimServiceStatusResponse{}, nil
 }
 
-func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimStatusResponse, error) {
+func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
 	if err := deactivateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
-	return &pb.ToggleSimStatusResponse{}, nil
+	return &pb.ToggleSimServiceStatusResponse{}, nil
 }
 
 func (s *SimManagerServer) GenerateSimToken(ctx context.Context, req *pb.SimTokenRequest) (*pb.SimTokenResponse, error) {

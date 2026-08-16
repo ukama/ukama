@@ -82,7 +82,7 @@ func Test_FullFlow(t *testing.T) {
 		return
 	}
 
-	simResp := &pb.AllocateSimResponse{}
+	simResp := &pb.SimResponse{}
 
 	t.Run("AllocateSim", func(t *testing.T) {
 		var err error
@@ -99,7 +99,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("GetSim", func(t *testing.T) {
-		_, err := c.GetSim(ctx, &pb.GetSimRequest{
+		_, err := c.GetSim(ctx, &pb.SimRequest{
 			SimId: simResp.Sim.Id,
 		})
 
@@ -107,7 +107,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("ToggleSimStatus", func(t *testing.T) {
-		_, err := c.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{
+		_, err := c.ToggleSimServiceStatus(ctx, &pb.ToggleSimServiceStatusRequest{
 			SimId:  simResp.Sim.Id,
 			Status: "active",
 		})
@@ -179,7 +179,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("ToggleSimStatus", func(t *testing.T) {
-		_, err := c.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{
+		_, err := c.ToggleSimServiceStatus(ctx, &pb.ToggleSimServiceStatusRequest{
 			SimId:  simResp.Sim.Id,
 			Status: "inactive",
 		})
@@ -188,7 +188,7 @@ func Test_FullFlow(t *testing.T) {
 	})
 
 	t.Run("TerminateSim", func(t *testing.T) {
-		_, err := c.TerminateSim(ctx, &pb.TerminateSimRequest{
+		_, err := c.TerminateSim(ctx, &pb.SimRequest{
 			SimId: simResp.Sim.Id,
 		})
 

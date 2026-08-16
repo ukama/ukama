@@ -492,7 +492,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+		simResp, err := s.GetSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String()})
 
 		assert.NoError(t, err)
@@ -522,7 +522,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+		simResp, err := s.GetSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String()})
 
 		assert.Error(t, err)
@@ -556,7 +556,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+		simResp, err := s.GetSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String()})
 
 		assert.NoError(t, err)
@@ -573,7 +573,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+		simResp, err := s.GetSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String()})
 
 		assert.Error(t, err)
@@ -588,7 +588,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-		simResp, err := s.GetSim(context.TODO(), &pb.GetSimRequest{
+		simResp, err := s.GetSim(context.TODO(), &pb.SimRequest{
 			SimId: simId})
 
 		assert.Error(t, err)
@@ -1808,7 +1808,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: "lol",
 		})
@@ -1833,7 +1833,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOn.String(),
 		})
@@ -1858,7 +1858,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1887,7 +1887,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1921,7 +1921,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1963,7 +1963,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -2012,7 +2012,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -2067,7 +2067,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimStatusRequest{
+		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -2305,7 +2305,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 
-		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String(),
 		})
 
@@ -2333,7 +2333,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo,
 			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String(),
 		})
 
@@ -2366,7 +2366,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String(),
 		})
 
@@ -2403,7 +2403,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.TerminateSim(context.TODO(), &pb.TerminateSimRequest{
+		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String(),
 		})
 
