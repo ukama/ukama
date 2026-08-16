@@ -63,7 +63,16 @@ fi
 
 PUBLISH_ARGS=""
 if [ "${ULAB_PUBLISH_NODE_PORTS:-0}" = "1" ]; then
-    PUBLISH_ARGS="-p 18001:18001 -p 18026:18026 -p 18028:18028 -p 18029:18029/udp -p 18030:18030"
+    case "$NODE_ID" in
+        *-tnode-*)
+            PUBLISH_ARGS="-p 18001:18001 \
+                -p 18026:18026 \
+                -p 18028:18028 \
+                -p 18029:18029/udp \
+                -p 18030:18030 \
+                -p 18033:18033"
+            ;;
+    esac
 fi
 
 echo "podman: removing existing container if present: $CONTAINER_NAME"
