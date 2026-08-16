@@ -23,7 +23,7 @@
 
 int web_service_cb_ping(const URequest *request,
                         UResponse *response,
-                        void *epConfig) {
+						void *epConfig) {
 
 	ulfius_set_string_body_response(response, HttpStatus_OK,
 			HttpStatusStr(HttpStatus_OK));
@@ -39,6 +39,80 @@ int web_service_cb_version(const URequest *request,
                                     HttpStatus_OK,
                                     VERSION);
 
+    return U_CALLBACK_CONTINUE;
+}
+
+static const char *config_state_reason(ConfigApplyState state) {
+
+    switch (state) {
+    case CONFIG_APPLY_IN_PROGRESS:
+        return CONFIG_REASON_IN_PROGRESS;
+    case CONFIG_APPLY_APPLIED:
+        return CONFIG_REASON_APPLIED;
+    case CONFIG_APPLY_FAILED:
+        return CONFIG_REASON_FAILED;
+    default:
+        return CONFIG_REASON_AWAITING;
+    }
+}
+
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    Config *config;
+    ConfigApplyState state;
+    char requestId[CONFIG_REQUEST_ID_LEN];
+    JsonObj *json;
+    int status;
+
+    (void)request;
+
+    config = (Config *)epConfig;
+    if (!config) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                            HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    config_status_snapshot(config,
+                           &state,
+                           requestId,
+                           sizeof(requestId));
+
+    status = HttpStatus_OK;
+    if (state == CONFIG_APPLY_IN_PROGRESS) {
+        status = HttpStatus_Accepted;
+    } else if (state == CONFIG_APPLY_FAILED) {
+        status = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (!json) {
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_InternalServerError,
+                                        HttpStatusStr(
+                                            HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(state == CONFIG_APPLY_AWAITING ||
+                                     state == CONFIG_APPLY_APPLIED));
+    json_object_set_new(json,
+                        "reason",
+                        json_string(config_state_reason(state)));
+    if (requestId[0]) {
+        json_object_set_new(json,
+                            "requestId",
+                            json_string(requestId));
+    }
+
+    ulfius_set_json_body_response(response, status, json);
+    json_decref(json);
     return U_CALLBACK_CONTINUE;
 }
 

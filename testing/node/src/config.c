@@ -230,6 +230,11 @@ static int read_capp_table(toml_table_t *table, Config *config,
             return FALSE;
         }
 
+        if (!read_entry(table, KEY_SERVICE, &capp->service, NULL,
+                        DATUM_STRING)) {
+            return FALSE;
+        }
+
         if (!read_entry(table, KEY_VERSION, &capp->version, NULL,
                         DATUM_STRING | DATUM_MANDATORY)) {
             return FALSE;
@@ -736,6 +741,7 @@ void free_config(Config *config, int flag) {
         capp = config->capp;
 
         if (capp->name)      free(capp->name);
+        if (capp->service)   free(capp->service);
         if (capp->version)   free(capp->version);
         if (capp->bin)       free(capp->bin);
         if (capp->path)      free(capp->path);
@@ -796,6 +802,8 @@ void log_config(Config *config) {
 
         log_debug("[EXEC:]");
         log_debug("\t name: %s", capp->name);
+        log_debug("\t service: %s",
+                  capp->service ? capp->service : capp->name);
         log_debug("\t version: %s", capp->version);
         log_debug("\t autostart:  %s", (capp->autostart ? "true" : "false"));
         log_debug("\t autorestart:  %s", (capp->autorestart ? "true" : "false"));

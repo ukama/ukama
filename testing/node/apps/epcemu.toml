@@ -19,3 +19,4 @@
 	autorestart="true"
 	startretries=5
 	group="on-boot"
+	readiness=true

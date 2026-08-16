@@ -57,3 +57,10 @@ phases:
         state: off
       - type: wait_nodes_ready
         nodes: all
+    checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

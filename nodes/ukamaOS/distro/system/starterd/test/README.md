@@ -2,7 +2,7 @@
 
 This bundle contains self-contained smoke tests for:
 
-1. `starter.d` app lifecycle with a mock WIMC server and a mock `example_app`
+1. `starter.d` lifecycle gate and app management with mock services
 2. `init-starter` slot switch behavior on child exit code `77`
 
 ## Files
@@ -11,6 +11,7 @@ This bundle contains self-contained smoke tests for:
 - `smoke_init_switch.sh`
 - `run_all.sh`
 - `mock_wimc.py`
+- `mock_lifecycle.py`
 - `common.sh`
 
 ## Requirements
@@ -55,13 +56,17 @@ INIT_STARTER_BIN=/path/to/init-starter \
 - creates a temp root
 - creates two mock app packages: `example_app-v1.tar.gz` and `example_app-v2.tar.gz`
 - starts a mock WIMC HTTP server that serves `/v1/apps/<app>/<tag>/pkg`
-- writes a manifest that loads `example_app` in the `boot` space
+- starts a mock lifecycle HTTP server with a delayed startup gate
+- writes a manifest that loads `example_app` in the `services` space
 - starts `starter.d` with temp env vars
 - validates:
   - `starter.d` responds on `/v1/ping`
-  - `example_app` boots and reports version `v1`
-  - `/v1/terminate` stops the app
+  - `starter.d` checks in exactly once with `bootResult=ready`
+  - `example_app` does not start before the lifecycle gate opens
+  - `example_app` starts and reports version `v1` after the gate opens
+  - aggregate readiness reaches ready using the manifest service identity
   - `/v1/update` updates the app to `v2` and restarts it
+  - `/v1/restart` restarts the app without changing its version
 
 ## What `smoke_init_switch.sh` does
 
@@ -79,4 +84,5 @@ INIT_STARTER_BIN=/path/to/init-starter \
 
 - The `init-starter` smoke test validates the `77` handoff behavior directly.
 - It does **not** invoke the real `starter.d` self-update endpoint to populate `next`; it isolates and validates the bootstrapping/switch logic itself.
-- If your `starter.d` build still requires service-registry lookup before honoring `STARTERD_HTTP_PORT` / `STARTERD_WIMC_PORT`, make sure your build can start with the env overrides used here.
+- The smoke test uses port environment overrides and does not modify the host
+  service registry.

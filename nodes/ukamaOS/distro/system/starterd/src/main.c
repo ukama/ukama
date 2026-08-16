@@ -122,6 +122,7 @@ int main(int argc, char **argv) {
     ctx.readiness          = NULL;
     ctx.uInstance          = NULL;
     ctx.terminateRequested = 0;
+    ctx.restartRequested   = 0;
     ctx.switchRequested    = 0;
     ctx.updateInProgress   = 0;
     ctx.bootCompleted      = 0;
@@ -170,10 +171,19 @@ int main(int argc, char **argv) {
     }
 
     a = action_new(ACTION_RUN_BOOT, NULL, NULL, NULL, NULL);
-    actions_enqueue(&queue, a);
-
-    a = action_new(ACTION_RUN_ALL, NULL, NULL, NULL, NULL);
-    actions_enqueue(&queue, a);
+    if (!a || !actions_enqueue(&queue, a)) {
+        usys_log_error("startup: unable to queue boot action");
+        if (a) free(a);
+        web_service_stop(&ctx);
+        readiness_stop(ctx.readiness);
+        supervisor_stop(sup);
+        network_shutdown(&ctx);
+        actions_free(&queue);
+        manifest_free(spaceList);
+        log_router_stop();
+        config_free(&config);
+        return 1;
+    }
 
     supervisor_signal(sup);
 

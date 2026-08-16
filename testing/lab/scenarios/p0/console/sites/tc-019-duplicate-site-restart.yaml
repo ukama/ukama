@@ -43,3 +43,8 @@ phases:
         sites: all
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

@@ -174,6 +174,8 @@ int start_web_services(Config *config, UInst *clientInst) {
                                &web_service_cb_ping, config);
     ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "version", 0,
                                &web_service_cb_version, config);
+    ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "ready", 0,
+                               &web_service_cb_ready, config);
     ulfius_add_endpoint_by_val(clientInst, "GET", "/v1/", "status", 0,
                                &web_service_cb_status, config);
     ulfius_set_default_endpoint(clientInst, &web_service_cb_default, config);

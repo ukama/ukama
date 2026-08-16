@@ -72,6 +72,7 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
 
     root = NULL;
     code = 0;
+    config->initNetworkReady = false;
 
     status_set(status, EpcemuStateCheckingInitNetwork,
                "checking init-network");
@@ -79,13 +80,17 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
     snprintf(url, sizeof(url), "%s/v1/status", config->initNetworkUrl);
 
     if (!http_get_json(url, &root, &code)) {
-        status_fail(status, "failed to call init-network status");
+        status_set(status,
+                   EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network status");
         return USYS_FALSE;
     }
 
     if (code != 200 || root == NULL) {
         if (root != NULL) json_decref(root);
-        status_fail(status, "init-network status failed");
+        status_set(status,
+                   EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network status");
         return USYS_FALSE;
     }
 
@@ -96,7 +101,9 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
     ready = json_object_get(root, "ready");
     if (!json_is_true(ready)) {
         json_decref(root);
-        status_fail(status, "init-network is not ready");
+        status_set(status,
+                   EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network readiness");
         return USYS_FALSE;
     }
 
@@ -104,7 +111,9 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
     ue = json_object_get(root, "ue");
     if (!json_is_object(bridge) || !json_is_object(ue)) {
         json_decref(root);
-        status_fail(status, "init-network status missing bridge/ue");
+        status_set(status,
+                   EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network bridge and UE configuration");
         return USYS_FALSE;
     }
 
@@ -128,7 +137,9 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
 
     if (config->ueCidr[0] == '\0') {
         json_decref(root);
-        status_fail(status, "init-network status missing ue.cidr");
+        status_set(status,
+                   EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network UE CIDR");
         return USYS_FALSE;
     }
 
@@ -148,6 +159,7 @@ int init_network_reconcile(EpcemuConfig *config, EpcemuStatus *status) {
 
     root = NULL;
     code = 0;
+    config->initNetworkRouted = false;
 
     status_set(status, EpcemuStateReconcilingInitNetwork,
                "reconciling EPC tun routing through OVS");
@@ -160,19 +172,25 @@ int init_network_reconcile(EpcemuConfig *config, EpcemuStatus *status) {
                                 &root,
                                 &code,
                                 INIT_NETWORK_RECONCILE_TIMEOUT_SEC)) {
-        status_fail(status, "failed to call init-network reconcile");
+        status_set(status,
+                   EpcemuStateReconcilingInitNetwork,
+                   "waiting for init-network reconcile");
         return USYS_FALSE;
     }
 
     if (code != 200 || root == NULL) {
         if (root != NULL) json_decref(root);
-        status_fail(status, "init-network reconcile failed");
+        status_set(status,
+                   EpcemuStateReconcilingInitNetwork,
+                   "waiting for init-network reconcile");
         return USYS_FALSE;
     }
 
     if (!reconcile_response_ok(root)) {
         json_decref(root);
-        status_fail(status, "init-network policy routing is not ready");
+        status_set(status,
+                   EpcemuStateReconcilingInitNetwork,
+                   "waiting for init-network policy routing");
         return USYS_FALSE;
     }
 

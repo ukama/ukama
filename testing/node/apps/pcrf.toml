@@ -12,6 +12,7 @@
 
 [app-exec]
 	name="pcrf"
+	service="pcrf"
 	version="latest"
 	bin="pcrf"
 	path="/sbin"

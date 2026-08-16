@@ -12,6 +12,7 @@
 
 [app-exec]
 	name="deviced"
+	service="device"
 	version="latest"
 	bin="device.d"
 	path="/sbin"

@@ -16,8 +16,9 @@ LOGICAL_NODE_ID="$1"
 RUN_DIR="$2"
 
 STATE_DIR="$RUN_DIR/runtime-nodes"
-TIMEOUT_SEC="${ULAB_NODE_READY_TIMEOUT_SEC:-180}"
+TIMEOUT_SEC="${ULAB_NODE_READY_TIMEOUT_SEC:-300}"
 SLEEP_SEC="${ULAB_NODE_READY_SLEEP_SEC:-3}"
+LIFECYCLE_PORT="${ULAB_LIFECYCLE_PORT:-18033}"
 STARTER_PORT="${ULAB_STARTER_PORT:-18001}"
 
 safe_name() {
@@ -45,44 +46,6 @@ load_state() {
     . "$state_file"
 }
 
-node_kind() {
-    kind="${NODE_KIND:-}"
-
-    if [ -n "$kind" ]; then
-        echo "$kind"
-        return
-    fi
-
-    case "${FACTORY_NODE_ID:-} ${LOGICAL_NODE_ID:-}" in
-        *tnode*|*tower*) echo "tnode" ;;
-        *anode*|*amplifier*) echo "anode" ;;
-        *cnode*|*controller*) echo "cnode" ;;
-        *) echo "node" ;;
-    esac
-}
-
-required_apps() {
-    if [ -n "${ULAB_REQUIRED_STARTER_APPS:-}" ]; then
-        echo "$ULAB_REQUIRED_STARTER_APPS"
-        return
-    fi
-
-    case "$(node_kind)" in
-        tnode|tower)
-            echo "${ULAB_TOWER_READY_APPS:-init-network,noded,meshd,epcemu,pcrf}"
-            ;;
-        anode|amplifier)
-            echo "${ULAB_AMPLIFIER_READY_APPS:-noded,meshd}"
-            ;;
-        cnode|controller)
-            echo "${ULAB_CONTROLLER_READY_APPS:-noded,meshd}"
-            ;;
-        *)
-            echo "${ULAB_NODE_READY_APPS:-noded,meshd}"
-            ;;
-    esac
-}
-
 container_running() {
     podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
         grep -q '^true$'
@@ -94,106 +57,91 @@ starter_status() {
         2>/dev/null
 }
 
-check_required_apps() {
-    tmp_file="/tmp/ukama-starter-status.$$"
-    apps="$(required_apps)"
+lifecycle_status() {
+    podman exec "$CONTAINER_NAME" sh -lc \
+        "curl -fsS --max-time 2 http://127.0.0.1:${LIFECYCLE_PORT}/v1/status" \
+        2>/dev/null
+}
 
-    if ! starter_status > "$tmp_file"; then
-        rm -f "$tmp_file"
-        return 1
-    fi
-
-    REQUIRED_APPS="$apps" python3 - "$tmp_file" <<'PY'
+lifecycle_state() {
+    lifecycle_status | python3 -c '
 import json
-import os
 import sys
 
-path = sys.argv[1]
-required = [x.strip() for x in os.environ.get("REQUIRED_APPS", "").split(",") if x.strip()]
-
 try:
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-except Exception as exc:
-    print(f"invalid starter.d JSON: {exc}", file=sys.stderr)
+    data = json.load(sys.stdin)
+except Exception:
     sys.exit(1)
 
-starterd = data.get("starterd") or {}
-if starterd.get("updateInProgress") is True:
-    print("starterd update in progress", file=sys.stderr)
-    sys.exit(1)
-if starterd.get("terminateRequested") is True:
-    print("starterd terminate requested", file=sys.stderr)
+state = data.get("state")
+if not isinstance(state, str) or not state:
     sys.exit(1)
 
-apps = {}
-for space in data.get("spaces") or []:
-    for app in space.get("apps") or []:
-        name = str(app.get("name") or "")
-        state = str(app.get("state") or "").strip().lower()
-        if name:
-            apps[name] = state
-
-bad = []
-for name in required:
-    state = apps.get(name)
-    if state is None:
-        bad.append(f"{name}: missing")
-    elif state not in ("running", "active"):
-        bad.append(f"{name}: {state}")
-
-if bad:
-    for item in bad:
-        print(item, file=sys.stderr)
-    sys.exit(1)
-
-sys.exit(0)
-PY
-
-    rc="$?"
-    rm -f "$tmp_file"
-    return "$rc"
+print(state.upper())
+'
 }
 
 print_debug() {
     echo "---- podman ps ----" >&2
     podman ps -a --filter "name=$CONTAINER_NAME" >&2 || true
 
-    echo "---- required starter.d apps ----" >&2
-    echo "$(required_apps)" >&2
+    echo "---- lifecycle.d /v1/status ----" >&2
+    lifecycle_status >&2 ||
+        echo "lifecycle.d not reachable on port ${LIFECYCLE_PORT}" >&2
 
     echo "---- starter.d /v1/status ----" >&2
-    starter_status >&2 || echo "starter.d not reachable on port ${STARTER_PORT}" >&2
+    starter_status >&2 ||
+        echo "starter.d not reachable on port ${STARTER_PORT}" >&2
+
+    echo "---- starter.d /v1/ready ----" >&2
+    podman exec "$CONTAINER_NAME" sh -lc \
+        "curl -sS --max-time 2 http://127.0.0.1:${STARTER_PORT}/v1/ready" \
+        >&2 2>/dev/null || true
 
     echo "---- container logs ----" >&2
     podman logs --tail 80 "$CONTAINER_NAME" >&2 2>/dev/null || true
-}
-
-node_ready() {
-    container_running || return 1
-    check_required_apps || return 1
-    return 0
 }
 
 need_cmd podman
 need_cmd python3
 load_state
 
-echo "wait-node: logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME kind=$(node_kind) apps=$(required_apps) timeout=${TIMEOUT_SEC}s"
+echo "wait-node: logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} " \
+     "container=$CONTAINER_NAME timeout=${TIMEOUT_SEC}s"
 
 start_ts="$(date +%s)"
 
 while :; do
-    if node_ready; then
-        echo "node-ready logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME"
-        exit 0
+    state=""
+    if container_running; then
+        state="$(lifecycle_state 2>/dev/null || true)"
     fi
+
+    case "$state" in
+        READY|OPERATIONAL)
+            echo "node-ready logical=$LOGICAL_NODE_ID " \
+                 "factory=${FACTORY_NODE_ID:-} " \
+                 "container=$CONTAINER_NAME lifecycle=$state"
+            exit 0
+            ;;
+
+        FAULTY)
+            echo "node lifecycle is FAULTY: logical=$LOGICAL_NODE_ID " \
+                 "factory=${FACTORY_NODE_ID:-} " \
+                 "container=$CONTAINER_NAME" >&2
+            print_debug
+            exit 1
+            ;;
+    esac
 
     now_ts="$(date +%s)"
     elapsed=$((now_ts - start_ts))
 
     if [ "$elapsed" -ge "$TIMEOUT_SEC" ]; then
-        echo "node not ready after ${TIMEOUT_SEC}s: logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} container=$CONTAINER_NAME" >&2
+        echo "node not ready after ${TIMEOUT_SEC}s: " \
+             "logical=$LOGICAL_NODE_ID factory=${FACTORY_NODE_ID:-} " \
+             "container=$CONTAINER_NAME lifecycle=${state:-unavailable}" \
+             >&2
         print_debug
         exit 1
     fi

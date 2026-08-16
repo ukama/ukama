@@ -1217,6 +1217,7 @@ epcemu-data     18029/tcp
 pcrf            18030/tcp
 aisg		    18031/tcp
 aisg-emu        18032/tcp
+lifecycle	18033/tcp
 ukama		    18100/tcp   ukama
 remote          18200/tcp   remote
 example         18888/tcp

@@ -35,6 +35,12 @@ runtime:
 phases:
   - name: verify_app_before_version_changes
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -67,6 +73,12 @@ phases:
         type_selector: controller
         count_per_network: 1
         app: example
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
 
   - name: change_to_second_exact_version
     events:
@@ -102,3 +114,9 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

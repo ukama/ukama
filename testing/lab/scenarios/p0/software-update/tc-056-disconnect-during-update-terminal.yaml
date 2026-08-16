@@ -51,6 +51,16 @@ phases:
         count_per_network: 1
         connectivity: Offline
         seconds: 120
+    checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Offline
+        state: Operational
+        timeout_seconds: 120
+
+  - name: reconnect_and_finish_update
+    events:
       - type: reconnect_nodes
         type_selector: controller
         count_per_network: 1
@@ -72,3 +82,9 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
