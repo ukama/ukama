@@ -27,7 +27,6 @@
 	autostart="false"
 	autorestart="true"
 	startretries=5
-	readiness=true
 	bin="mesh.d"
 	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--config /ukama/configs/meshd/config.toml"
