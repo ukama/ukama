@@ -20,11 +20,11 @@ package ukama.subscriber.sim_manager.v1;
 
 service SimManagerService {
     // Sim
-    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
-    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc AllocateSim(AllocateSimRequest) returns (SimResponse);
+    rpc GetSim(SimRequest) returns (SimResponse);
     rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
-    rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
-    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
+    rpc ToggleSimServiceStatus(ToggleSimServiceStatusRequest) returns (ToggleSimServiceStatusResponse);
+    rpc TerminateSim(SimRequest) returns (TerminateSimResponse);
 
 	// Deprecated: Use pkg.server.ListSims with subscriberId as filtering param instead.
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
@@ -32,7 +32,7 @@ service SimManagerService {
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
 
     // Sim package
-    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc AddPackageForSim(AddPackageRequest) returns (PackageResponse);
     rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
     rpc SetPackageInUseForSim(PackageRequest) returns (PackageResponse);
     rpc UnsetPackageInUseForSim(PackageRequest) returns (PackageResponse);
@@ -60,16 +60,13 @@ message AllocateSimRequest {
     uint32 trafficPolicy = 6 [json_name = "traffic_policy"];
 }
 
-message AllocateSimResponse {
+message SimResponse {
     Sim sim = 1;
 }
 
-message GetSimRequest {
+
+message SimRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message GetSimResponse {
-    Sim sim = 1;
 }
 
 
@@ -111,20 +108,16 @@ message GetSimsByNetworkResponse {
 }
 
 
-message ToggleSimStatusRequest {
+message ToggleSimServiceStatusRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
     string status = 2;
 }
 
-message ToggleSimStatusResponse{}
+
+message ToggleSimServiceStatusResponse{}
 
 
-message TerminateSimRequest {
-    string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message TerminateSimResponse{
-}
+message TerminateSimResponse{}
 
 
 message SimTokenRequest {
@@ -140,9 +133,6 @@ message AddPackageRequest {
     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     string startDate = 3 [json_name = "start_date"];
-}
-
-message AddPackageResponse{
 }
 
 
@@ -178,8 +168,8 @@ message PackageRequest {
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }
 
-message PackageResponse{
-}
+
+message PackageResponse{}
 
 
 message UsageRequest {

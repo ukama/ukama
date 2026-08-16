@@ -45,7 +45,7 @@ func (this *AllocateSimRequest) Validate() error {
 	}
 	return nil
 }
-func (this *AllocateSimResponse) Validate() error {
+func (this *SimResponse) Validate() error {
 	if this.Sim != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
@@ -53,17 +53,9 @@ func (this *AllocateSimResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetSimRequest) Validate() error {
+func (this *SimRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
-	return nil
-}
-func (this *GetSimResponse) Validate() error {
-	if this.Sim != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
-		}
 	}
 	return nil
 }
@@ -124,19 +116,13 @@ func (this *GetSimsByNetworkResponse) Validate() error {
 	}
 	return nil
 }
-func (this *ToggleSimStatusRequest) Validate() error {
+func (this *ToggleSimServiceStatusRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
 	return nil
 }
-func (this *ToggleSimStatusResponse) Validate() error {
-	return nil
-}
-func (this *TerminateSimRequest) Validate() error {
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
+func (this *ToggleSimServiceStatusResponse) Validate() error {
 	return nil
 }
 func (this *TerminateSimResponse) Validate() error {
@@ -174,9 +160,6 @@ func (this *AddPackageRequest) Validate() error {
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
-	return nil
-}
-func (this *AddPackageResponse) Validate() error {
 	return nil
 }
 

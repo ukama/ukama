@@ -15,23 +15,23 @@ type SimManagerServiceServer struct {
 }
 
 // AddPackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) AddPackageForSim(_a0 context.Context, _a1 *gen.AddPackageRequest) (*gen.AddPackageResponse, error) {
+func (_m *SimManagerServiceServer) AddPackageForSim(_a0 context.Context, _a1 *gen.AddPackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddPackageForSim")
 	}
 
-	var r0 *gen.AddPackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) (*gen.AddPackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) *gen.AddPackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddPackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
@@ -45,23 +45,23 @@ func (_m *SimManagerServiceServer) AddPackageForSim(_a0 context.Context, _a1 *ge
 }
 
 // AllocateSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) AllocateSim(_a0 context.Context, _a1 *gen.AllocateSimRequest) (*gen.AllocateSimResponse, error) {
+func (_m *SimManagerServiceServer) AllocateSim(_a0 context.Context, _a1 *gen.AllocateSimRequest) (*gen.SimResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AllocateSim")
 	}
 
-	var r0 *gen.AllocateSimResponse
+	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) (*gen.AllocateSimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) (*gen.SimResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) *gen.AllocateSimResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) *gen.SimResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AllocateSimResponse)
+			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
@@ -135,27 +135,27 @@ func (_m *SimManagerServiceServer) GetPackagesForSim(_a0 context.Context, _a1 *g
 }
 
 // GetSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) GetSim(_a0 context.Context, _a1 *gen.GetSimRequest) (*gen.GetSimResponse, error) {
+func (_m *SimManagerServiceServer) GetSim(_a0 context.Context, _a1 *gen.SimRequest) (*gen.SimResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSim")
 	}
 
-	var r0 *gen.GetSimResponse
+	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest) (*gen.GetSimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimRequest) (*gen.SimResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetSimRequest) *gen.GetSimResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimRequest) *gen.SimResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimResponse)
+			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetSimRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SimRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -405,7 +405,7 @@ func (_m *SimManagerServiceServer) SetPackageInUseForSim(_a0 context.Context, _a
 }
 
 // TerminateSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *gen.TerminateSimRequest) (*gen.TerminateSimResponse, error) {
+func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *gen.SimRequest) (*gen.TerminateSimResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -414,10 +414,10 @@ func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *gen.Te
 
 	var r0 *gen.TerminateSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminateSimRequest) (*gen.TerminateSimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimRequest) (*gen.TerminateSimResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.TerminateSimRequest) *gen.TerminateSimResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.SimRequest) *gen.TerminateSimResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -425,7 +425,7 @@ func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *gen.Te
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.TerminateSimRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.SimRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
@@ -434,28 +434,28 @@ func (_m *SimManagerServiceServer) TerminateSim(_a0 context.Context, _a1 *gen.Te
 	return r0, r1
 }
 
-// ToggleSimStatus provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) ToggleSimStatus(_a0 context.Context, _a1 *gen.ToggleSimStatusRequest) (*gen.ToggleSimStatusResponse, error) {
+// ToggleSimServiceStatus provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) ToggleSimServiceStatus(_a0 context.Context, _a1 *gen.ToggleSimServiceStatusRequest) (*gen.ToggleSimServiceStatusResponse, error) {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ToggleSimStatus")
+		panic("no return value specified for ToggleSimServiceStatus")
 	}
 
-	var r0 *gen.ToggleSimStatusResponse
+	var r0 *gen.ToggleSimServiceStatusResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimStatusRequest) (*gen.ToggleSimStatusResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimServiceStatusRequest) (*gen.ToggleSimServiceStatusResponse, error)); ok {
 		return rf(_a0, _a1)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimStatusRequest) *gen.ToggleSimStatusResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleSimServiceStatusRequest) *gen.ToggleSimServiceStatusResponse); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleSimStatusResponse)
+			r0 = ret.Get(0).(*gen.ToggleSimServiceStatusResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSimStatusRequest) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleSimServiceStatusRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
