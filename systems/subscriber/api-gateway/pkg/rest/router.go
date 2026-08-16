@@ -189,8 +189,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.DELETE(simIdKey, formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
 		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
-		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set active package for a given SIM", ""), tonic.Handler(r.setPackageInUseForSim, http.StatusOK))
-		sim.PATCH(simIdKey+"/package/:package_id/inactive", formatDoc("Set inactive package for a given SIM", ""), tonic.Handler(r.unsetPackageInUseForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id", formatDoc("Set in-use package for a given SIM", ""), tonic.Handler(r.setPackageInUseForSim, http.StatusOK))
+		sim.PATCH(simIdKey+"/package/:package_id/inuse", formatDoc("remove in-use package for a given SIM", ""), tonic.Handler(r.unsetPackageInUseForSim, http.StatusOK))
 		sim.DELETE(simIdKey+"/package/:package_id", formatDoc("Delete a package from a given SIM", ""), tonic.Handler(r.removePkgForSim, http.StatusOK))
 
 		// Deprecated: Use GET /v1/sim with subscriberId as query param instead.
