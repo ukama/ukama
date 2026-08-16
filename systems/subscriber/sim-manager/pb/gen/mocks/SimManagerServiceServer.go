@@ -314,6 +314,36 @@ func (_m *SimManagerServiceServer) ListSims(_a0 context.Context, _a1 *gen.ListSi
 	return r0, r1
 }
 
+// MarkPackageExpiredForSim provides a mock function with given fields: _a0, _a1
+func (_m *SimManagerServiceServer) MarkPackageExpiredForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkPackageExpiredForSim")
+	}
+
+	var r0 *gen.PackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemovePackageForSim provides a mock function with given fields: _a0, _a1
 func (_m *SimManagerServiceServer) RemovePackageForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -350,36 +380,6 @@ func (_m *SimManagerServiceServer) SetPackageInUseForSim(_a0 context.Context, _a
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetPackageInUseForSim")
-	}
-
-	var r0 *gen.PackageResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
-		r0 = rf(_a0, _a1)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.PackageResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// TerminatePackageForSim provides a mock function with given fields: _a0, _a1
-func (_m *SimManagerServiceServer) TerminatePackageForSim(_a0 context.Context, _a1 *gen.PackageRequest) (*gen.PackageResponse, error) {
-	ret := _m.Called(_a0, _a1)
-
-	if len(ret) == 0 {
-		panic("no return value specified for TerminatePackageForSim")
 	}
 
 	var r0 *gen.PackageResponse

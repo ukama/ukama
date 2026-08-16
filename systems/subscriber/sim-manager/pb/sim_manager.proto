@@ -36,7 +36,7 @@ service SimManagerService {
     rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
     rpc SetPackageInUseForSim(PackageRequest) returns (PackageResponse);
     rpc UnsetPackageInUseForSim(PackageRequest) returns (PackageResponse);
-    rpc TerminatePackageForSim(PackageRequest) returns (PackageResponse);
+    rpc MarkPackageExpiredForSim(PackageRequest) returns (PackageResponse);
     rpc RemovePackageForSim(PackageRequest) returns (PackageResponse);
 
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.

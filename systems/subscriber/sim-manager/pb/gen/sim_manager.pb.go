@@ -1872,7 +1872,7 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x12deactivationsCount\x18\x0f \x01(\x04R\x12deactivationsCount\x12=\n" +
 	"\vallocatedAt\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\fallocated_at\x12\x1f\n" +
 	"\n" +
-	"syncStatus\x18\x11 \x01(\tR\vsync_status2\xfa\x0f\n" +
+	"syncStatus\x18\x11 \x01(\tR\vsync_status2\xfc\x0f\n" +
 	"\x11SimManagerService\x12x\n" +
 	"\vAllocateSim\x123.ukama.subscriber.sim_manager.v1.AllocateSimRequest\x1a4.ukama.subscriber.sim_manager.v1.AllocateSimResponse\x12i\n" +
 	"\x06GetSim\x12..ukama.subscriber.sim_manager.v1.GetSimRequest\x1a/.ukama.subscriber.sim_manager.v1.GetSimResponse\x12o\n" +
@@ -1884,8 +1884,8 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x10AddPackageForSim\x122.ukama.subscriber.sim_manager.v1.AddPackageRequest\x1a3.ukama.subscriber.sim_manager.v1.AddPackageResponse\x12\x8d\x01\n" +
 	"\x12ListPackagesForSim\x12:.ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest\x1a;.ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse\x12z\n" +
 	"\x15SetPackageInUseForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12|\n" +
-	"\x17UnsetPackageInUseForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12{\n" +
-	"\x16TerminatePackageForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12x\n" +
+	"\x17UnsetPackageInUseForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12}\n" +
+	"\x18MarkPackageExpiredForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12x\n" +
 	"\x13RemovePackageForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12\x8a\x01\n" +
 	"\x11GetPackagesForSim\x129.ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest\x1a:.ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse\x12w\n" +
 	"\x10GenerateSimToken\x120.ukama.subscriber.sim_manager.v1.SimTokenRequest\x1a1.ukama.subscriber.sim_manager.v1.SimTokenResponse\x12j\n" +
@@ -1961,7 +1961,7 @@ var file_sim_manager_proto_depIdxs = []int32{
 	18, // 21: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest
 	22, // 22: ukama.subscriber.sim_manager.v1.SimManagerService.SetPackageInUseForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
 	22, // 23: ukama.subscriber.sim_manager.v1.SimManagerService.UnsetPackageInUseForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
-	22, // 24: ukama.subscriber.sim_manager.v1.SimManagerService.TerminatePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
+	22, // 24: ukama.subscriber.sim_manager.v1.SimManagerService.MarkPackageExpiredForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
 	22, // 25: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
 	20, // 26: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest
 	14, // 27: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:input_type -> ukama.subscriber.sim_manager.v1.SimTokenRequest
@@ -1977,7 +1977,7 @@ var file_sim_manager_proto_depIdxs = []int32{
 	19, // 37: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse
 	23, // 38: ukama.subscriber.sim_manager.v1.SimManagerService.SetPackageInUseForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
 	23, // 39: ukama.subscriber.sim_manager.v1.SimManagerService.UnsetPackageInUseForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
-	23, // 40: ukama.subscriber.sim_manager.v1.SimManagerService.TerminatePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	23, // 40: ukama.subscriber.sim_manager.v1.SimManagerService.MarkPackageExpiredForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
 	23, // 41: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
 	21, // 42: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse
 	15, // 43: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:output_type -> ukama.subscriber.sim_manager.v1.SimTokenResponse

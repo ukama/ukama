@@ -386,6 +386,43 @@ func (_m *SimManagerServiceClient) ListSims(ctx context.Context, in *gen.ListSim
 	return r0, r1
 }
 
+// MarkPackageExpiredForSim provides a mock function with given fields: ctx, in, opts
+func (_m *SimManagerServiceClient) MarkPackageExpiredForSim(ctx context.Context, in *gen.PackageRequest, opts ...grpc.CallOption) (*gen.PackageResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MarkPackageExpiredForSim")
+	}
+
+	var r0 *gen.PackageResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) (*gen.PackageResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) *gen.PackageResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.PackageResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RemovePackageForSim provides a mock function with given fields: ctx, in, opts
 func (_m *SimManagerServiceClient) RemovePackageForSim(ctx context.Context, in *gen.PackageRequest, opts ...grpc.CallOption) (*gen.PackageResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -436,43 +473,6 @@ func (_m *SimManagerServiceClient) SetPackageInUseForSim(ctx context.Context, in
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetPackageInUseForSim")
-	}
-
-	var r0 *gen.PackageResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) (*gen.PackageResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) *gen.PackageResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.PackageResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// TerminatePackageForSim provides a mock function with given fields: ctx, in, opts
-func (_m *SimManagerServiceClient) TerminatePackageForSim(ctx context.Context, in *gen.PackageRequest, opts ...grpc.CallOption) (*gen.PackageResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for TerminatePackageForSim")
 	}
 
 	var r0 *gen.PackageResponse

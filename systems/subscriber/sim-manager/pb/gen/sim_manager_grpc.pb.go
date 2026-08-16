@@ -26,22 +26,22 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SimManagerService_AllocateSim_FullMethodName             = "/ukama.subscriber.sim_manager.v1.SimManagerService/AllocateSim"
-	SimManagerService_GetSim_FullMethodName                  = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSim"
-	SimManagerService_ListSims_FullMethodName                = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListSims"
-	SimManagerService_ToggleSimStatus_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus"
-	SimManagerService_TerminateSim_FullMethodName            = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminateSim"
-	SimManagerService_GetSimsBySubscriber_FullMethodName     = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber"
-	SimManagerService_GetSimsByNetwork_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork"
-	SimManagerService_AddPackageForSim_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim"
-	SimManagerService_ListPackagesForSim_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListPackagesForSim"
-	SimManagerService_SetPackageInUseForSim_FullMethodName   = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetPackageInUseForSim"
-	SimManagerService_UnsetPackageInUseForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/UnsetPackageInUseForSim"
-	SimManagerService_TerminatePackageForSim_FullMethodName  = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminatePackageForSim"
-	SimManagerService_RemovePackageForSim_FullMethodName     = "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim"
-	SimManagerService_GetPackagesForSim_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesForSim"
-	SimManagerService_GenerateSimToken_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/GenerateSimToken"
-	SimManagerService_GetUsages_FullMethodName               = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetUsages"
+	SimManagerService_AllocateSim_FullMethodName              = "/ukama.subscriber.sim_manager.v1.SimManagerService/AllocateSim"
+	SimManagerService_GetSim_FullMethodName                   = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSim"
+	SimManagerService_ListSims_FullMethodName                 = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListSims"
+	SimManagerService_ToggleSimStatus_FullMethodName          = "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus"
+	SimManagerService_TerminateSim_FullMethodName             = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminateSim"
+	SimManagerService_GetSimsBySubscriber_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber"
+	SimManagerService_GetSimsByNetwork_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork"
+	SimManagerService_AddPackageForSim_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim"
+	SimManagerService_ListPackagesForSim_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListPackagesForSim"
+	SimManagerService_SetPackageInUseForSim_FullMethodName    = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetPackageInUseForSim"
+	SimManagerService_UnsetPackageInUseForSim_FullMethodName  = "/ukama.subscriber.sim_manager.v1.SimManagerService/UnsetPackageInUseForSim"
+	SimManagerService_MarkPackageExpiredForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/MarkPackageExpiredForSim"
+	SimManagerService_RemovePackageForSim_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim"
+	SimManagerService_GetPackagesForSim_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesForSim"
+	SimManagerService_GenerateSimToken_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/GenerateSimToken"
+	SimManagerService_GetUsages_FullMethodName                = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetUsages"
 )
 
 // SimManagerServiceClient is the client API for SimManagerService service.
@@ -63,7 +63,7 @@ type SimManagerServiceClient interface {
 	ListPackagesForSim(ctx context.Context, in *ListPackagesForSimRequest, opts ...grpc.CallOption) (*ListPackagesForSimResponse, error)
 	SetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
 	UnsetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
-	TerminatePackageForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
+	MarkPackageExpiredForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
 	RemovePackageForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
 	GetPackagesForSim(ctx context.Context, in *GetPackagesForSimRequest, opts ...grpc.CallOption) (*GetPackagesForSimResponse, error)
@@ -191,10 +191,10 @@ func (c *simManagerServiceClient) UnsetPackageInUseForSim(ctx context.Context, i
 	return out, nil
 }
 
-func (c *simManagerServiceClient) TerminatePackageForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
+func (c *simManagerServiceClient) MarkPackageExpiredForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(PackageResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_TerminatePackageForSim_FullMethodName, in, out, cOpts...)
+	err := c.cc.Invoke(ctx, SimManagerService_MarkPackageExpiredForSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -260,7 +260,7 @@ type SimManagerServiceServer interface {
 	ListPackagesForSim(context.Context, *ListPackagesForSimRequest) (*ListPackagesForSimResponse, error)
 	SetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error)
 	UnsetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error)
-	TerminatePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error)
+	MarkPackageExpiredForSim(context.Context, *PackageRequest) (*PackageResponse, error)
 	RemovePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
 	GetPackagesForSim(context.Context, *GetPackagesForSimRequest) (*GetPackagesForSimResponse, error)
@@ -311,8 +311,8 @@ func (UnimplementedSimManagerServiceServer) SetPackageInUseForSim(context.Contex
 func (UnimplementedSimManagerServiceServer) UnsetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnsetPackageInUseForSim not implemented")
 }
-func (UnimplementedSimManagerServiceServer) TerminatePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method TerminatePackageForSim not implemented")
+func (UnimplementedSimManagerServiceServer) MarkPackageExpiredForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkPackageExpiredForSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method RemovePackageForSim not implemented")
@@ -545,20 +545,20 @@ func _SimManagerService_UnsetPackageInUseForSim_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimManagerService_TerminatePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _SimManagerService_MarkPackageExpiredForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(PackageRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(SimManagerServiceServer).TerminatePackageForSim(ctx, in)
+		return srv.(SimManagerServiceServer).MarkPackageExpiredForSim(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: SimManagerService_TerminatePackageForSim_FullMethodName,
+		FullMethod: SimManagerService_MarkPackageExpiredForSim_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).TerminatePackageForSim(ctx, req.(*PackageRequest))
+		return srv.(SimManagerServiceServer).MarkPackageExpiredForSim(ctx, req.(*PackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -687,8 +687,8 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SimManagerService_UnsetPackageInUseForSim_Handler,
 		},
 		{
-			MethodName: "TerminatePackageForSim",
-			Handler:    _SimManagerService_TerminatePackageForSim_Handler,
+			MethodName: "MarkPackageExpiredForSim",
+			Handler:    _SimManagerService_MarkPackageExpiredForSim_Handler,
 		},
 		{
 			MethodName: "RemovePackageForSim",
