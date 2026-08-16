@@ -822,8 +822,8 @@ func (s *SimManagerServer) UnsetPackageInUseForSim(ctx context.Context, req *pb.
 	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) TerminatePackageForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
-	if err := terminatePackageForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
+func (s *SimManagerServer) MarkPackageExpiredForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
+	if err := markPackageExpiredForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
@@ -1385,9 +1385,9 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 	return nil
 }
 
-func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+func markPackageExpiredForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	log.Infof("Terminating package %v for sim: %v", reqPackageId, reqSimId)
+	log.Infof("Marking package %v as expired for sim: %v", reqPackageId, reqSimId)
 
 	packageId, err := uuid.FromString(reqPackageId)
 	if err != nil {
@@ -1407,10 +1407,10 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 	}
 
 	if !pckg.IsCurrentlyInUse {
-		log.Warnf("cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
+		log.Warnf("cannot mark not in-use package (%s) as expired. Skipping operation.", pckg.Id)
 
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot terminate inactive package (%s). Skipping operation.", pckg.Id)
+			"cannot mark not in-use package (%s) as expired. Skipping operation.", pckg.Id)
 	}
 
 	if pckg.IsExpired {
@@ -1423,33 +1423,34 @@ func terminatePackageForSim(ctx context.Context, reqSimId, reqPackageId string, 
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
+	//TODO: This might need to be removed as per new service-on/service-off flow
 	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
-			"cannot terminate active package on non active sim: sim's status is is %s", sim.Status)
+			"cannot mark in-use package on non active sim as expired: sim's status is is %s", sim.Status)
 	}
 
-	packageToTerminate := &sims.Package{
+	packageToExpire := &sims.Package{
 		Id:               pckg.Id,
 		IsCurrentlyInUse: false,
 		IsExpired:        true,
 	}
 
-	err = packageRepo.Update(packageToTerminate, func(pckg *sims.Package, tx *gorm.DB) error {
-		packageToTerminate.EndDate = time.Now().UTC()
+	err = packageRepo.Update(packageToExpire, func(pckg *sims.Package, tx *gorm.DB) error {
+		packageToExpire.EndDate = time.Now().UTC()
 
 		return nil
 	})
 
 	if err != nil {
 		return status.Errorf(codes.Internal,
-			"failed to terminate package. Error %s", err.Error())
+			"failed to mark package as expired. Error %s", err.Error())
 	}
 
 	route := baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
 	evtMsg := &epb.EventSimPackageExpire{
 		Id:              sim.Id.String(),
 		StartDate:       pckg.StartDate.String(),
-		EndDate:         packageToTerminate.EndDate.String(),
+		EndDate:         packageToExpire.EndDate.String(),
 		DefaultDuration: pckg.DefaultDuration,
 		PackageId:       pckg.Id.String(),
 		DataPlanId:      pckg.PackageId.String(),

@@ -2239,7 +2239,7 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 	})
 }
 
-func TestSimManagerServer_TerminatePackageForSim(t *testing.T) {
+func TestSimManagerServer_MarkPackageExpiredForSim(t *testing.T) {
 	t.Run("PackageIdNotValid", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
@@ -2251,7 +2251,7 @@ func TestSimManagerServer_TerminatePackageForSim(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
 			nil, nil, nil, nil, orgId.String(), "", nil, nil, nil, nil)
 
-		resp, err := s.TerminatePackageForSim(context.TODO(), &pb.PackageRequest{
+		resp, err := s.MarkPackageExpiredForSim(context.TODO(), &pb.PackageRequest{
 			SimId:     simId.String(),
 			PackageId: "lol",
 		})

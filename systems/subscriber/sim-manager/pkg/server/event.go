@@ -330,7 +330,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 
 	log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
 
-	err = terminatePackageForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
+	err = markPackageExpiredForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
 		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
 		log.Errorf("Failed to terminate active package %s on sim %s. Error: %v",

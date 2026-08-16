@@ -1050,7 +1050,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			}, nil)
 
 		packageRepo.On("Update", mock.Anything, mock.Anything).
-			Return(errors.New("package terminate update failure"))
+			Return(errors.New("package expired update failure"))
 
 		evt := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{
