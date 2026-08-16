@@ -8,6 +8,7 @@
 package server
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -117,6 +118,27 @@ func TestNodeStateFsm_Offboarding(t *testing.T) {
 		"an offboarded node must be able to come back")
 }
 
+func TestNodeStateFsm_OffboardedNodeReturnsWhenItComesOnline(t *testing.T) {
+	instance := newNodeInstance(t, "offboarded-online", "Offboarded")
+
+	require.NoError(t, instance.Transition("online"))
+
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"a released node that reappears must re-enter the pool, not stay Offboarded")
+	assert.Equal(t, "on", instance.CurrentSubstate)
+}
+
+func TestNodeStateFsm_OffboardedTracksConnectivity(t *testing.T) {
+	instance := newNodeInstance(t, "offboarded-connectivity", "Offboarded")
+
+	require.NoError(t, instance.Transition("offline"))
+
+	assert.Equal(t, "Offboarded", instance.CurrentState,
+		"going offline must not move an offboarded node")
+	assert.Equal(t, "off", instance.CurrentSubstate,
+		"connectivity must still be tracked while offboarded")
+}
+
 func TestNodeStateFsm_UpdateReboots(t *testing.T) {
 	instance := newNodeInstance(t, "update-reboot", "Initializing")
 
@@ -134,7 +156,6 @@ func TestNodeStateFsm_Timeouts(t *testing.T) {
 		from string
 		to   string
 	}{
-		{"Ready", "Configuring"},
 		{"Configuring", "Operational"},
 		{"Updating", "Initializing"},
 	}
@@ -152,12 +173,15 @@ func TestNodeStateFsm_Timeouts(t *testing.T) {
 		})
 	}
 
-	t.Run("Operational never times out", func(t *testing.T) {
-		instance := newNodeInstance(t, "timeout-operational", "Operational")
+	for _, state := range []string{"Ready", "Operational", "Unknown", "Faulty", "Offboarded"} {
+		t.Run(state+" never times out", func(t *testing.T) {
+			instance := newNodeInstance(t, "timeout-"+state, state)
 
-		_, due := instance.DueTransition(enteredAt, enteredAt.Add(time.Hour))
-		assert.False(t, due)
-	})
+			_, due := instance.DueTransition(enteredAt, enteredAt.Add(time.Hour))
+			assert.False(t, due,
+				"%s must wait for a real event, not drift on a timer", state)
+		})
+	}
 }
 
 func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
@@ -309,4 +333,27 @@ func TestNodeStateFsm_LatchSurvivesRestart(t *testing.T) {
 	require.True(t, ok, "a latch persisted before the restart must still be found")
 	assert.Equal(t, NodeStateEventPlatformReady, latched)
 	repo.AssertExpectations(t)
+}
+
+func TestStateEventServer_applyEvent_SkipsWritesWhenNothingChanges(t *testing.T) {
+	repo := &mocks.StateRepo{}
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	instance, err := srv.getOrCreateInstance("noop-node", "Offboarded", "off")
+	require.NoError(t, err)
+
+	changed, err := srv.applyEvent(context.Background(), instance, "noop-node", "service_on")
+
+	require.NoError(t, err)
+	assert.False(t, changed)
+	assert.Equal(t, "Offboarded", instance.CurrentState)
+	repo.AssertNotCalled(t, "UpdateState", mock.Anything, mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "AddState", mock.Anything, mock.Anything)
 }

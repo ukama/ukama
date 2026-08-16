@@ -471,9 +471,16 @@ import (
  func (n *StateEventServer) applyEvent(ctx context.Context, instance *stm.StateMachineInstance,
 	 nodeId, eventName string) (bool, error) {
 	 prevState := instance.CurrentState
+	 prevSubstate := instance.CurrentSubstate
 
 	 if err := instance.Transition(eventName); err != nil {
 		 return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
+	 }
+
+	 if instance.CurrentState == prevState && instance.CurrentSubstate == prevSubstate {
+		 log.Infof("Event %s did not change state for node %s, skipping persistence", eventName, nodeId)
+
+		 return false, nil
 	 }
 
 	 return n.persistTransition(ctx, instance, nodeId, prevState, eventName)

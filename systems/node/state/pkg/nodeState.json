@@ -118,10 +118,6 @@
         "fault",
         "offboard"
       ],
-      "timeout": {
-        "seconds": 60,
-        "to_state": "Configuring"
-      },
       "transition": [
         {
           "to_state": "Configuring",
@@ -361,13 +357,30 @@
     {
       "name": "Offboarded",
       "description": "Node has been released from the organisation",
-      "events": ["onboarding"],
+      "events": ["online", "offline", "reboot", "onboarding"],
       "transition": [
         {
           "to_state": "Unknown",
-          "trigger": ["onboarding"]
+          "trigger": ["online", "onboarding"]
         }
-      ]
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"]
+          }
+        ]
+      }
     }
   ]
 }
