@@ -20,6 +20,7 @@ export const NodeSchema = z.object({
   state: z.string().optional(),
   type: z.enum(['Tower node', 'Amplifier node', 'Controller node', 'Home node']),
   site: z.string(),
+  siteId: z.string().optional(),
   status: z.enum(['online', 'degraded', 'offline', 'configuring']),
   cpu: z.number(),
   mem: z.number(),

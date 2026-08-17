@@ -9,7 +9,7 @@
 
 /** Nodes — radio hardware card grid, wired to the `nodesView` composite. */
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import PlaceRounded from '@mui/icons-material/PlaceRounded';
 import RouterRounded from '@mui/icons-material/RouterRounded';
 import SettingsInputAntennaRounded from '@mui/icons-material/SettingsInputAntennaRounded';
@@ -20,6 +20,7 @@ import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
+import SearchField from '@/components/SearchField';
 import type { UkamaNode } from '@/data';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { useNetworkId } from '@/lib/useNetworkId';
@@ -129,6 +130,7 @@ function NodeCard({
 export default function NodesScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const [q, setQ] = useState('');
 
   const { data, loading, refetch } = useNodesListQuery({
     variables: { networkId },
@@ -168,6 +170,16 @@ export default function NodesScreen() {
       );
   }, [nodesSection?.nodes, siteNameById]);
 
+  const list = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return nodes;
+    return nodes.filter((n) =>
+      [n.name, n.id, n.site, n.siteId].some((field) =>
+        field?.toLowerCase().includes(term),
+      ),
+    );
+  }, [nodes, q]);
+
   return (
     <div
       className="page"
@@ -180,51 +192,73 @@ export default function NodesScreen() {
         sub="Radio hardware deployed across your sites."
       />
       <div
+        style={{
+          display: 'flex',
+          gap: 10,
+          marginBottom: 18,
+          flexWrap: 'wrap',
+          alignItems: 'center',
+        }}
+      >
+        <SearchField
+          value={q}
+          onChange={setQ}
+          placeholder="Search by node or site name / ID"
+          width={300}
+        />
+      </div>
+      <div
         style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 4 }}
       >
         {loading ? (
-        <div
-          className="tile-grid"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          }}
-        >
-          {[0, 1, 2].map((i) => (
-            <Skeleton key={i} variant="rounded" sx={{ height: 132 }} />
-          ))}
-        </div>
-      ) : nodesSection?.error ? (
-        <EmptyState
-          art="error"
-          title="Couldn't load nodes"
-          sub={nodesSection.error.message}
-          cta="Try again"
-          onCta={() => refetch()}
-        />
-      ) : nodes.length === 0 ? (
-        <EmptyState
-          art="node"
-          title="No nodes yet"
-          sub="Set up your network and register nodes to get started."
-          cta="Set up network"
-          onCta={() => router.push('/configure')}
-        />
-      ) : (
-        <div
-          className="tile-grid"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-          }}
-        >
-          {nodes.map((n) => (
-            <NodeCard
-              key={n.id}
-              n={n}
-              onOpen={(node) => router.push(`/network/nodes/${node.id}`)}
-            />
-          ))}
-        </div>
-      )}
+          <div
+            className="tile-grid"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            }}
+          >
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} variant="rounded" sx={{ height: 132 }} />
+            ))}
+          </div>
+        ) : nodesSection?.error ? (
+          <EmptyState
+            art="error"
+            title="Couldn't load nodes"
+            sub={nodesSection.error.message}
+            cta="Try again"
+            onCta={() => refetch()}
+          />
+        ) : nodes.length === 0 ? (
+          <EmptyState
+            art="node"
+            title="No nodes yet"
+            sub="Set up your network and register nodes to get started."
+            cta="Set up network"
+            onCta={() => router.push('/configure')}
+          />
+        ) : list.length === 0 ? (
+          <EmptyState
+            art="search"
+            title="No matching nodes"
+            sub="Try a different node name, node ID, site name or site ID."
+          />
+        ) : (
+          <div
+            className="tile-grid"
+            style={{
+              gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            }}
+          >
+            {list.map((n) => (
+              <NodeCard
+                key={n.id}
+                n={n}
+                onOpen={(node) => router.push(`/network/nodes/${node.id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

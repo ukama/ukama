@@ -45,6 +45,7 @@ export const toUkamaNode = (
   type: NODE_TYPE_LABEL[node.type] ?? 'Tower node',
   // Only show a resolved site name; never the raw siteId.
   site: siteName ?? '—',
+  siteId: node.site?.siteId ?? undefined,
   status: toNodeStatus(node),
   // TODO(metrics-phase): cpu/mem/temp/fw/up come from nodeView.kpis —
   // backend gap #6 (docs in systems/console-bff/docs/backend-gaps.md)
