@@ -126,9 +126,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	}
 
 	if r.config.grpcEndpoints != nil {
+
 		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
 			"mailer":             {Host: r.config.grpcEndpoints.Mailer, Description: desc.Mailer},
-			"notify":             {Host: r.config.grpcEndpoints.Notify, Description: desc.Notify},
 			"event-notification": {Host: r.config.grpcEndpoints.EventNotification, Description: desc.EventNotification},
 			"distributor":        {Host: r.config.grpcEndpoints.Distributor, Description: desc.Distributor},
 		}, r.config.grpcEndpoints.Timeout)
