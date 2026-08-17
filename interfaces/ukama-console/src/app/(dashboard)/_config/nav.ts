@@ -106,7 +106,7 @@ export function lensFromPath(pathname: string): Lens {
 /** Sidebar sentinel: external link to the status app (URL built in Sidebar). */
 export const BACKEND_STATUS_ITEM: NavItem = {
   href: '/backend-status',
-  label: 'Backend status',
+  label: 'Service status',
   icon: 'monitor_heart',
   external: true,
 };

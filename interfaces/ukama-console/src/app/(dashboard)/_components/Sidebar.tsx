@@ -7,15 +7,15 @@
  */
 'use client';
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import { useAuth } from '@/lib/auth/context';
 import { publicEnv } from '@/lib/runtime-env';
 import { useUiPrefs } from '@/lib/store';
-import { NAV_BY_LENS, bottomNav, lensFromPath } from '../_config/nav';
+import ChevronLeftRounded from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import type { NavItem } from '../_config/nav';
+import { NAV_BY_LENS, bottomNav, lensFromPath } from '../_config/nav';
 import { Ic } from './icons';
 
 function isActive(pathname: string, item: NavItem): boolean {
@@ -37,12 +37,6 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   );
 }
 
-/**
- * External sidebar link (e.g. "Backend status"): opens the status app in a
- * new tab with the session's org passed via ?org= so the status app can
- * scope its init lookups. No active-state matching — it never owns a
- * console route.
- */
 function ExternalNavLink({ item }: { item: NavItem }) {
   const user = useAuth();
   const href = `${publicEnv().statusAppUrl}/?org=${encodeURIComponent(
@@ -67,6 +61,7 @@ export default function Sidebar() {
   const lens = lensFromPath(pathname);
   const groups = NAV_BY_LENS[lens];
   const { rail, toggleRail } = useUiPrefs();
+  const statusAppEnabled = publicEnv().statusAppEnabled === 'true';
 
   return (
     <aside className="sidebar">
@@ -82,7 +77,7 @@ export default function Sidebar() {
       <hr className="sidebar-divider" />
       {bottomNav(lens).map((item) =>
         item.external ? (
-          <ExternalNavLink key={item.href} item={item} />
+          statusAppEnabled && <ExternalNavLink key={item.href} item={item} />
         ) : (
           <NavLink key={item.href} item={item} pathname={pathname} />
         ),
