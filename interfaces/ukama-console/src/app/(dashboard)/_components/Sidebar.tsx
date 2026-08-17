@@ -43,13 +43,7 @@ function ExternalNavLink({ item }: { item: NavItem }) {
     user?.orgName ?? '',
   )}`;
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="navitem"
-      title={item.label}
-    >
+    <a href={href} className="navitem" title={item.label}>
       <Ic name={item.icon} className="ni-ic" />
       <span className="ni-label">{item.label}</span>
     </a>
