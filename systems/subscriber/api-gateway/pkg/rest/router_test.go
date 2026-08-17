@@ -509,10 +509,10 @@ func TestRouter_SimManager(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/sim/"+sim.Id,
 			nil)
 
-		preq := &smPb.GetSimRequest{
+		preq := &smPb.SimRequest{
 			SimId: sim.Id,
 		}
-		csm.On("GetSim", mock.Anything, preq).Return(&smPb.GetSimResponse{
+		csm.On("GetSim", mock.Anything, preq).Return(&smPb.SimResponse{
 			Sim: sim,
 		}, nil)
 
@@ -588,7 +588,7 @@ func TestRouter_SimManager(t *testing.T) {
 			PackageId: p.PackageId,
 			StartDate: p.StartDate,
 		}
-		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -623,7 +623,7 @@ func TestRouter_SimManager(t *testing.T) {
 			SimType:      p.SimType,
 		}
 
-		csm.On("AllocateSim", mock.Anything, preq).Return(&smPb.AllocateSimResponse{}, nil)
+		csm.On("AllocateSim", mock.Anything, preq).Return(&smPb.SimResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -645,12 +645,12 @@ func TestRouter_SimManager(t *testing.T) {
 			bytes.NewReader(jdata))
 		assert.NoError(t, err)
 
-		preq := &smPb.ToggleSimStatusRequest{
+		preq := &smPb.ToggleSimServiceStatusRequest{
 			SimId:  sim.Id,
 			Status: p.Status,
 		}
 
-		csm.On("ToggleSimStatus", mock.Anything, preq).Return(&smPb.ToggleSimStatusResponse{}, nil)
+		csm.On("ToggleSimServiceStatus", mock.Anything, preq).Return(&smPb.ToggleSimServiceStatusResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -706,7 +706,7 @@ func TestRouter_SimManager(t *testing.T) {
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.TerminateSimRequest{
+		preq := &smPb.SimRequest{
 			SimId: sim.Id,
 		}
 
@@ -1062,7 +1062,7 @@ func TestRouter_addPackageForSim(t *testing.T) {
 		StartDate: startDate,
 	}
 
-	csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+	csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 

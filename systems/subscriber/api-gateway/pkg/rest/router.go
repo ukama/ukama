@@ -65,12 +65,12 @@ type simPool interface {
 }
 
 type simManager interface {
-	AllocateSim(req *simMangPb.AllocateSimRequest) (*simMangPb.AllocateSimResponse, error)
-	GetSim(simId string) (*simMangPb.GetSimResponse, error)
+	AllocateSim(req *simMangPb.AllocateSimRequest) (*simMangPb.SimResponse, error)
+	GetSim(simId string) (*simMangPb.SimResponse, error)
 	ListSims(iccid, imsi, subscriberId, networkId, simType, simStatus string, trafficPolicy uint32,
 		isPhysical, sort bool, count uint32) (*simMangPb.ListSimsResponse, error)
-	ToggleSimStatus(simId string, status string) (*simMangPb.ToggleSimStatusResponse, error)
-	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.AddPackageResponse, error)
+	ToggleSimServiceStatus(simId string, status string) (*simMangPb.ToggleSimServiceStatusResponse, error)
+	AddPackageToSim(req *simMangPb.AddPackageRequest) (*simMangPb.PackageResponse, error)
 	RemovePackageForSim(req *simMangPb.PackageRequest) (*simMangPb.PackageResponse, error)
 	TerminateSim(simId string) (*simMangPb.TerminateSimResponse, error)
 	ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
@@ -185,7 +185,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		sim.GET("", formatDoc("List SIMs with various query params as filters", ""), tonic.Handler(r.listSims, http.StatusOK))
 		sim.GET(simIdKey, formatDoc("Get SIM by Id", ""), tonic.Handler(r.getSim, http.StatusOK))
 		sim.POST("/", formatDoc("Allocate a new SIM to given subscriber", ""), tonic.Handler(r.allocateSim, http.StatusCreated))
-		sim.PATCH(simIdKey, formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimStatus, http.StatusOK))
+		sim.PATCH(simIdKey, formatDoc("Activate/Deactivate a given SIM", ""), tonic.Handler(r.updateSimServiceStatus, http.StatusOK))
 		sim.DELETE(simIdKey, formatDoc("Terminate a given SIM", ""), tonic.Handler(r.terminateSim, http.StatusOK))
 		sim.GET(simIdKey+"/package", formatDoc("Get packages for a given SIM", ""), tonic.Handler(r.listPackagesForSim, http.StatusOK))
 		sim.POST(simIdKey+"/package", formatDoc("Add a new package to the given SIM", ""), tonic.Handler(r.addPackageForSim, http.StatusCreated))
@@ -329,7 +329,7 @@ func (r *Router) getSubscriberByNetwork(c *gin.Context, req *SubscriberByNetwork
 
 // Sim manager
 
-func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.AllocateSimResponse, error) {
+func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.SimResponse, error) {
 	simReq := simMangPb.AllocateSimRequest{
 		SubscriberId:  req.SubscriberId,
 		SimToken:      req.SimToken,
@@ -341,7 +341,7 @@ func (r *Router) allocateSim(c *gin.Context, req *AllocateSimReq) (*simMangPb.Al
 	return r.clients.sm.AllocateSim(&simReq)
 }
 
-func (r *Router) getSim(c *gin.Context, req *SimReq) (*simMangPb.GetSimResponse, error) {
+func (r *Router) getSim(c *gin.Context, req *SimReq) (*simMangPb.SimResponse, error) {
 	return r.clients.sm.GetSim(req.SimId)
 }
 
@@ -360,15 +360,15 @@ func (r *Router) getSimsByNetwork(c *gin.Context, req *SimByNetworkReq) (*simMan
 	return r.clients.sm.GetSimsByNetwork(req.NetworkId)
 }
 
-func (r *Router) updateSimStatus(c *gin.Context, req *ActivateDeactivateSimReq) (*simMangPb.ToggleSimStatusResponse, error) {
-	return r.clients.sm.ToggleSimStatus(req.SimId, req.Status)
+func (r *Router) updateSimServiceStatus(c *gin.Context, req *ActivateDeactivateSimReq) (*simMangPb.ToggleSimServiceStatusResponse, error) {
+	return r.clients.sm.ToggleSimServiceStatus(req.SimId, req.Status)
 }
 
 func (r *Router) terminateSim(c *gin.Context, req *SimReq) (*simMangPb.TerminateSimResponse, error) {
 	return r.clients.sm.TerminateSim(req.SimId)
 }
 
-func (r *Router) addPackageForSim(c *gin.Context, req *AddPkgToSimReq) (*simMangPb.AddPackageResponse, error) {
+func (r *Router) addPackageForSim(c *gin.Context, req *AddPkgToSimReq) (*simMangPb.PackageResponse, error) {
 	payload := simMangPb.AddPackageRequest{
 		SimId:     req.SimId,
 		PackageId: req.PackageId,

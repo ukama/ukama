@@ -59,18 +59,18 @@ func (sm *SimManager) Close() {
 	}
 }
 
-func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.SimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
 	return sm.client.AllocateSim(ctx, req)
 }
 
-func (sm *SimManager) GetSim(simId string) (*pb.GetSimResponse, error) {
+func (sm *SimManager) GetSim(simId string) (*pb.SimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.GetSim(ctx, &pb.GetSimRequest{SimId: simId})
+	return sm.client.GetSim(ctx, &pb.SimRequest{SimId: simId})
 }
 
 func (sm *SimManager) ListSims(iccid, imsi, subscriberId, networkId, simType, simStatus string, trafficPolicy uint32,
@@ -92,14 +92,14 @@ func (sm *SimManager) ListSims(iccid, imsi, subscriberId, networkId, simType, si
 	})
 }
 
-func (sm *SimManager) ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error) {
+func (sm *SimManager) ToggleSimServiceStatus(simId string, status string) (*pb.ToggleSimServiceStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{SimId: simId, Status: status})
+	return sm.client.ToggleSimServiceStatus(ctx, &pb.ToggleSimServiceStatusRequest{SimId: simId, Status: status})
 }
 
-func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
@@ -150,7 +150,7 @@ func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, erro
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.TerminateSim(ctx, &pb.TerminateSimRequest{SimId: simId})
+	return sm.client.TerminateSim(ctx, &pb.SimRequest{SimId: simId})
 }
 
 func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string) (*pb.UsageResponse, error) {

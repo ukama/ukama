@@ -13,23 +13,23 @@ type simManager struct {
 }
 
 // AddPackageToSim provides a mock function with given fields: req
-func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.AddPackageResponse, error) {
+func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.PackageResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddPackageToSim")
 	}
 
-	var r0 *gen.AddPackageResponse
+	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) (*gen.AddPackageResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) (*gen.PackageResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) *gen.AddPackageResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) *gen.PackageResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AddPackageResponse)
+			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
@@ -43,23 +43,23 @@ func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.AddPacka
 }
 
 // AllocateSim provides a mock function with given fields: req
-func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.AllocateSimResponse, error) {
+func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.SimResponse, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AllocateSim")
 	}
 
-	var r0 *gen.AllocateSimResponse
+	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) (*gen.AllocateSimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) (*gen.SimResponse, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) *gen.AllocateSimResponse); ok {
+	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) *gen.SimResponse); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.AllocateSimResponse)
+			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
@@ -103,23 +103,23 @@ func (_m *simManager) GetPackagesForSim(simId string) (*gen.GetPackagesForSimRes
 }
 
 // GetSim provides a mock function with given fields: simId
-func (_m *simManager) GetSim(simId string) (*gen.GetSimResponse, error) {
+func (_m *simManager) GetSim(simId string) (*gen.SimResponse, error) {
 	ret := _m.Called(simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSim")
 	}
 
-	var r0 *gen.GetSimResponse
+	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSimResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*gen.SimResponse, error)); ok {
 		return rf(simId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSimResponse); ok {
+	if rf, ok := ret.Get(0).(func(string) *gen.SimResponse); ok {
 		r0 = rf(simId)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetSimResponse)
+			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
@@ -402,24 +402,24 @@ func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, err
 	return r0, r1
 }
 
-// ToggleSimStatus provides a mock function with given fields: simId, status
-func (_m *simManager) ToggleSimStatus(simId string, status string) (*gen.ToggleSimStatusResponse, error) {
+// ToggleSimServiceStatus provides a mock function with given fields: simId, status
+func (_m *simManager) ToggleSimServiceStatus(simId string, status string) (*gen.ToggleSimServiceStatusResponse, error) {
 	ret := _m.Called(simId, status)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ToggleSimStatus")
+		panic("no return value specified for ToggleSimServiceStatus")
 	}
 
-	var r0 *gen.ToggleSimStatusResponse
+	var r0 *gen.ToggleSimServiceStatusResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleSimStatusResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleSimServiceStatusResponse, error)); ok {
 		return rf(simId, status)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleSimStatusResponse); ok {
+	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleSimServiceStatusResponse); ok {
 		r0 = rf(simId, status)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleSimStatusResponse)
+			r0 = ret.Get(0).(*gen.ToggleSimServiceStatusResponse)
 		}
 	}
 
