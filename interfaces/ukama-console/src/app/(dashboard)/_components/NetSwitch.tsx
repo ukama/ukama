@@ -13,11 +13,12 @@
  * old seed default) it self-heals to the default/first network. "Add
  * network" opens an inline dialog that creates + selects the new network.
  */
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import AddRounded from '@mui/icons-material/AddRounded';
 import CheckRounded from '@mui/icons-material/CheckRounded';
@@ -47,22 +48,45 @@ export default function NetSwitch() {
 
   const current = selected ?? fallback;
 
+  const nameRef = useRef<HTMLSpanElement | null>(null);
+  const [clipped, setClipped] = useState(false);
+  const measure = useCallback(() => {
+    const el = nameRef.current;
+    if (!el) return;
+    setClipped(el.clientWidth === 0 || el.scrollWidth > el.clientWidth + 1);
+  }, []);
+
+  useEffect(() => {
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [measure, current?.name]);
+
   return (
     <>
-      <button
-        type="button"
-        className="netswitch"
-        onClick={(e) => setAnchor(e.currentTarget)}
-        aria-haspopup="menu"
+      <Tooltip
+        title={!anchor && clipped && current ? current.name : ''}
+        placement="bottom-start"
+        enterDelay={300}
+        disableInteractive
       >
-        <span className="dot" />
-        <span className="nm">
-          {current ? current.name : loading ? '…' : 'No network'}
-        </span>
-        <UnfoldMoreRounded
-          sx={{ fontSize: 18, color: 'rgba(255,255,255,.55)', flexShrink: 0 }}
-        />
-      </button>
+        <button
+          type="button"
+          className="netswitch"
+          onClick={(e) => setAnchor(e.currentTarget)}
+          onPointerEnter={measure}
+          onFocus={measure}
+          aria-haspopup="menu"
+        >
+          <span className="dot" />
+          <span className="nm" ref={nameRef}>
+            {current ? current.name : loading ? '…' : 'No network'}
+          </span>
+          <UnfoldMoreRounded
+            sx={{ fontSize: 18, color: 'rgba(255,255,255,.55)', flexShrink: 0 }}
+          />
+        </button>
+      </Tooltip>
       <Menu
         anchorEl={anchor}
         open={!!anchor}
