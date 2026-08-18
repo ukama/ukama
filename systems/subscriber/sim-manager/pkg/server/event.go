@@ -325,22 +325,6 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			ukama.SimTypeUkamaData.String(), sim.Type.String())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-	defer cancel()
-
-	log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
-
-	err = markPackageExpiredForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
-		es.packageRepo, es.msgbus, es.baseRoutingKey)
-	if err != nil {
-		log.Errorf("Failed to terminate active package %s on sim %s. Error: %v",
-			asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
-
-		return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
-			asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
-	}
-
-	// Get next package to activate if any
 	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
@@ -350,38 +334,113 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			sim.Id.String(), err)
 	}
 
-	if len(packages) > 1 {
-		var p sims.Package
-
-		var i int
-		for i, p = range packages {
-			if p.Id.String() == asrProfile.Subscriber.SimPackage {
-				break
+	for _, p := range packages {
+		if p.Id.String() == asrProfile.Subscriber.SimPackage {
+			err = unsetPackageInuseForSim(sim.Id.String(), asrProfile.Subscriber.SimPackage, es.packageRepo)
+			if err != nil {
+				log.Warnf("Failed to unset package in-use %s on sim %s. Error: %v",
+					asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
 			}
 		}
 
-		if i <= len(packages)-2 {
-			nextPackage := packages[i+1]
+		log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-			defer cancel()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+		defer cancel()
 
-			log.Infof("activating package %s on sim %s", nextPackage.Id.String(), sim.Id.String())
-
-			err = setPackageInUseForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
-				es.agentFactory, es.msgbus, es.baseRoutingKey)
-			if err != nil {
-				log.Errorf("Failed to activate next package %s for sim %s. Error: %v",
-					nextPackage.Id.String(), sim.Id.String(), err)
-
-				return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
-					nextPackage.Id.String(), sim.Id.String(), err)
-			}
+		err = markPackageExpiredForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
+			es.packageRepo, es.msgbus, es.baseRoutingKey)
+		if err != nil {
+			log.Warnf("Failed to mark package %s as expired on sim %s. Error: %v",
+				asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
 		}
 	}
 
 	return nil
 }
+
+// func (es *SimManagerEventServer) handleUkamaAgentAsrProfileUpdateEvent(key string, asrProfile *epb.AsrInactivated) error {
+// log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
+
+// sim, err := es.getSimFromIccidOrImsi(asrProfile.Subscriber.Iccid, "")
+// if err != nil {
+// log.Errorf("Error while looking up sim for ukama agent ASR delete event. Error: %v",
+// err)
+
+// return fmt.Errorf("error while looking up sim for ukama agent ASR delte event. Error: %w",
+// err)
+// }
+
+// if sim.Type != ukama.SimTypeUkamaData {
+// log.Errorf("Invalid sim type: sim must be of type %s, not %s",
+// ukama.SimTypeUkamaData.String(), sim.Type.String())
+
+// return fmt.Errorf("invalid sim type: sim must be of type %s, not %s",
+// ukama.SimTypeUkamaData.String(), sim.Type.String())
+// }
+
+// ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+// defer cancel()
+
+// //TODO: updates
+// // list all packages
+// // for each, mark as not in use and expired
+// // finally, terminate the sim.
+
+// log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
+
+// err = markPackageExpiredForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
+// es.packageRepo, es.msgbus, es.baseRoutingKey)
+// if err != nil {
+// log.Errorf("Failed to terminate active package %s on sim %s. Error: %v",
+// asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
+
+// return fmt.Errorf("failed to terminate active package %s on sim %s. Error: %w",
+// asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
+// }
+
+// // Get next package to activate if any
+// packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
+// if err != nil {
+// log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+// sim.Id.String(), err)
+
+// return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
+// sim.Id.String(), err)
+// }
+
+// if len(packages) > 1 {
+// var p sims.Package
+
+// var i int
+// for i, p = range packages {
+// if p.Id.String() == asrProfile.Subscriber.SimPackage {
+// break
+// }
+// }
+
+// if i <= len(packages)-2 {
+// nextPackage := packages[i+1]
+
+// ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+// defer cancel()
+
+// log.Infof("activating package %s on sim %s", nextPackage.Id.String(), sim.Id.String())
+
+// err = setPackageInUseForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
+// es.agentFactory, es.msgbus, es.baseRoutingKey)
+// if err != nil {
+// log.Errorf("Failed to activate next package %s for sim %s. Error: %v",
+// nextPackage.Id.String(), sim.Id.String(), err)
+
+// return fmt.Errorf("failed to activate next package %s for sim %s. Error: %w",
+// nextPackage.Id.String(), sim.Id.String(), err)
+// }
+// }
+// }
+
+// return nil
+// }
 
 func (es *SimManagerEventServer) getSimFromIccidOrImsi(iccid, imsi string) (*sims.Sim, error) {
 	ukamaSims, err := es.simRepo.List(iccid, imsi, "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
