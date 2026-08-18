@@ -14,11 +14,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/adapters"
 	"github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/clients/providers"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -327,7 +329,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 
 	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
 	if err != nil {
-		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
+		log.Errorf("Failed to get the sorted list of packages present on sim (%s): %v",
 			sim.Id.String(), err)
 
 		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
@@ -343,7 +345,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			}
 		}
 
-		log.Infof("terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
+		log.Infof("Terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 		defer cancel()
@@ -354,6 +356,32 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			log.Warnf("Failed to mark package %s as expired on sim %s. Error: %v",
 				asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
 		}
+	}
+
+	// Terminating sim
+
+	simUpdates := &sims.Sim{
+		Id:     sim.Id,
+		Status: ukama.SimStatusTerminated,
+	}
+
+	err = es.simRepo.Update(simUpdates, func(sim *sims.Sim, tx *gorm.DB) error {
+		sim.TerminatedAt = time.Now().UTC()
+
+		return nil
+	})
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	err = pushTerminatedSimsCountMetric(sim.NetworkId.String(), es.simRepo, es.orgId, es.metricsPusher)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
+	}
+
+	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), es.simRepo, es.orgId, es.metricsPusher)
+	if err != nil {
+		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
 
 	return nil

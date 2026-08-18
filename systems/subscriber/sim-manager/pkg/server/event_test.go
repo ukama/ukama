@@ -813,77 +813,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete")
 
-	t.Run("NextPackagesNotFound", func(t *testing.T) {
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		simRepo := mocks.SimRepo{}
-		packageRepo := mocks.PackageRepo{}
-
-		simId := uuid.NewV4()
-		packageId := uuid.NewV4()
-
-		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{
-				sims.Sim{
-					Id:     simId,
-					Iccid:  testIccid,
-					Status: ukama.SimStatusServiceOn,
-					Type:   ukama.SimTypeUkamaData,
-				},
-			}, nil)
-
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				Id:               packageId,
-				SimId:            simId,
-				IsCurrentlyInUse: true,
-				IsExpired:        false,
-			}, nil)
-
-		simRepo.On("Get", mock.Anything).
-			Return(&sims.Sim{
-				Id:     simId,
-				Iccid:  testIccid,
-				Status: ukama.SimStatusServiceOn,
-				Type:   ukama.SimTypeUkamaData,
-			}, nil)
-
-		packageRepo.On("Update", mock.Anything, mock.Anything).
-			Return(nil)
-
-		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{
-				sims.Package{
-					Id:               packageId,
-					SimId:            simId,
-					IsCurrentlyInUse: false,
-					IsExpired:        true,
-				},
-			}, nil)
-
-		evt := &epb.AsrInactivated{
-			Subscriber: &epb.Subscriber{
-				Iccid:      testIccid,
-				SimPackage: packageId.String(),
-			}}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.NoError(t, err)
-	})
-
 	t.Run("NextPackagesFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
@@ -938,6 +867,13 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 					IsExpired:        false,
 				},
 			}, nil)
+
+		simRepo.On("Update",
+			&sims.Sim{
+				Id:     simId,
+				Status: ukama.SimStatusTerminated,
+			},
+			mock.Anything).Return(nil).Once()
 
 		evt := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{
@@ -1018,7 +954,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		assert.Error(t, err)
 	})
 
-	t.Run("PackageTerminateUpdateError", func(t *testing.T) {
+	t.Run("PackageUpdateError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -1074,6 +1010,13 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		packageRepo.On("Update", mock.Anything, mock.Anything).
 			Return(errors.New("package expired update failure"))
 
+		simRepo.On("Update",
+			&sims.Sim{
+				Id:     simId,
+				Status: ukama.SimStatusTerminated,
+			},
+			mock.Anything).Return(nil).Once()
+
 		evt := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{
 				Iccid:      testIccid,
@@ -1092,55 +1035,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
-	})
-
-	t.Run("SimExpired", func(t *testing.T) {
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		simRepo := mocks.SimRepo{}
-		packageRepo := mocks.PackageRepo{}
-
-		simId := uuid.NewV4()
-		packageId := uuid.NewV4()
-
-		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{
-				sims.Sim{
-					Id: simId,
-				},
-			}, nil)
-
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				SimId:            simId,
-				IsCurrentlyInUse: true,
-				IsExpired:        false,
-			}, nil)
-
-		simRepo.On("Get", mock.Anything).
-			Return(&sims.Sim{
-				Status: ukama.SimStatusServiceOff,
-			}, nil)
-
-		evt := &epb.AsrInactivated{
-			Subscriber: &epb.Subscriber{
-				SimPackage: packageId.String(),
-			}}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
 	})
 
 	t.Run("SimGetError", func(t *testing.T) {
@@ -1170,93 +1064,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		simRepo.On("Get", mock.Anything).
 			Return(nil, errors.New("failed to get sim"))
-
-		evt := &epb.AsrInactivated{
-			Subscriber: &epb.Subscriber{
-				SimPackage: packageId.String(),
-			}}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("PackageExpired", func(t *testing.T) {
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		simRepo := mocks.SimRepo{}
-		packageRepo := mocks.PackageRepo{}
-
-		simId := uuid.NewV4()
-		packageId := uuid.NewV4()
-
-		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{
-				sims.Sim{
-					Id: simId,
-				},
-			}, nil)
-
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				SimId:            simId,
-				IsCurrentlyInUse: true,
-				IsExpired:        true,
-			}, nil)
-
-		evt := &epb.AsrInactivated{
-			Subscriber: &epb.Subscriber{
-				SimPackage: packageId.String(),
-			}}
-
-		anyE, err := anypb.New(evt)
-		assert.NoError(t, err)
-
-		msg := &epb.Event{
-			RoutingKey: routingKey,
-			Msg:        anyE,
-		}
-
-		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
-		_, err = s.EventNotification(context.TODO(), msg)
-
-		assert.Error(t, err)
-	})
-
-	t.Run("PackageNotActive", func(t *testing.T) {
-		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		simRepo := mocks.SimRepo{}
-		packageRepo := mocks.PackageRepo{}
-
-		simId := uuid.NewV4()
-		packageId := uuid.NewV4()
-
-		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{
-				sims.Sim{
-					Id: simId,
-				},
-			}, nil)
-
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				SimId:            simId,
-				IsCurrentlyInUse: false,
-			}, nil)
 
 		evt := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{

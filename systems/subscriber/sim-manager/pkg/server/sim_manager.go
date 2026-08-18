@@ -580,51 +580,14 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 }
 
 func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest) (*pb.TerminateSimResponse, error) {
-	log.Infof("Terminating sim: %v", req.GetSimId())
+	//Ths does not terminate the sim, but instead send a termination request to ukama agent
+	//which will remove the ASR profile first, then trigger the sim termination request on sim manager.
+
+	log.Infof("Sending terminate sim: %v request to agent", req.GetSimId())
 
 	sim, err := getSim(req.SimId, s.simRepo)
 	if err != nil {
 		return nil, err
-	}
-
-	if sim.Status != ukama.SimStatusServiceOff {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"sim state: %s is invalid for deletion", sim.Status)
-	}
-
-	simAgent, ok := s.agentFactory.GetAgentAdapter(sim.Type)
-	if !ok {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, req.SimId)
-	}
-
-	err = simAgent.TerminateSim(ctx, sim.Iccid)
-	if err != nil {
-		return nil, err
-	}
-
-	simUpdates := &sims.Sim{
-		Id:     sim.Id,
-		Status: ukama.SimStatusTerminated,
-	}
-
-	err = s.simRepo.Update(simUpdates, func(sim *sims.Sim, tx *gorm.DB) error {
-		sim.TerminatedAt = time.Now().UTC()
-
-		return nil
-	})
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
-	}
-
-	err = pushTerminatedSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.metricsPusher)
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
-	}
-
-	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), s.simRepo, s.orgId, s.metricsPusher)
-	if err != nil {
-		log.Errorf("Error while pushing metrics on sim terminate operation: %s", err.Error())
 	}
 
 	evtMsg := &epb.EventSimTermination{
@@ -642,7 +605,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest)
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	log.Infof("Sim %s terminated successfully", req.GetSimId())
+	log.Infof("Async Sim %s terminate request sent  successfully", req.GetSimId())
 
 	return &pb.TerminateSimResponse{}, nil
 }

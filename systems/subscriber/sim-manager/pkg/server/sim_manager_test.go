@@ -2273,34 +2273,16 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 
 		simId := uuid.NewV4()
 
-		sim := simRepo.On("Get", simId).
+		simRepo.On("Get", simId).
 			Return(&sims.Sim{Id: simId,
 				Iccid:      testIccid,
 				Status:     ukama.SimStatusServiceOff,
 				Type:       ukama.SimTypeTest,
 				IsPhysical: false,
 			}, nil).
-			Once().
-			ReturnArguments.Get(0).(*sims.Sim)
+			Once()
 
-		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
-			Return(&mocks.AgentAdapter{}, true).
-			Once().
-			ReturnArguments.Get(0).(*mocks.AgentAdapter)
-
-		agentAdapter.On("TerminateSim", mock.Anything,
-			sim.Iccid).Return(nil).Once()
-
-		simRepo.On("Update",
-			&sims.Sim{
-				Id:     sim.Id,
-				Status: ukama.SimStatusTerminated,
-			},
-			mock.Anything).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
-
-		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]sims.Sim{}, nil).Twice()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
@@ -2316,55 +2298,19 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		agentFactory.AssertExpectations(t)
 	})
 
-	t.Run("SimStatusInvalid", func(t *testing.T) {
+	t.Run("SimNotFound", func(t *testing.T) {
+		msgbusClient := &cmocks.MsgBusServiceClient{}
 		simRepo := &mocks.SimRepo{}
+		agentFactory := &mocks.AgentFactory{}
 
 		simId := uuid.NewV4()
 
 		simRepo.On("Get", simId).
-			Return(&sims.Sim{Id: simId,
-				Iccid:      testIccid,
-				Status:     ukama.SimStatusServiceOn,
-				Type:       ukama.SimTypeTest,
-				IsPhysical: false,
-			}, nil).
-			Once()
-
-		s := server.NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-
-		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
-			SimId: simId.String(),
-		})
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-
-		simRepo.AssertExpectations(t)
-	})
-
-	t.Run("SimTypeNotSupported", func(t *testing.T) {
-		simRepo := &mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		sim := simRepo.On("Get", simId).
-			Return(&sims.Sim{Id: simId,
-				Iccid:      testIccid,
-				Status:     ukama.SimStatusServiceOff,
-				Type:       100,
-				IsPhysical: false,
-			}, nil).
-			Once().
-			ReturnArguments.Get(0).(*sims.Sim)
-
-		agentFactory.On("GetAgentAdapter", sim.Type).
-			Return(&mocks.AgentAdapter{}, false).
+			Return(nil, errors.New("sim not found")).
 			Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+			nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 
 		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
 			SimId: simId.String(),
@@ -2374,44 +2320,9 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 		assert.Nil(t, resp)
 
 		simRepo.AssertExpectations(t)
+		agentFactory.AssertExpectations(t)
 	})
 
-	t.Run("SimAgentFailToTerminate", func(t *testing.T) {
-		simRepo := &mocks.SimRepo{}
-		agentFactory := &mocks.AgentFactory{}
-
-		simId := uuid.NewV4()
-
-		sim := simRepo.On("Get", simId).
-			Return(&sims.Sim{Id: simId,
-				Iccid:      testIccid,
-				Status:     ukama.SimStatusServiceOff,
-				Type:       ukama.SimTypeTest,
-				IsPhysical: false,
-			}, nil).
-			Once().
-			ReturnArguments.Get(0).(*sims.Sim)
-
-		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
-			Return(&mocks.AgentAdapter{}, true).
-			Once().
-			ReturnArguments.Get(0).(*mocks.AgentAdapter)
-
-		agentAdapter.On("TerminateSim", mock.Anything,
-			sim.Iccid).Return(errors.New("anyError")).Once()
-
-		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
-			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-
-		resp, err := s.TerminateSim(context.TODO(), &pb.SimRequest{
-			SimId: simId.String(),
-		})
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
-
-		simRepo.AssertExpectations(t)
-	})
 }
 
 func TestSimManagerServer_GenerateSimToken(t *testing.T) {
