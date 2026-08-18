@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/factory"
@@ -25,10 +24,6 @@ import (
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
-)
-
-const (
-	handlerTimeoutFactor = 3
 )
 
 type AsrEventServer struct {
@@ -92,6 +87,21 @@ func (ae *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 
 			return nil, fmt.Errorf("error while handling sim manage SimAllocate Event: %w", err)
 		}
+
+	case msgbus.PrepareRoute(ae.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.terminate"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimTermination](e.Msg)
+		if err != nil {
+			log.Errorf("Error while unmarshaling EventSimTermination proto: %v", err)
+
+			return nil, fmt.Errorf("error while unmarshaling EventSimTermination proto: %w", err)
+		}
+
+		err = ae.handleSimManagerSimTerminateEvent(e.RoutingKey, msg)
+		if err != nil {
+			log.Errorf("Error while handling sim manage SimTerminate Event: %v", err)
+
+			return nil, fmt.Errorf("error while handling sim manage SimTerminate Event: %w", err)
+		}
 	default:
 		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}
@@ -121,13 +131,10 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-	defer cancel()
-
-	_, err := activate(ctx, sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
+	_, err := activate(sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
 		ae.network, ae.factory, ae.asrRepo, ae.pc, ae.allowedToS)
 	if err != nil {
-		log.Errorf("Failed to turn on service for sim %s. Error: %v", sim.Imsi, err)
+		log.Errorf("Failed to create subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 
 		// Publish activation failure for rollback on sim manager and sim pool if necessary
 		e := &epb.AsrInactivated{
@@ -138,10 +145,29 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 
 		if err := utils.PublishEvent(ae.orgName, activeSubscriberEventObject, msgbus.ACTION_CRUD_DELETE, e,
 			ae.msgbus); err != nil {
-			log.Warnf("Failed to publish service turn on failure for sim %s. Error: %v", sim.Imsi, err)
+			log.Warnf("Failed to publish subcriber delete as rollback event for sim %s allocation failure. Error: %v", sim.Imsi, err)
 		}
 
-		return fmt.Errorf("Failed to turn on service for sim %s. Error: %v", sim.Imsi, err)
+		return fmt.Errorf("failed to create profile for sim %s. Error: %v", sim.Imsi, err)
+	}
+
+	return nil
+}
+
+func (ae *AsrEventServer) handleSimManagerSimTerminateEvent(key string, sim *epb.EventSimTermination) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
+
+	if sim.Type != ukama.SimTypeUkamaData.String() {
+		log.Infof("Sim type %s is not supported by ukama agent. Skipping...", sim.Type)
+
+		return nil
+	}
+
+	_, err := inactivate(sim.Iccid, ae.asrRepo, ae.pc)
+	if err != nil {
+		log.Errorf("Failed to remove subscriber profile for sim %s. Error: %v", sim.Imsi, err)
+
+		return fmt.Errorf("failed to remove subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 	}
 
 	return nil

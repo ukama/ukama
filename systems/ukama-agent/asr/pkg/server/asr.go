@@ -159,7 +159,7 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 }
 
 func (ar *AsrRecordServer) Activate(ctx context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	return activate(ctx, req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
+	return activate(req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
 		ar.factory, ar.asrRepo, ar.pc, ar.allowedToS)
 }
 
@@ -238,40 +238,7 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 }
 
 func (ar *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
-	log.Infof("Removing ASR profile for imsi %s", req.GetImsi())
-
-	delAsrRecord, err := ar.asrRepo.GetByIccid(req.GetIccid())
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
-	}
-
-	pcrfData := &pm.SimInfo{
-		ID:        delAsrRecord.ID,
-		Imsi:      delAsrRecord.Imsi,
-		Iccid:     delAsrRecord.Iccid,
-		NetworkId: delAsrRecord.NetworkId,
-	}
-
-	err = ar.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
-	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
-	}
-
-	err = ar.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, activeSubscriberEventObject, true)
-	if err != nil {
-		log.Errorf("Failure to sync imsi %s pcrf profile for ASR deactivation. Error: %v",
-			delAsrRecord.Imsi, err)
-
-		//TODO: We need some kind of retry mecanism here
-
-		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR deactivation. Error: %w",
-			delAsrRecord.Imsi, err)
-	}
-
-	log.Debugf("Deleted subscriber %+v", delAsrRecord)
-
-	return &pb.InactivateResp{}, nil
-
+	return inactivate(req.Iccid, ar.asrRepo, ar.pc)
 }
 
 func (ar *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp, error) {
@@ -480,7 +447,7 @@ func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 	return nil
 }
 
-func activate(ctx context.Context, iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
+func activate(iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
 	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64) (*pb.ActivateResp, error) {
 	log.Infof("Adding ASR profile for iccid %s", iccid)
 
@@ -586,4 +553,40 @@ func activate(ctx context.Context, iccid, imsi, packageId, dataPlanId, networkId
 	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
 
 	return &pb.ActivateResp{}, err
+}
+
+func inactivate(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Controller) (*pb.InactivateResp, error) {
+	log.Infof("Removing ASR profile for Iccid %s", iccid)
+
+	delAsrRecord, err := asrRepo.GetByIccid(iccid)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
+	}
+
+	pcrfData := &pm.SimInfo{
+		ID:        delAsrRecord.ID,
+		Imsi:      delAsrRecord.Imsi,
+		Iccid:     delAsrRecord.Iccid,
+		NetworkId: delAsrRecord.NetworkId,
+	}
+
+	err = asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
+	}
+
+	err = policyController.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, activeSubscriberEventObject, true)
+	if err != nil {
+		log.Errorf("Failure to sync imsi %s pcrf profile for ASR deactivation. Error: %v",
+			delAsrRecord.Imsi, err)
+
+		//TODO: We need some kind of retry mecanism here
+
+		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR deactivation. Error: %w",
+			delAsrRecord.Imsi, err)
+	}
+
+	log.Debugf("Deleted subscriber %+v", delAsrRecord)
+
+	return &pb.InactivateResp{}, nil
 }
