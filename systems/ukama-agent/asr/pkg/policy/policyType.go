@@ -15,6 +15,7 @@ import (
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -71,7 +72,7 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 	}
 
 	if event {
-		err = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+		err = utils.PublishEvent(p.OrgName, msgbus.ACTION_CRUD_DELETE, "activesubscriber", e, p.msgbus)
 		if err != nil {
 			log.Errorf("Failed to publish subscriber profile removal event to backend: %v", err)
 			//TODO: msgb retries policies???

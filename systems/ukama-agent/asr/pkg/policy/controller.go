@@ -22,6 +22,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -237,7 +238,7 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	}
 
 	if event {
-		return p.publishEvent(action, object, msg)
+		return utils.PublishEvent(p.OrgName, action, object, msg, p.msgbus)
 	} else {
 		return nil
 	}
@@ -336,20 +337,6 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 	log.Infof("Published Policy %s  for imsi %s on route %s.", msg, imsi, route)
 	return nil
-}
-
-func (p *policyController) publishEvent(action string, object string, msg protoreflect.ProtoMessage) error {
-	var err error
-	if p.msgbus != nil {
-		route := p.MsgBusRoutingKey.SetObject(object).SetAction(action).MustBuild()
-		err = p.msgbus.PublishRequest(route, msg)
-		if err != nil {
-			log.Errorf("Failed to publish event message %+v with key %+v. Error: %s", msg, route, err.Error())
-
-			return fmt.Errorf("failed to publish event message %+v with key %+v. Error: %w", msg, route, err)
-		}
-	}
-	return err
 }
 
 func (p *policyController) StartPolicyControllerRoutine() {

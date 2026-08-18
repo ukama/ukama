@@ -21,7 +21,6 @@ import (
 	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
@@ -31,19 +30,22 @@ import (
 	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
 
+const (
+	activeSubscriberEventObject = "activesubscriber"
+)
+
 type AsrRecordServer struct {
 	pb.UnimplementedAsrRecordServiceServer
-	asrRepo        db.AsrRecordRepo
-	gutiRepo       db.GutiRepo
-	network        registry.NetworkClient
-	factory        factory.SimFactoryClient
-	cdr            client.CDRService
-	msgbus         mb.MsgBusServiceClient
-	baseRoutingKey msgbus.RoutingKeyBuilder
-	pc             pm.Controller
-	OrgName        string
-	OrgId          string
-	allowedToS     int64
+	asrRepo    db.AsrRecordRepo
+	gutiRepo   db.GutiRepo
+	network    registry.NetworkClient
+	factory    factory.SimFactoryClient
+	cdr        client.CDRService
+	msgbus     mb.MsgBusServiceClient
+	pc         pm.Controller
+	OrgName    string
+	OrgId      string
+	allowedToS int64
 }
 
 func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory factory.SimFactoryClient, network registry.NetworkClient,
@@ -61,27 +63,22 @@ func NewAsrRecordServer(asrRepo db.AsrRecordRepo, gutiRepo db.GutiRepo, factory 
 		allowedToS: aToS,
 	}
 
-	if msgBus != nil {
-		asr.baseRoutingKey = msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().
-			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName)
-	}
-
 	log.Infof("Asr is %+v", asr)
 
 	return &asr, nil
 }
 
-func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session uint64) error {
+func (ar *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session uint64) error {
 	log.Infof("Handling POST CDR event for imsi %s", imsi)
 
-	sub, err := s.asrRepo.GetByImsi(imsi)
+	sub, err := ar.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("Error getting ASR profile for ismi %s.Error: %v", imsi, err)
 
 		return grpc.SqlErrorToGrpc(err, "error getting ASR record for given imsi:")
 	}
 
-	r, err := s.cdr.GetUsage(imsi)
+	r, err := ar.cdr.GetUsage(imsi)
 	if err != nil {
 		log.Errorf("Failed to get usage: %v for imsi %s", err, imsi)
 
@@ -100,7 +97,7 @@ func (s *AsrRecordServer) HandePostCDREvent(imsi string, policy string, session 
 	return nil
 }
 
-func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, error) {
+func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp, error) {
 	log.Infof("Reading ASR data for imsi %s", req.GetImsi())
 
 	var sub *db.Asr
@@ -108,19 +105,19 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 
 	switch req.Id.(type) {
 	case *pb.ReadReq_Imsi:
-		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
+		sub, err = ar.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given imsi:")
 		}
 
 	case *pb.ReadReq_Iccid:
-		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+		sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 		}
 	}
 
-	r, err := s.cdr.GetUsage(sub.Imsi)
+	r, err := ar.cdr.GetUsage(sub.Imsi)
 	if err != nil {
 		log.Errorf("Failed to get usage for imsi %s. Error: %v", req.GetImsi(), err)
 
@@ -161,15 +158,15 @@ func (s *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadResp
 	return resp, nil
 }
 
-func (s *AsrRecordServer) Activate(ctx context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	return activate(ctx, req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, s.network,
-		s.factory, s.asrRepo, s.pc, s.allowedToS, s.msgbus, s.baseRoutingKey)
+func (ar *AsrRecordServer) Activate(ctx context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
+	return activate(ctx, req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
+		ar.factory, ar.asrRepo, ar.pc, ar.allowedToS)
 }
 
-func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
+func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
 	log.Infof("Updating ASR profile package for imsi %s", req.GetImsi())
 
-	asrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
+	asrRecord, err := ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 	}
@@ -191,17 +188,17 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	}
 
 	/* Create policy and send message to PCRF */
-	policy, err := s.pc.NewPolicy(pcrfData.PackageId)
+	policy, err := ar.pc.NewPolicy(pcrfData.PackageId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}
 
-	err = s.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
+	err = ar.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
-	err, removed := s.pc.RunPolicyControl(asrRecord.Imsi, false)
+	err, removed := ar.pc.RunPolicyControl(asrRecord.Imsi, false)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error %v",
 			asrRecord.Imsi, err)
@@ -219,15 +216,17 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	}
 
 	/* read the updated profile */
-	nRec, err := s.asrRepo.GetByIccid(req.GetIccid())
+	nRec, err := ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true)
+	err = ar.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, activeSubscriberEventObject, true)
 	if err != nil {
 		log.Errorf("Failure to sync imsi %s pcrf profile for ASR package update. Error: %v",
 			asrRecord.Imsi, err)
+
+		//TODO: We need some kind of retry mecanism here
 
 		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR package update. Error: %w",
 			asrRecord.Imsi, err)
@@ -238,10 +237,10 @@ func (s *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackage
 	return &pb.UpdatePackageResp{}, nil
 }
 
-func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
+func (ar *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
 	log.Infof("Removing ASR profile for imsi %s", req.GetImsi())
 
-	delAsrRecord, err := s.asrRepo.GetByIccid(req.GetIccid())
+	delAsrRecord, err := ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 	}
@@ -253,15 +252,17 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 		NetworkId: delAsrRecord.NetworkId,
 	}
 
-	err = s.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
+	err = ar.asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
-	err = s.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, "activesubscriber", true)
+	err = ar.pc.SyncProfile(pcrfData, delAsrRecord, msgbus.ACTION_CRUD_DELETE, activeSubscriberEventObject, true)
 	if err != nil {
 		log.Errorf("Failure to sync imsi %s pcrf profile for ASR deactivation. Error: %v",
 			delAsrRecord.Imsi, err)
+
+		//TODO: We need some kind of retry mecanism here
 
 		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR deactivation. Error: %w",
 			delAsrRecord.Imsi, err)
@@ -273,7 +274,7 @@ func (s *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (
 
 }
 
-func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp, error) {
+func (ar *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp, error) {
 	log.Debugf("Received a usage request %+v", req)
 	var sub *db.Asr
 	var err error
@@ -281,19 +282,19 @@ func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.Usa
 	switch req.Id.(type) {
 	case *pb.UsageReq_Imsi:
 
-		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
+		sub, err = ar.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given imsi:")
 		}
 
 	case *pb.UsageReq_Iccid:
-		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+		sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 		}
 	}
 
-	r, err := s.cdr.GetUsage(sub.Imsi)
+	r, err := ar.cdr.GetUsage(sub.Imsi)
 	if err != nil {
 		log.Errorf("Failed to get usage: %v for imsi %s", err, req.GetImsi())
 
@@ -305,7 +306,7 @@ func (s *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.Usa
 	}, nil
 }
 
-func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForPeriodReq) (*pb.UsageResp, error) {
+func (ar *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForPeriodReq) (*pb.UsageResp, error) {
 	log.Debugf("Received a usage request for period %+v", req)
 
 	var sub *db.Asr
@@ -314,19 +315,19 @@ func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForP
 	switch req.Id.(type) {
 	case *pb.UsageForPeriodReq_Imsi:
 
-		sub, err = s.asrRepo.GetByImsi(req.GetImsi())
+		sub, err = ar.asrRepo.GetByImsi(req.GetImsi())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given imsi:")
 		}
 
 	case *pb.UsageForPeriodReq_Iccid:
-		sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+		sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
 		}
 	}
 
-	r, err := s.cdr.GetUsageForPeriod(sub.Imsi, req.StartTime, req.EndTime)
+	r, err := ar.cdr.GetUsageForPeriod(sub.Imsi, req.StartTime, req.EndTime)
 	if err != nil {
 		log.Errorf("Failed to get usage for imsi %s. Error: %v", req.GetImsi(), err)
 
@@ -338,14 +339,14 @@ func (s *AsrRecordServer) GetUsageForPeriod(c context.Context, req *pb.UsageForP
 	}, nil
 
 }
-func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
+func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.QueryUsageResp, error) {
 	log.Debugf("Received a query usage request: %+v", req)
 
 	var sub *db.Asr
 	var err error
 	var policies []string
 
-	sub, err = s.asrRepo.GetByIccid(req.GetIccid())
+	sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
 		log.Errorf("Failed to query ASR record for given iccid : %s. Error: %v", req.Iccid, err)
 
@@ -354,7 +355,7 @@ func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (
 
 	policies = []string{sub.Policy.Id.String()}
 
-	r, err := s.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policies, req.Count, req.Sort)
+	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policies, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Failed to query usage: for imsi %s. Error: %v", sub.Imsi, err)
 
@@ -366,15 +367,15 @@ func (s *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (
 	}, nil
 }
 
-func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
+func (ar *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (*pb.UpdateGutiResp, error) {
 	log.Infof("Updating DUTI for imsi %s", req.GetImsi())
 
-	_, err := s.asrRepo.GetByImsi(req.Imsi)
+	_, err := ar.asrRepo.GetByImsi(req.Imsi)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
-	err = s.gutiRepo.Update(&db.Guti{
+	err = ar.gutiRepo.Update(&db.Guti{
 		Imsi:            req.Imsi,
 		PlmnId:          req.Guti.PlmnId,
 		Mmegi:           req.Guti.Mmegi,
@@ -395,15 +396,15 @@ func (s *AsrRecordServer) UpdateGuti(c context.Context, req *pb.UpdateGutiReq) (
 	return &pb.UpdateGutiResp{}, nil
 }
 
-func (s *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*pb.UpdateTaiResp, error) {
+func (ar *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*pb.UpdateTaiResp, error) {
 	log.Infof("Updating TAI for imsi %s", req.GetImsi())
 
-	_, err := s.asrRepo.GetByImsi(req.Imsi)
+	_, err := ar.asrRepo.GetByImsi(req.Imsi)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "imsi")
 	}
 
-	err = s.asrRepo.UpdateTai(req.Imsi, db.Tai{
+	err = ar.asrRepo.UpdateTai(req.Imsi, db.Tai{
 		PlmnId:          req.PlmnId,
 		Tac:             req.Tac,
 		DeviceUpdatedAt: time.Unix(int64(req.UpdatedAt), 0),
@@ -422,17 +423,17 @@ func (s *AsrRecordServer) UpdateTai(c context.Context, req *pb.UpdateTaiReq) (*p
 	return &pb.UpdateTaiResp{}, nil
 }
 
-func (s *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
+func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 	log.Infof("Updating and syncing ASR profile for imsi %s", imsi)
 
-	sub, err := s.asrRepo.GetByImsi(imsi)
+	sub, err := ar.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("ASR record not found for imsi %s. Error: %v", imsi, err)
 
 		return grpc.SqlErrorToGrpc(err, "error getting ASR record by imsi:")
 	}
 
-	r, err := s.cdr.GetUsage(imsi)
+	r, err := ar.cdr.GetUsage(imsi)
 	if err != nil {
 		log.Errorf("Failed to get usage: %v for imsi %s", err, imsi)
 
@@ -441,14 +442,14 @@ func (s *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 
 	sub.Policy.ConsumedData = r.Usage
 
-	err = s.asrRepo.Update(imsi, sub)
+	err = ar.asrRepo.Update(imsi, sub)
 	if err != nil {
 		log.Errorf("Failed to update usage: %v for imsi %s. Error: %v", r, imsi, err)
 
 		return fmt.Errorf("failed to update usage for imsi %s. Error: %w", imsi, err)
 	}
 
-	err, removed := s.pc.RunPolicyControl(imsi, false)
+	err, removed := ar.pc.RunPolicyControl(imsi, false)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error: %v", sub.Imsi, err)
 
@@ -469,7 +470,7 @@ func (s *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 		NetworkId: sub.NetworkId,
 	}
 
-	err = s.pc.SyncProfile(pcrfData, sub, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", false)
+	err = ar.pc.SyncProfile(pcrfData, sub, msgbus.ACTION_CRUD_UPDATE, activeSubscriberEventObject, false)
 	if err != nil {
 		log.Errorf("Failure to sync imsi %s pcrf profile for ASR update. Error: %v", sub.Imsi, err)
 
@@ -480,15 +481,13 @@ func (s *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 }
 
 func activate(ctx context.Context, iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
-	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64,
-	msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) (*pb.ActivateResp, error) {
+	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64) (*pb.ActivateResp, error) {
 	log.Infof("Adding ASR profile for iccid %s", iccid)
 
 	/* Package DataPlan Id */
 	pId, err := uuid.FromString(dataPlanId)
 	if err != nil {
 		log.Errorf("PackageId not valid: %s", dataPlanId)
-
 		return nil, fmt.Errorf("packageId %s not valid.`Error:%w ", dataPlanId, err)
 	}
 
@@ -578,11 +577,10 @@ func activate(ctx context.Context, iccid, imsi, packageId, dataPlanId, networkId
 		return nil, fmt.Errorf("profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
 	}
 
-	err = policyController.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
+	err = policyController.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, activeSubscriberEventObject, true)
 	if err != nil {
-		log.Errorf("Failure to sync imsi %s pcrf profile for ASR activation. Error: %v", asr.Imsi, err)
-
-		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR activation. Error: %w", asr.Imsi, err)
+		log.Warnf("Failure to sync imsi %s pcrf profile for ASR activation. Error: %v", asr.Imsi, err)
+		log.Warnf("We'll have to rely on pcrf subscriber reverse lookup!")
 	}
 
 	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
