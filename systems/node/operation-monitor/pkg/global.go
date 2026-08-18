@@ -16,7 +16,7 @@ const (
 )
 
 const (
-	DefaultDeadlineTTL = 2 * time.Minute
+	DefaultDeadlineTTL = 4 * time.Minute
 	SweeperInterval    = 30 * time.Second
 )
 
