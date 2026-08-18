@@ -132,8 +132,6 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
 
-	// Publish reboot FSM event to transition substate deterministically
-	// This ensures the operation-monitor intent arms before the node comes back online
 	forceRoute := msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.node.state.node.force")
 	rebootEvent := &epb.EnforceNodeStateEvent{
 		NodeId: nId.StringLowercase(),
@@ -141,7 +139,6 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	}
 	if err := c.msgbus.PublishRequest(forceRoute, rebootEvent); err != nil {
 		log.Warnf("RestartNode: failed to publish FSM reboot event for %s: %v", nId.String(), err)
-		// Non-fatal: device command already sent, FSM may still transition via offline/online
 	}
 
 	return &pb.RestartNodeResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
