@@ -16,6 +16,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 type StateRepo interface {
@@ -27,6 +28,9 @@ type StateRepo interface {
 	UpdateState(nodeId string, subStates []string, events []string) (*State, error)
 	GetNodeConfig(nodeId string) (*NodeConfig, error)
 	GetStateHistoryWithFilter(nodeId string, pageSize int, pageNumber int, startTime, endTime time.Time) ([]*State, error)
+	SetLatchedEvent(nodeId, event string) error
+	TakeLatchedEvent(nodeId string) (string, error)
+	ListLatestStates() ([]State, error)
 }
 
 type stateRepo struct {
@@ -103,6 +107,22 @@ func (r *stateRepo) GetLatestState(nodeId string) (*State, error) {
 
 	return &latestState, nil
 }
+func (r *stateRepo) ListLatestStates() ([]State, error) {
+	var states []State
+
+	result := r.Db.GetGormDb().
+		Where("deleted_at IS NULL").
+		Order("node_id, created_at DESC").
+		Distinct("ON (node_id) *").
+		Find(&states)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("error listing latest states: %w", result.Error)
+	}
+
+	return states, nil
+}
+
 func (r *stateRepo) AddState(newState *State, previousState *State) error {
 	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if previousState != nil {
@@ -176,3 +196,37 @@ func (r *stateRepo) GetStateHistoryWithFilter(nodeId string, pageSize int, pageN
 	return states, nil
 }
 
+func (s *stateRepo) SetLatchedEvent(nodeId, event string) error {
+	db := s.Db.GetGormDb()
+
+	return db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "node_id"}},
+		DoUpdates: clause.AssignmentColumns([]string{"event", "updated_at"}),
+	}).Create(&LatchedEvent{
+		NodeId:    nodeId,
+		Event:     event,
+		CreatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC(),
+	}).Error
+}
+
+func (s *stateRepo) TakeLatchedEvent(nodeId string) (string, error) {
+	db := s.Db.GetGormDb()
+
+	latched := &LatchedEvent{}
+
+	err := db.Where("node_id = ?", nodeId).First(latched).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", nil
+		}
+
+		return "", err
+	}
+
+	if err := db.Delete(&LatchedEvent{}, "node_id = ?", nodeId).Error; err != nil {
+		return "", err
+	}
+
+	return latched.Event, nil
+}

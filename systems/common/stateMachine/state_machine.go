@@ -50,12 +50,18 @@ type SubState struct {
 	Transitions map[string]TransitionState `json:"transition"`
 }
 
+type StateTimeout struct {
+	Seconds int    `json:"seconds"`
+	ToState string `json:"to_state"`
+}
+
 type State struct {
 	Name        string                     `json:"name"`
 	Description string                     `json:"description"`
 	Events      []string                   `json:"events"`
 	Transitions map[string]TransitionState `json:"transition"`
 	SubState    *SubState                  `json:"substate,omitempty"`
+	Timeout     *StateTimeout              `json:"timeout,omitempty"`
 	OnEnter     func() error               `json:"-"`
 	OnExit      func() error               `json:"-"`
 }
@@ -116,6 +122,7 @@ func (s *State) UnmarshalJSON(data []byte) error {
 		Events      []string          `json:"events"`
 		Transitions []TransitionState `json:"transition"`
 		SubState    *SubState         `json:"substate,omitempty"`
+		Timeout     *StateTimeout     `json:"timeout,omitempty"`
 	}{
 		Transitions: make([]TransitionState, 0),
 	}
@@ -132,6 +139,7 @@ func (s *State) UnmarshalJSON(data []byte) error {
 		}
 	}
 	s.SubState = aux.SubState
+	s.Timeout = aux.Timeout
 	return nil
 }
 
@@ -323,6 +331,18 @@ func validateStateTransitions(config StateMachineConfig) error {
 				}
 			}
 		}
+
+		if state.Timeout != nil {
+			if state.Timeout.Seconds <= 0 {
+				return fmt.Errorf("state '%s' has a timeout with non-positive seconds %d",
+					stateName, state.Timeout.Seconds)
+			}
+
+			if _, exists := config.States[state.Timeout.ToState]; !exists {
+				return fmt.Errorf("state '%s' has a timeout to non-existent state '%s'",
+					stateName, state.Timeout.ToState)
+			}
+		}
 	}
 	return nil
 }
@@ -426,7 +446,40 @@ func LoadConfig(configFile string) (StateMachineConfig, error) {
 	return config, nil
 }
 
+func (instance *StateMachineInstance) DueTransition(enteredAt, now time.Time) (string, bool) {
+	instance.StateMachine.mu.RLock()
+	defer instance.StateMachine.mu.RUnlock()
+
+	state, exists := instance.Config.States[instance.CurrentState]
+	if !exists || state.Timeout == nil {
+		return "", false
+	}
+
+	if now.Sub(enteredAt) < time.Duration(state.Timeout.Seconds)*time.Second {
+		return "", false
+	}
+
+	return state.Timeout.ToState, true
+}
+
+func (instance *StateMachineInstance) TimeoutTransition(enteredAt, now time.Time) (bool, error) {
+	toState, due := instance.DueTransition(enteredAt, now)
+	if !due {
+		return false, nil
+	}
+
+	if err := instance.enforce(toState, instance.CurrentSubstate, "timeout"); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
 func (instance *StateMachineInstance) EnforceStateTransition(newState string, newSubstate string) error {
+	return instance.enforce(newState, newSubstate, "manual_transition")
+}
+
+func (instance *StateMachineInstance) enforce(newState string, newSubstate string, eventName string) error {
 	instance.StateMachine.mu.Lock()
 	defer instance.StateMachine.mu.Unlock()
 
@@ -459,7 +512,7 @@ func (instance *StateMachineInstance) EnforceStateTransition(newState string, ne
 
 	if instance.StateMachine.handler != nil {
 		instance.StateMachine.handler(Event{
-			Name:        "manual_transition",
+			Name:        eventName,
 			Timestamp:   time.Now(),
 			InstanceID:  instance.InstanceID,
 			OldState:    oldState,
@@ -469,8 +522,8 @@ func (instance *StateMachineInstance) EnforceStateTransition(newState string, ne
 		})
 	}
 
-	log.Infof("Manually enforced state transition: %s:%s -> %s:%s",
-		oldState, oldSubstate, newState, newSubstate)
+	log.Infof("Enforced state transition on %s: %s:%s -> %s:%s",
+		eventName, oldState, oldSubstate, newState, newSubstate)
 
 	return nil
 }

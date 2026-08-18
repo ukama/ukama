@@ -23,11 +23,13 @@ const (
 	NodeStateEventOffline
 	NodeStateTransition
 	NodeAppChunkReady
+	NodeStateEventDelete
 )
 
 var NodeStateEventRoutingKey = map[NodeStateEventId]string{
 	NodeStateEventAssign:  "event.cloud.local.{{ .Org}}.registry.node.node.assign",
 	NodeStateEventRelease: "event.cloud.local.{{ .Org}}.registry.node.node.release",
+	NodeStateEventDelete:  "event.cloud.local.{{ .Org}}.registry.node.node.delete",
 	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
 	NodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
@@ -37,13 +39,18 @@ var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
 	
 	NodeStateEventAssign: {
 		Key:        NodeStateEventAssign,
-		Name:       "onboarding",
+		Name:       "assign",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventAssign],
 	},
 	NodeStateEventRelease: {
 		Key:        NodeStateEventRelease,
-		Name:       "offboarding",
+		Name:       "release",
 		RoutingKey: NodeStateEventRoutingKey[NodeStateEventRelease],
+	},
+	NodeStateEventDelete: {
+		Key:        NodeStateEventDelete,
+		Name:       "offboard",
+		RoutingKey: NodeStateEventRoutingKey[NodeStateEventDelete],
 	},
 	NodeStateEventOffline: {
 		Key:        NodeStateEventOffline,

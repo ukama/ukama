@@ -1,16 +1,36 @@
 {
-  "version": "0.0.0",
+  "version": "0.1.0",
   "entity": "node",
   "file": "nodeState.json",
   "states": [
     {
       "name": "Unknown",
-      "description": "Initial state when node comes online for the first time, or state after offBoarding",
-      "events": ["online", "offline", "reboot", "onboarding"],
+      "description": "Node is registered but nothing has been heard from it yet",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "assign",
+        "platformready",
+        "fault",
+        "offboard"
+      ],
       "transition": [
         {
-          "to_state": "Configured",
-          "trigger": ["onboarding"]
+          "to_state": "Configuring",
+          "trigger": ["assign"]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": ["platformready"]
+        },
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
         }
       ],
       "substate": {
@@ -27,49 +47,48 @@
           {
             "to_state": "reboot",
             "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"],
-            "timeout": 180
+            "expectedEvents": ["offline", "online"]
           }
         ]
       }
     },
     {
-      "name": "Configured",
-      "description": "Node is in configuration state",
+      "name": "Initializing",
+      "description": "Node is coming up and has not reported platform readiness yet",
       "events": [
         "online",
         "offline",
         "reboot",
-        "config",
-        "ready",
-        "upgrade",
+        "platformready",
         "update",
-        "downgrade",
-        "fault"
+        "assign",
+        "fault",
+        "offboard"
       ],
       "transition": [
+        {
+          "to_state": "Ready",
+          "trigger": ["platformready"]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": ["assign"]
+        },
+        {
+          "to_state": "Updating",
+          "trigger": ["update"]
+        },
         {
           "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "Configured",
-          "trigger": ["config"]
-        },
-        {
-          "to_state": "Operational",
-          "trigger": ["ready"]
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
         }
       ],
       "substate": {
-        "events": [
-          "online",
-          "offline",
-          "reboot",
-          "upgrade",
-          "update",
-          "downgrade"
-        ],
+        "events": ["online", "offline", "reboot"],
         "transition": [
           {
             "to_state": "on",
@@ -82,53 +101,141 @@
           {
             "to_state": "reboot",
             "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"],
-            "timeout": 180
+            "expectedEvents": ["offline", "online"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Ready",
+      "description": "Node is up and available to be assigned to a site",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "assign",
+        "assignnoconfig",
+        "fault",
+        "offboard"
+      ],
+      "transition": [
+        {
+          "to_state": "Configuring",
+          "trigger": ["assign"]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": ["assignnoconfig"]
+        },
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
           },
           {
-            "to_state": "update",
-            "trigger": ["update"],
-            "expectedEvents": ["offline", "online", "ready"],
-            "timeout": 600
+            "to_state": "off",
+            "trigger": ["offline"]
           },
           {
-            "to_state": "upgrade",
-            "trigger": ["upgrade"],
-            "expectedEvents": ["offline", "online", "ready"],
-            "timeout": 180
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Configuring",
+      "description": "Node is assigned to a site and is applying its configuration",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "configapplied",
+        "release",
+        "fault",
+        "offboard"
+      ],
+      "timeout": {
+        "seconds": 60,
+        "to_state": "Operational"
+      },
+      "transition": [
+        {
+          "to_state": "Operational",
+          "trigger": ["configapplied"]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": ["release"]
+        },
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
           },
           {
-            "to_state": "downgrade",
-            "trigger": ["downgrade"],
-            "expectedEvents": ["offline", "online", "ready"],
-            "timeout": 180
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"]
           }
         ]
       }
     },
     {
       "name": "Operational",
-      "description": "Node is fully operational and part of a site",
+      "description": "Node is configured and serving",
       "events": [
         "online",
         "offline",
         "reboot",
+        "configchange",
+        "release",
         "fault",
-        "offboarding",
-        "reset"
+        "offboard"
       ],
       "transition": [
+        {
+          "to_state": "Configuring",
+          "trigger": ["configchange"]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": ["release"]
+        },
         {
           "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "Configured",
-          "trigger": ["reset"]
-        },
-        {
-          "to_state": "Unknown",
-          "trigger": ["offboarding"]
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
         }
       ],
       "substate": {
@@ -145,35 +252,87 @@
           {
             "to_state": "reboot",
             "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"],
-            "timeout": 180
+            "expectedEvents": ["offline", "online"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Updating",
+      "description": "Node accepted a software update and is expected to reboot into it",
+      "events": [
+        "online",
+        "offline",
+        "reboot",
+        "rebooted",
+        "fault",
+        "offboard"
+      ],
+      "timeout": {
+        "seconds": 60,
+        "to_state": "Initializing"
+      },
+      "transition": [
+        {
+          "to_state": "Initializing",
+          "trigger": ["rebooted"]
+        },
+        {
+          "to_state": "Faulty",
+          "trigger": ["fault"]
+        },
+        {
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"],
+            "expectedEvents": ["offline", "online"]
           }
         ]
       }
     },
     {
       "name": "Faulty",
-      "description": "Node is in a faulty state",
+      "description": "Node reported a fault and is not serving",
       "events": [
+        "online",
         "offline",
         "reboot",
+        "recover",
+        "assign",
         "fault",
-        "online",
-        "config",
-        "ready"
+        "offboard"
       ],
       "transition": [
+        {
+          "to_state": "Initializing",
+          "trigger": ["recover"]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": ["assign"]
+        },
         {
           "to_state": "Faulty",
           "trigger": ["fault"]
         },
         {
-          "to_state": "Configured",
-          "trigger": ["config"]
-        },
-        {
-          "to_state": "Operational",
-          "trigger": ["ready"]
+          "to_state": "Offboarded",
+          "trigger": ["offboard"]
         }
       ],
       "substate": {
@@ -190,8 +349,35 @@
           {
             "to_state": "reboot",
             "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"],
-            "timeout": 180
+            "expectedEvents": ["offline", "online"]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Offboarded",
+      "description": "Node has been released from the organisation",
+      "events": ["online", "offline", "reboot", "onboarding"],
+      "transition": [
+        {
+          "to_state": "Unknown",
+          "trigger": ["online", "onboarding"]
+        }
+      ],
+      "substate": {
+        "events": ["online", "offline", "reboot"],
+        "transition": [
+          {
+            "to_state": "on",
+            "trigger": ["online"]
+          },
+          {
+            "to_state": "off",
+            "trigger": ["offline"]
+          },
+          {
+            "to_state": "reboot",
+            "trigger": ["reboot"]
           }
         ]
       }

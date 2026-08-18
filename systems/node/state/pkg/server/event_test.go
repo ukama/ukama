@@ -12,7 +12,9 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
@@ -97,4 +99,41 @@ func TestStateEventServer_publishStateChangeEvent(t *testing.T) {
 	server.publishStateChangeEvent("unknown", "config", nodeId)
 
 	mockMsgBus.AssertExpectations(t)
+}
+
+func TestStateEventForNotifyValue(t *testing.T) {
+	cases := []struct {
+		name  string
+		value string
+		want  string
+	}{
+		{"node reports READY as sent on the wire", "READY", NodeStateEventPlatformReady},
+		{"node reports FAULTY as sent on the wire", "FAULTY", NodeStateEventFault},
+		{"lower case ready still maps", "ready", NodeStateEventPlatformReady},
+		{"mixed case faulty still maps", "Faulty", NodeStateEventFault},
+		{"unmapped values pass through", "reboot", "reboot"},
+		{"empty value passes through", "", ""},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, stateEventForNotifyValue(tc.value))
+		})
+	}
+}
+
+func TestStateEventForNotifyValue_DrivesTheStateMachine(t *testing.T) {
+	t.Run("READY moves an initializing node to Ready", func(t *testing.T) {
+		instance := newNodeInstance(t, "notify-ready", "Initializing")
+
+		require.NoError(t, instance.Transition(stateEventForNotifyValue("READY")))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+
+	t.Run("FAULTY moves an operational node to Faulty", func(t *testing.T) {
+		instance := newNodeInstance(t, "notify-faulty", "Operational")
+
+		require.NoError(t, instance.Transition(stateEventForNotifyValue("FAULTY")))
+		assert.Equal(t, "Faulty", instance.CurrentState)
+	})
 }

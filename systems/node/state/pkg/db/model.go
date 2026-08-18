@@ -45,6 +45,13 @@ type State struct {
 	DeletedAt       gorm.DeletedAt  `gorm:"index" json:"deletedAt,omitempty"`
 }
 
+type LatchedEvent struct {
+	NodeId    string    `gorm:"primaryKey;not null" json:"nodeId"`
+	Event     string    `gorm:"not null" json:"event"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 type NodeConfig struct {
 	Id           uuid.UUID      `gorm:"primaryKey;type:uuid" json:"id"`
 	NodeId       string         `gorm:"not null;index" json:"nodeId"`
