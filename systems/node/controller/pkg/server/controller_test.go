@@ -54,7 +54,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
-	msgclientRepo.On("PublishRequest", "event.cloud.local.test-org.node.state.node.force", &epb.EnforceNodeStateEvent{
+	msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.node.state.node.force", &epb.EnforceNodeStateEvent{
 		NodeId: nodeId,
 		Event:  "reboot",
 	}).Return(nil).Once()
