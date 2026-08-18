@@ -86,14 +86,6 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 
 	g.serviceRegistrar(server)
 
-	// Pre-initialise the gRPC metrics for every method registered above, so each
-	// one reports 0 rather than being absent.
-	//
-	// grpc_prometheus's interceptors only create a series on a method's FIRST
-	// call, so a service that has handled no traffic exposes no grpc_server_*
-	// metrics at all. On a dashboard that renders as "No data" -- which reads as
-	// "monitoring is broken" when it actually means "idle" -- and an alert on the
-	// error ratio cannot distinguish "no errors" from "no telemetry".
 	grpc_prometheus.Register(server)
 
 	// Standard health service (grpc.health.v1), used by Kubernetes native
