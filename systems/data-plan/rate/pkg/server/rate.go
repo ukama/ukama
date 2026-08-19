@@ -206,7 +206,7 @@ func (r *RateServer) GetMarkupHistory(ctx context.Context, req *pb.GetMarkupHist
 
 func (r *RateServer) GetRate(ctx context.Context, req *pb.GetRateRequest) (*pb.GetRateResponse, error) {
 
-	log.Infof("GetRates where country  %s and network %s and simType %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
+	log.Infof("GetRates where country  %s, network %s and simType %s", req.GetCountry(), req.GetProvider(), req.GetSimType())
 
 	uuid, err := uuid.FromString(req.OwnerId)
 	if err != nil {

@@ -170,7 +170,7 @@ func (_m *PackageRepo) GetDetails(_a0 uuid.UUID) (*db.Package, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: _a0, pkg
+// Update provides a mock function with given fields: _a0, updates
 func (_m *PackageRepo) Update(_a0 uuid.UUID, updates map[string]interface{}) error {
 	ret := _m.Called(_a0, updates)
 
