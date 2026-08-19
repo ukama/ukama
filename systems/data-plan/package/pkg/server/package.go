@@ -105,7 +105,7 @@ func (p *PackageServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.
 
 	packages, err := p.packageRepo.GetAll()
 	if err != nil {
-		log.Error("error while getting package by Org" + err.Error())
+		log.Error("error while getting package by org" + err.Error())
 		return nil, grpc.SqlErrorToGrpc(err, "packages")
 	}
 

@@ -126,7 +126,7 @@ func (b *BaseRateServer) GetBaseRatesForPeriod(ctx context.Context, req *pb.GetB
 }
 
 func (b *BaseRateServer) GetBaseRatesForPackage(ctx context.Context, req *pb.GetBaseRatesByPeriodRequest) (*pb.GetBaseRatesResponse, error) {
-	log.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From %s To %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
+	log.Infof("GetBaseRatesForPackage where country = %s and network = %s and simType = %s and Period From: %s, To: %s ", req.GetCountry(), req.GetProvider(), req.GetSimType(), req.From, req.To)
 
 	from, err := time.Parse(time.RFC3339, req.GetFrom())
 	if err != nil {
