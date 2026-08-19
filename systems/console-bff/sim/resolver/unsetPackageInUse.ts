@@ -8,17 +8,20 @@
 import { Arg, Ctx, Mutation, Resolver } from "type-graphql";
 
 import type { AppContext } from "../../server/context";
-import { SimStatusResDto, ToggleSimStatusInputDto } from "./types";
+import {
+  RemovePackageFormSimInputDto,
+  RemovePackageFromSimResDto,
+} from "./types";
 
 @Resolver()
-export class ToggleSimStatusResolver {
-  @Mutation(() => SimStatusResDto)
-  async toggleSimStatus(
-    @Arg("data") data: ToggleSimStatusInputDto,
+export class UnsetPackageInUseResolver {
+  @Mutation(() => RemovePackageFromSimResDto)
+  async unsetPackageInUseForSim(
+    @Arg("data") data: RemovePackageFormSimInputDto,
     @Ctx() ctx: AppContext
-  ): Promise<SimStatusResDto> {
+  ): Promise<RemovePackageFromSimResDto> {
     const { dataSources } = ctx;
     const baseURL = await ctx.urls.url("sim");
-    return await dataSources.sim.toggleSimStatus(baseURL, data);
+    return await dataSources.sim.unsetPackageInUseForSim(baseURL, data);
   }
 }

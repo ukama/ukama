@@ -721,12 +721,12 @@ export type Mutation = {
   restartNode: CBooleanResponse;
   restartSite: CBooleanResponse;
   setDefaultNetwork: CBooleanResponse;
-  setInactivePackageForSim: RemovePackageFromSimResDto;
   setSite: CBooleanResponse;
   toggleInternetSwitch: CBooleanResponse;
   toggleRFStatus: CBooleanResponse;
   toggleService: CBooleanResponse;
-  toggleSimStatus: SimStatusResDto;
+  toggleSimServiceStatus: SimStatusResDto;
+  unsetPackageInUseForSim: RemovePackageFromSimResDto;
   updateFirstVisit: UserFirstVisitResDto;
   updateInvitation: UpdateInvitationResDto;
   updateMember: CBooleanResponse;
@@ -897,11 +897,6 @@ export type MutationSetDefaultNetworkArgs = {
 };
 
 
-export type MutationSetInactivePackageForSimArgs = {
-  data: RemovePackageFormSimInputDto;
-};
-
-
 export type MutationSetSiteArgs = {
   data: SetSiteInputDto;
 };
@@ -922,8 +917,13 @@ export type MutationToggleServiceArgs = {
 };
 
 
-export type MutationToggleSimStatusArgs = {
-  data: ToggleSimStatusInputDto;
+export type MutationToggleSimServiceStatusArgs = {
+  data: ToggleSimServiceStatusInputDto;
+};
+
+
+export type MutationUnsetPackageInUseForSimArgs = {
+  data: RemovePackageFormSimInputDto;
 };
 
 
@@ -2049,7 +2049,7 @@ export type SimAllocatePackageDto = {
   __typename?: 'SimAllocatePackageDto';
   endDate?: Maybe<Scalars['String']['output']>;
   id?: Maybe<Scalars['String']['output']>;
-  isActive?: Maybe<Scalars['Boolean']['output']>;
+  isCurrentlyInUse?: Maybe<Scalars['Boolean']['output']>;
   packageId?: Maybe<Scalars['String']['output']>;
   startDate?: Maybe<Scalars['String']['output']>;
 };
@@ -2088,13 +2088,15 @@ export type SimDto = {
 
 export type SimPackage = {
   __typename?: 'SimPackage';
-  asExpired: Scalars['Boolean']['output'];
   defaultDuration: Scalars['String']['output'];
   endDate: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  isActive: Scalars['Boolean']['output'];
+  initialData: Scalars['String']['output'];
+  isCurrentlyInUse: Scalars['Boolean']['output'];
+  isExpired: Scalars['Boolean']['output'];
   packageId: Scalars['String']['output'];
   startDate: Scalars['String']['output'];
+  usedDataAtExpiry: Scalars['String']['output'];
 };
 
 export type SimPackageDto = {
@@ -2102,7 +2104,7 @@ export type SimPackageDto = {
   created_at: Scalars['String']['output'];
   end_date: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  is_active: Scalars['Boolean']['output'];
+  is_currently_in_use: Scalars['Boolean']['output'];
   package_id: Scalars['String']['output'];
   start_date: Scalars['String']['output'];
   updated_at: Scalars['String']['output'];
@@ -2170,7 +2172,7 @@ export type SimToPackagesDto = {
   __typename?: 'SimToPackagesDto';
   end_date: Scalars['String']['output'];
   id: Scalars['String']['output'];
-  is_active: Scalars['Boolean']['output'];
+  is_currently_in_use: Scalars['Boolean']['output'];
   package_id: Scalars['String']['output'];
   start_date: Scalars['String']['output'];
 };
@@ -2562,7 +2564,7 @@ export type ToggleInternetSwitchInputDto = {
   status: Scalars['Boolean']['input'];
 };
 
-export type ToggleSimStatusInputDto = {
+export type ToggleSimServiceStatusInputDto = {
   sim_id: Scalars['String']['input'];
   status: Scalars['String']['input'];
 };

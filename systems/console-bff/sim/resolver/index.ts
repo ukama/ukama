@@ -22,8 +22,8 @@ import { GetSimsBySubscriberResolver } from "./getSimsBySubscriber";
 import { GetSimsFromPoolResolver } from "./getSimsFromPool";
 import { GetSimsUsageByNetworkResolver } from "./getSimsUsageByNetwork";
 import { RemovePackageForSimResolver } from "./removePackageForSim";
-import { SetInactivePackageResolver } from "./setInactivePackage";
-import { ToggleSimStatusResolver } from "./toggleSimStatus";
+import { ToggleSimServiceStatusResolver } from "./toggleSimServiceStatus";
+import { UnsetPackageInUseResolver } from "./unsetPackageInUse";
 import { UploadSimsResolver } from "./uploadSims";
 
 const resolvers: NonEmptyArray<any> = [
@@ -42,9 +42,9 @@ const resolvers: NonEmptyArray<any> = [
   GetSimsResolver,
   GetSimsUsageByNetworkResolver,
   RemovePackageForSimResolver,
-  ToggleSimStatusResolver,
+  ToggleSimServiceStatusResolver,
   UploadSimsResolver,
-  SetInactivePackageResolver,
+  UnsetPackageInUseResolver,
 ];
 
 export default resolvers;

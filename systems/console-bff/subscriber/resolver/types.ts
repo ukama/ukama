@@ -23,7 +23,7 @@ export class SimPackageAPIDto {
   end_date: string;
 
   @Field()
-  is_active: boolean;
+  is_currently_in_use: boolean;
 
   @Field()
   created_at: string;
@@ -167,7 +167,7 @@ export class SimPackageDto {
   end_date: string;
 
   @Field()
-  is_active: boolean;
+  is_currently_in_use: boolean;
 
   @Field()
   created_at: string;
