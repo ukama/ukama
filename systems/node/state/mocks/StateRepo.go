@@ -214,29 +214,29 @@ func (_m *StateRepo) GetStatesByNodeId(nodeId string) ([]db.State, error) {
 	return r0, r1
 }
 
-// UpdateState provides a mock function with given fields: nodeId, subStates, events
-func (_m *StateRepo) UpdateState(nodeId string, subStates []string, events []string) (*db.State, error) {
-	ret := _m.Called(nodeId, subStates, events)
+// ListLatestStates provides a mock function with no fields
+func (_m *StateRepo) ListLatestStates() ([]db.State, error) {
+	ret := _m.Called()
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateState")
+		panic("no return value specified for ListLatestStates")
 	}
 
-	var r0 *db.State
+	var r0 []db.State
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, []string, []string) (*db.State, error)); ok {
-		return rf(nodeId, subStates, events)
+	if rf, ok := ret.Get(0).(func() ([]db.State, error)); ok {
+		return rf()
 	}
-	if rf, ok := ret.Get(0).(func(string, []string, []string) *db.State); ok {
-		r0 = rf(nodeId, subStates, events)
+	if rf, ok := ret.Get(0).(func() []db.State); ok {
+		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.State)
+			r0 = ret.Get(0).([]db.State)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, []string, []string) error); ok {
-		r1 = rf(nodeId, subStates, events)
+	if rf, ok := ret.Get(1).(func() error); ok {
+		r1 = rf()
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -290,6 +290,36 @@ func (_m *StateRepo) TakeLatchedEvent(nodeId string) (string, error) {
 	return r0, r1
 }
 
+// UpdateState provides a mock function with given fields: nodeId, subStates, events
+func (_m *StateRepo) UpdateState(nodeId string, subStates []string, events []string) (*db.State, error) {
+	ret := _m.Called(nodeId, subStates, events)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateState")
+	}
+
+	var r0 *db.State
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, []string, []string) (*db.State, error)); ok {
+		return rf(nodeId, subStates, events)
+	}
+	if rf, ok := ret.Get(0).(func(string, []string, []string) *db.State); ok {
+		r0 = rf(nodeId, subStates, events)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*db.State)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string, []string, []string) error); ok {
+		r1 = rf(nodeId, subStates, events)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // NewStateRepo creates a new instance of StateRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewStateRepo(t interface {
@@ -302,34 +332,4 @@ func NewStateRepo(t interface {
 	t.Cleanup(func() { mock.AssertExpectations(t) })
 
 	return mock
-}
-
-// ListLatestStates provides a mock function with given fields:
-func (_m *StateRepo) ListLatestStates() ([]db.State, error) {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListLatestStates")
-	}
-
-	var r0 []db.State
-	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]db.State, error)); ok {
-		return rf()
-	}
-	if rf, ok := ret.Get(0).(func() []db.State); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.State)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
 }

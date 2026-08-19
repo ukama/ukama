@@ -21,8 +21,8 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
-	github.com/sirupsen/logrus v1.9.4
-	github.com/stretchr/testify v1.11.1
+	github.com/sirupsen/logrus v1.10.1
+	github.com/stretchr/testify v1.12.0
 	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-20230831053137-df467d889284
 	github.com/ukama/ukama/systems/notification/event-notify v0.0.0-00010101000000-000000000000
@@ -30,9 +30,9 @@ require (
 	github.com/ukama/ukama/systems/nucleus/user v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/member v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/registry/network v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260807072710-2f2cc710cf28
-	google.golang.org/grpc v1.83.0
-	google.golang.org/protobuf v1.36.11
+	github.com/ukama/ukama/systems/subscriber/registry v0.0.0-20260818020130-935c71f7b3b1
+	google.golang.org/grpc v1.83.1
+	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -45,7 +45,6 @@ require (
 	github.com/cloudwego/base64x v0.1.5 // indirect
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/creasty/defaults v1.6.0 // indirect
-	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.9 // indirect
 	github.com/gin-contrib/cors v1.7.6 // indirect
@@ -56,7 +55,7 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
 	github.com/go-resty/resty/v2 v2.13.1 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
-	github.com/gofrs/uuid v4.3.1+incompatible // indirect
+	github.com/gofrs/uuid v4.2.0+incompatible // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
@@ -87,7 +86,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/penglongli/gin-metrics v0.1.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
 	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
@@ -102,7 +100,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.19.0 // indirect
 	github.com/streadway/amqp v1.1.0 // indirect
-	github.com/stretchr/objx v0.5.2 // indirect
+	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.0 // indirect
