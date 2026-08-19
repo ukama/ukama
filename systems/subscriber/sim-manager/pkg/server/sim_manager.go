@@ -562,17 +562,17 @@ func (s *SimManagerServer) GetSimsByNetwork(ctx context.Context, req *pb.GetSims
 	return resp, nil
 }
 
-func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSimServiceStatusRequest) (*pb.ToggleSimServiceStatusResponse, error) {
-	log.Infof("Toggling status for sim: %v", req.GetSimId())
+func (s *SimManagerServer) ToggleSimServiceStatus(ctx context.Context, req *pb.ToggleSimServiceStatusRequest) (*pb.ToggleSimServiceStatusResponse, error) {
+	log.Infof("Toggling service status for sim: %v", req.GetSimId())
 
 	strStatus := strings.ToLower(req.Status)
 	simStatus := ukama.ParseSimStatus(strStatus)
 
 	switch simStatus {
 	case ukama.SimStatusServiceOn:
-		return s.activateSim(ctx, req.SimId)
+		return s.setSimServiceOn(ctx, req.SimId)
 	case ukama.SimStatusServiceOff:
-		return s.deactivateSim(ctx, req.SimId)
+		return s.setSimServiceOff(ctx, req.SimId)
 	default:
 		return nil, status.Errorf(codes.InvalidArgument,
 			"invalid status parameter: %s.", strStatus)
@@ -582,7 +582,6 @@ func (s *SimManagerServer) ToggleSimStatus(ctx context.Context, req *pb.ToggleSi
 func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest) (*pb.TerminateSimResponse, error) {
 	//Ths does not terminate the sim, but instead send a termination request to ukama agent
 	//which will remove the ASR profile first, then trigger the sim termination request on sim manager.
-
 	log.Infof("Sending terminate sim: %v request to agent", req.GetSimId())
 
 	sim, err := getSim(req.SimId, s.simRepo)
@@ -794,16 +793,16 @@ func (s *SimManagerServer) MarkPackageExpiredForSim(ctx context.Context, req *pb
 	return &pb.PackageResponse{}, nil
 }
 
-func (s *SimManagerServer) activateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
-	if err := activateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
+func (s *SimManagerServer) setSimServiceOn(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
+	if err := setSimServiceOn(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
 	return &pb.ToggleSimServiceStatusResponse{}, nil
 }
 
-func (s *SimManagerServer) deactivateSim(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
-	if err := deactivateSim(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
+func (s *SimManagerServer) setSimServiceOff(ctx context.Context, reqSimId string) (*pb.ToggleSimServiceStatusResponse, error) {
+	if err := setSimServiceOff(ctx, reqSimId, s.simRepo, s.agentFactory, s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
@@ -838,9 +837,9 @@ func getSim(simId string, simRepo sims.SimRepo) (*sims.Sim, error) {
 	return sim, nil
 }
 
-func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+func setSimServiceOn(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
 	orgId string, metricsPusher MetricsPusher, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	log.Infof("Activating sim: %v", reqSimId)
+	log.Infof("Turning service on for sim: %v", reqSimId)
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
@@ -849,29 +848,13 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 
 	if sim.Status != ukama.SimStatusServiceOff {
 		return status.Errorf(codes.FailedPrecondition,
-			"sim state: %s is invalid for activation", sim.Status)
-	}
-
-	simUpdates := &sims.Sim{
-		Id:               sim.Id,
-		Status:           ukama.SimStatusServiceOn,
-		ActivationsCount: sim.ActivationsCount + 1,
-		LastActivatedOn:  time.Now(),
-	}
-
-	if sim.FirstActivatedOn.IsZero() {
-		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
-	}
-
-	err = simRepo.Update(simUpdates, nil)
-	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+			"sim service state: %s is invalid for turning on", sim.Status)
 	}
 
 	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
+			"invalid sim type: %q for sim Id: %q while turning service on", sim.Type, reqSimId)
 	}
 
 	agentRequest := client.AgentRequestData{
@@ -888,6 +871,22 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 		// if agent operation fails.
 
 		return err
+	}
+
+	simUpdates := &sims.Sim{
+		Id:               sim.Id,
+		Status:           ukama.SimStatusServiceOn,
+		ActivationsCount: sim.ActivationsCount + 1,
+		LastActivatedOn:  time.Now(),
+	}
+
+	if sim.FirstActivatedOn.IsZero() {
+		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
+	}
+
+	err = simRepo.Update(simUpdates, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	err = pushActiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
@@ -921,9 +920,9 @@ func activateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, age
 	return nil
 }
 
-func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
+func setSimServiceOff(ctx context.Context, reqSimId string, simRepo sims.SimRepo, agentFactory adapters.AgentFactory,
 	orgId string, metricsPusher MetricsPusher, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	log.Infof("Deactivating sim: %v", reqSimId)
+	log.Infof("Turning service off for sim: %v", reqSimId)
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
@@ -932,23 +931,13 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 
 	if sim.Status != ukama.SimStatusServiceOn {
 		return status.Errorf(codes.FailedPrecondition,
-			"sim state: %s is invalid for deactivation", sim.Status)
+			"sim service state: %s is invalid for turning off", sim.Status)
 	}
 
 	simAgent, ok := agentFactory.GetAgentAdapter(sim.Type)
 	if !ok {
 		return status.Errorf(codes.InvalidArgument,
-			"invalid sim type: %q for sim Id: %q", sim.Type, reqSimId)
-	}
-
-	simUpdates := &sims.Sim{
-		Id:                 sim.Id,
-		Status:             ukama.SimStatusServiceOff,
-		DeactivationsCount: sim.DeactivationsCount + 1}
-
-	err = simRepo.Update(simUpdates, nil)
-	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+			"invalid sim type: %q for sim Id: %q while turning service off", sim.Type, reqSimId)
 	}
 
 	agentRequest := client.AgentRequestData{
@@ -958,12 +947,24 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 		PackageId:    sim.Package.PackageId.String(),
 		SimPackageId: sim.Package.Id.String(),
 	}
+
 	err = simAgent.DeactivateSim(ctx, agentRequest)
 	if err != nil {
 		// TODO: think of rolling back the DB transaction on sim manager
 		// if agent operation fails.
 
 		return err
+	}
+
+	simUpdates := &sims.Sim{
+		Id:                 sim.Id,
+		Status:             ukama.SimStatusServiceOff,
+		DeactivationsCount: sim.DeactivationsCount + 1,
+	}
+
+	err = simRepo.Update(simUpdates, nil)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
 	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
@@ -991,7 +992,7 @@ func deactivateSim(ctx context.Context, reqSimId string, simRepo sims.SimRepo, a
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	log.Infof("Sim %s deactivated successfully", reqSimId)
+	log.Infof("Sim %s turned off successfully", reqSimId)
 
 	return nil
 }

@@ -1798,8 +1798,8 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 	})
 }
 
-func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
-	t.Run("InvalidSimStatus", func(t *testing.T) {
+func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
+	t.Run("InvalidSimServiceStatus", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 
@@ -1808,7 +1808,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: "lol",
 		})
@@ -1820,7 +1820,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("ActiveSimNotFound", func(t *testing.T) {
+	t.Run("SimNotFoundForSwitchingServiceOn", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 
@@ -1833,7 +1833,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOn.String(),
 		})
@@ -1845,7 +1845,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("InactiveSimNotFound", func(t *testing.T) {
+	t.Run("SimNotFoundForSwitchingServiceOff", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 
@@ -1858,7 +1858,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1870,7 +1870,36 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SimAlreadyInactive", func(t *testing.T) {
+	t.Run("SimServiceIsAlreadyOn", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOn,
+			}, nil).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOn.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimServiceIsAlreadyOff", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 
@@ -1887,7 +1916,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1899,7 +1928,41 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("AgentFactoryFailure", func(t *testing.T) {
+	t.Run("AgentFactoryFailureWhileTurningServiceOn", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOff,
+			}, nil).
+			Once()
+
+		agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(nil, false).
+			Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOn.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("AgentFactoryFailureWhileTurningServiceOff", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
@@ -1921,7 +1984,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -1933,39 +1996,38 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SimStatusUpdateFailure", func(t *testing.T) {
+	t.Run("SimAgentUpdateFailureWhile TurningServiceOn", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
 
 		simId := uuid.NewV4()
 
-		simRepo.On("Get", simId).
+		sim := simRepo.On("Get", simId).
 			Return(&sims.Sim{
 				Id:         simId,
+				Iccid:      testIccid,
 				IsPhysical: false,
-				Status:     ukama.SimStatusServiceOn,
+				Status:     ukama.SimStatusServiceOff,
+				Type:       ukama.SimTypeTest,
 			}, nil).
-			Once()
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
 
-		simRepo.On("Update",
-			&sims.Sim{
-				Id:                 simId,
-				Status:             ukama.SimStatusServiceOff,
-				DeactivationsCount: uint64(1),
-			},
-			mock.Anything).Return(errors.New("sim status update failure")).Once()
-
-		agentFactory.On("GetAgentAdapter", mock.Anything).
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
 			Return(&mocks.AgentAdapter{}, true).
-			Once()
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("ActivateSim", mock.Anything,
+			mock.Anything).Return(errors.New("fail to deactivate sim on remove agent")).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
-			Status: ukama.SimStatusServiceOff.String(),
+			Status: ukama.SimStatusServiceOn.String(),
 		})
 
 		assert.Error(t, err)
@@ -1975,7 +2037,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SimAgentFailure", func(t *testing.T) {
+	t.Run("SimAgentUpdateFailureWhile TurningServiceOff", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
@@ -1993,14 +2055,6 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*sims.Sim)
 
-		simRepo.On("Update",
-			&sims.Sim{
-				Id:                 simId,
-				Status:             ukama.SimStatusServiceOff,
-				DeactivationsCount: uint64(1),
-			},
-			mock.Anything).Return(nil).Once()
-
 		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
 			Return(&mocks.AgentAdapter{}, true).
 			Once().
@@ -2012,7 +2066,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -2024,7 +2078,139 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		simRepo.AssertExpectations(t)
 	})
 
-	t.Run("SimDeactivated", func(t *testing.T) {
+	t.Run("SimStatusUpdateFailureWhileTurningServiceOn", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOff,
+			}, nil).
+			Once()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("ActivateSim", mock.Anything,
+			mock.Anything).Return(nil).Once()
+
+		simRepo.On("Update", mock.Anything, mock.Anything).
+			Return(errors.New("sim status update failure")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOn.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimStatusUpdateFailureWhileTurningServiceOff", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOn,
+			}, nil).
+			Once()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", mock.Anything).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("DeactivateSim", mock.Anything,
+			mock.Anything).Return(nil).Once()
+
+		simRepo.On("Update", mock.Anything, mock.Anything).
+			Return(errors.New("sim status update failure")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOff.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimServiceTurnedOn", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		simId := uuid.NewV4()
+
+		sim := simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				Iccid:      testIccid,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOff,
+				Type:       ukama.SimTypeTest,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
+
+		simRepo.On("Update", mock.Anything, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]sims.Sim{}, nil).Twice()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		agentAdapter.On("ActivateSim", mock.Anything,
+			mock.Anything).Return(nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOn.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("SimServiceTurnedOff", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
 		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
@@ -2043,13 +2229,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*sims.Sim)
 
-		simRepo.On("Update",
-			&sims.Sim{
-				Id:                 simId,
-				Status:             ukama.SimStatusServiceOff,
-				DeactivationsCount: uint64(1),
-			},
-			mock.Anything).Return(nil).Once()
+		simRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]sims.Sim{}, nil).Twice()
@@ -2067,7 +2247,7 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
 
-		resp, err := s.ToggleSimStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
 		})
@@ -2078,7 +2258,6 @@ func TestSimManagerServer_ToggleSimStatus(t *testing.T) {
 		packageRepo.AssertExpectations(t)
 		simRepo.AssertExpectations(t)
 	})
-
 }
 
 func TestSimManagerServer_RemovePackageForSim(t *testing.T) {

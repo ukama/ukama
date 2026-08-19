@@ -304,7 +304,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key strin
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	return activateSim(ctx, sim.Id.String(), es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
+	return setSimServiceOn(ctx, sim.Id.String(), es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.AsrInactivated) error {
