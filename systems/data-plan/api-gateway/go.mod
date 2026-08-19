@@ -14,14 +14,14 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/loopfz/gadgeto v0.11.6
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.0
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/base-rate v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/package v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/data-plan/rate v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.23.0
-	google.golang.org/grpc v1.83.0
+	google.golang.org/grpc v1.83.1
 )
 
 require (

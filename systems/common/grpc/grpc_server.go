@@ -18,6 +18,7 @@ import (
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/metrics"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -87,6 +88,8 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	g.serviceRegistrar(server)
 
 	grpc_prometheus.Register(server)
+
+	metrics.StartMetricsServer(config.DefaultMetrics())
 
 	// Standard health service (grpc.health.v1), used by Kubernetes native
 	// gRPC probes and grpc_health_probe.

@@ -9,11 +9,11 @@ replace github.com/ukama/ukama/systems/services/msgClient => ./
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/num30/config v0.1.3
-	github.com/sirupsen/logrus v1.10.0
+	github.com/sirupsen/logrus v1.10.1
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.12.0
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	google.golang.org/grpc v1.83.0
+	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 	gorm.io/driver/postgres v1.6.2
