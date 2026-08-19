@@ -115,10 +115,12 @@ const dtoToSimPackageDto = (res: SimPackageAPI): SimPackage => {
   return {
     id: res.id,
     endDate: res.end_date,
-    isActive: res.is_active,
+    isCurrentlyInUse: res.is_currently_in_use,
     packageId: res.package_id,
     startDate: res.start_date,
-    asExpired: res.as_expired,
+    isExpired: res.is_expired,
+    initialData: res.initial_data,
+    usedDataAtExpiry: res.used_data_at_expiry,
     defaultDuration: res.default_duration,
   };
 };

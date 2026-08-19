@@ -154,7 +154,7 @@ export interface PlanLike {
 
 export interface SimPackageLike {
   packageId?: string;
-  isActive?: boolean;
+  isCurrentlyInUse?: boolean;
 }
 
 export interface PlanStats {
@@ -189,7 +189,7 @@ export const derivePlanStats = (
   }
   const attachByPlan = activeSimPackages
     ? groupBy(
-        activeSimPackages.filter(p => p.isActive),
+        activeSimPackages.filter(p => p.isCurrentlyInUse),
         p => p.packageId
       )
     : null;

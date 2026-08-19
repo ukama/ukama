@@ -30,7 +30,7 @@ import {
   SimsPoolResDto,
   SimsResDto,
   SubscriberToSimsDto,
-  ToggleSimStatusInputDto,
+  ToggleSimServiceStatusInputDto,
   UploadSimsInputDto,
   UploadSimsResDto,
 } from "../resolver/types";
@@ -88,12 +88,12 @@ class SimApi extends BaseRESTDataSource {
     }).then(res => res);
   };
 
-  toggleSimStatus = async (
+  toggleSimServiceStatus = async (
     baseURL: string,
-    req: ToggleSimStatusInputDto
+    req: ToggleSimServiceStatusInputDto
   ): Promise<SimStatusResDto> => {
     this.logger.info(
-      `ToggleSimStatus [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}`
+      `ToggleSimServiceStatus [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}`
     );
     this.baseURL = baseURL;
     // The sim backend returns only an HTTP status (no body) on success and an
@@ -105,7 +105,7 @@ class SimApi extends BaseRESTDataSource {
       .then(() => ({ success: true }) as SimStatusResDto)
       .catch(error => {
         const message = extractErrorMessage(error);
-        this.logger.error(`ToggleSimStatus failed: ${message}`);
+        this.logger.error(`ToggleSimServiceStatus failed: ${message}`);
         return { success: false, message };
       });
   };
@@ -195,16 +195,16 @@ class SimApi extends BaseRESTDataSource {
     );
   };
 
-  setInactivePackageForSim = async (
+  unsetPackageInUseForSim = async (
     baseURL: string,
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
     this.baseURL = baseURL;
     this.logger.info(
-      `SetInactivePackageForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
+      `UnsetPackageInUseForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inuse`
     );
     return this.patch(
-      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inactive`
+      `/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inuse`
     ).then(res => res);
   };
 
