@@ -596,6 +596,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest)
 		Iccid:        sim.Iccid,
 		Imsi:         sim.Imsi,
 		NetworkId:    sim.NetworkId.String(),
+		Type:         sim.Type.String(),
 	}
 
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
