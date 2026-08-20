@@ -90,6 +90,14 @@ const (
 //	             radio_available, unreachable
 //	com_uptime — metrics.com_uptime.last: tnode + cnode liveness
 //	ctl_uptime — metrics.ctl_uptime.last: anode liveness
+//
+// Liveness is required PER SITE, and only of sites that are in the metrics
+// path at all: a site none of whose nodes has ever produced an uptime series
+// is judged on health alone, exactly as v2 did. That is a statement about the
+// pipeline, not the nodes — a node that is genuinely dead keeps its series and
+// reports NaN, so this cannot mask an outage — and it is what lets virtual
+// nodes (the lab's world pushes no uptime counters) and real hardware share
+// one deployment without the virtual sites all reading down.
 func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	sites, err := classifySites(in, "SITE_UPTIME")
 	if err != nil {
@@ -193,6 +201,10 @@ func (a *siteAgg) isUp() bool {
 
 // classifySites builds the per-window site state shared by SITE_UPTIME and
 // NETWORK_UPTIME from the health + uptime + nodes inputs.
+//
+// Two passes: group each site's nodes from the registry (the authority on
+// membership), then judge them — because whether the liveness term applies is
+// a property of the SITE, not of one node. See siteMembers.hasUptime.
 func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	health, ok := in["health"]
 	if !ok {
@@ -215,9 +227,55 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	}
 
 	healthByNode := indexHealthByNode(health)
-	reportingByNode, uptimeKnown := indexUptimeByNode(com, ctl)
+	reporting := indexUptimeByNode(com, ctl)
 
-	sites := map[string]*siteAgg{}
+	grouped := groupNodesBySite(nodes, reporting)
+
+	sites := make(map[string]*siteAgg, len(grouped))
+
+	for siteID, sn := range grouped {
+		agg := &siteAgg{networkID: sn.networkID}
+		sites[siteID] = agg
+
+		for _, n := range sn.nodes {
+			agg.judged++
+
+			if nodeIsUp(n.nodeType, healthByNode[n.id], reporting[n.id], sn.hasUptime) {
+				agg.upNodes++
+			} else {
+				agg.downNodes++
+			}
+		}
+	}
+
+	return sites, nil
+}
+
+// nodeRef is one judged node: everything the classification needs from the
+// registry row.
+type nodeRef struct {
+	id       string
+	nodeType string
+}
+
+// siteMembers is one site's judged membership for a window.
+type siteMembers struct {
+	networkID string
+	nodes     []nodeRef
+	// hasUptime: at least one of this site's judged nodes produced an uptime
+	// series this window (NaN counts — the series exists). False means the
+	// site is not in the metrics path at all, so requiring liveness of it
+	// would report a pipeline gap as an outage.
+	hasUptime bool
+}
+
+// groupNodesBySite folds registry.node.list into per-site membership. Every
+// node type registers its site, so a site made only of hnodes still produces
+// a row (classified down) instead of vanishing; only tnode/anode/cnode are
+// judged.
+func groupNodesBySite(nodes []map[string]interface{},
+	reporting map[string]bool) map[string]*siteMembers {
+	out := map[string]*siteMembers{}
 
 	for _, node := range nodes {
 		siteID, networkID := str(node["site_id"]), str(node["network_id"])
@@ -225,12 +283,10 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 			continue // unattached node
 		}
 
-		// Every node type registers the site, so a site made only of hnodes
-		// still produces a row (classified down) instead of vanishing.
-		agg, ok := sites[siteID]
+		sn, ok := out[siteID]
 		if !ok {
-			agg = &siteAgg{networkID: networkID}
-			sites[siteID] = agg
+			sn = &siteMembers{networkID: networkID}
+			out[siteID] = sn
 		}
 
 		nodeType := strings.ToLower(str(node["type"]))
@@ -238,18 +294,15 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 			continue // not part of what makes a site
 		}
 
-		agg.judged++
-
 		nodeID := str(node["node_id"])
+		sn.nodes = append(sn.nodes, nodeRef{id: nodeID, nodeType: nodeType})
 
-		if nodeIsUp(nodeType, healthByNode[nodeID], reportingByNode[nodeID], uptimeKnown) {
-			agg.upNodes++
-		} else {
-			agg.downNodes++
+		if _, seen := reporting[nodeID]; seen {
+			sn.hasUptime = true
 		}
 	}
 
-	return sites, nil
+	return out
 }
 
 // isSiteNodeType reports whether a node type is one of the three that make up
@@ -274,19 +327,16 @@ func indexHealthByNode(health []map[string]interface{}) map[string]map[string]in
 // indexUptimeByNode folds the com (tnode + cnode) and ctl (anode) uptime
 // series into one node_id -> is-reporting map.
 //
-// The second return value says whether the uptime datasets carried ANY row at
-// all. Empty means the metrics path delivered nothing this window — which is
-// a statement about the pipeline, not about the nodes — so the caller drops
-// the liveness term rather than reporting every site in the org as down. A
-// node that is genuinely dead is NOT absent: it arrives with a NaN reading.
-func indexUptimeByNode(sets ...[]map[string]interface{}) (map[string]bool, bool) {
+// KEY PRESENCE and VALUE mean different things, and the distinction is the
+// whole design: a key exists when the node has a series at all, and its value
+// says whether that series carries a real reading. A dead node is present with
+// false (its staleness marker arrives as NaN); a node that was never in the
+// metrics path is absent entirely.
+func indexUptimeByNode(sets ...[]map[string]interface{}) map[string]bool {
 	out := map[string]bool{}
-	seen := false
 
 	for _, set := range sets {
 		for _, row := range set {
-			seen = true
-
 			nodeID := str(row["node_id"])
 			if nodeID == "" {
 				continue // a series without its node label is unattributable
@@ -298,17 +348,17 @@ func indexUptimeByNode(sets ...[]map[string]interface{}) (map[string]bool, bool)
 		}
 	}
 
-	return out, seen
+	return out
 }
 
 // nodeIsUp judges one node from the signals its type actually has.
 //
-// uptimeKnown = false means the uptime datasets were empty for the window
-// (see indexUptimeByNode): the liveness term is dropped and the rule degrades
-// to the v2 health-only one, with the cnode left unjudged because nothing
-// probes it.
-func nodeIsUp(nodeType string, h map[string]interface{}, reporting, uptimeKnown bool) bool {
-	if uptimeKnown && !reporting {
+// siteHasUptime = false means no node on this node's SITE produced an uptime
+// series (see siteMembers.hasUptime): the liveness term is dropped and the rule
+// degrades to the v2 health-only one, with the cnode left unjudged because
+// nothing probes it.
+func nodeIsUp(nodeType string, h map[string]interface{}, reporting, siteHasUptime bool) bool {
+	if siteHasUptime && !reporting {
 		return false
 	}
 

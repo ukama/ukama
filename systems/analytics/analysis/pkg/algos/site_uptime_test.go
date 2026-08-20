@@ -273,14 +273,19 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 	}
 }
 
-// A node whose series is missing entirely — it aged out of the pull's
-// lookback rather than going stale — is down for the same reason a NaN is:
-// nothing confirms it is alive.
-func TestSiteUptimeAbsentSeriesIsDown(t *testing.T) {
+// Within a site that IS in the metrics path, a node whose series is missing
+// entirely — it aged out of the pull's lookback rather than going stale — is
+// down for the same reason a NaN is: nothing confirms it is alive.
+func TestSiteUptimeAbsentSeriesIsDownWhenSiteReports(t *testing.T) {
 	in := Datasets{
-		"nodes":      []map[string]interface{}{node("t1", "tnode", "site-a", "Online")},
-		"health":     []map[string]interface{}{health("t1", true, true, "on")},
-		"com_uptime": []map[string]interface{}{up("some-other-node", "1")},
+		"nodes": []map[string]interface{}{
+			node("t1", "tnode", "site-a", "Online"),
+			node("c1", "cnode", "site-a", "Online"),
+		},
+		"health": []map[string]interface{}{health("t1", true, true, "on")},
+		// c1 reports, t1 has no series at all -> the site is in the metrics
+		// path, so t1's silence counts against it.
+		"com_uptime": []map[string]interface{}{up("c1", "542344.69")},
 		"ctl_uptime": []map[string]interface{}{},
 	}
 
@@ -291,6 +296,46 @@ func TestSiteUptimeAbsentSeriesIsDown(t *testing.T) {
 
 	if v := siteResult(t, results, "site-a").Value; v != 0 {
 		t.Errorf("site value = %v, want 0 — t1 has no uptime series", v)
+	}
+}
+
+// The fallback is PER SITE, not global. Virtual nodes push no uptime counters,
+// and they share a deployment with real hardware that does — so a global
+// "are any rows present" test would read every virtual site as down. A site
+// none of whose nodes has a series is judged on health alone; a site that does
+// report is held to the full v3 rule.
+func TestSiteUptimeFallbackIsPerSite(t *testing.T) {
+	in := Datasets{
+		"nodes": []map[string]interface{}{
+			// site-a: virtual, never in the metrics path
+			node("v1", "tnode", "site-a", "Online"),
+			node("v2", "cnode", "site-a", "Online"),
+			// site-b: real hardware, reporting
+			node("r1", "tnode", "site-b", "Online"),
+			node("r2", "cnode", "site-b", "Online"),
+		},
+		"health": []map[string]interface{}{
+			health("v1", true, true, "on"),
+			health("r1", true, true, "on"),
+		},
+		"com_uptime": []map[string]interface{}{
+			up("r1", "542344.69"),
+			dead("r2"), // real cnode went dark
+		},
+		"ctl_uptime": []map[string]interface{}{},
+	}
+
+	results, err := SiteUptime(schema.Window{}, in, schema.KpiSpec{})
+	if err != nil {
+		t.Fatalf("SiteUptime: %v", err)
+	}
+
+	if v := siteResult(t, results, "site-a").Value; v != 100 {
+		t.Errorf("site-a value = %v, want 100 — no node of it is in the metrics path, so v2 rules apply", v)
+	}
+
+	if v := siteResult(t, results, "site-b").Value; v != 0 {
+		t.Errorf("site-b value = %v, want 0 — it reports, so its NaN cnode counts", v)
 	}
 }
 
@@ -323,9 +368,10 @@ func TestSiteUptimeReadsBothUptimeSeries(t *testing.T) {
 	}
 }
 
-// Empty uptime datasets mean the metrics path delivered nothing, not that
-// every node in the org died: the liveness term is dropped and the health
-// rule alone decides, so a broken sanitizer cannot zero the whole KPI.
+// The whole-org case of the per-site rule: empty uptime datasets mean the
+// metrics path delivered nothing, not that every node in the org died. No site
+// reports, so every site degrades to the health rule and a broken sanitizer
+// cannot zero the KPI.
 func TestSiteUptimeDegradesWhenUptimeDatasetIsEmpty(t *testing.T) {
 	nodes := []map[string]interface{}{
 		node("t1", "tnode", "site-a", "Online"),

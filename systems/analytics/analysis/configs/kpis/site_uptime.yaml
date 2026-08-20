@@ -21,10 +21,14 @@
 # radio.state is NOT read: uptime tracks interface availability, so a radio
 # that is available but switched off is still up, and there is no
 # planned/unplanned distinction.
-# Degraded mode: when BOTH uptime datasets come back with no rows at all, the
-# metrics path delivered nothing rather than every node dying, so the liveness
-# term is dropped for that window and the health rule alone decides — a broken
-# sanitizer or remote_write cannot zero the KPI org-wide.
+# Degraded mode, PER SITE: a site none of whose nodes produced an uptime series
+# is judged on health alone, exactly as v2 did. Absence of a series is a
+# statement about the metrics path, not about the nodes — a node that is
+# genuinely dead keeps its series and reports NaN — so this cannot mask an
+# outage, and it is what lets virtual nodes (the lab pushes no uptime counters)
+# share a deployment with real hardware without every virtual site reading
+# down. The whole-org case follows: if nothing anywhere reports, a broken
+# sanitizer or remote_write cannot zero the KPI.
 # Per window: Sum = 100 when up else 0, Count = 1 always — so the aggregator's
 # AVG is exactly up_windows / total_windows x 100.
 # Query with op=AVG at span daily/weekly/monthly for the timeseries.
