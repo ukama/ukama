@@ -24,7 +24,7 @@ var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
 // var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
 var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
 
-func TestAsrClient_Activate(t *testing.T) {
+func TestAsrClient_CreateProfile(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 	l := &Asr{
 		client: m,
@@ -99,7 +99,7 @@ func TestAsrClient_Read(t *testing.T) {
 	}
 }
 
-func TestAsrClient_Inactivate(t *testing.T) {
+func TestAsrClient_DeleteProfile(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 
 	l := &Asr{

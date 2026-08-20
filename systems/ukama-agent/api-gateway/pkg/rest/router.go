@@ -113,9 +113,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	{
 		asr := auth.Group("/asr", "Asr", "Active susbcriber registry")
 		asr.GET("/:iccid", formatDoc("Get Subscriber", ""), tonic.Handler(r.getActiveSubscriber, http.StatusOK))
-		asr.PUT("/:iccid", formatDoc("Activate: Add a new subscriber", ""), tonic.Handler(r.putSubscriber, http.StatusCreated))
+		asr.PUT("/:iccid", formatDoc("Create Profile", "Add a new subscriber profile"), tonic.Handler(r.putSubscriber, http.StatusCreated))
 		asr.PATCH("/:iccid", formatDoc("Update package id", ""), tonic.Handler(r.patchPackageUpdate, http.StatusOK))
-		asr.DELETE("/:iccid", formatDoc("Inactivate: Remove a susbcriber", ""), tonic.Handler(r.deleteSubscriber, http.StatusOK))
+		asr.DELETE("/:iccid", formatDoc("Delete Profile", "Remove a susbcriber profile"), tonic.Handler(r.deleteSubscriber, http.StatusOK))
 		asr.GET("/:iccid/usage", formatDoc("Get Subscriber usage for time", ""), tonic.Handler(r.getUsage, http.StatusOK))
 		asr.GET("/:iccid/period", formatDoc("Get Subscriber usage package", ""), tonic.Handler(r.getUsageForPeriod, http.StatusOK))
 

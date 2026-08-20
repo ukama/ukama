@@ -49,7 +49,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 
 	client := resty.New()
 
-	t.Run("Activate", func(tt *testing.T) {
+	t.Run("CreateProfile", func(tt *testing.T) {
 		httpReq := &rest.CreateProfileReq{
 			Iccid:     iccid,
 			NetworkId: network,
@@ -95,7 +95,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 		}
 	})
 
-	t.Run("Inactivate", func(tt *testing.T) {
+	t.Run("DeleteProfile", func(tt *testing.T) {
 		resp, err := client.R().
 			EnableTrace().
 			Delete(getApiUrl() + "/v1/asr/" + iccid)
