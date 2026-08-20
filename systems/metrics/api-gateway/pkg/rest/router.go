@@ -212,7 +212,14 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 
 		sanitizer := auth.Group("/sanitize", "Sanitizer", "Sanitizer")
-		sanitizer.POST("", formatDoc("Sanitize", "Stream metrics for Sanitizer service"), tonic.Handler(r.sanitizeMetrics, http.StatusOK))
+		sanitizer.POST("", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Summary = "Sanitize"
+				info.Description = "Prometheus remote_write receiver. The body must be a snappy compressed " +
+					"prompb.WriteRequest, so this endpoint cannot be exercised from the Swagger UI. " +
+					"Matching metrics are re-published with node_id, site and network labels appended. " +
+					"See https://prometheus.io/docs/specs/prw/remote_write_spec/"
+			}}, tonic.Handler(r.sanitizeMetrics, http.StatusOK))
 
 		reasoning := auth.Group("/reasoning", "Reasoning", "Reasoning")
 		reasoning.GET("/stats/nodes/:node/metrics/:metric", []fizz.OperationOption{
@@ -269,7 +276,20 @@ func (r *Router) sanitizeMetrics(c *gin.Context) (*pbs.SanitizeResponse, error) 
 	if err != nil {
 		log.Errorf("Failure while reading request body before sanitizing: %v", err)
 
-		return nil, fmt.Errorf("failure while reading request body before sanitizing: %w", err)
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  fmt.Sprintf("failure while reading request body before sanitizing: %v", err),
+		}
+	}
+
+	if len(data) == 0 {
+		log.Warn("Got an empty body on the sanitize endpoint")
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message: "empty request body: this endpoint is a Prometheus remote_write receiver " +
+				"and expects a snappy compressed prompb.WriteRequest, not JSON",
+		}
 	}
 
 	return r.clients.s.Sanitize(data)
