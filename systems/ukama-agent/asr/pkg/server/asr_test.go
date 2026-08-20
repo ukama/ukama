@@ -237,7 +237,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 
 }
 
-func TestAsr_Activate(t *testing.T) {
+func TestAsr_CreateProfile(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
@@ -247,8 +247,8 @@ func TestAsr_Activate(t *testing.T) {
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
-	t.Run("ActivateByICCID", func(t *testing.T) {
-		reqPb := pb.ActivateReq{
+	t.Run("CreateProfileByICCID", func(t *testing.T) {
+		reqPb := pb.CreateProfileReq{
 			NetworkId:    networkId.String(),
 			Iccid:        "0123456789012345678912",
 			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
@@ -308,7 +308,7 @@ func TestAsr_Activate(t *testing.T) {
 		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, Atos)
 		assert.NoError(t, err)
 
-		hs, err := s.Activate(context.TODO(), &reqPb)
+		hs, err := s.CreateProfile(context.TODO(), &reqPb)
 		assert.NoError(t, err)
 
 		assert.NotNil(t, hs)
@@ -319,7 +319,7 @@ func TestAsr_Activate(t *testing.T) {
 	})
 }
 
-func TestAsr_Inactivate(t *testing.T) {
+func TestAsr_DeleteProfile(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	gutiRepo := &mocks.GutiRepo{}
 
@@ -329,8 +329,8 @@ func TestAsr_Inactivate(t *testing.T) {
 	mbC := &cmocks.MsgBusServiceClient{}
 	cdr := &mocks.CDRService{}
 
-	t.Run("InactivateByICCID", func(t *testing.T) {
-		reqPb := pb.InactivateReq{
+	t.Run("DeleteProfileByICCID", func(t *testing.T) {
+		reqPb := pb.DeleteProfileReq{
 			Iccid: "0123456789012345678912",
 		}
 
@@ -351,7 +351,7 @@ func TestAsr_Inactivate(t *testing.T) {
 		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, Atos)
 		assert.NoError(t, err)
 
-		hs, err := s.Inactivate(context.TODO(), &reqPb)
+		hs, err := s.DeleteProfile(context.TODO(), &reqPb)
 		assert.NoError(t, err)
 
 		assert.NotNil(t, hs)

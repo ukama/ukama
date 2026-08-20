@@ -247,25 +247,26 @@ func (*UsageForPeriodReq_Imsi) isUsageForPeriodReq_Id() {}
 func (*UsageForPeriodReq_Iccid) isUsageForPeriodReq_Id() {}
 
 type Record struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
-	Iccid         string                 `protobuf:"bytes,2,opt,name=iccid,proto3" json:"iccid,omitempty"`
-	Key           []byte                 `protobuf:"bytes,3,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
-	Op            []byte                 `protobuf:"bytes,4,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
-	Amf           []byte                 `protobuf:"bytes,5,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
-	Apn           *Apn                   `protobuf:"bytes,6,opt,name=Apn,json=apn,proto3" json:"Apn,omitempty"`
-	AlgoType      uint32                 `protobuf:"varint,7,opt,name=AlgoType,json=algo_type,proto3" json:"AlgoType,omitempty"`
-	UeDlAmbrBps   uint32                 `protobuf:"varint,8,opt,name=UeDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"UeDlAmbrBps,omitempty"`
-	UeUlAmbrBps   uint32                 `protobuf:"varint,9,opt,name=UeUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"UeUlAmbrBps,omitempty"`
-	Sqn           uint64                 `protobuf:"varint,10,opt,name=Sqn,json=sqn,proto3" json:"Sqn,omitempty"`
-	CsgIdPrsent   bool                   `protobuf:"varint,11,opt,name=CsgIdPrsent,json=csg_id_prsent,proto3" json:"CsgIdPrsent,omitempty"`
-	CsgId         uint32                 `protobuf:"varint,12,opt,name=CsgId,json=csg_id,proto3" json:"CsgId,omitempty"`
-	PackageId     string                 `protobuf:"bytes,13,opt,name=PackageId,json=package_id,proto3" json:"PackageId,omitempty"`
-	SimPackageId  string                 `protobuf:"bytes,14,opt,name=SimPackageId,json=sim_package_id,proto3" json:"SimPackageId,omitempty"`
-	NetworkId     string                 `protobuf:"bytes,15,opt,name=NetworkId,json=network_id,proto3" json:"NetworkId,omitempty"`
-	Policy        *Policy                `protobuf:"bytes,16,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Imsi              string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
+	Iccid             string                 `protobuf:"bytes,2,opt,name=iccid,proto3" json:"iccid,omitempty"`
+	Key               []byte                 `protobuf:"bytes,3,opt,name=key,json=k,proto3" json:"key,omitempty"`
+	Op                []byte                 `protobuf:"bytes,4,opt,name=op,proto3" json:"op,omitempty"`
+	Amf               []byte                 `protobuf:"bytes,5,opt,name=amf,proto3" json:"amf,omitempty"`
+	Apn               *Apn                   `protobuf:"bytes,6,opt,name=apn,proto3" json:"apn,omitempty"`
+	AlgoType          uint32                 `protobuf:"varint,7,opt,name=algoType,json=algo_type,proto3" json:"algoType,omitempty"`
+	UeDlAmbrBps       uint32                 `protobuf:"varint,8,opt,name=ueDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"ueDlAmbrBps,omitempty"`
+	UeUlAmbrBps       uint32                 `protobuf:"varint,9,opt,name=ueUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"ueUlAmbrBps,omitempty"`
+	Sqn               uint64                 `protobuf:"varint,10,opt,name=sqn,proto3" json:"sqn,omitempty"`
+	CsgIdPrsent       bool                   `protobuf:"varint,11,opt,name=csgIdPrsent,json=csg_id_prsent,proto3" json:"csgIdPrsent,omitempty"`
+	CsgId             uint32                 `protobuf:"varint,12,opt,name=csgId,json=csg_id,proto3" json:"csgId,omitempty"`
+	PackageId         string                 `protobuf:"bytes,13,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	SimPackageId      string                 `protobuf:"bytes,14,opt,name=simPackageId,json=sim_package_id,proto3" json:"simPackageId,omitempty"`
+	NetworkId         string                 `protobuf:"bytes,15,opt,name=networkId,json=network_id,proto3" json:"networkId,omitempty"`
+	Policy            *Policy                `protobuf:"bytes,16,opt,name=policy,proto3" json:"policy,omitempty"`
+	IsServiceStatusOn bool                   `protobuf:"varint,17,opt,name=IsServiceStatusOn,json=is_service_status_on,proto3" json:"IsServiceStatusOn,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *Record) Reset() {
@@ -408,6 +409,13 @@ func (x *Record) GetPolicy() *Policy {
 		return x.Policy
 	}
 	return nil
+}
+
+func (x *Record) GetIsServiceStatusOn() bool {
+	if x != nil {
+		return x.IsServiceStatusOn
+	}
+	return false
 }
 
 type Apn struct {
@@ -580,7 +588,7 @@ func (x *ReadResp) GetRecord() *Record {
 	return nil
 }
 
-type ActivateReq struct {
+type CreateProfileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
@@ -591,20 +599,20 @@ type ActivateReq struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ActivateReq) Reset() {
-	*x = ActivateReq{}
+func (x *CreateProfileReq) Reset() {
+	*x = CreateProfileReq{}
 	mi := &file_asr_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ActivateReq) String() string {
+func (x *CreateProfileReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ActivateReq) ProtoMessage() {}
+func (*CreateProfileReq) ProtoMessage() {}
 
-func (x *ActivateReq) ProtoReflect() protoreflect.Message {
+func (x *CreateProfileReq) ProtoReflect() protoreflect.Message {
 	mi := &file_asr_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -616,66 +624,66 @@ func (x *ActivateReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ActivateReq.ProtoReflect.Descriptor instead.
-func (*ActivateReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateProfileReq.ProtoReflect.Descriptor instead.
+func (*CreateProfileReq) Descriptor() ([]byte, []int) {
 	return file_asr_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *ActivateReq) GetIccid() string {
+func (x *CreateProfileReq) GetIccid() string {
 	if x != nil {
 		return x.Iccid
 	}
 	return ""
 }
 
-func (x *ActivateReq) GetImsi() string {
+func (x *CreateProfileReq) GetImsi() string {
 	if x != nil {
 		return x.Imsi
 	}
 	return ""
 }
 
-func (x *ActivateReq) GetSimPackageId() string {
+func (x *CreateProfileReq) GetSimPackageId() string {
 	if x != nil {
 		return x.SimPackageId
 	}
 	return ""
 }
 
-func (x *ActivateReq) GetPackageId() string {
+func (x *CreateProfileReq) GetPackageId() string {
 	if x != nil {
 		return x.PackageId
 	}
 	return ""
 }
 
-func (x *ActivateReq) GetNetworkId() string {
+func (x *CreateProfileReq) GetNetworkId() string {
 	if x != nil {
 		return x.NetworkId
 	}
 	return ""
 }
 
-type ActivateResp struct {
+type CreateProfileResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ActivateResp) Reset() {
-	*x = ActivateResp{}
+func (x *CreateProfileResp) Reset() {
+	*x = CreateProfileResp{}
 	mi := &file_asr_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ActivateResp) String() string {
+func (x *CreateProfileResp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ActivateResp) ProtoMessage() {}
+func (*CreateProfileResp) ProtoMessage() {}
 
-func (x *ActivateResp) ProtoReflect() protoreflect.Message {
+func (x *CreateProfileResp) ProtoReflect() protoreflect.Message {
 	mi := &file_asr_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -687,13 +695,13 @@ func (x *ActivateResp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ActivateResp.ProtoReflect.Descriptor instead.
-func (*ActivateResp) Descriptor() ([]byte, []int) {
+// Deprecated: Use CreateProfileResp.ProtoReflect.Descriptor instead.
+func (*CreateProfileResp) Descriptor() ([]byte, []int) {
 	return file_asr_proto_rawDescGZIP(), []int{8}
 }
 
 // Could be called by subscriber manager with ICCID and by billing service with imsi
-type InactivateReq struct {
+type DeleteProfileReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Iccid         string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
 	Imsi          string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
@@ -703,20 +711,20 @@ type InactivateReq struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InactivateReq) Reset() {
-	*x = InactivateReq{}
+func (x *DeleteProfileReq) Reset() {
+	*x = DeleteProfileReq{}
 	mi := &file_asr_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InactivateReq) String() string {
+func (x *DeleteProfileReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InactivateReq) ProtoMessage() {}
+func (*DeleteProfileReq) ProtoMessage() {}
 
-func (x *InactivateReq) ProtoReflect() protoreflect.Message {
+func (x *DeleteProfileReq) ProtoReflect() protoreflect.Message {
 	mi := &file_asr_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -728,59 +736,59 @@ func (x *InactivateReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InactivateReq.ProtoReflect.Descriptor instead.
-func (*InactivateReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteProfileReq.ProtoReflect.Descriptor instead.
+func (*DeleteProfileReq) Descriptor() ([]byte, []int) {
 	return file_asr_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *InactivateReq) GetIccid() string {
+func (x *DeleteProfileReq) GetIccid() string {
 	if x != nil {
 		return x.Iccid
 	}
 	return ""
 }
 
-func (x *InactivateReq) GetImsi() string {
+func (x *DeleteProfileReq) GetImsi() string {
 	if x != nil {
 		return x.Imsi
 	}
 	return ""
 }
 
-func (x *InactivateReq) GetPackageId() string {
+func (x *DeleteProfileReq) GetPackageId() string {
 	if x != nil {
 		return x.PackageId
 	}
 	return ""
 }
 
-func (x *InactivateReq) GetNetworkId() string {
+func (x *DeleteProfileReq) GetNetworkId() string {
 	if x != nil {
 		return x.NetworkId
 	}
 	return ""
 }
 
-type InactivateResp struct {
+type DeleteProfileResp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *InactivateResp) Reset() {
-	*x = InactivateResp{}
+func (x *DeleteProfileResp) Reset() {
+	*x = DeleteProfileResp{}
 	mi := &file_asr_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *InactivateResp) String() string {
+func (x *DeleteProfileResp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*InactivateResp) ProtoMessage() {}
+func (*DeleteProfileResp) ProtoMessage() {}
 
-func (x *InactivateResp) ProtoReflect() protoreflect.Message {
+func (x *DeleteProfileResp) ProtoReflect() protoreflect.Message {
 	mi := &file_asr_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -792,8 +800,8 @@ func (x *InactivateResp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use InactivateResp.ProtoReflect.Descriptor instead.
-func (*InactivateResp) Descriptor() ([]byte, []int) {
+// Deprecated: Use DeleteProfileResp.ProtoReflect.Descriptor instead.
+func (*DeleteProfileResp) Descriptor() ([]byte, []int) {
 	return file_asr_proto_rawDescGZIP(), []int{10}
 }
 
@@ -1437,29 +1445,30 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Iccid\x18\x02 \x01(\tH\x00R\x05Iccid\x12\x1c\n" +
 	"\tstartTime\x18\x03 \x01(\x04R\tstartTime\x12\x18\n" +
 	"\aendTime\x18\x04 \x01(\x04R\aendTimeB\x04\n" +
-	"\x02id\"\x94\x04\n" +
+	"\x02id\"\xc5\x04\n" +
 	"\x06Record\x12)\n" +
 	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
 	"\r^[0-9]{6,15}$X\x01R\x04imsi\x12,\n" +
 	"\x05iccid\x18\x02 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x0e\n" +
-	"\x03Key\x18\x03 \x01(\fR\x01k\x12\x0e\n" +
-	"\x02Op\x18\x04 \x01(\fR\x02op\x12\x10\n" +
-	"\x03Amf\x18\x05 \x01(\fR\x03amf\x12.\n" +
-	"\x03Apn\x18\x06 \x01(\v2\x1c.ukama.subscriber.asr.v1.ApnR\x03apn\x12\x1b\n" +
-	"\bAlgoType\x18\a \x01(\rR\talgo_type\x12#\n" +
-	"\vUeDlAmbrBps\x18\b \x01(\rR\x0eue_dl_ambr_bps\x12#\n" +
-	"\vUeUlAmbrBps\x18\t \x01(\rR\x0eue_ul_ambr_bps\x12\x10\n" +
-	"\x03Sqn\x18\n" +
+	"\x03key\x18\x03 \x01(\fR\x01k\x12\x0e\n" +
+	"\x02op\x18\x04 \x01(\fR\x02op\x12\x10\n" +
+	"\x03amf\x18\x05 \x01(\fR\x03amf\x12.\n" +
+	"\x03apn\x18\x06 \x01(\v2\x1c.ukama.subscriber.asr.v1.ApnR\x03apn\x12\x1b\n" +
+	"\balgoType\x18\a \x01(\rR\talgo_type\x12#\n" +
+	"\vueDlAmbrBps\x18\b \x01(\rR\x0eue_dl_ambr_bps\x12#\n" +
+	"\vueUlAmbrBps\x18\t \x01(\rR\x0eue_ul_ambr_bps\x12\x10\n" +
+	"\x03sqn\x18\n" +
 	" \x01(\x04R\x03sqn\x12\"\n" +
-	"\vCsgIdPrsent\x18\v \x01(\bR\rcsg_id_prsent\x12\x15\n" +
-	"\x05CsgId\x18\f \x01(\rR\x06csg_id\x12\x1d\n" +
-	"\tPackageId\x18\r \x01(\tR\n" +
+	"\vcsgIdPrsent\x18\v \x01(\bR\rcsg_id_prsent\x12\x15\n" +
+	"\x05csgId\x18\f \x01(\rR\x06csg_id\x12\x1d\n" +
+	"\tpackageId\x18\r \x01(\tR\n" +
 	"package_id\x12$\n" +
-	"\fSimPackageId\x18\x0e \x01(\tR\x0esim_package_id\x12\x1d\n" +
-	"\tNetworkId\x18\x0f \x01(\tR\n" +
+	"\fsimPackageId\x18\x0e \x01(\tR\x0esim_package_id\x12\x1d\n" +
+	"\tnetworkId\x18\x0f \x01(\tR\n" +
 	"network_id\x127\n" +
-	"\x06Policy\x18\x10 \x01(\v2\x1f.ukama.subscriber.asr.v1.PolicyR\x06policy\"\x19\n" +
+	"\x06policy\x18\x10 \x01(\v2\x1f.ukama.subscriber.asr.v1.PolicyR\x06policy\x12/\n" +
+	"\x11IsServiceStatusOn\x18\x11 \x01(\bR\x14is_service_status_on\"\x19\n" +
 	"\x03Apn\x12\x12\n" +
 	"\x04Name\x18\x01 \x01(\tR\x04Name\"=\n" +
 	"\aReadReq\x12\x14\n" +
@@ -1467,22 +1476,22 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Iccid\x18\x02 \x01(\tH\x00R\x05IccidB\x04\n" +
 	"\x02id\"C\n" +
 	"\bReadResp\x127\n" +
-	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xaf\x01\n" +
-	"\vActivateReq\x12,\n" +
+	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xb4\x01\n" +
+	"\x10CreateProfileReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\"\n" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
-	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x0e\n" +
-	"\fActivateResp\"\x8d\x01\n" +
-	"\rInactivateReq\x12,\n" +
+	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x13\n" +
+	"\x11CreateProfileResp\"\x90\x01\n" +
+	"\x10DeleteProfileReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\x1c\n" +
 	"\tPackageId\x18\x03 \x01(\tR\tPackageId\x12\x1c\n" +
-	"\tNetworkId\x18\x04 \x01(\tR\tNetworkId\"\x10\n" +
-	"\x0eInactivateResp\"\xb4\x01\n" +
+	"\tNetworkId\x18\x04 \x01(\tR\tNetworkId\"\x13\n" +
+	"\x11DeleteProfileResp\"\xb4\x01\n" +
 	"\x10UpdatePackageReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
@@ -1537,11 +1546,10 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Count\x18\a \x01(\rR\x05Count\x12\x12\n" +
 	"\x04Sort\x18\b \x01(\bR\x04Sort\"&\n" +
 	"\x0eQueryUsageResp\x12\x14\n" +
-	"\x05Usage\x18\x01 \x01(\x04R\x05Usage2\xd1\x06\n" +
-	"\x10AsrRecordService\x12W\n" +
-	"\bActivate\x12$.ukama.subscriber.asr.v1.ActivateReq\x1a%.ukama.subscriber.asr.v1.ActivateResp\x12]\n" +
-	"\n" +
-	"Inactivate\x12&.ukama.subscriber.asr.v1.InactivateReq\x1a'.ukama.subscriber.asr.v1.InactivateResp\x12f\n" +
+	"\x05Usage\x18\x01 \x01(\x04R\x05Usage2\xe9\x06\n" +
+	"\x10AsrRecordService\x12f\n" +
+	"\rCreateProfile\x12).ukama.subscriber.asr.v1.CreateProfileReq\x1a*.ukama.subscriber.asr.v1.CreateProfileResp\x12f\n" +
+	"\rDeleteProfile\x12).ukama.subscriber.asr.v1.DeleteProfileReq\x1a*.ukama.subscriber.asr.v1.DeleteProfileResp\x12f\n" +
 	"\rUpdatePackage\x12).ukama.subscriber.asr.v1.UpdatePackageReq\x1a*.ukama.subscriber.asr.v1.UpdatePackageResp\x12]\n" +
 	"\n" +
 	"UpdateGuti\x12&.ukama.subscriber.asr.v1.UpdateGutiReq\x1a'.ukama.subscriber.asr.v1.UpdateGutiResp\x12Z\n" +
@@ -1573,10 +1581,10 @@ var file_asr_proto_goTypes = []any{
 	(*Apn)(nil),               // 4: ukama.subscriber.asr.v1.Apn
 	(*ReadReq)(nil),           // 5: ukama.subscriber.asr.v1.ReadReq
 	(*ReadResp)(nil),          // 6: ukama.subscriber.asr.v1.ReadResp
-	(*ActivateReq)(nil),       // 7: ukama.subscriber.asr.v1.ActivateReq
-	(*ActivateResp)(nil),      // 8: ukama.subscriber.asr.v1.ActivateResp
-	(*InactivateReq)(nil),     // 9: ukama.subscriber.asr.v1.InactivateReq
-	(*InactivateResp)(nil),    // 10: ukama.subscriber.asr.v1.InactivateResp
+	(*CreateProfileReq)(nil),  // 7: ukama.subscriber.asr.v1.CreateProfileReq
+	(*CreateProfileResp)(nil), // 8: ukama.subscriber.asr.v1.CreateProfileResp
+	(*DeleteProfileReq)(nil),  // 9: ukama.subscriber.asr.v1.DeleteProfileReq
+	(*DeleteProfileResp)(nil), // 10: ukama.subscriber.asr.v1.DeleteProfileResp
 	(*UpdatePackageReq)(nil),  // 11: ukama.subscriber.asr.v1.UpdatePackageReq
 	(*UpdatePackageResp)(nil), // 12: ukama.subscriber.asr.v1.UpdatePackageResp
 	(*UpdateGutiReq)(nil),     // 13: ukama.subscriber.asr.v1.UpdateGutiReq
@@ -1589,12 +1597,12 @@ var file_asr_proto_goTypes = []any{
 	(*QueryUsageResp)(nil),    // 20: ukama.subscriber.asr.v1.QueryUsageResp
 }
 var file_asr_proto_depIdxs = []int32{
-	4,  // 0: ukama.subscriber.asr.v1.Record.Apn:type_name -> ukama.subscriber.asr.v1.Apn
-	18, // 1: ukama.subscriber.asr.v1.Record.Policy:type_name -> ukama.subscriber.asr.v1.Policy
+	4,  // 0: ukama.subscriber.asr.v1.Record.apn:type_name -> ukama.subscriber.asr.v1.Apn
+	18, // 1: ukama.subscriber.asr.v1.Record.policy:type_name -> ukama.subscriber.asr.v1.Policy
 	3,  // 2: ukama.subscriber.asr.v1.ReadResp.Record:type_name -> ukama.subscriber.asr.v1.Record
 	14, // 3: ukama.subscriber.asr.v1.UpdateGutiReq.Guti:type_name -> ukama.subscriber.asr.v1.Guti
-	7,  // 4: ukama.subscriber.asr.v1.AsrRecordService.Activate:input_type -> ukama.subscriber.asr.v1.ActivateReq
-	9,  // 5: ukama.subscriber.asr.v1.AsrRecordService.Inactivate:input_type -> ukama.subscriber.asr.v1.InactivateReq
+	7,  // 4: ukama.subscriber.asr.v1.AsrRecordService.CreateProfile:input_type -> ukama.subscriber.asr.v1.CreateProfileReq
+	9,  // 5: ukama.subscriber.asr.v1.AsrRecordService.DeleteProfile:input_type -> ukama.subscriber.asr.v1.DeleteProfileReq
 	11, // 6: ukama.subscriber.asr.v1.AsrRecordService.UpdatePackage:input_type -> ukama.subscriber.asr.v1.UpdatePackageReq
 	13, // 7: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:input_type -> ukama.subscriber.asr.v1.UpdateGutiReq
 	16, // 8: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:input_type -> ukama.subscriber.asr.v1.UpdateTaiReq
@@ -1602,8 +1610,8 @@ var file_asr_proto_depIdxs = []int32{
 	1,  // 10: ukama.subscriber.asr.v1.AsrRecordService.GetUsage:input_type -> ukama.subscriber.asr.v1.UsageReq
 	2,  // 11: ukama.subscriber.asr.v1.AsrRecordService.GetUsageForPeriod:input_type -> ukama.subscriber.asr.v1.UsageForPeriodReq
 	19, // 12: ukama.subscriber.asr.v1.AsrRecordService.QueryUsage:input_type -> ukama.subscriber.asr.v1.QueryUsageReq
-	8,  // 13: ukama.subscriber.asr.v1.AsrRecordService.Activate:output_type -> ukama.subscriber.asr.v1.ActivateResp
-	10, // 14: ukama.subscriber.asr.v1.AsrRecordService.Inactivate:output_type -> ukama.subscriber.asr.v1.InactivateResp
+	8,  // 13: ukama.subscriber.asr.v1.AsrRecordService.CreateProfile:output_type -> ukama.subscriber.asr.v1.CreateProfileResp
+	10, // 14: ukama.subscriber.asr.v1.AsrRecordService.DeleteProfile:output_type -> ukama.subscriber.asr.v1.DeleteProfileResp
 	12, // 15: ukama.subscriber.asr.v1.AsrRecordService.UpdatePackage:output_type -> ukama.subscriber.asr.v1.UpdatePackageResp
 	15, // 16: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:output_type -> ukama.subscriber.asr.v1.UpdateGutiResp
 	17, // 17: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:output_type -> ukama.subscriber.asr.v1.UpdateTaiResp

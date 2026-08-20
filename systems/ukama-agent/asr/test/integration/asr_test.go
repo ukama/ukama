@@ -102,8 +102,8 @@ func Test_FullFlow(t *testing.T) {
 		return
 	}
 
-	t.Run("Activate", func(t *testing.T) {
-		_, err := c.Activate(ctx, &pb.ActivateReq{
+	t.Run("CreateProfile", func(t *testing.T) {
+		_, err := c.CreateProfile(ctx, &pb.CreateProfileReq{
 			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:        sim.Iccid,
 			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
@@ -167,8 +167,8 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Inactivate", func(t *testing.T) {
-		_, err := c.Inactivate(ctx, &pb.InactivateReq{
+	t.Run("DeleteProfile", func(t *testing.T) {
+		_, err := c.DeleteProfile(ctx, &pb.DeleteProfileReq{
 			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
@@ -177,8 +177,8 @@ func Test_FullFlow(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("Activate", func(t *testing.T) {
-		_, err := c.Activate(ctx, &pb.ActivateReq{
+	t.Run("CreateProfile", func(t *testing.T) {
+		_, err := c.CreateProfile(ctx, &pb.CreateProfileReq{
 			NetworkId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:        sim.Iccid,
 			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
@@ -199,8 +199,8 @@ func Test_FullFlow(t *testing.T) {
 		Imsi = resp.Record.Imsi
 	})
 
-	t.Run("InactivateByImsi", func(t *testing.T) {
-		_, err := c.Inactivate(ctx, &pb.InactivateReq{
+	t.Run("DeleteProfileByImsi", func(t *testing.T) {
+		_, err := c.DeleteProfile(ctx, &pb.DeleteProfileReq{
 			NetworkId: "40987edb-ebb6-4f84-a27c-99db7c136127",
 			Iccid:     sim.Iccid,
 			PackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",

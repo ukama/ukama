@@ -133,15 +133,16 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 		Apn: &pb.Apn{
 			Name: sub.DefaultApnName,
 		},
-		AlgoType:     sub.AlgoType,
-		CsgId:        sub.CsgId,
-		CsgIdPrsent:  sub.CsgIdPrsent,
-		Sqn:          sub.Sqn,
-		UeDlAmbrBps:  sub.UeDlAmbrBps,
-		UeUlAmbrBps:  sub.UeDlAmbrBps,
-		NetworkId:    sub.NetworkId.String(),
-		PackageId:    sub.PackageId.String(),
-		SimPackageId: sub.SimPackageId.String(),
+		AlgoType:          sub.AlgoType,
+		CsgId:             sub.CsgId,
+		CsgIdPrsent:       sub.CsgIdPrsent,
+		Sqn:               sub.Sqn,
+		UeDlAmbrBps:       sub.UeDlAmbrBps,
+		UeUlAmbrBps:       sub.UeDlAmbrBps,
+		IsServiceStatusOn: sub.IsServiceStatusOn,
+		NetworkId:         sub.NetworkId.String(),
+		PackageId:         sub.PackageId.String(),
+		SimPackageId:      sub.SimPackageId.String(),
 		Policy: &pb.Policy{
 			Uuid:         sub.Policy.Id.String(),
 			Burst:        sub.Policy.Burst,
@@ -158,8 +159,8 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 	return resp, nil
 }
 
-func (ar *AsrRecordServer) Activate(ctx context.Context, req *pb.ActivateReq) (*pb.ActivateResp, error) {
-	return activate(req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
+func (ar *AsrRecordServer) CreateProfile(ctx context.Context, req *pb.CreateProfileReq) (*pb.CreateProfileResp, error) {
+	return createProfile(req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
 		ar.factory, ar.asrRepo, ar.pc, ar.allowedToS)
 }
 
@@ -238,8 +239,8 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	return &pb.UpdatePackageResp{}, nil
 }
 
-func (ar *AsrRecordServer) Inactivate(c context.Context, req *pb.InactivateReq) (*pb.InactivateResp, error) {
-	return inactivate(req.Iccid, ar.asrRepo, ar.pc)
+func (ar *AsrRecordServer) DeleteProfile(c context.Context, req *pb.DeleteProfileReq) (*pb.DeleteProfileResp, error) {
+	return deleteProfile(req.Iccid, ar.asrRepo, ar.pc)
 }
 
 func (ar *AsrRecordServer) GetUsage(c context.Context, req *pb.UsageReq) (*pb.UsageResp, error) {
@@ -448,8 +449,8 @@ func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 	return nil
 }
 
-func activate(iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
-	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64) (*pb.ActivateResp, error) {
+func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
+	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64) (*pb.CreateProfileResp, error) {
 	log.Infof("Adding ASR profile for iccid %s", iccid)
 
 	/* Package DataPlan Id */
@@ -524,6 +525,7 @@ func activate(iccid, imsi, packageId, dataPlanId, networkId string, networkClien
 		Policy:                  *policy,
 		LastStatusChangeAt:      time.Now(),
 		AllowedTimeOfService:    allowedToS,
+		IsServiceStatusOn:       true,
 		LastStatusChangeReasons: db.PROFILE_CREATION,
 	}
 
@@ -554,10 +556,10 @@ func activate(iccid, imsi, packageId, dataPlanId, networkId string, networkClien
 
 	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
 
-	return &pb.ActivateResp{}, err
+	return &pb.CreateProfileResp{}, err
 }
 
-func inactivate(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Controller) (*pb.InactivateResp, error) {
+func deleteProfile(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Controller) (*pb.DeleteProfileResp, error) {
 	log.Infof("Removing ASR profile for Iccid %s", iccid)
 
 	delAsrRecord, err := asrRepo.GetByIccid(iccid)
@@ -590,5 +592,5 @@ func inactivate(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Cont
 
 	log.Debugf("Deleted subscriber %+v", delAsrRecord)
 
-	return &pb.InactivateResp{}, nil
+	return &pb.DeleteProfileResp{}, nil
 }

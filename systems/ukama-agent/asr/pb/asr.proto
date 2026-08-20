@@ -19,8 +19,8 @@ import "validator.proto";
   For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 
   RPC exposed by ASR
-    - Activate
-    - Inactivate
+    - CreateProfile
+    - DeleteProfile
     - UpdatePackage
     - UpdateGuti
     - UpdateTai
@@ -30,10 +30,10 @@ import "validator.proto";
   service AsrRecordService {
 
     /// Use this RPC to activate or add a new subscriber to ASR
-    rpc Activate(ActivateReq) returns (ActivateResp);
+    rpc CreateProfile(CreateProfileReq) returns (CreateProfileResp);
 
     /// Use this RPC to inactivate or remove a subscriber to ASR
-    rpc Inactivate(InactivateReq) returns (InactivateResp);
+    rpc DeleteProfile(DeleteProfileReq) returns (DeleteProfileResp);
 
     /// Use this RPC to update a subscriber package in ASR
     rpc UpdatePackage(UpdatePackageReq) returns (UpdatePackageResp);
@@ -81,20 +81,21 @@ message UsageForPeriodReq {
 message Record {
     string imsi = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{6,15}$"}, json_name = "imsi"];
     string iccid = 2 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
-    bytes Key = 3 [json_name="k"];
-    bytes Op = 4 [json_name="op"];
-    bytes Amf = 5 [json_name="amf"];
-    Apn Apn = 6 [json_name="apn"];
-    uint32 AlgoType = 7 [json_name="algo_type"];
-    uint32 UeDlAmbrBps = 8 [json_name="ue_dl_ambr_bps"];
-    uint32 UeUlAmbrBps = 9 [json_name="ue_ul_ambr_bps"];
-    uint64 Sqn  = 10 [json_name="sqn"];
-    bool CsgIdPrsent = 11 [json_name="csg_id_prsent"];
-    uint32 CsgId = 12 [json_name="csg_id"];
-    string PackageId = 13 [json_name="package_id"];
-    string SimPackageId = 14 [json_name="sim_package_id"];
-    string NetworkId = 15 [json_name="network_id"];
-    Policy Policy = 16 [json_name="policy"];
+    bytes key = 3 [json_name="k"];
+    bytes op = 4 [json_name="op"];
+    bytes amf = 5 [json_name="amf"];
+    Apn apn = 6 [json_name="apn"];
+    uint32 algoType = 7 [json_name="algo_type"];
+    uint32 ueDlAmbrBps = 8 [json_name="ue_dl_ambr_bps"];
+    uint32 ueUlAmbrBps = 9 [json_name="ue_ul_ambr_bps"];
+    uint64 sqn  = 10 [json_name="sqn"];
+    bool csgIdPrsent = 11 [json_name="csg_id_prsent"];
+    uint32 csgId = 12 [json_name="csg_id"];
+    string packageId = 13 [json_name="package_id"];
+    string simPackageId = 14 [json_name="sim_package_id"];
+    string networkId = 15 [json_name="network_id"];
+    Policy policy = 16 [json_name="policy"];
+    bool IsServiceStatusOn = 17 [json_name="is_service_status_on"];
 }
 
 message Apn {
@@ -112,7 +113,7 @@ message ReadResp {
     Record Record = 1;
 }
 
-message ActivateReq {
+message CreateProfileReq {
     string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string Imsi = 2;
     string SimPackageId = 3;
@@ -120,19 +121,19 @@ message ActivateReq {
     string NetworkId = 5;
 }
 
-message ActivateResp {
+message CreateProfileResp {
     ///Empty
 }
 
 /* Could be called by subscriber manager with ICCID and by billing service with imsi */
-message InactivateReq {
+message DeleteProfileReq {
     string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string Imsi = 2;
     string PackageId = 3;
     string NetworkId = 4;
 }
 
-message InactivateResp {
+message DeleteProfileResp {
     ///Empty
 }
 

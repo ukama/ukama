@@ -131,7 +131,7 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 		return nil
 	}
 
-	_, err := activate(sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
+	_, err := createProfile(sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
 		ae.network, ae.factory, ae.asrRepo, ae.pc, ae.allowedToS)
 	if err != nil {
 		log.Errorf("Failed to create subscriber profile for sim %s. Error: %v", sim.Imsi, err)
@@ -163,7 +163,7 @@ func (ae *AsrEventServer) handleSimManagerSimTerminateEvent(key string, sim *epb
 		return nil
 	}
 
-	_, err := inactivate(sim.Iccid, ae.asrRepo, ae.pc)
+	_, err := deleteProfile(sim.Iccid, ae.asrRepo, ae.pc)
 	if err != nil {
 		log.Errorf("Failed to remove subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 

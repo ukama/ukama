@@ -16,8 +16,8 @@ type AsrRecordServiceClient struct {
 	mock.Mock
 }
 
-// Activate provides a mock function with given fields: ctx, in, opts
-func (_m *AsrRecordServiceClient) Activate(ctx context.Context, in *gen.ActivateReq, opts ...grpc.CallOption) (*gen.ActivateResp, error) {
+// CreateProfile provides a mock function with given fields: ctx, in, opts
+func (_m *AsrRecordServiceClient) CreateProfile(ctx context.Context, in *gen.CreateProfileReq, opts ...grpc.CallOption) (*gen.CreateProfileResp, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -28,23 +28,60 @@ func (_m *AsrRecordServiceClient) Activate(ctx context.Context, in *gen.Activate
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Activate")
+		panic("no return value specified for CreateProfile")
 	}
 
-	var r0 *gen.ActivateResp
+	var r0 *gen.CreateProfileResp
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateReq, ...grpc.CallOption) (*gen.ActivateResp, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateProfileReq, ...grpc.CallOption) (*gen.CreateProfileResp, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ActivateReq, ...grpc.CallOption) *gen.ActivateResp); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.CreateProfileReq, ...grpc.CallOption) *gen.CreateProfileResp); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateResp)
+			r0 = ret.Get(0).(*gen.CreateProfileResp)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ActivateReq, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.CreateProfileReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteProfile provides a mock function with given fields: ctx, in, opts
+func (_m *AsrRecordServiceClient) DeleteProfile(ctx context.Context, in *gen.DeleteProfileReq, opts ...grpc.CallOption) (*gen.DeleteProfileResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteProfile")
+	}
+
+	var r0 *gen.DeleteProfileResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteProfileReq, ...grpc.CallOption) (*gen.DeleteProfileResp, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteProfileReq, ...grpc.CallOption) *gen.DeleteProfileResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteProfileResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteProfileReq, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -119,43 +156,6 @@ func (_m *AsrRecordServiceClient) GetUsageForPeriod(ctx context.Context, in *gen
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.UsageForPeriodReq, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Inactivate provides a mock function with given fields: ctx, in, opts
-func (_m *AsrRecordServiceClient) Inactivate(ctx context.Context, in *gen.InactivateReq, opts ...grpc.CallOption) (*gen.InactivateResp, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Inactivate")
-	}
-
-	var r0 *gen.InactivateResp
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.InactivateReq, ...grpc.CallOption) (*gen.InactivateResp, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.InactivateReq, ...grpc.CallOption) *gen.InactivateResp); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.InactivateResp)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.InactivateReq, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	AsrRecordService_Activate_FullMethodName          = "/ukama.subscriber.asr.v1.AsrRecordService/Activate"
-	AsrRecordService_Inactivate_FullMethodName        = "/ukama.subscriber.asr.v1.AsrRecordService/Inactivate"
+	AsrRecordService_CreateProfile_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/CreateProfile"
+	AsrRecordService_DeleteProfile_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/DeleteProfile"
 	AsrRecordService_UpdatePackage_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/UpdatePackage"
 	AsrRecordService_UpdateGuti_FullMethodName        = "/ukama.subscriber.asr.v1.AsrRecordService/UpdateGuti"
 	AsrRecordService_UpdateTai_FullMethodName         = "/ukama.subscriber.asr.v1.AsrRecordService/UpdateTai"
@@ -47,17 +47,17 @@ const (
 // For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 //
 // RPC exposed by ASR
-// - Activate
-// - Inactivate
+// - CreateProfile
+// - DeleteProfile
 // - UpdatePackage
 // - UpdateGuti
 // - UpdateTai
 // - Read
 type AsrRecordServiceClient interface {
 	// / Use this RPC to activate or add a new subscriber to ASR
-	Activate(ctx context.Context, in *ActivateReq, opts ...grpc.CallOption) (*ActivateResp, error)
+	CreateProfile(ctx context.Context, in *CreateProfileReq, opts ...grpc.CallOption) (*CreateProfileResp, error)
 	// / Use this RPC to inactivate or remove a subscriber to ASR
-	Inactivate(ctx context.Context, in *InactivateReq, opts ...grpc.CallOption) (*InactivateResp, error)
+	DeleteProfile(ctx context.Context, in *DeleteProfileReq, opts ...grpc.CallOption) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
 	// / This RPC is called when a Update GUTI message is sent by node
@@ -82,20 +82,20 @@ func NewAsrRecordServiceClient(cc grpc.ClientConnInterface) AsrRecordServiceClie
 	return &asrRecordServiceClient{cc}
 }
 
-func (c *asrRecordServiceClient) Activate(ctx context.Context, in *ActivateReq, opts ...grpc.CallOption) (*ActivateResp, error) {
+func (c *asrRecordServiceClient) CreateProfile(ctx context.Context, in *CreateProfileReq, opts ...grpc.CallOption) (*CreateProfileResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ActivateResp)
-	err := c.cc.Invoke(ctx, AsrRecordService_Activate_FullMethodName, in, out, cOpts...)
+	out := new(CreateProfileResp)
+	err := c.cc.Invoke(ctx, AsrRecordService_CreateProfile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *asrRecordServiceClient) Inactivate(ctx context.Context, in *InactivateReq, opts ...grpc.CallOption) (*InactivateResp, error) {
+func (c *asrRecordServiceClient) DeleteProfile(ctx context.Context, in *DeleteProfileReq, opts ...grpc.CallOption) (*DeleteProfileResp, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(InactivateResp)
-	err := c.cc.Invoke(ctx, AsrRecordService_Inactivate_FullMethodName, in, out, cOpts...)
+	out := new(DeleteProfileResp)
+	err := c.cc.Invoke(ctx, AsrRecordService_DeleteProfile_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -189,17 +189,17 @@ func (c *asrRecordServiceClient) QueryUsage(ctx context.Context, in *QueryUsageR
 // For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 //
 // RPC exposed by ASR
-// - Activate
-// - Inactivate
+// - CreateProfile
+// - DeleteProfile
 // - UpdatePackage
 // - UpdateGuti
 // - UpdateTai
 // - Read
 type AsrRecordServiceServer interface {
 	// / Use this RPC to activate or add a new subscriber to ASR
-	Activate(context.Context, *ActivateReq) (*ActivateResp, error)
+	CreateProfile(context.Context, *CreateProfileReq) (*CreateProfileResp, error)
 	// / Use this RPC to inactivate or remove a subscriber to ASR
-	Inactivate(context.Context, *InactivateReq) (*InactivateResp, error)
+	DeleteProfile(context.Context, *DeleteProfileReq) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)
 	// / This RPC is called when a Update GUTI message is sent by node
@@ -224,11 +224,11 @@ type AsrRecordServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAsrRecordServiceServer struct{}
 
-func (UnimplementedAsrRecordServiceServer) Activate(context.Context, *ActivateReq) (*ActivateResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method Activate not implemented")
+func (UnimplementedAsrRecordServiceServer) CreateProfile(context.Context, *CreateProfileReq) (*CreateProfileResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method CreateProfile not implemented")
 }
-func (UnimplementedAsrRecordServiceServer) Inactivate(context.Context, *InactivateReq) (*InactivateResp, error) {
-	return nil, status.Error(codes.Unimplemented, "method Inactivate not implemented")
+func (UnimplementedAsrRecordServiceServer) DeleteProfile(context.Context, *DeleteProfileReq) (*DeleteProfileResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteProfile not implemented")
 }
 func (UnimplementedAsrRecordServiceServer) UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdatePackage not implemented")
@@ -272,38 +272,38 @@ func RegisterAsrRecordServiceServer(s grpc.ServiceRegistrar, srv AsrRecordServic
 	s.RegisterService(&AsrRecordService_ServiceDesc, srv)
 }
 
-func _AsrRecordService_Activate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ActivateReq)
+func _AsrRecordService_CreateProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CreateProfileReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AsrRecordServiceServer).Activate(ctx, in)
+		return srv.(AsrRecordServiceServer).CreateProfile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AsrRecordService_Activate_FullMethodName,
+		FullMethod: AsrRecordService_CreateProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AsrRecordServiceServer).Activate(ctx, req.(*ActivateReq))
+		return srv.(AsrRecordServiceServer).CreateProfile(ctx, req.(*CreateProfileReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AsrRecordService_Inactivate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(InactivateReq)
+func _AsrRecordService_DeleteProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteProfileReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AsrRecordServiceServer).Inactivate(ctx, in)
+		return srv.(AsrRecordServiceServer).DeleteProfile(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: AsrRecordService_Inactivate_FullMethodName,
+		FullMethod: AsrRecordService_DeleteProfile_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AsrRecordServiceServer).Inactivate(ctx, req.(*InactivateReq))
+		return srv.(AsrRecordServiceServer).DeleteProfile(ctx, req.(*DeleteProfileReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -442,12 +442,12 @@ var AsrRecordService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AsrRecordServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Activate",
-			Handler:    _AsrRecordService_Activate_Handler,
+			MethodName: "CreateProfile",
+			Handler:    _AsrRecordService_CreateProfile_Handler,
 		},
 		{
-			MethodName: "Inactivate",
-			Handler:    _AsrRecordService_Inactivate_Handler,
+			MethodName: "DeleteProfile",
+			Handler:    _AsrRecordService_DeleteProfile_Handler,
 		},
 		{
 			MethodName: "UpdatePackage",
