@@ -9,7 +9,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "assign",
         "platformready",
         "fault",
@@ -18,36 +17,46 @@
       "transition": [
         {
           "to_state": "Configuring",
-          "trigger": ["assign"]
+          "trigger": [
+            "assign"
+          ]
         },
         {
           "to_state": "Ready",
-          "trigger": ["platformready"]
+          "trigger": [
+            "platformready"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -58,7 +67,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "platformready",
         "update",
         "assign",
@@ -68,40 +76,52 @@
       "transition": [
         {
           "to_state": "Ready",
-          "trigger": ["platformready"]
+          "trigger": [
+            "platformready"
+          ]
         },
         {
           "to_state": "Configuring",
-          "trigger": ["assign"]
+          "trigger": [
+            "assign"
+          ]
         },
         {
           "to_state": "Updating",
-          "trigger": ["update"]
+          "trigger": [
+            "update"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -112,7 +132,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "assign",
         "assignnoconfig",
         "fault",
@@ -121,36 +140,46 @@
       "transition": [
         {
           "to_state": "Configuring",
-          "trigger": ["assign"]
+          "trigger": [
+            "assign"
+          ]
         },
         {
           "to_state": "Operational",
-          "trigger": ["assignnoconfig"]
+          "trigger": [
+            "assignnoconfig"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -161,7 +190,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "configapplied",
         "release",
         "fault",
@@ -174,36 +202,46 @@
       "transition": [
         {
           "to_state": "Operational",
-          "trigger": ["configapplied"]
+          "trigger": [
+            "configapplied"
+          ]
         },
         {
           "to_state": "Ready",
-          "trigger": ["release"]
+          "trigger": [
+            "release"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -214,7 +252,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "configchange",
         "release",
         "fault",
@@ -223,36 +260,46 @@
       "transition": [
         {
           "to_state": "Configuring",
-          "trigger": ["configchange"]
+          "trigger": [
+            "configchange"
+          ]
         },
         {
           "to_state": "Ready",
-          "trigger": ["release"]
+          "trigger": [
+            "release"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -263,7 +310,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "rebooted",
         "fault",
         "offboard"
@@ -275,32 +321,40 @@
       "transition": [
         {
           "to_state": "Initializing",
-          "trigger": ["rebooted"]
+          "trigger": [
+            "rebooted"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -311,7 +365,6 @@
       "events": [
         "online",
         "offline",
-        "reboot",
         "recover",
         "assign",
         "fault",
@@ -320,36 +373,46 @@
       "transition": [
         {
           "to_state": "Initializing",
-          "trigger": ["recover"]
+          "trigger": [
+            "recover"
+          ]
         },
         {
           "to_state": "Configuring",
-          "trigger": ["assign"]
+          "trigger": [
+            "assign"
+          ]
         },
         {
           "to_state": "Faulty",
-          "trigger": ["fault"]
+          "trigger": [
+            "fault"
+          ]
         },
         {
           "to_state": "Offboarded",
-          "trigger": ["offboard"]
+          "trigger": [
+            "offboard"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"],
-            "expectedEvents": ["offline", "online"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
@@ -357,27 +420,37 @@
     {
       "name": "Offboarded",
       "description": "Node has been released from the organisation",
-      "events": ["online", "offline", "reboot", "onboarding"],
+      "events": [
+        "online",
+        "offline",
+        "onboarding"
+      ],
       "transition": [
         {
           "to_state": "Unknown",
-          "trigger": ["online", "onboarding"]
+          "trigger": [
+            "online",
+            "onboarding"
+          ]
         }
       ],
       "substate": {
-        "events": ["online", "offline", "reboot"],
+        "events": [
+          "online",
+          "offline"
+        ],
         "transition": [
           {
             "to_state": "on",
-            "trigger": ["online"]
+            "trigger": [
+              "online"
+            ]
           },
           {
             "to_state": "off",
-            "trigger": ["offline"]
-          },
-          {
-            "to_state": "reboot",
-            "trigger": ["reboot"]
+            "trigger": [
+              "offline"
+            ]
           }
         ]
       }
