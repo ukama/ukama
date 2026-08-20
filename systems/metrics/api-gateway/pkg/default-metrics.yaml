@@ -73,15 +73,6 @@ tnode:
     tickInterval: 10
     tickPositions: [0, 10, 20, 30, 40, 50, 60, 70, 80]
     threshold: { min: 0, normal: 65, max: 80 }
-  uptime:
-    metric: com_generic_system_uptime_seconds
-    needRate: false
-    rateInterval: ""
-    unit: "s"
-    format: "number"
-    tickInterval: 3600
-    tickPositions: []
-    threshold: { min: 0, normal: 0, max: 0 }
   memory:
     metric: com_memory_ddr_used
     needRate: false
@@ -190,24 +181,6 @@ tnode:
     tickInterval: 10
     tickPositions: []
     threshold: { min: 0, normal: 100, max: 1000 }
-  subscribers_active:
-    metric: trx_lte_core_active_ue
-    needRate: false
-    rateInterval: ""
-    unit: ""
-    format: "number"
-    tickInterval: 10
-    tickPositions: []
-    threshold: { min: 0, normal: 100, max: 1000 }
-  lte_subscribers:
-    metric: trx_lte_core_subscribers
-    needRate: false
-    rateInterval: ""
-    unit: ""
-    format: "number"
-    tickInterval: 10
-    tickPositions: []
-    threshold: { min: 0, normal: 100, max: 1000 }
   lte_cell_id:
     metric: trx_lte_cell_id
     needRate: false
@@ -232,15 +205,6 @@ anode:
     tickInterval: 20
     tickPositions: [0, 20, 40, 60, 80, 100]
     threshold: { min: 0, normal: 80, max: 100 }
-  uptime:
-    metric: ctl_generic_system_uptime_seconds
-    needRate: false
-    rateInterval: ""
-    unit: "s"
-    format: "number"
-    tickInterval: 3600
-    tickPositions: []
-    threshold: { min: 0, normal: 0, max: 0 }
   cpu_temperature:
     metric: com_power_power_power_board_temp_c_celsius
     needRate: false
@@ -400,15 +364,6 @@ anode:
 # Node ID pattern: uk-<site>-cnode-<ver>-<suffix>
 # ---------------------------------------------------------------------------
 cnode:
-  uptime:
-    metric: com_generic_system_uptime_seconds
-    needRate: false
-    rateInterval: ""
-    unit: "s"
-    format: "number"
-    tickInterval: 3600
-    tickPositions: []
-    threshold: { min: 0, normal: 0, max: 0 }
   cpu:
     metric: com_soc_cpu_usage
     needRate: false
@@ -1379,7 +1334,19 @@ cnode:
 # ExtractNodeType returns "system" when no valid node type is found in the node ID.
 # ---------------------------------------------------------------------------
 system:
+  # The non-node-scoped endpoints filter on site/network, which the raw
+  # trx_lte_core_active_ue series does not carry: the sanitizer re-publishes it
+  # as active_subscribers with node_id/site/network appended.
   subscribers_active:
+    metric: active_subscribers
+    needRate: false
+    rateInterval: ""
+    unit: ""
+    format: "number"
+    tickInterval: 10
+    tickPositions: []
+    threshold: { min: 0, normal: 100, max: 1000 }
+  active_ue:
     metric: trx_lte_core_active_ue
     needRate: false
     rateInterval: ""
@@ -1388,15 +1355,24 @@ system:
     tickInterval: 10
     tickPositions: []
     threshold: { min: 0, normal: 100, max: 1000 }
-  subscribers_attached:
-    metric: trx_lte_core_subscribers
+  com_uptime: #tnode, cnode
+    metric: com_node_uptime
     needRate: false
     rateInterval: ""
-    unit: ""
+    unit: "s"
     format: "number"
-    tickInterval: 10
+    tickInterval: 3600
     tickPositions: []
-    threshold: { min: 0, normal: 100, max: 1000 }
+    threshold: { min: 0, normal: 0, max: 0 }
+  ctl_uptime: #anode
+    metric: ctl_node_uptime
+    needRate: false
+    rateInterval: ""
+    unit: "s"
+    format: "number"
+    tickInterval: 3600
+    tickPositions: []
+    threshold: { min: 0, normal: 0, max: 0 }
   active_org_users:
     metric: number_of_active_users
     needRate: false
@@ -1505,15 +1481,6 @@ system:
     tickInterval: 10
     tickPositions: []
     threshold: { min: 0, normal: 20, max: 100000 }
-  node_active_subscribers:
-    metric: active_subscribers_per_node
-    needRate: false
-    rateInterval: ""
-    unit: ""
-    format: "number"
-    tickInterval: 10
-    tickPositions: []
-    threshold: { min: 0, normal: 100, max: 1000 }
   sims:
     metric: number_of_sims
     needRate: false

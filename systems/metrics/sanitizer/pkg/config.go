@@ -17,9 +17,35 @@ import (
 )
 
 const (
-	NodeActiveSubscribers = "active_subscribers_per_node"
-	GaugeType             = "gauge"
+	RawNodeActiveSubscribers = "trx_lte_core_active_ue"
+	RawComNodeUptimeSeconds  = "com_generic_system_uptime_seconds"
+	RawCtlNodeUptimeSeconds  = "ctl_generic_system_uptime_seconds"
 )
+
+const (
+	NodeActiveSubscribers = "active_subscribers"
+	ComNodeUptime         = "com_node_uptime"
+	CtlNodeUptime         = "ctl_node_uptime"
+
+	GaugeType = "gauge"
+)
+
+const (
+	NodeIdLabel  = "node_id"
+	SiteIdLabel  = "site"
+	NetworkLabel = "network"
+)
+
+type SanitizedMetric struct {
+	Name          string
+	SkipUnchanged bool
+}
+
+var SanitizedMetrics = map[string]SanitizedMetric{
+	RawNodeActiveSubscribers: {Name: NodeActiveSubscribers, SkipUnchanged: true},
+	RawComNodeUptimeSeconds:  {Name: ComNodeUptime},
+	RawCtlNodeUptimeSeconds:  {Name: CtlNodeUptime},
+}
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
@@ -59,11 +85,26 @@ func NewConfig(name string) *Config {
 	}
 }
 
-var NodeActiveSubscribersMetric = []pmetric.MetricConfig{
+var NodeMetrics = []pmetric.MetricConfig{
 	{
-		Name:   NodeActiveSubscribers,
-		Type:   GaugeType,
-		Labels: map[string]string{"nodeid": "", "site": "", "network": ""},
-		Value:  0,
+		Name:    NodeActiveSubscribers,
+		Type:    GaugeType,
+		Details: "Number of active subscribers per node, with site and network labels appended",
+		Labels:  map[string]string{NodeIdLabel: "", SiteIdLabel: "", NetworkLabel: ""},
+		Value:   0,
+	},
+	{
+		Name:    ComNodeUptime,
+		Type:    GaugeType,
+		Details: "System uptime in seconds reported by com nodes, with site and network labels appended",
+		Labels:  map[string]string{NodeIdLabel: "", SiteIdLabel: "", NetworkLabel: ""},
+		Value:   0,
+	},
+	{
+		Name:    CtlNodeUptime,
+		Type:    GaugeType,
+		Details: "System uptime in seconds reported by ctl nodes, with site and network labels appended",
+		Labels:  map[string]string{NodeIdLabel: "", SiteIdLabel: "", NetworkLabel: ""},
+		Value:   0,
 	},
 }
