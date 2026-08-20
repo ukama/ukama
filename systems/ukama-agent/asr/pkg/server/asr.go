@@ -554,7 +554,7 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, network
 		log.Warnf("We'll have to rely on pcrf subscriber reverse lookup!")
 	}
 
-	log.Debugf("Activated %s imsi with %+v", asr.Imsi, asr)
+	log.Debugf("Imsi %s added with profile %+v", asr.Imsi, asr)
 
 	return &pb.CreateProfileResp{}, err
 }

@@ -36,7 +36,7 @@ const (
 //
 // ASR aka Active Subscriber Registry
 // ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
-// Subscriber is added to ASr as soon as it is activated and removed from ASR as soon as its deactivated.
+// Subscriber is added to ASR as soon as it has one sim allocated and removed from ASR as soon as its last sim is terminated.
 //
 // ASR has REST interfaces to services like
 // -  Factory, for reading sim data
@@ -54,9 +54,9 @@ const (
 // - UpdateTai
 // - Read
 type AsrRecordServiceClient interface {
-	// / Use this RPC to activate or add a new subscriber to ASR
+	// / Use this RPC to add a new subscriber to ASR
 	CreateProfile(ctx context.Context, in *CreateProfileReq, opts ...grpc.CallOption) (*CreateProfileResp, error)
-	// / Use this RPC to inactivate or remove a subscriber to ASR
+	// / Use this RPC to remove a subscriber to ASR
 	DeleteProfile(ctx context.Context, in *DeleteProfileReq, opts ...grpc.CallOption) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
@@ -178,7 +178,7 @@ func (c *asrRecordServiceClient) QueryUsage(ctx context.Context, in *QueryUsageR
 //
 // ASR aka Active Subscriber Registry
 // ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
-// Subscriber is added to ASr as soon as it is activated and removed from ASR as soon as its deactivated.
+// Subscriber is added to ASR as soon as it has one sim allocated and removed from ASR as soon as its last sim is terminated.
 //
 // ASR has REST interfaces to services like
 // -  Factory, for reading sim data
@@ -196,9 +196,9 @@ func (c *asrRecordServiceClient) QueryUsage(ctx context.Context, in *QueryUsageR
 // - UpdateTai
 // - Read
 type AsrRecordServiceServer interface {
-	// / Use this RPC to activate or add a new subscriber to ASR
+	// / Use this RPC to add a new subscriber to ASR
 	CreateProfile(context.Context, *CreateProfileReq) (*CreateProfileResp, error)
-	// / Use this RPC to inactivate or remove a subscriber to ASR
+	// / Use this RPC to remove a subscriber to ASR
 	DeleteProfile(context.Context, *DeleteProfileReq) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)

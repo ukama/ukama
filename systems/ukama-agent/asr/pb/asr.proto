@@ -8,7 +8,7 @@ import "validator.proto";
 
 /* ASR aka Active Subscriber Registry
   ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
-  Subscriber is added to ASr as soon as it is activated and removed from ASR as soon as its deactivated.
+  Subscriber is added to ASR as soon as it has one sim allocated and removed from ASR as soon as its last sim is terminated.
 
   ASR has REST interfaces to services like
     -  Factory, for reading sim data
@@ -29,10 +29,10 @@ import "validator.proto";
   */
   service AsrRecordService {
 
-    /// Use this RPC to activate or add a new subscriber to ASR
+    /// Use this RPC to add a new subscriber to ASR
     rpc CreateProfile(CreateProfileReq) returns (CreateProfileResp);
 
-    /// Use this RPC to inactivate or remove a subscriber to ASR
+    /// Use this RPC to remove a subscriber to ASR
     rpc DeleteProfile(DeleteProfileReq) returns (DeleteProfileResp);
 
     /// Use this RPC to update a subscriber package in ASR
