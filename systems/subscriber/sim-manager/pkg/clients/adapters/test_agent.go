@@ -28,7 +28,6 @@ type TestAgentAdapter struct {
 }
 
 func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgentAdapter, error) {
-
 	testAgentConn, err := grpc.NewClient(testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -70,8 +69,8 @@ func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req client.AgentRe
 	return nil
 }
 
-func (t *TestAgentAdapter) TerminateSim(ctx context.Context, iccid string) error {
-	_, err := t.client.TerminateSim(ctx, &pb.TerminateSimRequest{Iccid: iccid})
+func (t *TestAgentAdapter) TerminateSim(ctx context.Context, req client.AgentRequestData) error {
+	_, err := t.client.TerminateSim(ctx, &pb.TerminateSimRequest{Iccid: req.Iccid})
 
 	return err
 }

@@ -132,5 +132,7 @@ func (f *FakeSimInterceptor) deleteSimHandler(ctx context.Context, simId string)
 		return nil, err
 	}
 
-	return nil, f.testAgentAdapter.TerminateSim(ctx, fakeIccid)
+	return nil, f.testAgentAdapter.TerminateSim(ctx, client.AgentRequestData{
+		Iccid: fakeIccid,
+	})
 }
