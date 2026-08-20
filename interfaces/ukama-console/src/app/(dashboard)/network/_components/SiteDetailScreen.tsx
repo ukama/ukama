@@ -131,10 +131,18 @@ const UPTIME_BUCKETS = [
 ] as const;
 
 /** Cell style for a day's uptime %: greener = higher; null = muted (no data). */
-function uptimeFillStyle(v: number | null): { background: string; opacity: number } {
+function uptimeFillStyle(v: number | null): {
+  background: string;
+  opacity: number;
+} {
   if (v == null) return { background: 'transparent', opacity: 1 };
   const bucket = UPTIME_BUCKETS.find((b) => v < b.max) ?? UPTIME_BUCKETS[3];
   return { background: 'var(--uk-success-bright)', opacity: bucket.opacity };
+}
+
+function formatUptimePct(v: number): string {
+  if (v >= 100) return '100%';
+  return `${Math.min(Number(v.toFixed(1)), 99.9).toFixed(1)}%`;
 }
 
 /** Contribution-style uptime grid: one box per day (oldest -> newest), spanning
@@ -172,7 +180,7 @@ function UptimeGrid({
                 <b>
                   {d.value == null
                     ? 'No data'
-                    : `${Math.round(d.value)}% uptime`}
+                    : `${formatUptimePct(d.value)} uptime`}
                 </b>
                 {d.elapsed < 1 ? ' · in progress' : ''}
                 <br />
@@ -323,13 +331,14 @@ function SwitchPortRow({
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
   const toast = useToast();
-  const [toggleSwitch, { loading: toggling }] =
-    useToggleInternetSwitchMutation({
+  const [toggleSwitch, { loading: toggling }] = useToggleInternetSwitchMutation(
+    {
       onError: () => {
         setEnabled((v) => !v); // revert optimistic flip
         toast(`Couldn't switch Port ${port.n}`);
       },
-    });
+    },
+  );
 
   const onToggle = (next: boolean) => {
     setEnabled(next); // optimistic
@@ -816,19 +825,21 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   // 90-day daily site uptime from the analytics SITE_UPTIME KPI (scope
   // network_id + site_id), read as a daily time series.
   const [uNow] = useState(() => Math.floor(Date.now() / 1000));
-  const { data: uptimeData, loading: uptimeLoading } = useGetKpiTimeSeriesQuery({
-    variables: {
-      data: {
-        keys: [KPI_KEYS.siteUptime],
-        span: 'daily',
-        from: new Date((uNow - 30 * 86_400) * 1000).toISOString(),
-        to: new Date(uNow * 1000).toISOString(),
-        networkId,
-        siteId,
+  const { data: uptimeData, loading: uptimeLoading } = useGetKpiTimeSeriesQuery(
+    {
+      variables: {
+        data: {
+          keys: [KPI_KEYS.siteUptime],
+          span: 'daily',
+          from: new Date((uNow - 30 * 86_400) * 1000).toISOString(),
+          to: new Date(uNow * 1000).toISOString(),
+          networkId,
+          siteId,
+        },
       },
+      skip: !networkId || !siteId,
     },
-    skip: !networkId || !siteId,
-  });
+  );
   // Continuous day axis (one cell per calendar day, oldest→newest) so the
   // contribution grid shows gaps as empty boxes. Each day carries that day's
   // AVG uptime %, or null when there's no bucket.
@@ -848,9 +859,23 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const realUptime = uptimeDays
     .map((d) => d.value)
     .filter((v): v is number => v != null);
-  const uptimePct = realUptime.length
-    ? Math.round(realUptime.reduce((a, b) => a + b, 0) / realUptime.length)
-    : null;
+  // "Uptime over 30 days" is the share of site-time up across the whole
+  // period, so each day is weighted by how much of it has elapsed: today has
+  // only a few hours of windows behind it and must not carry the same weight
+  // as a finished day. A plain mean of the daily averages let a bad hour this
+  // morning count for as much as a whole bad day.
+  const uptimePct = (() => {
+    let sum = 0;
+    let weight = 0;
+
+    for (const d of uptimeDays) {
+      if (d.value == null || d.elapsed <= 0) continue;
+      sum += d.value * d.elapsed;
+      weight += d.elapsed;
+    }
+
+    return weight > 0 ? sum / weight : null;
+  })();
 
   const { data: sitesData } = useSitesListQuery({
     variables: { networkId },
@@ -1065,7 +1090,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
                 fontFamily: 'var(--font-display)',
               }}
             >
-              {uptimePct != null ? `${uptimePct}%` : '—'}
+              {uptimePct != null ? formatUptimePct(uptimePct) : '—'}
             </span>
             <span style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>
               uptime over 30 days
