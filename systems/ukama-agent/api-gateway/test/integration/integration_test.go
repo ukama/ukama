@@ -8,7 +8,7 @@
  *
  * Copyright (c) 2023-present, Ukama Inc.
  */
- 
+
 package integration
 
 import (
@@ -50,7 +50,7 @@ func Test_UkamaAgentClientApi(t *testing.T) {
 	client := resty.New()
 
 	t.Run("Activate", func(tt *testing.T) {
-		httpReq := &rest.ActivateReq{
+		httpReq := &rest.CreateProfileReq{
 			Iccid:     iccid,
 			NetworkId: network,
 			PackageId: packageId,

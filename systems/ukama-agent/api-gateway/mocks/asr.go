@@ -12,28 +12,58 @@ type asr struct {
 	mock.Mock
 }
 
-// Activate provides a mock function with given fields: req
-func (_m *asr) Activate(req *gen.ActivateReq) (*gen.ActivateResp, error) {
+// CreateProfile provides a mock function with given fields: req
+func (_m *asr) CreateProfile(req *gen.CreateProfileReq) (*gen.CreateProfileResp, error) {
 	ret := _m.Called(req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Activate")
+		panic("no return value specified for CreateProfile")
 	}
 
-	var r0 *gen.ActivateResp
+	var r0 *gen.CreateProfileResp
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.ActivateReq) (*gen.ActivateResp, error)); ok {
+	if rf, ok := ret.Get(0).(func(*gen.CreateProfileReq) (*gen.CreateProfileResp, error)); ok {
 		return rf(req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.ActivateReq) *gen.ActivateResp); ok {
+	if rf, ok := ret.Get(0).(func(*gen.CreateProfileReq) *gen.CreateProfileResp); ok {
 		r0 = rf(req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ActivateResp)
+			r0 = ret.Get(0).(*gen.CreateProfileResp)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.ActivateReq) error); ok {
+	if rf, ok := ret.Get(1).(func(*gen.CreateProfileReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// DeleteProfile provides a mock function with given fields: req
+func (_m *asr) DeleteProfile(req *gen.DeleteProfileReq) (*gen.DeleteProfileResp, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteProfile")
+	}
+
+	var r0 *gen.DeleteProfileResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.DeleteProfileReq) (*gen.DeleteProfileResp, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.DeleteProfileReq) *gen.DeleteProfileResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteProfileResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.DeleteProfileReq) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)
@@ -94,36 +124,6 @@ func (_m *asr) GetUsageForPeriod(req *gen.UsageForPeriodReq) (*gen.UsageResp, er
 	}
 
 	if rf, ok := ret.Get(1).(func(*gen.UsageForPeriodReq) error); ok {
-		r1 = rf(req)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Inactivate provides a mock function with given fields: req
-func (_m *asr) Inactivate(req *gen.InactivateReq) (*gen.InactivateResp, error) {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Inactivate")
-	}
-
-	var r0 *gen.InactivateResp
-	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.InactivateReq) (*gen.InactivateResp, error)); ok {
-		return rf(req)
-	}
-	if rf, ok := ret.Get(0).(func(*gen.InactivateReq) *gen.InactivateResp); ok {
-		r0 = rf(req)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.InactivateResp)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(*gen.InactivateReq) error); ok {
 		r1 = rf(req)
 	} else {
 		r1 = ret.Error(1)

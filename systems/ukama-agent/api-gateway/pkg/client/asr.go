@@ -58,18 +58,18 @@ func (a *Asr) Close() {
 	}
 }
 
-func (a *Asr) Activate(req *pb.ActivateReq) (*pb.ActivateResp, error) {
+func (a *Asr) CreateProfile(req *pb.CreateProfileReq) (*pb.CreateProfileResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return a.client.Activate(ctx, req)
+	return a.client.CreateProfile(ctx, req)
 }
 
-func (a *Asr) Inactivate(req *pb.InactivateReq) (*pb.InactivateResp, error) {
+func (a *Asr) DeleteProfile(req *pb.DeleteProfileReq) (*pb.DeleteProfileResp, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), a.timeout)
 	defer cancel()
 
-	return a.client.Inactivate(ctx, req)
+	return a.client.DeleteProfile(ctx, req)
 }
 
 func (a *Asr) UpdatePackage(req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {

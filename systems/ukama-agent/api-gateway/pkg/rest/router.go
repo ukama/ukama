@@ -48,8 +48,8 @@ type Clients struct {
 }
 
 type asr interface {
-	Activate(req *pb.ActivateReq) (*pb.ActivateResp, error)
-	Inactivate(req *pb.InactivateReq) (*pb.InactivateResp, error)
+	CreateProfile(req *pb.CreateProfileReq) (*pb.CreateProfileResp, error)
+	DeleteProfile(req *pb.DeleteProfileReq) (*pb.DeleteProfileResp, error)
 	UpdatePackage(req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error)
 	Read(req *pb.ReadReq) (*pb.ReadResp, error)
 	GetUsage(req *pb.UsageReq) (*pb.UsageResp, error)
@@ -132,9 +132,9 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 	}}
 }
 
-func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateResp, error) {
+func (r *Router) putSubscriber(c *gin.Context, req *CreateProfileReq) (*pb.CreateProfileResp, error) {
 	log.Infof("Received a add subscriber request: %v", req)
-	return r.clients.a.Activate(&pb.ActivateReq{
+	return r.clients.a.CreateProfile(&pb.CreateProfileReq{
 		Iccid:        req.Iccid,
 		Imsi:         req.Imsi,
 		SimPackageId: req.SimPackageId,
@@ -143,9 +143,9 @@ func (r *Router) putSubscriber(c *gin.Context, req *ActivateReq) (*pb.ActivateRe
 	})
 }
 
-func (r *Router) deleteSubscriber(c *gin.Context, req *DeactivateReq) (*pb.InactivateResp, error) {
+func (r *Router) deleteSubscriber(c *gin.Context, req *DeleteProfileReq) (*pb.DeleteProfileResp, error) {
 	log.Infof("Received a update subscriber request: %v", req)
-	return r.clients.a.Inactivate(&pb.InactivateReq{
+	return r.clients.a.DeleteProfile(&pb.DeleteProfileReq{
 		Iccid:     req.Iccid,
 		Imsi:      req.Imsi,
 		PackageId: req.PackageId,

@@ -101,7 +101,7 @@ func TestRouter_PingRoute(t *testing.T) {
 func TestRouter_PutSubscriber(t *testing.T) {
 	w := httptest.NewRecorder()
 
-	httpreq := ActivateReq{
+	httpreq := CreateProfileReq{
 		Iccid:     iccid,
 		NetworkId: network,
 		PackageId: packageId,
@@ -114,13 +114,13 @@ func TestRouter_PutSubscriber(t *testing.T) {
 
 	m := &amocks.AsrRecordServiceClient{}
 
-	pReq := &pb.ActivateReq{
+	pReq := &pb.CreateProfileReq{
 		Iccid:     iccid,
 		NetworkId: network,
 		PackageId: packageId,
 	}
 
-	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
+	m.On("CreateProfile", mock.Anything, pReq).Return(&pb.CreateProfileResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),
@@ -140,11 +140,11 @@ func TestRouter_DeleteSubscriber(t *testing.T) {
 
 	m := &amocks.AsrRecordServiceClient{}
 
-	pReq := &pb.InactivateReq{
+	pReq := &pb.DeleteProfileReq{
 		Iccid: iccid,
 	}
 
-	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
+	m.On("DeleteProfile", mock.Anything, pReq).Return(&pb.DeleteProfileResp{}, nil)
 
 	r := NewRouter(&Clients{
 		a: client.NewAsrFromClient(m),

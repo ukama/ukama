@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	//"github.com/ukama/ukama/systems/init/lookup/gen/mocks"
-
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
 )
@@ -32,15 +30,15 @@ func TestAsrClient_Activate(t *testing.T) {
 		client: m,
 	}
 
-	pReq := &pb.ActivateReq{
+	pReq := &pb.CreateProfileReq{
 		Iccid:     iccid,
 		NetworkId: network,
 		PackageId: packageId,
 	}
 
-	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
+	m.On("CreateProfile", mock.Anything, pReq).Return(&pb.CreateProfileResp{}, nil)
 
-	_, err := l.Activate(pReq)
+	_, err := l.CreateProfile(pReq)
 	assert.NoError(t, err)
 }
 
@@ -108,13 +106,13 @@ func TestAsrClient_Inactivate(t *testing.T) {
 		client: m,
 	}
 
-	pReq := &pb.InactivateReq{
+	pReq := &pb.DeleteProfileReq{
 		Iccid: iccid,
 	}
 
-	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
+	m.On("DeleteProfile", mock.Anything, pReq).Return(&pb.DeleteProfileResp{}, nil)
 
-	_, err := l.Inactivate(pReq)
+	_, err := l.DeleteProfile(pReq)
 	assert.NoError(t, err)
 }
 

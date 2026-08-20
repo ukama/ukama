@@ -26,9 +26,9 @@ type UsageRequest struct {
 	Iccid string `json:"iccid" path:"iccid" validate:"required"`
 }
 
-type ActivateReq ReqData
+type CreateProfileReq ReqData
 
-type DeactivateReq ReqData
+type DeleteProfileReq ReqData
 
 type UpdatePackageReq ReqData
 
