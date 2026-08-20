@@ -7,6 +7,7 @@
  */
 
 #include <curl/curl.h>
+#include <errno.h>
 #include <jansson.h>
 #include <math.h>
 #include <stdio.h>
@@ -1175,6 +1176,35 @@ static int bff_load_site_components(bff_client_t *c,
     return ULAB_OK;
 }
 
+/*
+ * The node reports "-999.000000" for latitude/longitude while it has no GPS
+ * fix. Those placeholders must never be promoted into a site, because a site
+ * location is write-once: the registry never re-syncs it once the real fix
+ * arrives. Accept only a parseable coordinate inside its valid range.
+ */
+static int ulab_valid_coord(const char *value, double min, double max) {
+
+    char *end = NULL;
+    double v;
+
+    if (value == NULL || value[0] == '\0') {
+        return 0;
+    }
+
+    errno = 0;
+    v = strtod(value, &end);
+
+    if (errno != 0 || end == value || *end != '\0') {
+        return 0;
+    }
+
+    if (fabs(v - ULAB_GPS_COORD_NA) < ULAB_GPS_COORD_EPSILON) {
+        return 0;
+    }
+
+    return v >= min && v <= max;
+}
+
 int bff_wait_site_anchor_online(bff_client_t *c,
                                 site_t *site,
                                 ulab_error_t *err) {
@@ -1191,6 +1221,8 @@ int bff_wait_site_anchor_online(bff_client_t *c,
     json_t *idv;
     char state[ULAB_MAX_REF];
     char connectivity[ULAB_MAX_REF];
+    char latitude[ULAB_MAX_REF];
+    char longitude[ULAB_MAX_REF];
     const char *id;
     size_t i;
     int found;
@@ -1244,15 +1276,24 @@ int bff_wait_site_anchor_online(bff_client_t *c,
                                     sizeof(state));
                 json_get_nested_str(it, "status", "connectivity",
                                     connectivity, sizeof(connectivity));
-                json_get_nested_str(it, "latitude", NULL, site->latitude,
-                                    sizeof(site->latitude));
-                json_get_nested_str(it, "longitude", NULL, site->longitude,
-                                    sizeof(site->longitude));
+                latitude[0]  = '\0';
+                longitude[0] = '\0';
+
+                json_get_nested_str(it, "latitude", NULL, latitude,
+                                    sizeof(latitude));
+                json_get_nested_str(it, "longitude", NULL, longitude,
+                                    sizeof(longitude));
+
+                if (!ulab_valid_coord(latitude, -90.0, 90.0) ||
+                    !ulab_valid_coord(longitude, -180.0, 180.0)) {
+                    continue;
+                }
+
+                ulab_copy(site->latitude, sizeof(site->latitude), latitude);
+                ulab_copy(site->longitude, sizeof(site->longitude), longitude);
 
                 if (ulab_streq(connectivity, "Online") &&
-                    ulab_streq(state, "Unknown") &&
-                    site->latitude[0] != '\0' &&
-                    site->longitude[0] != '\0') {
+                    ulab_streq(state, "Unknown")) {
                     json_decref(root);
                     ulab_status("BACKEND", "site %s anchor online %s lat=%s lng=%s",
                                 site->ref, site->tnode_id, site->latitude,
@@ -1295,9 +1336,11 @@ int bff_add_site(bff_client_t *c,
         return ULAB_ERR;
     }
 
-    if (s->latitude[0] == '\0' || s->longitude[0] == '\0') {
+    if (!ulab_valid_coord(s->latitude, -90.0, 90.0) ||
+        !ulab_valid_coord(s->longitude, -180.0, 180.0)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "site %s missing anchor lat/lng", s->ref);
+                 "site %s has no valid anchor lat/lng (lat=%s lng=%s)",
+                 s->ref, s->latitude, s->longitude);
         return ULAB_ERR;
     }
 
