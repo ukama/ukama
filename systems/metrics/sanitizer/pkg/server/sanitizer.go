@@ -15,6 +15,8 @@ import (
 	"sync"
 
 	"github.com/prometheus/prometheus/prompb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -104,18 +106,28 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 	metricsToPush := []NodeMetricMetaData{}
 
+	if len(req.Data) == 0 {
+		log.Warn("Got a sanitize request with no data")
+
+		return nil, status.Error(codes.InvalidArgument,
+			"empty remote_write payload: expected a snappy compressed prompb.WriteRequest")
+	}
+
 	data, err := snappy.Decode(nil, req.Data)
 	if err != nil {
 		log.Errorf("Failed to decode remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("failed to decode remote_write data. Error: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to decode remote_write data: %v. Expected a snappy compressed prompb.WriteRequest",
+			err)
 	}
 
 	err = metricsPayload.Unmarshal(data)
 	if err != nil {
 		log.Errorf("Failed to unmarshal remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("failed to unmarshal remote_write data. Error: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal remote_write data: %v. Expected a prompb.WriteRequest", err)
 	}
 
 	for _, ts := range metricsPayload.Timeseries {
