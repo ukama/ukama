@@ -12,7 +12,7 @@ type GetNodeRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
-type GetMeshRequest struct{
+type GetMeshRequest struct {
 	NodeId string `json:"node_id" path:"node_id" validate:"required"`
 }
 
@@ -44,4 +44,5 @@ type DeleteRequest struct {
 }
 
 type ListRequest struct {
+	NodeId string `json:"node_id,omitempty" query:"node_id"`
 }

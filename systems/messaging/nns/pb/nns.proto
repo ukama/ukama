@@ -89,7 +89,9 @@ message NodeMeshInfo {
     string meshHostName = 9;
 }
 
-message ListRequest { }
+message ListRequest {
+    string nodeId = 1;
+}
 
 message ListResponse {
     repeated NodeMeshInfo list  = 1;

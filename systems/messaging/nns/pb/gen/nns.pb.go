@@ -748,6 +748,7 @@ func (x *NodeMeshInfo) GetMeshHostName() string {
 
 type ListRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -780,6 +781,13 @@ func (x *ListRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListRequest.ProtoReflect.Descriptor instead.
 func (*ListRequest) Descriptor() ([]byte, []int) {
 	return file_nns_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *ListRequest) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
 }
 
 type ListResponse struct {
@@ -878,8 +886,9 @@ const file_nns_proto_rawDesc = "" +
 	"\anetwork\x18\x06 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04site\x18\a \x01(\tR\x04site\x12\x16\n" +
 	"\x06meshIp\x18\b \x01(\tR\x06meshIp\x12\"\n" +
-	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"\r\n" +
-	"\vListRequest\"H\n" +
+	"\fmeshHostName\x18\t \x01(\tR\fmeshHostName\"%\n" +
+	"\vListRequest\x12\x16\n" +
+	"\x06nodeId\x18\x01 \x01(\tR\x06nodeId\"H\n" +
 	"\fListResponse\x128\n" +
 	"\x04list\x18\x01 \x03(\v2$.ukama.messaging.nns.v1.NodeMeshInfoR\x04list2\x83\x05\n" +
 	"\x03Nns\x12Z\n" +

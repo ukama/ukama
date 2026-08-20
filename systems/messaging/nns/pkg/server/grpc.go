@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -132,15 +133,33 @@ func (n *NnsServer) Delete(c context.Context, req *pb.DeleteRequest) (*pb.Delete
 	return &pb.DeleteResponse{}, nil
 }
 
+// List returns the mesh mapping of every known node, or of a single node when
+// req.NodeId is set. An empty NodeId is a no-op filter.
 func (n *NnsServer) List(c context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
-	log.Infof("Listing all nodes")
-	items, err := n.nns.GetAll(c)
-	if err != nil {
-		return nil, err
+	nodeId := strings.TrimSpace(req.GetNodeId())
+	if nodeId == "" {
+		log.Infof("Listing all nodes")
+
+		items, err := n.nns.GetAll(c)
+		if err != nil {
+			return nil, err
+		}
+
+		return &pb.ListResponse{List: parseNodeMeshMapList(items)}, nil
 	}
-	resp := &pb.ListResponse{}
-	resp.List = parseNodeMeshMapList(items)
-	return resp, nil
+
+	log.Infof("Listing node %s", nodeId)
+
+	if _, err := ukama.ValidateNodeId(nodeId); err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	item, err := n.nns.Get(c, nodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "node %s not found: %v", nodeId, err)
+	}
+
+	return &pb.ListResponse{List: []*pb.NodeMeshInfo{parseNodeMeshMap(*item)}}, nil
 }
 
 func parseNodeMeshMap(item pkg.NodeMeshMap) *pb.NodeMeshInfo {

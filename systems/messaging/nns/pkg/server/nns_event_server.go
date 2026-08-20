@@ -65,7 +65,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assigned"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assign"):
 		msg, err := l.unmarshalNodeAssignedEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -76,7 +76,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.released"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.release"):
 		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -107,40 +107,16 @@ func (l *NnsEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnli
 func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	log.Infof("Getting org and network for %s", msg.GetNodeId())
+	network, site := l.resolveNodeLineage(msg.GetNodeId())
 
-	nodeInfo, err := l.NodeClient.Get(msg.GetNodeId())
-	if err != nil {
-		log.Errorf("Failed to get org and network. Error: %+v", err)
-		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
-
-		nodeInfo = &creg.NodeInfo{
-			Id: msg.GetNodeId(),
-		}
-
-		nodeInfo.Site = creg.NodeSiteInfo{}
-		nodeInfo.Site.NodeId = msg.GetNodeId()
-		nodeInfo.Site.SiteId = ""
-		nodeInfo.Site.NetworkId = ""
-	}
-
-	node, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
-	if err == nil && node != nil {
-		err = l.Nns.nns.Delete(context.Background(), msg.GetNodeId())
-		if err != nil {
-			log.Errorf("failed to delete node %s. Error %v", msg.GetNodeId(), err)
-			return err
-		}
-	}
-
-	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
+	_, err := l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       msg.GetNodeIp(),
 		MeshIp:       msg.GetMeshIp(),
 		NodePort:     msg.GetNodePort(),
 		MeshPort:     msg.GetMeshPort(),
-		Network:      nodeInfo.Site.NetworkId,
-		Site:         nodeInfo.Site.SiteId,
+		Network:      network,
+		Site:         site,
 		MeshHostName: msg.GetMeshHostName(),
 	})
 
@@ -153,6 +129,37 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 	log.Infof("Node %s IP set to %s", msg.GetNodeId(), msg.GetMeshIp())
 
 	return nil
+}
+
+// resolveNodeLineage returns the network and site to store for a node. Registry
+// is authoritative, including when it reports no site: an unattached node
+// legitimately has empty lineage. When registry cannot be reached the currently
+// stored lineage is kept, so a registry outage does not blank out the mapping
+// of every node that reconnects during it.
+func (l *NnsEventServer) resolveNodeLineage(nodeId string) (network, site string) {
+	log.Infof("Getting org and network for %s", nodeId)
+
+	nodeInfo, err := l.NodeClient.Get(nodeId)
+	if err == nil && nodeInfo != nil {
+		return nodeInfo.Site.NetworkId, nodeInfo.Site.SiteId
+	}
+
+	if err != nil {
+		log.Errorf("Failed to get org and network for %s. Error: %+v", nodeId, err)
+	} else {
+		log.Errorf("Registry returned no node info for %s", nodeId)
+	}
+
+	stored, sErr := l.Nns.nns.Get(context.Background(), nodeId)
+	if sErr != nil || stored == nil {
+		log.Warningf("Node id %s won't have org and network info", nodeId)
+
+		return "", ""
+	}
+
+	log.Warningf("Keeping stored network %q and site %q for node %s", stored.Network, stored.Site, nodeId)
+
+	return stored.Network, stored.Site
 }
 
 func (l *NnsEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOfflineEvent, error) {
@@ -170,11 +177,11 @@ func (l *NnsEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOffline
 	return nil
 }
 
-func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.NodeAssignedEvent, error) {
-	p := &epb.NodeAssignedEvent{}
+func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
+	p := &epb.EventRegistryNodeAssign{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to unmarshal EventRegistryNodeAssign message with : %+v. Error %s.", msg, err.Error())
 		return nil, err
 	}
 	return p, nil
@@ -190,60 +197,49 @@ func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeRel
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssignedEvent) error {
+func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.EventRegistryNodeAssign) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
-	if err != nil {
-		log.Errorf("node %s doesn't exist. Error %v", msg.GetNodeId(), err)
-		return err
-	}
-
-	obj := pkg.NodeMeshMap{
-		NodeId:       msg.GetNodeId(),
-		NodeIp:       orgNet.NodeIp,
-		NodePort:     orgNet.NodePort,
-		MeshIp:       orgNet.MeshIp,
-		MeshHostName: orgNet.MeshHostName,
-		MeshPort:     orgNet.MeshPort,
-		Org:          l.orgName,
-		Network:      msg.Network,
-		Site:         msg.Site,
-	}
-
-	err = l.Nns.nns.Add(context.Background(), obj)
-	if err != nil {
-		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
-		return err
-	}
-
-	return nil
+	return l.updateNodeLineage(msg.GetNodeId(), msg.GetNetwork(), msg.GetSite())
 }
 
 func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleasedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
+	return l.updateNodeLineage(msg.GetNodeId(), "", "")
+}
+
+// updateNodeLineage rewrites the network/site of an already known node, leaving
+// its mesh and node addressing untouched. A node that has never been online is
+// not an error: it has no mapping yet, and handleNodeOnlineEvent resolves its
+// lineage from registry when it first connects.
+func (l *NnsEventServer) updateNodeLineage(nodeId, network, site string) error {
+	orgNet, err := l.Nns.nns.Get(context.Background(), nodeId)
 	if err != nil {
-		log.Errorf("node %s doesn't exist. Error %v", msg.GetNodeId(), err)
-		return err
+		log.Warningf("Skipping lineage update for node %s: no mesh mapping yet. Error %v", nodeId, err)
+
+		return nil
+	}
+
+	if orgNet.Network == network && orgNet.Site == site {
+		return nil
 	}
 
 	obj := pkg.NodeMeshMap{
-		NodeId:       msg.GetNodeId(),
+		NodeId:       nodeId,
 		NodeIp:       orgNet.NodeIp,
 		NodePort:     orgNet.NodePort,
 		MeshIp:       orgNet.MeshIp,
 		MeshHostName: orgNet.MeshHostName,
 		MeshPort:     orgNet.MeshPort,
 		Org:          l.orgName,
-		Network:      msg.Network,
-		Site:         msg.Site,
+		Network:      network,
+		Site:         site,
 	}
 
-	err = l.Nns.nns.Add(context.Background(), obj)
-	if err != nil {
-		log.Errorf("failed to update labels for %s. Error %v", msg.GetNodeId(), err)
+	if err := l.Nns.nns.Add(context.Background(), obj); err != nil {
+		log.Errorf("failed to update labels for %s. Error %v", nodeId, err)
+
 		return err
 	}
 

@@ -211,9 +211,9 @@ func TestNnsServerUpdateMesh(t *testing.T) {
 		}
 		srv := NewNnsServer(fake, testConfig(), testDns())
 		_, err := srv.UpdateMesh(ctx, &pb.UpdateMeshRequest{
-			NodeId:    testValidNodeID,
-			MeshIp:    "9.9.9.9",
-			MeshPort:  3333,
+			NodeId:   testValidNodeID,
+			MeshIp:   "9.9.9.9",
+			MeshPort: 3333,
 		})
 		require.ErrorIs(t, err, want)
 	})
@@ -329,5 +329,61 @@ func TestNnsServerList(t *testing.T) {
 		assert.Equal(t, "UK-SA2156-TNODE-A1-XXXX", resp.List[0].NodeId)
 		assert.Equal(t, "10.0.0.1", resp.List[0].NodeIp)
 		assert.Equal(t, "o", resp.List[0].Org)
+	})
+
+	t.Run("filterByNodeId", func(t *testing.T) {
+		var asked string
+		fake := &fakeNnsStore{
+			get: func(_ context.Context, nodeId string) (*pkg.NodeMeshMap, error) {
+				asked = nodeId
+
+				return &pkg.NodeMeshMap{
+					NodeId:  testValidNodeID,
+					NodeIp:  "10.0.0.2",
+					Org:     "o",
+					Network: "net-1",
+					Site:    "site-1",
+				}, nil
+			},
+			getAll: func(context.Context) ([]pkg.NodeMeshMap, error) {
+				t.Fatal("GetAll must not be called when a node filter is set")
+
+				return nil, nil
+			},
+		}
+		srv := NewNnsServer(fake, testConfig(), testDns())
+		resp, err := srv.List(ctx, &pb.ListRequest{NodeId: testValidNodeID})
+		require.NoError(t, err)
+		require.Len(t, resp.List, 1)
+		assert.Equal(t, testValidNodeID, asked)
+		assert.Equal(t, testValidNodeID, resp.List[0].NodeId)
+		assert.Equal(t, "site-1", resp.List[0].Site)
+		assert.Equal(t, "net-1", resp.List[0].Network)
+	})
+
+	t.Run("filterByInvalidNodeId", func(t *testing.T) {
+		fake := &fakeNnsStore{
+			getAll: func(context.Context) ([]pkg.NodeMeshMap, error) {
+				t.Fatal("GetAll must not be called when a node filter is set")
+
+				return nil, nil
+			},
+		}
+		srv := NewNnsServer(fake, testConfig(), testDns())
+		_, err := srv.List(ctx, &pb.ListRequest{NodeId: "not-a-node"})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("filterByUnknownNodeId", func(t *testing.T) {
+		fake := &fakeNnsStore{
+			get: func(context.Context, string) (*pkg.NodeMeshMap, error) {
+				return nil, errors.New("node not found")
+			},
+		}
+		srv := NewNnsServer(fake, testConfig(), testDns())
+		_, err := srv.List(ctx, &pb.ListRequest{NodeId: testValidNodeID})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
 	})
 }

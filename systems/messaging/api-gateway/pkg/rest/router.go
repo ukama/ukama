@@ -293,5 +293,7 @@ func (r *Router) deleteHandler(c *gin.Context, req *DeleteRequest) (*pb.DeleteRe
 }
 
 func (r *Router) listHandler(c *gin.Context, req *ListRequest) (*pb.ListResponse, error) {
-	return r.clients.n.ListRequest(&pb.ListRequest{})
+	return r.clients.n.ListRequest(&pb.ListRequest{
+		NodeId: req.NodeId,
+	})
 }
