@@ -28,7 +28,7 @@ fragment SimPackages on SimToPackagesDto {
   package_id
   start_date
   end_date
-  is_active
+  is_currently_in_use
 }
 fragment SubscriberSims on SubscriberToSimsDto {
   subscriberId

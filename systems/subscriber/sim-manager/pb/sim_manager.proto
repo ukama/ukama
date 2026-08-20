@@ -20,25 +20,27 @@ package ukama.subscriber.sim_manager.v1;
 
 service SimManagerService {
     // Sim
-    rpc AllocateSim(AllocateSimRequest) returns (AllocateSimResponse);
-    rpc GetSim(GetSimRequest) returns (GetSimResponse);
+    rpc AllocateSim(AllocateSimRequest) returns (SimResponse);
+    rpc GetSim(SimRequest) returns (SimResponse);
     rpc ListSims(ListSimsRequest) returns (ListSimsResponse);
+    rpc ToggleSimServiceStatus(ToggleSimServiceStatusRequest) returns (ToggleSimServiceStatusResponse);
+    rpc TerminateSim(SimRequest) returns (TerminateSimResponse);
+
 	// Deprecated: Use pkg.server.ListSims with subscriberId as filtering param instead.
     rpc GetSimsBySubscriber(GetSimsBySubscriberRequest) returns (GetSimsBySubscriberResponse);
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
     rpc GetSimsByNetwork(GetSimsByNetworkRequest) returns (GetSimsByNetworkResponse);
-    rpc ToggleSimStatus(ToggleSimStatusRequest) returns (ToggleSimStatusResponse);
-    rpc TerminateSim(TerminateSimRequest) returns (TerminateSimResponse);
 
     // Sim package
-    rpc AddPackageForSim(AddPackageRequest) returns (AddPackageResponse);
+    rpc AddPackageForSim(AddPackageRequest) returns (PackageResponse);
     rpc ListPackagesForSim(ListPackagesForSimRequest) returns (ListPackagesForSimResponse);
+    rpc SetPackageInUseForSim(PackageRequest) returns (PackageResponse);
+    rpc UnsetPackageInUseForSim(PackageRequest) returns (PackageResponse);
+    rpc MarkPackageExpiredForSim(PackageRequest) returns (PackageResponse);
+    rpc RemovePackageForSim(PackageRequest) returns (PackageResponse);
+
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
     rpc GetPackagesForSim(GetPackagesForSimRequest) returns (GetPackagesForSimResponse);
-    rpc SetActivePackageForSim(SetActivePackageRequest) returns (SetActivePackageResponse);
-    rpc SetInactivePackageForSim(SetInactivePackageRequest) returns (SetInactivePackageResponse);
-    rpc TerminatePackageForSim(TerminatePackageRequest) returns (TerminatePackageResponse);
-    rpc RemovePackageForSim(RemovePackageRequest) returns (RemovePackageResponse);
 
     // Sim token
     rpc GenerateSimToken(SimTokenRequest) returns (SimTokenResponse);
@@ -58,16 +60,13 @@ message AllocateSimRequest {
     uint32 trafficPolicy = 6 [json_name = "traffic_policy"];
 }
 
-message AllocateSimResponse {
+message SimResponse {
     Sim sim = 1;
 }
 
-message GetSimRequest {
+
+message SimRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message GetSimResponse {
-    Sim sim = 1;
 }
 
 
@@ -109,20 +108,16 @@ message GetSimsByNetworkResponse {
 }
 
 
-message ToggleSimStatusRequest {
+message ToggleSimServiceStatusRequest {
     string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
     string status = 2;
 }
 
-message ToggleSimStatusResponse{}
+
+message ToggleSimServiceStatusResponse{}
 
 
-message TerminateSimRequest {
-    string simId = 1 [(validator.field) = {string_not_empty: true}, json_name = "sim_id"];
-}
-
-message TerminateSimResponse{
-}
+message TerminateSimResponse{}
 
 
 message SimTokenRequest {
@@ -140,9 +135,6 @@ message AddPackageRequest {
     string startDate = 3 [json_name = "start_date"];
 }
 
-message AddPackageResponse{
-}
-
 
 message ListPackagesForSimRequest{
    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
@@ -151,8 +143,8 @@ message ListPackagesForSimRequest{
    string toStartDate = 4 [json_name = "to_start_date"];
    string fromEndDate = 5 [json_name = "from_end_date"];
    string toEndDate = 6 [json_name = "to_end_date"];
-   bool isActive = 7 [json_name = "is_active"];
-   bool asExpired = 8 [json_name = "as_expired"];
+   bool isCurrentlyInUse = 7 [json_name = "is_currently_in_use"];
+   bool isExpired = 8 [json_name = "is_expired"];
    uint32 count = 9;
    bool sort = 10;
 }
@@ -171,39 +163,13 @@ message GetPackagesForSimResponse {
     repeated Package packages = 2;
 }
 
-message SetInactivePackageRequest {
+message PackageRequest {
     string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
 }
 
-message SetInactivePackageResponse{
-}
 
-message SetActivePackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-}
-
-message SetActivePackageResponse{
-}
-
-
-message TerminatePackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-}
-
-message TerminatePackageResponse{
-}
-
-
-message RemovePackageRequest {
-    string simId = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "sim_id"];
-    string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
-}
-
-message RemovePackageResponse{
-}
+message PackageResponse{}
 
 
 message UsageRequest {
@@ -228,11 +194,13 @@ message Package {
     string packageId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "package_id"];
     string startDate = 3 [json_name = "start_date"];
     string endDate = 4 [json_name = "end_date"];
-    uint64 defaultDuration = 5 [json_name = "default_duration"]; /// in minutes, cannot be more than 1000 years
-    bool isActive = 6  [json_name = "is_active"];
-    bool asExpired = 7  [json_name = "as_expired"];
-    string createdAt = 8 [json_name = "created_at"];
-    string updatedAt = 9 [json_name = "updated_at"];
+    uint64 initialData = 5 [json_name="initial_data"];
+    uint64 usedDataAtExpiry = 6 [json_name="used_data_at_expiry"];
+    uint64 defaultDuration = 7 [json_name = "default_duration"]; /// in minutes, cannot be more than 1000 years
+    bool isCurrentlyInUse = 8  [json_name = "is_currently_in_use"];
+    bool isExpired = 9  [json_name = "is_expired"];
+    string createdAt = 10 [json_name = "created_at"];
+    string updatedAt = 11 [json_name = "updated_at"];
 }
 
 

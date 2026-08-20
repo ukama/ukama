@@ -51,9 +51,11 @@ fragment SimPackage on SimPackage {
   packageId
   startDate
   endDate
+  initialData
+  usedDataAtExpiry
   defaultDuration
-  isActive
-  asExpired
+  isCurrentlyInUse
+  isExpired
 }
 
 fragment Sim on SimDto {
@@ -82,7 +84,7 @@ fragment SimAllocationPackage on SimAllocatePackageDto {
   packageId
   startDate
   endDate
-  isActive
+  isCurrentlyInUse
 }
 
 fragment SimAllocation on AllocateSimAPIDto {
@@ -108,8 +110,8 @@ mutation allocateSim($data: AllocateSimInputDto!) {
   }
 }
 
-mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
-  toggleSimStatus(data: $data) {
+mutation toggleSimServiceStatus($data: ToggleSimServiceStatusInputDto!) {
+  toggleSimServiceStatus(data: $data) {
     success
     message
   }

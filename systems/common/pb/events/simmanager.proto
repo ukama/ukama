@@ -76,6 +76,7 @@ message EventSimTermination {
     string iccid = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string imsi = 4;
     string networkId = 5;
+    string type = 6;
 }
 
 message EventSimActivation {

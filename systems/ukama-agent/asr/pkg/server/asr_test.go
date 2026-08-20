@@ -291,7 +291,7 @@ func TestAsr_Activate(t *testing.T) {
 			Policy:                  Policy,
 			LastStatusChangeAt:      time.Now(),
 			AllowedTimeOfService:    Atos,
-			LastStatusChangeReasons: db.ACTIVATION,
+			LastStatusChangeReasons: db.PROFILE_CREATION,
 		}
 
 		network.On("Get", reqPb.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
@@ -343,7 +343,7 @@ func TestAsr_Inactivate(t *testing.T) {
 
 		asrRepo.On("GetByIccid", reqPb.GetIccid()).Return(&sub, nil).Once()
 
-		asrRepo.On("Delete", sub.Imsi, db.DEACTIVATION).Return(nil).Once()
+		asrRepo.On("Delete", sub.Imsi, db.PROFILE_DELETION).Return(nil).Once()
 		ctrl.On("SyncProfile", pcrfData, mock.MatchedBy(func(a1 *db.Asr) bool {
 			return a1.Iccid == sub.Iccid
 		}), msgbus.ACTION_CRUD_DELETE, "activesubscriber", true).Return(nil, false).Once()

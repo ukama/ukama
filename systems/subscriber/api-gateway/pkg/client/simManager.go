@@ -59,18 +59,18 @@ func (sm *SimManager) Close() {
 	}
 }
 
-func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.AllocateSimResponse, error) {
+func (sm *SimManager) AllocateSim(req *pb.AllocateSimRequest) (*pb.SimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
 	return sm.client.AllocateSim(ctx, req)
 }
 
-func (sm *SimManager) GetSim(simId string) (*pb.GetSimResponse, error) {
+func (sm *SimManager) GetSim(simId string) (*pb.SimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.GetSim(ctx, &pb.GetSimRequest{SimId: simId})
+	return sm.client.GetSim(ctx, &pb.SimRequest{SimId: simId})
 }
 
 func (sm *SimManager) ListSims(iccid, imsi, subscriberId, networkId, simType, simStatus string, trafficPolicy uint32,
@@ -92,89 +92,65 @@ func (sm *SimManager) ListSims(iccid, imsi, subscriberId, networkId, simType, si
 	})
 }
 
-// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
-func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
+func (sm *SimManager) ToggleSimServiceStatus(simId string, status string) (*pb.ToggleSimServiceStatusResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberId: subscriberId})
+	return sm.client.ToggleSimServiceStatus(ctx, &pb.ToggleSimServiceStatusRequest{SimId: simId, Status: status})
 }
 
-// Deprecated: Use pkg.client.SimManager.ListSims with networkId as filtering param instead.
-func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkId: networkId})
-}
-
-func (sm *SimManager) ToggleSimStatus(simId string, status string) (*pb.ToggleSimStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.ToggleSimStatus(ctx, &pb.ToggleSimStatusRequest{SimId: simId, Status: status})
-}
-
-func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.AddPackageResponse, error) {
+func (sm *SimManager) AddPackageToSim(req *pb.AddPackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
 	return sm.client.AddPackageForSim(ctx, req)
 }
 
-func (sm *SimManager) RemovePackageForSim(req *pb.RemovePackageRequest) (*pb.RemovePackageResponse, error) {
+func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
+	toEndDate string, isCurrentlyInUse, isExpired, sort bool, count uint32) (*pb.ListPackagesForSimResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.ListPackagesForSim(ctx, &pb.ListPackagesForSimRequest{
+		SimId:            simId,
+		DataPlanId:       dataPlanId,
+		FromStartDate:    fromStartDate,
+		ToStartDate:      toStartDate,
+		FromEndDate:      fromEndDate,
+		ToEndDate:        toEndDate,
+		IsCurrentlyInUse: isCurrentlyInUse,
+		IsExpired:        isExpired,
+		Sort:             sort,
+		Count:            count,
+	})
+}
+
+func (sm *SimManager) RemovePackageForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
 	return sm.client.RemovePackageForSim(ctx, req)
 }
 
-func (sm *SimManager) SetInactivePackageForSim(req *pb.SetInactivePackageRequest) (*pb.SetInactivePackageResponse, error) {
+func (sm *SimManager) SetPackageInUseForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.SetInactivePackageForSim(ctx, req)
+	return sm.client.SetPackageInUseForSim(ctx, req)
+}
+
+func (sm *SimManager) UnsetPackageInUseForSim(req *pb.PackageRequest) (*pb.PackageResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.UnsetPackageInUseForSim(ctx, req)
 }
 
 func (sm *SimManager) TerminateSim(simId string) (*pb.TerminateSimResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
 	defer cancel()
 
-	return sm.client.TerminateSim(ctx, &pb.TerminateSimRequest{SimId: simId})
-}
-
-func (sm *SimManager) ListPackagesForSim(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
-	toEndDate string, isActive, asExpired, sort bool, count uint32) (*pb.ListPackagesForSimResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.ListPackagesForSim(ctx, &pb.ListPackagesForSimRequest{
-		SimId:         simId,
-		DataPlanId:    dataPlanId,
-		FromStartDate: fromStartDate,
-		ToStartDate:   toStartDate,
-		FromEndDate:   fromEndDate,
-		ToEndDate:     toEndDate,
-		IsActive:      isActive,
-		AsExpired:     asExpired,
-		Sort:          sort,
-		Count:         count,
-	})
-}
-
-// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
-func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesForSimResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.GetPackagesForSim(ctx, &pb.GetPackagesForSimRequest{SimId: simId})
-}
-
-func (sm *SimManager) SetActivePackageForSim(req *pb.SetActivePackageRequest) (*pb.SetActivePackageResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
-	defer cancel()
-
-	return sm.client.SetActivePackageForSim(ctx, req)
+	return sm.client.TerminateSim(ctx, &pb.SimRequest{SimId: simId})
 }
 
 func (sm *SimManager) GetUsages(simId, simType, cdrType, from, to, region string) (*pb.UsageResponse, error) {
@@ -206,4 +182,28 @@ func (sm *SimManager) GetSimToken(iccid string) (*pb.SimTokenResponse, error) {
 		&pb.SimTokenRequest{
 			Iccid: iccid,
 		})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListPackagesForSim with simId as filtering param instead.
+func (sm *SimManager) GetPackagesForSim(simId string) (*pb.GetPackagesForSimResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetPackagesForSim(ctx, &pb.GetPackagesForSimRequest{SimId: simId})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListSims with subscriberId as filtering param instead.
+func (sm *SimManager) GetSimsBySub(subscriberId string) (*pb.GetSimsBySubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetSimsBySubscriber(ctx, &pb.GetSimsBySubscriberRequest{SubscriberId: subscriberId})
+}
+
+// Deprecated: Use pkg.client.SimManager.ListSims with networkId as filtering param instead.
+func (sm *SimManager) GetSimsByNetwork(networkId string) (*pb.GetSimsByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), sm.timeout)
+	defer cancel()
+
+	return sm.client.GetSimsByNetwork(ctx, &pb.GetSimsByNetworkRequest{NetworkId: networkId})
 }

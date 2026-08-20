@@ -20,7 +20,7 @@ require (
 	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.0
 	github.com/tj/assert v0.0.3
-	github.com/ukama/ukama/systems/common v0.0.0-20260730183946-e72067da775f
+	github.com/ukama/ukama/systems/common v0.0.0-20260803195617-287151d3243f
 	github.com/ukama/ukama/systems/ukama-agent/cdr v0.0.0-00010101000000-000000000000
 	github.com/wI2L/fizz v0.23.0
 	google.golang.org/grpc v1.83.1

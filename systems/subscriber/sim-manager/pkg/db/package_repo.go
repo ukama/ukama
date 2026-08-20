@@ -22,7 +22,7 @@ type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageId uuid.UUID) (*Package, error)
 	List(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate string,
-		isActive, asExpired bool, count uint32, sort bool) ([]Package, error)
+		isCurrentlyInUse, isExpired bool, count uint32, sort bool) ([]Package, error)
 
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simId uuid.UUID) ([]Package, error)
@@ -74,7 +74,7 @@ func (p *packageRepo) Get(packageId uuid.UUID) (*Package, error) {
 }
 
 func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
-	toEndDate string, isActive, asExpired bool, count uint32, sort bool) ([]Package, error) {
+	toEndDate string, isCurrentlyInUse, isExpired bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -103,12 +103,12 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEn
 		tx = tx.Where("end_date <= ?", toEndDate)
 	}
 
-	if isActive {
-		tx = tx.Where("is_active = ?", true)
+	if isCurrentlyInUse {
+		tx = tx.Where("is_currently_in_use = ?", true)
 	}
 
-	if asExpired {
-		tx = tx.Where("as_expired = ?", true)
+	if isExpired {
+		tx = tx.Where("is_expired = ?", true)
 	}
 
 	if sort {
@@ -148,11 +148,11 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 			}
 		}
 
-		// GORM Updates skips zero-value struct fields, so bool fields like is_active
+		// GORM Updates skips zero-value struct fields, so bool fields like is_currently_in_use
 		// cannot be set to false via struct updates alone.
 		updates := map[string]interface{}{
-			"is_active":  pkg.IsActive,
-			"as_expired": pkg.AsExpired,
+			"is_currently_in_use  ": pkg.IsCurrentlyInUse,
+			"is_expired":            pkg.IsExpired,
 		}
 		if !pkg.StartDate.IsZero() {
 			updates["start_date"] = pkg.StartDate

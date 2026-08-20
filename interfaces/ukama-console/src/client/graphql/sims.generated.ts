@@ -24,41 +24,41 @@ export type UploadSimsMutationVariables = Types.Exact<{
 
 export type UploadSimsMutation = { __typename?: 'Mutation', uploadSims: { __typename?: 'UploadSimsResDto', iccid: Array<string> } };
 
-export type SimPackageFragment = { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean };
+export type SimPackageFragment = { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, initialData: string, usedDataAtExpiry: string, defaultDuration: string, isCurrentlyInUse: boolean, isExpired: boolean };
 
-export type SimFragment = { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null };
+export type SimFragment = { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, initialData: string, usedDataAtExpiry: string, defaultDuration: string, isCurrentlyInUse: boolean, isExpired: boolean } | null };
 
-export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null };
+export type SimAllocationPackageFragment = { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isCurrentlyInUse?: boolean | null };
 
-export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } };
+export type SimAllocationFragment = { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isCurrentlyInUse?: boolean | null } };
 
 export type AllocateSimMutationVariables = Types.Exact<{
   data: Types.AllocateSimInputDto;
 }>;
 
 
-export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isActive?: boolean | null } } };
+export type AllocateSimMutation = { __typename?: 'Mutation', allocateSim: { __typename?: 'AllocateSimAPIDto', id: string, subscriber_id: string, network_id: string, iccid: string, msisdn: string, imsi?: string | null, type: string, status: string, is_physical: boolean, traffic_policy: number, allocated_at: string, sync_status: string, package: { __typename?: 'SimAllocatePackageDto', id?: string | null, packageId?: string | null, startDate?: string | null, endDate?: string | null, isCurrentlyInUse?: boolean | null } } };
 
-export type ToggleSimStatusMutationVariables = Types.Exact<{
-  data: Types.ToggleSimStatusInputDto;
+export type ToggleSimServiceStatusMutationVariables = Types.Exact<{
+  data: Types.ToggleSimServiceStatusInputDto;
 }>;
 
 
-export type ToggleSimStatusMutation = { __typename?: 'Mutation', toggleSimStatus: { __typename?: 'SimStatusResDto', success: boolean, message?: string | null } };
+export type ToggleSimServiceStatusMutation = { __typename?: 'Mutation', toggleSimServiceStatus: { __typename?: 'SimStatusResDto', success: boolean, message?: string | null } };
 
 export type GetSimQueryVariables = Types.Exact<{
   data: Types.GetSimInputDto;
 }>;
 
 
-export type GetSimQuery = { __typename?: 'Query', getSim: { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null } };
+export type GetSimQuery = { __typename?: 'Query', getSim: { __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, initialData: string, usedDataAtExpiry: string, defaultDuration: string, isCurrentlyInUse: boolean, isExpired: boolean } | null } };
 
 export type GetSimsQueryVariables = Types.Exact<{
   data: Types.ListSimsInput;
 }>;
 
 
-export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sims: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, defaultDuration: string, isActive: boolean, asExpired: boolean } | null }> } };
+export type GetSimsQuery = { __typename?: 'Query', getSims: { __typename?: 'SimsResDto', sims: Array<{ __typename?: 'SimDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, isPhysical: boolean, trafficPolicy: number, firstActivatedOn: string, lastActivatedOn: string, activationsCount: string, deactivationsCount: string, allocatedAt: string, syncStatus: string, package?: { __typename?: 'SimPackage', id: string, packageId: string, startDate: string, endDate: string, initialData: string, usedDataAtExpiry: string, defaultDuration: string, isCurrentlyInUse: boolean, isExpired: boolean } | null }> } };
 
 export type GetDataUsagesQueryVariables = Types.Exact<{
   data: Types.SimUsagesInputDto;
@@ -80,9 +80,11 @@ export const SimPackageFragmentDoc = gql`
   packageId
   startDate
   endDate
+  initialData
+  usedDataAtExpiry
   defaultDuration
-  isActive
-  asExpired
+  isCurrentlyInUse
+  isExpired
 }
     `;
 export const SimFragmentDoc = gql`
@@ -114,7 +116,7 @@ export const SimAllocationPackageFragmentDoc = gql`
   packageId
   startDate
   endDate
-  isActive
+  isCurrentlyInUse
 }
     `;
 export const SimAllocationFragmentDoc = gql`
@@ -307,40 +309,40 @@ export function useAllocateSimMutation(baseOptions?: Apollo.MutationHookOptions<
 export type AllocateSimMutationHookResult = ReturnType<typeof useAllocateSimMutation>;
 export type AllocateSimMutationResult = Apollo.MutationResult<AllocateSimMutation>;
 export type AllocateSimMutationOptions = Apollo.BaseMutationOptions<AllocateSimMutation, AllocateSimMutationVariables>;
-export const ToggleSimStatusDocument = gql`
-    mutation toggleSimStatus($data: ToggleSimStatusInputDto!) {
-  toggleSimStatus(data: $data) {
+export const ToggleSimServiceStatusDocument = gql`
+    mutation toggleSimServiceStatus($data: ToggleSimServiceStatusInputDto!) {
+  toggleSimServiceStatus(data: $data) {
     success
     message
   }
 }
     `;
-export type ToggleSimStatusMutationFn = Apollo.MutationFunction<ToggleSimStatusMutation, ToggleSimStatusMutationVariables>;
+export type ToggleSimServiceStatusMutationFn = Apollo.MutationFunction<ToggleSimServiceStatusMutation, ToggleSimServiceStatusMutationVariables>;
 
 /**
- * __useToggleSimStatusMutation__
+ * __useToggleSimServiceStatusMutation__
  *
- * To run a mutation, you first call `useToggleSimStatusMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useToggleSimStatusMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useToggleSimServiceStatusMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useToggleSimServiceStatusMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [toggleSimStatusMutation, { data, loading, error }] = useToggleSimStatusMutation({
+ * const [toggleSimServiceStatusMutation, { data, loading, error }] = useToggleSimServiceStatusMutation({
  *   variables: {
  *      data: // value for 'data'
  *   },
  * });
  */
-export function useToggleSimStatusMutation(baseOptions?: Apollo.MutationHookOptions<ToggleSimStatusMutation, ToggleSimStatusMutationVariables>) {
+export function useToggleSimServiceStatusMutation(baseOptions?: Apollo.MutationHookOptions<ToggleSimServiceStatusMutation, ToggleSimServiceStatusMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<ToggleSimStatusMutation, ToggleSimStatusMutationVariables>(ToggleSimStatusDocument, options);
+        return Apollo.useMutation<ToggleSimServiceStatusMutation, ToggleSimServiceStatusMutationVariables>(ToggleSimServiceStatusDocument, options);
       }
-export type ToggleSimStatusMutationHookResult = ReturnType<typeof useToggleSimStatusMutation>;
-export type ToggleSimStatusMutationResult = Apollo.MutationResult<ToggleSimStatusMutation>;
-export type ToggleSimStatusMutationOptions = Apollo.BaseMutationOptions<ToggleSimStatusMutation, ToggleSimStatusMutationVariables>;
+export type ToggleSimServiceStatusMutationHookResult = ReturnType<typeof useToggleSimServiceStatusMutation>;
+export type ToggleSimServiceStatusMutationResult = Apollo.MutationResult<ToggleSimServiceStatusMutation>;
+export type ToggleSimServiceStatusMutationOptions = Apollo.BaseMutationOptions<ToggleSimServiceStatusMutation, ToggleSimServiceStatusMutationVariables>;
 export const GetSimDocument = gql`
     query getSim($data: GetSimInputDto!) {
   getSim(data: $data) {

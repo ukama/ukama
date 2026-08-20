@@ -111,11 +111,11 @@ const (
 
 // Test counts and flags
 const (
-	testCount         = 10
-	testSort          = true
-	testIsActive      = true
-	testIsPhysical    = false
-	testIsPhysicalSim = true
+	testCount            = 10
+	testSort             = true
+	testIsCurrentlyInUse = true
+	testIsPhysical       = false
+	testIsPhysicalSim    = true
 )
 
 var defaultCors = cors.Config{
@@ -509,10 +509,10 @@ func TestRouter_SimManager(t *testing.T) {
 		req, _ := http.NewRequest("GET", "/v1/sim/"+sim.Id,
 			nil)
 
-		preq := &smPb.GetSimRequest{
+		preq := &smPb.SimRequest{
 			SimId: sim.Id,
 		}
-		csm.On("GetSim", mock.Anything, preq).Return(&smPb.GetSimResponse{
+		csm.On("GetSim", mock.Anything, preq).Return(&smPb.SimResponse{
 			Sim: sim,
 		}, nil)
 
@@ -588,7 +588,7 @@ func TestRouter_SimManager(t *testing.T) {
 			PackageId: p.PackageId,
 			StartDate: p.StartDate,
 		}
-		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+		csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -623,7 +623,7 @@ func TestRouter_SimManager(t *testing.T) {
 			SimType:      p.SimType,
 		}
 
-		csm.On("AllocateSim", mock.Anything, preq).Return(&smPb.AllocateSimResponse{}, nil)
+		csm.On("AllocateSim", mock.Anything, preq).Return(&smPb.SimResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -631,6 +631,7 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusCreated, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("updateSimStatus", func(t *testing.T) {
 		p := ActivateDeactivateSimReq{
 			Status: testStatus,
@@ -644,12 +645,12 @@ func TestRouter_SimManager(t *testing.T) {
 			bytes.NewReader(jdata))
 		assert.NoError(t, err)
 
-		preq := &smPb.ToggleSimStatusRequest{
+		preq := &smPb.ToggleSimServiceStatusRequest{
 			SimId:  sim.Id,
 			Status: p.Status,
 		}
 
-		csm.On("ToggleSimStatus", mock.Anything, preq).Return(&smPb.ToggleSimStatusResponse{}, nil)
+		csm.On("ToggleSimServiceStatus", mock.Anything, preq).Return(&smPb.ToggleSimServiceStatusResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -657,19 +658,20 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
-	t.Run("setActivePackageForSim", func(t *testing.T) {
+
+	t.Run("setPackageInUseForSim", func(t *testing.T) {
 
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("PATCH", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.SetActivePackageRequest{
+		preq := &smPb.PackageRequest{
 			SimId:     sim.Id,
 			PackageId: sim.Package.Id,
 		}
 
-		csm.On("SetActivePackageForSim", mock.Anything, preq).Return(&smPb.SetActivePackageResponse{}, nil)
+		csm.On("SetPackageInUseForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -677,18 +679,19 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("removePkgForSim", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id+"/package/"+sim.Package.Id,
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.RemovePackageRequest{
+		preq := &smPb.PackageRequest{
 			SimId:     sim.Id,
 			PackageId: sim.Package.Id,
 		}
 
-		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.RemovePackageResponse{}, nil)
+		csm.On("RemovePackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 		r.ServeHTTP(w, req)
 
@@ -696,13 +699,14 @@ func TestRouter_SimManager(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code)
 		csm.AssertExpectations(t)
 	})
+
 	t.Run("deleteSim", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, err := http.NewRequest("DELETE", "/v1/sim/"+sim.Id,
 			nil)
 		assert.NoError(t, err)
 
-		preq := &smPb.TerminateSimRequest{
+		preq := &smPb.SimRequest{
 			SimId: sim.Id,
 		}
 
@@ -985,7 +989,9 @@ func TestRouter_getSimsByNetwork(t *testing.T) {
 
 func TestRouter_listPackagesForSim(t *testing.T) {
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/v1/sim/"+testSimId+"/package?data_plan_id="+testDataPlanId+"&is_active="+strconv.FormatBool(testIsActive)+"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
+	req, _ := http.NewRequest("GET", "/v1/sim/"+testSimId+"/package?data_plan_id="+
+		testDataPlanId+"&is_currently_in_use="+strconv.FormatBool(testIsCurrentlyInUse)+
+		"&count="+strconv.Itoa(testCount)+"&sort="+strconv.FormatBool(testSort), nil)
 
 	csp := &spmocks.SimServiceClient{}
 	csm := &smmocks.SimManagerServiceClient{}
@@ -1000,11 +1006,11 @@ func TestRouter_listPackagesForSim(t *testing.T) {
 
 	// Mock the gRPC client call with the correct request structure
 	preq := &smPb.ListPackagesForSimRequest{
-		SimId:      testSimId,
-		DataPlanId: testDataPlanId,
-		IsActive:   testIsActive,
-		Count:      testCount,
-		Sort:       testSort,
+		SimId:            testSimId,
+		DataPlanId:       testDataPlanId,
+		IsCurrentlyInUse: testIsCurrentlyInUse,
+		Count:            testCount,
+		Sort:             testSort,
 	}
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
@@ -1056,7 +1062,7 @@ func TestRouter_addPackageForSim(t *testing.T) {
 		StartDate: startDate,
 	}
 
-	csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.AddPackageResponse{}, nil)
+	csm.On("AddPackageForSim", mock.Anything, preq).Return(&smPb.PackageResponse{}, nil)
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 

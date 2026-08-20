@@ -74,7 +74,7 @@ func (s *simRepo) Get(simId uuid.UUID) (*Sim, error) {
 	var sim Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).
-		Preload("Package", "is_active is true").First(&sim, simId)
+		Preload("Package", "is_currently_in_use is true").First(&sim, simId)
 	if result.Error != nil {
 		return nil, result.Error
 	}
@@ -87,7 +87,7 @@ func (s *simRepo) GetByIccid(iccid string) (*Sim, error) {
 	var sim Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{Iccid: iccid}).
-		Preload("Package", "is_active is true").First(&sim)
+		Preload("Package", "is_currently_in_use is true").First(&sim)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -101,7 +101,7 @@ func (s *simRepo) GetBySubscriber(subscriberId uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{SubscriberId: subscriberId}).
-		Preload("Package", "is_active is true").Find(&sims)
+		Preload("Package", "is_currently_in_use is true").Find(&sims)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -115,7 +115,7 @@ func (s *simRepo) GetByNetwork(networkId uuid.UUID) ([]Sim, error) {
 	var sims []Sim
 
 	result := s.Db.GetGormDb().Model(&Sim{}).Where(&Sim{NetworkId: networkId}).
-		Preload("Package", "is_active is true").Find(&sims)
+		Preload("Package", "is_currently_in_use is true").Find(&sims)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -171,7 +171,7 @@ func (r *simRepo) List(iccid, imsi, subscriberId, networkId string, simType ukam
 		tx = tx.Limit(int(count))
 	}
 
-	result := tx.Preload("Package", "is_active is true").Find(&sims)
+	result := tx.Preload("Package", "is_currently_in_use is true").Find(&sims)
 	if result.Error != nil {
 		return nil, result.Error
 	}
