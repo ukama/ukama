@@ -193,6 +193,7 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}
 
+	//Update policy
 	err = ar.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
@@ -523,9 +524,10 @@ func activate(iccid, imsi, packageId, dataPlanId, networkId string, networkClien
 		Policy:                  *policy,
 		LastStatusChangeAt:      time.Now(),
 		AllowedTimeOfService:    allowedToS,
-		LastStatusChangeReasons: db.ACTIVATION,
+		LastStatusChangeReasons: db.PROFILE_CREATION,
 	}
 
+	//Create profile
 	err = asrRepo.Add(asr)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
@@ -570,7 +572,7 @@ func inactivate(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Cont
 		NetworkId: delAsrRecord.NetworkId,
 	}
 
-	err = asrRepo.Delete(delAsrRecord.Imsi, db.DEACTIVATION)
+	err = asrRepo.Delete(delAsrRecord.Imsi, db.PROFILE_DELETION)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}

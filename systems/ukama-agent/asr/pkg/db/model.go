@@ -22,9 +22,9 @@ type StatusReason int64
 
 const (
 	UNKNOWN StatusReason = iota
-	ACTIVATION
+	PROFILE_CREATION
 	PACKAGE_UPDATE
-	DEACTIVATION
+	PROFILE_DELETION
 	NO_DATA_AVAILABLE
 	POLICY_FAILURE
 )
@@ -58,6 +58,7 @@ type Asr struct {
 	Policy                  Policy
 	LastStatusChangeAt      time.Time
 	AllowedTimeOfService    int64
+	IsServiceStatusOn       bool
 	LastStatusChangeReasons StatusReason
 }
 
@@ -99,12 +100,12 @@ type Policy struct {
 
 func StatusReasonFromString(s string) StatusReason {
 	switch s {
-	case "ACTIVATION", "activation":
-		return StatusReason(ACTIVATION)
+	case "PROFILE_CREATION", "profile_creation":
+		return StatusReason(PROFILE_CREATION)
 	case "PACKAGE_UPDATE", "package_update":
 		return StatusReason(PACKAGE_UPDATE)
-	case "DEACTIVATION", "deactivation":
-		return StatusReason(DEACTIVATION)
+	case "PROFILE_DELETION", "profile_deletion":
+		return StatusReason(PROFILE_DELETION)
 	case "NO_DATA_AVAILABLE", "no_data_available":
 		return StatusReason(NO_DATA_AVAILABLE)
 	case "POLICY_FAILURE", "policy_failure":
@@ -116,12 +117,12 @@ func StatusReasonFromString(s string) StatusReason {
 
 func (s StatusReason) String() string {
 	switch s {
-	case ACTIVATION:
-		return "ACTIVATION"
+	case PROFILE_CREATION:
+		return "PROFILE_CREATION"
 	case PACKAGE_UPDATE:
 		return "PACKAGE_UPDATE"
-	case DEACTIVATION:
-		return "DEACTIVATION"
+	case PROFILE_DELETION:
+		return "PROFILE_DELETION"
 	case NO_DATA_AVAILABLE:
 		return "NO_DATA_AVAILABLE"
 	case POLICY_FAILURE:
@@ -142,7 +143,7 @@ func (s *StatusReason) Scan(value interface{}) error {
 	}
 
 	switch StatusReason(val) {
-	case ACTIVATION, PACKAGE_UPDATE, DEACTIVATION, NO_DATA_AVAILABLE, POLICY_FAILURE:
+	case PROFILE_CREATION, PACKAGE_UPDATE, PROFILE_DELETION, NO_DATA_AVAILABLE, POLICY_FAILURE:
 		*s = StatusReason(val)
 	default:
 		*s = UNKNOWN

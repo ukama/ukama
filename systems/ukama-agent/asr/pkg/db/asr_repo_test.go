@@ -43,7 +43,7 @@ var sub = int_db.Asr{
 	CsgId:                   0,
 	DefaultApnName:          "ukama",
 	LastStatusChangeAt:      time.Now(),
-	LastStatusChangeReasons: int_db.ACTIVATION,
+	LastStatusChangeReasons: int_db.PROFILE_CREATION,
 	AllowedTimeOfService:    7200,
 	Policy: int_db.Policy{
 		CreatedAt:    time.Now(),
@@ -99,7 +99,6 @@ func (u UkamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.D
 }
 
 func TestAsrRecordRepo_Add(t *testing.T) {
-
 	t.Run("Add", func(t *testing.T) {
 		// Arrange
 		var db *sql.DB
@@ -114,7 +113,7 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op,
 				sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent,
 				sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.SimPackageId, sub.LastStatusChangeAt,
-				sub.AllowedTimeOfService, sub.LastStatusChangeReasons).
+				sub.AllowedTimeOfService, sub.IsServiceStatusOn, sub.LastStatusChangeReasons).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
@@ -153,7 +152,6 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 }
 
 func TestAsrRecordRepo_Update(t *testing.T) {
-
 	t.Run("UpdatePackage", func(t *testing.T) {
 		// Arrange
 		var db *sql.DB
@@ -228,7 +226,7 @@ func TestAsrRecordRepo_Delete(t *testing.T) {
 			WillReturnRows(hrow)
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(subID, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.DEACTIVATION, sub.Imsi).
+			WithArgs(subID, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.PROFILE_DELETION, sub.Imsi).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
@@ -256,7 +254,7 @@ func TestAsrRecordRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(Imsi, int_db.DEACTIVATION, nil)
+		err = r.Delete(Imsi, int_db.PROFILE_DELETION, nil)
 
 		// Assert
 		assert.NoError(t, err)
