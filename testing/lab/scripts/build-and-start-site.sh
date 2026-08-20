@@ -170,21 +170,26 @@ print_incomplete_bundles() {
     ' "$json" >&2 || true
 }
 
-mark_provisioned() {
+reserve_node() {
     node_id="$1"
-    body="$(mktemp "${TMPDIR:-/tmp}/ukama-mark-provisioned.XXXXXX")"
+    body="$(mktemp "${TMPDIR:-/tmp}/ukama-reserve-node.XXXXXX")"
 
-    echo "factory: marking node provisioned $node_id"
+    echo "factory: reserving node $node_id"
     code="$(curl -sS -o "$body" -w "%{http_code}" -X PATCH \
         "$FACTORY_URL/v1/nodefactory/node/$node_id" \
         -H "accept: application/json")"
 
     case "$code" in
-        200|204|409)
+        2??)
             rm -f "$body"
+            return 0
+            ;;
+        409)
+            rm -f "$body"
+            return 1
             ;;
         *)
-            echo "factory: mark provisioned failed node=$node_id status=$code" >&2
+            echo "factory: reserve failed node=$node_id status=$code" >&2
             cat "$body" >&2 || true
             rm -f "$body"
             exit 1
@@ -194,12 +199,24 @@ mark_provisioned() {
 
 assign_org() {
     node_id="$1"
+    body="$(mktemp "${TMPDIR:-/tmp}/ukama-assign-org.XXXXXX")"
 
     echo "factory: assigning node $node_id to org $FACTORY_ORG"
-    curl -fsS -X PATCH \
+    code="$(curl -sS -o "$body" -w "%{http_code}" -X PATCH \
         "$FACTORY_URL/v1/nodefactory/node/$node_id/org/$FACTORY_ORG" \
-        -H "accept: application/json" \
-        >/dev/null
+        -H "accept: application/json")"
+
+    case "$code" in
+        2??)
+            rm -f "$body"
+            ;;
+        *)
+            echo "factory: assign failed node=$node_id status=$code" >&2
+            cat "$body" >&2 || true
+            rm -f "$body"
+            exit 1
+            ;;
+    esac
 }
 
 container_name() {
@@ -285,47 +302,64 @@ cleanup() {
 }
 trap cleanup EXIT INT TERM
 
-echo "factory: fetching unprovisioned factory nodes for site=$SITE_REF"
+while :; do
+    echo "factory: fetching unprovisioned factory nodes for site=$SITE_REF"
 
-curl -fsS -X GET \
-    "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
-    -H "accept: application/json" \
-    > "$FACTORY_JSON"
+    curl -fsS -X GET \
+        "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
+        -H "accept: application/json" \
+        > "$FACTORY_JSON"
 
-BUNDLE="$(pick_site_bundle "$FACTORY_JSON")"
+    BUNDLE="$(pick_site_bundle "$FACTORY_JSON")"
 
-if [ -z "$BUNDLE" ]; then
-    echo "no complete unprovisioned factory bundle for site=$SITE_REF" >&2
-    print_incomplete_bundles "$FACTORY_JSON"
-    exit 1
-fi
+    if [ -z "$BUNDLE" ]; then
+        echo "no complete unprovisioned factory bundle for site=$SITE_REF" >&2
+        print_incomplete_bundles "$FACTORY_JSON"
+        exit 1
+    fi
 
-# shellcheck disable=SC2086
-set -- $BUNDLE
-TNODE_ID="$1"
-CNODE_ID="$2"
-ANODE_ID="$3"
+    # shellcheck disable=SC2086
+    set -- $BUNDLE
+    TNODE_ID="$1"
+    CNODE_ID="$2"
+    ANODE_ID="$3"
+
+    echo "factory: selected bundle site=$SITE_REF tnode=$TNODE_ID" \
+        "cnode=$CNODE_ID anode=$ANODE_ID"
+
+    # The tower node is the bundle claim. Factory updates this flag
+    # atomically, so only one lab runner can receive a successful response.
+    if ! reserve_node "$TNODE_ID"; then
+        echo "factory: bundle already reserved tnode=$TNODE_ID; retrying"
+        continue
+    fi
+
+    if ! reserve_node "$CNODE_ID"; then
+        echo "factory: incomplete reservation cnode=$CNODE_ID" >&2
+        exit 1
+    fi
+    if ! reserve_node "$ANODE_ID"; then
+        echo "factory: incomplete reservation anode=$ANODE_ID" >&2
+        exit 1
+    fi
+
+    assign_org "$TNODE_ID"
+    assign_org "$CNODE_ID"
+    assign_org "$ANODE_ID"
+
+    echo "factory: reserved bundle site=$SITE_REF tnode=$TNODE_ID" \
+        "cnode=$CNODE_ID anode=$ANODE_ID"
+    break
+done
 
 TNODE_CONTAINER="$(container_name "$TNODE_ID")"
 CNODE_CONTAINER="$(container_name "$CNODE_ID")"
 ANODE_CONTAINER="$(container_name "$ANODE_ID")"
 
-echo "factory: selected complete site bundle site=$SITE_REF tnode=$TNODE_ID cnode=$CNODE_ID anode=$ANODE_ID"
-
-# Build first. Do not mutate factory state until all three images build.
+# Build only after the complete Factory bundle has been reserved.
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$TNODE_ID" "$NODE_RUNTIME"
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$CNODE_ID" "$NODE_RUNTIME"
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$ANODE_ID" "$NODE_RUNTIME"
-
-# Only after all builds succeed, mark all three provisioned.
-mark_provisioned "$TNODE_ID"
-mark_provisioned "$CNODE_ID"
-mark_provisioned "$ANODE_ID"
-
-# Only after all three are provisioned, assign all three to the org.
-assign_org "$TNODE_ID"
-assign_org "$CNODE_ID"
-assign_org "$ANODE_ID"
 
 "$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
 "$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
