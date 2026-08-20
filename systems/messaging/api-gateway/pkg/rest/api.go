@@ -46,3 +46,12 @@ type DeleteRequest struct {
 type ListRequest struct {
 	NodeId string `json:"node_id,omitempty" query:"node_id"`
 }
+
+type PrometheusTargetsRequest struct {
+	NodeId string `json:"node_id,omitempty" query:"node_id"`
+}
+
+type PrometheusTarget struct {
+	Targets []string          `json:"targets"`
+	Labels  map[string]string `json:"labels"`
+}

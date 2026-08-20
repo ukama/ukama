@@ -9,8 +9,11 @@
 package rest
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
+	"strings"
+	"text/template"
 
 	"github.com/gin-gonic/gin"
 	"github.com/loopfz/gadgeto/tonic"
@@ -36,14 +39,15 @@ type Router struct {
 }
 
 type RouterConfig struct {
-	metricsConfig config.Metrics
-	httpEndpoints *pkg.HttpEndpoints
-	debugMode     bool
-	serverConf    *rest.HttpConfig
-	auth          *config.Auth
-	// nodeMetricPort int32
-	grpcEndpoints *pkg.GrpcEndpoints
-	descriptions  *pkg.ServiceDescriptions
+	metricsConfig      config.Metrics
+	httpEndpoints      *pkg.HttpEndpoints
+	debugMode          bool
+	serverConf         *rest.HttpConfig
+	auth               *config.Auth
+	orgName            string
+	nodeTargetTemplate string
+	grpcEndpoints      *pkg.GrpcEndpoints
+	descriptions       *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -90,6 +94,9 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
+
+		orgName:            svcConf.OrgName,
+		nodeTargetTemplate: svcConf.NodeTargetTemplate,
 	}
 }
 
@@ -141,8 +148,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		nns.DELETE("/node/:node_id", formatDoc("Remove node from dns", ""), tonic.Handler(r.deleteHandler, http.StatusOK))
 		nns.GET("/list", formatDoc("Get all nodes", ""), tonic.Handler(r.listHandler, http.StatusOK))
 
-		// prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
-		// prom.GET("", formatDoc("Get target to scrape", ""), tonic.Handler(r.prometheusHandler, http.StatusOK))
+		prom := auth.Group("/prometheus", "Prometheus target", "Target discovery endpoint")
+		prom.GET("", formatDoc("Get targets to scrape",
+			"Prometheus http_sd_config endpoint. Returns one target per known node, "+
+				"labelled with node_id, org, network and site."),
+			tonic.Handler(r.prometheusHandler, http.StatusOK))
 	}
 }
 
@@ -152,96 +162,6 @@ func formatDoc(summary string, description string) []fizz.OperationOption {
 		info.Description = description
 	}}
 }
-
-// func (r *Router) prometheusHandler(c *gin.Context) error {
-// 	w := c.Writer
-// 	w.Header().Set("Content-Type", "application/json")
-
-// 	m := make(chan bool)
-// 	nodeToOrg := &pb.NodeOrgMapListResponse{}
-// 	go func() {
-// 		var errCh error
-// 		if nodeToOrg, errCh = r.clients.n.GetNodeOrgMapListRequest(&pb.NodeOrgMapListRequest{}); errCh != nil {
-// 			logrus.Error("Error getting node to org/network map. Error: ", errCh)
-// 		}
-// 		m <- true
-// 	}()
-
-// 	l, err := r.clients.n.GetNodeIPMapListRequest(&pb.NodeIPMapListRequest{})
-// 	if err != nil {
-// 		logrus.Error("Error getting list of namespaces. Error: ", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return err
-// 	}
-
-// 	// wait for nodeToOrgNetwork mapping to finish
-// 	<-m
-
-// 	b, err := r.marshallTargets(l, nodeToOrg, int(r.config.nodeMetricPort))
-// 	if err != nil {
-// 		logrus.Error("Error marshalling targets. Error: ", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return err
-// 	}
-
-// 	_, err = w.Write(b)
-// 	if err != nil {
-// 		logrus.Error("Error writing response. Error: ", err)
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		return err
-// 	}
-// 	return nil
-// }
-
-// type targets struct {
-// 	Targets []string          `json:"targets"`
-// 	Labels  map[string]string `json:"labels"`
-// }
-
-// func (r *Router) marshallTargets(l *pb.NodeIPMapListResponse, nodeToOrg *pb.NodeOrgMapListResponse, nodeMetricsPort int) ([]byte, error) {
-// 	resp := make([]targets, 0, len(l.Map))
-// 	var dname string
-// 	for _, v := range l.Map {
-// 		labels := map[string]string{
-// 			"nodeid": v.NodeId,
-// 		}
-
-// 		nodeIp, err := r.clients.n.GetNodeIpRequest(&pb.GetNodeIPRequest{
-// 			NodeId: v.NodeId,
-// 		})
-// 		if err != nil {
-// 			logrus.Errorf("Failed to get node ip for node %s.Error: %s", v.NodeId, err.Error())
-// 			continue
-// 		}
-
-// 		if m, ok := func(m *pb.NodeOrgMapListResponse, id string) (*pb.NodeOrgMap, bool) {
-// 			for _, k := range m.Map {
-// 				if strings.EqualFold(k.NodeId, id) {
-// 					return k, true
-// 				}
-// 			}
-// 			return nil, false
-// 		}(nodeToOrg, v.NodeId); ok {
-// 			dname = m.GetDomainname()
-// 			labels["org"] = m.Org
-// 			labels["network"] = m.Network
-// 			labels["serial"] = v.NodeId
-// 			labels["dns"] = v.NodeId + "." + dname
-// 		}
-
-// 		resp = append(resp, targets{
-// 			Targets: []string{nodeIp.Ip},
-// 			Labels:  labels,
-// 		})
-// 	}
-
-// 	b, err := json.Marshal(resp)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return b, nil
-// }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*pb.GetNodeResponse, error) {
 
@@ -296,4 +216,91 @@ func (r *Router) listHandler(c *gin.Context, req *ListRequest) (*pb.ListResponse
 	return r.clients.n.ListRequest(&pb.ListRequest{
 		NodeId: req.NodeId,
 	})
+}
+
+func (r *Router) prometheusHandler(c *gin.Context, req *PrometheusTargetsRequest) ([]PrometheusTarget, error) {
+	resp, err := r.clients.n.ListRequest(&pb.ListRequest{
+		NodeId: req.NodeId,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return buildPrometheusTargets(resp.GetList(), r.config.orgName, r.config.nodeTargetTemplate)
+}
+
+var nodeTargetFuncs = template.FuncMap{"lower": strings.ToLower}
+
+// buildPrometheusTargets turns the nns mesh mapping into http_sd_config
+// entries. A node whose address cannot be rendered is skipped rather than
+// failing the whole response, so one bad record cannot blind Prometheus to the
+// rest of the fleet. Empty network/site labels are omitted: a node that is not
+// attached to a site should carry no site label at all.
+func buildPrometheusTargets(nodes []*pb.NodeMeshInfo, orgName, tmplText string) ([]PrometheusTarget, error) {
+	if strings.TrimSpace(tmplText) == "" {
+		tmplText = pkg.DefaultNodeTargetTemplate
+	}
+
+	tmpl, err := template.New("nodeTarget").Funcs(nodeTargetFuncs).Parse(tmplText)
+	if err != nil {
+		return nil, fmt.Errorf("invalid node target template: %w", err)
+	}
+
+	targets := make([]PrometheusTarget, 0, len(nodes))
+
+	for _, node := range nodes {
+		if node.GetNodeId() == "" {
+			continue
+		}
+
+		org := node.GetOrg()
+		if org == "" {
+			org = orgName
+		}
+
+		address := &bytes.Buffer{}
+
+		err := tmpl.Execute(address, pkg.NodeTargetVars{
+			OrgName:  org,
+			NodeId:   node.GetNodeId(),
+			NodeIp:   node.GetNodeIp(),
+			NodePort: node.GetNodePort(),
+			MeshIp:   node.GetMeshIp(),
+			MeshPort: node.GetMeshPort(),
+			Network:  node.GetNetwork(),
+			Site:     node.GetSite(),
+		})
+		if err != nil {
+			logrus.Errorf("Skipping node %s: failed to render scrape target. Error: %v", node.GetNodeId(), err)
+
+			continue
+		}
+
+		if address.Len() == 0 {
+			logrus.Errorf("Skipping node %s: rendered scrape target is empty", node.GetNodeId())
+
+			continue
+		}
+
+		labels := map[string]string{"node_id": node.GetNodeId()}
+
+		putLabel(labels, "org", org)
+		putLabel(labels, "network", node.GetNetwork())
+		putLabel(labels, "site", node.GetSite())
+
+		targets = append(targets, PrometheusTarget{
+			Targets: []string{address.String()},
+			Labels:  labels,
+		})
+	}
+
+	return targets, nil
+}
+
+func putLabel(labels map[string]string, key, value string) {
+	if value == "" {
+		return
+	}
+
+	labels[key] = value
 }

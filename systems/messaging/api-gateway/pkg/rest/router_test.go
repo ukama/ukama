@@ -356,3 +356,85 @@ func TestRouter_ListNodes(t *testing.T) {
 	assert.Contains(t, w.Body.String(), testNodeIp)
 	n.AssertExpectations(t)
 }
+
+func TestBuildPrometheusTargets(t *testing.T) {
+	nodes := []*pb.NodeMeshInfo{
+		{
+			NodeId:  "uk-sa2209-tnode-a1-ee58",
+			NodeIp:  testNodeIp,
+			MeshIp:  testMeshIp,
+			Org:     "ukama",
+			Network: testNetwork,
+			Site:    testSite,
+		},
+	}
+
+	t.Run("defaultTemplateResolvesMeshServiceDns", func(t *testing.T) {
+		got, err := buildPrometheusTargets(nodes, "ukama", "")
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+		assert.Equal(t,
+			[]string{"ukama-mesh-node-uk-sa2209-tnode-a1-ee58.ukama-messaging.svc.cluster.local:8082"},
+			got[0].Targets)
+		assert.Equal(t, "uk-sa2209-tnode-a1-ee58", got[0].Labels["node_id"])
+		assert.Equal(t, "ukama", got[0].Labels["org"])
+		assert.Equal(t, testNetwork, got[0].Labels["network"])
+		assert.Equal(t, testSite, got[0].Labels["site"])
+	})
+
+	t.Run("nodeIdIsLowercasedForDns", func(t *testing.T) {
+		upper := []*pb.NodeMeshInfo{{NodeId: "UK-SA2209-TNODE-A1-EE58", Org: "ukama"}}
+
+		got, err := buildPrometheusTargets(upper, "ukama", "")
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+		assert.Contains(t, got[0].Targets[0], "ukama-mesh-node-uk-sa2209-tnode-a1-ee58.")
+		assert.Equal(t, "UK-SA2209-TNODE-A1-EE58", got[0].Labels["node_id"])
+	})
+
+	t.Run("unattachedNodeOmitsSiteAndNetworkLabels", func(t *testing.T) {
+		unattached := []*pb.NodeMeshInfo{{NodeId: "uk-sa2209-tnode-a1-ee58", Org: "ukama"}}
+
+		got, err := buildPrometheusTargets(unattached, "ukama", "")
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+		assert.NotContains(t, got[0].Labels, "site")
+		assert.NotContains(t, got[0].Labels, "network")
+		assert.Equal(t, "ukama", got[0].Labels["org"])
+	})
+
+	t.Run("orgFallsBackToConfiguredOrgName", func(t *testing.T) {
+		noOrg := []*pb.NodeMeshInfo{{NodeId: "uk-sa2209-tnode-a1-ee58", Site: testSite}}
+
+		got, err := buildPrometheusTargets(noOrg, "fallback-org", "")
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+		assert.Equal(t, "fallback-org", got[0].Labels["org"])
+		assert.Contains(t, got[0].Targets[0], "fallback-org-mesh-node-")
+	})
+
+	t.Run("customTemplateIsHonoured", func(t *testing.T) {
+		got, err := buildPrometheusTargets(nodes, "ukama", "{{ .NodeIp }}:10250")
+		assert.NoError(t, err)
+		assert.Len(t, got, 1)
+		assert.Equal(t, []string{testNodeIp + ":10250"}, got[0].Targets)
+	})
+
+	t.Run("invalidTemplateErrors", func(t *testing.T) {
+		_, err := buildPrometheusTargets(nodes, "ukama", "{{ .NodeId ")
+		assert.Error(t, err)
+	})
+
+	t.Run("nodeWithoutIdIsSkipped", func(t *testing.T) {
+		got, err := buildPrometheusTargets([]*pb.NodeMeshInfo{{Site: testSite}}, "ukama", "")
+		assert.NoError(t, err)
+		assert.Empty(t, got)
+	})
+
+	t.Run("emptyListYieldsEmptyArrayNotNull", func(t *testing.T) {
+		got, err := buildPrometheusTargets(nil, "ukama", "")
+		assert.NoError(t, err)
+		assert.NotNil(t, got)
+		assert.Empty(t, got)
+	})
+}

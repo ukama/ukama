@@ -17,14 +17,29 @@ import (
 )
 
 type Config struct {
-	config.BaseConfig `mapstructure:",squash"`
-	Server            rest.HttpConfig
-	Services          GrpcEndpoints       `mapstructure:"services"`
-	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
-	Http              HttpEndpoints       `mapstructure:"http"`
-	Metrics           config.Metrics      `mapstructure:"metrics"`
-	Auth              *config.Auth        `mapstructure:"auth"`
-	NodeMetricsPort   int32               `default:"10250"`
+	config.BaseConfig  `mapstructure:",squash"`
+	Server             rest.HttpConfig
+	Services           GrpcEndpoints       `mapstructure:"services"`
+	Descriptions       ServiceDescriptions `mapstructure:"descriptions"`
+	Http               HttpEndpoints       `mapstructure:"http"`
+	Metrics            config.Metrics      `mapstructure:"metrics"`
+	Auth               *config.Auth        `mapstructure:"auth"`
+	NodeMetricsPort    int32               `default:"10250"`
+	OrgName            string
+	NodeTargetTemplate string
+}
+
+const DefaultNodeTargetTemplate = "{{ .OrgName }}-mesh-node-{{ lower .NodeId }}.{{ .OrgName }}-messaging.svc.cluster.local:8082"
+
+type NodeTargetVars struct {
+	OrgName  string
+	NodeId   string
+	NodeIp   string
+	NodePort int32
+	MeshIp   string
+	MeshPort int32
+	Network  string
+	Site     string
 }
 
 type Kratos struct {
@@ -38,10 +53,6 @@ type GrpcEndpoints struct {
 	NodeFeeder  string
 }
 
-// ServiceDescriptions holds a human-readable description per gRPC service,
-// returned by GET /status so consumers know which features are affected
-// when a service is unavailable. Overridable via env vars
-// (DESCRIPTIONS_<SERVICE>) without a code change.
 type ServiceDescriptions struct {
 	Nns         string
 	Broadcaster string
@@ -82,7 +93,8 @@ func NewConfig() *Config {
 			Port: 8080,
 			Cors: defaultCors,
 		},
-		Metrics: *config.DefaultMetrics(),
-		Auth:    config.LoadAuthHostConfig("auth"),
+		Metrics:            *config.DefaultMetrics(),
+		Auth:               config.LoadAuthHostConfig("auth"),
+		NodeTargetTemplate: DefaultNodeTargetTemplate,
 	}
 }
