@@ -1,22 +1,36 @@
-# SITE_UPTIME (%): a site is up in a window when its SERVICE and its RADIO are
-# available.
+# SITE_UPTIME (%): a site is up in a window when every node that makes it up
+# is both ALIVE and SERVING.
+#   alive   — the node is still pushing its system uptime counter. The
+#             sanitizer republishes those counters with node_id/site/network
+#             stamped on them: com_node_uptime for the tnode and the cnode,
+#             ctl_node_uptime for the anode. A node that stopped pushing does
+#             not disappear — Prometheus turns the series into a staleness
+#             marker, which arrives as the literal NaN, and that reads as
+#             down. A series that aged out of the pull's lookback is down for
+#             the same reason.
 #   service — digital cellular service, from the tnode health report
 #             (interfaces.cellular.available); the anode has no cellular
 #             interface and reports "cellular": null
 #   radio   — interfaces.radio.available, on tnode and anode alike
-# A node is down when either flag is false, its probe is unreachable, or it has
-# never reported. A site is up when it has at least one tnode/anode and all of
-# them are up; a site with no tnode/anode carries neither service nor radio and
-# reads down.
+# The cnode carries neither interface and is not probed, so liveness is all it
+# is judged on. A node is down when its uptime reading is NaN or absent,
+# either interface flag is false, its probe is unreachable, or it never
+# reported. A site is up when it has at least one tnode/anode/cnode and every
+# one of them is up; a site carrying none of the three reads down. An hnode
+# attached to a site is ignored.
 # radio.state is NOT read: uptime tracks interface availability, so a radio
 # that is available but switched off is still up, and there is no
 # planned/unplanned distinction.
+# Degraded mode: when BOTH uptime datasets come back with no rows at all, the
+# metrics path delivered nothing rather than every node dying, so the liveness
+# term is dropped for that window and the health rule alone decides — a broken
+# sanitizer or remote_write cannot zero the KPI org-wide.
 # Per window: Sum = 100 when up else 0, Count = 1 always — so the aggregator's
 # AVG is exactly up_windows / total_windows x 100.
 # Query with op=AVG at span daily/weekly/monthly for the timeseries.
 kpi: SITE_UPTIME
 domain: network
-algo: site_uptime@v2
+algo: site_uptime@v3
 kind: gauge
 scope_agg: avg
 scope: [network_id, site_id]
@@ -27,6 +41,15 @@ inputs:
   nodes:
     dataset: registry.node.list
     fields: [node_id, site_id, network_id, type]
+  # Liveness. Registry stays authoritative for site membership: a site whose
+  # nodes are all dark still has to produce a row, and a dark node has no
+  # metric left to carry a site label on.
+  com_uptime:
+    dataset: metrics.com_uptime.last
+    fields: [node_id, site_id, network_id, value]
+  ctl_uptime:
+    dataset: metrics.ctl_uptime.last
+    fields: [node_id, site_id, network_id, value]
 output:
   type: float
   unit: percent
