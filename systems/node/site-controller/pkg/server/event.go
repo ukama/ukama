@@ -176,7 +176,7 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 			return fmt.Errorf("failed to list apps for node %s: %w", nodeId, err)
 		}
 
-		return c.recordObservedState(siteId, &db.SiteState{
+		return c.recordObservedState(ctx, siteId, &db.SiteState{
 			ServiceState: observedServiceState(apps.GetApps()),
 			Reason:       reasonHealthReport,
 		})
@@ -186,7 +186,7 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 			return fmt.Errorf("no radio found for node %s", nodeId)
 		}
 
-		return c.recordObservedState(siteId, &db.SiteState{
+		return c.recordObservedState(ctx, siteId, &db.SiteState{
 			RadioState: report.Interfaces.Radio.State,
 			Reason:     reasonHealthReport,
 		})
@@ -200,11 +200,19 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 	}
 }
 
-func (c *SiteControllerEventServer) recordObservedState(siteID string, observed *db.SiteState) error {
+func (c *SiteControllerEventServer) recordObservedState(ctx context.Context, siteID string, observed *db.SiteState) error {
 	observed.SiteID = siteID
 
 	if err := c.states.Upsert(observed); err != nil {
 		return fmt.Errorf("failed to record observed state for site %s: %w", siteID, err)
+	}
+
+	if c.s == nil || c.s.reconciler == nil {
+		return nil
+	}
+
+	if err := c.s.reconciler.ReconcileSite(ctx, siteID, false); err != nil {
+		log.Warnf("site-controller: reconcile site %s after health report: %v", siteID, err)
 	}
 
 	return nil

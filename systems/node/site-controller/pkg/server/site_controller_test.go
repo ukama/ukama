@@ -143,7 +143,7 @@ func TestRecordObservedState_WritesStateNotIntent(t *testing.T) {
 
 	c := &SiteControllerEventServer{states: states, intents: intents}
 
-	err := c.recordObservedState(siteID, &db.SiteState{
+	err := c.recordObservedState(context.Background(), siteID, &db.SiteState{
 		RadioState: "on",
 		Reason:     reasonHealthReport,
 	})
@@ -163,7 +163,7 @@ func TestRecordObservedState_LeavesOtherAxisUntouched(t *testing.T) {
 
 	c := &SiteControllerEventServer{states: states}
 
-	err := c.recordObservedState(siteID, &db.SiteState{RadioState: "off"})
+	err := c.recordObservedState(context.Background(), siteID, &db.SiteState{RadioState: "off"})
 
 	assert.NoError(t, err)
 	states.AssertExpectations(t)
@@ -214,4 +214,31 @@ func TestObservedServiceState_UsesReconcilerVocabulary(t *testing.T) {
 
 	assert.Equal(t, reconciler.StateRunning, running,
 		"observed service must use the value the reconciler expects for a desired service of on")
+}
+
+func TestRecordObservedState_SurvivesMissingReconciler(t *testing.T) {
+	siteID := "55555555-5555-5555-5555-555555555555"
+
+	states := &scmocks.StateRepo{}
+	states.On("Upsert", mock.Anything).Return(nil).Once()
+
+	c := &SiteControllerEventServer{states: states}
+
+	err := c.recordObservedState(context.Background(), siteID, &db.SiteState{RadioState: "on"})
+
+	assert.NoError(t, err, "recording an observation must not depend on the reconciler")
+	states.AssertExpectations(t)
+}
+
+func TestRecordObservedState_ReportsStoreFailure(t *testing.T) {
+	siteID := "66666666-6666-6666-6666-666666666666"
+
+	states := &scmocks.StateRepo{}
+	states.On("Upsert", mock.Anything).Return(assert.AnError).Once()
+
+	c := &SiteControllerEventServer{states: states}
+
+	err := c.recordObservedState(context.Background(), siteID, &db.SiteState{RadioState: "on"})
+
+	assert.Error(t, err, "a failed observation write must surface so the event is retried")
 }
