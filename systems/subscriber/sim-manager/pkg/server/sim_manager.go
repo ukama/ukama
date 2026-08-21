@@ -1388,12 +1388,6 @@ func markPackageExpiredForSim(ctx context.Context, reqSimId, reqPackageId string
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
-	//TODO: This might need to be removed as per new service-on/service-off flow
-	if sim.Status != ukama.SimStatusServiceOn {
-		return status.Errorf(codes.FailedPrecondition,
-			"cannot mark in-use package on non active sim as expired: sim's status is is %s", sim.Status)
-	}
-
 	packageToExpire := &sims.Package{
 		Id:               pckg.Id,
 		IsCurrentlyInUse: false,
