@@ -418,7 +418,7 @@ func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 		return fmt.Errorf("failed to update usage for imsi %s. Error: %w", imsi, err)
 	}
 
-	err, removed := ar.pc.RunPolicyControl(imsi, false)
+	err, removed := ar.pc.RunPolicyControl(imsi, true)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error: %v", sub.Imsi, err)
 
@@ -481,9 +481,6 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, network
 	if err != nil {
 		return nil, fmt.Errorf("error while fetching network %s info: %w", networkId, err)
 	}
-
-	// network-org validation is no longer needed since we are using initClient to fetch
-	// the correct registry system that matches with the current running org.
 
 	/* Send Request to SIM Factory */
 	sim, err := factoryClient.ReadSimCardInfo(iccid)

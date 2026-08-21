@@ -437,3 +437,34 @@ func TestAsr_UpdateTai(t *testing.T) {
 		assert.NoError(t, err)
 	})
 }
+
+func TestAsr_UpdateAndSyncAsrProfileFromCdr(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	gutiRepo := &mocks.GutiRepo{}
+
+	factory := &cmocks.SimFactoryClient{}
+	ctrl := &mocks.Controller{}
+	network := &cmocks.NetworkClient{}
+	mbC := &cmocks.MsgBusServiceClient{}
+	cdr := &mocks.CDRService{}
+
+	usub := sub
+	usub.Policy = Policy
+
+	asrRepo.On("GetByImsi", usub.Imsi).Return(&usub, nil).Once()
+	cdr.On("GetUsage", usub.Imsi).Return(&cpb.UsageResp{Usage: 1024}, nil).Once()
+	asrRepo.On("Update", usub.Imsi, mock.Anything).Return(nil).Once()
+
+	ctrl.On("RunPolicyControl", usub.Imsi, true).Return(nil, false).Once()
+	ctrl.On("SyncProfile", mock.Anything, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", false).Return(nil).Once()
+
+	s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, Atos)
+	assert.NoError(t, err)
+
+	err = s.UpdateAndSyncAsrProfileFromCdr(usub.Imsi)
+	assert.NoError(t, err)
+
+	asrRepo.AssertExpectations(t)
+	ctrl.AssertExpectations(t)
+	cdr.AssertExpectations(t)
+}

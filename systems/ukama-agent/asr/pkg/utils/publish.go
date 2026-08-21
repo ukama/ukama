@@ -21,7 +21,7 @@ func PublishEvent(orgname, action, object string, msg protoreflect.ProtoMessage,
 	var err error
 	if msgBus != nil {
 		baseRoutingKey := msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().
-			SetSystem(pkg.SystemName).SetOrgName("ukama").SetService(pkg.ServiceName)
+			SetSystem(pkg.SystemName).SetOrgName(orgname).SetService(pkg.ServiceName)
 
 		route := baseRoutingKey.SetObject(object).SetAction(action).MustBuild()
 		err = msgBus.PublishRequest(route, msg)

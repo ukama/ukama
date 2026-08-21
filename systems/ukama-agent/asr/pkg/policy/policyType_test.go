@@ -14,7 +14,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
 	"github.com/ukama/ukama/systems/ukama-agent/asr/mocks"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 
@@ -77,10 +76,15 @@ func TestPolicy_RemoveProfile(t *testing.T) {
 
 	t.Run("RemoveProfile", func(t *testing.T) {
 		asrRepo.On("Delete", sub.Imsi, db.POLICY_FAILURE).Return(nil).Once()
-		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policies.publish", mock.Anything).Return(nil).Once()
-		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.activesubscriber.create", mock.Anything).Return(nil).Once()
+		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policies.publish",
+			mock.Anything).Return(nil).Once()
 
-		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.activesubscriber.create",
+			mock.Anything).Return(nil).Once()
+
+		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+			Reroute, MonitoringPeriod, false)
+
 		assert.NotNil(t, pc)
 
 		err, state := ip.RemoveProfile(pc, sub, false)
@@ -89,5 +93,63 @@ func TestPolicy_RemoveProfile(t *testing.T) {
 
 		asrRepo.AssertExpectations(t)
 		assert.NoError(t, err)
+	})
+}
+
+func TestPolicy_NotifyDataCapExceeded(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	t.Run("NotifyDataCapExceeded", func(t *testing.T) {
+		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
+			mock.Anything).Return(nil).Once()
+
+		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+			Reroute, MonitoringPeriod, false)
+		assert.NotNil(t, pc)
+
+		err, state := ip.NotifyDataCapExceeded(pc, sub, true)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, state)
+
+		asrRepo.AssertExpectations(t)
+		mbC.AssertExpectations(t)
+	})
+
+	t.Run("NoEventNoPublish", func(t *testing.T) {
+		mbC2 := &cmocks.MsgBusServiceClient{}
+		pc := ip.NewPolicyController(asrRepo, mbC2, dataplanHost, OrgName, OrgId,
+			Reroute, MonitoringPeriod, false)
+
+		err, state := ip.NotifyDataCapExceeded(pc, sub, false)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, state)
+
+		mbC2.AssertExpectations(t)
+	})
+}
+
+func TestPolicy_NotifyPackageExpired(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	t.Run("NotifyPackageExpired", func(t *testing.T) {
+		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
+			mock.Anything).Return(nil).Once()
+
+		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+			Reroute, MonitoringPeriod, false)
+
+		assert.NotNil(t, pc)
+
+		err, state := ip.NotifyPackageExpired(pc, sub, true)
+
+		assert.NoError(t, err)
+		assert.Equal(t, false, state)
+
+		asrRepo.AssertExpectations(t)
+		mbC.AssertExpectations(t)
 	})
 }

@@ -130,7 +130,7 @@ func (p *policyController) InitPolicyController() {
 			Name:   "DataCap",
 			ID:     1,
 			Check:  DataCapCheck,
-			Action: RemoveProfile,
+			Action: NotifyDataCapExceeded,
 		},
 		{
 			Name:   "AllowedServiceTime",
@@ -142,7 +142,7 @@ func (p *policyController) InitPolicyController() {
 			Name:   "ValidityCheck",
 			ID:     3,
 			Check:  ValidityCheck,
-			Action: RemoveProfile,
+			Action: NotifyPackageExpired,
 		},
 	}
 }
@@ -242,6 +242,30 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	} else {
 		return nil
 	}
+}
+
+func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.PolicyViolationReason, event bool) error {
+	log.Infof("Reporting policy violation (%s) for subscriber %s", reason, pf.Imsi)
+
+	if !event {
+		return nil
+	}
+
+	e := &epb.PolicyViolation{
+		Profile: &epb.Profile{
+			Imsi:                 pf.Imsi,
+			Iccid:                pf.Iccid,
+			Network:              pf.NetworkId.String(),
+			Package:              pf.PackageId.String(),
+			SimPackage:           pf.SimPackageId.String(),
+			Org:                  p.OrgId,
+			AllowedTimeOfService: pf.AllowedTimeOfService,
+			TotalDataBytes:       pf.Policy.ConsumedData,
+		},
+		Reason: reason.String(),
+	}
+
+	return utils.PublishEvent(p.OrgName, "violation", "policy", e, p.msgbus)
 }
 
 /*
