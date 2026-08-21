@@ -402,6 +402,13 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 			violation.Profile.SimPackage, sim.Id.String(), err)
 	}
 
+	if sim.Package.Id != packageId {
+		log.Infof("Ignoring stale policy violation for package %s on sim %s: current package is %s",
+			packageId, sim.Id.String(), sim.Package.Id)
+
+		return nil
+	}
+
 	err = es.packageRepo.Update([]uuid.UUID{packageId},
 		&sims.Package{UsedDataAtExpiry: violation.Profile.TotalDataBytes}, nil)
 	if err != nil {
@@ -419,9 +426,6 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 
 		return nil
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-	defer cancel()
 
 	log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
 
@@ -464,6 +468,8 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 	nextPackage := packages[i+1]
 
 	log.Infof("Setting next package %s as in-use on sim %s", nextPackage.Id.String(), sim.Id.String())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+	defer cancel()
 
 	err = setPackageInUseForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
 		es.agentFactory, es.msgbus, es.baseRoutingKey)
