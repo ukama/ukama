@@ -117,8 +117,11 @@ func TestPolicy_NotifyDataCapExceeded(t *testing.T) {
 		mbC.AssertExpectations(t)
 	})
 
-	t.Run("NoEventNoPublish", func(t *testing.T) {
+	t.Run("PublishesEvenWithEventFalse", func(t *testing.T) {
 		mbC2 := &cmocks.MsgBusServiceClient{}
+		mbC2.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
+			mock.Anything).Return(nil).Once()
+
 		pc := ip.NewPolicyController(asrRepo, mbC2, dataplanHost, OrgName, OrgId,
 			Reroute, MonitoringPeriod, false)
 

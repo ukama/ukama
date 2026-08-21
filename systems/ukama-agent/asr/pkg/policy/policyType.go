@@ -86,7 +86,7 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 func NotifyDataCapExceeded(p *policyController, pf db.Asr, event bool) (error, bool) {
 	log.Infof("Data cap exceeded for subscriber %s. Notifying sim manager.", pf.Imsi)
 
-	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonDataCapExceeded, event)
+	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonDataCapExceeded)
 	if err != nil {
 		log.Errorf("Failed to publish data cap exceeded policy violation for subscriber %s: %v", pf.Imsi, err)
 	}
@@ -97,7 +97,7 @@ func NotifyDataCapExceeded(p *policyController, pf db.Asr, event bool) (error, b
 func NotifyPackageExpired(p *policyController, pf db.Asr, event bool) (error, bool) {
 	log.Infof("Package expired for subscriber %s. Notifying sim manager.", pf.Imsi)
 
-	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonPackageExpired, event)
+	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonPackageExpired)
 	if err != nil {
 		log.Errorf("Failed to publish package expired policy violation for subscriber %s: %v", pf.Imsi, err)
 	}

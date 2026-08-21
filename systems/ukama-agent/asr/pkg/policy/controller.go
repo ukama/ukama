@@ -244,12 +244,8 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	}
 }
 
-func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.PolicyViolationReason, event bool) error {
+func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.PolicyViolationReason) error {
 	log.Infof("Reporting policy violation (%s) for subscriber %s", reason, pf.Imsi)
-
-	if !event {
-		return nil
-	}
 
 	e := &epb.PolicyViolation{
 		Profile: &epb.Profile{
@@ -268,11 +264,6 @@ func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.Policy
 	return utils.PublishEvent(p.OrgName, "violation", "policy", e, p.msgbus)
 }
 
-/*
-For now all the policies are by default applicable for the profiles.
-There might be more policies which are applicable for certain profiles
-that can be easily managed by adding policy db and adding applicable policy id for each susbcriber.
-*/
 func (p *policyController) RunPolicyControl(imsi string, event bool) (error, bool) {
 	log.Infof("Running policy control for subscriber %s", imsi)
 
