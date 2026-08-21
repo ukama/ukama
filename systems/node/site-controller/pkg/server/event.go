@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -44,6 +45,19 @@ const (
 	pcrfAppName        = "pcrf"
 	appStatusActive    = "Active"
 )
+
+func normalizeNodeType(nodeType string) string {
+	switch strings.ToLower(nodeType) {
+	case ukama.NODE_ID_TYPE_TOWERNODE, "tower":
+		return ukama.NODE_ID_TYPE_TOWERNODE
+	case ukama.NODE_ID_TYPE_AMPNODE, "amplifier":
+		return ukama.NODE_ID_TYPE_AMPNODE
+	case ukama.NODE_ID_TYPE_CNODE, "control", "controller":
+		return ukama.NODE_ID_TYPE_CNODE
+	default:
+		return strings.ToLower(nodeType)
+	}
+}
 
 func observedServiceState(apps []*hpb.App) string {
 	for _, app := range apps {
@@ -138,7 +152,7 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 	}
 
 	nodeId := msg.NodeId
-	nodeType := msg.NodeType
+	nodeType := normalizeNodeType(msg.NodeType)
 	if _, err := c.s.nodeClient.Get(nodeId); err != nil {
 		return fmt.Errorf("failed to get node %s: %w", nodeId, err)
 	}

@@ -242,3 +242,27 @@ func TestRecordObservedState_ReportsStoreFailure(t *testing.T) {
 
 	assert.Error(t, err, "a failed observation write must surface so the event is retried")
 }
+
+func TestNormalizeNodeType(t *testing.T) {
+	cases := []struct {
+		reported string
+		want     string
+	}{
+		{"tower", ukama.NODE_ID_TYPE_TOWERNODE},
+		{"tnode", ukama.NODE_ID_TYPE_TOWERNODE},
+		{"Tower", ukama.NODE_ID_TYPE_TOWERNODE},
+		{"amplifier", ukama.NODE_ID_TYPE_AMPNODE},
+		{"anode", ukama.NODE_ID_TYPE_AMPNODE},
+		{"control", ukama.NODE_ID_TYPE_CNODE},
+		{"controller", ukama.NODE_ID_TYPE_CNODE},
+		{"cnode", ukama.NODE_ID_TYPE_CNODE},
+		{"something-else", "something-else"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.reported, func(t *testing.T) {
+			assert.Equal(t, tc.want, normalizeNodeType(tc.reported),
+				"nodes report long names while the constants are short codes")
+		})
+	}
+}
