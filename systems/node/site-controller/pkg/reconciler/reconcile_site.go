@@ -32,16 +32,33 @@ func (r *Reconciler) ReconcileSite(ctx context.Context, siteID string, force boo
 	if err != nil {
 		return err
 	}
-	if flight != nil && flight.IsTerminal() {
-		return nil
-	}
 
 	state, err := r.states.Get(siteID)
 	if err != nil {
 		return err
 	}
 	if intentMatchesState(intent, state) {
-		return r.markFlightStatus(intent, db.IntentFlightStatusSucceeded)
+		return r.markConverged(intent, flight)
+	}
+
+	if flight != nil && flight.IsTerminal() {
+		if !force && !r.rearmDue(flight) {
+			return nil
+		}
+
+		log.Infof("site-controller: site %s drifted from intent %s after a %s flight, re-arming",
+			siteID, intent.ID, flight.Status)
+
+		if err := r.resetIntentReconcile(intent); err != nil {
+			return err
+		}
+
+		flight, err = r.getFlight(intent)
+		if err != nil {
+			return err
+		}
+
+		force = true
 	}
 
 	if r.flightExpired(flight) {
