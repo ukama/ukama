@@ -22,6 +22,7 @@ import (
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 )
 
 var defaultSiteIntent = db.SiteIntent{
@@ -38,7 +39,21 @@ var defaultSiteState = db.SiteState{
 	Reason:       "site_created",
 }
 
-const reasonHealthReport = "health_report"
+const (
+	reasonHealthReport = "health_report"
+	pcrfAppName        = "pcrf"
+	appStatusActive    = "Active"
+)
+
+func observedServiceState(apps []*hpb.App) string {
+	for _, app := range apps {
+		if app.GetName() == pcrfAppName && app.GetStatus() == appStatusActive {
+			return reconciler.StateRunning
+		}
+	}
+
+	return reconciler.StateOff
+}
 
 type SiteControllerEventServer struct {
 	s                    *SiteControllerServer
@@ -156,8 +171,15 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_TOWERNODE:
-		// TODO: Handle tower node health report
-		return nil
+		apps, err := hClient.ListApps(ctx, &hpb.ListAppsRequest{NodeId: nodeId})
+		if err != nil {
+			return fmt.Errorf("failed to list apps for node %s: %w", nodeId, err)
+		}
+
+		return c.recordObservedState(siteId, &db.SiteState{
+			ServiceState: observedServiceState(apps.GetApps()),
+			Reason:       reasonHealthReport,
+		})
 
 	case ukama.NODE_ID_TYPE_AMPNODE:
 		if report.Interfaces.Radio == nil {

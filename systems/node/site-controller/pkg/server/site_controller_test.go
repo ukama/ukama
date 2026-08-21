@@ -19,9 +19,11 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	contmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	scmocks "github.com/ukama/ukama/systems/node/site-controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -165,4 +167,51 @@ func TestRecordObservedState_LeavesOtherAxisUntouched(t *testing.T) {
 
 	assert.NoError(t, err)
 	states.AssertExpectations(t)
+}
+
+func TestObservedServiceState(t *testing.T) {
+	cases := []struct {
+		name string
+		apps []*hpb.App
+		want string
+	}{
+		{
+			name: "pcrf active means service is running",
+			apps: []*hpb.App{{Name: "pcrf", Status: "Active"}},
+			want: reconciler.StateRunning,
+		},
+		{
+			name: "pcrf inactive means service is off",
+			apps: []*hpb.App{{Name: "pcrf", Status: "Inactive"}},
+			want: reconciler.StateOff,
+		},
+		{
+			name: "pcrf missing means service is off",
+			apps: []*hpb.App{{Name: "lookout", Status: "Active"}},
+			want: reconciler.StateOff,
+		},
+		{
+			name: "no apps reported means service is off",
+			apps: nil,
+			want: reconciler.StateOff,
+		},
+		{
+			name: "another active app does not imply service",
+			apps: []*hpb.App{{Name: "meshd", Status: "Active"}, {Name: "pcrf", Status: "Stopped"}},
+			want: reconciler.StateOff,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.want, observedServiceState(tc.apps))
+		})
+	}
+}
+
+func TestObservedServiceState_UsesReconcilerVocabulary(t *testing.T) {
+	running := observedServiceState([]*hpb.App{{Name: "pcrf", Status: "Active"}})
+
+	assert.Equal(t, reconciler.StateRunning, running,
+		"observed service must use the value the reconciler expects for a desired service of on")
 }
