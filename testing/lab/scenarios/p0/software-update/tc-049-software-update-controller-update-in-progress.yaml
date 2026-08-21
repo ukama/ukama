@@ -31,6 +31,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
       - type: node_health_ok
         type_selector: controller
@@ -88,6 +89,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 60
 
   - name: reject_competing_target
@@ -130,4 +132,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

@@ -57,6 +57,7 @@ phases:
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
 
   - name: reconnect_and_finish_update
@@ -87,4 +88,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
