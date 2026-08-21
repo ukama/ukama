@@ -46,6 +46,8 @@ message DerivedStateMsg {
   string radio = 7;
   string access = 8;
   string reason = 9;
+  string sync_status = 10;
+  string sync_reason = 11;
 }
 
 message SiteSnapshot {

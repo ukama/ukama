@@ -94,7 +94,20 @@ func (r *Reconciler) GetSnapshot(ctx context.Context, siteID string) (*SiteSnaps
 		}
 		componentsJSON = string(b)
 	}
-	return &SiteSnapshot{Intent: intent, ObservedState: st, ComponentsJSON: componentsJSON, Ports: ports}, nil
+	flight, err := r.getFlight(intent)
+	if err != nil {
+		return nil, err
+	}
+	status, reason := syncStatus(intent, st, flight)
+
+	return &SiteSnapshot{
+		Intent:         intent,
+		ObservedState:  st,
+		ComponentsJSON: componentsJSON,
+		Ports:          ports,
+		SyncStatus:     status,
+		SyncReason:     reason,
+	}, nil
 }
 func (r *Reconciler) GetState(ctx context.Context, siteID string) (*db.SiteState, *db.SiteIntent, error) {
 	intent, err := r.getIntent(siteID)

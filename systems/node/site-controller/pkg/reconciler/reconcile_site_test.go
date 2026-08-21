@@ -264,3 +264,70 @@ func TestMarkConverged_SkipsWriteWhenAlreadyConverged(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, flights.upserts, "a converged flight must not be rewritten")
 }
+
+func TestSyncStatus(t *testing.T) {
+	inSyncIntent := &db.SiteIntent{DesiredService: StateOn, DesiredRadio: StateOn}
+	inSyncState := &db.SiteState{ServiceState: StateRunning, RadioState: StateOn}
+	driftState := &db.SiteState{ServiceState: StateOff, RadioState: StateOn}
+
+	t.Run("observed matching desired is in sync", func(t *testing.T) {
+		status, reason := syncStatus(inSyncIntent, inSyncState, &db.SiteIntentFlight{
+			Status: db.IntentFlightStatusSucceeded,
+		})
+
+		assert.Equal(t, SyncStatusInSync, status)
+		assert.Equal(t, ReasonOK, reason)
+	})
+
+	t.Run("in sync wins even after a failed flight", func(t *testing.T) {
+		status, _ := syncStatus(inSyncIntent, inSyncState, &db.SiteIntentFlight{
+			Status:     db.IntentFlightStatusTimeout,
+			RetryCount: 3,
+		})
+
+		assert.Equal(t, SyncStatusInSync, status,
+			"fault must clear as soon as observed matches desired")
+	})
+
+	t.Run("drift while still retrying is applying", func(t *testing.T) {
+		status, reason := syncStatus(inSyncIntent, driftState, &db.SiteIntentFlight{
+			Status:     db.IntentFlightStatusPending,
+			RetryCount: 1,
+		})
+
+		assert.Equal(t, SyncStatusApplying, status)
+		assert.Contains(t, reason, "service desired=on observed=off")
+	})
+
+	t.Run("drift after retries are exhausted is a fault", func(t *testing.T) {
+		for _, terminal := range []string{
+			db.IntentFlightStatusFailed,
+			db.IntentFlightStatusTimeout,
+			db.IntentFlightStatusExpired,
+		} {
+			status, reason := syncStatus(inSyncIntent, driftState, &db.SiteIntentFlight{
+				Status:     terminal,
+				RetryCount: 3,
+			})
+
+			assert.Equal(t, SyncStatusFault, status, "%s must surface as fault", terminal)
+			assert.Contains(t, reason, "attempts=3")
+		}
+	})
+
+	t.Run("drift with no flight yet is applying", func(t *testing.T) {
+		status, _ := syncStatus(inSyncIntent, driftState, nil)
+
+		assert.Equal(t, SyncStatusApplying, status)
+	})
+
+	t.Run("radio drift is named in the reason", func(t *testing.T) {
+		_, reason := syncStatus(
+			&db.SiteIntent{DesiredService: StateOff, DesiredRadio: StateOn},
+			&db.SiteState{ServiceState: StateOff, RadioState: StateOff},
+			&db.SiteIntentFlight{Status: db.IntentFlightStatusTimeout, RetryCount: 2},
+		)
+
+		assert.Contains(t, reason, "radio desired=on observed=off")
+	})
+}
