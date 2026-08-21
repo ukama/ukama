@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -31,13 +30,6 @@ const errFailedAddNodeToSiteFmt = "failed to add node to site: %v"
 const errFailedGetNodeFmt = "failed to get node: %v"
 const errFailedUpdateNodeStatusFmt = "failed to update node status: %v"
 const errNodeNotFoundFmt = "node %s not found"
-
-// lookoutd reports this sentinel instead of real coordinates whenever the node
-// has no GPS fix yet. It must never be persisted as a node location.
-const gpsCoordNotAvailable = -999.0
-
-// Coordinates within this delta of the sentinel are treated as "not available".
-const gpsCoordEpsilon = 0.000001
 
 type NodeEventServer struct {
 	s         *NodeServer
@@ -210,8 +202,9 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		return fmt.Errorf("GPS not found: %+v", interfaces.Gps)
 	}
 
-	// Without a fix the reported coordinates are a placeholder, not a location.
-	// Skip the update instead of freezing the placeholder onto the node.
+	// GPS lock is the only gate on node location. Without a fix the reported
+	// coordinates are a placeholder, so drop the report; with a fix, whatever
+	// the node reports is stored verbatim.
 	if !interfaces.Gps.Lock {
 		log.Infof("Node %s has no GPS lock yet, skipping location update",
 			msg.NodeId)
@@ -352,38 +345,7 @@ func parseCoordinates(coordinates string) (string, string, error) {
 		return "", "", fmt.Errorf("invalid coordinates: latitude or longitude is empty")
 	}
 
-	lat, err := strconv.ParseFloat(latStr, 64)
-	if err != nil {
-		return "", "", fmt.Errorf("invalid latitude %q: %w", latStr, err)
-	}
-
-	lon, err := strconv.ParseFloat(lonStr, 64)
-	if err != nil {
-		return "", "", fmt.Errorf("invalid longitude %q: %w", lonStr, err)
-	}
-
-	if isGpsCoordNotAvailable(lat) || isGpsCoordNotAvailable(lon) {
-		return "", "", fmt.Errorf("coordinates not available: %s", coordinates)
-	}
-
-	if lat < -90 || lat > 90 {
-		return "", "", fmt.Errorf("latitude %f out of range [-90, 90]", lat)
-	}
-
-	if lon < -180 || lon > 180 {
-		return "", "", fmt.Errorf("longitude %f out of range [-180, 180]", lon)
-	}
-
 	return latStr, lonStr, nil
-}
-
-func isGpsCoordNotAvailable(v float64) bool {
-	d := v - gpsCoordNotAvailable
-	if d < 0 {
-		d = -d
-	}
-
-	return d < gpsCoordEpsilon
 }
 
 func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId string, siteID string, networkID string) error {

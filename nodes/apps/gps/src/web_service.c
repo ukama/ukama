@@ -197,8 +197,8 @@ int web_service_cb_coordinates(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    /* Return "latitude,longitude" */
-    snprintf(body, sizeof(body), "%s,%s", lat, lon);
+    /* Return "longitude,latitude" */
+    snprintf(body, sizeof(body), "%s,%s", lon, lat);
     ulfius_set_string_body_response(response, HttpStatus_OK, body);
 
     return U_CALLBACK_CONTINUE;

@@ -19,13 +19,6 @@
 #define ULAB_NODE_KIND_AMPLIFIER  "anode"
 #define ULAB_NODE_KIND_CONTROLLER "cnode"
 
-/*
- * Placeholder the node reports for latitude/longitude while it has no GPS fix.
- * See LOOKOUT_GPS_COORD_NA in the node's lookoutd.
- */
-#define ULAB_GPS_COORD_NA      (-999.0)
-#define ULAB_GPS_COORD_EPSILON (0.000001)
-
 #define ULAB_MAX_UES_PER_TOWER 500u
 #define ULAB_UE_SUBNET_BASE_A 192u
 #define ULAB_UE_SUBNET_BASE_B 168u
