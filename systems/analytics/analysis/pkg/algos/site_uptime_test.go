@@ -10,6 +10,7 @@ package algos
 
 import (
 	"math"
+	"strconv"
 	"testing"
 	"time"
 
@@ -281,6 +282,50 @@ func TestSiteUptimePerWindow(t *testing.T) {
 			if math.Abs(got.Sum-tt.wantSum) > 1e-9 || got.Count != 1 {
 				t.Errorf("got sum=%v count=%v, want sum=%v count=1",
 					got.Sum, got.Count, tt.wantSum)
+			}
+		})
+	}
+}
+
+// A short window grid still measures a range wide enough for increase() to see
+// several scrapes.
+func TestSiteUptimeLookbackIsFloored(t *testing.T) {
+	tests := []struct {
+		name       string
+		windowSecs int64
+		wantDenom  float64
+	}{
+		{name: "10s grid floors to 60s", windowSecs: 10, wantDenom: 60},
+		{name: "60s grid is its own denominator", windowSecs: 60, wantDenom: 60},
+		{name: "5m grid is its own denominator", windowSecs: 300, wantDenom: 300},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			start := time.Unix(1787257920, 0).UTC()
+			win := schema.Window{
+				Start: start,
+				End:   start.Add(time.Duration(tt.windowSecs) * time.Second),
+			}
+
+			if got := lookbackSeconds(win); got != tt.wantDenom {
+				t.Fatalf("lookbackSeconds = %v, want %v", got, tt.wantDenom)
+			}
+
+			// A node that gained the full denominator reads 100.
+			in := inputs(
+				[]map[string]interface{}{node("t1", "tnode", "site-a", "Online")},
+				[]map[string]interface{}{health("t1", true, true, "on")},
+				[]map[string]interface{}{gained("t1", strconv.FormatFloat(tt.wantDenom, 'f', -1, 64))},
+				none())
+
+			results, err := SiteUptime(win, in, schema.KpiSpec{})
+			if err != nil {
+				t.Fatalf("SiteUptime: %v", err)
+			}
+
+			if v := siteResult(t, results, "site-a").Value; v != 100 {
+				t.Errorf("site value = %v, want 100", v)
 			}
 		})
 	}

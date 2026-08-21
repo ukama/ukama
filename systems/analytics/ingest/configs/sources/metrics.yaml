@@ -57,9 +57,13 @@ pulls:
   # state as of one, and carrying the last value forward would let a single
   # failed pull replay one reading across every window behind it.
   #
-  # lookback is the window's length and time its end, so the range evaluated
-  # is [WindowStart, WindowEnd) whenever the pull actually runs — retry,
-  # catchup and replay all measure the same seconds.
+  # lookback is the window length floored at 60s: `increase` needs its range to
+  # span several scrape intervals, and the pushgateway is scraped every 10s. A
+  # 10s range holds one sample (Prometheus drops the series) or two identical
+  # ones (increase 0). The algo applies the same floor, so the two cannot drift.
+  #
+  # time is the window end, so retry, catchup and replay evaluate the same
+  # range.
   #
   # site_id/network_id are the sanitizer's labels, kept for traceability; site
   # membership comes from registry.node.list, which also covers dark nodes.
@@ -70,7 +74,7 @@ pulls:
     entity: node_id
     params:
       fn: increase
-      lookback: "{{.WindowSeconds}}s"
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
       time: "{{.WindowEndUnix}}"
     map:
       node_id: $.metric.node_id
@@ -86,7 +90,7 @@ pulls:
     entity: node_id
     params:
       fn: increase
-      lookback: "{{.WindowSeconds}}s"
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
       time: "{{.WindowEndUnix}}"
     map:
       node_id: $.metric.node_id

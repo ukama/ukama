@@ -13,9 +13,18 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
+
+// minUptimeLookback floors the range the increase is measured over: it has to
+// span several scrape intervals, or Prometheus returns a single sample (and
+// drops the series) or two identical ones (increase 0), reading a live node as
+// down. Below the floor consecutive windows overlap, each reporting the
+// trailing 60s. Ingest applies the same floor via {{ atLeast .WindowSeconds
+// 60 }}, so the two cannot drift.
+const minUptimeLookback = 60 * time.Second
 
 // The node types that make up a site. Any other type attached to a site
 // (hnode) is ignored by the uptime KPIs.
@@ -27,18 +36,19 @@ const (
 
 // SiteUptime (SITE_UPTIME @ network_id+site_id), percentage of the window.
 //
-//	node % = clamp(increase / W, 0, 1) x 100, forced to 0 by a health flag
+//	node % = clamp(increase / L, 0, 1) x 100, forced to 0 by a health flag
 //	         reported false
 //	site % = min over the site's tnode/anode/cnode
 //
-// Ingest pulls each node's uptime counter as `increase` over this window, so
-// the input value is seconds of uptime gained during it: ~W for a node up
-// throughout, 0 for one whose counter stalled or that never reported.
+// L is the window length floored at minUptimeLookback. Ingest pulls each
+// node's uptime counter as `increase` over that same range, so the input
+// value is seconds of uptime gained over it: ~L for a node up throughout, 0
+// for one whose counter stalled or that never reported.
 //
 // Emits Sum = the site's percentage, Count = 1, so the aggregator's AVG over
 // any span is the mean of its windows. Query with op=AVG.
 func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sites, err := classifySites(in, windowSeconds(win), "SITE_UPTIME")
+	sites, err := classifySites(in, lookbackSeconds(win), "SITE_UPTIME")
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +82,7 @@ func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, 
 //
 // Per-site rule and inputs: identical to SITE_UPTIME.
 func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sites, err := classifySites(in, windowSeconds(win), "NETWORK_UPTIME")
+	sites, err := classifySites(in, lookbackSeconds(win), "NETWORK_UPTIME")
 	if err != nil {
 		return nil, err
 	}
@@ -113,10 +123,16 @@ func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 	return results, nil
 }
 
-// windowSeconds is the denominator every node's uptime gain is measured
-// against: the same W ingest asked Prometheus to compute the increase over.
-func windowSeconds(win schema.Window) float64 {
-	return win.End.Sub(win.Start).Seconds()
+// lookbackSeconds is the denominator every node's uptime gain is measured
+// against: the window length floored at minUptimeLookback, which is the range
+// ingest asked Prometheus for.
+func lookbackSeconds(win schema.Window) float64 {
+	seconds := win.End.Sub(win.Start).Seconds()
+	if floor := minUptimeLookback.Seconds(); seconds < floor {
+		return floor
+	}
+
+	return seconds
 }
 
 // siteAgg holds one site's state for a window. The site is only as available
@@ -137,7 +153,7 @@ func (a *siteAgg) percent() float64 { return a.worst }
 
 // classifySites builds the per-window site state shared by SITE_UPTIME and
 // NETWORK_UPTIME.
-func classifySites(in Datasets, windowSeconds float64, kpi string) (map[string]*siteAgg, error) {
+func classifySites(in Datasets, lookback float64, kpi string) (map[string]*siteAgg, error) {
 	health, ok := in["health"]
 	if !ok {
 		return nil, fmt.Errorf("%s: missing input 'health'", kpi)
@@ -187,7 +203,7 @@ func classifySites(in Datasets, windowSeconds float64, kpi string) (map[string]*
 		nodeID := str(node["node_id"])
 
 		agg.observe(nodeUptimePercent(nodeType, healthByNode[nodeID],
-			gainByNode[nodeID], windowSeconds))
+			gainByNode[nodeID], lookback))
 	}
 
 	return sites, nil
@@ -209,7 +225,7 @@ func isSiteNodeType(nodeType string) bool {
 // state or node-gateway reachability — the node's own counter is the
 // authority on whether it is alive.
 func nodeUptimePercent(nodeType string, h map[string]interface{},
-	gain float64, windowSeconds float64) float64 {
+	gain float64, lookback float64) float64 {
 	if flagIsFalse(h, "radio_available") {
 		return 0
 	}
@@ -220,13 +236,13 @@ func nodeUptimePercent(nodeType string, h map[string]interface{},
 		return 0
 	}
 
-	if windowSeconds <= 0 {
+	if lookback <= 0 {
 		return 0
 	}
 
 	// increase() extrapolates to the edges of its range, so a node up
-	// throughout can come back a little over (or under) the window length.
-	ratio := gain / windowSeconds
+	// throughout can come back a little over (or under) the lookback.
+	ratio := gain / lookback
 	if ratio > 1 {
 		ratio = 1
 	}

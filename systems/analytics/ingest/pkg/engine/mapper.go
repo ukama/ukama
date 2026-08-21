@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
 )
@@ -113,12 +114,30 @@ func HashFields(fields map[string]interface{}) string {
 
 // RenderTemplate expands {{.key}} references (window bounds + for_each binds)
 // in endpoints and params.
+// tmplFuncs are the helpers available inside endpoint/param templates.
+var tmplFuncs = template.FuncMap{
+	// atLeast floors a numeric value: {{ atLeast .WindowSeconds 60 }} yields
+	// the window length, or 60 when the window is shorter.
+	"atLeast": func(value string, floor int64) (string, error) {
+		n, err := strconv.ParseInt(strings.TrimSpace(value), 10, 64)
+		if err != nil {
+			return "", fmt.Errorf("atLeast: %q is not an integer: %w", value, err)
+		}
+
+		if n < floor {
+			n = floor
+		}
+
+		return strconv.FormatInt(n, 10), nil
+	},
+}
+
 func RenderTemplate(tmpl string, ctx map[string]string) (string, error) {
 	if !strings.Contains(tmpl, "{{") {
 		return tmpl, nil
 	}
 
-	t, err := template.New("t").Option("missingkey=error").Parse(tmpl)
+	t, err := template.New("t").Funcs(tmplFuncs).Option("missingkey=error").Parse(tmpl)
 	if err != nil {
 		return "", fmt.Errorf("parsing template %q: %w", tmpl, err)
 	}

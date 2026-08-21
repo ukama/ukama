@@ -1,14 +1,16 @@
 # SITE_UPTIME (%): how much of each window the site was serving for.
 #
-#   node % = clamp(increase / W, 0, 1) x 100, forced to 0 by a health flag
+#   node % = clamp(increase / L, 0, 1) x 100, forced to 0 by a health flag
 #            reported false: interfaces.cellular.available (service; tnode
 #            only, as the anode reports "cellular": null) or
 #            interfaces.radio.available
 #   site % = min over the site's tnode/anode/cnode
 #
-# Ingest pulls each node's uptime counter as `increase` over the window, so
-# the value is seconds of uptime gained during it: ~W for a node up
-# throughout, 0 for one whose counter stalled or that never reported.
+# L is the window length floored at 60s — `increase` needs its range to span
+# several scrape intervals. Ingest pulls each node's uptime counter as
+# `increase` over that range, so the value is seconds of uptime gained over it:
+# ~L for a node up throughout, 0 for one whose counter stalled or never
+# reported. Below the floor consecutive windows overlap.
 #
 # Taking the minimum collapses to "any node down means the site is down"
 # whenever the per-node values are 0 or 100. A site carrying no tnode/anode/
