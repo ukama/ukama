@@ -859,11 +859,8 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   const realUptime = uptimeDays
     .map((d) => d.value)
     .filter((v): v is number => v != null);
-  // "Uptime over 30 days" is the share of site-time up across the whole
-  // period, so each day is weighted by how much of it has elapsed: today has
-  // only a few hours of windows behind it and must not carry the same weight
-  // as a finished day. A plain mean of the daily averages let a bad hour this
-  // morning count for as much as a whole bad day.
+  // Share of site-time up across the period: each day is weighted by how much
+  // of it has elapsed, so today does not count as a whole day.
   const uptimePct = (() => {
     let sum = 0;
     let weight = 0;

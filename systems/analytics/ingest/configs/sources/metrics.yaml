@@ -49,18 +49,12 @@ pulls:
   #
   # A node that stopped pushing does NOT drop out: Prometheus turns its series
   # into a staleness marker, the sanitizer forwards it untouched, and it comes
-  # back as the literal "NaN" — which is what the algo reads as down. Absence
-  # only happens once the series ages past the lookback.
+  # back as the literal "NaN", which is what the algo reads as dead.
   #
-  # lookback 5m, not the 30m data_usage uses. This is a liveness signal, so the
-  # lookback is the blind spot: for that long a node that vanished outright,
-  # instead of going stale, still reads as reporting. Deliberately reasoned in
-  # WALL CLOCK, not in windows — it has to hold whatever WINDOW_W the
-  # deployment runs (dev is 10s, the compose default is 5m), and 5m is many
-  # pushgateway scrapes of margin either way. Shortening it further is safe but
-  # pointless: every series here comes from the same pushgateway scrape, so the
-  # failure mode is all-or-nothing, and "all" lands in the algo's degraded mode
-  # rather than reading as an org-wide outage.
+  # lookback 5m, in wall clock rather than windows (WINDOW_W varies by
+  # deployment): it is how long a series that vanished outright, instead of
+  # going stale, still reads as reporting, and it leaves many pushgateway
+  # scrapes of margin.
   #
   # site_id/network_id are the sanitizer's own labels, kept for traceability;
   # site membership itself comes from registry.node.list, which also covers

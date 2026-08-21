@@ -17,9 +17,8 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Node types that make up a site and are judged by the uptime KPIs. Any other
-// type attached to a site (hnode) is ignored rather than allowed to drag the
-// site down — the same rule SITES_ONLINE uses.
+// The node types that make up a site and are judged by the uptime KPIs. Any
+// other type attached to a site (hnode) is ignored.
 const (
 	nodeTypeTower      = "tnode"
 	nodeTypeAmplifier  = "anode"
@@ -28,48 +27,41 @@ const (
 
 // SiteUptime (SITE_UPTIME @ scope network_id+site_id), percentage.
 //
-// v3 judges a node on TWO independent signals, and it has to pass both:
+// Uptime is 100% by default and comes down only on evidence of failure: a
+// window counts against a site when something in it positively reports a
+// problem, never when information is merely absent.
 //
-//	LIVENESS — the node is powering the metrics path. The sanitizer
-//	           republishes each node's system uptime counter with its
-//	           node_id/site/network stamped on it (com_node_uptime for the
-//	           tnode and the cnode, ctl_node_uptime for the anode), so a
-//	           reading exists for every node type. A node that stopped
-//	           pushing does not vanish — Prometheus turns the series into a
-//	           staleness marker, which arrives as the literal NaN, and that
-//	           is what reads as down here. No sample at all (the series aged
-//	           out of the pull's lookback) is down for the same reason.
-//	SERVICE + RADIO — the interfaces the site actually serves with, from the
-//	           node-gateway health probe: service is the tnode's
-//	           interfaces.cellular.available (the anode reports
-//	           "cellular": null and carries no service), radio is
-//	           interfaces.radio.available on tnode and anode alike.
+// The two kinds of evidence:
 //
-// Per-window node state:
+//	LIVENESS — each node pushes a system uptime counter, which the sanitizer
+//	           republishes with its node_id/site/network stamped on it
+//	           (com_node_uptime for the tnode and the cnode, ctl_node_uptime
+//	           for the anode). When a node dies Prometheus turns its series
+//	           into a staleness marker, which arrives as the literal NaN.
+//	SERVICE + RADIO — interfaces.cellular.available (service; tnode-only, as
+//	           the anode reports "cellular": null) and
+//	           interfaces.radio.available, from the node-gateway health report.
 //
-//	tnode UP: uptime reported && cellular.available && radio.available
-//	anode UP: uptime reported && radio.available
-//	cnode UP: uptime reported          (it is not probed: node.health.
-//	          interfaces only fans out over tnode/anode, and the cnode
-//	          carries neither a cellular nor a radio interface)
-//	DOWN:     a NaN/absent uptime reading, either flag false, an unreachable
-//	          probe, or no health row at all
+// Per node:
 //
-// radio.state is deliberately NOT read. Uptime tracks interface
-// AVAILABILITY — a radio that is available but switched off is still up, and
-// there is no planned/unplanned distinction to carry.
+//	DOWN ⟺ its uptime reading is NaN
+//	       OR a health flag it reports is explicitly false
+//	UP   otherwise, including when nothing has reported anything about it
 //
-// Per-window site state:
+// Per site:
 //
-//	UP   — the site has at least one tnode/anode/cnode and every one of them
-//	       is up
-//	DOWN — any of them is down, or the site has none of the three
+//	DOWN — any node that makes up the site is down
+//	UP   — otherwise, including a site carrying no tnode/anode/cnode
 //
-// v2 judged only the tnode and the anode, and only on the health probe: a
-// node whose gateway probe answered from a stale cache read up while the box
-// itself was dark, and a site was never held to its cnode. v3 requires
-// liveness on every site node type, matching what sites_online@v3 calls a
-// site.
+// Node lifecycle state and node-gateway reachability are not read: a node is a
+// separate device, and its own uptime counter is the authority on whether it
+// is alive. radio.state is not read either — uptime tracks interface
+// AVAILABILITY, so a radio that is available but switched off is still up, and
+// there is no planned/unplanned distinction.
+//
+// Liveness rests on the staleness marker arriving. A node whose series stops
+// being written without Prometheus marking it stale reads up until a NaN
+// appears or the series ages past the pull's lookback.
 //
 // Every window counts: Sum = 100 when up else 0, Count = 1 always. The
 // aggregator's weighted AVG is then exactly
@@ -80,24 +72,11 @@ const (
 //
 // Inputs:
 //
-//	nodes      — registry.node.list: site membership (EVERY node type, so a
-//	             site is never invisible) and the expected node set. Registry
-//	             stays authoritative for membership rather than the metric's
-//	             own site label: a site whose nodes are ALL dark still has to
-//	             produce a row, and a dark node has no metric to carry a
-//	             label on.
+//	nodes      — registry.node.list: site membership only
 //	health     — node.health.interfaces (state): cellular_available,
-//	             radio_available, unreachable
+//	             radio_available
 //	com_uptime — metrics.com_uptime.last: tnode + cnode liveness
 //	ctl_uptime — metrics.ctl_uptime.last: anode liveness
-//
-// Liveness is required PER SITE, and only of sites that are in the metrics
-// path at all: a site none of whose nodes has ever produced an uptime series
-// is judged on health alone, exactly as v2 did. That is a statement about the
-// pipeline, not the nodes — a node that is genuinely dead keeps its series and
-// reports NaN, so this cannot mask an outage — and it is what lets virtual
-// nodes (the lab's world pushes no uptime counters) and real hardware share
-// one deployment without the virtual sites all reading down.
 func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	sites, err := classifySites(in, "SITE_UPTIME")
 	if err != nil {
@@ -184,27 +163,17 @@ func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 	return results, nil
 }
 
-// siteAgg accumulates one site's node states for a window. judged counts the
-// nodes that make up a site (tnode/anode/cnode); a site with none of them has
-// nothing to serve with.
+// siteAgg accumulates one site's state for a window. Only downNodes decides
+// the outcome: uptime is 100% until something is reported down.
 type siteAgg struct {
 	networkID string
-	judged    int
-	upNodes   int
 	downNodes int
 }
 
-// isUp: the site has something to serve with, and none of it is down.
-func (a *siteAgg) isUp() bool {
-	return a.judged > 0 && a.downNodes == 0
-}
+func (a *siteAgg) isUp() bool { return a.downNodes == 0 }
 
 // classifySites builds the per-window site state shared by SITE_UPTIME and
-// NETWORK_UPTIME from the health + uptime + nodes inputs.
-//
-// Two passes: group each site's nodes from the registry (the authority on
-// membership), then judge them — because whether the liveness term applies is
-// a property of the SITE, not of one node. See siteMembers.hasUptime.
+// NETWORK_UPTIME from the nodes + uptime + health inputs.
 func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	health, ok := in["health"]
 	if !ok {
@@ -227,55 +196,9 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	}
 
 	healthByNode := indexHealthByNode(health)
-	reporting := indexUptimeByNode(com, ctl)
+	uptimeByNode := indexUptimeByNode(com, ctl)
 
-	grouped := groupNodesBySite(nodes, reporting)
-
-	sites := make(map[string]*siteAgg, len(grouped))
-
-	for siteID, sn := range grouped {
-		agg := &siteAgg{networkID: sn.networkID}
-		sites[siteID] = agg
-
-		for _, n := range sn.nodes {
-			agg.judged++
-
-			if nodeIsUp(n.nodeType, healthByNode[n.id], reporting[n.id], sn.hasUptime) {
-				agg.upNodes++
-			} else {
-				agg.downNodes++
-			}
-		}
-	}
-
-	return sites, nil
-}
-
-// nodeRef is one judged node: everything the classification needs from the
-// registry row.
-type nodeRef struct {
-	id       string
-	nodeType string
-}
-
-// siteMembers is one site's judged membership for a window.
-type siteMembers struct {
-	networkID string
-	nodes     []nodeRef
-	// hasUptime: at least one of this site's judged nodes produced an uptime
-	// series this window (NaN counts — the series exists). False means the
-	// site is not in the metrics path at all, so requiring liveness of it
-	// would report a pipeline gap as an outage.
-	hasUptime bool
-}
-
-// groupNodesBySite folds registry.node.list into per-site membership. Every
-// node type registers its site, so a site made only of hnodes still produces
-// a row (classified down) instead of vanishing; only tnode/anode/cnode are
-// judged.
-func groupNodesBySite(nodes []map[string]interface{},
-	reporting map[string]bool) map[string]*siteMembers {
-	out := map[string]*siteMembers{}
+	sites := map[string]*siteAgg{}
 
 	for _, node := range nodes {
 		siteID, networkID := str(node["site_id"]), str(node["network_id"])
@@ -283,10 +206,12 @@ func groupNodesBySite(nodes []map[string]interface{},
 			continue // unattached node
 		}
 
-		sn, ok := out[siteID]
+		// Every node type registers the site, so a site made only of hnodes
+		// still produces a row.
+		agg, ok := sites[siteID]
 		if !ok {
-			sn = &siteMembers{networkID: networkID}
-			out[siteID] = sn
+			agg = &siteAgg{networkID: networkID}
+			sites[siteID] = agg
 		}
 
 		nodeType := strings.ToLower(str(node["type"]))
@@ -295,14 +220,13 @@ func groupNodesBySite(nodes []map[string]interface{},
 		}
 
 		nodeID := str(node["node_id"])
-		sn.nodes = append(sn.nodes, nodeRef{id: nodeID, nodeType: nodeType})
 
-		if _, seen := reporting[nodeID]; seen {
-			sn.hasUptime = true
+		if nodeIsDown(nodeType, healthByNode[nodeID], uptimeByNode[nodeID]) {
+			agg.downNodes++
 		}
 	}
 
-	return out
+	return sites, nil
 }
 
 // isSiteNodeType reports whether a node type is one of the three that make up
@@ -311,6 +235,86 @@ func isSiteNodeType(nodeType string) bool {
 	return nodeType == nodeTypeTower ||
 		nodeType == nodeTypeAmplifier ||
 		nodeType == nodeTypeController
+}
+
+// nodeIsDown reports whether this window carries positive evidence that the
+// node is not serving. Everything else — including knowing nothing at all
+// about it — leaves the node up.
+func nodeIsDown(nodeType string, h map[string]interface{}, u uptimeReading) bool {
+	// The node's own counter went stale: it is dead.
+	if u.present && !u.alive {
+		return true
+	}
+
+	// The radio is reported, and reported gone.
+	if flagIsFalse(h, "radio_available") {
+		return true
+	}
+
+	// Cellular is the service interface, and it is tnode-only: the anode
+	// reports "cellular": null, so the field never reaches the row for it.
+	if nodeType == nodeTypeTower && flagIsFalse(h, "cellular_available") {
+		return true
+	}
+
+	return false
+}
+
+// flagIsFalse reports whether a health flag is present AND says false. A
+// missing field is not a false one: the ingest mapper writes a field only when
+// its path resolves, so an unreachable probe records the bare
+// `unreachable: true` marker with no interface flags at all, and the anode's
+// null cellular object yields no cellular field.
+func flagIsFalse(h map[string]interface{}, key string) bool {
+	if h == nil {
+		return false
+	}
+
+	v, ok := h[key]
+	if !ok || v == nil {
+		return false
+	}
+
+	if s, isStr := v.(string); isStr && s == "" {
+		return false
+	}
+
+	return !asBool(v)
+}
+
+// uptimeReading is one node's liveness evidence for a window. The two fields
+// answer different questions: `present` says whether the node has a series at
+// all, `alive` says whether that series carries a real reading. A dead node is
+// present and not alive (its staleness marker arrives as NaN); a node nothing
+// has been heard from yet is simply not present.
+type uptimeReading struct {
+	present bool
+	alive   bool
+}
+
+// indexUptimeByNode folds the com (tnode + cnode) and ctl (anode) uptime
+// series into one node_id -> reading map.
+func indexUptimeByNode(sets ...[]map[string]interface{}) map[string]uptimeReading {
+	out := map[string]uptimeReading{}
+
+	for _, set := range sets {
+		for _, row := range set {
+			nodeID := str(row["node_id"])
+			if nodeID == "" {
+				continue // a series without its node label is unattributable
+			}
+
+			// A node should appear in exactly one of the two series; if it
+			// somehow appears in both, any live reading counts.
+			prev := out[nodeID]
+			out[nodeID] = uptimeReading{
+				present: true,
+				alive:   prev.alive || uptimeReported(row["value"]),
+			}
+		}
+	}
+
+	return out
 }
 
 // indexHealthByNode keys the node.health.interfaces rows of a window by node
@@ -324,82 +328,17 @@ func indexHealthByNode(health []map[string]interface{}) map[string]map[string]in
 	return out
 }
 
-// indexUptimeByNode folds the com (tnode + cnode) and ctl (anode) uptime
-// series into one node_id -> is-reporting map.
-//
-// KEY PRESENCE and VALUE mean different things, and the distinction is the
-// whole design: a key exists when the node has a series at all, and its value
-// says whether that series carries a real reading. A dead node is present with
-// false (its staleness marker arrives as NaN); a node that was never in the
-// metrics path is absent entirely.
-func indexUptimeByNode(sets ...[]map[string]interface{}) map[string]bool {
-	out := map[string]bool{}
-
-	for _, set := range sets {
-		for _, row := range set {
-			nodeID := str(row["node_id"])
-			if nodeID == "" {
-				continue // a series without its node label is unattributable
-			}
-
-			// A node should appear in exactly one of the two series; if it
-			// somehow appears in both, any live reading counts.
-			out[nodeID] = out[nodeID] || uptimeReported(row["value"])
-		}
-	}
-
-	return out
-}
-
-// nodeIsUp judges one node from the signals its type actually has.
-//
-// siteHasUptime = false means no node on this node's SITE produced an uptime
-// series (see siteMembers.hasUptime): the liveness term is dropped and the rule
-// degrades to the v2 health-only one, with the cnode left unjudged because
-// nothing probes it.
-func nodeIsUp(nodeType string, h map[string]interface{}, reporting, siteHasUptime bool) bool {
-	if siteHasUptime && !reporting {
-		return false
-	}
-
-	if nodeType == nodeTypeController {
-		// The cnode carries neither a cellular nor a radio interface and is
-		// not probed by node.health.interfaces, so liveness is its only
-		// signal — already checked above.
-		return true
-	}
-
-	// A missing health row (never probed) and an unreachable probe both count
-	// as down: neither can confirm the interfaces are there.
-	if h == nil || asBool(h["unreachable"]) {
-		return false
-	}
-
-	if !asBool(h["radio_available"]) {
-		return false
-	}
-
-	// Cellular is the service interface, and it is tnode-only.
-	if nodeType == nodeTypeTower && !asBool(h["cellular_available"]) {
-		return false
-	}
-
-	return true
-}
-
 // uptimeReported reports whether a mapped uptime sample is a real reading.
 //
 // /v1/last serialises a Prometheus instant vector, so `value` is the
-// [unix_ts, "value-as-string"] pair. A node that stopped pushing keeps its
-// series — Prometheus turns it into a staleness marker, the sanitizer
-// forwards it untouched, and it comes back as the string "NaN":
+// [unix_ts, "value-as-string"] pair:
 //
-//	"value": [1787257964.364, "NaN"]     -> not reporting
-//	"value": [1787257964.364, "543529.39"] -> reporting
+//	"value": [1787257964.364, "NaN"]       -> dead
+//	"value": [1787257964.364, "543529.39"] -> alive
 //
-// Anything unparseable, infinite or negative is treated as not reporting: an
-// uptime that is not a finite non-negative number of seconds is not evidence
-// the node is alive.
+// Anything unparseable, infinite or negative reads as dead: a series that
+// exists but whose value is not a finite non-negative number of seconds is not
+// evidence the node is alive.
 func uptimeReported(v interface{}) bool {
 	seconds, ok := uptimeSeconds(v)
 
