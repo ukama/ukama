@@ -786,7 +786,7 @@ func (s *SimManagerServer) UnsetPackageInUseForSim(ctx context.Context, req *pb.
 }
 
 func (s *SimManagerServer) MarkPackageExpiredForSim(ctx context.Context, req *pb.PackageRequest) (*pb.PackageResponse, error) {
-	if err := markPackageExpiredForSim(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
+	if err := markPackageExpiredForSim(req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.msgbus, s.baseRoutingKey); err != nil {
 		return nil, err
 	}
 
@@ -1348,7 +1348,7 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 	return nil
 }
 
-func markPackageExpiredForSim(ctx context.Context, reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	log.Infof("Marking package %v as expired for sim: %v", reqPackageId, reqSimId)
 

@@ -425,7 +425,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 
 	log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
 
-	err = markPackageExpiredForSim(ctx, sim.Id.String(), packageId.String(), es.simRepo,
+	err = markPackageExpiredForSim(sim.Id.String(), packageId.String(), es.simRepo,
 		es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
 		log.Errorf("Failed to mark package %s as expired on sim %s. Error: %v",
