@@ -38,7 +38,16 @@ func node(id, nodeType, siteID string, connectivity interface{}) map[string]inte
 		"site_id":      siteID,
 		"network_id":   "net-1",
 		"connectivity": connectivity,
+		"state":        "Operational",
 	}
+}
+
+// nodeState is node() with an explicit registry state.
+func nodeState(id, nodeType, siteID string, connectivity, state interface{}) map[string]interface{} {
+	n := node(id, nodeType, siteID, connectivity)
+	n["state"] = state
+
+	return n
 }
 
 func health(id string, cellular, radio bool, state string) map[string]interface{} {
@@ -524,6 +533,54 @@ func TestSitesOnlineAllNodes(t *testing.T) {
 				node("t1", "tnode", "site-a", "Online"),
 				node("t2", "tnode", "site-b", "Online"),
 				node("a2", "anode", "site-b", "Offline"),
+			},
+			want: 1,
+		},
+
+		// state must be Operational, not merely connected
+		{
+			name:  "online but still configuring is not counted",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", "Configuring")},
+			want:  0,
+		},
+		{
+			name:  "online but only Ready is not counted",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", "Ready")},
+			want:  0,
+		},
+		{
+			name:  "a faulty node is not counted",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", "Faulty")},
+			want:  0,
+		},
+		{
+			name:  "an offboarded node is not counted",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", "Offboarded")},
+			want:  0,
+		},
+		{
+			name:  "a missing state is not operational",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", nil)},
+			want:  0,
+		},
+		{
+			name:  "numeric enum 2 is operational",
+			nodes: []map[string]interface{}{nodeState("t1", "tnode", "site-a", "Online", float64(2))},
+			want:  1,
+		},
+		{
+			name: "one non-operational node disqualifies the whole site",
+			nodes: []map[string]interface{}{
+				node("t1", "tnode", "site-a", "Online"),
+				nodeState("a1", "anode", "site-a", "Online", "Updating"),
+			},
+			want: 0,
+		},
+		{
+			name: "an hnode in a bad state is still ignored",
+			nodes: []map[string]interface{}{
+				node("t1", "tnode", "site-a", "Online"),
+				nodeState("h1", "hnode", "site-a", "Offline", "Faulty"),
 			},
 			want: 1,
 		},
