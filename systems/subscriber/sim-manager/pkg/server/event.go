@@ -280,7 +280,6 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 	return nil
 }
 
-// We activate any new allocated sim as long as ARS registration was successful
 func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.AsrActivated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
@@ -301,10 +300,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key strin
 			ukama.SimTypeUkamaData.String(), sim.Type.String())
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-	defer cancel()
-
-	return setSimServiceOn(ctx, sim.Id.String(), es.simRepo, es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
+	return setSimServiceOn(sim, es.simRepo, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.AsrInactivated) error {

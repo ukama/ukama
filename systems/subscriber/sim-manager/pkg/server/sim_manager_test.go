@@ -1557,7 +1557,7 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("ActivateSim", mock.Anything,
+		agentAdapter.On("UpdatePackage", mock.Anything,
 			mock.MatchedBy(func(a client.AgentRequestData) bool {
 				return a.Iccid == simd.Iccid
 			})).Return(nil).Once()
@@ -1601,32 +1601,6 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 
-		simRepo.AssertExpectations(t)
-	})
-
-	t.Run("SimStatusInvalid", func(t *testing.T) {
-		simRepo := &mocks.SimRepo{}
-
-		packageId := uuid.NewV4()
-		simId := uuid.NewV4()
-
-		simRepo.On("Get", simId).
-			Return(&sims.Sim{Id: simId,
-				IsPhysical: false,
-				Status:     ukama.SimStatusUnknown,
-			}, nil).
-			Once()
-
-		s := server.NewSimManagerServer(OrgName, simRepo,
-			nil, nil, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
-
-		resp, err := s.SetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
-			SimId:     simId.String(),
-			PackageId: packageId.String(),
-		})
-
-		assert.Error(t, err)
-		assert.Nil(t, resp)
 		simRepo.AssertExpectations(t)
 	})
 
