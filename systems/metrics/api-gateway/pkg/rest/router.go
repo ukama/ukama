@@ -203,8 +203,10 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 
 		auth.GET("/last/metrics/:metric", []fizz.OperationOption{
 			func(info *openapi.OperationInfo) {
-				info.Description = "Get the latest value (KPI) of a metric, using the same filters as the range endpoint. " +
-					"Returns the last sample each matching series reported within the lookback window, unaggregated. " +
+				info.Description = "Get a single value (KPI) per series for a metric, using the same filters as the range endpoint. " +
+					"`fn` selects what that value is over the `lookback` window: last (default), delta, increase, rate, min, max or avg. " +
+					"Results are unaggregated across series. " +
+					"Note delta does not correct for counter resets — use increase on a counter such as node uptime. " +
 					"Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries"
 			}}, tonic.Handler(r.metricLastHandler, http.StatusOK))
 
@@ -355,8 +357,7 @@ func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) er
 }
 
 func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) error {
-	// Empty operation: this endpoint never aggregates, so the filter's
-	// operation is unused.
+	// Empty operation: this endpoint never aggregates.
 	filter := pkg.NewFilter().
 		WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, "").
 		WithPackage(in.Package).WithIccid(in.Iccid)
@@ -368,8 +369,9 @@ func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) erro
 			Message:  "Metric not found"}
 	}
 
-	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s", filter, nodeType, in.Lookback)
-	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter, in.Lookback, c.Writer)
+	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s fn: %s",
+		filter, nodeType, in.Lookback, in.Fn)
+	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter, in.Lookback, in.Fn, c.Writer)
 
 	return httpErrorOrNil(httpCode, err)
 }
