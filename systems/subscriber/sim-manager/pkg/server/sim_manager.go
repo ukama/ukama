@@ -425,7 +425,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 	simAgent, ok := s.agentFactory.GetAgentAdapter(simType)
 	if !ok {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"failure to get agentDeactivateSim for sim type: %q", simType)
+			"failure to get agent adapter for sim type: %q", simType)
 	}
 
 	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To, req.Region)
@@ -1238,8 +1238,8 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 		Iccid:        sim.Iccid,
 		Imsi:         sim.Imsi,
 		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
+		PackageId:    pkg.PackageId.String(),
+		SimPackageId: pkg.Id.String(),
 	}
 
 	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
@@ -1255,16 +1255,16 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 	}
 
 	// Update package on sim manager
-	newPackageToActivate := &sims.Package{
+	packageToSetInUse := &sims.Package{
 		IsCurrentlyInUse: true,
 	}
 
-	err = packageRepo.Update([]uuid.UUID{pkg.Id}, newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Update([]uuid.UUID{pkg.Id}, packageToSetInUse, func(pckg *sims.Package, tx *gorm.DB) error {
 		// update startDate and endDate
-		newPackageToActivate.StartDate = time.Now().UTC().
+		packageToSetInUse.StartDate = time.Now().UTC().
 			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 
-		newPackageToActivate.EndDate = validation.CalculateEndDate(newPackageToActivate.
+		packageToSetInUse.EndDate = validation.CalculateEndDate(packageToSetInUse.
 			StartDate, pkg.DefaultDuration)
 
 		return nil
@@ -1287,8 +1287,8 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 		NetworkId:        sim.NetworkId.String(),
 		PackageId:        pkg.Id.String(),
 		PlanId:           pkg.PackageId.String(),
-		PackageStartDate: timestamppb.New(newPackageToActivate.StartDate),
-		PackageEndDate:   timestamppb.New(newPackageToActivate.EndDate),
+		PackageStartDate: timestamppb.New(packageToSetInUse.StartDate),
+		PackageEndDate:   timestamppb.New(packageToSetInUse.EndDate),
 	}
 
 	err = publishEventMessage(route, evtMsg, msgbus)

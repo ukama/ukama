@@ -166,6 +166,9 @@ func (p *packageRepo) Update(packageIds []uuid.UUID, pkg *Package, nestedFunc fu
 		if pkg.DefaultDuration != 0 {
 			updates["default_duration"] = pkg.DefaultDuration
 		}
+		if pkg.UsedDataAtExpiry != 0 {
+			updates["used_data_at_expiry"] = pkg.UsedDataAtExpiry
+		}
 
 		result := tx.Model(&Package{}).Where("id IN ?", packageIds).Updates(updates)
 

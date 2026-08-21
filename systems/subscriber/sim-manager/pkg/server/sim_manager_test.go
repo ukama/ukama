@@ -1523,6 +1523,7 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 		agentFactory := &mocks.AgentFactory{}
 
 		packageId := uuid.NewV4()
+		dataPlanId := uuid.NewV4()
 		simId := uuid.NewV4()
 
 		simd := &sims.Sim{Id: simId,
@@ -1538,6 +1539,7 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{Id: packageId,
 				SimId:            simId,
+				PackageId:        dataPlanId,
 				DefaultDuration:  1,
 				EndDate:          time.Now().UTC().AddDate(0, 1, 0), // next month
 				IsCurrentlyInUse: false,
@@ -1559,7 +1561,9 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 
 		agentAdapter.On("UpdatePackage", mock.Anything,
 			mock.MatchedBy(func(a client.AgentRequestData) bool {
-				return a.Iccid == simd.Iccid
+				return a.Iccid == simd.Iccid &&
+					a.PackageId == dataPlanId.String() &&
+					a.SimPackageId == packageId.String()
 			})).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
