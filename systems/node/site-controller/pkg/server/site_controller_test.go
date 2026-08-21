@@ -19,7 +19,9 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	contmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	scmocks "github.com/ukama/ukama/systems/node/site-controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -122,4 +124,45 @@ func TestSetService_EmptySite_InvalidArgument(t *testing.T) {
 
 	assert.Error(t, err)
 	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+}
+
+func TestRecordObservedState_WritesStateNotIntent(t *testing.T) {
+	siteID := "22222222-2222-2222-2222-222222222222"
+
+	states := &scmocks.StateRepo{}
+	intents := &scmocks.IntentRepo{}
+
+	states.On("Upsert", mock.MatchedBy(func(s *db.SiteState) bool {
+		return s.SiteID == siteID &&
+			s.RadioState == "on" &&
+			s.ServiceState == "" &&
+			s.Reason == reasonHealthReport
+	})).Return(nil).Once()
+
+	c := &SiteControllerEventServer{states: states, intents: intents}
+
+	err := c.recordObservedState(siteID, &db.SiteState{
+		RadioState: "on",
+		Reason:     reasonHealthReport,
+	})
+
+	assert.NoError(t, err)
+	states.AssertExpectations(t)
+	intents.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func TestRecordObservedState_LeavesOtherAxisUntouched(t *testing.T) {
+	siteID := "33333333-3333-3333-3333-333333333333"
+
+	states := &scmocks.StateRepo{}
+	states.On("Upsert", mock.MatchedBy(func(s *db.SiteState) bool {
+		return s.ServiceState == "" && s.PowerState == "" && s.AccessState == ""
+	})).Return(nil).Once()
+
+	c := &SiteControllerEventServer{states: states}
+
+	err := c.recordObservedState(siteID, &db.SiteState{RadioState: "off"})
+
+	assert.NoError(t, err)
+	states.AssertExpectations(t)
 }

@@ -20,7 +20,6 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
-	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 )
@@ -38,6 +37,8 @@ var defaultSiteState = db.SiteState{
 	AccessState:  "unavailable",
 	Reason:       "site_created",
 }
+
+const reasonHealthReport = "health_report"
 
 type SiteControllerEventServer struct {
 	s                    *SiteControllerServer
@@ -163,15 +164,10 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 			return fmt.Errorf("no radio found for node %s", nodeId)
 		}
 
-		radioState := report.Interfaces.Radio.State
-		_, err = c.s.SetRadio(ctx, &pb.SetRadioRequest{
-			SiteId: siteId,
-			State:  radioState,
+		return c.recordObservedState(siteId, &db.SiteState{
+			RadioState: report.Interfaces.Radio.State,
+			Reason:     reasonHealthReport,
 		})
-		if err != nil {
-			return err
-		}
-		return nil
 
 	case ukama.NODE_ID_TYPE_CNODE:
 		// TODO: Handle dnode health report
@@ -180,6 +176,16 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 	default:
 		return fmt.Errorf("unsupported node type %s", nodeType)
 	}
+}
+
+func (c *SiteControllerEventServer) recordObservedState(siteID string, observed *db.SiteState) error {
+	observed.SiteID = siteID
+
+	if err := c.states.Upsert(observed); err != nil {
+		return fmt.Errorf("failed to record observed state for site %s: %w", siteID, err)
+	}
+
+	return nil
 }
 
 func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {
