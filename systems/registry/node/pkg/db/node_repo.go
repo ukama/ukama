@@ -328,15 +328,19 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 		return 0, 0, 0, err
 	}
 
-	res1 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL",
-		ukama.NodeConnectivityOnline).Scan(&onlineCount)
-	if res1.Error != nil {
+	// Use GORM Joins to match the same relationship that GetNode() uses via Preload
+	// This ensures consistent behavior between single node lookups and node counts
+	if err := db.Model(&Node{}).
+		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND node_statuses.deleted_at IS NULL").
+		Where("node_statuses.connectivity = ?", ukama.NodeConnectivityOnline).
+		Count(&onlineCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
-	res2 := db.Raw("select COUNT(*) from nodes LEFT JOIN node_statuses ON nodes.id = node_statuses.node_id WHERE node_statuses.connectivity = ? AND node_statuses.deleted_at IS NULL",
-		ukama.NodeConnectivityOffline).Scan(&offlineCount)
-	if res2.Error != nil {
+	if err := db.Model(&Node{}).
+		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND node_statuses.deleted_at IS NULL").
+		Where("node_statuses.connectivity = ?", ukama.NodeConnectivityOffline).
+		Count(&offlineCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
