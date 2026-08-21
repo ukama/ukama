@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -252,6 +253,12 @@ func (p *Puller) fetch(pull schema.PullSpec, win schema.Window, binds map[string
 	ctx := map[string]string{
 		"WindowStart": win.Start.Format(time.RFC3339),
 		"WindowEnd":   win.End.Format(time.RFC3339),
+		// For sources taking a duration or an instant rather than a range,
+		// e.g. increase() over exactly this window:
+		// lookback={{.WindowSeconds}}s at time={{.WindowEndUnix}}.
+		"WindowStartUnix": strconv.FormatInt(win.Start.Unix(), 10),
+		"WindowEndUnix":   strconv.FormatInt(win.End.Unix(), 10),
+		"WindowSeconds":   strconv.FormatInt(int64(win.End.Sub(win.Start).Seconds()), 10),
 	}
 	for k, v := range binds {
 		ctx[k] = v

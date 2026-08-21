@@ -41,3 +41,59 @@ pulls:
       session_id: $.metric.session
       # Prometheus sample pair [ts, "value"].
       value: $.value
+
+  # Node liveness for SITE_UPTIME / NETWORK_UPTIME. The sanitizer republishes
+  # each node's system uptime counter with node_id/site/network appended:
+  # com_node_uptime covers the tnode and cnode, ctl_node_uptime the anode.
+  #
+  # The counter gains one second per second of wall clock, so `increase` over
+  # the window is the seconds the node was up for. A node that stopped
+  # reporting holds its last value in the pushgateway, so its increase is 0 —
+  # stalled reads as down without waiting on a staleness marker. `increase`
+  # rather than `delta` because it corrects for counter resets: a window
+  # containing a reboot would otherwise go negative.
+  #
+  # strategy: window, not full_snapshot — this measures a window rather than
+  # state as of one, and carrying the last value forward would let a single
+  # failed pull replay one reading across every window behind it.
+  #
+  # lookback is the window length floored at 60s: `increase` needs its range to
+  # span several scrape intervals, and the pushgateway is scraped every 10s. A
+  # 10s range holds one sample (Prometheus drops the series) or two identical
+  # ones (increase 0). The algo applies the same floor, so the two cannot drift.
+  #
+  # time is the window end, so retry, catchup and replay evaluate the same
+  # range.
+  #
+  # site_id/network_id are the sanitizer's labels, kept for traceability; site
+  # membership comes from registry.node.list, which also covers dark nodes.
+  - key: metrics.com_uptime.last
+    endpoint: /v1/last/metrics/com_uptime
+    strategy: window
+    items: $.data.result
+    entity: node_id
+    params:
+      fn: increase
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
+      time: "{{.WindowEndUnix}}"
+    map:
+      node_id: $.metric.node_id
+      site_id: $.metric.site
+      network_id: $.metric.network
+      # Prometheus sample pair [ts, "value"]: seconds gained over the window.
+      value: $.value
+
+  - key: metrics.ctl_uptime.last
+    endpoint: /v1/last/metrics/ctl_uptime
+    strategy: window
+    items: $.data.result
+    entity: node_id
+    params:
+      fn: increase
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
+      time: "{{.WindowEndUnix}}"
+    map:
+      node_id: $.metric.node_id
+      site_id: $.metric.site
+      network_id: $.metric.network
+      value: $.value
