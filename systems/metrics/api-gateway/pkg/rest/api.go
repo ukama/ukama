@@ -82,6 +82,9 @@ type GetMetricsLastInput struct {
 	// Function applied to the lookback window to produce one value per series.
 	// See pkg.lastFuncs.
 	Fn string `query:"fn" default:"last" validate:"omitempty,oneof=last delta increase rate min max avg"`
+	// Instant the query is evaluated at (Unix seconds or RFC3339); empty
+	// means now. Pass a window end to measure exactly that window.
+	Time string `query:"time"`
 }
 
 type GetSimMetricsInput struct {

@@ -64,9 +64,9 @@ func Default() *Registry {
 
 	// v3: site online = ALL its nodes are online (v2: only its cnode).
 	r.Register("sites_online@v3", SitesOnline)
-	// 100% by default, down only on evidence: a NaN uptime reading from a
-	// node's com_/ctl_node_uptime counter, or a health flag reported false.
-	// Judges the tnode, anode and cnode.
+	// Per window: each node's uptime increase over the window length, floored
+	// to 0 by a health flag reported false; the site takes its least
+	// available node. Judges the tnode, anode and cnode.
 	r.Register("site_uptime@v3", SiteUptime)
 	r.Register("network_uptime@v3", NetworkUptime)
 	// v3: reads the shared all-sims dataset (subscriber.sim.list) and

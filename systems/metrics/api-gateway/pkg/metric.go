@@ -49,6 +49,19 @@ func ValidateLookback(l string) error {
 	return nil
 }
 
+// promTime matches an instant-query evaluation timestamp: Unix seconds
+// (optionally fractional) or an RFC3339 instant.
+var promTime = regexp.MustCompile(`^([0-9]+(\.[0-9]+)?|[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+)$`)
+
+// ValidateQueryTime reports whether t is a usable evaluation timestamp. Like
+// the lookback it reaches Prometheus unquoted, so it is validated not escaped.
+func ValidateQueryTime(t string) error {
+	if !promTime.MatchString(t) {
+		return errors.Errorf("invalid time %q: expected Unix seconds or an RFC3339 timestamp", t)
+	}
+	return nil
+}
+
 const DefaultLastFunc = "last"
 
 // lastFuncs maps the API's `fn` values onto the Prometheus function wrapped
@@ -256,7 +269,11 @@ func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilte
 // GetMetricRange: same filters, no aggregation across series — the Prometheus
 // vector response is passed through as-is.
 // nodeType is one of "tnode", "anode", "cnode", or "system".
-func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter *Filter, lookback string, fn string, w io.Writer) (httpStatus int, err error) {
+//
+// queryTime is the instant the query is evaluated at; empty means now. A
+// caller measuring a bounded window must pass that window's end, or the
+// lookback range trails the clock at call time.
+func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter *Filter, lookback string, fn string, queryTime string, w io.Writer) (httpStatus int, err error) {
 	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
 		return http.StatusNotFound, errors.New("metric type not found for node type")
@@ -274,6 +291,12 @@ func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter
 		return http.StatusBadRequest, err
 	}
 
+	if queryTime != "" {
+		if err := ValidateQueryTime(queryTime); err != nil {
+			return http.StatusBadRequest, err
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
 	defer cancel()
 
@@ -281,6 +304,11 @@ func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter
 
 	data := url.Values{}
 	data.Set("query", metric.getLastQuery(metricFilter, lookback, promFn))
+
+	// Omitted when empty: Prometheus then evaluates at now.
+	if queryTime != "" {
+		data.Set("time", queryTime)
+	}
 
 	log.Infof("GetMetricLast query: %s", data.Encode())
 

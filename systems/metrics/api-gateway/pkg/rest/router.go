@@ -207,6 +207,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 					"`fn` selects what that value is over the `lookback` window: last (default), delta, increase, rate, min, max or avg. " +
 					"Results are unaggregated across series. " +
 					"Note delta does not correct for counter resets — use increase on a counter such as node uptime. " +
+					"`time` pins the evaluation instant (Unix seconds or RFC3339, default now), so a caller measuring a bounded window gets that window rather than the one trailing the clock. " +
 					"Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries"
 			}}, tonic.Handler(r.metricLastHandler, http.StatusOK))
 
@@ -369,9 +370,10 @@ func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) erro
 			Message:  "Metric not found"}
 	}
 
-	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s fn: %s",
-		filter, nodeType, in.Lookback, in.Fn)
-	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter, in.Lookback, in.Fn, c.Writer)
+	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s fn: %s time: %s",
+		filter, nodeType, in.Lookback, in.Fn, in.Time)
+	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter,
+		in.Lookback, in.Fn, in.Time, c.Writer)
 
 	return httpErrorOrNil(httpCode, err)
 }
