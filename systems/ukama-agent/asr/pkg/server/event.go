@@ -143,7 +143,7 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 			},
 		}
 
-		if err := utils.PublishEvent(ae.orgName, activeSubscriberEventObject, msgbus.ACTION_CRUD_DELETE, e,
+		if err := utils.PublishEvent(ae.orgName, msgbus.ACTION_CRUD_DELETE, activeSubscriberEventObject, e,
 			ae.msgbus); err != nil {
 			log.Warnf("Failed to publish subcriber delete as rollback event for sim %s allocation failure. Error: %v", sim.Imsi, err)
 		}
