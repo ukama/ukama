@@ -142,17 +142,17 @@ func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate strin
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: pkg, nestedFunc
-func (_m *PackageRepo) Update(pkg *db.Package, nestedFunc func(*db.Package, *gorm.DB) error) error {
-	ret := _m.Called(pkg, nestedFunc)
+// Update provides a mock function with given fields: packageIds, pkg, nestedFunc
+func (_m *PackageRepo) Update(packageIds []uuid.UUID, pkg *db.Package, nestedFunc func(*db.Package, *gorm.DB) error) error {
+	ret := _m.Called(packageIds, pkg, nestedFunc)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Package, func(*db.Package, *gorm.DB) error) error); ok {
-		r0 = rf(pkg, nestedFunc)
+	if rf, ok := ret.Get(0).(func([]uuid.UUID, *db.Package, func(*db.Package, *gorm.DB) error) error); ok {
+		r0 = rf(packageIds, pkg, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}

@@ -1544,8 +1544,8 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 			}, nil).Once()
 
 		packageRepo.On("Update",
+			[]uuid.UUID{packageId},
 			&sims.Package{
-				Id:               packageId,
 				IsCurrentlyInUse: true,
 			},
 			mock.Anything).Return(nil).Once()

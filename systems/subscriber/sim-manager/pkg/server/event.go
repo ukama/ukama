@@ -323,35 +323,13 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key strin
 			ukama.SimTypeUkamaData.String(), sim.Type.String())
 	}
 
-	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
+	log.Infof("Terminating all packages on sim %s", sim.Id.String())
+
+	err = expireAllPackagesForSim(sim.Id.String(), es.packageRepo, es.msgbus, es.baseRoutingKey)
 	if err != nil {
-		log.Errorf("Failed to get the sorted list of packages present on sim (%s): %v",
-			sim.Id.String(), err)
+		log.Errorf("Failed to expire packages on sim %s. Error: %v", sim.Id.String(), err)
 
-		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
-			sim.Id.String(), err)
-	}
-
-	for _, p := range packages {
-		if p.Id.String() == asrProfile.Subscriber.SimPackage {
-			err = unsetPackageInuseForSim(sim.Id.String(), asrProfile.Subscriber.SimPackage, es.packageRepo)
-			if err != nil {
-				log.Warnf("Failed to unset package in-use %s on sim %s. Error: %v",
-					asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
-			}
-		}
-
-		log.Infof("Terminating package %s on sim %s", asrProfile.Subscriber.SimPackage, sim.Id.String())
-
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
-		defer cancel()
-
-		err = markPackageExpiredForSim(ctx, sim.Id.String(), asrProfile.Subscriber.SimPackage, es.simRepo,
-			es.packageRepo, es.msgbus, es.baseRoutingKey)
-		if err != nil {
-			log.Warnf("Failed to mark package %s as expired on sim %s. Error: %v",
-				asrProfile.Subscriber.SimPackage, sim.Id.String(), err)
-		}
+		return fmt.Errorf("failed to expire packages on sim %s. Error: %w", sim.Id.String(), err)
 	}
 
 	// Terminating sim

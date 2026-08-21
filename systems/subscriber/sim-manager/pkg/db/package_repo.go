@@ -23,12 +23,11 @@ type PackageRepo interface {
 	Get(packageId uuid.UUID) (*Package, error)
 	List(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate string,
 		isCurrentlyInUse, isExpired bool, count uint32, sort bool) ([]Package, error)
+	Update(packageIds []uuid.UUID, pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
+	Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 
 	// Deprecated: Use db.PackageRepo.List with simId as filtering param instead.
 	GetBySim(simId uuid.UUID) ([]Package, error)
-
-	Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
-	Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
 type packageRepo struct {
@@ -139,7 +138,11 @@ func (p *packageRepo) GetBySim(simId uuid.UUID) ([]Package, error) {
 	return packages, nil
 }
 
-func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error {
+func (p *packageRepo) Update(packageIds []uuid.UUID, pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error {
+	if len(packageIds) == 0 {
+		return nil
+	}
+
 	err := p.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if nestedFunc != nil {
 			nestErr := nestedFunc(pkg, tx)
@@ -151,8 +154,8 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 		// GORM Updates skips zero-value struct fields, so bool fields like is_currently_in_use
 		// cannot be set to false via struct updates alone.
 		updates := map[string]interface{}{
-			"is_currently_in_use  ": pkg.IsCurrentlyInUse,
-			"is_expired":            pkg.IsExpired,
+			"is_currently_in_use": pkg.IsCurrentlyInUse,
+			"is_expired":          pkg.IsExpired,
 		}
 		if !pkg.StartDate.IsZero() {
 			updates["start_date"] = pkg.StartDate
@@ -164,7 +167,7 @@ func (p *packageRepo) Update(pkg *Package, nestedFunc func(*Package, *gorm.DB) e
 			updates["default_duration"] = pkg.DefaultDuration
 		}
 
-		result := tx.Model(pkg).Clauses(clause.Returning{}).Updates(updates)
+		result := tx.Model(&Package{}).Where("id IN ?", packageIds).Updates(updates)
 
 		if result.Error != nil {
 			return result.Error

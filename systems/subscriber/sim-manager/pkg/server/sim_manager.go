@@ -1256,11 +1256,10 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	// Update package on sim manager
 	newPackageToActivate := &sims.Package{
-		Id:               pkg.Id,
 		IsCurrentlyInUse: true,
 	}
 
-	err = packageRepo.Update(newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Update([]uuid.UUID{pkg.Id}, newPackageToActivate, func(pckg *sims.Package, tx *gorm.DB) error {
 		// update startDate and endDate
 		newPackageToActivate.StartDate = time.Now().UTC().
 			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
@@ -1331,12 +1330,11 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 	}
 
 	inUsePackageToUnset := &sims.Package{
-		Id:               pckg.Id,
 		IsCurrentlyInUse: false,
 		// UsedDataAtExpiry; // Get the final volume from ASR,
 	}
 
-	err = packageRepo.Update(inUsePackageToUnset, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Update([]uuid.UUID{pckg.Id}, inUsePackageToUnset, func(pckg *sims.Package, tx *gorm.DB) error {
 		inUsePackageToUnset.EndDate = time.Now().UTC()
 
 		return nil
@@ -1389,12 +1387,11 @@ func markPackageExpiredForSim(ctx context.Context, reqSimId, reqPackageId string
 	}
 
 	packageToExpire := &sims.Package{
-		Id:               pckg.Id,
 		IsCurrentlyInUse: false,
 		IsExpired:        true,
 	}
 
-	err = packageRepo.Update(packageToExpire, func(pckg *sims.Package, tx *gorm.DB) error {
+	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToExpire, func(pckg *sims.Package, tx *gorm.DB) error {
 		packageToExpire.EndDate = time.Now().UTC()
 
 		return nil
@@ -1413,6 +1410,71 @@ func markPackageExpiredForSim(ctx context.Context, reqSimId, reqPackageId string
 		DefaultDuration: pckg.DefaultDuration,
 		PackageId:       pckg.Id.String(),
 		DataPlanId:      pckg.PackageId.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	return nil
+}
+
+func expireAllPackagesForSim(simId string, packageRepo sims.PackageRepo, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	if err != nil {
+		return fmt.Errorf("failed to get the list of packages present on sim (%s): %w", simId, err)
+	}
+
+	var idsToExpire []uuid.UUID
+	var activePckg *sims.Package
+
+	for i, pckg := range packages {
+		if pckg.IsExpired {
+			continue
+		}
+
+		idsToExpire = append(idsToExpire, pckg.Id)
+
+		if pckg.IsCurrentlyInUse {
+			activePckg = &packages[i]
+		}
+	}
+
+	if len(idsToExpire) == 0 {
+		return nil
+	}
+
+	packageToExpire := &sims.Package{
+		IsCurrentlyInUse: false,
+		IsExpired:        true,
+	}
+
+	err = packageRepo.Update(idsToExpire, packageToExpire, func(pckg *sims.Package, tx *gorm.DB) error {
+		packageToExpire.EndDate = time.Now().UTC()
+
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to mark packages as expired on sim (%s): %w", simId, err)
+	}
+
+	endDate := packageToExpire.EndDate
+
+	log.Infof("Marked packages %v as expired on sim %s", idsToExpire, simId)
+
+	if activePckg == nil {
+		return nil
+	}
+
+	route := baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimPackageExpire{
+		Id:              simId,
+		StartDate:       activePckg.StartDate.String(),
+		EndDate:         endDate.String(),
+		DefaultDuration: activePckg.DefaultDuration,
+		PackageId:       activePckg.Id.String(),
+		DataPlanId:      activePckg.PackageId.String(),
 	}
 
 	err = publishEventMessage(route, evtMsg, msgbus)

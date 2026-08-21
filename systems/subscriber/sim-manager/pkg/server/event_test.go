@@ -815,7 +815,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("NextPackagesFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -833,14 +833,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				},
 			}, nil)
 
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				Id:               packageId,
-				SimId:            simId,
-				IsCurrentlyInUse: true,
-				IsExpired:        false,
-			}, nil)
-
 		simRepo.On("Get", mock.Anything).
 			Return(&sims.Sim{
 				Id:     simId,
@@ -848,7 +840,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
-		packageRepo.On("Update", mock.Anything, mock.Anything).
+		packageRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil)
 
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -928,7 +920,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
-		packageRepo.On("Update", mock.Anything, mock.Anything).
+		packageRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil)
 
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -954,9 +946,8 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		assert.Error(t, err)
 	})
 
-	t.Run("PackageUpdateError", func(t *testing.T) {
+	t.Run("ExpirePackagesError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -973,21 +964,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 					Status: ukama.SimStatusServiceOn,
 					Type:   ukama.SimTypeUkamaData,
 				},
-			}, nil)
-
-		packageRepo.On("Get", mock.Anything).
-			Return(&sims.Package{
-				SimId:            simId,
-				IsCurrentlyInUse: true,
-				IsExpired:        false,
-			}, nil)
-
-		simRepo.On("Get", mock.Anything).
-			Return(&sims.Sim{
-				Id:     simId,
-				Iccid:  testIccid,
-				Status: ukama.SimStatusServiceOn,
-				Type:   ukama.SimTypeUkamaData,
 			}, nil)
 
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -1007,15 +983,8 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				},
 			}, nil)
 
-		packageRepo.On("Update", mock.Anything, mock.Anything).
+		packageRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(errors.New("package expired update failure"))
-
-		simRepo.On("Update",
-			&sims.Sim{
-				Id:     simId,
-				Status: ukama.SimStatusTerminated,
-			},
-			mock.Anything).Return(nil).Once()
 
 		evt := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{
@@ -1034,7 +1003,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
 		_, err = s.EventNotification(context.TODO(), msg)
 
-		assert.NoError(t, err)
+		assert.Error(t, err)
 	})
 
 	t.Run("SimGetError", func(t *testing.T) {
