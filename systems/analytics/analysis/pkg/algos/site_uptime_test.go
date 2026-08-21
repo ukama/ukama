@@ -34,9 +34,62 @@ func health(id string, cellular, radio bool, state string) map[string]interface{
 	}
 }
 
-// uptimeInputs builds the two inputs the uptime algos share.
-func uptimeInputs(nodes, healthRows []map[string]interface{}) Datasets {
-	return Datasets{"nodes": nodes, "health": healthRows}
+// up is an uptime row as /v1/last serialises it: the [ts, "value"] pair of a
+// node that is still pushing its system uptime counter.
+func up(id string, seconds string) map[string]interface{} {
+	return map[string]interface{}{
+		"node_id":    id,
+		"site_id":    "site-a",
+		"network_id": "net-1",
+		"value":      []interface{}{1787257964.364, seconds},
+	}
+}
+
+// dead is the same row for a node that stopped pushing: Prometheus' staleness
+// marker, forwarded by the sanitizer and serialised as the string "NaN".
+func dead(id string) map[string]interface{} {
+	return up(id, "NaN")
+}
+
+// uptimeInputs builds the four inputs the uptime algos share. Nodes with no
+// explicit uptime row are given a live one, so a test only has to spell out
+// the liveness it actually cares about.
+func uptimeInputs(nodes, healthRows []map[string]interface{},
+	uptimeRows ...map[string]interface{}) Datasets {
+	given := map[string]bool{}
+	rows := append([]map[string]interface{}{}, uptimeRows...)
+
+	for _, r := range uptimeRows {
+		given[str(r["node_id"])] = true
+	}
+
+	for _, n := range nodes {
+		id := str(n["node_id"])
+		if !given[id] {
+			rows = append(rows, up(id, "542344.69"))
+		}
+	}
+
+	// The split between the two series does not matter to the algo — it folds
+	// them into one map — so the fixtures put every row in com_uptime and
+	// keep a dedicated case for the ctl (anode) series.
+	return Datasets{
+		"nodes":      nodes,
+		"health":     healthRows,
+		"com_uptime": rows,
+		"ctl_uptime": []map[string]interface{}{},
+	}
+}
+
+// noUptime is the degraded shape: both uptime datasets empty, which means the
+// metrics path delivered nothing rather than that every node died.
+func noUptime(nodes, healthRows []map[string]interface{}) Datasets {
+	return Datasets{
+		"nodes":      nodes,
+		"health":     healthRows,
+		"com_uptime": []map[string]interface{}{},
+		"ctl_uptime": []map[string]interface{}{},
+	}
 }
 
 // siteResult finds the row for one site.
@@ -59,6 +112,7 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 		name      string
 		nodes     []map[string]interface{}
 		health    []map[string]interface{}
+		uptime    []map[string]interface{}
 		wantSum   float64
 		wantCount float64
 	}{
@@ -105,6 +159,22 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 			wantCount: 1,
 		},
 		{
+			name:      "a healthy node that stopped pushing uptime is down",
+			nodes:     []map[string]interface{}{node("t1", "tnode", "site-a", "Online")},
+			health:    []map[string]interface{}{health("t1", true, true, "on")},
+			uptime:    []map[string]interface{}{dead("t1")},
+			wantSum:   0,
+			wantCount: 1,
+		},
+		{
+			name:      "a zero uptime reading still counts as reporting",
+			nodes:     []map[string]interface{}{node("t1", "tnode", "site-a", "Online")},
+			health:    []map[string]interface{}{health("t1", true, true, "on")},
+			uptime:    []map[string]interface{}{up("t1", "0")},
+			wantSum:   100,
+			wantCount: 1,
+		},
+		{
 			name:  "anode needs only radio — no cellular key of its own",
 			nodes: []map[string]interface{}{node("a1", "anode", "site-a", "Online")},
 			health: []map[string]interface{}{
@@ -127,7 +197,7 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name: "every bearer up makes the site up",
+			name: "every node up makes the site up",
 			nodes: []map[string]interface{}{
 				node("t1", "tnode", "site-a", "Online"),
 				node("a1", "anode", "site-a", "Online"),
@@ -140,27 +210,56 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 			wantCount: 1,
 		},
 		{
-			name:      "site with only a cnode is down, not missing",
+			name:      "a site with only a live cnode is up — v3 judges the cnode too",
 			nodes:     []map[string]interface{}{node("c1", "cnode", "site-a", "Online")},
 			health:    []map[string]interface{}{},
+			wantSum:   100,
+			wantCount: 1,
+		},
+		{
+			name:      "a site with only a dead cnode is down, not missing",
+			nodes:     []map[string]interface{}{node("c1", "cnode", "site-a", "Online")},
+			health:    []map[string]interface{}{},
+			uptime:    []map[string]interface{}{dead("c1")},
 			wantSum:   0,
 			wantCount: 1,
 		},
 		{
-			name: "a cnode does not affect a healthy site",
+			name: "a dead cnode takes an otherwise healthy site down",
 			nodes: []map[string]interface{}{
 				node("t1", "tnode", "site-a", "Online"),
-				node("c1", "cnode", "site-a", "Offline"),
+				node("c1", "cnode", "site-a", "Online"),
 			},
 			health:    []map[string]interface{}{health("t1", true, true, "on")},
+			uptime:    []map[string]interface{}{dead("c1")},
+			wantSum:   0,
+			wantCount: 1,
+		},
+		{
+			name: "an hnode on the site is still ignored",
+			nodes: []map[string]interface{}{
+				node("t1", "tnode", "site-a", "Online"),
+				node("h1", "hnode", "site-a", "Offline"),
+			},
+			health:    []map[string]interface{}{health("t1", true, true, "on")},
+			uptime:    []map[string]interface{}{dead("h1")},
 			wantSum:   100,
+			wantCount: 1,
+		},
+		{
+			name:      "a site with only an hnode has nothing to serve with",
+			nodes:     []map[string]interface{}{node("h1", "hnode", "site-a", "Online")},
+			health:    []map[string]interface{}{},
+			wantSum:   0,
 			wantCount: 1,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			results, err := SiteUptime(schema.Window{}, uptimeInputs(tt.nodes, tt.health), schema.KpiSpec{})
+			in := uptimeInputs(tt.nodes, tt.health, tt.uptime...)
+
+			results, err := SiteUptime(schema.Window{}, in, schema.KpiSpec{})
 			if err != nil {
 				t.Fatalf("SiteUptime: %v", err)
 			}
@@ -174,12 +273,115 @@ func TestSiteUptimeServiceAndRadio(t *testing.T) {
 	}
 }
 
-// Every site must emit a row, including one that carries no service or radio —
-// a silently absent row is what made this KPI look broken before.
+// A node whose series is missing entirely — it aged out of the pull's
+// lookback rather than going stale — is down for the same reason a NaN is:
+// nothing confirms it is alive.
+func TestSiteUptimeAbsentSeriesIsDown(t *testing.T) {
+	in := Datasets{
+		"nodes":      []map[string]interface{}{node("t1", "tnode", "site-a", "Online")},
+		"health":     []map[string]interface{}{health("t1", true, true, "on")},
+		"com_uptime": []map[string]interface{}{up("some-other-node", "1")},
+		"ctl_uptime": []map[string]interface{}{},
+	}
+
+	results, err := SiteUptime(schema.Window{}, in, schema.KpiSpec{})
+	if err != nil {
+		t.Fatalf("SiteUptime: %v", err)
+	}
+
+	if v := siteResult(t, results, "site-a").Value; v != 0 {
+		t.Errorf("site value = %v, want 0 — t1 has no uptime series", v)
+	}
+}
+
+// The anode's liveness arrives on the ctl series, the tnode's and cnode's on
+// the com series; the algo folds both.
+func TestSiteUptimeReadsBothUptimeSeries(t *testing.T) {
+	nodes := []map[string]interface{}{
+		node("t1", "tnode", "site-a", "Online"),
+		node("a1", "anode", "site-a", "Online"),
+	}
+	healthRows := []map[string]interface{}{
+		health("t1", true, true, "on"),
+		{"node_id": "a1", "radio_available": true},
+	}
+
+	in := Datasets{
+		"nodes":      nodes,
+		"health":     healthRows,
+		"com_uptime": []map[string]interface{}{up("t1", "542344.69")},
+		"ctl_uptime": []map[string]interface{}{dead("a1")},
+	}
+
+	results, err := SiteUptime(schema.Window{}, in, schema.KpiSpec{})
+	if err != nil {
+		t.Fatalf("SiteUptime: %v", err)
+	}
+
+	if v := siteResult(t, results, "site-a").Value; v != 0 {
+		t.Errorf("site value = %v, want 0 — the anode's ctl series is NaN", v)
+	}
+}
+
+// Empty uptime datasets mean the metrics path delivered nothing, not that
+// every node in the org died: the liveness term is dropped and the health
+// rule alone decides, so a broken sanitizer cannot zero the whole KPI.
+func TestSiteUptimeDegradesWhenUptimeDatasetIsEmpty(t *testing.T) {
+	nodes := []map[string]interface{}{
+		node("t1", "tnode", "site-a", "Online"),
+		node("c1", "cnode", "site-a", "Online"),
+		node("t2", "tnode", "site-b", "Online"),
+	}
+	healthRows := []map[string]interface{}{
+		health("t1", true, true, "on"),
+		health("t2", true, false, ""), // radio unavailable -> still down
+	}
+
+	results, err := SiteUptime(schema.Window{}, noUptime(nodes, healthRows), schema.KpiSpec{})
+	if err != nil {
+		t.Fatalf("SiteUptime: %v", err)
+	}
+
+	if v := siteResult(t, results, "site-a").Value; v != 100 {
+		t.Errorf("site-a value = %v, want 100 — no uptime signal must not read as down", v)
+	}
+
+	if v := siteResult(t, results, "site-b").Value; v != 0 {
+		t.Errorf("site-b value = %v, want 0 — the health rule still applies", v)
+	}
+}
+
+func TestSiteUptimeMissingInputs(t *testing.T) {
+	full := Datasets{
+		"nodes":      {},
+		"health":     {},
+		"com_uptime": {},
+		"ctl_uptime": {},
+	}
+
+	for _, missing := range []string{"nodes", "health", "com_uptime", "ctl_uptime"} {
+		t.Run("missing "+missing, func(t *testing.T) {
+			in := Datasets{}
+
+			for k, v := range full {
+				if k != missing {
+					in[k] = v
+				}
+			}
+
+			if _, err := SiteUptime(schema.Window{}, in, schema.KpiSpec{}); err == nil {
+				t.Errorf("expected an error when input %q is absent", missing)
+			}
+		})
+	}
+}
+
+// Every site must emit a row, including one that carries nothing that can
+// serve — a silently absent row is what made this KPI look broken before.
 func TestSiteUptimeEmitsEverySite(t *testing.T) {
 	nodes := []map[string]interface{}{
 		node("t1", "tnode", "site-a", "Online"),
-		node("c1", "cnode", "site-b", "Online"),
+		node("h1", "hnode", "site-b", "Online"),
 	}
 	healthRows := []map[string]interface{}{health("t1", true, true, "on")}
 
@@ -197,12 +399,13 @@ func TestSiteUptimeEmitsEverySite(t *testing.T) {
 	}
 
 	if v := siteResult(t, results, "site-b").Value; v != 0 {
-		t.Errorf("site-b (cnode only) value = %v, want 0", v)
+		t.Errorf("site-b (hnode only) value = %v, want 0", v)
 	}
 }
 
 func TestNetworkUptimePoolsSites(t *testing.T) {
-	// 3 sites: one up, one down, one whose radio is switched off (still up).
+	// 3 sites: one up, one whose radio is switched off (still up), one whose
+	// tnode stopped pushing uptime.
 	nodes := []map[string]interface{}{
 		node("t1", "tnode", "site-a", "Online"),
 		node("t2", "tnode", "site-b", "Online"),
@@ -210,11 +413,13 @@ func TestNetworkUptimePoolsSites(t *testing.T) {
 	}
 	healthRows := []map[string]interface{}{
 		health("t1", true, true, "on"),  // up
-		health("t2", true, false, ""),   // down
+		health("t2", true, true, "on"),  // healthy, but dark below -> down
 		health("t3", true, true, "off"), // available, just switched off -> up
 	}
 
-	results, err := NetworkUptime(schema.Window{}, uptimeInputs(nodes, healthRows), schema.KpiSpec{})
+	in := uptimeInputs(nodes, healthRows, dead("t2"))
+
+	results, err := NetworkUptime(schema.Window{}, in, schema.KpiSpec{})
 	if err != nil {
 		t.Fatalf("NetworkUptime: %v", err)
 	}
@@ -236,12 +441,12 @@ func TestNetworkUptimePoolsSites(t *testing.T) {
 	}
 }
 
-// A site with no tnode/anode has no service and no radio, so it drags the
-// network percentage down rather than being quietly left out.
+// A site with nothing that can serve drags the network percentage down rather
+// than being quietly left out.
 func TestNetworkUptimeCountsEverySite(t *testing.T) {
 	nodes := []map[string]interface{}{
 		node("t1", "tnode", "site-a", "Online"),
-		node("c1", "cnode", "site-b", "Online"),
+		node("h1", "hnode", "site-b", "Online"),
 	}
 	healthRows := []map[string]interface{}{health("t1", true, true, "on")}
 

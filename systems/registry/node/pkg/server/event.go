@@ -201,6 +201,15 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		log.Errorf("GPS not found/available: %+v", interfaces.Gps)
 		return fmt.Errorf("GPS not found: %+v", interfaces.Gps)
 	}
+
+	// GPS lock is the only gate on node location. Without a fix the reported
+	// coordinates are a placeholder, so drop the report; with a fix, whatever
+	// the node reports is stored verbatim.
+	if !interfaces.Gps.Lock {
+		log.Infof("Node %s has no GPS lock yet, skipping location update",
+			msg.NodeId)
+		return nil
+	}
 	coordinates := interfaces.Gps.Coordinates
 
 	if coordinates == "" {
