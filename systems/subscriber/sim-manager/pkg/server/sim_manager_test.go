@@ -1997,7 +1997,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("ActivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(errors.New("fail to deactivate sim on remove agent")).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2038,7 +2038,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("DeactivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(errors.New("fail to deactivate sim on remove agent")).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2076,7 +2076,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("ActivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
 		simRepo.On("Update", mock.Anything, mock.Anything).
@@ -2117,7 +2117,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		agentAdapter.On("DeactivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
 		simRepo.On("Update", mock.Anything, mock.Anything).
@@ -2170,7 +2170,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		agentAdapter.On("ActivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2219,7 +2219,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-		agentAdapter.On("DeactivateSim", mock.Anything,
+		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,

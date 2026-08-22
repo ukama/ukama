@@ -69,6 +69,14 @@ func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req client.AgentRe
 	return nil
 }
 
+func (t *TestAgentAdapter) Update(ctx context.Context, req client.AgentRequestData) error {
+	if req.IsServiceStatusOn {
+		return t.ActivateSim(ctx, req)
+	}
+
+	return t.DeactivateSim(ctx, req)
+}
+
 func (t *TestAgentAdapter) TerminateSim(ctx context.Context, req client.AgentRequestData) error {
 	_, err := t.client.TerminateSim(ctx, &pb.TerminateSimRequest{Iccid: req.Iccid})
 

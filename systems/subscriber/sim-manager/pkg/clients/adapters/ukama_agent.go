@@ -50,18 +50,21 @@ func (u *UkamaAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, 
 }
 
 func (u *UkamaAgentAdaper) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
-	// think of how to use ctx with restclient
-	return u.client.ActivateSim(req)
+	return nil
 }
 
 func (u *UkamaAgentAdaper) DeactivateSim(ctx context.Context, req client.AgentRequestData) error {
-	// think of how to use ctx with restclient
-	return u.client.DeactivateSim(req)
+	return nil
 }
 
 func (u *UkamaAgentAdaper) UpdatePackage(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
 	return u.client.UpdatePackage(req)
+}
+
+func (u *UkamaAgentAdaper) Update(ctx context.Context, req client.AgentRequestData) error {
+	// think of how to use ctx with restclient
+	return u.client.Update(req)
 }
 
 func (u *UkamaAgentAdaper) TerminateSim(ctx context.Context, req client.AgentRequestData) error {

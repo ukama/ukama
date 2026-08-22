@@ -14,24 +14,6 @@ type UkamaAgentClient struct {
 	mock.Mock
 }
 
-// ActivateSim provides a mock function with given fields: req
-func (_m *UkamaAgentClient) ActivateSim(req client.AgentRequestData) error {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ActivateSim")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(client.AgentRequestData) error); ok {
-		r0 = rf(req)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
 // CreateProfile provides a mock function with given fields: req
 func (_m *UkamaAgentClient) CreateProfile(req client.AgentRequestData) (*ukamaagent.UkamaSimInfo, error) {
 	ret := _m.Called(req)
@@ -60,24 +42,6 @@ func (_m *UkamaAgentClient) CreateProfile(req client.AgentRequestData) (*ukamaag
 	}
 
 	return r0, r1
-}
-
-// DeactivateSim provides a mock function with given fields: req
-func (_m *UkamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
-	ret := _m.Called(req)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeactivateSim")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(client.AgentRequestData) error); ok {
-		r0 = rf(req)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
 }
 
 // DeleteProfile provides a mock function with given fields: req
@@ -165,6 +129,24 @@ func (_m *UkamaAgentClient) GetUsages(iccid string, cdrType string, from string,
 	}
 
 	return r0, r1, r2
+}
+
+// Update provides a mock function with given fields: req
+func (_m *UkamaAgentClient) Update(req client.AgentRequestData) error {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(client.AgentRequestData) error); ok {
+		r0 = rf(req)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // UpdatePackage provides a mock function with given fields: req

@@ -32,6 +32,12 @@ type DeleteProfileReq ReqData
 
 type UpdatePackageReq ReqData
 
+type UpdateReq struct {
+	Iccid             string `json:"iccid" path:"iccid" validate:"required"`
+	Imsi              string `json:"imsi,omitempty"`
+	IsServiceStatusOn bool   `json:"is_service_status_on"`
+}
+
 type ReadSubscriberReq struct {
 	Iccid string `path:"iccid" validate:"required"`
 }

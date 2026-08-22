@@ -15,6 +15,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -27,6 +28,7 @@ const (
 	PROFILE_DELETION
 	NO_DATA_AVAILABLE
 	POLICY_FAILURE
+	SERVICE_STATUS_UPDATE
 )
 
 // Represents record in HSS db
@@ -58,7 +60,7 @@ type Asr struct {
 	Policy                  Policy
 	LastStatusChangeAt      time.Time
 	AllowedTimeOfService    int64
-	IsServiceStatusOn       bool
+	ServiceStatus           ukama.SimStatus
 	LastStatusChangeReasons StatusReason
 }
 
@@ -110,6 +112,8 @@ func StatusReasonFromString(s string) StatusReason {
 		return StatusReason(NO_DATA_AVAILABLE)
 	case "POLICY_FAILURE", "policy_failure":
 		return StatusReason(POLICY_FAILURE)
+	case "SERVICE_STATUS_UPDATE", "service_status_update":
+		return StatusReason(SERVICE_STATUS_UPDATE)
 	default:
 		return StatusReason(UNKNOWN)
 	}
@@ -127,6 +131,8 @@ func (s StatusReason) String() string {
 		return "NO_DATA_AVAILABLE"
 	case POLICY_FAILURE:
 		return "POLICY_FAILURE"
+	case SERVICE_STATUS_UPDATE:
+		return "SERVICE_STATUS_UPDATE"
 	default:
 		return "UNKNOWN"
 	}
@@ -143,7 +149,7 @@ func (s *StatusReason) Scan(value interface{}) error {
 	}
 
 	switch StatusReason(val) {
-	case PROFILE_CREATION, PACKAGE_UPDATE, PROFILE_DELETION, NO_DATA_AVAILABLE, POLICY_FAILURE:
+	case PROFILE_CREATION, PACKAGE_UPDATE, PROFILE_DELETION, NO_DATA_AVAILABLE, POLICY_FAILURE, SERVICE_STATUS_UPDATE:
 		*s = StatusReason(val)
 	default:
 		*s = UNKNOWN

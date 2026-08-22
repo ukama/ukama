@@ -113,7 +113,7 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op,
 				sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.CsgIdPrsent,
 				sub.CsgId, sub.DefaultApnName, sub.NetworkId, sub.PackageId, sub.SimPackageId, sub.LastStatusChangeAt,
-				sub.AllowedTimeOfService, sub.IsServiceStatusOn, sub.LastStatusChangeReasons).
+				sub.AllowedTimeOfService, sub.ServiceStatus, sub.LastStatusChangeReasons).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).

@@ -115,6 +115,21 @@ func (this *UpdatePackageResp) Validate() error {
 	return nil
 }
 
+var _regex_UpdateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
+func (this *UpdateReq) Validate() error {
+	if !_regex_UpdateReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
+	if this.Iccid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
+	}
+	return nil
+}
+func (this *UpdateResp) Validate() error {
+	return nil
+}
+
 var _regex_UpdateGutiReq_Imsi = regexp.MustCompile(`^[0-9]{6,15}$`)
 
 func (this *UpdateGutiReq) Validate() error {

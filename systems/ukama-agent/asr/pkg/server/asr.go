@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/client"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
@@ -139,7 +140,7 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 		Sqn:               sub.Sqn,
 		UeDlAmbrBps:       sub.UeDlAmbrBps,
 		UeUlAmbrBps:       sub.UeDlAmbrBps,
-		IsServiceStatusOn: sub.IsServiceStatusOn,
+		IsServiceStatusOn: sub.ServiceStatus == ukama.SimStatusServiceOn,
 		NetworkId:         sub.NetworkId.String(),
 		PackageId:         sub.PackageId.String(),
 		SimPackageId:      sub.SimPackageId.String(),
@@ -237,6 +238,58 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	asrRecord.Policy = *policy
 	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, nRec)
 	return &pb.UpdatePackageResp{}, nil
+}
+
+func (ar *AsrRecordServer) Update(c context.Context, req *pb.UpdateReq) (*pb.UpdateResp, error) {
+	log.Infof("Updating ASR service status for iccid %s", req.GetIccid())
+
+	asrRecord, err := ar.asrRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
+	}
+
+	newStatus := ukama.SimStatusServiceOff
+	if req.GetIsServiceStatusOn() {
+		newStatus = ukama.SimStatusServiceOn
+	}
+
+	err = ar.asrRepo.Update(asrRecord.Imsi, &db.Asr{
+		ServiceStatus:           newStatus,
+		LastStatusChangeAt:      time.Now(),
+		LastStatusChangeReasons: db.SERVICE_STATUS_UPDATE,
+	})
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
+	}
+
+	pcrfData := &pm.SimInfo{
+		ID:        asrRecord.ID,
+		Imsi:      asrRecord.Imsi,
+		Iccid:     asrRecord.Iccid,
+		PackageId: asrRecord.PackageId,
+		NetworkId: asrRecord.NetworkId,
+	}
+
+	/* read the updated profile */
+	nRec, err := ar.asrRepo.GetByIccid(req.GetIccid())
+	if err != nil {
+		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
+	}
+
+	err = ar.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, activeSubscriberEventObject, true)
+	if err != nil {
+		log.Errorf("Failure to sync imsi %s pcrf profile for ASR service status update. Error: %v",
+			asrRecord.Imsi, err)
+
+		//TODO: We need some kind of retry mecanism here
+
+		return nil, fmt.Errorf("failure to sync imsi %s pcrf profile for ASR service status update. Error: %w",
+			asrRecord.Imsi, err)
+	}
+
+	log.Debugf("Updated service status for %s imsi to %+v", asrRecord.Imsi, nRec)
+
+	return &pb.UpdateResp{}, nil
 }
 
 func (ar *AsrRecordServer) DeleteProfile(c context.Context, req *pb.DeleteProfileReq) (*pb.DeleteProfileResp, error) {
@@ -522,7 +575,7 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, network
 		Policy:                  *policy,
 		LastStatusChangeAt:      time.Now(),
 		AllowedTimeOfService:    allowedToS,
-		IsServiceStatusOn:       true,
+		ServiceStatus:           ukama.SimStatusServiceOn,
 		LastStatusChangeReasons: db.PROFILE_CREATION,
 	}
 

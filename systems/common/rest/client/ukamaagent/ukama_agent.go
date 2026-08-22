@@ -31,9 +31,8 @@ type UkamaAgentClient interface {
 	CreateProfile(req client.AgentRequestData) (*UkamaSimInfo, error)
 	GetSimInfo(iccid string) (*UkamaSimInfo, error)
 	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
-	ActivateSim(req client.AgentRequestData) error
-	DeactivateSim(req client.AgentRequestData) error
 	UpdatePackage(req client.AgentRequestData) error
+	Update(req client.AgentRequestData) error
 	DeleteProfile(req client.AgentRequestData) error
 }
 
@@ -136,40 +135,27 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	return map[string]any{iccid: usage.Usage}, nil, nil
 }
 
-func (u *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
-	log.Debugf("Activating ukama sim: %v", req.Iccid)
-
-	_, err := u.R.C.R().SetBody(req).Put(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
-	if err != nil {
-		log.Errorf("ActivateSim failure. error: %v", err)
-
-		return fmt.Errorf("ActivateSim failure: %w", err)
-	}
-
-	return nil
-}
-
-func (u *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
-	log.Debugf("Deactivating ukama sim: %v", req.Iccid)
-
-	_, err := u.R.C.R().SetBody(req).Delete(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
-	if err != nil {
-		log.Errorf("DeactivateSim failure. error: %v", err)
-
-		return fmt.Errorf("DeactivateSim failure: %w", err)
-	}
-
-	return nil
-}
-
 func (u *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
 	log.Debugf("Updating ukama sim's package: %v", req.Iccid)
 
-	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid + "/package")
 	if err != nil {
 		log.Errorf("Update sim's package failure. error: %v", err)
 
 		return fmt.Errorf("update sim's package failure: %w", err)
+	}
+
+	return nil
+}
+
+func (u *ukamaAgentClient) Update(req client.AgentRequestData) error {
+	log.Debugf("Updating ukama sim's service status: %v", req.Iccid)
+
+	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	if err != nil {
+		log.Errorf("Update sim's service status failure. error: %v", err)
+
+		return fmt.Errorf("update sim's service status failure: %w", err)
 	}
 
 	return nil

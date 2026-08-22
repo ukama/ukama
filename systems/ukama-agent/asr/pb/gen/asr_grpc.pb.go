@@ -22,6 +22,7 @@ const (
 	AsrRecordService_CreateProfile_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/CreateProfile"
 	AsrRecordService_DeleteProfile_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/DeleteProfile"
 	AsrRecordService_UpdatePackage_FullMethodName     = "/ukama.subscriber.asr.v1.AsrRecordService/UpdatePackage"
+	AsrRecordService_Update_FullMethodName            = "/ukama.subscriber.asr.v1.AsrRecordService/Update"
 	AsrRecordService_UpdateGuti_FullMethodName        = "/ukama.subscriber.asr.v1.AsrRecordService/UpdateGuti"
 	AsrRecordService_UpdateTai_FullMethodName         = "/ukama.subscriber.asr.v1.AsrRecordService/UpdateTai"
 	AsrRecordService_Read_FullMethodName              = "/ukama.subscriber.asr.v1.AsrRecordService/Read"
@@ -60,6 +61,8 @@ type AsrRecordServiceClient interface {
 	DeleteProfile(ctx context.Context, in *DeleteProfileReq, opts ...grpc.CallOption) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(ctx context.Context, in *UpdatePackageReq, opts ...grpc.CallOption) (*UpdatePackageResp, error)
+	// / Use this RPC to update mutable fields on a subscriber's ASR record, without touching its imsi or iccid
+	Update(ctx context.Context, in *UpdateReq, opts ...grpc.CallOption) (*UpdateResp, error)
 	// / This RPC is called when a Update GUTI message is sent by node
 	UpdateGuti(ctx context.Context, in *UpdateGutiReq, opts ...grpc.CallOption) (*UpdateGutiResp, error)
 	// / This RPC is called when a Update TAI message is sent by node
@@ -106,6 +109,16 @@ func (c *asrRecordServiceClient) UpdatePackage(ctx context.Context, in *UpdatePa
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpdatePackageResp)
 	err := c.cc.Invoke(ctx, AsrRecordService_UpdatePackage_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *asrRecordServiceClient) Update(ctx context.Context, in *UpdateReq, opts ...grpc.CallOption) (*UpdateResp, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateResp)
+	err := c.cc.Invoke(ctx, AsrRecordService_Update_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -202,6 +215,8 @@ type AsrRecordServiceServer interface {
 	DeleteProfile(context.Context, *DeleteProfileReq) (*DeleteProfileResp, error)
 	// / Use this RPC to update a subscriber package in ASR
 	UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error)
+	// / Use this RPC to update mutable fields on a subscriber's ASR record, without touching its imsi or iccid
+	Update(context.Context, *UpdateReq) (*UpdateResp, error)
 	// / This RPC is called when a Update GUTI message is sent by node
 	UpdateGuti(context.Context, *UpdateGutiReq) (*UpdateGutiResp, error)
 	// / This RPC is called when a Update TAI message is sent by node
@@ -232,6 +247,9 @@ func (UnimplementedAsrRecordServiceServer) DeleteProfile(context.Context, *Delet
 }
 func (UnimplementedAsrRecordServiceServer) UpdatePackage(context.Context, *UpdatePackageReq) (*UpdatePackageResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdatePackage not implemented")
+}
+func (UnimplementedAsrRecordServiceServer) Update(context.Context, *UpdateReq) (*UpdateResp, error) {
+	return nil, status.Error(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedAsrRecordServiceServer) UpdateGuti(context.Context, *UpdateGutiReq) (*UpdateGutiResp, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateGuti not implemented")
@@ -322,6 +340,24 @@ func _AsrRecordService_UpdatePackage_Handler(srv interface{}, ctx context.Contex
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AsrRecordServiceServer).UpdatePackage(ctx, req.(*UpdatePackageReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AsrRecordService_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AsrRecordServiceServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: AsrRecordService_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AsrRecordServiceServer).Update(ctx, req.(*UpdateReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -452,6 +488,10 @@ var AsrRecordService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdatePackage",
 			Handler:    _AsrRecordService_UpdatePackage_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _AsrRecordService_Update_Handler,
 		},
 		{
 			MethodName: "UpdateGuti",

@@ -192,6 +192,36 @@ func (_m *asr) Read(req *gen.ReadReq) (*gen.ReadResp, error) {
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: req
+func (_m *asr) Update(req *gen.UpdateReq) (*gen.UpdateResp, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *gen.UpdateResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.UpdateReq) (*gen.UpdateResp, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.UpdateReq) *gen.UpdateResp); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.UpdateReq) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdatePackage provides a mock function with given fields: req
 func (_m *asr) UpdatePackage(req *gen.UpdatePackageReq) (*gen.UpdatePackageResp, error) {
 	ret := _m.Called(req)

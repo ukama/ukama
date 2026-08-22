@@ -238,6 +238,43 @@ func (_m *AsrRecordServiceClient) Read(ctx context.Context, in *gen.ReadReq, opt
 	return r0, r1
 }
 
+// Update provides a mock function with given fields: ctx, in, opts
+func (_m *AsrRecordServiceClient) Update(ctx context.Context, in *gen.UpdateReq, opts ...grpc.CallOption) (*gen.UpdateResp, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 *gen.UpdateResp
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateReq, ...grpc.CallOption) (*gen.UpdateResp, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateReq, ...grpc.CallOption) *gen.UpdateResp); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.UpdateResp)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateReq, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateGuti provides a mock function with given fields: ctx, in, opts
 func (_m *AsrRecordServiceClient) UpdateGuti(ctx context.Context, in *gen.UpdateGutiReq, opts ...grpc.CallOption) (*gen.UpdateGutiResp, error) {
 	_va := make([]interface{}, len(opts))

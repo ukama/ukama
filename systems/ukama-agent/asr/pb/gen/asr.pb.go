@@ -917,6 +917,102 @@ func (*UpdatePackageResp) Descriptor() ([]byte, []int) {
 	return file_asr_proto_rawDescGZIP(), []int{12}
 }
 
+type UpdateReq struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Iccid             string                 `protobuf:"bytes,1,opt,name=iccid,proto3" json:"iccid,omitempty"`
+	Imsi              string                 `protobuf:"bytes,2,opt,name=Imsi,proto3" json:"Imsi,omitempty"`
+	IsServiceStatusOn bool                   `protobuf:"varint,3,opt,name=IsServiceStatusOn,proto3" json:"IsServiceStatusOn,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *UpdateReq) Reset() {
+	*x = UpdateReq{}
+	mi := &file_asr_proto_msgTypes[13]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateReq) ProtoMessage() {}
+
+func (x *UpdateReq) ProtoReflect() protoreflect.Message {
+	mi := &file_asr_proto_msgTypes[13]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateReq.ProtoReflect.Descriptor instead.
+func (*UpdateReq) Descriptor() ([]byte, []int) {
+	return file_asr_proto_rawDescGZIP(), []int{13}
+}
+
+func (x *UpdateReq) GetIccid() string {
+	if x != nil {
+		return x.Iccid
+	}
+	return ""
+}
+
+func (x *UpdateReq) GetImsi() string {
+	if x != nil {
+		return x.Imsi
+	}
+	return ""
+}
+
+func (x *UpdateReq) GetIsServiceStatusOn() bool {
+	if x != nil {
+		return x.IsServiceStatusOn
+	}
+	return false
+}
+
+type UpdateResp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateResp) Reset() {
+	*x = UpdateResp{}
+	mi := &file_asr_proto_msgTypes[14]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateResp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateResp) ProtoMessage() {}
+
+func (x *UpdateResp) ProtoReflect() protoreflect.Message {
+	mi := &file_asr_proto_msgTypes[14]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateResp.ProtoReflect.Descriptor instead.
+func (*UpdateResp) Descriptor() ([]byte, []int) {
+	return file_asr_proto_rawDescGZIP(), []int{14}
+}
+
 type UpdateGutiReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Imsi          string                 `protobuf:"bytes,1,opt,name=imsi,proto3" json:"imsi,omitempty"`
@@ -928,7 +1024,7 @@ type UpdateGutiReq struct {
 
 func (x *UpdateGutiReq) Reset() {
 	*x = UpdateGutiReq{}
-	mi := &file_asr_proto_msgTypes[13]
+	mi := &file_asr_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -940,7 +1036,7 @@ func (x *UpdateGutiReq) String() string {
 func (*UpdateGutiReq) ProtoMessage() {}
 
 func (x *UpdateGutiReq) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[13]
+	mi := &file_asr_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -953,7 +1049,7 @@ func (x *UpdateGutiReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateGutiReq.ProtoReflect.Descriptor instead.
 func (*UpdateGutiReq) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{13}
+	return file_asr_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *UpdateGutiReq) GetImsi() string {
@@ -989,7 +1085,7 @@ type Guti struct {
 
 func (x *Guti) Reset() {
 	*x = Guti{}
-	mi := &file_asr_proto_msgTypes[14]
+	mi := &file_asr_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1001,7 +1097,7 @@ func (x *Guti) String() string {
 func (*Guti) ProtoMessage() {}
 
 func (x *Guti) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[14]
+	mi := &file_asr_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1014,7 +1110,7 @@ func (x *Guti) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Guti.ProtoReflect.Descriptor instead.
 func (*Guti) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{14}
+	return file_asr_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *Guti) GetPlmnId() string {
@@ -1053,7 +1149,7 @@ type UpdateGutiResp struct {
 
 func (x *UpdateGutiResp) Reset() {
 	*x = UpdateGutiResp{}
-	mi := &file_asr_proto_msgTypes[15]
+	mi := &file_asr_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1065,7 +1161,7 @@ func (x *UpdateGutiResp) String() string {
 func (*UpdateGutiResp) ProtoMessage() {}
 
 func (x *UpdateGutiResp) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[15]
+	mi := &file_asr_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1078,7 +1174,7 @@ func (x *UpdateGutiResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateGutiResp.ProtoReflect.Descriptor instead.
 func (*UpdateGutiResp) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{15}
+	return file_asr_proto_rawDescGZIP(), []int{17}
 }
 
 type UpdateTaiReq struct {
@@ -1093,7 +1189,7 @@ type UpdateTaiReq struct {
 
 func (x *UpdateTaiReq) Reset() {
 	*x = UpdateTaiReq{}
-	mi := &file_asr_proto_msgTypes[16]
+	mi := &file_asr_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1105,7 +1201,7 @@ func (x *UpdateTaiReq) String() string {
 func (*UpdateTaiReq) ProtoMessage() {}
 
 func (x *UpdateTaiReq) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[16]
+	mi := &file_asr_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1118,7 +1214,7 @@ func (x *UpdateTaiReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTaiReq.ProtoReflect.Descriptor instead.
 func (*UpdateTaiReq) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{16}
+	return file_asr_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UpdateTaiReq) GetImsi() string {
@@ -1157,7 +1253,7 @@ type UpdateTaiResp struct {
 
 func (x *UpdateTaiResp) Reset() {
 	*x = UpdateTaiResp{}
-	mi := &file_asr_proto_msgTypes[17]
+	mi := &file_asr_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +1265,7 @@ func (x *UpdateTaiResp) String() string {
 func (*UpdateTaiResp) ProtoMessage() {}
 
 func (x *UpdateTaiResp) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[17]
+	mi := &file_asr_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +1278,7 @@ func (x *UpdateTaiResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateTaiResp.ProtoReflect.Descriptor instead.
 func (*UpdateTaiResp) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{17}
+	return file_asr_proto_rawDescGZIP(), []int{19}
 }
 
 type Policy struct {
@@ -1201,7 +1297,7 @@ type Policy struct {
 
 func (x *Policy) Reset() {
 	*x = Policy{}
-	mi := &file_asr_proto_msgTypes[18]
+	mi := &file_asr_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1213,7 +1309,7 @@ func (x *Policy) String() string {
 func (*Policy) ProtoMessage() {}
 
 func (x *Policy) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[18]
+	mi := &file_asr_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1226,7 +1322,7 @@ func (x *Policy) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Policy.ProtoReflect.Descriptor instead.
 func (*Policy) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{18}
+	return file_asr_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *Policy) GetUuid() string {
@@ -1301,7 +1397,7 @@ type QueryUsageReq struct {
 
 func (x *QueryUsageReq) Reset() {
 	*x = QueryUsageReq{}
-	mi := &file_asr_proto_msgTypes[19]
+	mi := &file_asr_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1313,7 +1409,7 @@ func (x *QueryUsageReq) String() string {
 func (*QueryUsageReq) ProtoMessage() {}
 
 func (x *QueryUsageReq) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[19]
+	mi := &file_asr_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1326,7 +1422,7 @@ func (x *QueryUsageReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryUsageReq.ProtoReflect.Descriptor instead.
 func (*QueryUsageReq) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{19}
+	return file_asr_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *QueryUsageReq) GetIccid() string {
@@ -1394,7 +1490,7 @@ type QueryUsageResp struct {
 
 func (x *QueryUsageResp) Reset() {
 	*x = QueryUsageResp{}
-	mi := &file_asr_proto_msgTypes[20]
+	mi := &file_asr_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1406,7 +1502,7 @@ func (x *QueryUsageResp) String() string {
 func (*QueryUsageResp) ProtoMessage() {}
 
 func (x *QueryUsageResp) ProtoReflect() protoreflect.Message {
-	mi := &file_asr_proto_msgTypes[20]
+	mi := &file_asr_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1419,7 +1515,7 @@ func (x *QueryUsageResp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use QueryUsageResp.ProtoReflect.Descriptor instead.
 func (*QueryUsageResp) Descriptor() ([]byte, []int) {
-	return file_asr_proto_rawDescGZIP(), []int{20}
+	return file_asr_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *QueryUsageResp) GetUsage() uint64 {
@@ -1499,7 +1595,14 @@ const file_asr_proto_rawDesc = "" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
 	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x13\n" +
-	"\x11UpdatePackageResp\"\xa0\x01\n" +
+	"\x11UpdatePackageResp\"{\n" +
+	"\tUpdateReq\x12,\n" +
+	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
+	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
+	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12,\n" +
+	"\x11IsServiceStatusOn\x18\x03 \x01(\bR\x11IsServiceStatusOn\"\f\n" +
+	"\n" +
+	"UpdateResp\"\xa0\x01\n" +
 	"\rUpdateGutiReq\x12)\n" +
 	"\x04imsi\x18\x01 \x01(\tB\x15\xe2\xdf\x1f\x11\n" +
 	"\r^[0-9]{6,15}$X\x01R\x04imsi\x129\n" +
@@ -1546,11 +1649,12 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Count\x18\a \x01(\rR\x05Count\x12\x12\n" +
 	"\x04Sort\x18\b \x01(\bR\x04Sort\"&\n" +
 	"\x0eQueryUsageResp\x12\x14\n" +
-	"\x05Usage\x18\x01 \x01(\x04R\x05Usage2\xe9\x06\n" +
+	"\x05Usage\x18\x01 \x01(\x04R\x05Usage2\xbc\a\n" +
 	"\x10AsrRecordService\x12f\n" +
 	"\rCreateProfile\x12).ukama.subscriber.asr.v1.CreateProfileReq\x1a*.ukama.subscriber.asr.v1.CreateProfileResp\x12f\n" +
 	"\rDeleteProfile\x12).ukama.subscriber.asr.v1.DeleteProfileReq\x1a*.ukama.subscriber.asr.v1.DeleteProfileResp\x12f\n" +
-	"\rUpdatePackage\x12).ukama.subscriber.asr.v1.UpdatePackageReq\x1a*.ukama.subscriber.asr.v1.UpdatePackageResp\x12]\n" +
+	"\rUpdatePackage\x12).ukama.subscriber.asr.v1.UpdatePackageReq\x1a*.ukama.subscriber.asr.v1.UpdatePackageResp\x12Q\n" +
+	"\x06Update\x12\".ukama.subscriber.asr.v1.UpdateReq\x1a#.ukama.subscriber.asr.v1.UpdateResp\x12]\n" +
 	"\n" +
 	"UpdateGuti\x12&.ukama.subscriber.asr.v1.UpdateGutiReq\x1a'.ukama.subscriber.asr.v1.UpdateGutiResp\x12Z\n" +
 	"\tUpdateTai\x12%.ukama.subscriber.asr.v1.UpdateTaiReq\x1a&.ukama.subscriber.asr.v1.UpdateTaiResp\x12K\n" +
@@ -1572,7 +1676,7 @@ func file_asr_proto_rawDescGZIP() []byte {
 	return file_asr_proto_rawDescData
 }
 
-var file_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_asr_proto_goTypes = []any{
 	(*UsageResp)(nil),         // 0: ukama.subscriber.asr.v1.UsageResp
 	(*UsageReq)(nil),          // 1: ukama.subscriber.asr.v1.UsageReq
@@ -1587,40 +1691,44 @@ var file_asr_proto_goTypes = []any{
 	(*DeleteProfileResp)(nil), // 10: ukama.subscriber.asr.v1.DeleteProfileResp
 	(*UpdatePackageReq)(nil),  // 11: ukama.subscriber.asr.v1.UpdatePackageReq
 	(*UpdatePackageResp)(nil), // 12: ukama.subscriber.asr.v1.UpdatePackageResp
-	(*UpdateGutiReq)(nil),     // 13: ukama.subscriber.asr.v1.UpdateGutiReq
-	(*Guti)(nil),              // 14: ukama.subscriber.asr.v1.Guti
-	(*UpdateGutiResp)(nil),    // 15: ukama.subscriber.asr.v1.UpdateGutiResp
-	(*UpdateTaiReq)(nil),      // 16: ukama.subscriber.asr.v1.UpdateTaiReq
-	(*UpdateTaiResp)(nil),     // 17: ukama.subscriber.asr.v1.UpdateTaiResp
-	(*Policy)(nil),            // 18: ukama.subscriber.asr.v1.Policy
-	(*QueryUsageReq)(nil),     // 19: ukama.subscriber.asr.v1.QueryUsageReq
-	(*QueryUsageResp)(nil),    // 20: ukama.subscriber.asr.v1.QueryUsageResp
+	(*UpdateReq)(nil),         // 13: ukama.subscriber.asr.v1.UpdateReq
+	(*UpdateResp)(nil),        // 14: ukama.subscriber.asr.v1.UpdateResp
+	(*UpdateGutiReq)(nil),     // 15: ukama.subscriber.asr.v1.UpdateGutiReq
+	(*Guti)(nil),              // 16: ukama.subscriber.asr.v1.Guti
+	(*UpdateGutiResp)(nil),    // 17: ukama.subscriber.asr.v1.UpdateGutiResp
+	(*UpdateTaiReq)(nil),      // 18: ukama.subscriber.asr.v1.UpdateTaiReq
+	(*UpdateTaiResp)(nil),     // 19: ukama.subscriber.asr.v1.UpdateTaiResp
+	(*Policy)(nil),            // 20: ukama.subscriber.asr.v1.Policy
+	(*QueryUsageReq)(nil),     // 21: ukama.subscriber.asr.v1.QueryUsageReq
+	(*QueryUsageResp)(nil),    // 22: ukama.subscriber.asr.v1.QueryUsageResp
 }
 var file_asr_proto_depIdxs = []int32{
 	4,  // 0: ukama.subscriber.asr.v1.Record.apn:type_name -> ukama.subscriber.asr.v1.Apn
-	18, // 1: ukama.subscriber.asr.v1.Record.policy:type_name -> ukama.subscriber.asr.v1.Policy
+	20, // 1: ukama.subscriber.asr.v1.Record.policy:type_name -> ukama.subscriber.asr.v1.Policy
 	3,  // 2: ukama.subscriber.asr.v1.ReadResp.Record:type_name -> ukama.subscriber.asr.v1.Record
-	14, // 3: ukama.subscriber.asr.v1.UpdateGutiReq.Guti:type_name -> ukama.subscriber.asr.v1.Guti
+	16, // 3: ukama.subscriber.asr.v1.UpdateGutiReq.Guti:type_name -> ukama.subscriber.asr.v1.Guti
 	7,  // 4: ukama.subscriber.asr.v1.AsrRecordService.CreateProfile:input_type -> ukama.subscriber.asr.v1.CreateProfileReq
 	9,  // 5: ukama.subscriber.asr.v1.AsrRecordService.DeleteProfile:input_type -> ukama.subscriber.asr.v1.DeleteProfileReq
 	11, // 6: ukama.subscriber.asr.v1.AsrRecordService.UpdatePackage:input_type -> ukama.subscriber.asr.v1.UpdatePackageReq
-	13, // 7: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:input_type -> ukama.subscriber.asr.v1.UpdateGutiReq
-	16, // 8: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:input_type -> ukama.subscriber.asr.v1.UpdateTaiReq
-	5,  // 9: ukama.subscriber.asr.v1.AsrRecordService.Read:input_type -> ukama.subscriber.asr.v1.ReadReq
-	1,  // 10: ukama.subscriber.asr.v1.AsrRecordService.GetUsage:input_type -> ukama.subscriber.asr.v1.UsageReq
-	2,  // 11: ukama.subscriber.asr.v1.AsrRecordService.GetUsageForPeriod:input_type -> ukama.subscriber.asr.v1.UsageForPeriodReq
-	19, // 12: ukama.subscriber.asr.v1.AsrRecordService.QueryUsage:input_type -> ukama.subscriber.asr.v1.QueryUsageReq
-	8,  // 13: ukama.subscriber.asr.v1.AsrRecordService.CreateProfile:output_type -> ukama.subscriber.asr.v1.CreateProfileResp
-	10, // 14: ukama.subscriber.asr.v1.AsrRecordService.DeleteProfile:output_type -> ukama.subscriber.asr.v1.DeleteProfileResp
-	12, // 15: ukama.subscriber.asr.v1.AsrRecordService.UpdatePackage:output_type -> ukama.subscriber.asr.v1.UpdatePackageResp
-	15, // 16: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:output_type -> ukama.subscriber.asr.v1.UpdateGutiResp
-	17, // 17: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:output_type -> ukama.subscriber.asr.v1.UpdateTaiResp
-	6,  // 18: ukama.subscriber.asr.v1.AsrRecordService.Read:output_type -> ukama.subscriber.asr.v1.ReadResp
-	0,  // 19: ukama.subscriber.asr.v1.AsrRecordService.GetUsage:output_type -> ukama.subscriber.asr.v1.UsageResp
-	0,  // 20: ukama.subscriber.asr.v1.AsrRecordService.GetUsageForPeriod:output_type -> ukama.subscriber.asr.v1.UsageResp
-	20, // 21: ukama.subscriber.asr.v1.AsrRecordService.QueryUsage:output_type -> ukama.subscriber.asr.v1.QueryUsageResp
-	13, // [13:22] is the sub-list for method output_type
-	4,  // [4:13] is the sub-list for method input_type
+	13, // 7: ukama.subscriber.asr.v1.AsrRecordService.Update:input_type -> ukama.subscriber.asr.v1.UpdateReq
+	15, // 8: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:input_type -> ukama.subscriber.asr.v1.UpdateGutiReq
+	18, // 9: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:input_type -> ukama.subscriber.asr.v1.UpdateTaiReq
+	5,  // 10: ukama.subscriber.asr.v1.AsrRecordService.Read:input_type -> ukama.subscriber.asr.v1.ReadReq
+	1,  // 11: ukama.subscriber.asr.v1.AsrRecordService.GetUsage:input_type -> ukama.subscriber.asr.v1.UsageReq
+	2,  // 12: ukama.subscriber.asr.v1.AsrRecordService.GetUsageForPeriod:input_type -> ukama.subscriber.asr.v1.UsageForPeriodReq
+	21, // 13: ukama.subscriber.asr.v1.AsrRecordService.QueryUsage:input_type -> ukama.subscriber.asr.v1.QueryUsageReq
+	8,  // 14: ukama.subscriber.asr.v1.AsrRecordService.CreateProfile:output_type -> ukama.subscriber.asr.v1.CreateProfileResp
+	10, // 15: ukama.subscriber.asr.v1.AsrRecordService.DeleteProfile:output_type -> ukama.subscriber.asr.v1.DeleteProfileResp
+	12, // 16: ukama.subscriber.asr.v1.AsrRecordService.UpdatePackage:output_type -> ukama.subscriber.asr.v1.UpdatePackageResp
+	14, // 17: ukama.subscriber.asr.v1.AsrRecordService.Update:output_type -> ukama.subscriber.asr.v1.UpdateResp
+	17, // 18: ukama.subscriber.asr.v1.AsrRecordService.UpdateGuti:output_type -> ukama.subscriber.asr.v1.UpdateGutiResp
+	19, // 19: ukama.subscriber.asr.v1.AsrRecordService.UpdateTai:output_type -> ukama.subscriber.asr.v1.UpdateTaiResp
+	6,  // 20: ukama.subscriber.asr.v1.AsrRecordService.Read:output_type -> ukama.subscriber.asr.v1.ReadResp
+	0,  // 21: ukama.subscriber.asr.v1.AsrRecordService.GetUsage:output_type -> ukama.subscriber.asr.v1.UsageResp
+	0,  // 22: ukama.subscriber.asr.v1.AsrRecordService.GetUsageForPeriod:output_type -> ukama.subscriber.asr.v1.UsageResp
+	22, // 23: ukama.subscriber.asr.v1.AsrRecordService.QueryUsage:output_type -> ukama.subscriber.asr.v1.QueryUsageResp
+	14, // [14:24] is the sub-list for method output_type
+	4,  // [4:14] is the sub-list for method input_type
 	4,  // [4:4] is the sub-list for extension type_name
 	4,  // [4:4] is the sub-list for extension extendee
 	0,  // [0:4] is the sub-list for field type_name
@@ -1649,7 +1757,7 @@ func file_asr_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_asr_proto_rawDesc), len(file_asr_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

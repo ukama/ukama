@@ -25,6 +25,7 @@ type AgentAdapter interface {
 	ActivateSim(context.Context, client.AgentRequestData) error
 	DeactivateSim(context.Context, client.AgentRequestData) error
 	UpdatePackage(context.Context, client.AgentRequestData) error
+	Update(context.Context, client.AgentRequestData) error
 	TerminateSim(context.Context, client.AgentRequestData) error
 	Close()
 }

@@ -38,6 +38,8 @@ import "validator.proto";
     /// Use this RPC to update a subscriber package in ASR
     rpc UpdatePackage(UpdatePackageReq) returns (UpdatePackageResp);
 
+    /// Use this RPC to update mutable fields on a subscriber's ASR record, without touching its imsi or iccid
+    rpc Update(UpdateReq) returns (UpdateResp);
 
     /// This RPC is called when a Update GUTI message is sent by node
     rpc UpdateGuti (UpdateGutiReq) returns (UpdateGutiResp);
@@ -146,6 +148,16 @@ message UpdatePackageReq {
 }
 
 message UpdatePackageResp {
+    ///Empty
+}
+
+message UpdateReq {
+    string iccid = 1 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
+    string Imsi = 2;
+    bool IsServiceStatusOn = 3;
+}
+
+message UpdateResp {
     ///Empty
 }
 

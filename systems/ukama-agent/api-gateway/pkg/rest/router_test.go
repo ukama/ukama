@@ -168,7 +168,7 @@ func TestRouter_PatchSubscriber(t *testing.T) {
 	assert.NoError(t, err)
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("PATCH", "/v1/asr/"+iccid, bytes.NewReader(jReq))
+	req, _ := http.NewRequest("PATCH", "/v1/asr/"+iccid+"/package", bytes.NewReader(jReq))
 
 	m := &amocks.AsrRecordServiceClient{}
 	pReq := &pb.UpdatePackageReq{

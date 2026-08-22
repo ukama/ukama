@@ -824,14 +824,15 @@ func (s *SimManagerServer) setSimServiceOnForAgent(ctx context.Context, reqSimId
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
+		Iccid:             sim.Iccid,
+		Imsi:              sim.Imsi,
+		NetworkId:         sim.NetworkId.String(),
+		PackageId:         sim.Package.PackageId.String(),
+		SimPackageId:      sim.Package.Id.String(),
+		IsServiceStatusOn: true,
 	}
 
-	err = simAgent.ActivateSim(ctx, agentRequest)
+	err = simAgent.Update(ctx, agentRequest)
 	if err != nil {
 		return nil, err
 	}
@@ -861,14 +862,15 @@ func (s *SimManagerServer) setSimServiceOffForAgent(ctx context.Context, reqSimI
 	}
 
 	agentRequest := client.AgentRequestData{
-		Iccid:        sim.Iccid,
-		Imsi:         sim.Imsi,
-		NetworkId:    sim.NetworkId.String(),
-		PackageId:    sim.Package.PackageId.String(),
-		SimPackageId: sim.Package.Id.String(),
+		Iccid:             sim.Iccid,
+		Imsi:              sim.Imsi,
+		NetworkId:         sim.NetworkId.String(),
+		PackageId:         sim.Package.PackageId.String(),
+		SimPackageId:      sim.Package.Id.String(),
+		IsServiceStatusOn: false,
 	}
 
-	err = simAgent.DeactivateSim(ctx, agentRequest)
+	err = simAgent.Update(ctx, agentRequest)
 	if err != nil {
 		return nil, err
 	}
