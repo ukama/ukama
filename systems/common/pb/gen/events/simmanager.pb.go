@@ -574,7 +574,7 @@ func (x *EventSimTermination) GetType() string {
 	return ""
 }
 
-type EventSimActivation struct {
+type EventSimServiceOn struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
@@ -586,20 +586,20 @@ type EventSimActivation struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EventSimActivation) Reset() {
-	*x = EventSimActivation{}
+func (x *EventSimServiceOn) Reset() {
+	*x = EventSimServiceOn{}
 	mi := &file_events_simmanager_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EventSimActivation) String() string {
+func (x *EventSimServiceOn) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EventSimActivation) ProtoMessage() {}
+func (*EventSimServiceOn) ProtoMessage() {}
 
-func (x *EventSimActivation) ProtoReflect() protoreflect.Message {
+func (x *EventSimServiceOn) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -611,54 +611,54 @@ func (x *EventSimActivation) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EventSimActivation.ProtoReflect.Descriptor instead.
-func (*EventSimActivation) Descriptor() ([]byte, []int) {
+// Deprecated: Use EventSimServiceOn.ProtoReflect.Descriptor instead.
+func (*EventSimServiceOn) Descriptor() ([]byte, []int) {
 	return file_events_simmanager_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *EventSimActivation) GetId() string {
+func (x *EventSimServiceOn) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *EventSimActivation) GetSubscriberId() string {
+func (x *EventSimServiceOn) GetSubscriberId() string {
 	if x != nil {
 		return x.SubscriberId
 	}
 	return ""
 }
 
-func (x *EventSimActivation) GetIccid() string {
+func (x *EventSimServiceOn) GetIccid() string {
 	if x != nil {
 		return x.Iccid
 	}
 	return ""
 }
 
-func (x *EventSimActivation) GetImsi() string {
+func (x *EventSimServiceOn) GetImsi() string {
 	if x != nil {
 		return x.Imsi
 	}
 	return ""
 }
 
-func (x *EventSimActivation) GetNetworkId() string {
+func (x *EventSimServiceOn) GetNetworkId() string {
 	if x != nil {
 		return x.NetworkId
 	}
 	return ""
 }
 
-func (x *EventSimActivation) GetPackageId() string {
+func (x *EventSimServiceOn) GetPackageId() string {
 	if x != nil {
 		return x.PackageId
 	}
 	return ""
 }
 
-type EventSimDeactivation struct {
+type EventSimServiceOff struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	SubscriberId  string                 `protobuf:"bytes,2,opt,name=subscriberId,json=subscriber_id,proto3" json:"subscriberId,omitempty"`
@@ -670,20 +670,20 @@ type EventSimDeactivation struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *EventSimDeactivation) Reset() {
-	*x = EventSimDeactivation{}
+func (x *EventSimServiceOff) Reset() {
+	*x = EventSimServiceOff{}
 	mi := &file_events_simmanager_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *EventSimDeactivation) String() string {
+func (x *EventSimServiceOff) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*EventSimDeactivation) ProtoMessage() {}
+func (*EventSimServiceOff) ProtoMessage() {}
 
-func (x *EventSimDeactivation) ProtoReflect() protoreflect.Message {
+func (x *EventSimServiceOff) ProtoReflect() protoreflect.Message {
 	mi := &file_events_simmanager_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -695,47 +695,47 @@ func (x *EventSimDeactivation) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use EventSimDeactivation.ProtoReflect.Descriptor instead.
-func (*EventSimDeactivation) Descriptor() ([]byte, []int) {
+// Deprecated: Use EventSimServiceOff.ProtoReflect.Descriptor instead.
+func (*EventSimServiceOff) Descriptor() ([]byte, []int) {
 	return file_events_simmanager_proto_rawDescGZIP(), []int{5}
 }
 
-func (x *EventSimDeactivation) GetId() string {
+func (x *EventSimServiceOff) GetId() string {
 	if x != nil {
 		return x.Id
 	}
 	return ""
 }
 
-func (x *EventSimDeactivation) GetSubscriberId() string {
+func (x *EventSimServiceOff) GetSubscriberId() string {
 	if x != nil {
 		return x.SubscriberId
 	}
 	return ""
 }
 
-func (x *EventSimDeactivation) GetIccid() string {
+func (x *EventSimServiceOff) GetIccid() string {
 	if x != nil {
 		return x.Iccid
 	}
 	return ""
 }
 
-func (x *EventSimDeactivation) GetImsi() string {
+func (x *EventSimServiceOff) GetImsi() string {
 	if x != nil {
 		return x.Imsi
 	}
 	return ""
 }
 
-func (x *EventSimDeactivation) GetNetworkId() string {
+func (x *EventSimServiceOff) GetNetworkId() string {
 	if x != nil {
 		return x.NetworkId
 	}
 	return ""
 }
 
-func (x *EventSimDeactivation) GetPackageId() string {
+func (x *EventSimServiceOff) GetPackageId() string {
 	if x != nil {
 		return x.PackageId
 	}
@@ -1138,16 +1138,16 @@ const file_events_simmanager_proto_rawDesc = "" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04imsi\x18\x04 \x01(\tR\x04imsi\x12\x1c\n" +
 	"\tnetworkId\x18\x05 \x01(\tR\tnetworkId\x12\x12\n" +
-	"\x04type\x18\x06 \x01(\tR\x04type\"\xdd\x01\n" +
-	"\x12EventSimActivation\x12\x19\n" +
+	"\x04type\x18\x06 \x01(\tR\x04type\"\xdc\x01\n" +
+	"\x11EventSimServiceOn\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
 	"\fsubscriberId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\rsubscriber_id\x12,\n" +
 	"\x05iccid\x18\x03 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04imsi\x18\x04 \x01(\tR\x04imsi\x12\x1c\n" +
 	"\tnetworkId\x18\x05 \x01(\tR\tnetworkId\x12\x1c\n" +
-	"\tpackageId\x18\x06 \x01(\tR\tpackageId\"\xdf\x01\n" +
-	"\x14EventSimDeactivation\x12\x19\n" +
+	"\tpackageId\x18\x06 \x01(\tR\tpackageId\"\xdd\x01\n" +
+	"\x12EventSimServiceOff\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
 	"\fsubscriberId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\rsubscriber_id\x12,\n" +
 	"\x05iccid\x18\x03 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
@@ -1211,8 +1211,8 @@ var file_events_simmanager_proto_goTypes = []any{
 	(*EventSimAllocation)(nil),    // 1: ukama.events.v1.EventSimAllocation
 	(*EventSimActivePackage)(nil), // 2: ukama.events.v1.EventSimActivePackage
 	(*EventSimTermination)(nil),   // 3: ukama.events.v1.EventSimTermination
-	(*EventSimActivation)(nil),    // 4: ukama.events.v1.EventSimActivation
-	(*EventSimDeactivation)(nil),  // 5: ukama.events.v1.EventSimDeactivation
+	(*EventSimServiceOn)(nil),     // 4: ukama.events.v1.EventSimServiceOn
+	(*EventSimServiceOff)(nil),    // 5: ukama.events.v1.EventSimServiceOff
 	(*EventSimAddPackage)(nil),    // 6: ukama.events.v1.EventSimAddPackage
 	(*EventSimRemovePackage)(nil), // 7: ukama.events.v1.EventSimRemovePackage
 	(*EventSimPackageExpire)(nil), // 8: ukama.events.v1.EventSimPackageExpire
