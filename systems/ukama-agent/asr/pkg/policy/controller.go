@@ -210,13 +210,13 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	switch action {
 
 	case "create":
-		e := &epb.AsrActivated{
+		e := &epb.AsrProfileCreated{
 			Subscriber: subscriber,
 		}
 		httpMethod = "POST"
 		msg = e
 	case "delete":
-		e := &epb.AsrInactivated{
+		e := &epb.AsrProfileDeleted{
 			Subscriber: subscriber,
 		}
 		msg = e

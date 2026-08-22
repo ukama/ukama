@@ -10,11 +10,13 @@ package server_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"google.golang.org/protobuf/types/known/anypb"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -135,5 +137,157 @@ func TestUkamaAgentEventServer_HandleSimAllocationEvent(t *testing.T) {
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
+	})
+}
+
+func TestUkamaAgentEventServer_HandleSimServiceOnEvent(t *testing.T) {
+	pc := &mocks.Controller{}
+	msgbusClient := &cmocks.MsgBusServiceClient{}
+
+	routingKey := msgbus.PrepareRoute(server.Org,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.serviceon")
+
+	t.Run("ServiceOnSuccess", func(t *testing.T) {
+		asrRepo := &mocks.AsrRecordRepo{}
+
+		evt := &epb.EventSimServiceOn{
+			Iccid: server.Iccid,
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		asrRecord := &db.Asr{Iccid: server.Iccid, Imsi: server.Imsi}
+
+		asrRepo.On("GetByIccid", server.Iccid).Return(asrRecord, nil)
+		asrRepo.On("Update", server.Imsi, mock.MatchedBy(func(a *db.Asr) bool {
+			return a.ServiceStatus == ukama.SimStatusServiceOn
+		})).Return(nil).Once()
+		pc.On("SyncProfile", mock.Anything, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).
+			Return(nil).Once()
+
+		s := server.NewAsrEventServer(asrRepo, nil, nil, nil, nil, pc, msgbusClient, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		asrRepo.AssertExpectations(t)
+	})
+
+	t.Run("NoAsrProfileIsNoOp", func(t *testing.T) {
+		asrRepo := &mocks.AsrRecordRepo{}
+
+		evt := &epb.EventSimServiceOn{
+			Iccid: server.Iccid,
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		asrRepo.On("GetByIccid", server.Iccid).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		s := server.NewAsrEventServer(asrRepo, nil, nil, nil, nil, pc, msgbusClient, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		asrRepo.AssertExpectations(t)
+	})
+
+	t.Run("InvalidEventTypeSent", func(t *testing.T) {
+		repo := &mocks.AsrRecordRepo{}
+		evt := &epb.EventAddSite{
+			SiteId: uuid.NewV4().String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewAsrEventServer(repo, nil, nil, nil, nil, pc, msgbusClient, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestUkamaAgentEventServer_HandleSimServiceOffEvent(t *testing.T) {
+	pc := &mocks.Controller{}
+	msgbusClient := &cmocks.MsgBusServiceClient{}
+
+	routingKey := msgbus.PrepareRoute(server.Org,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.serviceoff")
+
+	t.Run("ServiceOffSuccess", func(t *testing.T) {
+		asrRepo := &mocks.AsrRecordRepo{}
+
+		evt := &epb.EventSimServiceOff{
+			Iccid: server.Iccid,
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		asrRecord := &db.Asr{Iccid: server.Iccid, Imsi: server.Imsi}
+
+		asrRepo.On("GetByIccid", server.Iccid).Return(asrRecord, nil)
+		asrRepo.On("Update", server.Imsi, mock.MatchedBy(func(a *db.Asr) bool {
+			return a.ServiceStatus == ukama.SimStatusServiceOff
+		})).Return(nil).Once()
+		pc.On("SyncProfile", mock.Anything, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).
+			Return(nil).Once()
+
+		s := server.NewAsrEventServer(asrRepo, nil, nil, nil, nil, pc, msgbusClient, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		asrRepo.AssertExpectations(t)
+	})
+
+	t.Run("SyncFailurePropagatesError", func(t *testing.T) {
+		asrRepo := &mocks.AsrRecordRepo{}
+		localPc := &mocks.Controller{}
+
+		evt := &epb.EventSimServiceOff{
+			Iccid: server.Iccid,
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		asrRecord := &db.Asr{Iccid: server.Iccid, Imsi: server.Imsi}
+
+		asrRepo.On("GetByIccid", server.Iccid).Return(asrRecord, nil)
+		asrRepo.On("Update", server.Imsi, mock.Anything).Return(nil).Once()
+		localPc.On("SyncProfile", mock.Anything, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).
+			Return(errors.New("pcrf unreachable")).Once()
+
+		s := server.NewAsrEventServer(asrRepo, nil, nil, nil, nil, localPc, msgbusClient, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.Error(t, err)
+		asrRepo.AssertExpectations(t)
 	})
 }

@@ -12,6 +12,9 @@ import (
 	"context"
 	"fmt"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/factory"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -102,6 +105,36 @@ func (ae *AsrEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 
 			return nil, fmt.Errorf("error while handling sim manage SimTerminate Event: %w", err)
 		}
+
+	case msgbus.PrepareRoute(ae.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.serviceon"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimServiceOn](e.Msg)
+		if err != nil {
+			log.Errorf("Error while unmarshaling EventSimServiceOn proto: %v", err)
+
+			return nil, fmt.Errorf("error while unmarshaling EventSimServiceOn proto: %w", err)
+		}
+
+		err = ae.handleSimManagerSimServiceOnEvent(e.RoutingKey, msg)
+		if err != nil {
+			log.Errorf("Error while handling sim manager SimServiceOn Event: %v", err)
+
+			return nil, fmt.Errorf("error while handling sim manager SimServiceOn Event: %w", err)
+		}
+
+	case msgbus.PrepareRoute(ae.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.serviceoff"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimServiceOff](e.Msg)
+		if err != nil {
+			log.Errorf("Error while unmarshaling EventSimServiceOff proto: %v", err)
+
+			return nil, fmt.Errorf("error while unmarshaling EventSimServiceOff proto: %w", err)
+		}
+
+		err = ae.handleSimManagerSimServiceOffEvent(e.RoutingKey, msg)
+		if err != nil {
+			log.Errorf("Error while handling sim manager SimServiceOff Event: %v", err)
+
+			return nil, fmt.Errorf("error while handling sim manager SimServiceOff Event: %w", err)
+		}
 	default:
 		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}
@@ -137,7 +170,7 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 		log.Errorf("Failed to create subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 
 		// Publish ASR activation failure for rollback on sim manager and sim pool if necessary
-		e := &epb.AsrInactivated{
+		e := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				Iccid: sim.Iccid,
 			},
@@ -149,6 +182,42 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 		}
 
 		return fmt.Errorf("failed to create profile for sim %s. Error: %v", sim.Imsi, err)
+	}
+
+	return nil
+}
+
+func (ae *AsrEventServer) handleSimManagerSimServiceOnEvent(key string, sim *epb.EventSimServiceOn) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
+
+	if err := updateServiceStatus(sim.Iccid, true, ae.asrRepo, ae.pc); err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+			log.Infof("No ASR profile for sim %s; skipping service status update", sim.Iccid)
+
+			return nil
+		}
+
+		log.Errorf("Failed to turn on ASR service status for sim %s. Error: %v", sim.Iccid, err)
+
+		return fmt.Errorf("failed to turn on ASR service status for sim %s. Error: %w", sim.Iccid, err)
+	}
+
+	return nil
+}
+
+func (ae *AsrEventServer) handleSimManagerSimServiceOffEvent(key string, sim *epb.EventSimServiceOff) error {
+	log.Infof("Keys %s and Proto is: %+v", key, sim)
+
+	if err := updateServiceStatus(sim.Iccid, false, ae.asrRepo, ae.pc); err != nil {
+		if st, ok := status.FromError(err); ok && st.Code() == codes.NotFound {
+			log.Infof("No ASR profile for sim %s; skipping service status update", sim.Iccid)
+
+			return nil
+		}
+
+		log.Errorf("Failed to turn off ASR service status for sim %s. Error: %v", sim.Iccid, err)
+
+		return fmt.Errorf("failed to turn off ASR service status for sim %s. Error: %w", sim.Iccid, err)
 	}
 
 	return nil
