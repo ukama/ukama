@@ -269,6 +269,58 @@ func (x *ProfileUpdated) GetProfile() *Profile {
 	return nil
 }
 
+type PolicyViolation struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Profile       *Profile               `protobuf:"bytes,1,opt,name=profile,proto3" json:"profile,omitempty"`
+	Reason        string                 `protobuf:"bytes,2,opt,name=reason,proto3" json:"reason,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PolicyViolation) Reset() {
+	*x = PolicyViolation{}
+	mi := &file_events_asrprofile_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PolicyViolation) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PolicyViolation) ProtoMessage() {}
+
+func (x *PolicyViolation) ProtoReflect() protoreflect.Message {
+	mi := &file_events_asrprofile_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PolicyViolation.ProtoReflect.Descriptor instead.
+func (*PolicyViolation) Descriptor() ([]byte, []int) {
+	return file_events_asrprofile_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PolicyViolation) GetProfile() *Profile {
+	if x != nil {
+		return x.Profile
+	}
+	return nil
+}
+
+func (x *PolicyViolation) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
 var File_events_asrprofile_proto protoreflect.FileDescriptor
 
 const file_events_asrprofile_proto_rawDesc = "" +
@@ -292,7 +344,10 @@ const file_events_asrprofile_proto_rawDesc = "" +
 	"\fProfileAdded\x12:\n" +
 	"\aprofile\x18\x01 \x01(\v2\x18.ukama.events.v1.ProfileB\x06\xe2\xdf\x1f\x02 \x01R\aprofile\"L\n" +
 	"\x0eProfileUpdated\x12:\n" +
-	"\aprofile\x18\x01 \x01(\v2\x18.ukama.events.v1.ProfileB\x06\xe2\xdf\x1f\x02 \x01R\aprofileB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
+	"\aprofile\x18\x01 \x01(\v2\x18.ukama.events.v1.ProfileB\x06\xe2\xdf\x1f\x02 \x01R\aprofile\"m\n" +
+	"\x0fPolicyViolation\x12:\n" +
+	"\aprofile\x18\x01 \x01(\v2\x18.ukama.events.v1.ProfileB\x06\xe2\xdf\x1f\x02 \x01R\aprofile\x12\x1e\n" +
+	"\x06reason\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06reasonB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
 
 var (
 	file_events_asrprofile_proto_rawDescOnce sync.Once
@@ -306,22 +361,24 @@ func file_events_asrprofile_proto_rawDescGZIP() []byte {
 	return file_events_asrprofile_proto_rawDescData
 }
 
-var file_events_asrprofile_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_events_asrprofile_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_events_asrprofile_proto_goTypes = []any{
-	(*Profile)(nil),        // 0: ukama.events.v1.Profile
-	(*ProfileRemoved)(nil), // 1: ukama.events.v1.ProfileRemoved
-	(*ProfileAdded)(nil),   // 2: ukama.events.v1.ProfileAdded
-	(*ProfileUpdated)(nil), // 3: ukama.events.v1.ProfileUpdated
+	(*Profile)(nil),         // 0: ukama.events.v1.Profile
+	(*ProfileRemoved)(nil),  // 1: ukama.events.v1.ProfileRemoved
+	(*ProfileAdded)(nil),    // 2: ukama.events.v1.ProfileAdded
+	(*ProfileUpdated)(nil),  // 3: ukama.events.v1.ProfileUpdated
+	(*PolicyViolation)(nil), // 4: ukama.events.v1.PolicyViolation
 }
 var file_events_asrprofile_proto_depIdxs = []int32{
 	0, // 0: ukama.events.v1.ProfileRemoved.profile:type_name -> ukama.events.v1.Profile
 	0, // 1: ukama.events.v1.ProfileAdded.profile:type_name -> ukama.events.v1.Profile
 	0, // 2: ukama.events.v1.ProfileUpdated.profile:type_name -> ukama.events.v1.Profile
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	0, // 3: ukama.events.v1.PolicyViolation.profile:type_name -> ukama.events.v1.Profile
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_events_asrprofile_proto_init() }
@@ -335,7 +392,7 @@ func file_events_asrprofile_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_asrprofile_proto_rawDesc), len(file_events_asrprofile_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   4,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

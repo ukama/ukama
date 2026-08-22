@@ -136,7 +136,7 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 	if err != nil {
 		log.Errorf("Failed to create subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 
-		// Publish activation failure for rollback on sim manager and sim pool if necessary
+		// Publish ASR activation failure for rollback on sim manager and sim pool if necessary
 		e := &epb.AsrInactivated{
 			Subscriber: &epb.Subscriber{
 				Iccid: sim.Iccid,

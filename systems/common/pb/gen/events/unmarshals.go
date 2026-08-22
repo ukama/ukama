@@ -803,6 +803,16 @@ func UnmarshalPayment(msg *anypb.Any, emsg string) (*Payment, error) {
 	return p, nil
 }
 
+func UnmarshalPolicyViolation(msg *anypb.Any, emsg string) (*PolicyViolation, error) {
+	p := &PolicyViolation{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
 func UnmarshalProfile(msg *anypb.Any, emsg string) (*Profile, error) {
 	p := &Profile{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
