@@ -145,6 +145,17 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		if err != nil {
 			return nil, err
 		}
+
+	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.addpackage"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAddPackage](e.Msg)
+		if err != nil {
+			return nil, err
+		}
+
+		err = es.handleSimManagerSimAddPackageEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -402,86 +413,57 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 			violation.Profile.SimPackage, sim.Id.String(), err)
 	}
 
-	if sim.Package.Id != packageId {
-		log.Infof("Ignoring stale policy violation for package %s on sim %s: current package is %s",
-			packageId, sim.Id.String(), sim.Package.Id)
-
-		return nil
-	}
-
-	err = es.packageRepo.Update([]uuid.UUID{packageId},
-		&sims.Package{UsedDataAtExpiry: violation.Profile.TotalDataBytes}, nil)
-	if err != nil {
-		log.Errorf("Failed to record usage for package %s on sim %s. Error: %v",
-			packageId, sim.Id.String(), err)
-
-		return fmt.Errorf("failed to record usage for package %s on sim %s. Error: %w",
-			packageId, sim.Id.String(), err)
-	}
-
-	reason := ukama.ParsePolicyViolationReason(violation.Reason)
-	if reason != ukama.PolicyViolationReasonPackageExpired {
-		log.Infof("Policy violation (%s) recorded for sim %s. No further action for this reason yet.",
-			reason, sim.Id.String())
-
-		return nil
-	}
-
-	log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
-
-	err = markPackageExpiredForSim(sim.Id.String(), packageId.String(), es.simRepo,
-		es.packageRepo, es.msgbus, es.baseRoutingKey)
-	if err != nil {
-		log.Errorf("Failed to mark package %s as expired on sim %s. Error: %v",
-			packageId, sim.Id.String(), err)
-
-		return fmt.Errorf("failed to mark package %s as expired on sim %s. Error: %w",
-			packageId, sim.Id.String(), err)
-	}
-
-	// Get next package to set in-use, if any
-	packages, err := es.packageRepo.List(sim.Id.String(), "", "", "", "", "", false, false, 0, true)
-	if err != nil {
-		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
-			sim.Id.String(), err)
-
-		return fmt.Errorf("failed to get the sorted list of packages present on sim (%s): %w",
-			sim.Id.String(), err)
-	}
-
-	var i int
-	var p sims.Package
-
-	for i, p = range packages {
-		if p.Id == packageId {
-			break
-		}
-	}
-
-	if i > len(packages)-2 {
-		log.Warnf("Sim %s has no queued package to roll over to after package %s expired.",
-			sim.Id.String(), packageId.String())
-
-		return nil
-	}
-
-	nextPackage := packages[i+1]
-
-	log.Infof("Setting next package %s as in-use on sim %s", nextPackage.Id.String(), sim.Id.String())
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
 	defer cancel()
 
-	err = setPackageInUseForSim(ctx, sim.Id.String(), nextPackage.Id.String(), es.simRepo, es.packageRepo,
-		es.agentFactory, es.msgbus, es.baseRoutingKey)
-	if err != nil {
-		log.Errorf("Failed to set next package %s as in-use for sim %s. Error: %v",
-			nextPackage.Id.String(), sim.Id.String(), err)
+	if sim.Package.Id == packageId {
+		// Live violation: this package is genuinely still the sim's active one.
+		err = es.packageRepo.Update([]uuid.UUID{packageId},
+			&sims.Package{UsedDataAtExpiry: violation.Profile.TotalDataBytes}, nil)
+		if err != nil {
+			log.Errorf("Failed to record usage for package %s on sim %s. Error: %v",
+				packageId, sim.Id.String(), err)
 
-		return fmt.Errorf("failed to set next package %s as in-use for sim %s. Error: %w",
-			nextPackage.Id.String(), sim.Id.String(), err)
+			return fmt.Errorf("failed to record usage for package %s on sim %s. Error: %w",
+				packageId, sim.Id.String(), err)
+		}
+
+		reason := ukama.ParsePolicyViolationReason(violation.Reason)
+		if reason != ukama.PolicyViolationReasonPackageExpired {
+			log.Infof("Policy violation (%s) recorded for sim %s. No further action for this reason yet.",
+				reason, sim.Id.String())
+
+			return nil
+		}
+
+		log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
+
+		err = markPackageExpiredForSim(sim.Id.String(), packageId.String(), es.simRepo,
+			es.packageRepo, es.msgbus, es.baseRoutingKey)
+		if err != nil {
+			log.Errorf("Failed to mark package %s as expired on sim %s. Error: %v",
+				packageId, sim.Id.String(), err)
+
+			return fmt.Errorf("failed to mark package %s as expired on sim %s. Error: %w",
+				packageId, sim.Id.String(), err)
+		}
+	} else {
+		log.Infof("Ignoring stale policy violation for package %s on sim %s: current package is %s",
+			packageId, sim.Id.String(), sim.Package.Id)
 	}
 
-	return nil
+	return setNextQueuedPackageInUseIfIdle(ctx, sim.Id.String(), es.simRepo, es.packageRepo,
+		es.agentFactory, es.msgbus, es.baseRoutingKey)
+}
+
+func (es *SimManagerEventServer) handleSimManagerSimAddPackageEvent(key string, evt *epb.EventSimAddPackage) error {
+	log.Infof("Keys %s and Proto is: %+v", key, evt)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*handlerTimeoutFactor)
+	defer cancel()
+
+	return setNextQueuedPackageInUseIfIdle(ctx, evt.Id, es.simRepo, es.packageRepo,
+		es.agentFactory, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) getSimFromIccidOrImsi(iccid, imsi string) (*sims.Sim, error) {

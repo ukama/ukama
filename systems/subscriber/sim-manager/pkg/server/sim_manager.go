@@ -1083,7 +1083,6 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 
 		pkg.StartDate = startDate
 		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
-		pkg.IsCurrentlyInUse = true
 	} else {
 		pkg.StartDate = packages[len(packages)-1].EndDate.Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
 		pkg.EndDate = validation.CalculateEndDate(pkg.StartDate, pkgInfo.Duration)
@@ -1344,6 +1343,37 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 		return status.Errorf(codes.Internal,
 			"failed to unset in-use package as . Error %s", err.Error())
 	}
+
+	return nil
+}
+
+func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	sim, err := getSim(simId, simRepo)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	if sim.Package.Id != uuid.Nil {
+		return nil
+	}
+
+	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	if err != nil {
+		return fmt.Errorf("failed to get the list of packages present on sim (%s): %w", simId, err)
+	}
+
+	for _, p := range packages {
+		if p.IsExpired || p.IsCurrentlyInUse {
+			continue
+		}
+
+		log.Infof("Sim %s is idle; setting queued package %s as in-use", simId, p.Id.String())
+
+		return setPackageInUseForSim(ctx, simId, p.Id.String(), simRepo, packageRepo, agentFactory, msgbus, baseRoutingKey)
+	}
+
+	log.Infof("Sim %s is idle with no queued package to activate", simId)
 
 	return nil
 }
