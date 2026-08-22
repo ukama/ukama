@@ -61,7 +61,7 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventInviteUpdate],
 				evt.EventRoutingKey[evt.EventNodeOnline],
 				evt.EventRoutingKey[evt.EventNodeOffline],
-				evt.EventRoutingKey[evt.EventSimActivate],
+				evt.EventRoutingKey[evt.EventSimServiceOn],
 				evt.EventRoutingKey[evt.EventSimAllocate],
 				evt.EventRoutingKey[evt.EventSimDelete],
 				evt.EventRoutingKey[evt.EventSimAddPackage],
