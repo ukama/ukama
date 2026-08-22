@@ -932,9 +932,9 @@ func setSimServiceOn(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metricsP
 		log.Errorf("Error while pushing metrics on sim service-on operation: %s", err.Error())
 	}
 
-	route := baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
+	route := baseRoutingKey.SetAction("serviceon").SetObject("sim").MustBuild()
 
-	evtMsg := &epb.EventSimActivation{
+	evtMsg := &epb.EventSimServiceOn{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
 		Iccid:        sim.Iccid,
@@ -983,8 +983,8 @@ func setSimServiceOff(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metrics
 		log.Errorf("Error while pushing metrics on sim service-off operation: %s", err.Error())
 	}
 
-	route := baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
-	evtMsg := &epb.EventSimDeactivation{
+	route := baseRoutingKey.SetAction("serviceoff").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimServiceOff{
 		Id:           sim.Id.String(),
 		SubscriberId: sim.SubscriberId.String(),
 		Iccid:        sim.Iccid,

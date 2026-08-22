@@ -951,7 +951,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			},
 			mock.Anything).Return(nil).Once()
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: packageId.String(),
 			}}
@@ -1011,7 +1011,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("failed to list next packages"))
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: packageId.String(),
 			}}
@@ -1070,7 +1070,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		packageRepo.On("Update", mock.Anything, mock.Anything, mock.Anything).
 			Return(errors.New("package expired update failure"))
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				Iccid:      testIccid,
 				SimPackage: packageId.String(),
@@ -1118,7 +1118,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		simRepo.On("Get", mock.Anything).
 			Return(nil, errors.New("failed to get sim"))
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: packageId.String(),
 			}}
@@ -1160,7 +1160,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				SimId: uuid.NewV4(),
 			}, nil)
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: packageId.String(),
 			}}
@@ -1196,7 +1196,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 		packageRepo.On("Get", mock.Anything).Return(nil, errors.New("error while looking up package"))
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: packageId.String(),
 			}}
@@ -1227,7 +1227,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{},
 			}, nil)
 
-		evt := &epb.AsrInactivated{
+		evt := &epb.AsrProfileDeleted{
 			Subscriber: &epb.Subscriber{
 				SimPackage: "lol",
 			}}
@@ -1259,7 +1259,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 				sims.Sim{},
 			}, nil)
 
-		evt := &epb.AsrInactivated{Subscriber: &epb.Subscriber{}}
+		evt := &epb.AsrProfileDeleted{Subscriber: &epb.Subscriber{}}
 
 		anyE, err := anypb.New(evt)
 		assert.NoError(t, err)
@@ -1285,7 +1285,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Sim{}, nil)
 
-		evt := &epb.AsrInactivated{Subscriber: &epb.Subscriber{}}
+		evt := &epb.AsrProfileDeleted{Subscriber: &epb.Subscriber{}}
 
 		anyE, err := anypb.New(evt)
 		assert.NoError(t, err)
@@ -1311,7 +1311,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(nil, errors.New("failed to list sim by Iccid"))
 
-		evt := &epb.AsrInactivated{Subscriber: &epb.Subscriber{}}
+		evt := &epb.AsrProfileDeleted{Subscriber: &epb.Subscriber{}}
 
 		anyE, err := anypb.New(evt)
 		assert.NoError(t, err)
@@ -1332,7 +1332,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
-		evt := &epb.AsrActivated{Subscriber: &epb.Subscriber{}}
+		evt := &epb.AsrProfileCreated{Subscriber: &epb.Subscriber{}}
 
 		anyE, err := anypb.New(evt)
 		assert.NoError(t, err)

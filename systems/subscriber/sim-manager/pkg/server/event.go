@@ -114,7 +114,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.AsrActivated](e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrProfileCreated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -125,7 +125,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 		}
 
 	case msgbus.PrepareRoute(es.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.delete"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.AsrInactivated](e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrProfileDeleted](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -303,7 +303,7 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 	return nil
 }
 
-func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.AsrActivated) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key string, asrProfile *epb.AsrProfileCreated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
 	sim, err := es.getSimFromIccidOrImsi(asrProfile.Subscriber.Iccid, "")
@@ -326,7 +326,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrProfileCreateEvent(key strin
 	return setSimServiceOn(sim, es.simRepo, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
-func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.AsrInactivated) error {
+func (es *SimManagerEventServer) handleUkamaAgentAsrProfileDeleteEvent(key string, asrProfile *epb.AsrProfileDeleted) error {
 	log.Infof("Keys %s and Proto is: %+v", key, asrProfile)
 
 	sim, err := es.getSimFromIccidOrImsi(asrProfile.Subscriber.Iccid, "")
