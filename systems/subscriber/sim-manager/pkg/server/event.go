@@ -417,7 +417,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 	defer cancel()
 
 	if sim.Package.Id == packageId {
-		// Live violation: this package is genuinely still the sim's active one.
+		// Live violation: this package is genuinely still the sim's current in-use one.
 		err = es.packageRepo.Update([]uuid.UUID{packageId},
 			&sims.Package{UsedDataAtExpiry: violation.Profile.TotalDataBytes}, nil)
 		if err != nil {
@@ -453,7 +453,7 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 	}
 
 	return setNextQueuedPackageInUseIfIdle(ctx, sim.Id.String(), es.simRepo, es.packageRepo,
-		es.agentFactory, es.msgbus, es.baseRoutingKey)
+		es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) handleSimManagerSimAddPackageEvent(key string, evt *epb.EventSimAddPackage) error {
@@ -463,7 +463,7 @@ func (es *SimManagerEventServer) handleSimManagerSimAddPackageEvent(key string, 
 	defer cancel()
 
 	return setNextQueuedPackageInUseIfIdle(ctx, evt.Id, es.simRepo, es.packageRepo,
-		es.agentFactory, es.msgbus, es.baseRoutingKey)
+		es.agentFactory, es.orgId, es.metricsPusher, es.msgbus, es.baseRoutingKey)
 }
 
 func (es *SimManagerEventServer) getSimFromIccidOrImsi(iccid, imsi string) (*sims.Sim, error) {

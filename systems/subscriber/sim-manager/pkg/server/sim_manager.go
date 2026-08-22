@@ -922,12 +922,12 @@ func setSimServiceOn(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metricsP
 
 	err = pushActiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim service-on operation: %s", err.Error())
 	}
 
 	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim activation operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim service-on operation: %s", err.Error())
 	}
 
 	route := baseRoutingKey.SetAction("activate").SetObject("sim").MustBuild()
@@ -946,7 +946,7 @@ func setSimServiceOn(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metricsP
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
 
-	log.Infof("Sim %s activated successfully", sim.Id)
+	log.Infof("Sim %s service turned on successfully", sim.Id)
 
 	return nil
 }
@@ -973,12 +973,12 @@ func setSimServiceOff(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metrics
 
 	err = pushInactiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim service-off operation: %s", err.Error())
 	}
 
 	err = pushActiveSimsCountMetric(sim.NetworkId.String(), simRepo, orgId, metricsPusher)
 	if err != nil {
-		log.Errorf("Error while pushing metrics on sim deactivation operation: %s", err.Error())
+		log.Errorf("Error while pushing metrics on sim service-off operation: %s", err.Error())
 	}
 
 	route := baseRoutingKey.SetAction("deactivate").SetObject("sim").MustBuild()
@@ -1348,10 +1348,11 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 }
 
 func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
-	agentFactory adapters.AgentFactory, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	agentFactory adapters.AgentFactory, orgId string, metricsPusher MetricsPusher,
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	sim, err := getSim(simId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	if sim.Package.Id != uuid.Nil {
@@ -1370,12 +1371,31 @@ func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo 
 
 		log.Infof("Sim %s is idle; setting queued package %s as in-use", simId, p.Id.String())
 
-		return setPackageInUseForSim(ctx, simId, p.Id.String(), simRepo, packageRepo, agentFactory, msgbus, baseRoutingKey)
+		if err := setPackageInUseForSim(ctx, simId, p.Id.String(), simRepo, packageRepo, agentFactory, msgbus, baseRoutingKey); err != nil {
+			return err
+		}
+
+		if sim.Status != ukama.SimStatusServiceOff {
+			return nil
+		}
+
+		log.Infof("Sim %s had been turned off for running out of packages; resuming service now that %s is set in use",
+			simId, p.Id.String())
+
+		sim.Package.Id = p.Id
+
+		return setSimServiceOn(sim, simRepo, orgId, metricsPusher, msgbus, baseRoutingKey)
 	}
 
-	log.Infof("Sim %s is idle with no queued package to activate", simId)
+	log.Infof("Sim %s is idle with no queued package to set in use", simId)
 
-	return nil
+	if sim.Status != ukama.SimStatusServiceOn {
+		return nil
+	}
+
+	log.Infof("Turning off service for sim %s: no queued package to roll over to", simId)
+
+	return setSimServiceOff(sim, simRepo, orgId, metricsPusher, msgbus, baseRoutingKey)
 }
 
 func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
