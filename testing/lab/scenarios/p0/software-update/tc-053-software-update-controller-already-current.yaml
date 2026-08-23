@@ -1,6 +1,6 @@
 version: 1
 name: software_update_controller_already_current
-description: Verify requesting the example app version already running on the controller is rejected as unnecessary without changing the version or app health.
+description: Converge the controller to an available example app release, then verify requesting that already-running release is rejected without changing the version or app health.
 seed: 1744158692
 suite: p0
 priority: p0
@@ -52,26 +52,24 @@ phases:
         app: example
         version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 
-  - name: request_current_version
+  - name: converge_to_target_version
     events:
       - type: promote_release
         app: example
-        tag: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
       - type: wait
         seconds: 30
       - type: software_update
         type_selector: controller
         count_per_network: 1
         app: example
-        tag: ${ULAB_SOFTWARE_CURRENT_VERSION}
-        expect:
-          result: failure
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
     checks:
       - type: node_version_equals
         type_selector: controller
         count_per_network: 1
         app: example
-        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -81,7 +79,35 @@ phases:
         count_per_network: 1
         app: example
         status: up_to_date
-        current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
+        timeout_seconds: 300
+
+  - name: request_current_version
+    events:
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+        expect:
+          result: failure
+    checks:
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: up_to_date
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
         timeout_seconds: 300
       - type: node_operation_status_equals
         type_selector: controller

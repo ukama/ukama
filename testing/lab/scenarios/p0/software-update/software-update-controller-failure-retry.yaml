@@ -44,6 +44,7 @@ phases:
         app: example
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 120
 
   - name: force_update_failure
@@ -63,6 +64,7 @@ phases:
         app: example
         status: update_failed
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 300
       - type: node_status_equals
         type_selector: controller

@@ -81,25 +81,31 @@ phases:
         state: Operational
         immediate: true
         timeout_seconds: 180
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: false
+        immediate: true
+        timeout_seconds: 300
 
   - name: change_to_second_exact_version
     events:
       - type: promote_release
         app: example
-        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+        tag: 1.2.4-accdefgh
       - type: wait
         seconds: 30
       - type: software_update
         type_selector: controller
         count_per_network: 1
         app: example
-        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+        tag: 1.2.4-accdefgh
     checks:
       - type: node_version_equals
         type_selector: controller
         count_per_network: 1
         app: example
-        version: ${ULAB_SOFTWARE_NEXT_VERSION}
+        version: 1.2.4-accdefgh
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -109,7 +115,7 @@ phases:
         count_per_network: 1
         app: example
         status: up_to_date
-        current_version: ${ULAB_SOFTWARE_NEXT_VERSION}
+        current_version: 1.2.4-accdefgh
         timeout_seconds: 300
       - type: node_operation_status_equals
         type_selector: controller

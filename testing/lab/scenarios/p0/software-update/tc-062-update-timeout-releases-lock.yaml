@@ -48,6 +48,7 @@ phases:
         app: example
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 120
 
   - name: start_update_timeout
@@ -65,6 +66,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: true
+        immediate: true
         timeout_seconds: 60
 
   - name: wait_for_update_timeout
@@ -73,6 +75,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: false
+        immediate: true
         timeout_seconds: 300
 
   - name: restore_controller

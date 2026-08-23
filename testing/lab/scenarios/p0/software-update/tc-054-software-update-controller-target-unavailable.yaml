@@ -44,7 +44,8 @@ phases:
         timeout_seconds: 180
       - type: release_unavailable
         app: example
-        version: ${ULAB_SOFTWARE_UNAVAILABLE_VERSION}
+        version: 99.99.99-not-published
+        immediate: true
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -59,7 +60,7 @@ phases:
     events:
       - type: promote_release
         app: example
-        tag: ${ULAB_SOFTWARE_UNAVAILABLE_VERSION}
+        tag: 99.99.99-not-published
         expect:
           result: failure
     checks:

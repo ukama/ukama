@@ -1,6 +1,6 @@
 version: 1
 name: software_update_controller_duplicate_request
-description: Verify two immediate requests for the same example app release are handled idempotently and the controller converges to one healthy instance of the target version.
+description: Verify the backend rejects a second immediate request for the same example app release while the controller converges to one healthy instance of the target version.
 seed: 1744158694
 suite: p0
 priority: p0
@@ -69,6 +69,8 @@ phases:
         count_per_network: 1
         app: example
         tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+        expect:
+          result: failure
     checks:
       - type: node_version_equals
         type_selector: controller

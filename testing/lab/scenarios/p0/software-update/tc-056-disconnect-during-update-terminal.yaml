@@ -50,6 +50,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: true
+        immediate: true
         timeout_seconds: 60
   - name: interrupt_connectivity
     events:

@@ -49,6 +49,7 @@ phases:
       - type: site_operation_status_equals
         sites: all
         busy: true
+        immediate: true
         timeout_seconds: 60
   - name: reject_site_restart
     events:

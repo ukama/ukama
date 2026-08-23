@@ -51,6 +51,7 @@ phases:
         busy: true
         rf_available: false
         service_available: false
+        immediate: true
         timeout_seconds: 60
   - name: reject_conflicting_actions
     events:
