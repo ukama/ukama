@@ -803,6 +803,7 @@ static void sim_now_iso(char *out, size_t out_len) {
 static int sim_remove_package_from_sim(bff_client_t *c,
                                        const ue_t *ue,
                                        const char *package_id,
+                                       int package_active,
                                        ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char pkg_esc[ULAB_MAX_ID * 2];
@@ -818,18 +819,21 @@ static int sim_remove_package_from_sim(bff_client_t *c,
     ulab_json_escape(package_id, pkg_esc, sizeof(pkg_esc));
 
     root = NULL;
-    snprintf(query, sizeof(query),
-             "mutation { setInactivePackageForSim(data:{"
-             "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
-             pkg_esc, sim_esc);
-    if (sim_graphql_call(c, "setInactivePackageForSim", query, &root, err)) {
-        if (strstr(err->msg, "package record not found") == NULL) {
-            return ULAB_ERR;
+    if (package_active) {
+        snprintf(query, sizeof(query),
+                 "mutation { setInactivePackageForSim(data:{"
+                 "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
+                 pkg_esc, sim_esc);
+        if (sim_graphql_call(c, "setInactivePackageForSim", query, &root, err)) {
+            if (strstr(err->msg, "package record not found") == NULL &&
+                strstr(err->msg, "cannot set inactive package") == NULL) {
+                return ULAB_ERR;
+            }
         }
-    }
-    if (root != NULL) {
-        json_decref(root);
-        root = NULL;
+        if (root != NULL) {
+            json_decref(root);
+            root = NULL;
+        }
     }
 
     snprintf(query, sizeof(query),
@@ -854,11 +858,13 @@ int bff_clear_sim_packages(bff_client_t *c,
     char sim_esc[ULAB_MAX_ID * 2];
     char query[ULAB_MAX_QUERY];
     char package_record_ids[32][ULAB_MAX_ID];
+    int package_active[32];
     json_t *root;
     json_t *obj;
     json_t *arr;
     json_t *it;
     json_t *pid;
+    json_t *act;
     size_t i;
     size_t count;
 
@@ -896,6 +902,8 @@ int bff_clear_sim_packages(bff_client_t *c,
                 ulab_copy(package_record_ids[count],
                           sizeof(package_record_ids[count]),
                           json_string_value(pid));
+                act = it ? json_object_get(it, "is_active") : NULL;
+                package_active[count] = act != NULL && json_is_true(act);
                 count++;
             }
         }
@@ -904,7 +912,8 @@ int bff_clear_sim_packages(bff_client_t *c,
     json_decref(root);
 
     for (i = 0; i < count; i++) {
-        if (sim_remove_package_from_sim(c, ue, package_record_ids[i], err)) {
+        if (sim_remove_package_from_sim(c, ue, package_record_ids[i],
+                                        package_active[i], err)) {
             return ULAB_ERR;
         }
     }
