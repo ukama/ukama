@@ -1,10 +1,10 @@
 version: 1
-name: p0-tc-030-node-unknown-before-configuration
-description: Start nodes before creating their site, verify the Console Node Pool shows Online/Unknown, then configure the site and verify Nodes List shows Online/Operational.
+name: p0-tc-030-node-ready-before-site
+description: Start nodes before creating their site, verify the Console Node Pool shows Online/Ready, then add the site and verify Nodes List shows Online/Operational.
 seed: 5030
 suite: p0
 priority: p0
-tags: [virtual, console, nodes, lifecycle, unknown, tc-030]
+tags: [virtual, console, nodes, lifecycle, ready, operational, tc-030]
 status: active
 provider:
   type: virtual
@@ -23,15 +23,17 @@ runtime:
   wait: [nodes_ready]
 
 phases:
-  - name: verify_unknown
+  - name: verify_ready_before_site_assignment
     checks:
       - type: node_status_equals
         view: node_pool
         nodes: all
         connectivity: Online
-        state: Unknown
+        state: Ready
+        immediate: true
         timeout_seconds: 120
-  - name: complete_configuration
+
+  - name: assign_nodes_to_site
     events:
       - type: configure_sites
         sites: all
@@ -42,4 +44,5 @@ phases:
         nodes: all
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

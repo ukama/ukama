@@ -84,6 +84,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
 
   - name: after_restart
