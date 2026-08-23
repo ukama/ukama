@@ -200,6 +200,11 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	reqPb := pb.UpdatePackageReq{
 		Iccid:     "0123456789012345678912",
 		PackageId: "40987edb-ebb6-4f84-a27c-99db7c136127",
+		TotalData: 1024000000,
+		Dlbr:      15000,
+		Ulbr:      2000,
+		StartTime: 1700000000,
+		EndTime:   1700100000,
 	}
 
 	pId, err := uuid.FromString(reqPb.PackageId)
@@ -218,7 +223,13 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	usub.Policy = Policy
 
 	asrRepo.On("GetByIccid", reqPb.GetIccid()).Return(&sub, nil)
-	ctrl.On("NewPolicy", pId).Return(&Policy, nil).Once()
+	ctrl.On("NewPolicy", pm.PolicyInput{
+		TotalData: reqPb.TotalData,
+		Dlbr:      reqPb.Dlbr,
+		Ulbr:      reqPb.Ulbr,
+		StartTime: reqPb.StartTime,
+		EndTime:   reqPb.EndTime,
+	}).Return(&Policy, nil).Once()
 	asrRepo.On("UpdatePackage", sub.Imsi, pId, &Policy).Return(nil).Once()
 	ctrl.On("RunPolicyControl", sub.Imsi, false).Return(nil, false).Once()
 	ctrl.On("SyncProfile", pcrfData, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).Return(nil, false).Once()
@@ -253,6 +264,11 @@ func TestAsr_CreateProfile(t *testing.T) {
 			Iccid:        "0123456789012345678912",
 			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
 			SimPackageId: "107f7b15-a8c5-4711-b1e0-f2329bffaba1",
+			TotalData:    1024000000,
+			Dlbr:         15000,
+			Ulbr:         2000,
+			StartTime:    1700000000,
+			EndTime:      1700100000,
 		}
 
 		pId, err := uuid.FromString(reqPb.PackageId)
@@ -296,7 +312,13 @@ func TestAsr_CreateProfile(t *testing.T) {
 
 		network.On("Get", reqPb.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
 		factory.On("ReadSimCardInfo", reqPb.Iccid).Return(&Sim, nil).Once()
-		ctrl.On("NewPolicy", pId).Return(&Policy, nil).Once()
+		ctrl.On("NewPolicy", pm.PolicyInput{
+			TotalData: reqPb.TotalData,
+			Dlbr:      reqPb.Dlbr,
+			Ulbr:      reqPb.Ulbr,
+			StartTime: reqPb.StartTime,
+			EndTime:   reqPb.EndTime,
+		}).Return(&Policy, nil).Once()
 		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
 			return a1.Iccid == asr.Iccid
 		})).Return(nil).Once()

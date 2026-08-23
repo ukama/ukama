@@ -17,7 +17,6 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
@@ -30,7 +29,6 @@ import (
 )
 
 type policyController struct {
-	dp               dataplan.PackageClient
 	Rules            []Rule
 	asrRepo          db.AsrRecordRepo
 	period           time.Duration
@@ -81,14 +79,13 @@ type MsgSubscriber struct {
 
 type Controller interface {
 	InitPolicyController()
-	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
+	NewPolicy(in PolicyInput) (*db.Policy, error)
 	SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error
 	RunPolicyControl(imsi string, event bool) (error, bool)
 }
 
-func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
+func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
 	p := &policyController{
-		dp:               dataplan.NewPackageClient(dataplanHost),
 		asrRepo:          asrRepo,
 		msgbus:           msgB,
 		MsgBusRoutingKey: msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -149,42 +146,35 @@ func (p *policyController) InitPolicyController() {
 	}
 }
 
-func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
-	log.Infof("Creating new policy based on package %s", packageId.String())
+type PolicyInput struct {
+	TotalData uint64 // bytes
+	Dlbr      uint64
+	Ulbr      uint64
+	StartTime uint64 // unix seconds
+	EndTime   uint64 // unix seconds
+}
 
-	pack, err := p.dp.Get(packageId.String())
-	if err != nil {
-		log.Errorf("Failed to get package %s.Error: %v", packageId.String(), err)
+func (p *policyController) NewPolicy(in PolicyInput) (*db.Policy, error) {
+	log.Infof("Creating new policy from input %+v", in)
 
-		return nil, fmt.Errorf("failed to get package %s. Error: %w", packageId.String(), err)
+	if in.TotalData == 0 {
+		return nil, fmt.Errorf("invalid policy input: total data must be greater than 0")
 	}
 
-	// should we use sim manager startDate instead ?
-	startTime := uint64(time.Now().Unix())
-
-	// starttime is in seconds and pack.Duration is in minutes
-	endTime := uint64(startTime) + (pack.Duration * 60)
-
-	// totalData is in bytes and pack.DataVolume depends on pack.DataUnit
-	dataUnit := ukama.ParseDataUnitType(pack.DataUnit)
-	if dataUnit == ukama.DataUnitTypeUnknown {
-		log.Errorf("Invalid data unit type (%s) for data package (%s)", pack.DataUnit, pack.Id)
-
-		return nil, fmt.Errorf("invalid data unit type (%s) for data package (%s)", pack.DataUnit, pack.Id)
+	if in.EndTime <= in.StartTime {
+		return nil, fmt.Errorf("invalid policy input: end time (%d) must be after start time (%d)",
+			in.EndTime, in.StartTime)
 	}
-
-	dataUnitInBytes := ukama.ReturnDataUnitsInBytes(dataUnit)
-	totalData := pack.DataVolume * dataUnitInBytes
 
 	policy := db.Policy{
 		Id:           uuid.NewV4(),
 		Burst:        1500,
-		TotalData:    totalData,
+		TotalData:    in.TotalData,
 		ConsumedData: 0,
-		Dlbr:         pack.PackageDetails.Dlbr,
-		Ulbr:         pack.PackageDetails.Ulbr,
-		StartTime:    startTime,
-		EndTime:      endTime,
+		Dlbr:         in.Dlbr,
+		Ulbr:         in.Ulbr,
+		StartTime:    in.StartTime,
+		EndTime:      in.EndTime,
 	}
 
 	log.Infof("Returning new policy object %v", policy)

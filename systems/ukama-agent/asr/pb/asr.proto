@@ -121,6 +121,11 @@ message CreateProfileReq {
     string SimPackageId = 3;
     string PackageId = 4;
     string NetworkId = 5;
+    uint64 TotalData = 6;
+    uint64 Dlbr = 7;
+    uint64 Ulbr = 8;
+    uint64 StartTime = 9;
+    uint64 EndTime = 10;
 }
 
 message CreateProfileResp {
@@ -145,6 +150,11 @@ message UpdatePackageReq {
     string SimPackageId = 3;
     string PackageId = 4;
     string NetworkId = 5;
+    uint64 TotalData = 6;
+    uint64 Dlbr = 7;
+    uint64 Ulbr = 8;
+    uint64 StartTime = 9;
+    uint64 EndTime = 10;
 }
 
 message UpdatePackageResp {

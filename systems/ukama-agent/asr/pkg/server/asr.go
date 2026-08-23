@@ -161,8 +161,13 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 }
 
 func (ar *AsrRecordServer) CreateProfile(ctx context.Context, req *pb.CreateProfileReq) (*pb.CreateProfileResp, error) {
-	return createProfile(req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, ar.network,
-		ar.factory, ar.asrRepo, ar.pc, ar.allowedToS)
+	return createProfile(req.Iccid, req.Imsi, req.SimPackageId, req.PackageId, req.NetworkId, pm.PolicyInput{
+		TotalData: req.TotalData,
+		Dlbr:      req.Dlbr,
+		Ulbr:      req.Ulbr,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+	}, ar.network, ar.factory, ar.asrRepo, ar.pc, ar.allowedToS)
 }
 
 func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackageReq) (*pb.UpdatePackageResp, error) {
@@ -190,7 +195,13 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	}
 
 	/* Create policy and send message to PCRF */
-	policy, err := ar.pc.NewPolicy(pcrfData.PackageId)
+	policy, err := ar.pc.NewPolicy(pm.PolicyInput{
+		TotalData: req.TotalData,
+		Dlbr:      req.Dlbr,
+		Ulbr:      req.Ulbr,
+		StartTime: req.StartTime,
+		EndTime:   req.EndTime,
+	})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}
@@ -510,7 +521,7 @@ func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 	return nil
 }
 
-func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, networkClient registry.NetworkClient,
+func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, policyIn pm.PolicyInput, networkClient registry.NetworkClient,
 	factoryClient factory.SimFactoryClient, asrRepo db.AsrRecordRepo, policyController pm.Controller, allowedToS int64) (*pb.CreateProfileResp, error) {
 	log.Infof("Adding ASR profile for iccid %s", iccid)
 
@@ -558,7 +569,7 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, network
 	}
 
 	/* Send message to PCRF */
-	policy, err := policyController.NewPolicy(pcrfData.PackageId)
+	policy, err := policyController.NewPolicy(policyIn)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
 	}

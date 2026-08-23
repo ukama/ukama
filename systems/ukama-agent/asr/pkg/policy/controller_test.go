@@ -26,13 +26,12 @@ import (
 )
 
 const (
-	Imsi         = "012345678912345"
-	Iccid        = "123456789123456789123"
-	Network      = "db081ef5-a8ae-4a95-bff3-a7041d52bb9b"
-	OrgId        = "abdc0cec-5553-46aa-b3a8-1e31b0ef58ad"
-	OrgName      = "ukama"
-	dataplanHost = "localhost:8080"
-	Reroute      = "10.10.10.10"
+	Imsi    = "012345678912345"
+	Iccid   = "123456789123456789123"
+	Network = "db081ef5-a8ae-4a95-bff3-a7041d52bb9b"
+	OrgId   = "abdc0cec-5553-46aa-b3a8-1e31b0ef58ad"
+	OrgName = "ukama"
+	Reroute = "10.10.10.10"
 
 	Package        = "fab4f98d-2e82-47e8-adb5-e516346880d8"
 	NodePolicyPath = "v1/epc/pcrf"
@@ -112,7 +111,7 @@ func TestController_NewPolicyController(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
 	assert.NotNil(t, pc)
 }
 
@@ -120,7 +119,7 @@ func TestController_StartStopPolicyController(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, true)
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, true)
 	assert.NotNil(t, pc)
 	lp := []db.Asr{sub}
 	asrRepo.On("List").Return(lp, nil).Once()
@@ -134,11 +133,67 @@ func TestController_StartStopPolicyController(t *testing.T) {
 
 }
 
+func TestController_NewPolicy(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+
+	now := uint64(time.Now().Unix())
+
+	p, err := pc.NewPolicy(ip.PolicyInput{
+		TotalData: 1024000000,
+		Dlbr:      15000,
+		Ulbr:      2000,
+		StartTime: now,
+		EndTime:   now + 10000000,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(1024000000), p.TotalData)
+	assert.Equal(t, uint64(15000), p.Dlbr)
+	assert.Equal(t, uint64(2000), p.Ulbr)
+	assert.Equal(t, now, p.StartTime)
+	assert.Equal(t, now+10000000, p.EndTime)
+	assert.Equal(t, uint64(0), p.ConsumedData)
+}
+
+func TestController_NewPolicy_RejectsZeroTotalData(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+
+	now := uint64(time.Now().Unix())
+
+	_, err := pc.NewPolicy(ip.PolicyInput{
+		TotalData: 0,
+		StartTime: now,
+		EndTime:   now + 100,
+	})
+	assert.Error(t, err)
+}
+
+func TestController_NewPolicy_RejectsEndBeforeStart(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+
+	now := uint64(time.Now().Unix())
+
+	_, err := pc.NewPolicy(ip.PolicyInput{
+		TotalData: 1000,
+		StartTime: now,
+		EndTime:   now - 1,
+	})
+	assert.Error(t, err)
+}
+
 func TestController_SyncProfile(t *testing.T) {
 	asrRepo := &mocks.AsrRecordRepo{}
 	mbC := &cmocks.MsgBusServiceClient{}
 
-	pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
 	assert.NotNil(t, pc)
 
 	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policies.publish", mock.Anything).Return(nil).Once()

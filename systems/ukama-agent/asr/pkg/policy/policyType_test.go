@@ -82,7 +82,7 @@ func TestPolicy_RemoveProfile(t *testing.T) {
 		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.activesubscriber.create",
 			mock.Anything).Return(nil).Once()
 
-		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+		pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId,
 			Reroute, MonitoringPeriod, false)
 
 		assert.NotNil(t, pc)
@@ -104,7 +104,7 @@ func TestPolicy_NotifyDataCapExceeded(t *testing.T) {
 		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
 			mock.Anything).Return(nil).Once()
 
-		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+		pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId,
 			Reroute, MonitoringPeriod, false)
 		assert.NotNil(t, pc)
 
@@ -122,7 +122,7 @@ func TestPolicy_NotifyDataCapExceeded(t *testing.T) {
 		mbC2.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
 			mock.Anything).Return(nil).Once()
 
-		pc := ip.NewPolicyController(asrRepo, mbC2, dataplanHost, OrgName, OrgId,
+		pc := ip.NewPolicyController(asrRepo, mbC2, OrgName, OrgId,
 			Reroute, MonitoringPeriod, false)
 
 		err, state := ip.NotifyDataCapExceeded(pc, sub, false)
@@ -142,7 +142,7 @@ func TestPolicy_NotifyPackageExpired(t *testing.T) {
 		mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.asr.policy.violation",
 			mock.Anything).Return(nil).Once()
 
-		pc := ip.NewPolicyController(asrRepo, mbC, dataplanHost, OrgName, OrgId,
+		pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId,
 			Reroute, MonitoringPeriod, false)
 
 		assert.NotNil(t, pc)

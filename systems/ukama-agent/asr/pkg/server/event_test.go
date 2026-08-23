@@ -12,10 +12,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -28,6 +30,7 @@ import (
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	mocks "github.com/ukama/ukama/systems/ukama-agent/asr/mocks"
+	pm "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/policy"
 )
 
 func TestUkamaAgentEventServer_HandleSimAllocationEvent(t *testing.T) {
@@ -44,13 +47,21 @@ func TestUkamaAgentEventServer_HandleSimAllocationEvent(t *testing.T) {
 	t.Run("ASRActivationSuccess", func(t *testing.T) {
 		asrRepo := &mocks.AsrRecordRepo{}
 
+		startDate := timestamppb.New(time.Unix(1700000000, 0))
+		endDate := timestamppb.New(time.Unix(1700100000, 0))
+
 		evt := &epb.EventSimAllocation{
-			Iccid:      server.Iccid,
-			Imsi:       server.Imsi,
-			DataPlanId: uuid.NewV4().String(),
-			NetworkId:  uuid.NewV4().String(),
-			Type:       ukama.SimTypeUkamaData.String(),
-			PackageId:  uuid.NewV4().String(),
+			Iccid:            server.Iccid,
+			Imsi:             server.Imsi,
+			DataPlanId:       uuid.NewV4().String(),
+			NetworkId:        uuid.NewV4().String(),
+			Type:             ukama.SimTypeUkamaData.String(),
+			PackageId:        uuid.NewV4().String(),
+			PackageTotalData: 1024000000,
+			PackageDlbr:      15000,
+			PackageUlbr:      2000,
+			PackageStartDate: startDate,
+			PackageEndDate:   endDate,
 		}
 
 		anyE, err := anypb.New(evt)
@@ -63,7 +74,13 @@ func TestUkamaAgentEventServer_HandleSimAllocationEvent(t *testing.T) {
 
 		network.On("Get", evt.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
 		factory.On("ReadSimCardInfo", evt.Iccid).Return(&server.Sim, nil).Once()
-		pc.On("NewPolicy", mock.Anything).Return(&server.Policy, nil).Once()
+		pc.On("NewPolicy", pm.PolicyInput{
+			TotalData: evt.PackageTotalData,
+			Dlbr:      evt.PackageDlbr,
+			Ulbr:      evt.PackageUlbr,
+			StartTime: uint64(startDate.AsTime().Unix()),
+			EndTime:   uint64(endDate.AsTime().Unix()),
+		}).Return(&server.Policy, nil).Once()
 		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
 			return a1.Iccid == evt.Iccid
 		})).Return(nil).Once()

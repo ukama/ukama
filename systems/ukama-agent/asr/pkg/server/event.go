@@ -164,8 +164,13 @@ func (ae *AsrEventServer) handleSimManagerSimAllocateEvent(key string, sim *epb.
 		return nil
 	}
 
-	_, err := createProfile(sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId,
-		ae.network, ae.factory, ae.asrRepo, ae.pc, ae.allowedToS)
+	_, err := createProfile(sim.Iccid, sim.Imsi, sim.PackageId, sim.DataPlanId, sim.NetworkId, pm.PolicyInput{
+		TotalData: sim.PackageTotalData,
+		Dlbr:      sim.PackageDlbr,
+		Ulbr:      sim.PackageUlbr,
+		StartTime: uint64(sim.PackageStartDate.AsTime().Unix()),
+		EndTime:   uint64(sim.PackageEndDate.AsTime().Unix()),
+	}, ae.network, ae.factory, ae.asrRepo, ae.pc, ae.allowedToS)
 	if err != nil {
 		log.Errorf("Failed to create subscriber profile for sim %s. Error: %v", sim.Imsi, err)
 

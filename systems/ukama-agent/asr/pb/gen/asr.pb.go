@@ -595,6 +595,11 @@ type CreateProfileReq struct {
 	SimPackageId  string                 `protobuf:"bytes,3,opt,name=SimPackageId,proto3" json:"SimPackageId,omitempty"`
 	PackageId     string                 `protobuf:"bytes,4,opt,name=PackageId,proto3" json:"PackageId,omitempty"`
 	NetworkId     string                 `protobuf:"bytes,5,opt,name=NetworkId,proto3" json:"NetworkId,omitempty"`
+	TotalData     uint64                 `protobuf:"varint,6,opt,name=TotalData,proto3" json:"TotalData,omitempty"`
+	Dlbr          uint64                 `protobuf:"varint,7,opt,name=Dlbr,proto3" json:"Dlbr,omitempty"`
+	Ulbr          uint64                 `protobuf:"varint,8,opt,name=Ulbr,proto3" json:"Ulbr,omitempty"`
+	StartTime     uint64                 `protobuf:"varint,9,opt,name=StartTime,proto3" json:"StartTime,omitempty"`
+	EndTime       uint64                 `protobuf:"varint,10,opt,name=EndTime,proto3" json:"EndTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -662,6 +667,41 @@ func (x *CreateProfileReq) GetNetworkId() string {
 		return x.NetworkId
 	}
 	return ""
+}
+
+func (x *CreateProfileReq) GetTotalData() uint64 {
+	if x != nil {
+		return x.TotalData
+	}
+	return 0
+}
+
+func (x *CreateProfileReq) GetDlbr() uint64 {
+	if x != nil {
+		return x.Dlbr
+	}
+	return 0
+}
+
+func (x *CreateProfileReq) GetUlbr() uint64 {
+	if x != nil {
+		return x.Ulbr
+	}
+	return 0
+}
+
+func (x *CreateProfileReq) GetStartTime() uint64 {
+	if x != nil {
+		return x.StartTime
+	}
+	return 0
+}
+
+func (x *CreateProfileReq) GetEndTime() uint64 {
+	if x != nil {
+		return x.EndTime
+	}
+	return 0
 }
 
 type CreateProfileResp struct {
@@ -812,6 +852,11 @@ type UpdatePackageReq struct {
 	SimPackageId  string                 `protobuf:"bytes,3,opt,name=SimPackageId,proto3" json:"SimPackageId,omitempty"`
 	PackageId     string                 `protobuf:"bytes,4,opt,name=PackageId,proto3" json:"PackageId,omitempty"`
 	NetworkId     string                 `protobuf:"bytes,5,opt,name=NetworkId,proto3" json:"NetworkId,omitempty"`
+	TotalData     uint64                 `protobuf:"varint,6,opt,name=TotalData,proto3" json:"TotalData,omitempty"`
+	Dlbr          uint64                 `protobuf:"varint,7,opt,name=Dlbr,proto3" json:"Dlbr,omitempty"`
+	Ulbr          uint64                 `protobuf:"varint,8,opt,name=Ulbr,proto3" json:"Ulbr,omitempty"`
+	StartTime     uint64                 `protobuf:"varint,9,opt,name=StartTime,proto3" json:"StartTime,omitempty"`
+	EndTime       uint64                 `protobuf:"varint,10,opt,name=EndTime,proto3" json:"EndTime,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -879,6 +924,41 @@ func (x *UpdatePackageReq) GetNetworkId() string {
 		return x.NetworkId
 	}
 	return ""
+}
+
+func (x *UpdatePackageReq) GetTotalData() uint64 {
+	if x != nil {
+		return x.TotalData
+	}
+	return 0
+}
+
+func (x *UpdatePackageReq) GetDlbr() uint64 {
+	if x != nil {
+		return x.Dlbr
+	}
+	return 0
+}
+
+func (x *UpdatePackageReq) GetUlbr() uint64 {
+	if x != nil {
+		return x.Ulbr
+	}
+	return 0
+}
+
+func (x *UpdatePackageReq) GetStartTime() uint64 {
+	if x != nil {
+		return x.StartTime
+	}
+	return 0
+}
+
+func (x *UpdatePackageReq) GetEndTime() uint64 {
+	if x != nil {
+		return x.EndTime
+	}
+	return 0
 }
 
 type UpdatePackageResp struct {
@@ -1572,14 +1652,20 @@ const file_asr_proto_rawDesc = "" +
 	"\x05Iccid\x18\x02 \x01(\tH\x00R\x05IccidB\x04\n" +
 	"\x02id\"C\n" +
 	"\bReadResp\x127\n" +
-	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xb4\x01\n" +
+	"\x06Record\x18\x01 \x01(\v2\x1f.ukama.subscriber.asr.v1.RecordR\x06Record\"\xb2\x02\n" +
 	"\x10CreateProfileReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\"\n" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
-	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x13\n" +
+	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\x12\x1c\n" +
+	"\tTotalData\x18\x06 \x01(\x04R\tTotalData\x12\x12\n" +
+	"\x04Dlbr\x18\a \x01(\x04R\x04Dlbr\x12\x12\n" +
+	"\x04Ulbr\x18\b \x01(\x04R\x04Ulbr\x12\x1c\n" +
+	"\tStartTime\x18\t \x01(\x04R\tStartTime\x12\x18\n" +
+	"\aEndTime\x18\n" +
+	" \x01(\x04R\aEndTime\"\x13\n" +
 	"\x11CreateProfileResp\"\x90\x01\n" +
 	"\x10DeleteProfileReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
@@ -1587,14 +1673,20 @@ const file_asr_proto_rawDesc = "" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\x1c\n" +
 	"\tPackageId\x18\x03 \x01(\tR\tPackageId\x12\x1c\n" +
 	"\tNetworkId\x18\x04 \x01(\tR\tNetworkId\"\x13\n" +
-	"\x11DeleteProfileResp\"\xb4\x01\n" +
+	"\x11DeleteProfileResp\"\xb2\x02\n" +
 	"\x10UpdatePackageReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x12\n" +
 	"\x04Imsi\x18\x02 \x01(\tR\x04Imsi\x12\"\n" +
 	"\fSimPackageId\x18\x03 \x01(\tR\fSimPackageId\x12\x1c\n" +
 	"\tPackageId\x18\x04 \x01(\tR\tPackageId\x12\x1c\n" +
-	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\"\x13\n" +
+	"\tNetworkId\x18\x05 \x01(\tR\tNetworkId\x12\x1c\n" +
+	"\tTotalData\x18\x06 \x01(\x04R\tTotalData\x12\x12\n" +
+	"\x04Dlbr\x18\a \x01(\x04R\x04Dlbr\x12\x12\n" +
+	"\x04Ulbr\x18\b \x01(\x04R\x04Ulbr\x12\x1c\n" +
+	"\tStartTime\x18\t \x01(\x04R\tStartTime\x12\x18\n" +
+	"\aEndTime\x18\n" +
+	" \x01(\x04R\aEndTime\"\x13\n" +
 	"\x11UpdatePackageResp\"{\n" +
 	"\tUpdateReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
