@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -49,7 +51,7 @@ func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error
 }
 
 func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
-	return nil, nil, nil
+	return nil, nil, status.Error(codes.Unimplemented, "usage reporting is not supported for test sims")
 }
 
 func (t *TestAgentAdapter) ActivateSim(ctx context.Context, req client.AgentRequestData) error {

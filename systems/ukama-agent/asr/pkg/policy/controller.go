@@ -132,10 +132,20 @@ func (p *policyController) InitPolicyController() {
 			Action: NotifyDataCapExceeded,
 		},
 		{
-			Name:   "AllowedServiceTime",
-			ID:     2,
-			Check:  AllowedTimeOfServiceCheck,
-			Action: RemoveProfile,
+			Name:  "AllowedServiceTime",
+			ID:    2,
+			Check: AllowedTimeOfServiceCheck,
+			// Action intentionally left nil (was RemoveProfile) - this
+			// check's clock (LastStatusChangeAt) runs regardless of the
+			// subscriber's service on/off status, so it fires just from a
+			// sim being left off longer than AllowedTimeOfService, with no
+			// regard for the package's own validity. RemoveProfile's actual
+			// effect is deleting the ASR profile entirely, which cascades to
+			// sim-manager terminating the whole sim - not what's wanted for
+			// "sim has been off a while". Left as a detected-but-no-action
+			// violation (still logged) until the correct behavior for this
+			// scenario is decided.
+			Action: nil,
 		},
 		{
 			Name:   "ValidityCheck",

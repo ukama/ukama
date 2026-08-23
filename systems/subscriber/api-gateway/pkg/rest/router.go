@@ -360,7 +360,7 @@ func (r *Router) getSimsByNetwork(c *gin.Context, req *SimByNetworkReq) (*simMan
 	return r.clients.sm.GetSimsByNetwork(req.NetworkId)
 }
 
-func (r *Router) updateSimServiceStatus(c *gin.Context, req *ActivateDeactivateSimReq) (*simMangPb.ToggleSimServiceStatusResponse, error) {
+func (r *Router) updateSimServiceStatus(c *gin.Context, req *ToggleSimServiceStatusReq) (*simMangPb.ToggleSimServiceStatusResponse, error) {
 	return r.clients.sm.ToggleSimServiceStatus(req.SimId, req.Status)
 }
 

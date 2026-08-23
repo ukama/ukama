@@ -22,7 +22,7 @@ type PackageRepo interface {
 	Add(pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Get(packageId uuid.UUID) (*Package, error)
 	List(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate string,
-		isCurrentlyInUse, isExpired bool, count uint32, sort bool) ([]Package, error)
+		isCurrentlyInUse, isExpired *bool, count uint32, sort bool) ([]Package, error)
 	Update(packageIds []uuid.UUID, pkg *Package, nestedFunc func(*Package, *gorm.DB) error) error
 	Delete(packageId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 
@@ -73,7 +73,7 @@ func (p *packageRepo) Get(packageId uuid.UUID) (*Package, error) {
 }
 
 func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate,
-	toEndDate string, isCurrentlyInUse, isExpired bool, count uint32, sort bool) ([]Package, error) {
+	toEndDate string, isCurrentlyInUse, isExpired *bool, count uint32, sort bool) ([]Package, error) {
 	packages := []Package{}
 
 	tx := p.Db.GetGormDb().Preload(clause.Associations)
@@ -102,12 +102,12 @@ func (p *packageRepo) List(simId, dataPlanId, fromStartDate, toStartDate, fromEn
 		tx = tx.Where("end_date <= ?", toEndDate)
 	}
 
-	if isCurrentlyInUse {
-		tx = tx.Where("is_currently_in_use = ?", true)
+	if isCurrentlyInUse != nil {
+		tx = tx.Where("is_currently_in_use = ?", *isCurrentlyInUse)
 	}
 
-	if isExpired {
-		tx = tx.Where("is_expired = ?", true)
+	if isExpired != nil {
+		tx = tx.Where("is_expired = ?", *isExpired)
 	}
 
 	if sort {

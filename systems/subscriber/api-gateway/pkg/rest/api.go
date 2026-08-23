@@ -151,9 +151,9 @@ type SimByNetworkReq struct {
 	NetworkId string `example:"{{NetworkUUID}}" form:"network_id" json:"network_id" path:"network_id" binding:"required" validate:"required"`
 }
 
-type ActivateDeactivateSimReq struct {
+type ToggleSimServiceStatusReq struct {
 	SimId  string `example:"{{SimUUID}}" path:"sim_id" validate:"required"`
-	Status string `example:"active" json:"status" binding:"required" validate:"required"`
+	Status string `example:"service_on" json:"status" binding:"required" validate:"required"`
 }
 
 type GetSimsBySubReq struct {

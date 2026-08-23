@@ -9,7 +9,9 @@
 package providers
 
 import (
+	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -26,6 +28,7 @@ type SimPoolClientProvider interface {
 }
 
 type simPoolClientProvider struct {
+	mu             sync.Mutex
 	simPoolService pb.SimServiceClient
 	simPoolHost    string
 	timeout        time.Duration
@@ -36,12 +39,16 @@ func NewSimPoolClientProvider(simPoolHost string, timeout time.Duration) SimPool
 }
 
 func (sp *simPoolClientProvider) GetClient() (pb.SimServiceClient, error) {
+	sp.mu.Lock()
+	defer sp.mu.Unlock()
+
 	if sp.simPoolService == nil {
 		var conn *grpc.ClientConn
 
 		log.Infoln("Connecting to Sim Pool service ", sp.simPoolHost)
 
-		conn, err := grpc.NewClient(sp.simPoolHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(sp.simPoolHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(timeoutUnaryClientInterceptor(sp.timeout)))
 		if err != nil {
 			log.Errorf("Failed to connect to Sim Pool service %s. Error: %v", sp.simPoolHost, err)
 
@@ -52,4 +59,18 @@ func (sp *simPoolClientProvider) GetClient() (pb.SimServiceClient, error) {
 	}
 
 	return sp.simPoolService, nil
+}
+
+func timeoutUnaryClientInterceptor(timeout time.Duration) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply any, cc *grpc.ClientConn,
+		invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		if timeout <= 0 {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+
+		ctx, cancel := context.WithTimeout(ctx, timeout)
+		defer cancel()
+
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
 }

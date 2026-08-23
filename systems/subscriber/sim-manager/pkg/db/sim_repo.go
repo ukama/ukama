@@ -22,6 +22,13 @@ import (
 type SimRepo interface {
 	Add(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
 	Get(simId uuid.UUID) (*Sim, error)
+	List(iccid, imsi, SubscriberId, networkId string, simType ukama.SimType, status ukama.SimStatus,
+		TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error)
+	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
+
+	// This one avoids race conditionned status updates.
+	UpdateWithStatusGuard(sim *Sim, expectedStatus ukama.SimStatus, nestedFunc func(*Sim, *gorm.DB) error) error
+	Delete(simId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 
 	// Deprecated: Use db.SimRepo.List with iccid as filtering param instead.
 	GetByIccid(iccid string) (*Sim, error)
@@ -31,12 +38,6 @@ type SimRepo interface {
 
 	// Deprecated: Use db.SimRepo.List with networkId as filtering param instead.
 	GetByNetwork(networkId uuid.UUID) ([]Sim, error)
-
-	List(iccid, imsi, SubscriberId, networkId string, simType ukama.SimType, status ukama.SimStatus,
-		TrafficPolicy uint32, IsPhysical bool, count uint32, sort bool) ([]Sim, error)
-
-	Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error
-	Delete(simId uuid.UUID, nestedFunc func(uuid.UUID, *gorm.DB) error) error
 }
 
 type simRepo struct {
@@ -190,6 +191,33 @@ func (s *simRepo) Update(sim *Sim, nestedFunc func(*Sim, *gorm.DB) error) error 
 		}
 
 		result := tx.Clauses(clause.Returning{}).Updates(sim)
+		if result.Error != nil {
+			return result.Error
+		}
+
+		if result.RowsAffected == 0 {
+			return gorm.ErrRecordNotFound
+		}
+
+		return nil
+	})
+
+	return err
+}
+
+func (s *simRepo) UpdateWithStatusGuard(sim *Sim, expectedStatus ukama.SimStatus, nestedFunc func(*Sim, *gorm.DB) error) error {
+	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		if nestedFunc != nil {
+			nestErr := nestedFunc(sim, tx)
+			if nestErr != nil {
+				return nestErr
+			}
+		}
+
+		result := tx.Model(&Sim{}).
+			Where("id = ? AND status = ?", sim.Id, expectedStatus).
+			Clauses(clause.Returning{}).
+			Updates(sim)
 		if result.Error != nil {
 			return result.Error
 		}

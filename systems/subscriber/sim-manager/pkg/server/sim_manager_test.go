@@ -75,8 +75,9 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 
 		resp[0] = pckgResp
 
+		filterTrue := true
 		packageRepo.On("List", simId.String(), dataplanId.String(), from, to,
-			from, to, true, true, uint32(0), false).Return(resp, nil)
+			from, to, &filterTrue, &filterTrue, uint32(0), false).Return(resp, nil)
 
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
@@ -281,7 +282,7 @@ func TestSimManagerServer_ListPackagesForSim(t *testing.T) {
 		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
 
-		packageRepo.On("List", simId, "", "", "", "", "", false, false,
+		packageRepo.On("List", simId, "", "", "", "", "", (*bool)(nil), (*bool)(nil),
 			uint32(0), false).Return(nil, errors.New("package list for sim error"))
 
 		s := server.NewSimManagerServer(OrgName, nil, packageRepo, agentFactory,
@@ -1294,6 +1295,56 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		packageClient.AssertExpectations(t)
 	})
 
+	t.Run("ZeroDataVolumeRejected", func(t *testing.T) {
+		subscriberService := &mocks.SubscriberRegistryClientProvider{}
+		packageClient := &cmocks.PackageClient{}
+		tokCodec := &mocks.Codec{}
+
+		subscriberId := uuid.NewV4()
+		networkId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		subscriberClient := subscriberService.On("GetClient").
+			Return(&subsmocks.RegistryServiceClient{}, nil).
+			Once().
+			ReturnArguments.Get(0).(*subsmocks.RegistryServiceClient)
+
+		subscriberClient.On("Get", mock.Anything,
+			&subspb.GetSubscriberRequest{SubscriberId: subscriberId.String()}).
+			Return(&subspb.GetSubscriberResponse{
+				Subscriber: &upb.Subscriber{
+					SubscriberId: subscriberId.String(),
+					NetworkId:    networkId.String(),
+				},
+			}, nil).Once()
+
+		packageClient.On("Get", packageId.String()).
+			Return(&cdplan.PackageInfo{
+				IsActive:   true,
+				Duration:   3600,
+				SimType:    simTypeTest,
+				DataVolume: 0,
+			}, nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, nil, nil, nil,
+			packageClient, subscriberService, nil, tokCodec, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.AllocateSim(context.TODO(), &pb.AllocateSimRequest{
+			SubscriberId: subscriberId.String(),
+			NetworkId:    networkId.String(),
+			PackageId:    packageId.String(),
+			SimType:      simTypeTest,
+			SimToken:     "",
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		subscriberService.AssertExpectations(t)
+		subscriberClient.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
+	})
+
 	t.Run("PackageSimtypeAndProvidedSimtypeMismatch", func(t *testing.T) {
 		subscriberService := &mocks.SubscriberRegistryClientProvider{}
 		packageClient := &cmocks.PackageClient{}
@@ -2087,7 +2138,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
-		simRepo.On("Update", mock.Anything, mock.Anything).
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOff, mock.Anything).
 			Return(errors.New("sim status update failure")).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2128,7 +2179,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
 
-		simRepo.On("Update", mock.Anything, mock.Anything).
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOn, mock.Anything).
 			Return(errors.New("sim status update failure")).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
@@ -2137,6 +2188,48 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
 			SimId:  simId.String(),
 			Status: ukama.SimStatusServiceOff.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		packageRepo.AssertExpectations(t)
+		simRepo.AssertExpectations(t)
+	})
+
+	t.Run("ConcurrentToggleLosesRaceToTurnServiceOn", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+
+		simId := uuid.NewV4()
+
+		sim := simRepo.On("Get", simId).
+			Return(&sims.Sim{
+				Id:         simId,
+				Iccid:      testIccid,
+				IsPhysical: false,
+				Status:     ukama.SimStatusServiceOff,
+				Type:       ukama.SimTypeTest,
+			}, nil).
+			Once().
+			ReturnArguments.Get(0).(*sims.Sim)
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
+			Return(&mocks.AgentAdapter{}, true).
+			Once().
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOff, mock.Anything).
+			Return(gorm.ErrRecordNotFound).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
+
+		resp, err := s.ToggleSimServiceStatus(context.TODO(), &pb.ToggleSimServiceStatusRequest{
+			SimId:  simId.String(),
+			Status: ukama.SimStatusServiceOn.String(),
 		})
 
 		assert.Error(t, err)
@@ -2165,7 +2258,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*sims.Sim)
 
-		simRepo.On("Update", mock.Anything, mock.Anything).
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOff, mock.Anything).
 			Return(nil).Once()
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -2215,7 +2308,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*sims.Sim)
 
-		simRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOn, mock.Anything).Return(nil).Once()
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]sims.Sim{}, nil).Twice()
@@ -2401,6 +2494,44 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		packageRepo.AssertExpectations(t)
 		packageClient.AssertExpectations(t)
 
+	})
+
+	t.Run("ZeroDataVolumeRejected", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		packageClient := &cmocks.PackageClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		orgId := uuid.NewV4()
+
+		simRepo.On("Get", simId).Return(&sims.Sim{
+			Id:   simId,
+			Type: ukama.SimTypeTest,
+		}, nil).Once()
+
+		packageClient.On("Get", packageId.String()).Return(&cdplan.PackageInfo{
+			IsActive:   true,
+			Duration:   3600,
+			SimType:    simTypeTest,
+			DataVolume: 0,
+		}, nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
+			nil, nil, nil, nil, orgId.String(), "", nil, nil, nil, nil)
+
+		resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
+			SimId:     simId.String(),
+			PackageId: packageId.String(),
+			StartDate: from,
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		packageClient.AssertExpectations(t)
 	})
 }
 

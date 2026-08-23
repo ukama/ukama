@@ -190,7 +190,7 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List("", "", "", "", "", "", false, false, 0, false)
+		list, err := r.List("", "", "", "", "", "", nil, nil, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -218,8 +218,9 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
+		filterTrue := true
 		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
-			true, true, 1, true)
+			&filterTrue, &filterTrue, 1, true)
 
 		// Assert
 		assert.NoError(t, err)
@@ -244,8 +245,9 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
+		filterTrue := true
 		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
-			true, true, 1, true)
+			&filterTrue, &filterTrue, 1, true)
 
 		// Assert
 		assert.Error(t, err)

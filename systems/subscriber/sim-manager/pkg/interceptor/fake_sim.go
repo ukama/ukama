@@ -28,11 +28,11 @@ import (
 
 const (
 	getSimRPCSuffix          = "SimManagerService/GetSim"
-	toggleSimStatusRPCSuffix = "SimManagerService/ToggleSimStatus"
+	toggleSimStatusRPCSuffix = "SimManagerService/ToggleSimServiceStatus"
 	terminateSimRPCSuffix    = "SimManagerService/TerminateSim"
 
-	statusActive   = "active"
-	statusInactive = "inactive"
+	statusServiceOn  = "service_on"
+	statusServiceOff = "service_off"
 )
 
 type FakeSimInterceptor struct {
@@ -113,11 +113,11 @@ func (f *FakeSimInterceptor) toggleSimStatusHandler(ctx context.Context, simId, 
 	}
 
 	switch simStatus {
-	case statusActive:
+	case statusServiceOn:
 		return nil, f.testAgentAdapter.ActivateSim(ctx, client.AgentRequestData{
 			Iccid: fakeIccid,
 		})
-	case statusInactive:
+	case statusServiceOff:
 		return nil, f.testAgentAdapter.DeactivateSim(ctx, client.AgentRequestData{
 			Iccid: fakeIccid,
 		})

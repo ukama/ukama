@@ -418,34 +418,40 @@ func (es *SimManagerEventServer) handleUkamaAgentAsrPolicyViolationEvent(key str
 
 	if sim.Package.Id == packageId {
 		// Live violation: this package is genuinely still the sim's current in-use one.
-		err = es.packageRepo.Update([]uuid.UUID{packageId},
-			&sims.Package{UsedDataAtExpiry: violation.Profile.TotalDataBytes}, nil)
-		if err != nil {
-			log.Errorf("Failed to record usage for package %s on sim %s. Error: %v",
-				packageId, sim.Id.String(), err)
-
-			return fmt.Errorf("failed to record usage for package %s on sim %s. Error: %w",
-				packageId, sim.Id.String(), err)
-		}
-
 		reason := ukama.ParsePolicyViolationReason(violation.Reason)
-		if reason != ukama.PolicyViolationReasonPackageExpired {
+
+		switch reason {
+		case ukama.PolicyViolationReasonPackageExpired:
+			log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
+
+			err = markPackageExpiredForSim(sim.Id.String(), packageId.String(), es.simRepo,
+				es.packageRepo, es.msgbus, es.baseRoutingKey)
+			if err != nil {
+				log.Errorf("Failed to mark package %s as expired on sim %s. Error: %v",
+					packageId, sim.Id.String(), err)
+
+				return fmt.Errorf("failed to mark package %s as expired on sim %s. Error: %w",
+					packageId, sim.Id.String(), err)
+			}
+
+		case ukama.PolicyViolationReasonDataCapExceeded:
+			log.Infof("Draining package %s on sim %s", packageId, sim.Id.String())
+
+			err = markPackageDrainedForSim(sim.Id.String(), packageId.String(), violation.Profile.TotalDataBytes,
+				es.simRepo, es.packageRepo, es.msgbus, es.baseRoutingKey)
+			if err != nil {
+				log.Errorf("Failed to mark package %s as drained on sim %s. Error: %v",
+					packageId, sim.Id.String(), err)
+
+				return fmt.Errorf("failed to mark package %s as drained on sim %s. Error: %w",
+					packageId, sim.Id.String(), err)
+			}
+
+		default:
 			log.Infof("Policy violation (%s) recorded for sim %s. No further action for this reason yet.",
 				reason, sim.Id.String())
 
 			return nil
-		}
-
-		log.Infof("Expiring package %s on sim %s", packageId, sim.Id.String())
-
-		err = markPackageExpiredForSim(sim.Id.String(), packageId.String(), es.simRepo,
-			es.packageRepo, es.msgbus, es.baseRoutingKey)
-		if err != nil {
-			log.Errorf("Failed to mark package %s as expired on sim %s. Error: %v",
-				packageId, sim.Id.String(), err)
-
-			return fmt.Errorf("failed to mark package %s as expired on sim %s. Error: %w",
-				packageId, sim.Id.String(), err)
 		}
 	} else {
 		log.Infof("Ignoring stale policy violation for package %s on sim %s: current package is %s",

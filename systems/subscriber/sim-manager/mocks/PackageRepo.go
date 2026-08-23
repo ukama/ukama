@@ -113,7 +113,7 @@ func (_m *PackageRepo) GetBySim(simId uuid.UUID) ([]db.Package, error) {
 }
 
 // List provides a mock function with given fields: simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, count, sort
-func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate string, toSartDate string, fromEndDate string, toEndDate string, isCurrentlyInUse bool, isExpired bool, count uint32, sort bool) ([]db.Package, error) {
+func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate string, toSartDate string, fromEndDate string, toEndDate string, isCurrentlyInUse *bool, isExpired *bool, count uint32, sort bool) ([]db.Package, error) {
 	ret := _m.Called(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, count, sort)
 
 	if len(ret) == 0 {
@@ -122,10 +122,10 @@ func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate strin
 
 	var r0 []db.Package
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint32, bool) ([]db.Package, error)); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, *bool, *bool, uint32, bool) ([]db.Package, error)); ok {
 		return rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, count, sort)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, uint32, bool) []db.Package); ok {
+	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, *bool, *bool, uint32, bool) []db.Package); ok {
 		r0 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, count, sort)
 	} else {
 		if ret.Get(0) != nil {
@@ -133,7 +133,7 @@ func (_m *PackageRepo) List(simId string, dataPlanId string, fromStartDate strin
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, uint32, bool) error); ok {
+	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, *bool, *bool, uint32, bool) error); ok {
 		r1 = rf(simId, dataPlanId, fromStartDate, toSartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, count, sort)
 	} else {
 		r1 = ret.Error(1)

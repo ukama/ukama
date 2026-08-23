@@ -68,7 +68,7 @@ const (
 	testAddress         = "1 Main St"
 	testProofOfId       = "Passport"
 	testIdSerial        = "123456789"
-	testStatus          = "active"
+	testStatus          = "service_on"
 	testCdrType         = "voice"
 	testRegion          = "US"
 	testFromDate        = "2023-01-01"
@@ -633,7 +633,7 @@ func TestRouter_SimManager(t *testing.T) {
 	})
 
 	t.Run("updateSimStatus", func(t *testing.T) {
-		p := ActivateDeactivateSimReq{
+		p := ToggleSimServiceStatusReq{
 			Status: testStatus,
 		}
 

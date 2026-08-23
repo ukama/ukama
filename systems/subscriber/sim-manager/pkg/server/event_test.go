@@ -14,9 +14,12 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
 	"google.golang.org/protobuf/types/known/anypb"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -34,6 +37,40 @@ import (
 	subregpbmocks "github.com/ukama/ukama/systems/subscriber/registry/pb/gen/mocks"
 	sims "github.com/ukama/ukama/systems/subscriber/sim-manager/pkg/db"
 )
+
+type ukamaDbMock struct {
+	GormDb *gorm.DB
+}
+
+func (u ukamaDbMock) Init(model ...interface{}) error { panic("not needed for this test") }
+func (u ukamaDbMock) Connect() error                  { panic("not needed for this test") }
+func (u ukamaDbMock) GetGormDb() *gorm.DB             { return u.GormDb }
+func (u ukamaDbMock) InitDB() error                   { return nil }
+func (u ukamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
+	panic("not needed for this test")
+}
+func (u ukamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) error {
+	panic("not needed for this test")
+}
+
+func prepareTestDb(t *testing.T) (sqlmock.Sqlmock, *gorm.DB) {
+	t.Helper()
+
+	rawDb, mockSql, err := sqlmock.New()
+	assert.NoError(t, err)
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 rawDb,
+		PreferSimpleProtocol: true,
+	})
+
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	return mockSql, gdb
+}
 
 func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) {
 	msgbusClient := &cmocks.MsgBusServiceClient{}
@@ -1353,8 +1390,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.ukamaagent.asr.policy.violation")
 
-	t.Run("DataCapExceededOnlyRecordsUsage", func(t *testing.T) {
+	t.Run("DataCapExceededDrainsPackageNoNextQueued", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1362,18 +1400,47 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 		simId := uuid.NewV4()
 		packageId := uuid.NewV4()
 
+		simd := &sims.Sim{
+			Id:      simId,
+			Type:    ukama.SimTypeUkamaData,
+			Package: sims.Package{Id: packageId},
+		}
+
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Sim{
-				sims.Sim{
-					Id:      simId,
-					Type:    ukama.SimTypeUkamaData,
-					Package: sims.Package{Id: packageId},
-				},
+			Return([]sims.Sim{*simd}, nil)
+
+		simRepo.On("Get", simId).Return(simd, nil).Once()
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{
+				Id:               packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				InitialData:      500,
+				UsedDataAtExpiry: 0,
 			}, nil)
 
-		packageRepo.On("Update", []uuid.UUID{packageId}, &sims.Package{UsedDataAtExpiry: uint64(500)}, mock.Anything).
+		packageRepo.On("Update", []uuid.UUID{packageId},
+			&sims.Package{IsCurrentlyInUse: false, UsedDataAtExpiry: uint64(500)}, mock.Anything).
 			Return(nil).Once()
+
+		simRepo.On("Get", simId).Return(&sims.Sim{
+			Id:   simId,
+			Type: ukama.SimTypeUkamaData,
+		}, nil).Once()
+
+		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{
+				sims.Package{
+					Id:               packageId,
+					SimId:            simId,
+					IsCurrentlyInUse: false,
+					InitialData:      500,
+					UsedDataAtExpiry: 500,
+				},
+			}, nil)
 
 		evt := &epb.PolicyViolation{
 			Profile: &epb.Profile{
@@ -1397,6 +1464,157 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 		assert.NoError(t, err)
 
 		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("DataCapExceededRecordsRealOverCapUsageNotClipped", func(t *testing.T) {
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		simRepo := mocks.SimRepo{}
+		packageRepo := mocks.PackageRepo{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		simd := &sims.Sim{
+			Id:      simId,
+			Type:    ukama.SimTypeUkamaData,
+			Package: sims.Package{Id: packageId},
+		}
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{*simd}, nil)
+
+		simRepo.On("Get", simId).Return(simd, nil).Once()
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{
+				Id:               packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+				InitialData:      500,
+				UsedDataAtExpiry: 0,
+			}, nil)
+
+		packageRepo.On("Update", []uuid.UUID{packageId},
+			&sims.Package{IsCurrentlyInUse: false, UsedDataAtExpiry: uint64(550)}, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("Get", simId).Return(&sims.Sim{
+			Id:   simId,
+			Type: ukama.SimTypeUkamaData,
+		}, nil).Once()
+
+		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{
+				sims.Package{
+					Id:               packageId,
+					SimId:            simId,
+					IsCurrentlyInUse: false,
+					InitialData:      500,
+					UsedDataAtExpiry: 550,
+				},
+			}, nil)
+
+		evt := &epb.PolicyViolation{
+			Profile: &epb.Profile{
+				SimPackage:     packageId.String(),
+				TotalDataBytes: 550,
+			},
+			Reason: ukama.PolicyViolationReasonDataCapExceeded.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, &simRepo, &packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+
+		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("DataCapExceededDrainsPackage_RealRepo", func(t *testing.T) {
+		mockSql, gdb := prepareTestDb(t)
+		ukamaDb := ukamaDbMock{GormDb: gdb}
+
+		simRepo := sims.NewSimRepo(ukamaDb)
+		packageRepo := sims.NewPackageRepo(ukamaDb)
+
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		mockSql.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs().
+			WillReturnRows(sqlmock.NewRows([]string{"id", "type"}).AddRow(simId, ukama.SimTypeUkamaData))
+		mockSql.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simId).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "sim_id"}).AddRow(packageId, simId))
+
+		mockSql.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(packageId, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "sim_id", "is_currently_in_use", "initial_data", "used_data_at_expiry"}).
+				AddRow(packageId, simId, true, 500, 0))
+
+		mockSql.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(simId, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(simId))
+		mockSql.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simId).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "sim_id"}).AddRow(packageId, simId))
+
+		mockSql.ExpectBegin()
+		mockSql.ExpectExec(`UPDATE "packages" SET`).
+			WithArgs(false, false, uint64(500), sqlmock.AnyArg(), packageId).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mockSql.ExpectCommit()
+
+		mockSql.ExpectQuery(`^SELECT.*sims.*`).
+			WithArgs(simId, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(simId))
+		mockSql.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simId).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "sim_id"}))
+
+		mockSql.ExpectQuery(`^SELECT.*packages.*`).
+			WithArgs(simId, false, false).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "sim_id"}))
+
+		evt := &epb.PolicyViolation{
+			Profile: &epb.Profile{
+				SimPackage:     packageId.String(),
+				TotalDataBytes: 500,
+			},
+			Reason: ukama.PolicyViolationReasonDataCapExceeded.String(),
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		s := server.NewSimManagerEventServer(OrgName, orgId, simRepo, packageRepo, nil, nil, nil, nil, nil, nil, msgbusClient, "")
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+
+		assert.NoError(t, mockSql.ExpectationsWereMet())
 		msgbusClient.AssertExpectations(t)
 	})
 
@@ -1425,9 +1643,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		simRepo.On("Get", simId).Return(simd, nil).Once()
 
-		packageRepo.On("Update", []uuid.UUID{packageId}, &sims.Package{UsedDataAtExpiry: uint64(1000)}, mock.Anything).
-			Return(nil).Once()
-
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{
 				Id:               packageId,
@@ -1453,12 +1668,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Package{
-				sims.Package{
-					Id:               packageId,
-					SimId:            simId,
-					IsExpired:        true,
-					IsCurrentlyInUse: false,
-				},
 				sims.Package{
 					Id:              nextPackageId,
 					SimId:           simId,
@@ -1535,9 +1744,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		simRepo.On("Get", simId).Return(simd, nil).Once()
 
-		packageRepo.On("Update", []uuid.UUID{packageId}, &sims.Package{UsedDataAtExpiry: uint64(1000)}, mock.Anything).
-			Return(nil).Once()
-
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{
 				Id:               packageId,
@@ -1557,14 +1763,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{
-				sims.Package{
-					Id:               packageId,
-					SimId:            simId,
-					IsExpired:        true,
-					IsCurrentlyInUse: false,
-				},
-			}, nil)
+			Return([]sims.Package{}, nil)
 
 		evt := &epb.PolicyViolation{
 			Profile: &epb.Profile{
@@ -1614,9 +1813,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		simRepo.On("Get", simId).Return(simd, nil).Once()
 
-		packageRepo.On("Update", []uuid.UUID{packageId}, &sims.Package{UsedDataAtExpiry: uint64(1000)}, mock.Anything).
-			Return(nil).Once()
-
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{
 				Id:               packageId,
@@ -1637,16 +1833,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{
-				sims.Package{
-					Id:               packageId,
-					SimId:            simId,
-					IsExpired:        true,
-					IsCurrentlyInUse: false,
-				},
-			}, nil)
+			Return([]sims.Package{}, nil)
 
-		simRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOn, mock.Anything).Return(nil).Once()
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -1759,9 +1948,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 			Package: sims.Package{Id: packageId},
 		}, nil).Once()
 
-		packageRepo.On("Update", []uuid.UUID{packageId}, &sims.Package{UsedDataAtExpiry: uint64(1000)}, mock.Anything).
-			Return(nil).Once()
-
 		packageRepo.On("Get", packageId).Return(
 			&sims.Package{
 				Id:               packageId,
@@ -1787,12 +1973,6 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return([]sims.Package{
-				sims.Package{
-					Id:               packageId,
-					SimId:            simId,
-					IsExpired:        true,
-					IsCurrentlyInUse: false,
-				},
 				sims.Package{
 					Id:              nextPackageId,
 					SimId:           simId,
@@ -2004,7 +2184,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAddPackageEvent(t *testing.T) 
 
 		agentAdapter.On("UpdatePackage", mock.Anything, mock.Anything).Return(nil).Once()
 
-		simRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+		simRepo.On("UpdateWithStatusGuard", mock.Anything, ukama.SimStatusServiceOff, mock.Anything).Return(nil).Once()
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).

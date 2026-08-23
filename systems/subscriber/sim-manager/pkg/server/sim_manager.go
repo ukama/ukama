@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -167,6 +168,13 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			fmt.Errorf("invalid package duration: %w", err))
 	}
 
+	// Unlimited (zero data volume) packages are not supported yet - every
+	// package on a sim is assumed to have a finite, positive data cap.
+	if packageInfo.DataVolume == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"cannot allocate sim: unlimited (zero data volume) packages are not supported")
+	}
+
 	strType := strings.ToLower(req.GetSimType())
 	simType := ukama.ParseSimType(strType)
 	pkgInfoSimType := ukama.ParseSimType(packageInfo.SimType)
@@ -292,6 +300,19 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 	})
 
 	if err != nil {
+		// The sim was already committed in its own transaction above; without
+		// this, a package-add failure here would leave an orphaned sim with
+		// no package attached, since sim and package are not written
+		// atomically.
+		// The easiest fix we can do now: log but don't shadow the original
+		// error if the compensating delete also fails.
+		// TODO: See late if we can make sim and pakage persistance in the same
+		// DB transaction.
+		if delErr := s.simRepo.Delete(sim.Id, nil); delErr != nil {
+			log.Errorf("Failed to roll back sim %s after package add failure. Sim is now orphaned. Error: %v",
+				sim.Id, delErr)
+		}
+
 		return nil, status.Errorf(codes.Internal,
 			"failed to add initial package to newly allocated sim. Error %s", err.Error())
 	}
@@ -683,8 +704,16 @@ func (s *SimManagerServer) ListPackagesForSim(ctx context.Context, req *pb.ListP
 		req.ToEndDate = toEndDate
 	}
 
+	var inUseFilter, expiredFilter *bool
+	if req.IsCurrentlyInUse {
+		inUseFilter = &req.IsCurrentlyInUse
+	}
+	if req.IsExpired {
+		expiredFilter = &req.IsExpired
+	}
+
 	packages, err := s.packageRepo.List(req.SimId, req.DataPlanId, req.FromStartDate, req.ToStartDate,
-		req.FromEndDate, req.ToEndDate, req.IsCurrentlyInUse, req.IsExpired, req.Count, req.Sort)
+		req.FromEndDate, req.ToEndDate, inUseFilter, expiredFilter, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Error while getting list of packages present on sim (%s) matching the given filters: %v",
 			req.SimId, err)
@@ -923,8 +952,14 @@ func setSimServiceOn(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metricsP
 		simUpdates.FirstActivatedOn = simUpdates.LastActivatedOn
 	}
 
-	err := simRepo.Update(simUpdates, nil)
+	// Guards against concurent status updates.
+	err := simRepo.UpdateWithStatusGuard(simUpdates, sim.Status, nil)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return status.Errorf(codes.FailedPrecondition,
+				"sim %s service status was already changed by another request", sim.Id)
+		}
+
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
@@ -974,8 +1009,14 @@ func setSimServiceOff(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metrics
 		DeactivationsCount: sim.DeactivationsCount + 1,
 	}
 
-	err := simRepo.Update(simUpdates, nil)
+	// Guards against concurent status updates.
+	err := simRepo.UpdateWithStatusGuard(simUpdates, sim.Status, nil)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return status.Errorf(codes.FailedPrecondition,
+				"sim %s service status was already changed by another request", sim.Id)
+		}
+
 		return grpc.SqlErrorToGrpc(err, "sim")
 	}
 
@@ -1049,6 +1090,13 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 			fmt.Errorf("invalid package duration: %w", err))
 	}
 
+	// Unlimited (zero data volume) packages are not supported yet - every
+	// package on a sim is assumed to have a finite, positive data cap.
+	if pkgInfo.DataVolume == 0 {
+		return status.Error(codes.InvalidArgument,
+			"cannot add package to sim: unlimited (zero data volume) packages are not supported")
+	}
+
 	pkgInfoSimType := ukama.ParseSimType(pkgInfo.SimType)
 	if sim.Type != pkgInfoSimType {
 		return status.Errorf(codes.InvalidArgument,
@@ -1077,7 +1125,7 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		Ulbr:             pkgInfo.PackageDetails.Ulbr,
 	}
 
-	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	packages, err := packageRepo.List(simId, "", "", "", "", "", nil, nil, 0, true)
 	if err != nil {
 		log.Errorf("failed to get the sorted list of packages present on sim (%s): %v",
 			simId, err)
@@ -1370,13 +1418,15 @@ func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo 
 		return nil
 	}
 
-	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	notInUse, notExpired := false, false
+
+	packages, err := packageRepo.List(simId, "", "", "", "", "", &notInUse, &notExpired, 0, true)
 	if err != nil {
 		return fmt.Errorf("failed to get the list of packages present on sim (%s): %w", simId, err)
 	}
 
 	for _, p := range packages {
-		if p.IsExpired || p.IsCurrentlyInUse {
+		if p.InitialData > 0 && p.UsedDataAtExpiry >= p.InitialData {
 			continue
 		}
 
@@ -1481,8 +1531,75 @@ func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRep
 	return nil
 }
 
+func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint64, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	log.Infof("Marking package %v as drained for sim: %v", reqPackageId, reqSimId)
+
+	packageId, err := uuid.FromString(reqPackageId)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument,
+			"invalid format of package uuid. Error %s", err.Error())
+	}
+
+	pckg, err := packageRepo.Get(packageId)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "package")
+	}
+
+	if pckg.SimId.String() != reqSimId {
+		return status.Errorf(codes.InvalidArgument,
+			"simId packageId mismatch: package %s does not belong to the provided sim %s",
+			reqPackageId, reqSimId)
+	}
+
+	if !pckg.IsCurrentlyInUse {
+		log.Warnf("cannot mark not in-use package (%s) as drained. Skipping operation.", pckg.Id)
+
+		return status.Errorf(codes.FailedPrecondition,
+			"cannot mark not in-use package (%s) as drained. Skipping operation.", pckg.Id)
+	}
+
+	if pckg.UsedDataAtExpiry >= pckg.InitialData {
+		return status.Errorf(codes.FailedPrecondition,
+			"package (%s) has already been marked as drained", pckg.Id)
+	}
+
+	sim, err := getSim(reqSimId, simRepo)
+	if err != nil {
+		return grpc.SqlErrorToGrpc(err, "sim")
+	}
+
+	packageToDrain := &sims.Package{
+		IsCurrentlyInUse: false,
+		UsedDataAtExpiry: totalDataUsed,
+	}
+
+	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToDrain, nil)
+	if err != nil {
+		return status.Errorf(codes.Internal,
+			"failed to mark package as drained. Error %s", err.Error())
+	}
+
+	route := baseRoutingKey.SetAction("expirepackage").SetObject("sim").MustBuild()
+	evtMsg := &epb.EventSimPackageExpire{
+		Id:              sim.Id.String(),
+		StartDate:       pckg.StartDate.String(),
+		EndDate:         pckg.EndDate.String(),
+		DefaultDuration: pckg.DefaultDuration,
+		PackageId:       pckg.Id.String(),
+		DataPlanId:      pckg.PackageId.String(),
+	}
+
+	err = publishEventMessage(route, evtMsg, msgbus)
+	if err != nil {
+		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
+	}
+
+	return nil
+}
+
 func expireAllPackagesForSim(simId string, packageRepo sims.PackageRepo, msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
-	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
+	packages, err := packageRepo.List(simId, "", "", "", "", "", nil, nil, 0, true)
 	if err != nil {
 		return fmt.Errorf("failed to get the list of packages present on sim (%s): %w", simId, err)
 	}
@@ -1676,9 +1793,8 @@ func dbSimToPbSim(sim *sims.Sim) *pb.Sim {
 		res.LastActivatedOn = timestamppb.New(sim.LastActivatedOn)
 	}
 
-	//TODO: remove usage of timestamp and update this.
 	if sim.AllocatedAt != 0 {
-		res.AllocatedAt = timestamppb.New(sim.LastActivatedOn)
+		res.AllocatedAt = timestamppb.New(time.Unix(sim.AllocatedAt, 0))
 	}
 
 	return res
