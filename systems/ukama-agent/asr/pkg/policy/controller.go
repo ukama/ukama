@@ -74,8 +74,9 @@ type MsgPolicy struct {
 }
 
 type MsgSubscriber struct {
-	Policy  MsgPolicy `json:"policy"`
-	Reroute string    `json:"reroute"`
+	Policy      MsgPolicy `json:"policy"`
+	Reroute     string    `json:"reroute"`
+	IsServiceOn bool      `json:"is_service_on"`
 }
 
 type Controller interface {
@@ -107,7 +108,7 @@ func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, 
 	return p
 }
 
-func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
+func createMessage(p *db.Policy, reroute string, isServiceOn bool) *MsgSubscriber {
 	return &MsgSubscriber{
 		Policy: MsgPolicy{
 			Uuid:         p.Id.String(),
@@ -119,7 +120,8 @@ func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
 			StartTime:    p.StartTime,
 			EndTime:      p.EndTime,
 		},
-		Reroute: reroute,
+		Reroute:     reroute,
+		IsServiceOn: isServiceOn,
 	}
 }
 
@@ -232,7 +234,9 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 		return nil
 	}
 
-	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy)
+	isServiceOn := as.ServiceStatus == ukama.SimStatusServiceOn
+
+	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy, isServiceOn)
 	if err != nil {
 		return fmt.Errorf("error while syncing subscriber policy for imsi %s. Error: %w", s.Imsi, err)
 	}
@@ -305,11 +309,11 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 	return nil, removed
 }
 
-func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
+func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy, isServiceOn bool) error {
 	log.Infof("Syncing policy for subscriber %s", imsi)
 
 	route := p.MsgBusRoutingKey.SetObject("policies").SetAction("publish").MustBuild()
-	pMsg := createMessage(policy, p.reroute)
+	pMsg := createMessage(policy, p.reroute, isServiceOn)
 
 	jd, err := json.Marshal(pMsg)
 	if err != nil {

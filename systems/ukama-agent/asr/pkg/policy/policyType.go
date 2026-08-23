@@ -66,7 +66,7 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 		},
 	}
 
-	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
+	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy, false)
 	if err != nil {
 		log.Errorf("Failed to sync subscriber policy after profile removal: %v", err)
 		//TODO: any push to pcrf retries policies?
