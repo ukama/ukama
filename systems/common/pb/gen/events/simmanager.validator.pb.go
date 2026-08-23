@@ -118,6 +118,11 @@ func (this *EventSimAllocation) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("PackageEndDate", err)
 		}
 	}
+	if this.PackageStartDate != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.PackageStartDate); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("PackageStartDate", err)
+		}
+	}
 	return nil
 }
 

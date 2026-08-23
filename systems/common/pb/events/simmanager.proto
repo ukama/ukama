@@ -55,6 +55,10 @@ message EventSimAllocation {
     string packageDataUnit = 23 [json_name = "package_data_unit"];
     string packageAmount = 24 [json_name = "package_amount"];
     string packageDuration = 25 [json_name = "package_duration"];
+    uint64 packageTotalData = 26 [json_name = "package_total_data"];
+    uint64 packageDlbr = 27 [json_name = "package_dlbr"];
+    uint64 packageUlbr = 28 [json_name = "package_ulbr"];
+    google.protobuf.Timestamp packageStartDate = 29 [json_name = "start_date"];
 }
 
 

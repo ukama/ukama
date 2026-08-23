@@ -291,6 +291,11 @@ type AgentRequestData struct {
 	PackageId         string `json:"package_id,omitempty"`
 	NetworkId         string `json:"network_id,omitempty"`
 	IsServiceStatusOn bool   `json:"is_service_status_on,omitempty"`
+	TotalData         uint64 `json:"total_data,omitempty"` // bytes
+	Dlbr              uint64 `json:"dlbr,omitempty"`
+	Ulbr              uint64 `json:"ulbr,omitempty"`
+	StartTime         uint64 `json:"start_time,omitempty"` // unix seconds
+	EndTime           uint64 `json:"end_time,omitempty"`   // unix seconds
 }
 
 func HandleRestErrorStatus(err error) error {

@@ -173,6 +173,10 @@ type EventSimAllocation struct {
 	PackageDataUnit   string                 `protobuf:"bytes,23,opt,name=packageDataUnit,json=package_data_unit,proto3" json:"packageDataUnit,omitempty"`
 	PackageAmount     string                 `protobuf:"bytes,24,opt,name=packageAmount,json=package_amount,proto3" json:"packageAmount,omitempty"`
 	PackageDuration   string                 `protobuf:"bytes,25,opt,name=packageDuration,json=package_duration,proto3" json:"packageDuration,omitempty"`
+	PackageTotalData  uint64                 `protobuf:"varint,26,opt,name=packageTotalData,json=package_total_data,proto3" json:"packageTotalData,omitempty"`
+	PackageDlbr       uint64                 `protobuf:"varint,27,opt,name=packageDlbr,json=package_dlbr,proto3" json:"packageDlbr,omitempty"`
+	PackageUlbr       uint64                 `protobuf:"varint,28,opt,name=packageUlbr,json=package_ulbr,proto3" json:"packageUlbr,omitempty"`
+	PackageStartDate  *timestamppb.Timestamp `protobuf:"bytes,29,opt,name=packageStartDate,json=start_date,proto3" json:"packageStartDate,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -380,6 +384,34 @@ func (x *EventSimAllocation) GetPackageDuration() string {
 		return x.PackageDuration
 	}
 	return ""
+}
+
+func (x *EventSimAllocation) GetPackageTotalData() uint64 {
+	if x != nil {
+		return x.PackageTotalData
+	}
+	return 0
+}
+
+func (x *EventSimAllocation) GetPackageDlbr() uint64 {
+	if x != nil {
+		return x.PackageDlbr
+	}
+	return 0
+}
+
+func (x *EventSimAllocation) GetPackageUlbr() uint64 {
+	if x != nil {
+		return x.PackageUlbr
+	}
+	return 0
+}
+
+func (x *EventSimAllocation) GetPackageStartDate() *timestamppb.Timestamp {
+	if x != nil {
+		return x.PackageStartDate
+	}
+	return nil
 }
 
 type EventSimActivePackage struct {
@@ -1083,7 +1115,8 @@ const file_events_simmanager_proto_rawDesc = "" +
 	"\tsessionId\x18\b \x01(\x04R\tsessionId\x12\x1c\n" +
 	"\tstartTime\x18\t \x01(\x04R\tstartTime\x12\x18\n" +
 	"\aendTime\x18\n" +
-	" \x01(\x04R\aendTime\"\xed\b\n" +
+	" \x01(\x04R\aendTime\"\xa3\n" +
+	"\n" +
 	"\x12EventSimAllocation\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
 	"\fsubscriberId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\rsubscriber_id\x12(\n" +
@@ -1117,7 +1150,12 @@ const file_events_simmanager_proto_rawDesc = "" +
 	"\x11packageDataVolume\x18\x16 \x01(\tR\x13package_data_volume\x12*\n" +
 	"\x0fpackageDataUnit\x18\x17 \x01(\tR\x11package_data_unit\x12%\n" +
 	"\rpackageAmount\x18\x18 \x01(\tR\x0epackage_amount\x12)\n" +
-	"\x0fpackageDuration\x18\x19 \x01(\tR\x10package_duration\"\x90\x03\n" +
+	"\x0fpackageDuration\x18\x19 \x01(\tR\x10package_duration\x12,\n" +
+	"\x10packageTotalData\x18\x1a \x01(\x04R\x12package_total_data\x12!\n" +
+	"\vpackageDlbr\x18\x1b \x01(\x04R\fpackage_dlbr\x12!\n" +
+	"\vpackageUlbr\x18\x1c \x01(\x04R\fpackage_ulbr\x12@\n" +
+	"\x10packageStartDate\x18\x1d \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"start_date\"\x90\x03\n" +
 	"\x15EventSimActivePackage\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
 	"\fsubscriberId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\rsubscriber_id\x12(\n" +
@@ -1220,13 +1258,14 @@ var file_events_simmanager_proto_goTypes = []any{
 }
 var file_events_simmanager_proto_depIdxs = []int32{
 	9, // 0: ukama.events.v1.EventSimAllocation.packageEndDate:type_name -> google.protobuf.Timestamp
-	9, // 1: ukama.events.v1.EventSimActivePackage.packageStartDate:type_name -> google.protobuf.Timestamp
-	9, // 2: ukama.events.v1.EventSimActivePackage.packageEndDate:type_name -> google.protobuf.Timestamp
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	9, // 1: ukama.events.v1.EventSimAllocation.packageStartDate:type_name -> google.protobuf.Timestamp
+	9, // 2: ukama.events.v1.EventSimActivePackage.packageStartDate:type_name -> google.protobuf.Timestamp
+	9, // 3: ukama.events.v1.EventSimActivePackage.packageEndDate:type_name -> google.protobuf.Timestamp
+	4, // [4:4] is the sub-list for method output_type
+	4, // [4:4] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_events_simmanager_proto_init() }
