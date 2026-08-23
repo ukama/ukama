@@ -23,6 +23,16 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: verify_controller_before_update
+    checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
   - name: start_update
     events:
       - type: promote_release
