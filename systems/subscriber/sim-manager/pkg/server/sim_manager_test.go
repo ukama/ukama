@@ -1543,13 +1543,16 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 				DefaultDuration:  1,
 				EndDate:          time.Now().UTC().AddDate(0, 1, 0), // next month
 				IsCurrentlyInUse: false,
+				InitialData:      1024000000,
+				Dlbr:             15000,
+				Ulbr:             2000,
 			}, nil).Once()
 
 		packageRepo.On("Update",
 			[]uuid.UUID{packageId},
-			&sims.Package{
-				IsCurrentlyInUse: true,
-			},
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse && !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.After(p.StartDate)
+			}),
 			mock.Anything).Return(nil).Once()
 
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -1563,7 +1566,12 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 			mock.MatchedBy(func(a client.AgentRequestData) bool {
 				return a.Iccid == simd.Iccid &&
 					a.PackageId == dataPlanId.String() &&
-					a.SimPackageId == packageId.String()
+					a.SimPackageId == packageId.String() &&
+					a.TotalData == 1024000000 &&
+					a.Dlbr == 15000 &&
+					a.Ulbr == 2000 &&
+					a.StartTime > 0 &&
+					a.EndTime > a.StartTime
 			})).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,

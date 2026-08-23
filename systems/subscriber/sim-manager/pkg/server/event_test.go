@@ -1476,7 +1476,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 			}, nil)
 
 		packageRepo.On("Update", []uuid.UUID{nextPackageId},
-			&sims.Package{IsCurrentlyInUse: true}, mock.Anything).
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse && !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.After(p.StartDate)
+			}), mock.Anything).
 			Return(nil).Once()
 
 		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeUkamaData).
@@ -1808,7 +1810,9 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 			}, nil)
 
 		packageRepo.On("Update", []uuid.UUID{nextPackageId},
-			&sims.Package{IsCurrentlyInUse: true}, mock.Anything).
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse && !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.After(p.StartDate)
+			}), mock.Anything).
 			Return(nil).Once()
 
 		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeUkamaData).
@@ -1910,7 +1914,9 @@ func TestSimManagerEventServer_HandleSimManagerSimAddPackageEvent(t *testing.T) 
 			}, nil)
 
 		packageRepo.On("Update", []uuid.UUID{packageId},
-			&sims.Package{IsCurrentlyInUse: true}, mock.Anything).
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse && !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.After(p.StartDate)
+			}), mock.Anything).
 			Return(nil).Once()
 
 		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeTest).
@@ -1987,7 +1993,9 @@ func TestSimManagerEventServer_HandleSimManagerSimAddPackageEvent(t *testing.T) 
 			}, nil)
 
 		packageRepo.On("Update", []uuid.UUID{packageId},
-			&sims.Package{IsCurrentlyInUse: true}, mock.Anything).
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse && !p.StartDate.IsZero() && !p.EndDate.IsZero() && p.EndDate.After(p.StartDate)
+			}), mock.Anything).
 			Return(nil).Once()
 
 		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeTest).

@@ -277,6 +277,8 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		InitialData:      totalData,
 		IsCurrentlyInUse: true,
 		DefaultDuration:  packageInfo.Duration,
+		Dlbr:             packageInfo.PackageDetails.Dlbr,
+		Ulbr:             packageInfo.PackageDetails.Ulbr,
 	}
 
 	err = s.packageRepo.Add(firstPackage, func(pckg *sims.Package, tx *gorm.DB) error {
@@ -359,6 +361,10 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageAmount:     fmt.Sprintf("%v", packageInfo.Amount),
 		PackageDuration:   fmt.Sprintf("%v", packageInfo.Duration),
 		PackageEndDate:    timestamppb.New(sim.Package.EndDate),
+		PackageTotalData:  sim.Package.InitialData,
+		PackageDlbr:       sim.Package.Dlbr,
+		PackageUlbr:       sim.Package.Ulbr,
+		PackageStartDate:  timestamppb.New(sim.Package.StartDate),
 	}
 
 	err = publishEventMessage(route, evt, s.msgbus)
@@ -1067,6 +1073,8 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		InitialData:      totalData,
 		IsCurrentlyInUse: false,
 		DefaultDuration:  pkgInfo.Duration,
+		Dlbr:             pkgInfo.PackageDetails.Dlbr,
+		Ulbr:             pkgInfo.PackageDetails.Ulbr,
 	}
 
 	packages, err := packageRepo.List(simId, "", "", "", "", "", false, false, 0, true)
@@ -1235,12 +1243,20 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 			"invalid sim type: %q for sim Id: %q", sim.Type, sim.Id)
 	}
 
+	startDate := time.Now().UTC().Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
+	endDate := validation.CalculateEndDate(startDate, pkg.DefaultDuration)
+
 	agentRequest := client.AgentRequestData{
 		Iccid:        sim.Iccid,
 		Imsi:         sim.Imsi,
 		NetworkId:    sim.NetworkId.String(),
 		PackageId:    pkg.PackageId.String(),
 		SimPackageId: pkg.Id.String(),
+		TotalData:    pkg.InitialData,
+		Dlbr:         pkg.Dlbr,
+		Ulbr:         pkg.Ulbr,
+		StartTime:    uint64(startDate.Unix()),
+		EndTime:      uint64(endDate.Unix()),
 	}
 
 	log.Infof("Updating package on remote agent for %s sim type with iccid %s",
@@ -1258,18 +1274,11 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 	// Update package on sim manager
 	packageToSetInUse := &sims.Package{
 		IsCurrentlyInUse: true,
+		StartDate:        startDate,
+		EndDate:          endDate,
 	}
 
-	err = packageRepo.Update([]uuid.UUID{pkg.Id}, packageToSetInUse, func(pckg *sims.Package, tx *gorm.DB) error {
-		// update startDate and endDate
-		packageToSetInUse.StartDate = time.Now().UTC().
-			Add(time.Minute * DefaultMinuteDelayForPackageStartDate)
-
-		packageToSetInUse.EndDate = validation.CalculateEndDate(packageToSetInUse.
-			StartDate, pkg.DefaultDuration)
-
-		return nil
-	})
+	err = packageRepo.Update([]uuid.UUID{pkg.Id}, packageToSetInUse, nil)
 	if err != nil {
 		log.Errorf("Fail to update package on sim manager for %s sim type with iccid %s, while successfully updated on remote agent. Error: %v",
 			sim.Type.String(), sim.Iccid, err)

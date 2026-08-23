@@ -46,7 +46,9 @@ type Package struct {
 	InitialData      uint64
 	StartDate        time.Time
 	EndDate          time.Time
-	DefaultDuration  uint64    // in minutes, cannot be more than 1000 years
+	DefaultDuration  uint64 // in minutes, cannot be more than 1000 years
+	Dlbr             uint64
+	Ulbr             uint64
 	PackageId        uuid.UUID `gorm:"not null;type:uuid"`
 	IsCurrentlyInUse bool      `gorm:"uniqueIndex:unique_sim_package_is_currently_in_use,where:is_currently_in_use is true and deleted_at is null;default:false"`
 	IsExpired        bool      `gorm:"default:false"`

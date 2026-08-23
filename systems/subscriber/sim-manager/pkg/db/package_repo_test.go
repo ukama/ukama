@@ -45,7 +45,8 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -75,7 +76,8 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
