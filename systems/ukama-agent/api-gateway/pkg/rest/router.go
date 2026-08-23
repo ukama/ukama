@@ -142,6 +142,11 @@ func (r *Router) putActiveSubscriber(c *gin.Context, req *CreateProfileReq) (*pb
 		SimPackageId: req.SimPackageId,
 		PackageId:    req.PackageId,
 		NetworkId:    req.NetworkId,
+		TotalData:    req.TotalData,
+		Dlbr:         req.Dlbr,
+		Ulbr:         req.Ulbr,
+		StartTime:    req.StartTime,
+		EndTime:      req.EndTime,
 	})
 }
 
@@ -163,6 +168,11 @@ func (r *Router) updateActiveSubsriberPackage(c *gin.Context, req *UpdatePackage
 		SimPackageId: req.SimPackageId,
 		PackageId:    req.PackageId,
 		NetworkId:    req.NetworkId,
+		TotalData:    req.TotalData,
+		Dlbr:         req.Dlbr,
+		Ulbr:         req.Ulbr,
+		StartTime:    req.StartTime,
+		EndTime:      req.EndTime,
 	})
 }
 

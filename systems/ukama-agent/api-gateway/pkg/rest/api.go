@@ -14,6 +14,11 @@ type ReqData struct {
 	SimPackageId string `json:"sim_package_id,omitempty"`
 	PackageId    string `json:"package_id,omitempty"`
 	NetworkId    string `json:"network_id,omitempty"`
+	TotalData    uint64 `json:"total_data,omitempty"`
+	Dlbr         uint64 `json:"dlbr,omitempty"`
+	Ulbr         uint64 `json:"ulbr,omitempty"`
+	StartTime    uint64 `json:"start_time,omitempty"`
+	EndTime      uint64 `json:"end_time,omitempty"`
 }
 
 type UsageForPeriodRequest struct {
