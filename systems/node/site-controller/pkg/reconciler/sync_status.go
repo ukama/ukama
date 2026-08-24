@@ -15,6 +15,8 @@ import (
 )
 
 const (
+	reasonServiceApplied = "service_applied"
+
 	SyncStatusInSync   = "in_sync"
 	SyncStatusApplying = "applying"
 	SyncStatusFault    = "fault"

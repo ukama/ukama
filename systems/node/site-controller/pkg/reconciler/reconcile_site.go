@@ -17,8 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 )
 
-// ReconcileSite drives service/radio actions until SiteState (device-reported, external)
-// matches SiteIntent. This service never writes SiteState.
 func (r *Reconciler) ReconcileSite(ctx context.Context, siteID string, force bool) error {
 	intent, err := r.getIntent(siteID)
 	if err != nil {
@@ -134,6 +132,13 @@ func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent
 	if serviceMismatch {
 		if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
 			return fmt.Errorf("service action: %w", err)
+		}
+		if err := r.states.Upsert(&db.SiteState{
+			SiteID:       siteID,
+			ServiceState: expectedServiceState(intent.DesiredService),
+			Reason:       reasonServiceApplied,
+		}); err != nil {
+			return fmt.Errorf("record applied service state: %w", err)
 		}
 	}
 	return nil

@@ -85,6 +85,8 @@ func newHarness(t *testing.T) *harness {
 
 	provider := &fakeProvider{client: controller}
 
+	states.On("Upsert", mock.Anything).Return(nil).Maybe()
+
 	ports.On("GetBySite", testSiteID).Return([]db.SitePortMap{
 		{Port: 1, Role: policy.RoleCNode, NodeID: testCNodeID},
 		{Port: 2, Role: policy.RoleTower, NodeID: testTowerID},
