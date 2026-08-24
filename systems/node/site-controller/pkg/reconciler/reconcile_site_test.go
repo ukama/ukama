@@ -333,3 +333,22 @@ func TestSyncStatus(t *testing.T) {
 		assert.Contains(t, reason, "radio desired=on observed=off")
 	})
 }
+
+func TestApplyIntentState_ServiceAppliedWhenRadioFails(t *testing.T) {
+	h := newHarness(t).
+		withIntent(StateOn, StateOn).
+		withState(StateOff, StateOff).
+		withFlight(db.IntentFlightStatusSucceeded, 0, time.Now().UTC())
+
+	h.controller.On("SendNodeCommand", mock.Anything, mock.Anything).
+		Return(&contpb.SendNodeCommandResponse{}, nil).Maybe()
+	h.controller.On("ToggleRadio", mock.Anything, mock.Anything).
+		Return(nil, assert.AnError).Once()
+	h.controller.On("ToggleService", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleServiceRequest) bool {
+		return req.NodeId == testTowerID && req.State == StateOn
+	})).Return(&contpb.ToggleServiceResponse{}, nil).Once()
+
+	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, true)
+
+	h.controller.AssertExpectations(t)
+}

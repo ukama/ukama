@@ -10,6 +10,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -118,28 +119,43 @@ func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent
 		return nil
 	}
 
-	if intent.DesiredService == StateOn && serviceMismatch {
+	var errs []error
+
+	if radioMismatch {
+		if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
+			errs = append(errs, fmt.Errorf("radio action: %w", err))
+		}
+	}
+
+	if serviceMismatch {
+		if err := r.applyServiceState(ctx, intent); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (r *Reconciler) applyServiceState(ctx context.Context, intent *db.SiteIntent) error {
+	siteID := intent.SiteID
+
+	if intent.DesiredService == StateOn {
 		if err := r.ensureCriticalPoe(ctx, siteID); err != nil {
 			return fmt.Errorf("ensure critical poe: %w", err)
 		}
 	}
 
-	if radioMismatch {
-		if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
-			return fmt.Errorf("radio action: %w", err)
-		}
+	if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
+		return fmt.Errorf("service action: %w", err)
 	}
-	if serviceMismatch {
-		if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
-			return fmt.Errorf("service action: %w", err)
-		}
-		if err := r.states.Upsert(&db.SiteState{
-			SiteID:       siteID,
-			ServiceState: expectedServiceState(intent.DesiredService),
-			Reason:       reasonServiceApplied,
-		}); err != nil {
-			return fmt.Errorf("record applied service state: %w", err)
-		}
+
+	if err := r.states.Upsert(&db.SiteState{
+		SiteID:       siteID,
+		ServiceState: expectedServiceState(intent.DesiredService),
+		Reason:       reasonServiceApplied,
+	}); err != nil {
+		return fmt.Errorf("record applied service state: %w", err)
 	}
+
 	return nil
 }
