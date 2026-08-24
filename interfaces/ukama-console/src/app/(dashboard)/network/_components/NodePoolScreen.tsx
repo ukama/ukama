@@ -42,9 +42,10 @@ interface PoolRow {
   state: string;
 }
 
+/** The Available column answers "is this node free to install?". */
 const NP_LABEL: Record<PoolStatus, string> = {
-  available: 'Available',
-  assigned: 'Assigned',
+  available: 'Yes',
+  assigned: 'No',
 };
 
 /** Sortable columns and the value each row sorts by. */
@@ -64,18 +65,20 @@ function connectivity(raw: string): { kind: string; label: string } {
 }
 
 /**
- * Row action, driven by the node's lifecycle state — the label — and its
- * connectivity — whether the action is live:
- *  - Unknown state → not yet set up → "Configure" (routes to the flow).
- *  - Configured / Faulty state → "View detail" (routes to the node page).
- * Either action requires the node to be reachable, so the button is disabled
- * unless the node is Online. (An unconfigured node reports Unknown connectivity
- * until it first checks in, so it shows a disabled Configure until it's live.)
+ * Row action, driven by whether the node belongs to a site — the label — and
+ * its connectivity — whether the action is live:
+ *  - No site → not yet installed → "Configure" (routes to the flow).
+ *  - Assigned to a site → "View detail" (routes to the node page).
+ * Site membership is the question the pool answers, so it drives the action.
+ * Lifecycle state does not: a node released back into the pool reports Ready,
+ * not Unknown, and would otherwise never offer Configure again.
+ * Configuring needs the node reachable, so it is disabled while offline;
+ * viewing an installed node's detail always works.
  */
 function RowAction({ item }: { item: PoolRow }) {
   const router = useRouter();
   const isOnline = item.connectivity.toLowerCase() === 'online';
-  const needsConfigure = item.state.toLowerCase() === 'unknown';
+  const needsConfigure = item.status === 'available';
 
   const label = needsConfigure ? 'Configure' : 'View detail';
   const onClick = () =>
@@ -87,7 +90,7 @@ function RowAction({ item }: { item: PoolRow }) {
     <Button
       variant="text"
       size="small"
-      disabled={!isOnline}
+      disabled={needsConfigure && !isOnline}
       endIcon={<ChevronRightRounded />}
       onClick={onClick}
       sx={{
@@ -144,7 +147,7 @@ export default function NodePoolScreen() {
   const avail = pool.filter((n) => n.status === 'available').length;
   const deployed = pool.length - avail;
 
-  // Click-to-sort on Type / Connectivity / Status (toggles asc → desc → off).
+  // Click-to-sort on Type / Connectivity / Available (toggles asc → desc → off).
   const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
     null,
   );
@@ -216,7 +219,7 @@ export default function NodePoolScreen() {
                     [
                       ['type', 'Type'],
                       ['connectivity', 'Connectivity'],
-                      ['status', 'Status'],
+                      ['status', 'Available'],
                     ] as [SortKey, string][]
                   ).map(([key, label]) => (
                     <TableCell

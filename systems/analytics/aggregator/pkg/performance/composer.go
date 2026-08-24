@@ -149,7 +149,7 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		if rolling {
 			curr, err = c.windowRollups(col.Kpi, fromID, toID, scopeFilter)
 		} else {
-			curr, err = c.rollups.Range(c.org, col.Kpi, spanDaily, col.Op, from, now, scopeFilter)
+			curr, err = c.rollups.Range(c.org, col.Kpi, spanDaily, from, now, scopeFilter)
 		}
 
 		if err != nil {
@@ -159,7 +159,7 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		if rolling {
 			prev, err = c.windowRollups(col.Kpi, prevFromID, fromID, scopeFilter)
 		} else {
-			prev, err = c.rollups.Range(c.org, col.Kpi, spanDaily, col.Op, prevFrom, from, scopeFilter)
+			prev, err = c.rollups.Range(c.org, col.Kpi, spanDaily, prevFrom, from, scopeFilter)
 		}
 
 		if err != nil {
@@ -264,10 +264,11 @@ func groupByEntity(rows []schema.KpiRollup, rowScope string) map[string][]schema
 	return out
 }
 
-// foldValue reduces all of an entity's daily rows in the window (over days and
-// scopes) to a single value per the column op. SUM/COUNT sum exactly; MIN/MAX
-// take the extreme; LAST takes the most recent day's value; AVG is a mean
-// across the daily values (a documented approximation, as before).
+// foldValue reduces all of an entity's rows in the window (over days and
+// scopes) to a single value per the column op, from the rows' COMPONENTS:
+// SUM/COUNT fold exactly; AVG is weighted (Σsum/Σcount, never a mean of
+// daily values); MIN/MAX take the extremes; LAST sums, per scope, the
+// latest row's level (additive-gauge semantics).
 func foldValue(op string, rows []schema.KpiRollup) (float64, bool) {
 	if len(rows) == 0 {
 		return 0, false
@@ -275,46 +276,63 @@ func foldValue(op string, rows []schema.KpiRollup) (float64, bool) {
 
 	switch strings.ToUpper(op) {
 	case "MIN":
-		v := rows[0].Value
+		v := rows[0].Min
 		for _, r := range rows[1:] {
-			if r.Value < v {
-				v = r.Value
+			if r.Min < v {
+				v = r.Min
 			}
 		}
 
 		return v, true
 	case "MAX":
-		v := rows[0].Value
+		v := rows[0].Max
 		for _, r := range rows[1:] {
-			if r.Value > v {
-				v = r.Value
+			if r.Max > v {
+				v = r.Max
 			}
 		}
 
 		return v, true
 	case "AVG":
-		sum := 0.0
+		sum, count := 0.0, 0.0
 		for _, r := range rows {
-			sum += r.Value
+			sum += r.Sum
+			count += r.Count
 		}
 
-		return sum / float64(len(rows)), true
+		if count == 0 {
+			return 0, false
+		}
+
+		return sum / count, true
 	case "LAST":
-		v, latest := rows[0].Value, rows[0].SpanStart
-		for _, r := range rows[1:] {
-			if r.SpanStart.After(latest) {
-				latest, v = r.SpanStart, r.Value
+		latestPerScope := map[string]schema.KpiRollup{}
+		for _, r := range rows {
+			if cur, ok := latestPerScope[r.Scope]; !ok || r.SpanStart.After(cur.SpanStart) {
+				latestPerScope[r.Scope] = r
 			}
 		}
 
-		return v, true
-	default: // SUM, COUNT: additive across days and scopes
-		sum := 0.0
-		for _, r := range rows {
-			sum += r.Value
+		v := 0.0
+		for _, r := range latestPerScope {
+			v += r.Last
 		}
 
-		return sum, true
+		return v, true
+	case "COUNT":
+		v := 0.0
+		for _, r := range rows {
+			v += r.Count
+		}
+
+		return v, true
+	default: // SUM
+		v := 0.0
+		for _, r := range rows {
+			v += r.Sum
+		}
+
+		return v, true
 	}
 }
 
@@ -398,6 +416,11 @@ func (c *Composer) windowRollups(kpiKey string, fromID, toID int64, filter map[s
 		out = append(out, schema.KpiRollup{
 			Scope:      w.Scope,
 			Value:      w.Value,
+			Sum:        w.Sum,
+			Count:      w.Count,
+			Min:        w.Min,
+			Max:        w.Max,
+			Last:       w.Value, // a window's value IS its level at that moment
 			SpanStart:  c.grid.Window(w.WindowID).Start,
 			Unit:       w.Unit,
 			Symbol:     w.Symbol,

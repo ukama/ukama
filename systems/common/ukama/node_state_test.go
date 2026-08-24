@@ -17,12 +17,12 @@ import (
 
 func TestNodeState(t *testing.T) {
 	t.Run("NodeStateValidString", func(tt *testing.T) {
-		configuredState := ukama.ParseNodeState("configureD")
+		configuringState := ukama.ParseNodeState("configurinG")
 
-		assert.NotNil(t, configuredState)
-		assert.Equal(t, configuredState.String(), ukama.NodeStateConfigured.String())
-		assert.Equal(t, uint8(configuredState), uint8(1))
-		assert.True(t, ukama.IsValidNodeState("configureD"))
+		assert.NotNil(t, configuringState)
+		assert.Equal(t, configuringState.String(), ukama.NodeStateConfiguring.String())
+		assert.Equal(t, uint8(configuringState), uint8(1))
+		assert.True(t, ukama.IsValidNodeState("configurinG"))
 	})
 
 	t.Run("NodeStateValidNumber", func(tt *testing.T) {

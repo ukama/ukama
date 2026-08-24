@@ -27,6 +27,8 @@
 
 #include "version.h"
 
+#define EPCEMU_STARTUP_RETRY_SEC 1
+
 static volatile bool gTerminate = false;
 DataPlane gDataPlane;
 
@@ -98,6 +100,16 @@ static void detach_all_ues(EpcemuConfig *config) {
     ue_for_each_attached(detach_cb, config);
 }
 
+static void wait_before_startup_retry(void) {
+
+    unsigned int remaining;
+
+    remaining = EPCEMU_STARTUP_RETRY_SEC;
+    while (!gTerminate && remaining > 0) {
+        remaining = sleep(remaining);
+    }
+}
+
 int main(int argc, char **argv) {
 
     int opt;
@@ -107,6 +119,9 @@ int main(int argc, char **argv) {
     EpcemuConfig config;
     EpcemuStatus status;
     ServiceContext ctx;
+    bool webStarted;
+    bool dataPlaneStarted;
+    bool startupFailed;
 
     debug = EPCEMU_DEF_LOG_LEVEL;
 
@@ -114,6 +129,10 @@ int main(int argc, char **argv) {
     memset(&status,     0, sizeof(status));
     memset(&ctx,        0, sizeof(ctx));
     memset(&gDataPlane, 0, sizeof(gDataPlane));
+
+    webStarted = false;
+    dataPlaneStarted = false;
+    startupFailed = false;
 
     usys_log_set_service(EPCEMU_SERVICE_NAME);
 
@@ -154,6 +173,8 @@ int main(int argc, char **argv) {
 
     ctx.config = &config;
     ctx.status = &status;
+    ctx.serviceOn = true;
+    pthread_mutex_init(&ctx.serviceMutex, NULL);
 
     usys_log_debug("Starting %s", EPCEMU_SERVICE_NAME);
 
@@ -161,26 +182,44 @@ int main(int argc, char **argv) {
         goto failed;
     }
 
-    if (!init_network_probe(&config, &status)) {
-        goto failed;
-    }
-
-    (void)pcrf_probe(&config, &status);
-
-    if (!data_plane_start(&gDataPlane, &config, &status)) {
-        goto failed;
-    }
-
-    if (!init_network_reconcile(&config, &status)) {
-        goto failed;
-    }
-
     if (start_web_service(&ctx, &serviceInst) != USYS_TRUE) {
         status_fail(&status, "failed to start web service");
         goto failed;
     }
+    webStarted = true;
 
-    status_set(&status, EpcemuStateReady, "none");
+    while (!gTerminate) {
+        if (!init_network_probe(&config, &status)) {
+            wait_before_startup_retry();
+            continue;
+        }
+
+        (void)pcrf_probe(&config, &status);
+
+        if (!dataPlaneStarted) {
+            if (!data_plane_start(&gDataPlane, &config, &status)) {
+                startupFailed = true;
+                break;
+            }
+
+            dataPlaneStarted = true;
+            pthread_mutex_lock(&ctx.serviceMutex);
+            ctx.dataPlaneStarted = true;
+            pthread_mutex_unlock(&ctx.serviceMutex);
+        }
+
+        if (!init_network_reconcile(&config, &status)) {
+            wait_before_startup_retry();
+            continue;
+        }
+
+        status_set(&status, EpcemuStateReady, "none");
+        break;
+    }
+
+    if (startupFailed) {
+        usys_log_error("%s failed to initialize", EPCEMU_SERVICE_NAME);
+    }
 
     while (!gTerminate) {
         pause();
@@ -188,20 +227,25 @@ int main(int argc, char **argv) {
 
     detach_all_ues(&config);
 
-    ulfius_stop_framework(&serviceInst);
-    ulfius_clean_instance(&serviceInst);
-    data_plane_stop(&gDataPlane);
+    if (webStarted) {
+        ulfius_stop_framework(&serviceInst);
+        ulfius_clean_instance(&serviceInst);
+    }
+    if (dataPlaneStarted) {
+        data_plane_stop(&gDataPlane);
+    }
+    pthread_mutex_destroy(&ctx.serviceMutex);
     status_destroy(&status);
     ue_store_destroy();
     curl_global_cleanup();
 
     usys_log_debug("Exiting %s", EPCEMU_SERVICE_NAME);
-    return 0;
+    return startupFailed ? 1 : 0;
 
 failed:
     usys_log_error("%s failed to start", EPCEMU_SERVICE_NAME);
 
-    data_plane_stop(&gDataPlane);
+    pthread_mutex_destroy(&ctx.serviceMutex);
     status_destroy(&status);
     ue_store_destroy();
     curl_global_cleanup();

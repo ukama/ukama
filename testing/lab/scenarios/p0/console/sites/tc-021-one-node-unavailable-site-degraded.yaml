@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-021-one-node-unavailable-site-degraded
-description: Disconnect one amplifier from an otherwise healthy site and verify the site operation contract reports degraded until the node reconnects.
+description: Disconnect one amplifier from an otherwise healthy site and verify the Console site node counts report one offline node until it reconnects.
 seed: 5021
 suite: p0
 priority: p0
@@ -34,9 +34,12 @@ phases:
         connectivity: Offline
         seconds: 120
     checks:
-      - type: site_operation_status_equals
+      - type: site_node_counts_equals
         sites: all
-        degraded: true
+        total: 3
+        online: 2
+        offline: 1
+        immediate: true
         timeout_seconds: 120
   - name: recover_site
     events:
@@ -49,7 +52,10 @@ phases:
         connectivity: Online
         seconds: 180
     checks:
-      - type: site_operation_status_equals
+      - type: site_node_counts_equals
         sites: all
-        degraded: false
+        total: 3
+        online: 3
+        offline: 0
+        immediate: true
         timeout_seconds: 180

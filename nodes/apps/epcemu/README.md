@@ -20,12 +20,24 @@ forward user-plane traffic yet.
 ```text
 GET    /v1/ping
 GET    /v1/version
+GET    /v1/ready
 GET    /v1/status
 POST   /v1/ue/attach
 DELETE /v1/ue/detach
 GET    /v1/ue/:imsi
 GET    /v1/ues
 ```
+
+EPCEMU starts its HTTP service before probing its startup dependencies. The
+readiness endpoint returns:
+
+- `202 Accepted` while waiting for `init-network`, the data plane, or route
+  reconciliation
+- `200 OK` after all required startup work completes
+- `503 Service Unavailable` after a terminal startup failure
+
+PCRF is started after the lifecycle boot gate, so PCRF availability does not
+block EPCEMU readiness. PCRF is still required when attaching a UE.
 
 ## /etc/services
 

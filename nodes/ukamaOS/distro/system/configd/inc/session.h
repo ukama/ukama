@@ -33,6 +33,7 @@ typedef struct {
     char *app;
     char *data;
     char *version;
+    char *requestId;
     int timestamp;
     int reason;
     int fileCount;
@@ -41,9 +42,11 @@ typedef struct {
 typedef struct {
 
     AppData  apps[32];
+    char     *requestId;
     int      timestamp;
     int      expectedCount;
     int      receviedCount;
+    int      appCount;
 } ConfigSession;
 
 #endif

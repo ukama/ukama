@@ -64,9 +64,12 @@ export class NodesViewResolver {
   ): Promise<NodesSection> {
     const { value, error } = await runSection("nodes", async () => {
       const url = await root._urls.url("node");
-      const res = root.networkId
-        ? await ctx.dataSources.node.getNodesByNetwork(url, root.networkId)
-        : await ctx.dataSources.node.getNodes(url, {});
+      // `/nodes/list` returns an empty list for a network with no nodes; the
+      // deprecated `/nodes/networks/{id}` 404s on zero rows. An undefined
+      // networkId omits the filter and lists every node (node pool).
+      const res = await ctx.dataSources.node.getNodes(url, {
+        networkId: root.networkId,
+      });
       return res.nodes;
     });
     return { nodes: value, error };
@@ -137,11 +140,10 @@ export class NodeViewResolver {
   ): Promise<NodesSection> {
     const { value, error } = await runSection("siblings", async () => {
       const node = await this.fetchNode(root, ctx);
-      const networkId = node.site?.networkId;
       const url = await root._urls.url("node");
-      const res = networkId
-        ? await ctx.dataSources.node.getNodesByNetwork(url, networkId)
-        : await ctx.dataSources.node.getNodes(url, {});
+      const res = await ctx.dataSources.node.getNodes(url, {
+        networkId: node.site?.networkId || undefined,
+      });
       return res.nodes;
     });
     return { nodes: value, error };

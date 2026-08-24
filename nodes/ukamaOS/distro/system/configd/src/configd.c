@@ -8,6 +8,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 #include <libgen.h>
@@ -24,13 +25,44 @@
 #include "usys_types.h"
 #include "usys_services.h"
 
-USysMutex mutex;
+USysMutex mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static void config_status_set(Config *config,
+                              ConfigApplyState state,
+                              const char *requestId,
+                              bool replaceRequestId) {
+
+    if (!config) return;
+
+    pthread_mutex_lock(&mutex);
+    config->applyState = state;
+    if (replaceRequestId) {
+        snprintf(config->requestId,
+                 sizeof(config->requestId),
+                 "%s",
+                 requestId ? requestId : "");
+    }
+    pthread_mutex_unlock(&mutex);
+}
+
+void config_status_snapshot(Config *config,
+                            ConfigApplyState *state,
+                            char *requestId,
+                            size_t requestIdSize) {
+
+    if (!config || !state || !requestId || requestIdSize == 0) return;
+
+    pthread_mutex_lock(&mutex);
+    *state = config->applyState;
+    snprintf(requestId, requestIdSize, "%s", config->requestId);
+    pthread_mutex_unlock(&mutex);
+}
 
 static void free_session(ConfigSession *session) {
 
     if (session == NULL) return;
 
-    for (int index=0; index < session->receviedCount; index++) {
+    for (int index = 0; index < session->appCount; index++) {
 
         usys_free(session->apps[index].name);
         usys_free(session->apps[index].fileName);
@@ -38,31 +70,76 @@ static void free_session(ConfigSession *session) {
         usys_free(session->apps[index].version);
     }
 
+    usys_free(session->requestId);
     usys_free(session);
+}
+
+void config_session_clear(Config *config) {
+
+    ConfigSession *session;
+
+    if (!config) return;
+
+    pthread_mutex_lock(&mutex);
+    session = (ConfigSession *)config->updateSession;
+    config->updateSession = NULL;
+    pthread_mutex_unlock(&mutex);
+
+    free_session(session);
 }
 
 static ConfigSession *create_new_session(SessionData *sd) {
 
-	ConfigSession *session = NULL;
+    ConfigSession *session;
 
-    session = (ConfigSession*) usys_calloc(1, sizeof(ConfigSession));
+    session = (ConfigSession *)usys_calloc(1, sizeof(ConfigSession));
     if (session == NULL) {
-        usys_log_error("Unable to allocate memory of size: %d",
+        usys_log_error("Unable to allocate memory of size: %zu",
                        sizeof(ConfigSession));
         return NULL;
     }
 
-    session->apps[0].name     = strdup(sd->app);
-    session->apps[0].version  = strdup(sd->version);
-    session->apps[0].fileName = strdup(sd->fileName);
-    session->apps[0].data     = strdup(sd->data);
-    session->apps[0].reason   = sd->reason;
-
-    session->timestamp     = sd->timestamp;
+    session->requestId = sd->requestId ? strdup(sd->requestId) : NULL;
+    if (sd->requestId && !session->requestId) {
+        usys_free(session);
+        return NULL;
+    }
+    session->timestamp = sd->timestamp;
     session->expectedCount = sd->fileCount;
-    session->receviedCount = 0;
 
-	return session;
+    return session;
+}
+
+static int session_app_index(ConfigSession *session, const char *app) {
+
+    int index;
+
+    if (!session || !app) return -1;
+
+    for (index = 0; index < session->appCount; index++) {
+        if (session->apps[index].name &&
+            strcmp(session->apps[index].name, app) == 0) {
+            return index;
+        }
+    }
+
+    return -1;
+}
+
+static bool session_add_app(ConfigSession *session, const char *app) {
+
+    char *name;
+
+    if (!session || !app) return USYS_FALSE;
+    if (session_app_index(session, app) >= 0) return USYS_TRUE;
+    if (session->appCount >= MAX_APPS) return USYS_FALSE;
+
+    name = strdup(app);
+    if (!name) return USYS_FALSE;
+
+    session->apps[session->appCount].name = name;
+    session->appCount++;
+    return USYS_TRUE;
 }
 
 static bool create_config_staging_area(const char *app, int timestamp) {
@@ -116,7 +193,7 @@ static bool create_config_staging_area(const char *app, int timestamp) {
     return USYS_TRUE;
 }
 
-static bool update_symlinks(char *appName, int timestamp) {
+static bool update_symlinks(const char *appName, int timestamp) {
 
     char basePath[MAX_PATH]           = {0};
     char activePath[MAX_FILE_PATH]    = {0};
@@ -186,14 +263,14 @@ static bool process_config_session(Config *config) {
 
     bool ret = USYS_TRUE;
     int index;
-    ConfigSession *s = NULL;
+    ConfigSession *s;
     
     char srcPath[MAX_PATH]  = {0};
     char destPath[MAX_PATH] = {0};
 
-    s = (ConfigSession*)config->updateSession;
+    s = (ConfigSession *)config->updateSession;
 
-    for (index=0; index < s->receviedCount; index++) {
+    for (index = 0; index < s->appCount; index++) {
 
         snprintf(srcPath, sizeof(srcPath), "%s/%d/%s",
                  CONFIG_TMP_PATH, s->timestamp, s->apps[index].name);
@@ -201,30 +278,43 @@ static bool process_config_session(Config *config) {
                  DEF_CONFIG_DIR, s->apps[index].name, s->timestamp);
 
         /* copy the config from staging area to the app's config */
-        clone_dir(srcPath, destPath, false);
+        if (clone_dir(srcPath, destPath, false) != 0) {
+            usys_log_error("Unable to archive config for app: %s",
+                           s->apps[index].name);
+            ret = USYS_FALSE;
+            continue;
+        }
 
         /* update the active and previous symlink */
-        update_symlinks(s->apps[index].name, s->timestamp);
+        if (!update_symlinks(s->apps[index].name, s->timestamp)) {
+            ret = USYS_FALSE;
+            continue;
+        }
 
         /* remove the staging area */
         remove_dir(srcPath);
 
         /* send message to starter.d to restart the app */
-        if (wc_send_app_restart_request(config, s->apps[index].name) == USYS_FALSE) {
+        if (wc_send_app_restart_request(config,
+                                        s->apps[index].name) == USYS_FALSE) {
             usys_log_error("Unable to restart the app: %s",
                            s->apps[index].name);
             ret = USYS_FALSE;
             continue;
         }
 
-        usys_log_debug("App restart accepted by starter.d: %s",
+        usys_log_debug("App restart completed by starter.d: %s",
                        s->apps[index].name);
     }
 
-	free_session(s);
-	config->updateSession = NULL;
+    config_status_set(config,
+                      ret ? CONFIG_APPLY_APPLIED : CONFIG_APPLY_FAILED,
+                      s->requestId,
+                      true);
 
-	return ret;
+    config_session_clear(config);
+
+    return ret;
 }
 
 static bool is_valid_session_data(SessionData *sd, Config *config) {
@@ -236,6 +326,8 @@ static bool is_valid_session_data(SessionData *sd, Config *config) {
     if (sd->fileName == NULL) return USYS_FALSE;
     if (sd->version == NULL)  return USYS_FALSE;
     if (sd->data == NULL)     return USYS_FALSE;
+    if (sd->requestId &&
+        strlen(sd->requestId) >= CONFIG_REQUEST_ID_LEN) return USYS_FALSE;
 
     if (sd->reason != CONFIG_ADD    &&
         sd->reason != CONFIG_DELETE &&
@@ -246,11 +338,32 @@ static bool is_valid_session_data(SessionData *sd, Config *config) {
     }
 
     if (config->updateSession) {
-        if (sd->timestamp < ((ConfigSession *)config->updateSession)->timestamp) {
-            usys_log_error("Received config %s with timestamp %ld. "
-                           "expecting config timestamp %d",
+        ConfigSession *session;
+
+        session = (ConfigSession *)config->updateSession;
+        if (sd->timestamp != session->timestamp) {
+            usys_log_error("Received config with timestamp %d; "
+                           "expecting timestamp %d",
                            sd->timestamp,
-                           ((ConfigSession *)config->updateSession)->timestamp);
+                           session->timestamp);
+            return USYS_FALSE;
+        }
+
+        if (sd->fileCount != session->expectedCount) {
+            usys_log_error("Config file_count does not match active session");
+            return USYS_FALSE;
+        }
+
+        if ((session->requestId && !sd->requestId) ||
+            (!session->requestId && sd->requestId) ||
+            (session->requestId && sd->requestId &&
+             strcmp(session->requestId, sd->requestId) != 0)) {
+            usys_log_error("Config requestId does not match active session");
+            return USYS_FALSE;
+        }
+
+        if (session->receviedCount >= session->expectedCount) {
+            usys_log_error("Config session already received all files");
             return USYS_FALSE;
         }
     }
@@ -281,6 +394,7 @@ static bool decode_data(SessionData *sd) {
 
     if (!is_valid_json(sd->data)) {
         usys_free(sd->data);
+        sd->data = NULL;
         return USYS_FALSE;
     }
 
@@ -289,18 +403,32 @@ static bool decode_data(SessionData *sd) {
 
 bool process_received_config(JsonObj *json, Config *config) {
 
-	SessionData   *sd      = NULL;
-	ConfigSession *session = NULL;
+    SessionData *sd;
+    ConfigSession *session;
+    bool firstForApp;
+
+    if (!json || !config) return USYS_FALSE;
+
+    sd = NULL;
 
     session = (ConfigSession *)config->updateSession;
 
-	/* Deserialize incoming message from ukama */
-	if (!json_deserialize_session_data(json, &sd)) {
-		return USYS_FALSE;
-	}
+    /* Deserialize incoming message from ukama */
+    if (!json_deserialize_session_data(json, &sd)) {
+        if (!config->updateSession) {
+            config_status_set(config, CONFIG_APPLY_FAILED, NULL, true);
+        }
+        return USYS_FALSE;
+    }
 
     /* Check if the recevied session data is valid */
     if (!is_valid_session_data(sd, config)) {
+        if (!config->updateSession) {
+            config_status_set(config,
+                              CONFIG_APPLY_FAILED,
+                              sd->requestId,
+                              true);
+        }
         free_session_data(sd);
         return USYS_FALSE;
     }
@@ -312,48 +440,99 @@ bool process_received_config(JsonObj *json, Config *config) {
         if (!session) {
             usys_log_error("failed to create new session.");
             pthread_mutex_unlock(&mutex);
+            config_status_set(config,
+                              CONFIG_APPLY_FAILED,
+                              sd->requestId,
+                              true);
             free_session_data(sd);
             return USYS_FALSE;
         }
         config->updateSession = session;
         pthread_mutex_unlock(&mutex);
+
+        config_status_set(config,
+                          CONFIG_APPLY_IN_PROGRESS,
+                          session->requestId,
+                          true);
     }
 
     if (!decode_data(sd)) {
         usys_log_error("Unable to decode recevied data");
+        config_status_set(config,
+                          CONFIG_APPLY_FAILED,
+                          NULL,
+                          false);
+        config_session_clear(config);
         free_session_data(sd);
         return USYS_FALSE;
     }
 
-    /* create config staging area for valid session */
-    if (!create_config_staging_area(sd->app,
-                      ((ConfigSession *)config->updateSession)->timestamp)) {
+    firstForApp = session_app_index(session, sd->app) < 0;
+
+    /* create one staging tree per app in this session */
+    if (firstForApp &&
+        !create_config_staging_area(sd->app, session->timestamp)) {
         usys_log_error("Unable to create staging area for app");
+        config_status_set(config,
+                          CONFIG_APPLY_FAILED,
+                          NULL,
+                          false);
+        config_session_clear(config);
         free_session_data(sd);
         return USYS_FALSE;
     }
 
-    switch(sd->reason) {
+    switch (sd->reason) {
     case CONFIG_DELETE:
-		if (!remove_config_file_from_staging_area(sd)) {
-			usys_log_error("Failed to remove config for %s app version %s",
+        if (!remove_config_file_from_staging_area(sd)) {
+            usys_log_error("Failed to remove config for %s app version %s",
                            sd->app, sd->version);
-		}
+            config_status_set(config,
+                              CONFIG_APPLY_FAILED,
+                              NULL,
+                              false);
+            config_session_clear(config);
+            free_session_data(sd);
+            return USYS_FALSE;
+        }
         break;
     case CONFIG_ADD:
     case CONFIG_UPDATE:
-		pthread_mutex_lock(&mutex);
-		if (!create_config_file_in_staging_area(sd)) {
-			usys_log_error("Failed to create config for %s app version %s",
+        pthread_mutex_lock(&mutex);
+        if (!create_config_file_in_staging_area(sd)) {
+            usys_log_error("Failed to create config for %s app version %s",
                            sd->app, sd->version);
-		}
-		pthread_mutex_unlock(&mutex);
+            pthread_mutex_unlock(&mutex);
+            config_status_set(config,
+                              CONFIG_APPLY_FAILED,
+                              NULL,
+                              false);
+            config_session_clear(config);
+            free_session_data(sd);
+            return USYS_FALSE;
+        }
+        pthread_mutex_unlock(&mutex);
         break;
     default:
+        config_status_set(config,
+                          CONFIG_APPLY_FAILED,
+                          NULL,
+                          false);
+        config_session_clear(config);
+        free_session_data(sd);
         return USYS_FALSE;
-	}
+    }
 
-	/* Update session */
+    /* Update session */
+    if (!session_add_app(session, sd->app)) {
+        config_status_set(config,
+                          CONFIG_APPLY_FAILED,
+                          NULL,
+                          false);
+        config_session_clear(config);
+        free_session_data(sd);
+        return USYS_FALSE;
+    }
     session->receviedCount++;
     free_session_data(sd);
 
@@ -367,7 +546,7 @@ bool process_received_config(JsonObj *json, Config *config) {
                    session->expectedCount,
                    (session->expectedCount - session->receviedCount));
 
-	return USYS_TRUE;
+    return USYS_TRUE;
 }
 
 void free_session_data(SessionData *s) {
@@ -378,6 +557,7 @@ void free_session_data(SessionData *s) {
     usys_free(s->app);
     usys_free(s->version);
     usys_free(s->data);
+    usys_free(s->requestId);
 
     usys_free(s);
 }

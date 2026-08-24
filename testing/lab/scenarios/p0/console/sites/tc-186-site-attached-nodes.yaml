@@ -27,25 +27,31 @@ phases:
     checks:
       - type: list_count_equals
         target: site_nodes
+        view: site_detail
         sites: site-001
         type_selector: tower
         expected_count: 1
       - type: list_count_equals
         target: site_nodes
+        view: site_detail
         sites: site-001
         type_selector: amplifier
         expected_count: 1
       - type: list_count_equals
         target: site_nodes
+        view: site_detail
         sites: site-001
         type_selector: controller
         expected_count: 1
       - type: entity_reconciles
         entity: node
         ref: tower-site-001-001
+        view: site_detail
       - type: entity_reconciles
         entity: node
         ref: amplifier-site-001-001
+        view: site_detail
       - type: entity_reconciles
         entity: node
         ref: controller-site-001-001
+        view: site_detail

@@ -24,6 +24,10 @@ const _ = grpc.SupportPackageIsVersion7
 type AggregatorServiceClient interface {
 	// ListKpis returns the KPI registry (self-describing catalog).
 	ListKpis(ctx context.Context, in *ListKpisRequest, opts ...grpc.CallOption) (*ListKpisResponse, error)
+	// Query is the primary read API: one question shape for latest values,
+	// time series and top-N breakdowns. Aggregation is derived from each
+	// KPI's kind (flow|gauge) — callers never pick a fold function.
+	Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error)
 	// GetKpis returns the latest rollup value per KPI/scope for a span.
 	GetKpis(ctx context.Context, in *GetKpisRequest, opts ...grpc.CallOption) (*GetKpisResponse, error)
 	// GetKpiTimeSeries returns one value per span bucket over a range.
@@ -48,6 +52,15 @@ func NewAggregatorServiceClient(cc grpc.ClientConnInterface) AggregatorServiceCl
 func (c *aggregatorServiceClient) ListKpis(ctx context.Context, in *ListKpisRequest, opts ...grpc.CallOption) (*ListKpisResponse, error) {
 	out := new(ListKpisResponse)
 	err := c.cc.Invoke(ctx, "/ukama.analytics.aggregator.v1.AggregatorService/ListKpis", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *aggregatorServiceClient) Query(ctx context.Context, in *QueryRequest, opts ...grpc.CallOption) (*QueryResponse, error) {
+	out := new(QueryResponse)
+	err := c.cc.Invoke(ctx, "/ukama.analytics.aggregator.v1.AggregatorService/Query", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +118,10 @@ func (c *aggregatorServiceClient) GetPerformanceReport(ctx context.Context, in *
 type AggregatorServiceServer interface {
 	// ListKpis returns the KPI registry (self-describing catalog).
 	ListKpis(context.Context, *ListKpisRequest) (*ListKpisResponse, error)
+	// Query is the primary read API: one question shape for latest values,
+	// time series and top-N breakdowns. Aggregation is derived from each
+	// KPI's kind (flow|gauge) — callers never pick a fold function.
+	Query(context.Context, *QueryRequest) (*QueryResponse, error)
 	// GetKpis returns the latest rollup value per KPI/scope for a span.
 	GetKpis(context.Context, *GetKpisRequest) (*GetKpisResponse, error)
 	// GetKpiTimeSeries returns one value per span bucket over a range.
@@ -125,6 +142,9 @@ type UnimplementedAggregatorServiceServer struct {
 
 func (UnimplementedAggregatorServiceServer) ListKpis(context.Context, *ListKpisRequest) (*ListKpisResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListKpis not implemented")
+}
+func (UnimplementedAggregatorServiceServer) Query(context.Context, *QueryRequest) (*QueryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Query not implemented")
 }
 func (UnimplementedAggregatorServiceServer) GetKpis(context.Context, *GetKpisRequest) (*GetKpisResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetKpis not implemented")
@@ -168,6 +188,24 @@ func _AggregatorService_ListKpis_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AggregatorServiceServer).ListKpis(ctx, req.(*ListKpisRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _AggregatorService_Query_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AggregatorServiceServer).Query(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.analytics.aggregator.v1.AggregatorService/Query",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AggregatorServiceServer).Query(ctx, req.(*QueryRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -272,6 +310,10 @@ var AggregatorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListKpis",
 			Handler:    _AggregatorService_ListKpis_Handler,
+		},
+		{
+			MethodName: "Query",
+			Handler:    _AggregatorService_Query_Handler,
 		},
 		{
 			MethodName: "GetKpis",

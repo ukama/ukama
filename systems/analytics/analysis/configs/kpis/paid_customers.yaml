@@ -8,6 +8,8 @@
 kpi: PAID_CUSTOMERS
 domain: business
 algo: paid_customers@v1
+kind: gauge
+scope_agg: sum
 scope: [network_id]
 inputs:
   payments:
@@ -20,5 +22,4 @@ inputs:
     dataset: registry.network.getAll
     fields: [network_id]
 output: { type: int, unit: count, symbol: "" }
-rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

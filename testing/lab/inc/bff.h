@@ -177,9 +177,7 @@ typedef struct {
     uint32_t sim_total;
     uint32_t sim_available;
     uint32_t sim_consumed;
-    uint32_t sim_pool_total;
-    uint32_t sim_pool_available;
-    uint32_t sim_pool_consumed;
+    uint32_t sim_failed;
 } bff_inventory_summary_t;
 
 typedef struct {
@@ -328,10 +326,15 @@ int bff_get_nodes_count(bff_client_t *c,
                         uint32_t *count,
                         ulab_error_t *err);
 
-int bff_get_inventory_summary(bff_client_t *c,
-                              const char *sim_type,
-                              bff_inventory_summary_t *summary,
-                              ulab_error_t *err);
+int bff_get_component_inventory_summary(
+    bff_client_t *c,
+    bff_inventory_summary_t *summary,
+    ulab_error_t *err);
+
+int bff_get_sim_pool_summary(bff_client_t *c,
+                             const char *sim_type,
+                             bff_inventory_summary_t *summary,
+                             ulab_error_t *err);
 
 int bff_get_subscriber_payment_summary(
     bff_client_t *c,
@@ -538,22 +541,43 @@ int bff_get_list_count(bff_client_t *c,
                        size_t *count,
                        ulab_error_t *err);
 
+typedef struct {
+    size_t total;
+    size_t online;
+    size_t offline;
+} bff_site_node_counts_t;
+
+int bff_get_site_list_count(bff_client_t *c,
+                            const network_t *network,
+                            const char *view,
+                            size_t *count,
+                            ulab_error_t *err);
+
 int bff_get_node_list_count(bff_client_t *c,
                             const network_t *network,
                             const char *node_type,
+                            const char *view,
                             size_t *count,
                             ulab_error_t *err);
 
 int bff_get_site_node_count(bff_client_t *c,
                             const site_t *site,
                             const char *node_type,
+                            const char *view,
                             size_t *count,
                             ulab_error_t *err);
+
+int bff_get_console_site_node_counts(bff_client_t *c,
+                                     const network_t *network,
+                                     const site_t *site,
+                                     bff_site_node_counts_t *counts,
+                                     ulab_error_t *err);
 
 int bff_entity_fields_match_world(bff_client_t *c,
                                   const char *entity,
                                   const char *ref,
                                   const world_t *world,
+                                  const char *view,
                                   int *matched,
                                   char *detail,
                                   size_t detail_len,
@@ -563,6 +587,7 @@ int bff_entity_list_detail_reconciles(bff_client_t *c,
                                       const char *entity,
                                       const char *ref,
                                       const world_t *world,
+                                      const char *view,
                                       int *matched,
                                       char *detail,
                                       size_t detail_len,
@@ -571,6 +596,7 @@ int bff_entity_list_detail_reconciles(bff_client_t *c,
 int bff_get_software(bff_client_t *c,
                      const node_t *node,
                      const char *app,
+                     const char *view,
                      bff_software_t *software,
                      int *found,
                      ulab_error_t *err);
@@ -582,10 +608,18 @@ int bff_get_software_count(bff_client_t *c,
 
 int bff_get_software_list(bff_client_t *c,
                           const node_t *node,
+                          const char *view,
                           bff_software_t software[],
                           size_t max_software,
                           size_t *software_count,
                           ulab_error_t *err);
+
+int bff_get_node_status_for_view(bff_client_t *c,
+                                 const network_t *network,
+                                 const node_t *node,
+                                 const char *view,
+                                 bff_node_status_t *status,
+                                 ulab_error_t *err);
 
 int bff_get_node_operation_status(
     bff_client_t *c,

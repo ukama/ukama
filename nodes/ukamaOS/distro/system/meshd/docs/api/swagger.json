@@ -19,35 +19,78 @@
   "paths": {
     "/v1/ping": {
       "get": {
-        "summary": "Ping the mesh server",
-        "description": "Returns OK if the server is running",
+        "summary": "Ping the mesh service",
         "responses": {
           "200": {
-            "description": "OK",
+            "description": "The local service is responding"
+          }
+        }
+      }
+    },
+    "/v1/version": {
+      "get": {
+        "summary": "Get the mesh service version",
+        "responses": {
+          "200": {
+            "description": "Version string",
             "schema": {
               "type": "string"
             }
-          },
-          "404": {
-            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/v1/ready": {
+      "get": {
+        "summary": "Get local service readiness",
+        "description": "Remote mesh connectivity is reported separately.",
+        "responses": {
+          "200": {
+            "description": "The local mesh service is ready",
+            "schema": {
+              "$ref": "#/definitions/ReadyResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v1/status": {
+      "get": {
+        "summary": "Get remote mesh connectivity",
+        "responses": {
+          "200": {
+            "description": "Current websocket connection state",
+            "schema": {
+              "$ref": "#/definitions/StatusResponse"
+            }
           }
         }
       }
     }
   },
-  "/v1/version": {
-    "get": {
-      "summary": "Get API version",
-      "description": "Returns the API version",
-      "responses": {
-        "200": {
-          "description": "Version",
-          "schema": {
-          "type": "string"
-           }
+  "definitions": {
+    "ReadyResponse": {
+      "type": "object",
+      "required": ["ready"],
+      "properties": {
+        "ready": {
+          "type": "boolean"
+        }
+      }
+    },
+    "StatusResponse": {
+      "type": "object",
+      "required": ["connected", "reason", "changedAt"],
+      "properties": {
+        "connected": {
+          "type": "boolean"
         },
-        "404": {
-          "description": "Not Found"
+        "reason": {
+          "type": "string"
+        },
+        "changedAt": {
+          "type": "integer",
+          "format": "int64"
         }
       }
     }

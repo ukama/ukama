@@ -6,8 +6,10 @@ suite: p0
 priority: p0
 tags: [virtual, console, network-home, empty-topology, tc-165]
 status: active
+
 provider:
   type: virtual
+
 world:
   networks: 1
   sites_per_network: 0
@@ -16,20 +18,23 @@ world:
     amplifier: 0
     controller: 0
   ues_per_site: 0
+
 setup:
   create_via_bff: [networks]
 
 phases:
+
   - name: verify_empty_network_kpis
     checks:
       - type: kpi_state_equals
         key: NETWORK_UPTIME
         span: daily
-        op: LAST
+        op: AVG
         scope_key: network_id
         networks: net-001
         value_state: no_data
         timeout_seconds: 120
+
       - type: kpi_state_equals
         key: ACTIVE_CUSTOMERS
         span: daily
@@ -38,14 +43,15 @@ phases:
         networks: net-001
         value_state: zero
         timeout_seconds: 300
+
       - type: kpi_state_equals
-        key: USAGE_BY_NETWORK
+        key: DATA_USAGE
         span: daily
-        op: SUM
         scope_key: network_id
         networks: net-001
-        value_state: zero
+        value_state: no_data
         timeout_seconds: 300
+
       - type: kpi_state_equals
         key: SITES_ONLINE
         span: daily

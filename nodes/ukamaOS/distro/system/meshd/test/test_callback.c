@@ -1,5 +1,6 @@
 #include <ulfius.h>
 #include <pthread.h>
+#include <jansson.h>
 
 #include "unity.h"
 #include "callback.h"
@@ -85,6 +86,29 @@ void test_web_service_cb_version(void) {
     TEST_ASSERT_EQUAL_STRING(VERSION, response.binary_body);
 }
 
+// Test for web_service_cb_ready function
+void test_web_service_cb_ready(void) {
+    URequest request;
+    UResponse response;
+    json_error_t error;
+    json_t *json;
+    json_t *ready;
+
+    memset(&request, 0, sizeof(request));
+    memset(&response, 0, sizeof(response));
+    memset(&error, 0, sizeof(error));
+
+    int ret = web_service_cb_ready(&request, &response, NULL);
+    TEST_ASSERT_EQUAL_INT(U_CALLBACK_CONTINUE, ret);
+    TEST_ASSERT_EQUAL_INT(HttpStatus_OK, response.status);
+
+    json = json_loads((const char *)response.binary_body, 0, &error);
+    TEST_ASSERT_NOT_NULL(json);
+    ready = json_object_get(json, "ready");
+    TEST_ASSERT_TRUE(json_is_true(ready));
+    json_decref(json);
+}
+
 // Test for web_service_cb_default function
 void test_web_service_cb_default(void) {
     URequest request;
@@ -102,5 +126,6 @@ void run_all_tests_callback(void) {
     RUN_TEST(test_callback_not_allowed);
     RUN_TEST(test_web_service_cb_ping);
     RUN_TEST(test_web_service_cb_version);
+    RUN_TEST(test_web_service_cb_ready);
     RUN_TEST(test_web_service_cb_default);
 }

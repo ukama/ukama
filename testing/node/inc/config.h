@@ -38,6 +38,7 @@
 #define KEY_ARGS        "args"
 #define KEY_ENV         "env"
 #define KEY_NAME        "name"
+#define KEY_SERVICE     "service"
 #define KEY_BIN         "bin"
 #define KEY_AUTOSTART   "autostart"
 #define KEY_AUTORESTART "autorestart"
@@ -106,6 +107,7 @@ typedef struct build_config_t {
 typedef struct capp_config_t {
 
     char *name;       /* Name of the capp */
+    char *service;    /* Service registry name */
     char *version;    /* Version of the capp */
     char *bin;        /* capp binary */
     char *path;       /* Absolute path to the bin */

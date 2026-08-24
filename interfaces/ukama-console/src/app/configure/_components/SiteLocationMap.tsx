@@ -7,11 +7,12 @@
  */
 
 /**
- * Small location preview for the site name step: an OpenStreetMap embed with
- * a marker at the tower's coordinates. Dependency-free (no Leaflet/Mapbox
- * token) so it stays light for a one-off onboarding view.
+ * Small location preview for the site name step: a pin at the tower's
+ * coordinates on the shared console base map. Static — no pan/zoom.
  */
 'use client';
+
+import UkamaMap from '@/components/Map/UkamaMap';
 
 export default function SiteLocationMap({
   lat,
@@ -22,13 +23,6 @@ export default function SiteLocationMap({
   lng: number;
   height?: number;
 }) {
-  // A tight bbox zooms in on the marker (smaller = closer).
-  const d = 0.004;
-  const bbox = `${lng - d}%2C${lat - d}%2C${lng + d}%2C${lat + d}`;
-  const src =
-    `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}` +
-    `&layer=mapnik&marker=${lat}%2C${lng}`;
-
   return (
     <div
       style={{
@@ -38,11 +32,12 @@ export default function SiteLocationMap({
         border: '1px solid var(--uk-line)',
       }}
     >
-      <iframe
-        title="Site location"
-        src={src}
-        loading="lazy"
-        style={{ width: '100%', height: '100%', border: 0 }}
+      <UkamaMap
+        markers={[{ id: 'site', lat, lng }]}
+        zoom={16}
+        height="100%"
+        interactive={false}
+        fitToMarkers={false}
       />
     </div>
   );

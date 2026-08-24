@@ -32,7 +32,7 @@ runs:
   - name: Download code coverage results
     uses: actions/download-artifact@v4
     with:
-      name: code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}
+      name: code-coverage-${{ inputs.project-key }}-${{ github.run_number }}
       path: ${{ inputs.working-directory }}
 
   - name: SonarCloud Scan
@@ -46,7 +46,7 @@ runs:
         -Dsonar.organization=ukama
         -Dsonar.projectKey=${{ inputs.project-key }}
         -Dsonar.projectName=${{ inputs.working-directory }}
-        -Dsonar.go.coverage.reportPaths=code-coverage-${{ inputs.project-Key }}-${{ github.run_number }}.out
+        -Dsonar.go.coverage.reportPaths=code-coverage-${{ inputs.project-key }}-${{ github.run_number }}.out
         -Dsonar.test.exclusions=tests/**
         -Dsonar.tests=tests/
         -Dsonar.verbose=true

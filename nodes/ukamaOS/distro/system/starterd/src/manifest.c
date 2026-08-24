@@ -140,6 +140,7 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     App *a;
     json_t *v;
     const char *name;
+    const char *service;
     const char *tag;
     const char *cmd;
     const char *workdir;
@@ -150,6 +151,13 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     v = json_object_get(j, "name");
     name = json_is_string(v) ? json_string_value(v) : NULL;
 
+    v = json_object_get(j, "service");
+    if (v && !json_is_string(v)) {
+        usys_log_error("manifest: service must be a string");
+        return NULL;
+    }
+    service = v ? json_string_value(v) : name;
+
     v = json_object_get(j, "tag");
     tag = json_is_string(v) ? json_string_value(v) : NULL;
 
@@ -159,8 +167,10 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     v = json_object_get(j, "workdir");
     workdir = json_is_string(v) ? json_string_value(v) : NULL;
 
-    if (!m_is_valid_name(name) || !m_is_valid_name(spaceName)) {
-        usys_log_error("manifest: invalid app/space name");
+    if (!m_is_valid_name(name) ||
+        !m_is_valid_name(service) ||
+        !m_is_valid_name(spaceName)) {
+        usys_log_error("manifest: invalid app/service/space name");
         return NULL;
     }
 
@@ -175,11 +185,12 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
 
     a->space   = strdup(spaceName);
     a->name    = strdup(name);
+    a->service = strdup(service);
     a->tag     = strdup(tag);
     a->cmd     = strdup(cmd);
     a->workdir = workdir ? strdup(workdir) : NULL;
 
-    if (!a->space || !a->name || !a->tag || !a->cmd ||
+    if (!a->space || !a->name || !a->service || !a->tag || !a->cmd ||
         (workdir && !a->workdir)) {
         m_free_app(a);
         return NULL;
@@ -204,15 +215,16 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     v = json_object_get(j, "env");
     a->envp = m_parse_env_object(v, &a->envc);
 
-    svcPort = usys_find_service_port(a->name);
+    svcPort = usys_find_service_port(a->service);
     if (svcPort > 0) {
         a->port = svcPort;
     } else {
         v = json_object_get(j, "port");
         a->port = json_is_integer(v) ? (int)json_integer_value(v) : 0;
         if (a->port <= 0) {
-            usys_log_warn("manifest: app %s has no service port and no manifest port",
-                          a->name);
+            usys_log_warn("manifest: app %s service %s has no port",
+                          a->name,
+                          a->service);
         }
     }
 
@@ -252,6 +264,7 @@ static void m_free_app(App *a) {
 
     free(a->space);
     free(a->name);
+    free(a->service);
     free(a->tag);
     free(a->cmd);
     m_free_argv(a->argv);

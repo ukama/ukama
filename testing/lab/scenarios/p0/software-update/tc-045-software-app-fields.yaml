@@ -25,6 +25,13 @@ runtime:
 phases:
   - name: verify_installed_software_fields
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
       - type: software_status_equals
         type_selector: controller
         count_per_network: 1

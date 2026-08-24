@@ -8,12 +8,16 @@
 package server
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
+	"github.com/ukama/ukama/systems/node/state/mocks"
 )
 
 const nodeStateConfigPath = "../nodeState.json"
@@ -29,12 +33,60 @@ func newNodeInstance(t *testing.T, instanceID, initialState string) *stm.StateMa
 	return instance
 }
 
-func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
-	t.Run("faulty node returns to operational on ready", func(t *testing.T) {
-		instance := newNodeInstance(t, "faulty-ready", "Faulty")
+func TestNodeStateFsm_HappyPath(t *testing.T) {
+	instance := newNodeInstance(t, "happy-path", "Unknown")
 
-		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+	require.NoError(t, instance.Transition("online"))
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"connectivity must not move the lifecycle state")
+	assert.Equal(t, "on", instance.CurrentSubstate)
+
+	require.NoError(t, instance.Transition("platformready"))
+	assert.Equal(t, "Ready", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("assign"))
+	assert.Equal(t, "Configuring", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("configapplied"))
+	assert.Equal(t, "Operational", instance.CurrentState)
+}
+
+func TestNodeStateFsm_AssignWithoutConfig(t *testing.T) {
+	instance := newNodeInstance(t, "assign-no-config", "Ready")
+
+	require.NoError(t, instance.Transition("assignnoconfig"))
+	assert.Equal(t, "Operational", instance.CurrentState)
+}
+
+func TestNodeStateFsm_ReleaseReturnsToReady(t *testing.T) {
+	t.Run("from configuring", func(t *testing.T) {
+		instance := newNodeInstance(t, "release-configuring", "Configuring")
+
+		require.NoError(t, instance.Transition("release"))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+
+	t.Run("from operational", func(t *testing.T) {
+		instance := newNodeInstance(t, "release-operational", "Operational")
+
+		require.NoError(t, instance.Transition("release"))
+		assert.Equal(t, "Ready", instance.CurrentState)
+	})
+}
+
+func TestNodeStateFsm_ReconfigureFromOperational(t *testing.T) {
+	instance := newNodeInstance(t, "reconfigure", "Operational")
+
+	require.NoError(t, instance.Transition("configchange"))
+	assert.Equal(t, "Configuring", instance.CurrentState)
+}
+
+func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
+	t.Run("faulty node recovers to initializing", func(t *testing.T) {
+		instance := newNodeInstance(t, "faulty-recover", "Faulty")
+
+		require.NoError(t, instance.Transition("recover"))
+		assert.Equal(t, "Initializing", instance.CurrentState)
 	})
 
 	t.Run("operational to faulty and back again", func(t *testing.T) {
@@ -43,52 +95,93 @@ func TestNodeStateFsm_FaultyRecovery(t *testing.T) {
 		require.NoError(t, instance.Transition("fault"))
 		assert.Equal(t, "Faulty", instance.CurrentState)
 
-		require.NoError(t, instance.Transition("ready"))
-		assert.Equal(t, "Operational", instance.CurrentState)
+		require.NoError(t, instance.Transition("recover"))
+		assert.Equal(t, "Initializing", instance.CurrentState)
 	})
 
-	t.Run("faulty node still reaches configured on config", func(t *testing.T) {
-		instance := newNodeInstance(t, "faulty-config", "Faulty")
+	t.Run("faulty node is reconfigurable", func(t *testing.T) {
+		instance := newNodeInstance(t, "faulty-assign", "Faulty")
 
-		require.NoError(t, instance.Transition("config"))
-		assert.Equal(t, "Configured", instance.CurrentState)
+		require.NoError(t, instance.Transition("assign"))
+		assert.Equal(t, "Configuring", instance.CurrentState)
 	})
 }
 
-func TestNodeStateFsm_RepeatReadyInOperational(t *testing.T) {
-	instance := newNodeInstance(t, "operational-repeat-ready", "Operational")
+func TestNodeStateFsm_Offboarding(t *testing.T) {
+	instance := newNodeInstance(t, "offboard-round-trip", "Operational")
 
-	require.NoError(t, instance.Transition("online"))
-	assert.Equal(t, "on", instance.CurrentSubstate)
-
-	err := instance.Transition("ready")
-
-	assert.NoError(t, err)
-	assert.Equal(t, "Operational", instance.CurrentState)
-	assert.Equal(t, "on", instance.CurrentSubstate)
-}
-
-func TestNodeStateFsm_ConfiguredReadyKeepsSubstate(t *testing.T) {
-	instance := newNodeInstance(t, "configured-ready", "Configured")
-
-	require.NoError(t, instance.Transition("online"))
-	require.Equal(t, "on", instance.CurrentSubstate)
-
-	require.NoError(t, instance.Transition("ready"))
-
-	assert.Equal(t, "Operational", instance.CurrentState)
-	assert.Equal(t, "on", instance.CurrentSubstate,
-		"ready must not move the substate into update")
-}
-
-func TestNodeStateFsm_OnboardingFromUnknown(t *testing.T) {
-	instance := newNodeInstance(t, "unknown-onboarding", "Unknown")
+	require.NoError(t, instance.Transition("offboard"))
+	assert.Equal(t, "Offboarded", instance.CurrentState)
 
 	require.NoError(t, instance.Transition("onboarding"))
-	assert.Equal(t, "Configured", instance.CurrentState)
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"an offboarded node must be able to come back")
+}
 
-	require.NoError(t, instance.Transition("ready"))
-	assert.Equal(t, "Operational", instance.CurrentState)
+func TestNodeStateFsm_OffboardedNodeReturnsWhenItComesOnline(t *testing.T) {
+	instance := newNodeInstance(t, "offboarded-online", "Offboarded")
+
+	require.NoError(t, instance.Transition("online"))
+
+	assert.Equal(t, "Unknown", instance.CurrentState,
+		"a released node that reappears must re-enter the pool, not stay Offboarded")
+	assert.Equal(t, "on", instance.CurrentSubstate)
+}
+
+func TestNodeStateFsm_OffboardedTracksConnectivity(t *testing.T) {
+	instance := newNodeInstance(t, "offboarded-connectivity", "Offboarded")
+
+	require.NoError(t, instance.Transition("offline"))
+
+	assert.Equal(t, "Offboarded", instance.CurrentState,
+		"going offline must not move an offboarded node")
+	assert.Equal(t, "off", instance.CurrentSubstate,
+		"connectivity must still be tracked while offboarded")
+}
+
+func TestNodeStateFsm_UpdateReboots(t *testing.T) {
+	instance := newNodeInstance(t, "update-reboot", "Initializing")
+
+	require.NoError(t, instance.Transition("update"))
+	assert.Equal(t, "Updating", instance.CurrentState)
+
+	require.NoError(t, instance.Transition("rebooted"))
+	assert.Equal(t, "Initializing", instance.CurrentState)
+}
+
+func TestNodeStateFsm_Timeouts(t *testing.T) {
+	enteredAt := time.Date(2026, time.August, 14, 10, 0, 0, 0, time.UTC)
+
+	cases := []struct {
+		from string
+		to   string
+	}{
+		{"Configuring", "Operational"},
+		{"Updating", "Initializing"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.from+" advances after 60s", func(t *testing.T) {
+			instance := newNodeInstance(t, "timeout-"+tc.from, tc.from)
+
+			_, due := instance.DueTransition(enteredAt, enteredAt.Add(59*time.Second))
+			assert.False(t, due, "must not advance before the window closes")
+
+			to, due := instance.DueTransition(enteredAt, enteredAt.Add(60*time.Second))
+			require.True(t, due)
+			assert.Equal(t, tc.to, to)
+		})
+	}
+
+	for _, state := range []string{"Ready", "Operational", "Unknown", "Faulty", "Offboarded"} {
+		t.Run(state+" never times out", func(t *testing.T) {
+			instance := newNodeInstance(t, "timeout-"+state, state)
+
+			_, due := instance.DueTransition(enteredAt, enteredAt.Add(time.Hour))
+			assert.False(t, due,
+				"%s must wait for a real event, not drift on a timer", state)
+		})
+	}
 }
 
 func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
@@ -107,8 +200,8 @@ func TestNodeStateFsm_NoOpTransitionDoesNotPublish(t *testing.T) {
 	require.NoError(t, instance.Transition("online"))
 	assert.Equal(t, 1, published, "online changes substate and must publish")
 
-	require.NoError(t, instance.Transition("ready"))
-	assert.Equal(t, 1, published, "repeat ready must not publish a state change")
+	require.NoError(t, instance.Transition("online"))
+	assert.Equal(t, 1, published, "repeat online must not publish a state change")
 
 	require.NoError(t, instance.Transition("fault"))
 	assert.Equal(t, 2, published, "fault must publish")
@@ -123,9 +216,9 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 
 	nodeId := "test-node-resync"
 
-	first, err := srv.getOrCreateInstance(nodeId, "Configured", "on")
+	first, err := srv.getOrCreateInstance(nodeId, "Configuring", "on")
 	require.NoError(t, err)
-	require.NoError(t, first.Transition("ready"))
+	require.NoError(t, first.Transition("configapplied"))
 	require.Equal(t, "Operational", first.CurrentState)
 
 	t.Run("returns the cached instance when it matches stored state", func(t *testing.T) {
@@ -144,8 +237,123 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 		assert.Equal(t, "off", resynced.CurrentSubstate,
 			"stored substate must survive the rebuild")
 
-		require.NoError(t, resynced.Transition("ready"))
-		assert.Equal(t, "Operational", resynced.CurrentState,
+		require.NoError(t, resynced.Transition("recover"))
+		assert.Equal(t, "Initializing", resynced.CurrentState,
 			"resynced instance must transition from the stored state")
 	})
+}
+
+func TestIsHealthEvent(t *testing.T) {
+	assert.True(t, isHealthEvent(NodeStateEventPlatformReady))
+	assert.True(t, isHealthEvent(NodeStateEventFault))
+	assert.False(t, isHealthEvent("online"))
+	assert.False(t, isHealthEvent("assign"))
+	assert.False(t, isHealthEvent(""))
+}
+
+func TestShouldLatch(t *testing.T) {
+	t.Run("latches health events only while the node is Unknown", func(t *testing.T) {
+		assert.True(t, shouldLatch("Unknown", NodeStateEventPlatformReady))
+		assert.True(t, shouldLatch("Unknown", NodeStateEventFault))
+	})
+
+	t.Run("never latches non health events", func(t *testing.T) {
+		assert.False(t, shouldLatch("Unknown", "online"))
+		assert.False(t, shouldLatch("Unknown", "assign"))
+	})
+
+	t.Run("never latches once the node has come up", func(t *testing.T) {
+		for _, state := range []string{
+			"Initializing", "Ready", "Configuring",
+			"Operational", "Updating", "Faulty", "Offboarded",
+		} {
+			assert.False(t, shouldLatch(state, NodeStateEventPlatformReady),
+				"a duplicate platformready in %s must not be latched", state)
+			assert.False(t, shouldLatch(state, NodeStateEventFault),
+				"a duplicate fault in %s must not be latched", state)
+		}
+	})
+}
+
+func TestNodeStateFsm_PlatformReadyBeforeNodeIsUpIsLatched(t *testing.T) {
+	repo := &mocks.StateRepo{}
+	repo.On("SetLatchedEvent", mock.Anything, mock.Anything).Return(nil).Maybe()
+	repo.On("TakeLatchedEvent", mock.Anything).Return("", nil).Maybe()
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	nodeId := "test-node-ready-race"
+
+	t.Run("a latched event is stored and handed back once", func(t *testing.T) {
+		srv.latchHealthEvent(nodeId, NodeStateEventPlatformReady)
+
+		latched, ok := srv.takeLatchedHealthEvent(nodeId)
+		require.True(t, ok)
+		assert.Equal(t, NodeStateEventPlatformReady, latched)
+	})
+
+	t.Run("latched event is consumed only once", func(t *testing.T) {
+		_, ok := srv.takeLatchedHealthEvent(nodeId)
+		assert.False(t, ok, "latch must be cleared after being taken")
+	})
+
+	t.Run("replaying the latched platformready reaches Ready", func(t *testing.T) {
+		instance, err := srv.getOrCreateInstance("test-node-replay", "Unknown", "on")
+		require.NoError(t, err)
+
+		require.NoError(t, instance.Transition("online"))
+		require.Equal(t, "Unknown", instance.CurrentState)
+
+		require.NoError(t, instance.Transition(NodeStateEventPlatformReady))
+		assert.Equal(t, "Ready", instance.CurrentState,
+			"the latched platformready replayed after the node came up must reach Ready")
+	})
+}
+
+func TestNodeStateFsm_LatchSurvivesRestart(t *testing.T) {
+	repo := &mocks.StateRepo{}
+	repo.On("TakeLatchedEvent", "restarted-node").Return(NodeStateEventPlatformReady, nil).Once()
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	latched, ok := srv.takeLatchedHealthEvent("restarted-node")
+
+	require.True(t, ok, "a latch persisted before the restart must still be found")
+	assert.Equal(t, NodeStateEventPlatformReady, latched)
+	repo.AssertExpectations(t)
+}
+
+func TestStateEventServer_applyEvent_SkipsWritesWhenNothingChanges(t *testing.T) {
+	repo := &mocks.StateRepo{}
+
+	srv := &StateEventServer{
+		stateMachine:  stm.NewStateMachine(func(stm.Event) {}),
+		configPath:    nodeStateConfigPath,
+		instances:     make(map[string]*stm.StateMachineInstance),
+		latchedHealth: make(map[string]string),
+		s:             NewStateServer("test-org", "test-org-id", repo, nil),
+	}
+
+	instance, err := srv.getOrCreateInstance("noop-node", "Offboarded", "off")
+	require.NoError(t, err)
+
+	changed, err := srv.applyEvent(context.Background(), instance, "noop-node", "service_on")
+
+	require.NoError(t, err)
+	assert.False(t, changed)
+	assert.Equal(t, "Offboarded", instance.CurrentState)
+	repo.AssertNotCalled(t, "UpdateState", mock.Anything, mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "AddState", mock.Anything, mock.Anything)
 }

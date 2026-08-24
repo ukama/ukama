@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/num30/config"
@@ -62,7 +63,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.State{})
+	err := d.Init(&db.State{}, &db.LatchedEvent{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -88,9 +89,17 @@ func runGrpcServer(gormdb sql.Db) {
 		egenerated.RegisterEventNotificationServiceServer(s, stateEventServer)
 	})
 
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormdb))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+
 	go grpcServer.StartServer()
 
 	go msgBusListener(mbClient)
+
+	timeoutCtx, stopTimeouts := context.WithCancel(context.Background())
+	defer stopTimeouts()
+
+	stateEventServer.StartTimeoutWorker(timeoutCtx, svcConf.StateTimeoutSweepInterval)
 
 	waitForExit()
 }

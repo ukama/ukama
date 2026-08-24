@@ -443,7 +443,7 @@ func TestNodeRepo_List(t *testing.T) {
 			AddRow(nodeId.String(), "node-1", ntype, ukama.NodeConnectivity(connectivity), ukama.NodeState(state), siteId, networkId)
 
 		// Mock the main query first
-		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id WHERE node_statuses.deleted_at IS NULL AND nodes.id = \$1 AND sites.site_id = \$2 AND sites.network_id = \$3 AND node_statuses.connectivity = \$4 AND node_statuses.state = \$5 AND nodes.type = \$6 AND "nodes"."deleted_at" IS NULL$`).
+		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id AND sites.deleted_at IS NULL WHERE node_statuses.deleted_at IS NULL AND nodes.id = \$1 AND sites.site_id = \$2 AND sites.network_id = \$3 AND node_statuses.connectivity = \$4 AND node_statuses.state = \$5 AND nodes.type = \$6 AND "nodes"."deleted_at" IS NULL$`).
 			WithArgs(nodeId.String(), siteId, networkId, connectivity, state, ntype).
 			WillReturnRows(rows)
 
@@ -487,7 +487,7 @@ func TestNodeRepo_List(t *testing.T) {
 			AddRow(nodeId.String(), "node-1", ntype, connectivity, state, siteId, networkId)
 
 		// Mock the main query first
-		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id WHERE node_statuses.deleted_at IS NULL AND "nodes"."deleted_at" IS NULL$`).
+		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id AND sites.deleted_at IS NULL WHERE node_statuses.deleted_at IS NULL AND "nodes"."deleted_at" IS NULL$`).
 			WithArgs().
 			WillReturnRows(rows)
 
@@ -515,6 +515,42 @@ func TestNodeRepo_List(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, nodes)
 		assert.Len(t, nodes, 1)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	// Unlike siteRepo.GetByNetwork, List must not turn zero rows into
+	// gorm.ErrRecordNotFound — an empty network is not a missing one.
+	t.Run("ListEmptyNetworkReturnsNoError", func(t *testing.T) {
+		// Arrange
+		mock.ExpectQuery(`^SELECT nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id FROM "nodes" INNER JOIN node_statuses ON nodes.id = node_statuses.node_id LEFT JOIN sites ON nodes.id = sites.node_id AND sites.deleted_at IS NULL WHERE node_statuses.deleted_at IS NULL AND sites.network_id = \$1 AND "nodes"."deleted_at" IS NULL$`).
+			WithArgs(networkId).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "connectivity", "state", "site_id", "network_id"}))
+
+		// Act
+		nodes, err := r.List("", "", networkId.String(), "", nil, nil)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Empty(t, nodes)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("ListExcludesSoftDeletedSiteRows", func(t *testing.T) {
+		// Arrange
+		mock.ExpectQuery(`LEFT JOIN sites ON nodes\.id = sites\.node_id AND sites\.deleted_at IS NULL`).
+			WithArgs(siteId).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "connectivity", "state", "site_id", "network_id"}))
+
+		// Act
+		nodes, err := r.List("", siteId.String(), "", "", nil, nil)
+
+		// Assert
+		assert.NoError(t, err)
+		assert.Empty(t, nodes)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

@@ -18,10 +18,11 @@ import (
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 	Server            rest.HttpConfig
 }
 
@@ -33,7 +34,12 @@ type HttpEndpoints struct {
 type GrpcEndpoints struct {
 	Timeout           time.Duration
 	Mailer            string
-	Notify            string
+	EventNotification string
+	Distributor       string
+}
+
+type ServiceDescriptions struct {
+	Mailer            string
 	EventNotification string
 	Distributor       string
 }
@@ -53,6 +59,11 @@ func NewConfig() *Config {
 			Mailer:            "mailer:9090",
 			EventNotification: "eventnotify:9090",
 			Distributor:       "distributor:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			Mailer:            "Email delivery: outgoing system emails",
+			EventNotification: "Event notifications: converting system events into user notifications",
+			Distributor:       "Notification distribution: real-time streaming of notifications to clients",
 		},
 
 		Server: rest.HttpConfig{

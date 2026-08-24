@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"sort"
+	"strconv"
 	"time"
 
 	"google.golang.org/grpc/codes"
@@ -128,12 +129,14 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 
 	asr, err := s.asrClient.GetAsr(cdr.Imsi)
 	if err == nil && asr.Record != nil && asr.Record.Policy != nil && asr.Record.Policy.Uuid == cdr.Policy {
+		session := strconv.FormatUint(cdr.Session, 10)
 		labels := map[string]string{
 			"package":  asr.Record.SimPackageId,
 			"dataplan": asr.Record.PackageId,
 			"network":  asr.Record.NetworkId,
 			"site":     node.Site.SiteId,
 			"iccid":    asr.Record.Iccid,
+			"session":  session,
 		}
 
 		pushDataUsageMetrics(float64(cdr.TotalBytes), labels, s.pushGatewayHost)

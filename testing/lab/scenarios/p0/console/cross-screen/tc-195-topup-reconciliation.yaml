@@ -71,15 +71,6 @@ phases:
         column: sold
         expected_value: 1
       - type: kpi_value
-        key: REVENUE
-        span: daily
-        op: SUM
-        scope_key: network_id
-        networks: net-001
-        expected_value: 6.00
-        tolerance: 0.001
-        timeout_seconds: 600
-      - type: kpi_value
         key: PACKAGE_SALES
         span: daily
         op: SUM

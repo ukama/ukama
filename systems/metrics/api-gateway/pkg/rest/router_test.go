@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -125,5 +126,63 @@ func Test_GetMetrics(t *testing.T) {
 			}
 		}
 
+	})
+
+	t.Run("LastMetricWithFilters", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET",
+			"/v1/last/metrics/data_usage?package=pkg-1&iccid=8910309414559836625&network=net-1&lookback=24h",
+			nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 200, w.Code)
+
+		q, err := url.ParseQuery(body)
+		assert.NoError(t, err)
+		assert.Equal(t,
+			"last_over_time(data_usage {network='net-1',package='pkg-1',iccid='8910309414559836625'}[24h])",
+			q.Get("query"))
+	})
+
+	// Unfiltered: matches the hand-run `last_over_time(data_usage[7d])` curl —
+	// every series returned, no aggregation wrapper.
+	t.Run("LastMetricDefaultsLookback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/last/metrics/data_usage", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 200, w.Code)
+
+		q, err := url.ParseQuery(body)
+		assert.NoError(t, err)
+		assert.Equal(t, "last_over_time(data_usage {}[7d])", q.Get("query"))
+	})
+
+	t.Run("LastMetricRejectsBadLookback", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/last/metrics/data_usage?lookback=7", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 400, w.Code)
+	})
+
+	t.Run("LastMetricUnknownMetric", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/last/metrics/test-metrics-miss", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 404, w.Code)
 	})
 }

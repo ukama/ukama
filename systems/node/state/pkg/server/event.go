@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"sync"
 
 	log "github.com/sirupsen/logrus"
@@ -35,11 +36,27 @@ import (
 	 NodeNotifyEventReboot = "reboot"
 	 NodeNotifyEventOnline = "Node Online"
 	 NodeNotifyEventAdded  = "Node added"
-	 
+
+	 NodeStateEventPlatformReady = "platformready"
+	 NodeStateEventFault         = "fault"
+
 	 DefaultSubstate = "on"
      ForceTransitionRoutingKeyTemplate = "event.cloud.local.{{ .Org}}.node.state.node.force"
 	 NotifyEventRoutingKeyTemplate     = "event.cloud.local.{{ .Org}}.node.notify.notification.store"
  )
+
+ var notifyEventToStateEvent = map[string]string{
+	 "READY":  NodeStateEventPlatformReady,
+	 "FAULTY": NodeStateEventFault,
+ }
+
+ func stateEventForNotifyValue(value string) string {
+	 if mapped, ok := notifyEventToStateEvent[strings.ToUpper(value)]; ok {
+		 return mapped
+	 }
+
+	 return value
+ }
  
 
  type StateEventServer struct {
@@ -55,6 +72,8 @@ import (
 	 baseRoutingKey msgbus.RoutingKeyBuilder
 	 eventBuffer    map[string][]string
 	 bufferMu       sync.RWMutex
+	 latchedHealth  map[string]string
+	 latchedMu      sync.Mutex
 	 processingMutex sync.Map
  }
  
@@ -69,6 +88,7 @@ import (
 		 msgbus:         msgBus,
 		 baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		 eventBuffer:    make(map[string][]string),
+		 latchedHealth:  make(map[string]string),
 		 processingMutex: sync.Map{},
 	 }
  
@@ -190,7 +210,10 @@ import (
  
 	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
 		 return n.handleNodeReleaseEvent(ctx, e)
- 
+
+	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
+		 return n.handleNodeDeleteEvent(ctx, e)
+
 	 case msgbus.PrepareRoute(n.orgName, ForceTransitionRoutingKeyTemplate):
 		 return n.handleForceTransitionEvent(ctx, e)
 		 
@@ -251,6 +274,18 @@ import (
 	 return &epb.EventResponse{}, nil
  }
  
+ func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	 msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	 if err != nil {
+		 return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
+	 }
+	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventDelete].Name
+	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		 return nil, fmt.Errorf("failed to process node delete event: %w", err)
+	 }
+	 return &epb.EventResponse{}, nil
+ }
+
  func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
 	 msg, err := n.UnmarshalTransitionEvent(e.Msg)
 	 if err != nil {
@@ -334,9 +369,11 @@ import (
 		 return nil
 	 }
 	 
-	 log.Infof("Processing notification event %s for node %s", valueStr, msg.NodeId)
-	 
-	 if err := n.ProcessEvent(ctx, valueStr, msg.NodeId, msg); err != nil {
+	 eventName := stateEventForNotifyValue(valueStr)
+
+	 log.Infof("Processing notification event %s as %s for node %s", valueStr, eventName, msg.NodeId)
+
+	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
 		 return fmt.Errorf("failed to process %s notification event: %w", valueStr, err)
 	 }
 	 
@@ -395,42 +432,137 @@ import (
 		 return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
 	 }
  
-	 prevState := instance.CurrentState
- 
-	 if err := instance.Transition(eventName); err != nil {
-		 return fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
+	 changed, err := n.applyEvent(ctx, instance, nodeId, eventName)
+	 if err != nil {
+		 return err
 	 }
- 
-	 _, err = n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+
+	 if !changed {
+		 if shouldLatch(instance.CurrentState, eventName) {
+			 n.latchHealthEvent(nodeId, eventName)
+			 log.Infof("Node %s received %s before it came up, latching it until the node transitions",
+				 nodeId, eventName)
+		 }
+
+		 return nil
+	 }
+
+	 latched, ok := n.takeLatchedHealthEvent(nodeId)
+	 if !ok {
+		 return nil
+	 }
+
+	 if latched == NodeStateEventPlatformReady && instance.CurrentSubstate != DefaultSubstate {
+		 log.Infof("Discarding latched %s for node %s: node is %s, not online",
+			 latched, nodeId, instance.CurrentSubstate)
+
+		 return nil
+	 }
+
+	 log.Infof("Replaying latched %s event for node %s now in state %s", latched, nodeId, instance.CurrentState)
+
+	 if _, err := n.applyEvent(ctx, instance, nodeId, latched); err != nil {
+		 return fmt.Errorf("failed to replay latched %s event for node %s: %w", latched, nodeId, err)
+	 }
+
+	 return nil
+ }
+
+ func (n *StateEventServer) applyEvent(ctx context.Context, instance *stm.StateMachineInstance,
+	 nodeId, eventName string) (bool, error) {
+	 prevState := instance.CurrentState
+	 prevSubstate := instance.CurrentSubstate
+
+	 if err := instance.Transition(eventName); err != nil {
+		 return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
+	 }
+
+	 if instance.CurrentState == prevState && instance.CurrentSubstate == prevSubstate {
+		 log.Infof("Event %s did not change state for node %s, skipping persistence", eventName, nodeId)
+
+		 return false, nil
+	 }
+
+	 return n.persistTransition(ctx, instance, nodeId, prevState, eventName)
+ }
+
+ func (n *StateEventServer) persistTransition(ctx context.Context, instance *stm.StateMachineInstance,
+	 nodeId, prevState, eventName string) (bool, error) {
+	 _, err := n.s.UpdateState(ctx, &pb.UpdateStateRequest{
 		 NodeId:   nodeId,
-		 SubState: []string{instance.CurrentSubstate}, 
+		 SubState: []string{instance.CurrentSubstate},
 		 Events:   []string{eventName},
 	 })
 	 if err != nil {
-		 return fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
+		 return false, fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
 	 }
- 
-	 if instance.CurrentState != prevState {
-		 log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
-		 
-		 stateValue, ok := npb.NodeState_value[instance.CurrentState]
-		 if !ok {
-			 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
-			 stateValue = int32(npb.NodeState_Unknown)
-		 }
-		 
-		 _, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-			 NodeId:       nodeId,
-			 CurrentState: npb.NodeState(stateValue),
-			 SubState:     []string{instance.CurrentSubstate},
-			 Events:       []string{},
-		 })
-		 if err != nil {
-			 return fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
-		 }
+
+	 if instance.CurrentState == prevState {
+		 return false, nil
 	 }
-	 
-	 return nil
+
+	 log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
+
+	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	 if !ok {
+		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		 stateValue = int32(npb.NodeState_Unknown)
+	 }
+
+	 _, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
+		 NodeId:       nodeId,
+		 CurrentState: npb.NodeState(stateValue),
+		 SubState:     []string{instance.CurrentSubstate},
+		 Events:       []string{},
+	 })
+	 if err != nil {
+		 return false, fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
+	 }
+
+	 return true, nil
+ }
+
+ func isHealthEvent(eventName string) bool {
+	 return eventName == NodeStateEventPlatformReady || eventName == NodeStateEventFault
+ }
+
+ func shouldLatch(currentState, eventName string) bool {
+	 return currentState == npb.NodeState_Unknown.String() && isHealthEvent(eventName)
+ }
+
+ func (n *StateEventServer) latchHealthEvent(nodeID, eventName string) {
+	 n.latchedMu.Lock()
+	 defer n.latchedMu.Unlock()
+
+	 n.latchedHealth[nodeID] = eventName
+
+	 if err := n.s.SetLatchedEvent(nodeID, eventName); err != nil {
+		 log.Warnf("Failed to persist latched %s event for node %s, it will be lost on restart: %v",
+			 eventName, nodeID, err)
+	 }
+ }
+
+ func (n *StateEventServer) takeLatchedHealthEvent(nodeID string) (string, bool) {
+	 n.latchedMu.Lock()
+	 defer n.latchedMu.Unlock()
+
+	 eventName, ok := n.latchedHealth[nodeID]
+	 if ok {
+		 delete(n.latchedHealth, nodeID)
+	 }
+
+	 stored, err := n.s.TakeLatchedEvent(nodeID)
+	 if err != nil {
+		 log.Warnf("Failed to read persisted latched event for node %s: %v", nodeID, err)
+
+		 return eventName, ok
+	 }
+
+	 if !ok && stored != "" {
+		 return stored, true
+	 }
+
+	 return eventName, ok
  }
  
 
@@ -446,10 +578,18 @@ import (
 		 return fmt.Errorf("failed to create state machine instance: %w", err)
 	 }
 	 
+	 prevState := instance.CurrentState
+
 	 if err := instance.Transition(eventName); err != nil {
 		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
 	 }
-	 
+
+	 if instance.CurrentState == prevState && shouldLatch(instance.CurrentState, eventName) {
+		 n.latchHealthEvent(nodeId, eventName)
+		 log.Infof("Node %s received %s before it came up, latching it until the node transitions",
+			 nodeId, eventName)
+	 }
+
 	 if instance.CurrentSubstate == "" {
 		 instance.CurrentSubstate = DefaultSubstate
 		 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)

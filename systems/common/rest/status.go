@@ -1,0 +1,156 @@
+/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * Copyright (c) 2026-present, Ukama Inc.
+ */
+
+package rest
+
+import (
+	"context"
+	"net/http"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/loopfz/gadgeto/tonic"
+	"github.com/wI2L/fizz"
+
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+)
+
+const (
+	ServiceStatusAvailable   = "available"
+	ServiceStatusDegraded    = "degraded"
+	ServiceStatusUnavailable = "unavailable"
+
+	SystemStatusOk       = "ok"
+	SystemStatusDegraded = "degraded"
+	SystemStatusDown     = "down"
+
+	defaultStatusCheckTimeout = 5 * time.Second
+)
+
+// StatusTarget describes one gRPC service to health-check: where to reach
+// it and a human-readable description of the features it powers, so /status
+// consumers know what is affected when it goes down. The description is
+// meant to come from service config (env overridable), not be hardcoded.
+type StatusTarget struct {
+	Host        string
+	Description string
+}
+
+type ServiceStatus struct {
+	Name        string `json:"name"`
+	Host        string `json:"host"`
+	Description string `json:"description,omitempty"`
+	Status      string `json:"status"`
+	Error       string `json:"error,omitempty"`
+}
+
+type StatusResponse struct {
+	System   string          `json:"system"`
+	Status   string          `json:"status"`
+	Services []ServiceStatus `json:"services"`
+}
+
+// RegisterStatusEndpoint adds a GET /status route to the given fizz router.
+// It health-checks every gRPC service of the system (name -> host:port) in
+// parallel via grpc.health.v1 (with fallback to the legacy ukama.health.v1)
+// and reports each one as available/unavailable, plus an aggregated system
+// status: ok (all up), degraded (some up), or down (all down).
+func RegisterStatusEndpoint(f *fizz.Fizz, systemName string,
+	services map[string]StatusTarget, timeout time.Duration) {
+	if timeout <= 0 {
+		timeout = defaultStatusCheckTimeout
+	}
+
+	// fizz derives OpenAPI operation IDs from handler function names;
+	// anonymous handlers (like the /ping one) all reduce to "func1", so an
+	// explicit ID is required to avoid a duplicate-ID panic at startup.
+	f.GET("/status", []fizz.OperationOption{
+		fizz.ID("getSystemStatus"),
+		fizz.Summary("Get system status"),
+		fizz.Description("Health-checks all gRPC services of this system and reports each as available/unavailable."),
+	}, tonic.Handler(func(c *gin.Context) (*StatusResponse, error) {
+		return checkServices(c.Request.Context(), systemName, services, timeout), nil
+	}, http.StatusOK))
+}
+
+func checkServices(ctx context.Context, systemName string,
+	services map[string]StatusTarget, timeout time.Duration) *StatusResponse {
+	var (
+		mu      sync.Mutex
+		wg      sync.WaitGroup
+		results = make([]ServiceStatus, 0, len(services))
+	)
+
+	for name, target := range services {
+		wg.Add(1)
+
+		go func(name string, target StatusTarget) {
+			defer wg.Done()
+
+			cctx, cancel := context.WithTimeout(ctx, timeout)
+			defer cancel()
+
+			s := ServiceStatus{
+				Name:        name,
+				Host:        target.Host,
+				Description: target.Description,
+				Status:      ServiceStatusAvailable,
+			}
+
+			report := ugrpc.CheckServiceHealthDetailed(cctx, target.Host)
+			switch {
+			case report.Err != nil:
+				s.Status = ServiceStatusUnavailable
+				s.Error = report.Err.Error()
+				if len(report.DegradedDeps) > 0 {
+					s.Error += " (dependencies: " + strings.Join(report.DegradedDeps, ", ") + ")"
+				}
+			case len(report.DegradedDeps) > 0:
+				s.Status = ServiceStatusDegraded
+				s.Error = "dependency " + strings.Join(report.DegradedDeps, ", dependency ")
+			}
+
+			mu.Lock()
+			results = append(results, s)
+			mu.Unlock()
+		}(name, target)
+	}
+
+	wg.Wait()
+
+	sort.Slice(results, func(i, j int) bool {
+		return results[i].Name < results[j].Name
+	})
+
+	unavailable, degraded := 0, 0
+	for _, s := range results {
+		switch s.Status {
+		case ServiceStatusUnavailable:
+			unavailable++
+		case ServiceStatusDegraded:
+			degraded++
+		}
+	}
+
+	systemStatus := SystemStatusOk
+	switch {
+	case len(results) > 0 && unavailable == len(results):
+		systemStatus = SystemStatusDown
+	case unavailable > 0 || degraded > 0:
+		systemStatus = SystemStatusDegraded
+	}
+
+	return &StatusResponse{
+		System:   systemName,
+		Status:   systemStatus,
+		Services: results,
+	}
+}

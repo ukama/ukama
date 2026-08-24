@@ -115,7 +115,16 @@ func (d *db) Connect() error {
 		SkipDefaultTransaction: true,
 	})
 	d.gorm = db
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	if cerr := registerMetricsCallbacks(db); cerr != nil {
+		logrus.WithError(cerr).Warn("Failed to register database metrics callbacks")
+	}
+
+	return nil
 }
 
 func (d *db) migrateDb(dst ...interface{}) error {

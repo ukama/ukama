@@ -46,3 +46,9 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

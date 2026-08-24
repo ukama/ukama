@@ -41,6 +41,9 @@ int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,
                              ulab_error_t *err);
 int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
                                 ulab_error_t *err);
+int runtime_wait_service_state(runtime_t *rt, const world_t *w,
+                               const selector_result_t *sites,
+                               int enabled, ulab_error_t *err);
 int runtime_ensure_media(runtime_t *rt, ulab_error_t *err);
 int runtime_build_and_start_ues(const char *repo,
                                 runtime_t *rt,
@@ -48,6 +51,9 @@ int runtime_build_and_start_ues(const char *repo,
                                 const selector_result_t *ues,
                                 ulab_error_t *err);
 int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
+                              const selector_result_t *ues,
+                              ulab_error_t *err);
+int runtime_wait_ues_detached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
 int runtime_verify_ue_sessions(runtime_t *rt, const world_t *w,
@@ -67,6 +73,11 @@ int runtime_set_failure_control(runtime_t *rt,
                                 const char *target,
                                 int enabled,
                                 ulab_error_t *err);
+int runtime_failure_control_enabled(const runtime_t *rt,
+                                    const char *target);
+int runtime_hold_nodes(runtime_t *rt, const world_t *w,
+                       const selector_result_t *nodes,
+                       const char *target, ulab_error_t *err);
 int runtime_restore_failure_controls(runtime_t *rt, ulab_error_t *err);
 int runtime_set_node_version(runtime_t *rt, const char *version,
                              ulab_error_t *err);

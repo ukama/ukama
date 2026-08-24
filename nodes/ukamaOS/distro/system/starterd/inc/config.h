@@ -32,6 +32,9 @@ typedef struct {
     int  wimcPort;
     char *wimcPathTemplate;
 
+    char *lifecycleHost;
+    int lifecyclePort;
+
     int commitTimeoutSec;
     int pingTimeoutSec;
     int readyTimeoutSec;

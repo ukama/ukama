@@ -26,3 +26,10 @@ clean:
 	rm -rf bin/
 
 .PHONY: build test lint deps gen clean
+
+# KPI specs are owned by analysis/configs/kpis; this refreshes our copy.
+sync-specs:
+	rm -f configs/kpis/*.yaml
+	cp ../analysis/configs/kpis/*.yaml configs/kpis/
+
+.PHONY: sync-specs

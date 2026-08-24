@@ -210,6 +210,29 @@ int web_service_cb_version(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *epConfig) {
+
+    json_t *json;
+
+    (void)request;
+    (void)epConfig;
+
+    json = json_pack("{s:b}", "ready", true);
+    if (!json) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *epConfig) {

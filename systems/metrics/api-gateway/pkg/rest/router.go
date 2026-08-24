@@ -47,6 +47,8 @@ type RouterConfig struct {
 	serverConf          *rest.HttpConfig
 	metricsConf         *pkg.MetricsConfig
 	auth                *config.Auth
+	grpcEndpoints       *pkg.GrpcEndpoints
+	descriptions        *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -109,6 +111,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsServerConfig: svcConf.MetricsServer,
 		httpEndpoints:       &svcConf.Http,
 		serverConf:          &svcConf.Server,
+		grpcEndpoints:       &svcConf.Services,
+		descriptions:        &svcConf.Descriptions,
 		metricsConf:         svcConf.MetricsConfig,
 		debugMode:           svcConf.DebugMode,
 		auth:                svcConf.Auth,
@@ -126,6 +130,20 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"exporter":  {Host: r.config.grpcEndpoints.Exporter, Description: desc.Exporter},
+			"sanitizer": {Host: r.config.grpcEndpoints.Sanitizer, Description: desc.Sanitizer},
+			"reasoning": {Host: r.config.grpcEndpoints.Reasoning, Description: desc.Reasoning},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "metrics system", "metrics system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			log.Info("Bypassing auth")
@@ -183,11 +201,25 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 				info.Description = "Get metrics range for a time period. Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#range-vectors"
 			}}, tonic.Handler(r.metricRangeHandler, http.StatusOK))
 
+		auth.GET("/last/metrics/:metric", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Description = "Get the latest value (KPI) of a metric, using the same filters as the range endpoint. " +
+					"Returns the last sample each matching series reported within the lookback window, unaggregated. " +
+					"Response has Prometheus data format https://prometheus.io/docs/prometheus/latest/querying/api/#instant-queries"
+			}}, tonic.Handler(r.metricLastHandler, http.StatusOK))
+
 		exp := auth.Group("/exporter", "exporter", "exporter")
 		exp.GET("", formatDoc("Dummy functions", ""), tonic.Handler(r.getDummyHandler, http.StatusOK))
 
 		sanitizer := auth.Group("/sanitize", "Sanitizer", "Sanitizer")
-		sanitizer.POST("", formatDoc("Sanitize", "Stream metrics for Sanitizer service"), tonic.Handler(r.sanitizeMetrics, http.StatusOK))
+		sanitizer.POST("", []fizz.OperationOption{
+			func(info *openapi.OperationInfo) {
+				info.Summary = "Sanitize"
+				info.Description = "Prometheus remote_write receiver. The body must be a snappy compressed " +
+					"prompb.WriteRequest, so this endpoint cannot be exercised from the Swagger UI. " +
+					"Matching metrics are re-published with node_id, site and network labels appended. " +
+					"See https://prometheus.io/docs/specs/prw/remote_write_spec/"
+			}}, tonic.Handler(r.sanitizeMetrics, http.StatusOK))
 
 		reasoning := auth.Group("/reasoning", "Reasoning", "Reasoning")
 		reasoning.GET("/stats/nodes/:node/metrics/:metric", []fizz.OperationOption{
@@ -244,7 +276,20 @@ func (r *Router) sanitizeMetrics(c *gin.Context) (*pbs.SanitizeResponse, error) 
 	if err != nil {
 		log.Errorf("Failure while reading request body before sanitizing: %v", err)
 
-		return nil, fmt.Errorf("failure while reading request body before sanitizing: %w", err)
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message:  fmt.Sprintf("failure while reading request body before sanitizing: %v", err),
+		}
+	}
+
+	if len(data) == 0 {
+		log.Warn("Got an empty body on the sanitize endpoint")
+
+		return nil, rest.HttpError{
+			HttpCode: http.StatusBadRequest,
+			Message: "empty request body: this endpoint is a Prometheus remote_write receiver " +
+				"and expects a snappy compressed prompb.WriteRequest, not JSON",
+		}
 	}
 
 	return r.clients.s.Sanitize(data)
@@ -304,7 +349,29 @@ func (r *Router) metricHandler(c *gin.Context, in *GetMetricsInput) error {
 }
 
 func (r *Router) metricRangeHandler(c *gin.Context, in *GetMetricsRangeInput) error {
-	return r.requestMetricRangeInternal(c.Writer, in.FilterBase, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation))
+	return r.requestMetricRangeInternal(c.Writer, in.FilterBase,
+		pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation).
+			WithPackage(in.Package).WithIccid(in.Iccid))
+}
+
+func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) error {
+	// Empty operation: this endpoint never aggregates, so the filter's
+	// operation is unused.
+	filter := pkg.NewFilter().
+		WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, "").
+		WithPackage(in.Package).WithIccid(in.Iccid)
+
+	nodeType := pkg.ExtractNodeType(in.NodeID)
+	if !r.m.MetricsExist(in.Metric, nodeType) {
+		return rest.HttpError{
+			HttpCode: http.StatusNotFound,
+			Message:  "Metric not found"}
+	}
+
+	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s", filter, nodeType, in.Lookback)
+	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter, in.Lookback, c.Writer)
+
+	return httpErrorOrNil(httpCode, err)
 }
 
 func (r *Router) subscriberMetricHandler(c *gin.Context, in *GetSubscriberMetricsInput) error {
@@ -358,7 +425,9 @@ func (r *Router) nodeMetricHandler(c *gin.Context, in *GetNodeMetricsInput) erro
 }
 
 func (r *Router) wsMetricHandler(w io.Writer, in *GetWsMetricInput) error {
-	return r.requestMetricInternal(w, in.Metric, pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation), true)
+	return r.requestMetricInternal(w, in.Metric,
+		pkg.NewFilter().WithAny(in.Network, in.Subscriber, in.Sim, in.Site, in.NodeID, in.Operation).
+			WithPackage(in.Package).WithIccid(in.Iccid), true)
 }
 
 func (r *Router) requestMetricRangeInternal(writer io.Writer, filterBase FilterBase, filter *pkg.Filter) error {

@@ -42,7 +42,7 @@ phases:
       - type: list_count_equals
         target: customers
         networks: net-001
-        expected_count: 2
+        expected_count: 4
       - type: list_count_equals
         target: plans
         networks: net-001
@@ -50,7 +50,7 @@ phases:
       - type: list_count_equals
         target: sims
         networks: net-001
-        expected_count: 2
+        expected_count: 4
       - type: entity_fields_equal
         entity: network
         ref: net-001

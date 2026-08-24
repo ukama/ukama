@@ -6,6 +6,7 @@
 kpi: REVENUE
 domain: business
 algo: revenue@v1
+kind: flow
 scope: [network_id]
 inputs:
   payments:
@@ -18,5 +19,4 @@ inputs:
     dataset: registry.network.getAll
     fields: [network_id]
 output: { type: int, unit: cents, symbol: "$" }
-rollup_ops: [SUM, COUNT, AVG, MAX]
 positive_direction: up

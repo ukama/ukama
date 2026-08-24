@@ -29,6 +29,7 @@ import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
 import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -46,7 +47,7 @@ export default function NetworkHomeScreen() {
         keys: [
           KPI_KEYS.networkUptime,
           KPI_KEYS.activeCustomers,
-          KPI_KEYS.usageByNetwork,
+          KPI_KEYS.dataUsage,
           KPI_KEYS.sitesOnline,
         ],
         span: rangeToSpan(range),
@@ -57,7 +58,8 @@ export default function NetworkHomeScreen() {
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
   const {
-    data: sitesData,
+    data: sitesCurrent,
+    previousData: sitesPrevious,
     loading: sitesLoading,
     error: sitesError,
     refetch,
@@ -66,14 +68,21 @@ export default function NetworkHomeScreen() {
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
+  // The SiteDto cache TTL expires mid-session: Apollo hands back an emptied
+  // result while it refetches, with `loading` still false. Hold the last
+  // delivered response so the screen never reads as "no sites".
+  const sitesData = sitesCurrent ?? sitesPrevious;
   const kpis = kpiData?.getKpiValues.values;
   const loading = kpiLoading || sitesLoading;
 
+  // `sitesView` resolves per section, so a failed sites read arrives as an
+  // empty list with no top-level error — that is unknown, not zero.
+  const sitesSection = sitesData?.sitesView.sites;
+  const siteRows =
+    sitesError || sitesSection?.error ? undefined : sitesSection?.sites;
+
   // The home map only needs each site's name, status and coordinates.
-  const mapSites = useMemo(
-    () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
-    [sitesData?.sitesView.sites.sites],
-  );
+  const mapSites = useMemo(() => toMapSites(siteRows ?? []), [siteRows]);
 
   const mapMarkers = mapSites
     .filter((s) => s.lat !== 0 || s.lng !== 0)
@@ -91,17 +100,17 @@ export default function NetworkHomeScreen() {
     }));
 
   const site = mapSites.find((s) => s.id === sel);
-  const sitesTotal = mapSites.length;
   // Sites online comes from the analytics SITES_ONLINE KPI only (no registry
   // fallback); undefined when the KPI hasn't been emitted. The KPI counts a
   // site only when every one of its tnode/anode/cnode is online, so a site
   // with an offline node — or with no nodes registered yet — is excluded and
-  // the count reads below the registry site total.
-  const sitesOnlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
-  const sitesOnline =
-    sitesOnlineKpi != null ? Math.round(sitesOnlineKpi) : undefined;
-  const sitesOffline =
-    sitesOnline != null ? Math.max(0, sitesTotal - sitesOnline) : undefined;
+  // the count reads below the registry site total. The total comes from a
+  // different response, so `sitesOnlineTile` renders the pair only when it is
+  // coherent (`siteRows` is undefined, not [], when unknown).
+  const sitesTile = sitesOnlineTile(
+    kpiValue(kpis, KPI_KEYS.sitesOnline),
+    siteRows?.length,
+  );
 
   return (
     <div className="page">
@@ -140,7 +149,7 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.usageByNetwork, (v) =>
+              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) =>
                 formatBytes(v),
               ),
             },
@@ -148,21 +157,18 @@ export default function NetworkHomeScreen() {
               icon: 'cell_tower',
               color: 'var(--uk-ac)',
               label: 'Sites online',
-              value:
-                sitesError || sitesOnline == null
-                  ? '—'
-                  : `${sitesOnline}/${sitesTotal}`,
+              value: sitesTile.text,
               // A site counts as online only when all of its nodes are
               // connected, so the shortfall is "not fully online" rather than
               // "down". No sub-line at all while the KPI is absent — the old
               // copy claimed "all healthy" for a missing reading.
               sub:
-                sitesOffline == null
+                sitesTile.offline == null
                   ? undefined
-                  : sitesOffline > 0
-                    ? `${sitesOffline} not fully online`
+                  : sitesTile.offline > 0
+                    ? `${sitesTile.offline} not fully online`
                     : 'all sites online',
-              danger: sitesOffline != null && sitesOffline > 0,
+              danger: sitesTile.offline != null && sitesTile.offline > 0,
             },
           ]}
         />

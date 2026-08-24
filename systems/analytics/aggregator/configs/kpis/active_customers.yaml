@@ -3,6 +3,8 @@
 kpi: ACTIVE_CUSTOMERS
 domain: subscriber
 algo: active_customers@v3
+kind: gauge
+scope_agg: sum
 scope: [network_id]
 inputs:
   sims:
@@ -15,5 +17,4 @@ output:
   type: int
   unit: count
   symbol: ""
-rollup_ops: [AVG, MIN, MAX, LAST]
 positive_direction: up

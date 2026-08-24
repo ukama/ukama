@@ -23,6 +23,7 @@ type ListenerConfig struct {
 
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
+	Grpc              *config.Grpc `default:"{}"`
 	Queue             config.Queue
 	Listener          ListenerConfig
 	Metrics           *config.Metrics
@@ -39,6 +40,9 @@ type HttpServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		Grpc: &config.Grpc{
+			Port: 9090,
+		},
 		Queue: config.Queue{
 			Uri: "amqp://guest:guest@rabbitmq:5672/",
 		},

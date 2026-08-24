@@ -190,6 +190,8 @@ static int ws_status_cb(const struct _u_request *req,
                             json_boolean(ctx->updateInProgress ? 1 : 0));
         json_object_set_new(meta, "terminateRequested",
                             json_boolean(ctx->terminateRequested ? 1 : 0));
+        json_object_set_new(meta, "restartRequested",
+                            json_boolean(ctx->restartRequested ? 1 : 0));
         json_object_set_new(meta, "switchRequested",
                             json_boolean(ctx->switchRequested ? 1 : 0));
         json_object_set_new(meta, "exitCode",
@@ -358,7 +360,8 @@ static int ws_update_cb(const struct _u_request *req,
     }
 
     if (ctx->switchRequested ||
-        ctx->terminateRequested) {
+        ctx->terminateRequested ||
+        ctx->restartRequested) {
         return ws_reply_text(resp,
                              HttpStatus_Conflict,
                              HttpStatusStr(HttpStatus_Conflict));
@@ -454,7 +457,8 @@ static int ws_terminate_cb(const struct _u_request *req,
 
     if (ctx->switchRequested ||
         ctx->updateInProgress ||
-        ctx->terminateRequested) {
+        ctx->terminateRequested ||
+        ctx->restartRequested) {
         return ws_reply_text(resp,
                              HttpStatus_Conflict,
                              HttpStatusStr(HttpStatus_Conflict));
@@ -501,6 +505,82 @@ static int ws_terminate_cb(const struct _u_request *req,
             free(a);
         }
         ctx->terminateRequested = 0;
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    supervisor_signal((Supervisor *)ctx->supervisor);
+
+    return ws_reply_text(resp,
+                         HttpStatus_Accepted,
+                         HttpStatusStr(HttpStatus_Accepted));
+}
+
+static int ws_restart_cb(const struct _u_request *req,
+                         struct _u_response *resp,
+                         void *userData) {
+
+    StarterContext *ctx;
+    json_t *json;
+    json_t *value;
+    const char *space;
+    const char *name;
+    Action *action;
+
+    ctx = (StarterContext *)userData;
+    if (!ctx || !ctx->queue || !ctx->supervisor || !ctx->spaceList) {
+        return ws_reply_text(resp,
+                             HttpStatus_InternalServerError,
+                             HttpStatusStr(HttpStatus_InternalServerError));
+    }
+
+    if (ctx->switchRequested ||
+        ctx->updateInProgress ||
+        ctx->terminateRequested ||
+        ctx->restartRequested) {
+        return ws_reply_text(resp,
+                             HttpStatus_Conflict,
+                             HttpStatusStr(HttpStatus_Conflict));
+    }
+
+    json = ws_load_json_body(req);
+    if (!json) {
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    value = json_object_get(json, "space");
+    space = json_is_string(value) ? json_string_value(value) : NULL;
+    value = json_object_get(json, "name");
+    name = json_is_string(value) ? json_string_value(value) : NULL;
+
+    if (!space || !name) {
+        json_decref(json);
+        return ws_reply_text(resp,
+                             HttpStatus_BadRequest,
+                             HttpStatusStr(HttpStatus_BadRequest));
+    }
+
+    if (!ws_app_exists(ctx, space, name)) {
+        json_decref(json);
+        return ws_reply_text(resp,
+                             HttpStatus_NotFound,
+                             HttpStatusStr(HttpStatus_NotFound));
+    }
+
+    ctx->restartRequested = 1;
+    action = action_new(ACTION_RESTART_APP, space, name, NULL, NULL);
+    json_decref(json);
+
+    if (!action || !actions_enqueue(ctx->queue, action)) {
+        if (action) {
+            free(action->space);
+            free(action->name);
+            free(action);
+        }
+        ctx->restartRequested = 0;
         return ws_reply_text(resp,
                              HttpStatus_InternalServerError,
                              HttpStatusStr(HttpStatus_InternalServerError));
@@ -603,6 +683,12 @@ bool web_service_start(StarterContext *ctx) {
                                &ws_terminate_cb, ctx);
     setup_unsupported_methods(ctx->uInstance, "POST",
                               "/v1", "/terminate");
+
+    ulfius_add_endpoint_by_val(ctx->uInstance, "POST",
+                               "/v1", "/restart", 0,
+                               &ws_restart_cb, ctx);
+    setup_unsupported_methods(ctx->uInstance, "POST",
+                              "/v1", "/restart");
 
     if (ulfius_start_framework(ctx->uInstance) != U_OK) {
         usys_log_error("web: start failed");

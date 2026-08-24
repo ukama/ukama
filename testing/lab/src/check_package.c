@@ -11,6 +11,7 @@
 #include "selector.h"
 #include "util.h"
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -70,6 +71,11 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
                 size_t j;
                 size_t matching;
                 int active;
+                int inactive;
+                int queued;
+                char now_iso[32];
+                time_t now;
+                struct tm now_tm;
 
                 ue = &ctx->world->ues[ues.idx[i]];
                 pkg = check->package_ref[0] ?
@@ -87,6 +93,12 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
 
                 matching = 0;
                 active = 0;
+                inactive = 0;
+                queued = 0;
+                now = time(NULL);
+                gmtime_r(&now, &now_tm);
+                strftime(now_iso, sizeof(now_iso),
+                         "%Y-%m-%dT%H:%M:%SZ", &now_tm);
                 for (j = 0; j < assignment_count; j++) {
                     if (pkg != NULL &&
                         !ulab_streq(assignments[j].package_id,
@@ -96,6 +108,12 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
                     matching++;
                     if (assignments[j].active) {
                         active = 1;
+                    } else if (assignments[j].start_date[0] != '\0' &&
+                               strcmp(assignments[j].start_date,
+                                      now_iso) > 0) {
+                        queued = 1;
+                    } else {
+                        inactive = 1;
                     }
                 }
 
@@ -105,9 +123,9 @@ int check_package(check_ctx_t *ctx, const check_spec_t *check,
                 } else if (check->type == CHECK_PACKAGE_STATE &&
                            ((ulab_streq(check->expected, "active") && active) ||
                             (ulab_streq(check->expected, "queued") &&
-                             matching > 0 && !active) ||
+                             queued) ||
                             (ulab_streq(check->expected, "inactive") &&
-                             matching > 0 && !active) ||
+                             inactive) ||
                             (ulab_streq(check->expected, "absent") &&
                              matching == 0))) {
                     ok++;

@@ -21,9 +21,17 @@ int web_service_cb_version(const URequest *request,
                            UResponse *response,
                            void *data);
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *data);
+
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *data);
+
+int web_service_cb_service(const URequest *request,
+                           UResponse *response,
+                           void *data);
 
 int web_service_cb_attach(const URequest *request,
                           UResponse *response,

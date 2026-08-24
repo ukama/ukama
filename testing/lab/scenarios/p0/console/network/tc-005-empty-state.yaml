@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-network-empty-state
-description: Verify a provisioned network with no customers, plans, SIMs, sales, or usage returns valid empty lists and zero business values instead of stale data.
+description: Verify a provisioned network with no customers, plans, SIMs, sales, or usage returns valid empty lists and each KPI's documented zero or no-data state instead of stale data.
 seed: 4802
 suite: p0
 priority: p0
@@ -46,7 +46,7 @@ phases:
         key: PACKAGE_SALES
         networks: net-001
         span: daily
-        value_state: zero
+        value_state: no_data
         timeout_seconds: 600
       - type: kpi_state_equals
         key: PAID_CUSTOMERS
@@ -55,8 +55,8 @@ phases:
         value_state: zero
         timeout_seconds: 600
       - type: kpi_state_equals
-        key: USAGE_BY_NETWORK
+        key: DATA_USAGE
         networks: net-001
         span: daily
-        value_state: zero
+        value_state: no_data
         timeout_seconds: 600

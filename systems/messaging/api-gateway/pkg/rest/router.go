@@ -42,6 +42,8 @@ type RouterConfig struct {
 	serverConf    *rest.HttpConfig
 	auth          *config.Auth
 	// nodeMetricPort int32
+	grpcEndpoints *pkg.GrpcEndpoints
+	descriptions  *pkg.ServiceDescriptions
 }
 
 type Clients struct {
@@ -84,6 +86,8 @@ func NewRouterConfig(svcConf *pkg.Config) *RouterConfig {
 		metricsConfig: svcConf.Metrics,
 		httpEndpoints: &svcConf.Http,
 		serverConf:    &svcConf.Server,
+		grpcEndpoints: &svcConf.Services,
+		descriptions:  &svcConf.Descriptions,
 		debugMode:     svcConf.DebugMode,
 		auth:          svcConf.Auth,
 	}
@@ -100,6 +104,20 @@ func (rt *Router) Run() {
 func (r *Router) init(f func(*gin.Context, string) error) {
 
 	r.f = rest.NewFizzRouter(r.config.serverConf, pkg.SystemName, version.Version, r.config.debugMode, r.config.auth.AuthAppUrl+"?redirect=true")
+
+	desc := r.config.descriptions
+	if desc == nil {
+		desc = &pkg.ServiceDescriptions{}
+	}
+
+	if r.config.grpcEndpoints != nil {
+		rest.RegisterStatusEndpoint(r.f, pkg.SystemName, map[string]rest.StatusTarget{
+			"nns":         {Host: r.config.grpcEndpoints.Nns, Description: desc.Nns},
+			"broadcaster": {Host: r.config.grpcEndpoints.Broadcaster, Description: desc.Broadcaster},
+			"node-feeder": {Host: r.config.grpcEndpoints.NodeFeeder, Description: desc.NodeFeeder},
+		}, r.config.grpcEndpoints.Timeout)
+	}
+
 	auth := r.f.Group("/v1", "Messaging system API Gateway", "Messaging system version v1", func(ctx *gin.Context) {
 		if r.config.auth.BypassAuthMode {
 			logrus.Info("Bypassing auth")

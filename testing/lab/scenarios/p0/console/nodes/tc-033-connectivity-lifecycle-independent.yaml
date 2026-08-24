@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-033-connectivity-lifecycle-independent
-description: Take an operational controller offline and verify connectivity changes to Offline while its last lifecycle state remains Operational, then reconnect it.
+description: Take an operational controller offline and verify its Nodes List connectivity changes while lifecycle remains Operational, then verify recovery.
 seed: 5033
 suite: p0
 priority: p0
@@ -23,6 +23,17 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: verify_operational_baseline
+    checks:
+      - type: node_status_equals
+        view: nodes_list
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
   - name: disconnect_operational_node
     events:
       - type: disconnect_nodes
@@ -35,10 +46,12 @@ phases:
         seconds: 120
     checks:
       - type: node_status_equals
+        view: nodes_list
         type_selector: controller
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
   - name: reconnect_node
     events:
@@ -52,8 +65,10 @@ phases:
         seconds: 180
     checks:
       - type: node_status_equals
+        view: nodes_list
         type_selector: controller
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

@@ -1,6 +1,8 @@
 version: 1
 name: p0-policy-survives-restart
-description: Verify infrastructure restart does not reset recorded usage or bypass the original package allowance.
+description: >-
+  Re-enable service after an infrastructure restart and verify the restart
+  does not reset recorded usage or bypass the original package allowance.
 seed: 4313
 suite: p0
 priority: p0
@@ -48,10 +50,25 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 120
       - type: restart_nodes
         nodes: all
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 300
       - type: wait_nodes_ready
         nodes: all
+      - type: toggle_service
+        sites: all
+        state: on
       - type: wait_ues_attached
         ues: all
       - type: traffic
@@ -62,11 +79,8 @@ phases:
         seconds: 60
       - type: start_ues
         ues: all
-      - type: wait_ue_sessions
-        ues: all
-        seconds: 90
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: all
         amount_mb: 1
       - type: package_state

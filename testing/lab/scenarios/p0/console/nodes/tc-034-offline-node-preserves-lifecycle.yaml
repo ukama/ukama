@@ -1,10 +1,10 @@
 version: 1
 name: p0-tc-034-offline-node-preserves-lifecycle
-description: Disconnect a configured operational node and verify the BFF keeps its last known lifecycle state while reporting Offline connectivity; this also covers TC-177.
+description: Disconnect an operational amplifier and verify Nodes List preserves its Operational lifecycle while reporting Offline, then verify the row recovers Online.
 seed: 5034
 suite: p0
 priority: p0
-tags: [virtual, console, nodes, offline, lifecycle, tc-034, tc-177]
+tags: [virtual, console, nodes, offline, lifecycle, tc-034]
 status: active
 provider:
   type: virtual
@@ -26,10 +26,13 @@ phases:
   - name: record_last_known_state
     checks:
       - type: node_status_equals
+        view: nodes_list
         type_selector: amplifier
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
+        timeout_seconds: 120
   - name: verify_offline_last_known_state
     events:
       - type: disconnect_nodes
@@ -42,13 +45,29 @@ phases:
         seconds: 120
     checks:
       - type: node_status_equals
+        view: nodes_list
         type_selector: amplifier
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
   - name: restore_node
     events:
       - type: reconnect_nodes
         type_selector: amplifier
         count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        seconds: 180
+    checks:
+      - type: node_status_equals
+        view: nodes_list
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180

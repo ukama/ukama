@@ -36,8 +36,16 @@ static void setup_webservice_endpoints(ServiceContext *ctx, UInst *instance) {
                                &web_service_cb_version, ctx);
 
     ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("ready"), 0,
+                               &web_service_cb_ready, ctx);
+
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
                                API_RES_EP("status"), 0,
                                &web_service_cb_status, ctx);
+
+    ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
+                               API_RES_EP("service"), 0,
+                               &web_service_cb_service, ctx);
 
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("ue/attach"), 0,

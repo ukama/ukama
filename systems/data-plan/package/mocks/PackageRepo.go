@@ -170,17 +170,17 @@ func (_m *PackageRepo) GetDetails(_a0 uuid.UUID) (*db.Package, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: _a0, pkg
-func (_m *PackageRepo) Update(_a0 uuid.UUID, pkg *db.Package) error {
-	ret := _m.Called(_a0, pkg)
+// Update provides a mock function with given fields: _a0, updates
+func (_m *PackageRepo) Update(_a0 uuid.UUID, updates map[string]interface{}) error {
+	ret := _m.Called(_a0, updates)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, *db.Package) error); ok {
-		r0 = rf(_a0, pkg)
+	if rf, ok := ret.Get(0).(func(uuid.UUID, map[string]interface{}) error); ok {
+		r0 = rf(_a0, updates)
 	} else {
 		r0 = ret.Error(0)
 	}

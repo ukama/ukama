@@ -323,46 +323,6 @@ func ActivePlans(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result,
 	}), nil
 }
 
-// PackageDataUsed (PACKAGE_DATA_USED @ scope network_id+package_id): window
-// usage per sim attributed to the sim's currently-active package.
-func PackageDataUsed(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	usage, ok := in["usage"]
-	if !ok {
-		return nil, fmt.Errorf("PACKAGE_DATA_USED: missing input 'usage'")
-	}
-
-	assignments, ok := in["sim_packages"]
-	if !ok {
-		return nil, fmt.Errorf("PACKAGE_DATA_USED: missing input 'sim_packages'")
-	}
-
-	activePackageOfSim := map[string]string{}
-	for _, a := range activeOf(assignments) {
-		activePackageOfSim[str(a["sim_id"])] = str(a["package_id"])
-	}
-
-	bytes := map[[2]string]float64{}
-
-	for _, rec := range usage {
-		networkID, simID := str(rec["network_id"]), str(rec["sim_id"])
-
-		packageID := activePackageOfSim[simID]
-		if networkID == "" || packageID == "" {
-			continue
-		}
-
-		bytes[[2]string{networkID, packageID}] += sumNumeric(rec["usage"])
-	}
-
-	results := make([]Result, 0, len(bytes))
-	for key, b := range bytes {
-		results = append(results, CountResult(
-			map[string]string{"network_id": key[0], "package_id": key[1]}, b))
-	}
-
-	return results, nil
-}
-
 // --- shared helpers ---
 
 func packageInputs(in Datasets, kpi string) (assignments, networks []map[string]interface{}, err error) {

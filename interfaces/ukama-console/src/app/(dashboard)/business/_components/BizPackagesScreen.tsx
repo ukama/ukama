@@ -11,7 +11,7 @@
  *  data_volume/active) and columns (sold/revenue/data_used), plus a
  *  threshold-derived status. The four headline tiles are report-derived totals:
  *  Package revenue (Σ revenue), Packages sold (Σ sold), Best package (best
- *  seller's allowance / validity) and Data consumed (USAGE_BY_NETWORK). */
+ *  seller's allowance / validity) and Data consumed (DATA_USAGE). */
 import { useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -71,13 +71,13 @@ export default function BizPackagesScreen() {
     skip: !networkId,
   });
 
-  // Data consumed = total network data usage (USAGE_BY_NETWORK), read at the
-  // selected rolling span — the direct per-network metric (no per-package
-  // active-assignment attribution required).
+  // Data consumed = total network data usage (DATA_USAGE filtered by network,
+  // which folds the per-iccid scope to one network total), read at the selected
+  // rolling span — no per-package active-assignment attribution required.
   const { data: usageData } = useGetKpiValuesQuery({
     variables: {
       data: {
-        keys: [KPI_KEYS.usageByNetwork],
+        keys: [KPI_KEYS.dataUsage],
         span: rangeToSpan(range),
         networkId,
       },
@@ -86,7 +86,7 @@ export default function BizPackagesScreen() {
   });
   const usageBytes = kpiValue(
     usageData?.getKpiValues.values,
-    KPI_KEYS.usageByNetwork,
+    KPI_KEYS.dataUsage,
   );
 
   const plans: Plan[] = (data?.getPerformanceReport.rows ?? []).map((r) => ({

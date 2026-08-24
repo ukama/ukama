@@ -544,6 +544,58 @@ int runtime_enable_pcrf_service(runtime_t *rt, const world_t *w,
     return ULAB_OK;
 }
 
+static int runtime_site_selected(const world_t *w,
+                                 const selector_result_t *sites,
+                                 const char *site_ref) {
+    size_t i;
+
+    for (i = 0; i < sites->count; i++) {
+        if (ulab_streq(w->sites[sites->idx[i]].ref, site_ref)) {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+int runtime_wait_service_state(runtime_t *rt, const world_t *w,
+                               const selector_result_t *sites,
+                               int enabled, ulab_error_t *err) {
+    size_t i;
+
+    if (rt == NULL || w == NULL || sites == NULL) {
+        return ULAB_OK;
+    }
+
+    for (i = 0; i < w->node_count; i++) {
+        const node_t *node;
+        char args[ULAB_MAX_ARGS];
+        int rc;
+
+        node = &w->nodes[i];
+        if (!ulab_streq(node->type, ULAB_NODE_TOWER) ||
+            !runtime_site_selected(w, sites, node->site_ref)) {
+            continue;
+        }
+
+        rc = snprintf(args, sizeof(args), "%s %s %s",
+                      node->id, enabled ? "on" : "off", rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "service-state args too long for node %s", node->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("SERVICE", "wait %s %s",
+                    enabled ? "on" : "off", node->id);
+        if (run_script(rt, "wait-service-state.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_ensure_media(runtime_t *rt, ulab_error_t *err) {
 
     char args[ULAB_MAX_ARGS];
@@ -676,6 +728,35 @@ int runtime_wait_ues_attached(runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_wait_ues_detached(runtime_t *rt,
+                              world_t *w,
+                              const selector_result_t *ues,
+                              ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        ue_t *ue;
+        char args[4096];
+        int rc;
+
+        ue = &w->ues[ues->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s", ue->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "wait-ue-detached args too long for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (run_script(rt, "wait-ues-detached.sh", args, err)) {
+            return ULAB_ERR;
+        }
+
+        ue->attached = 0;
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_verify_ue_sessions(runtime_t *rt,
                                const world_t *w,
                                const selector_result_t *ues,
@@ -795,12 +876,12 @@ int runtime_restart_nodes(runtime_t *rt,
     return node_provider_restart(rt, w, nodes, err);
 }
 
-static int runtime_set_nodes_network(runtime_t *rt,
-                                     const world_t *w,
-                                     const selector_result_t *nodes,
-                                     const char *script,
-                                     const char *action,
-                                     ulab_error_t *err) {
+static int runtime_set_nodes_connection(runtime_t *rt,
+                                        const world_t *w,
+                                        const selector_result_t *nodes,
+                                        const char *script,
+                                        const char *action,
+                                        ulab_error_t *err) {
     size_t i;
 
     for (i = 0; i < nodes->count; i++) {
@@ -817,7 +898,7 @@ static int runtime_set_nodes_network(runtime_t *rt,
             return ULAB_ERR;
         }
 
-        ulab_status("NODE", "%s network %s", action, node->bff_id);
+        ulab_status("NODE", "%s %s", action, node->bff_id);
         if (run_script(rt, script, args, err)) {
             return ULAB_ERR;
         }
@@ -830,18 +911,18 @@ int runtime_disconnect_nodes(runtime_t *rt,
                              const world_t *w,
                              const selector_result_t *nodes,
                              ulab_error_t *err) {
-    return runtime_set_nodes_network(rt, w, nodes,
-                                     "disconnect-node.sh",
-                                     "disconnect", err);
+    return runtime_set_nodes_connection(rt, w, nodes,
+                                        "disconnect-node.sh",
+                                        "disconnect", err);
 }
 
 int runtime_reconnect_nodes(runtime_t *rt,
                             const world_t *w,
                             const selector_result_t *nodes,
                             ulab_error_t *err) {
-    return runtime_set_nodes_network(rt, w, nodes,
-                                     "reconnect-node.sh",
-                                     "reconnect", err);
+    return runtime_set_nodes_connection(rt, w, nodes,
+                                        "reconnect-node.sh",
+                                        "reconnect", err);
 }
 
 
@@ -1189,6 +1270,64 @@ static const failure_control_def_t *failure_control_def(
     return NULL;
 }
 
+static int native_virtual_failure_control(const runtime_t *rt,
+                                          const char *target) {
+    if (rt == NULL || !ulab_streq(rt->provider, "virtual")) {
+        return 0;
+    }
+
+    return ulab_streq(target, "node_restart") ||
+           ulab_streq(target, "site_restart") ||
+           ulab_streq(target, "software_timeout");
+}
+
+int runtime_failure_control_enabled(const runtime_t *rt,
+                                    const char *target) {
+    const failure_control_def_t *def;
+
+    if (rt == NULL || target == NULL) {
+        return 0;
+    }
+
+    def = failure_control_def(target);
+    return def != NULL && (rt->failure_controls & def->bit) != 0;
+}
+
+int runtime_hold_nodes(runtime_t *rt, const world_t *w,
+                       const selector_result_t *nodes,
+                       const char *target, ulab_error_t *err) {
+    size_t i;
+
+    if (rt == NULL || w == NULL || nodes == NULL || target == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "hold nodes requires runtime, world, nodes, and target");
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < nodes->count; i++) {
+        const node_t *node;
+        char args[ULAB_MAX_ARGS];
+        int rc;
+
+        node = &w->nodes[nodes->idx[i]];
+        rc = snprintf(args, sizeof(args), "%s %s %s",
+                      target, node->id, rt->run_dir);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "hold-node args too long for node %.128s", node->id);
+            return ULAB_ERR;
+        }
+
+        ulab_status("FAULT", "hold node=%s target=%s",
+                    node->bff_id, target);
+        if (run_script(rt, "hold-node.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_set_failure_control(runtime_t *rt,
                                 const char *target,
                                 int enabled,
@@ -1210,18 +1349,33 @@ int runtime_set_failure_control(runtime_t *rt,
         return ULAB_ERR;
     }
 
-    rc = snprintf(args, sizeof(args), "%s %s", target,
-                  enabled ? "on" : "off");
-    if (rc < 0 || (size_t)rc >= sizeof(args)) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "failure control arguments too long");
-        return ULAB_ERR;
-    }
-
     ulab_status("FAULT", "%s failure %s", target,
                 enabled ? "on" : "off");
-    if (run_script(rt, "test-control.sh", args, err)) {
-        return ULAB_ERR;
+
+    if (native_virtual_failure_control(rt, target)) {
+        if (!enabled) {
+            rc = snprintf(args, sizeof(args), "%s %s",
+                          target, rt->run_dir);
+            if (rc < 0 || (size_t)rc >= sizeof(args)) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "failure control arguments too long");
+                return ULAB_ERR;
+            }
+            if (run_script(rt, "release-held-nodes.sh", args, err)) {
+                return ULAB_ERR;
+            }
+        }
+    } else {
+        rc = snprintf(args, sizeof(args), "%s %s", target,
+                      enabled ? "on" : "off");
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "failure control arguments too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "test-control.sh", args, err)) {
+            return ULAB_ERR;
+        }
     }
 
     if (enabled) {

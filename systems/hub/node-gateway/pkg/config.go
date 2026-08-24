@@ -19,15 +19,25 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 	Server            rest.HttpConfig
-	Services          GrpcEndpoints  `mapstructure:"services"`
-	Http              HttpEndpoints  `mapstructure:"http"`
-	Metrics           config.Metrics `mapstructure:"metrics"`
-	Auth              *config.Auth   `mapstructure:"auth"`
+	Services          GrpcEndpoints       `mapstructure:"services"`
+	Descriptions      ServiceDescriptions `mapstructure:"descriptions"`
+	Http              HttpEndpoints       `mapstructure:"http"`
+	Metrics           config.Metrics      `mapstructure:"metrics"`
+	Auth              *config.Auth        `mapstructure:"auth"`
 }
 
 type GrpcEndpoints struct {
 	Timeout         time.Duration
 	MaxMsgSize      int `default:"4194304"`
+	ArtifactManager string
+	Distributor     string
+}
+
+// ServiceDescriptions holds a human-readable description per gRPC service,
+// returned by GET /status so consumers know which features are affected
+// when a service is unavailable. Overridable via env vars
+// (DESCRIPTIONS_<SERVICE>) without a code change.
+type ServiceDescriptions struct {
 	ArtifactManager string
 	Distributor     string
 }
@@ -52,6 +62,10 @@ func NewConfig() *Config {
 			MaxMsgSize:      209715200,
 			ArtifactManager: "artifactmanager:9090",
 			Distributor:     "distributor:9090",
+		},
+		Descriptions: ServiceDescriptions{
+			ArtifactManager: "Artifact manager: storing and serving cApp artifacts",
+			Distributor:     "Artifact distribution: distributing artifacts to nodes",
 		},
 		Http: HttpEndpoints{
 			Timeout:     3 * time.Second,

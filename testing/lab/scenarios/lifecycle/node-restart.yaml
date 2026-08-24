@@ -79,9 +79,13 @@ phases:
       - type: wait_ues_attached
         ues: all
     checks:
-      - type: node_ready
+      - type: node_status_equals
         type_selector: tower
         count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
 
   - name: after_restart
     events:

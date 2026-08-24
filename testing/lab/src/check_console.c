@@ -90,7 +90,7 @@ static int check_list_count(check_ctx_t *ctx,
                     check->nodes.kind ==
                         SEL_NODE_TYPE_COUNT_PER_NETWORK ?
                         check->nodes.value : NULL,
-                    &site_count, err)) {
+                    check->view, &site_count, err)) {
                 selector_result_free(&sites);
                 return ULAB_ERR;
             }
@@ -116,12 +116,22 @@ static int check_list_count(check_ctx_t *ctx,
             return ULAB_ERR;
         }
         i = networks.idx[0];
-        if (ulab_streq(check->target, "nodes") &&
-            (check->nodes.kind == SEL_NODE_TYPE ||
-             check->nodes.kind == SEL_NODE_TYPE_COUNT_PER_NETWORK)) {
+        if (ulab_streq(check->target, "nodes")) {
+            const char *node_type;
+
+            node_type = check->nodes.kind == SEL_NODE_TYPE ||
+                check->nodes.kind == SEL_NODE_TYPE_COUNT_PER_NETWORK ?
+                check->nodes.value : NULL;
             if (bff_get_node_list_count(
                     ctx->bff, &ctx->world->networks[i],
-                    check->nodes.value, &actual, err)) {
+                    node_type, check->view, &actual, err)) {
+                selector_result_free(&networks);
+                return ULAB_ERR;
+            }
+        } else if (ulab_streq(check->target, "sites")) {
+            if (bff_get_site_list_count(
+                    ctx->bff, &ctx->world->networks[i],
+                    check->view, &actual, err)) {
                 selector_result_free(&networks);
                 return ULAB_ERR;
             }
@@ -158,6 +168,7 @@ static int check_entity(check_ctx_t *ctx,
     if (check->type == CHECK_ENTITY_FIELDS_EQUAL) {
         if (bff_entity_fields_match_world(ctx->bff, check->entity,
                                           check->ref, ctx->world,
+                                          check->view,
                                           &matched, res->detail,
                                           sizeof(res->detail), err)) {
             return ULAB_ERR;
@@ -165,6 +176,7 @@ static int check_entity(check_ctx_t *ctx,
     } else {
         if (bff_entity_list_detail_reconciles(ctx->bff, check->entity,
                                               check->ref, ctx->world,
+                                              check->view,
                                               &matched, res->detail,
                                               sizeof(res->detail), err)) {
             return ULAB_ERR;
@@ -210,12 +222,16 @@ static int check_node_status_equals(check_ctx_t *ctx,
         matched = 0;
         for (i = 0; i < nodes.count; i++) {
             node_t *node;
+            network_t *network;
             bff_node_status_t status;
             int ok;
 
             node = &ctx->world->nodes[nodes.idx[i]];
+            network = world_network_by_ref(ctx->world,
+                                           node->network_ref);
             memset(&status, 0, sizeof(status));
-            if (bff_get_node_status(ctx->bff, node, &status, err)) {
+            if (bff_get_node_status_for_view(ctx->bff, network, node,
+                                             check->view, &status, err)) {
                 selector_result_free(&nodes);
                 return ULAB_ERR;
             }
@@ -329,7 +345,7 @@ static int check_software_status(check_ctx_t *ctx,
 
                 memset(rows, 0, sizeof(rows));
                 count = 0;
-                if (bff_get_software_list(ctx->bff, node, rows,
+                if (bff_get_software_list(ctx->bff, node, check->view, rows,
                                           ULAB_MAX_LIST, &count, err)) {
                     selector_result_free(&nodes);
                     return ULAB_ERR;
@@ -349,6 +365,7 @@ static int check_software_status(check_ctx_t *ctx,
                 memset(&software, 0, sizeof(software));
                 found = 0;
                 if (bff_get_software(ctx->bff, node, check->app,
+                                     check->view,
                                      &software, &found, err)) {
                     selector_result_free(&nodes);
                     return ULAB_ERR;
@@ -673,6 +690,94 @@ static int check_site_operation(check_ctx_t *ctx,
              last.service.available ? "true" : "false",
              last.node_count, last.restart_site.reason, last.rf.reason,
              last.service.reason);
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
+static int site_node_counts_match(const bff_site_node_counts_t *actual,
+                                  const check_spec_t *check) {
+    if (check->has_expected_total &&
+        actual->total != check->expected_total) {
+        return 0;
+    }
+    if (check->has_expected_online &&
+        actual->online != check->expected_online) {
+        return 0;
+    }
+    if (check->has_expected_offline &&
+        actual->offline != check->expected_offline) {
+        return 0;
+    }
+    return 1;
+}
+
+static int check_site_node_counts(check_ctx_t *ctx,
+                                  const check_spec_t *check,
+                                  check_result_t *res,
+                                  ulab_error_t *err) {
+    selector_result_t sites;
+    time_t deadline;
+    unsigned int poll;
+    size_t matched;
+    size_t i;
+    bff_site_node_counts_t last;
+
+    if (!check->has_expected_total && !check->has_expected_online &&
+        !check->has_expected_offline) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "site_node_counts_equals has no expected fields");
+        return ULAB_ERR;
+    }
+    if (selector_resolve_sites(ctx->world, &check->sites, &sites, err)) {
+        return ULAB_ERR;
+    }
+    deadline = time(NULL) + (time_t)check->timeout_seconds;
+    poll = check->poll_seconds ? check->poll_seconds : 2u;
+    memset(&last, 0, sizeof(last));
+    do {
+        matched = 0;
+        for (i = 0; i < sites.count; i++) {
+            site_t *site;
+            network_t *network;
+            bff_site_node_counts_t actual;
+
+            site = &ctx->world->sites[sites.idx[i]];
+            network = world_network_by_ref(ctx->world, site->network_ref);
+            if (network == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "site %s references unknown network %s",
+                         site->ref, site->network_ref);
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            memset(&actual, 0, sizeof(actual));
+            if (bff_get_console_site_node_counts(ctx->bff, network, site,
+                                                 &actual, err)) {
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            if (site_node_counts_match(&actual, check)) {
+                matched++;
+            }
+            last = actual;
+        }
+        if (matched == sites.count || time(NULL) >= deadline) {
+            break;
+        }
+        sleep(poll > 60u ? 60u : poll);
+    } while (1);
+
+    res->passed = sites.count > 0 && matched == sites.count;
+    snprintf(res->detail, sizeof(res->detail),
+             "matched=%zu/%zu total=%zu online=%zu offline=%zu "
+             "expected={total=%s%u online=%s%u offline=%s%u}",
+             matched, sites.count, last.total, last.online, last.offline,
+             check->has_expected_total ? "" : "unset/",
+             check->expected_total,
+             check->has_expected_online ? "" : "unset/",
+             check->expected_online,
+             check->has_expected_offline ? "" : "unset/",
+             check->expected_offline);
     selector_result_free(&sites);
     return ULAB_OK;
 }
@@ -1300,6 +1405,8 @@ int check_console(check_ctx_t *ctx, const check_spec_t *check,
         return check_node_operation(ctx, check, res, err);
     case CHECK_SITE_OPERATION_STATUS_EQUALS:
         return check_site_operation(ctx, check, res, err);
+    case CHECK_SITE_NODE_COUNTS_EQUALS:
+        return check_site_node_counts(ctx, check, res, err);
     case CHECK_KPI_STATE_EQUALS:
         return check_kpi_state(ctx, check, res, err);
     case CHECK_KPI_TIMESERIES:

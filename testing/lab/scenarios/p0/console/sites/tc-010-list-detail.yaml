@@ -26,20 +26,25 @@ phases:
     checks:
       - type: list_count_equals
         target: sites
+        view: sites_list
         networks: net-001
         expected_count: 2
       - type: entity_fields_equal
         entity: site
         ref: site-001
+        view: site_detail
       - type: entity_reconciles
         entity: site
         ref: site-001
+        view: sites_list
       - type: entity_fields_equal
         entity: site
         ref: site-002
+        view: site_detail
       - type: entity_reconciles
         entity: site
         ref: site-002
+        view: sites_list
       - type: site_operation_status_equals
         sites: all
         busy: false

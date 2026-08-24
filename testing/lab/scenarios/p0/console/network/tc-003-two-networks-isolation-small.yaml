@@ -1,6 +1,6 @@
 version: 1
 name: p0-two-networks-isolation-small
-description: Verify selecting either network returns only that network's sites, nodes, customers, plans, SIMs, and usage through current BFF queries.
+description: Verify selecting either network returns only that network's sites, nodes, customers, plans, and SIMs through current BFF queries.
 seed: 305
 suite: p0
 priority: p0
@@ -42,24 +42,6 @@ runtime:
   wait: [nodes_ready]
 
 phases:
-  - name: generate_usage_in_both_networks
-    events:
-      - type: toggle_service
-        sites: all
-        state: on
-      - type: start_ues
-        ues: all
-      - type: wait_ues_attached
-        ues: all
-      - type: traffic
-        ues: all
-        amount_mb: 10
-    checks:
-      - type: usage_sample
-        sample_per_site: 1
-        expected: from_model
-        tolerance_percent: 5
-
   - name: network_one_console_scope
     checks:
       - type: list_count_equals

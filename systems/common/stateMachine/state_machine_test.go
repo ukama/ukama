@@ -10,6 +10,7 @@ package statemachine
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -79,6 +80,83 @@ func TestNodeStateMachine(t *testing.T) {
 	})
 
 	
+}
+
+func TestStateTimeout(t *testing.T) {
+	configFile := createTempConfigFile(t, timeoutStateConfig)
+	enteredAt := time.Date(2026, time.August, 14, 10, 0, 0, 0, time.UTC)
+
+	t.Run("not due before the timeout elapses", func(t *testing.T) {
+		instance, err := NewStateMachine(nil).NewInstance(configFile, "node-early", "Configuring")
+		require.NoError(t, err)
+
+		toState, due := instance.DueTransition(enteredAt, enteredAt.Add(59*time.Second))
+		assert.False(t, due)
+		assert.Empty(t, toState)
+	})
+
+	t.Run("due once the timeout elapses", func(t *testing.T) {
+		instance, err := NewStateMachine(nil).NewInstance(configFile, "node-due", "Configuring")
+		require.NoError(t, err)
+
+		toState, due := instance.DueTransition(enteredAt, enteredAt.Add(60*time.Second))
+		assert.True(t, due)
+		assert.Equal(t, "Operational", toState)
+	})
+
+	t.Run("state without a timeout is never due", func(t *testing.T) {
+		instance, err := NewStateMachine(nil).NewInstance(configFile, "node-no-timeout", "Operational")
+		require.NoError(t, err)
+
+		_, due := instance.DueTransition(enteredAt, enteredAt.Add(time.Hour))
+		assert.False(t, due)
+	})
+
+	t.Run("TimeoutTransition moves state and reports a timeout event", func(t *testing.T) {
+		var captured []Event
+		sm := NewStateMachine(func(event Event) {
+			captured = append(captured, event)
+		})
+
+		instance, err := sm.NewInstance(configFile, "node-applied", "Configuring")
+		require.NoError(t, err)
+
+		moved, err := instance.TimeoutTransition(enteredAt, enteredAt.Add(90*time.Second))
+		require.NoError(t, err)
+		assert.True(t, moved)
+		assert.Equal(t, "Operational", instance.CurrentState)
+
+		require.Len(t, captured, 1)
+		assert.Equal(t, "timeout", captured[0].Name)
+		assert.Equal(t, "Configuring", captured[0].OldState)
+		assert.Equal(t, "Operational", captured[0].NewState)
+	})
+
+	t.Run("TimeoutTransition is a no-op before the timeout", func(t *testing.T) {
+		instance, err := NewStateMachine(nil).NewInstance(configFile, "node-noop", "Configuring")
+		require.NoError(t, err)
+
+		moved, err := instance.TimeoutTransition(enteredAt, enteredAt.Add(time.Second))
+		require.NoError(t, err)
+		assert.False(t, moved)
+		assert.Equal(t, "Configuring", instance.CurrentState)
+	})
+
+	t.Run("timeout to an unknown state is rejected at load", func(t *testing.T) {
+		badFile := createTempConfigFile(t, timeoutUnknownTargetConfig)
+
+		_, err := NewStateMachine(nil).NewInstance(badFile, "node-bad-target", "Configuring")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "non-existent state 'Nowhere'")
+	})
+
+	t.Run("non-positive timeout is rejected at load", func(t *testing.T) {
+		badFile := createTempConfigFile(t, timeoutZeroSecondsConfig)
+
+		_, err := NewStateMachine(nil).NewInstance(badFile, "node-bad-seconds", "Configuring")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "non-positive seconds")
+	})
 }
 
 func createTempConfigFile(t *testing.T, content string) string {
@@ -292,6 +370,75 @@ const nodeStateConfig = `{
           }
         ]
       }
+    }
+  ]
+}`
+const timeoutStateConfig = `{
+  "version": "0.1.0",
+  "entity": "node",
+  "file": "timeoutState.json",
+  "states": [
+    {
+      "name": "Configuring",
+      "description": "Assigned and applying configuration",
+      "events": ["configapplied"],
+      "timeout": {
+        "seconds": 60,
+        "to_state": "Operational"
+      },
+      "transition": [
+        {
+          "to_state": "Operational",
+          "trigger": ["configapplied"]
+        }
+      ]
+    },
+    {
+      "name": "Operational",
+      "description": "Serving",
+      "events": ["fault"],
+      "transition": [
+        {
+          "to_state": "Operational",
+          "trigger": ["fault"]
+        }
+      ]
+    }
+  ]
+}`
+
+const timeoutUnknownTargetConfig = `{
+  "version": "0.1.0",
+  "entity": "node",
+  "file": "timeoutUnknownTarget.json",
+  "states": [
+    {
+      "name": "Configuring",
+      "description": "Assigned and applying configuration",
+      "events": ["configapplied"],
+      "timeout": {
+        "seconds": 60,
+        "to_state": "Nowhere"
+      },
+      "transition": []
+    }
+  ]
+}`
+
+const timeoutZeroSecondsConfig = `{
+  "version": "0.1.0",
+  "entity": "node",
+  "file": "timeoutZeroSeconds.json",
+  "states": [
+    {
+      "name": "Configuring",
+      "description": "Assigned and applying configuration",
+      "events": ["configapplied"],
+      "timeout": {
+        "seconds": 0,
+        "to_state": "Configuring"
+      },
+      "transition": []
     }
   ]
 }`

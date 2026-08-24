@@ -1,6 +1,6 @@
 version: 1
 name: p0-usage-by-network
-description: Generate traffic at two sites in one network and verify the network-scoped GraphQL KPI equals the sum of both sites.
+description: Generate traffic at two sites in one network and verify DATA_USAGE filtered by network_id folds both sites' per-SIM series into one network total.
 seed: 4522
 suite: p0
 priority: p0
@@ -48,6 +48,5 @@ phases:
         target: network
         networks: net-001
         span: daily
-        op: SUM
         tolerance_percent: 15
         timeout_seconds: 600

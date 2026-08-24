@@ -1,0 +1,35 @@
+# DATA_USAGE: bytes consumed IN the window, per Prometheus series of the
+# metrics system's cumulative data_usage counter. By-network / by-site /
+# by-package / by-sim views are read-time scope filters and group_by folds,
+# not separate KPIs.
+#
+# The dataset is read twice — state (this window) and state_prev (previous) —
+# and the algo stores increment = clamp0(cur - prev). Increments telescope, so
+# any span SUM is exact under any filter/group_by combination.
+#
+# package_id = CATALOG package (cdr's `dataplan` label, renamed at ingest);
+# sim_package_id = the sim's package assignment instance.
+kpi: DATA_USAGE
+domain: subscriber
+algo: data_usage@v1
+kind: flow
+scope: [network_id, site_id, package_id, sim_package_id, iccid]
+inputs:
+  usage:
+    dataset: metrics.data_usage.last
+    fields: [network_id, site_id, package_id, sim_package_id, iccid, session_id, value]
+    mode: state
+  usage_prev:
+    dataset: metrics.data_usage.last
+    fields: [network_id, site_id, package_id, sim_package_id, iccid, session_id, value]
+    mode: state_prev
+output:
+  type: float
+  unit: bytes
+  symbol: B
+# first_value: count — a new series' first observed value is counted as
+# consumption. Use baseline instead when pointing the pipeline at a Prometheus
+# that already holds lifetime counters, so they don't flood one window.
+params:
+  first_value: count
+positive_direction: up

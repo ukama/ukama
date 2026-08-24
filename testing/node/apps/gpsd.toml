@@ -17,11 +17,11 @@
     args=""
     path="/sbin"
     autostart=false
+    readiness=true
     autorestart=true
     startretries=5
-    readiness=true
     group="service"
 
 [app-exec.env]
     UKAMA_GPS_MODE="mock"
-    UKAMA_GPS_COORDS="-90.000000,0.000000"
+    UKAMA_GPS_COORDS="33.942810,-118.410000"

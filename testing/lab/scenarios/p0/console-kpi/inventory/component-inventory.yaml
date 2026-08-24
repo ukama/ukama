@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-component-inventory
-description: Verify InventoryOverview component total equals the sum of every byCategory count returned in the same GraphQL response.
+description: Query the Console component inventory with GetComponentsByUserId and verify every returned component has a supported category.
 seed: 4716
 suite: p0
 priority: p0
@@ -26,4 +26,3 @@ phases:
     checks:
       - type: console_inventory_reconciles
         target: component
-

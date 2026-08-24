@@ -2,9 +2,9 @@ version: 1
 name: software_update_tower_app_example
 description: Verify the example app is healthy at the expected current version on the tower node, update it from the exact tar.gz version published in Hub, and confirm the running target version and app health after the update.
 seed: 3837459242
-suite: generated
-priority: p1
-tags: [generated, software_update, software_update, tower]
+suite: smoke
+priority: p0
+tags: [software_update,tower]
 status: active
 generated: true
 entity: software_update
@@ -41,6 +41,13 @@ runtime:
 phases:
   - name: verify_app_before_update
     checks:
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
       - type: node_health_ok
         type_selector: tower
         count_per_network: 1

@@ -45,12 +45,18 @@ type SourceSpec struct {
 // (<system>.<resource>.<operation>) — globally unique, referenced by KPI
 // specs, stamped on raw_records, tracked in the ledger.
 type PullSpec struct {
-	Key       string            `yaml:"key"`
-	Endpoint  string            `yaml:"endpoint"` // may contain {{.bind}} templates
-	Strategy  Strategy          `yaml:"strategy"`
-	Params    map[string]string `yaml:"params"`
-	Items     string            `yaml:"items"`  // path to result array; "$" = bare array
-	Entity    string            `yaml:"entity"` // mapped field used as entity key (snapshots)
+	Key      string            `yaml:"key"`
+	Endpoint string            `yaml:"endpoint"` // may contain {{.bind}} templates
+	Strategy Strategy          `yaml:"strategy"`
+	Params   map[string]string `yaml:"params"`
+	Items    string            `yaml:"items"` // path to result array; "$" = bare array
+	// Entity is the mapped field used as the entity key (snapshots). A
+	// comma-separated list builds a composite key (field values joined with
+	// "|") for sources where no single field identifies the entity — e.g. one
+	// Prometheus series per iccid×package×site. A component suffixed with
+	// "?" is optional: it contributes an empty component when absent rather
+	// than failing the pull.
+	Entity    string            `yaml:"entity"`
 	ForEach   *ForEachSpec      `yaml:"for_each"`
 	Map       map[string]string `yaml:"map"` // field -> $.path into each item
 	RateLimit string            `yaml:"rate_limit"`
@@ -88,26 +94,71 @@ type ForEachFilter struct {
 	In    []string `yaml:"in"`
 }
 
+// KPI kinds: what a KPI *is* determines how it aggregates — callers never
+// choose a fold function (the Prometheus counter/gauge pattern).
+const (
+	// KindFlow is an amount that accrues over time (bytes, sales, cents):
+	// SUM over time, SUM across scopes.
+	KindFlow = "flow"
+	// KindGauge is a level that exists at a moment (customers, MRR, an
+	// uptime ratio): latest bucket over time; across scopes per ScopeAgg.
+	KindGauge = "gauge"
+)
+
+// Scope aggregations for gauges.
+const (
+	ScopeAggSum = "sum" // additive gauges: customers, MRR, sites online
+	ScopeAggAvg = "avg" // ratios: uptime — weighted via components
+)
+
 // KpiSpec is one KPI: inputs from the warehouse (never endpoints), one
 // dedicated algo, output metadata, and the rollup ops Aggregator may apply.
 type KpiSpec struct {
-	Kpi               string               `yaml:"kpi"`
-	Domain            string               `yaml:"domain"`
-	Algo              string               `yaml:"algo"` // name@version, from the algo registry
+	Kpi    string `yaml:"kpi"`
+	Domain string `yaml:"domain"`
+	Algo   string `yaml:"algo"` // name@version, from the algo registry
+	// Kind (flow|gauge) drives the default aggregation server-side so
+	// callers ask for the KPI, not for a fold function.
+	Kind string `yaml:"kind"`
+	// ScopeAgg (gauges only): how the gauge folds ACROSS scopes — sum for
+	// additive gauges, avg (weighted) for ratios. Flows always sum.
+	ScopeAgg          string               `yaml:"scope_agg"`
 	Scope             []string             `yaml:"scope"`
 	Inputs            map[string]InputSpec `yaml:"inputs"`
 	Output            OutputSpec           `yaml:"output"`
-	RollupOps         []string             `yaml:"rollup_ops"`
 	PositiveDirection string               `yaml:"positive_direction"` // up|down (console polarity)
 	Lookback          string               `yaml:"lookback"`           // optional, e.g. "30d"
+	// Params are optional algo-specific tuning knobs, validated by the algo
+	// that consumes them.
+	Params map[string]string `yaml:"params"`
+}
+
+// DefaultReadOp is the aggregation the query planner computes for this KPI
+// when the caller does not override it:
+// flow → SUM; gauge ratios → AVG (weighted); additive gauges → LAST
+// (current level; folded across scopes as a sum of latest values).
+// Every op is computable at read time from a rollup row's components
+// (Sum/Count/Min/Max/Last) — nothing is materialized per op.
+func (k KpiSpec) DefaultReadOp() string {
+	if k.Kind == KindGauge {
+		if k.ScopeAgg == ScopeAggAvg {
+			return "AVG"
+		}
+
+		return "LAST"
+	}
+
+	return "SUM"
 }
 
 // InputSpec references a dataset by its static key.
 type InputSpec struct {
 	Dataset string   `yaml:"dataset"`
 	Fields  []string `yaml:"fields"`
-	// Mode: "state" (default; state-as-of-window for snapshot datasets) or
-	// "window" (only rows belonging to the window).
+	// Mode: "state" (default; state-as-of-window for snapshot datasets),
+	// "window" (only rows belonging to the window), or "state_prev"
+	// (state as of the PREVIOUS window — the lag-1 baseline that lets an
+	// algo turn a cumulative counter into a per-window increment).
 	Mode string `yaml:"mode"`
 }
 
@@ -117,9 +168,9 @@ type OutputSpec struct {
 	Symbol string `yaml:"symbol"`
 }
 
-// Rollup operations.
+// Read-time aggregations, all computable from a rollup row's components.
 var ValidOps = map[string]bool{
-	"SUM": true, "AVG": true, "MIN": true, "MAX": true, "COUNT": true, "LAST": true, "DELTA": true,
+	"SUM": true, "AVG": true, "MIN": true, "MAX": true, "COUNT": true, "LAST": true,
 }
 
 // LoadSourceSpecs reads and validates all *.yaml files in dir.
@@ -185,6 +236,26 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 			}
 			if p.Strategy == StrategyFullSnapshot && p.Entity == "" {
 				return fmt.Errorf("dataset %s: full_snapshot requires an entity field", p.Key)
+			}
+			for _, ef := range p.EntityFields() {
+				if _, mapped := p.Map[ef.Name]; mapped {
+					continue
+				}
+
+				bound := false
+				if p.ForEach != nil {
+					for _, b := range p.ForEach.Bind {
+						if b == ef.Name {
+							bound = true
+
+							break
+						}
+					}
+				}
+
+				if !bound {
+					return fmt.Errorf("dataset %s: entity field %q is neither mapped nor bound", p.Key, ef.Name)
+				}
 			}
 			if p.Gateway != "" && p.Gateway != "api" && p.Gateway != "node" {
 				return fmt.Errorf("dataset %s: gateway must be api or node, got %q", p.Key, p.Gateway)
@@ -303,6 +374,15 @@ func LoadKpiSpecs(dir string) ([]KpiSpec, error) {
 		if s.Kpi == "" || s.Algo == "" {
 			return nil, fmt.Errorf("kpi spec %s: kpi and algo are required", f)
 		}
+		if s.Kind != KindFlow && s.Kind != KindGauge {
+			return nil, fmt.Errorf("kpi %s: kind must be flow or gauge, got %q", s.Kpi, s.Kind)
+		}
+		if s.Kind == KindGauge && s.ScopeAgg != ScopeAggSum && s.ScopeAgg != ScopeAggAvg {
+			return nil, fmt.Errorf("kpi %s: gauge requires scope_agg sum or avg, got %q", s.Kpi, s.ScopeAgg)
+		}
+		if s.Kind == KindFlow && s.ScopeAgg != "" && s.ScopeAgg != ScopeAggSum {
+			return nil, fmt.Errorf("kpi %s: flow scope_agg is always sum (omit it), got %q", s.Kpi, s.ScopeAgg)
+		}
 		if seen[s.Kpi] {
 			return nil, fmt.Errorf("duplicate kpi key %q", s.Kpi)
 		}
@@ -316,19 +396,47 @@ func LoadKpiSpecs(dir string) ([]KpiSpec, error) {
 				return nil, fmt.Errorf("kpi %s: input %s has no dataset key", s.Kpi, name)
 			}
 		}
-		if len(s.RollupOps) == 0 {
-			return nil, fmt.Errorf("kpi %s: rollup_ops required", s.Kpi)
-		}
-		for _, op := range s.RollupOps {
-			if !ValidOps[strings.ToUpper(op)] {
-				return nil, fmt.Errorf("kpi %s: invalid rollup op %q", s.Kpi, op)
-			}
-		}
 
 		specs = append(specs, s)
 	}
 
 	return specs, nil
+}
+
+// EntityField is one component of a (possibly composite) entity key.
+type EntityField struct {
+	Name string
+	// Optional components (declared with a trailing "?") may be absent from
+	// a row; they contribute an empty component instead of failing the pull.
+	Optional bool
+}
+
+// EntityFields returns the entity key's component fields (one for a simple
+// key, several for a composite "a,b,c" key).
+func (p PullSpec) EntityFields() []EntityField {
+	if p.Entity == "" {
+		return nil
+	}
+
+	parts := strings.Split(p.Entity, ",")
+	out := make([]EntityField, 0, len(parts))
+
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+
+		field := EntityField{Name: part}
+		if strings.HasSuffix(part, "?") {
+			field.Name = strings.TrimSuffix(part, "?")
+			field.Optional = true
+		}
+
+		out = append(out, field)
+	}
+
+	return out
 }
 
 // InputDatasets returns the set of dataset keys a KPI depends on.

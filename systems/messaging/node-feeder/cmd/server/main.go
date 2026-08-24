@@ -1,11 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
 	"os"
-
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 
 	"github.com/num30/config"
 
@@ -17,8 +13,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	"google.golang.org/grpc"
 )
 
 var serviceConfig = pkg.NewConfig(global.ServiceName)
@@ -55,7 +54,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	exposeMetrics()
+	metrics.StartMetricsServer(serviceConfig.Metrics)
+
+	healthSrv := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {})
+	healthSrv.RegisterDependency("rabbitmq", true, ugrpc.AmqpCheck(serviceConfig.Queue.Uri))
+	go healthSrv.StartServer()
 
 	log.Infof("Starting queue listening")
 	err = listener.StartQueueListening()
@@ -78,17 +81,4 @@ func initConfig() {
 	}
 
 	global.IsDebugMode = serviceConfig.DebugMode
-}
-
-func exposeMetrics() {
-	if serviceConfig.Metrics.Enabled {
-		go func() {
-			http.Handle("/metrics", promhttp.Handler())
-			log.Infof("Starting metrics server on port %d", serviceConfig.Metrics.Port)
-			err := http.ListenAndServe(fmt.Sprintf(":%d", serviceConfig.Metrics.Port), nil)
-			if err != nil {
-				log.WithError(err).Error("Error starting metrics server")
-			}
-		}()
-	}
 }

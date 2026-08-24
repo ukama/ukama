@@ -328,7 +328,6 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 			PayerPhone:    remoteSubResp.Subscriber.PhoneNumber,
 			PayerEmail:    remoteSubResp.Subscriber.Email,
 			PayerName:     remoteSubResp.Subscriber.Name,
-			Description:   packageInfo.Name,
 			Country:       packageInfo.Country,
 			PaymentMethod: ukama.PaymentMethodCash.String(),
 			Metadata: map[string]string{

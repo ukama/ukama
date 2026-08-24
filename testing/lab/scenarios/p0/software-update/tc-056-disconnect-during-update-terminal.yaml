@@ -23,6 +23,16 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: verify_controller_before_update
+    checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
   - name: start_update
     events:
       - type: promote_release
@@ -40,6 +50,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: true
+        immediate: true
         timeout_seconds: 60
   - name: interrupt_connectivity
     events:
@@ -51,6 +62,17 @@ phases:
         count_per_network: 1
         connectivity: Offline
         seconds: 120
+    checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Offline
+        state: Operational
+        immediate: true
+        timeout_seconds: 120
+
+  - name: reconnect_and_finish_update
+    events:
       - type: reconnect_nodes
         type_selector: controller
         count_per_network: 1
@@ -72,3 +94,10 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180

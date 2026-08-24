@@ -25,6 +25,7 @@ jobs:
       with:
         registry-name: operation/manager
         working-directory: ${{ env.working-directory }}
+        project-key: ukama_systems_operation_manager
         github-bot-token: ${{ secrets.UKAMA_BOT_GITHUB_TOKEN }}
         aws-secret-key: ${{ secrets.AWS_REGISTRY_SECRET_ACCESS_KEY }}
         aws-access-key: ${{ secrets.AWS_REGISTRY_ACCESS_KEY_ID }}

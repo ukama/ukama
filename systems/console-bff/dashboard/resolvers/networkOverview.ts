@@ -72,10 +72,9 @@ export class NetworkOverviewResolver {
   ): Promise<NodeStatsSection> {
     const { value, error } = await runSection("nodeStats", async () => {
       const url = await root._urls.url("node");
-      const res = await ctx.dataSources.node.getNodesByNetwork(
-        url,
-        root.networkId
-      );
+      const res = await ctx.dataSources.node.getNodes(url, {
+        networkId: root.networkId,
+      });
       return countNodes(res.nodes);
     });
     return { ...value, error };

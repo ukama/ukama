@@ -39,6 +39,7 @@ import {
   kpiValue,
 } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
+import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
 import { useNetworkId } from '@/lib/useNetworkId';
@@ -138,25 +139,39 @@ export default function BizHomeScreen() {
     },
     skip: !networkId || span === 'last_30d',
   });
-  const { data: sitesData, loading: sitesLoading } = useSitesListQuery({
+  const {
+    data: sitesCurrent,
+    previousData: sitesPrevious,
+    loading: sitesLoading,
+    error: sitesError,
+  } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
   });
+  // Hold the last delivered response while a cache-TTL expiry refetches, so
+  // the site total never momentarily reads as zero.
+  const sitesData = sitesCurrent ?? sitesPrevious;
   const kpis = homeData?.getKpiValues.values;
   const monthKpis = monthData?.getKpiValues.values;
   const loading = homeLoading || sitesLoading;
 
-  const sites = useMemo(
-    () => toMapSites(sitesData?.sitesView.sites.sites ?? []),
-    [sitesData?.sitesView.sites.sites],
-  );
+  // `sitesView` resolves per section, so a failed sites read arrives as an
+  // empty list with no top-level error — that is unknown, not zero.
+  const sitesSection = sitesData?.sitesView.sites;
+  const siteRows =
+    sitesError || sitesSection?.error ? undefined : sitesSection?.sites;
+  const sites = useMemo(() => toMapSites(siteRows ?? []), [siteRows]);
   // Sites online comes from the analytics SITES_ONLINE KPI only — undefined
   // when it hasn't been emitted, same as the Ops home screen. The old registry
   // fallback counted every site that wasn't deactivated, which no longer means
   // the same thing: the KPI counts a site only when every one of its
-  // tnode/anode/cnode is online, so the fallback silently over-reported.
-  const onlineKpi = kpiValue(kpis, KPI_KEYS.sitesOnline);
-  const online = onlineKpi != null ? Math.round(onlineKpi) : undefined;
+  // tnode/anode/cnode is online, so the fallback silently over-reported. The
+  // KPI and the total come from separate responses, so `sitesOnlineTile`
+  // renders the pair only when it is coherent.
+  const sitesTile = sitesOnlineTile(
+    kpiValue(kpis, KPI_KEYS.sitesOnline),
+    siteRows?.length,
+  );
   // The business site-detail page was removed; drill into the canonical
   // Network site detail instead.
   const goSite = (id: string) => router.push(`/network/sites/${id}`);
@@ -236,10 +251,9 @@ export default function BizHomeScreen() {
               color: 'var(--uk-success-bright)',
               label: 'Network uptime',
               value: uptime != null ? `${uptime.toFixed(1)}%` : '—',
-              sub:
-                sites.length === 0 || online == null
-                  ? undefined
-                  : `${online}/${sites.length} sites online`,
+              sub: sitesTile.total
+                ? `${sitesTile.text} sites online`
+                : undefined,
             },
           ]}
         />
@@ -317,9 +331,9 @@ export default function BizHomeScreen() {
               marginBottom: 4,
             }}
           >
-            {online == null
+            {sitesTile.online == null
               ? `${sites.length} sites`
-              : `${online} of ${sites.length} sites online`}
+              : `${sitesTile.online} of ${sitesTile.total} sites online`}
           </div>
           <SiteSummaryList
             sites={sites}

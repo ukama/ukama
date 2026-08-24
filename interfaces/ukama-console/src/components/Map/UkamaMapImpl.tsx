@@ -12,27 +12,19 @@
  * Street / Satellite / Terrain base layers (free, no API key), colored status
  * pins, and optional per-marker popup content. Render via the dynamic
  * `UkamaMap` wrapper (ssr:false) so Leaflet never runs on the server.
+ *
+ * The base layer comes from the shared `useUiPrefs().mapView` preference —
+ * Settings is the only place it changes, so every console map shows one view
+ * and no map carries its own layer switcher.
  */
 import 'leaflet/dist/leaflet.css';
 
 import { useEffect } from 'react';
 import L from 'leaflet';
 import { useColorScheme } from '@mui/material/styles';
-import {
-  LayersControl,
-  MapContainer,
-  Marker,
-  Popup,
-  TileLayer,
-  useMap,
-} from 'react-leaflet';
-
-/** Free, no-key basemaps. Street follows the app theme (CARTO dark in dark
- *  mode); satellite/terrain are naturally dark and stay the same. */
-const STREET_LIGHT =
-  'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png';
-const STREET_DARK =
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png';
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
+import { useUiPrefs } from '@/lib/store';
+import { basemapUrl } from './basemaps';
 
 export interface UkamaMapMarker {
   id: string;
@@ -135,7 +127,7 @@ export default function UkamaMapImpl({
 }: UkamaMapProps) {
   const { mode, systemMode } = useColorScheme();
   const dark = (mode === 'system' ? systemMode : mode) === 'dark';
-  const streetUrl = dark ? STREET_DARK : STREET_LIGHT;
+  const mapView = useUiPrefs((s) => s.mapView);
 
   // With no sites and no explicit center, open on the whole-world view so the
   // first paint isn't an empty ocean at a tight zoom.
@@ -157,17 +149,7 @@ export default function UkamaMapImpl({
       doubleClickZoom={interactive}
       attributionControl={false}
     >
-      <LayersControl position="topright">
-        <LayersControl.BaseLayer checked name="Street">
-          <TileLayer url={streetUrl} />
-        </LayersControl.BaseLayer>
-        <LayersControl.BaseLayer name="Satellite">
-          <TileLayer url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" />
-        </LayersControl.BaseLayer>
-        <LayersControl.BaseLayer name="Terrain">
-          <TileLayer url="https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png" />
-        </LayersControl.BaseLayer>
-      </LayersControl>
+      <TileLayer url={basemapUrl(mapView, dark)} />
 
       {markers.map((m) => (
         <Marker

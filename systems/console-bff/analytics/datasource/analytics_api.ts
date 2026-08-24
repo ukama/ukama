@@ -91,6 +91,10 @@ class AnalyticsAPI extends BaseRESTDataSource {
     if (data.span) q.append("span", data.span);
     if (data.op) q.append("op", data.op);
     if (data.networkId) q.append("network_id", data.networkId);
+    if (data.siteId) q.append("site_id", data.siteId);
+    if (data.packageId) q.append("package_id", data.packageId);
+    if (data.simPackageId) q.append("sim_package_id", data.simPackageId);
+    if (data.iccid) q.append("iccid", data.iccid);
 
     const res = await this.callGet<RawGetKpiValues>(
       `kpis/values?${q.toString()}`

@@ -21,6 +21,11 @@
 #define NODE_CONNECTIVITY_POLL_DEFAULT_SEC 2u
 #define NODE_CONNECTIVITY_POLL_MAX_SEC     30u
 
+static int site_node_selection(const world_t *world,
+                               const site_t *site,
+                               selector_result_t *nodes,
+                               ulab_error_t *err);
+
 static int event_state_enabled(const event_spec_t *event, int *enabled,
                                ulab_error_t *err) {
     if (ulab_streq(event->status, "on") ||
@@ -95,6 +100,64 @@ static int event_wait_ues_attached(event_ctx_t *ctx,
             setenv("ULAB_UE_ATTACH_TIMEOUT", previous, 1);
         } else {
             unsetenv("ULAB_UE_ATTACH_TIMEOUT");
+        }
+    }
+    free(previous);
+
+    return rc;
+}
+
+static int event_wait_ues_detached(event_ctx_t *ctx,
+                                    const event_spec_t *event,
+                                    ulab_error_t *err) {
+    selector_result_t res;
+    const char *current;
+    char *previous;
+    char timeout[32];
+    int rc;
+
+    previous = NULL;
+    if (event->amount_mb > 300) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "UE detach wait exceeds 300 seconds");
+        return ULAB_ERR;
+    }
+
+    if (event->amount_mb > 0) {
+        current = getenv("ULAB_UE_DETACH_TIMEOUT");
+        if (current != NULL) {
+            previous = strdup(current);
+            if (previous == NULL) {
+                snprintf(err->msg, sizeof(err->msg),
+                         "failed to save UE detach timeout");
+                return ULAB_ERR;
+            }
+        }
+
+        snprintf(timeout, sizeof(timeout), "%llu",
+                 (unsigned long long)event->amount_mb);
+        if (setenv("ULAB_UE_DETACH_TIMEOUT", timeout, 1) != 0) {
+            free(previous);
+            snprintf(err->msg, sizeof(err->msg),
+                     "failed to set UE detach timeout");
+            return ULAB_ERR;
+        }
+    }
+
+    rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+    if (rc == ULAB_OK) {
+        rc = runtime_wait_ues_detached(ctx->runtime,
+                                       ctx->world,
+                                       &res,
+                                       err);
+    }
+    selector_result_free(&res);
+
+    if (event->amount_mb > 0) {
+        if (previous != NULL) {
+            setenv("ULAB_UE_DETACH_TIMEOUT", previous, 1);
+        } else {
+            unsetenv("ULAB_UE_DETACH_TIMEOUT");
         }
     }
     free(previous);
@@ -239,11 +302,23 @@ static int event_restart_nodes(event_ctx_t *ctx,
 
     for (i = 0; i < res.count; i++) {
         node_t *node;
+        selector_result_t selected;
 
         node = &ctx->world->nodes[res.idx[i]];
         if (bff_restart_node(ctx->bff, node, err)) {
             selector_result_free(&res);
             return ULAB_ERR;
+        }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "node_restart")) {
+            selected.idx = &res.idx[i];
+            selected.count = 1;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &selected,
+                                   "node_restart", err)) {
+                selector_result_free(&res);
+                return ULAB_ERR;
+            }
         }
     }
 
@@ -524,6 +599,21 @@ static int event_restart_site(event_ctx_t *ctx,
             selector_result_free(&sites);
             return ULAB_ERR;
         }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "site_restart")) {
+            selector_result_t nodes;
+
+            memset(&nodes, 0, sizeof(nodes));
+            if (site_node_selection(ctx->world, site, &nodes, err) ||
+                runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
+                                   "site_restart", err)) {
+                selector_result_free(&nodes);
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            selector_result_free(&nodes);
+        }
     }
 
     selector_result_free(&sites);
@@ -714,6 +804,19 @@ static int event_software_update(event_ctx_t *ctx,
             selector_result_free(&res);
             return ULAB_ERR;
         }
+
+        if (runtime_failure_control_enabled(ctx->runtime,
+                                            "software_timeout")) {
+            selector_result_t selected;
+
+            selected.idx = &res.idx[i];
+            selected.count = 1;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &selected,
+                                   "software_timeout", err)) {
+                selector_result_free(&res);
+                return ULAB_ERR;
+            }
+        }
     }
 
     selector_result_free(&res);
@@ -726,6 +829,7 @@ static int event_toggle_service(event_ctx_t *ctx,
     selector_result_t res;
     size_t i;
     int enabled;
+    int rc;
 
     if (event_state_enabled(event, &enabled, err)) {
         return ULAB_ERR;
@@ -745,8 +849,14 @@ static int event_toggle_service(event_ctx_t *ctx,
         }
     }
 
+    rc = runtime_set_service(ctx->runtime, enabled, err);
+    if (rc == ULAB_OK) {
+        rc = runtime_wait_service_state(ctx->runtime, ctx->world,
+                                        &res, enabled, err);
+    }
+
     selector_result_free(&res);
-    return runtime_set_service(ctx->runtime, enabled, err);
+    return rc;
 }
 
 static int event_toggle_radio(event_ctx_t *ctx,
@@ -851,6 +961,9 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_WAIT_UES_ATTACHED:
         return event_wait_ues_attached(ctx, event, err);
+
+    case EVT_WAIT_UES_DETACHED:
+        return event_wait_ues_detached(ctx, event, err);
 
     case EVT_WAIT_UE_SESSIONS:
         return event_wait_ue_sessions(ctx, event, err);

@@ -20,6 +20,7 @@
 # for [program:<exec>] in supervisor.conf
 [app-exec]
 	name="meshd"
+	service="mesh"
 	version="latest"
 	depends_on="bootstrap"
 	wait_for="10s"
@@ -30,4 +31,3 @@
 	path="/sbin" # path where the exec should be. Matches build.bin_to
 	args="--config /ukama/configs/meshd/config.toml"
         group="on-boot"
-

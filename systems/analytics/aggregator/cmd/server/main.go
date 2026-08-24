@@ -104,8 +104,7 @@ func run(sDb sql.Db) {
 	repo := db.NewRepo(sDb)
 
 	engine, err := rollup.NewEngine(grid, kpis, repo, repo, serviceConfig.OrgName,
-		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.FlatThresholdPct,
-		serviceConfig.Rollup.SweepInterval)
+		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.SweepInterval)
 	if err != nil {
 		log.Fatalf("Initializing rollup engine failed: %v", err)
 	}
@@ -120,13 +119,20 @@ func run(sDb sql.Db) {
 	composer := performance.NewComposer(serviceConfig.OrgName, reports, repo, repo, repo, grid,
 		serviceConfig.Rollup.ReportWindow)
 
-	readServer := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer, grid, repo)
+	readServer, err := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer, grid, repo,
+		serviceConfig.Rollup.Timezone)
+	if err != nil {
+		log.Fatalf("Initializing aggregator read server failed: %v", err)
+	}
 	eventServer := server.NewAggregatorEventServer(serviceConfig.OrgName, engine)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		pb.RegisterAggregatorServiceServer(s, readServer)
 		egenerated.RegisterEventNotificationServiceServer(s, eventServer)
 	})
+
+	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(sDb))
+	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
 
 	go grpcServer.StartServer()
 	go msgBusListener(mbClient)

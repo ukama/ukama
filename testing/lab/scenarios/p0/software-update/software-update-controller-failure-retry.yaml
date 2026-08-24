@@ -31,12 +31,20 @@ phases:
       - type: wait
         seconds: 30
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
       - type: software_status_equals
         type_selector: controller
         count_per_network: 1
         app: example
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 120
 
   - name: force_update_failure
@@ -56,7 +64,15 @@ phases:
         app: example
         status: update_failed
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
 
   - name: retry_after_recovery
     events:
@@ -90,3 +106,9 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180

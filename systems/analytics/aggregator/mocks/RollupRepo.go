@@ -14,39 +14,9 @@ type RollupRepo struct {
 	mock.Mock
 }
 
-// Get provides a mock function with given fields: orgID, kpiKey, scope, span, spanStart, op
-func (_m *RollupRepo) Get(orgID string, kpiKey string, scope string, span string, spanStart time.Time, op string) (*schema.KpiRollup, error) {
-	ret := _m.Called(orgID, kpiKey, scope, span, spanStart, op)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Get")
-	}
-
-	var r0 *schema.KpiRollup
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, time.Time, string) (*schema.KpiRollup, error)); ok {
-		return rf(orgID, kpiKey, scope, span, spanStart, op)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, time.Time, string) *schema.KpiRollup); ok {
-		r0 = rf(orgID, kpiKey, scope, span, spanStart, op)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*schema.KpiRollup)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, string, time.Time, string) error); ok {
-		r1 = rf(orgID, kpiKey, scope, span, spanStart, op)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Latest provides a mock function with given fields: orgID, kpiKey, span, op, scopeFilter
-func (_m *RollupRepo) Latest(orgID string, kpiKey string, span string, op string, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
-	ret := _m.Called(orgID, kpiKey, span, op, scopeFilter)
+// Latest provides a mock function with given fields: orgID, kpiKey, span, scopeFilter
+func (_m *RollupRepo) Latest(orgID string, kpiKey string, span string, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
+	ret := _m.Called(orgID, kpiKey, span, scopeFilter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Latest")
@@ -54,19 +24,19 @@ func (_m *RollupRepo) Latest(orgID string, kpiKey string, span string, op string
 
 	var r0 []schema.KpiRollup
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, map[string]string) ([]schema.KpiRollup, error)); ok {
-		return rf(orgID, kpiKey, span, op, scopeFilter)
+	if rf, ok := ret.Get(0).(func(string, string, string, map[string]string) ([]schema.KpiRollup, error)); ok {
+		return rf(orgID, kpiKey, span, scopeFilter)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, map[string]string) []schema.KpiRollup); ok {
-		r0 = rf(orgID, kpiKey, span, op, scopeFilter)
+	if rf, ok := ret.Get(0).(func(string, string, string, map[string]string) []schema.KpiRollup); ok {
+		r0 = rf(orgID, kpiKey, span, scopeFilter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]schema.KpiRollup)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, map[string]string) error); ok {
-		r1 = rf(orgID, kpiKey, span, op, scopeFilter)
+	if rf, ok := ret.Get(1).(func(string, string, string, map[string]string) error); ok {
+		r1 = rf(orgID, kpiKey, span, scopeFilter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,9 +44,9 @@ func (_m *RollupRepo) Latest(orgID string, kpiKey string, span string, op string
 	return r0, r1
 }
 
-// Range provides a mock function with given fields: orgID, kpiKey, span, op, from, to, scopeFilter
-func (_m *RollupRepo) Range(orgID string, kpiKey string, span string, op string, from time.Time, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
-	ret := _m.Called(orgID, kpiKey, span, op, from, to, scopeFilter)
+// Range provides a mock function with given fields: orgID, kpiKey, span, from, to, scopeFilter
+func (_m *RollupRepo) Range(orgID string, kpiKey string, span string, from time.Time, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error) {
+	ret := _m.Called(orgID, kpiKey, span, from, to, scopeFilter)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Range")
@@ -84,49 +54,19 @@ func (_m *RollupRepo) Range(orgID string, kpiKey string, span string, op string,
 
 	var r0 []schema.KpiRollup
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, time.Time, time.Time, map[string]string) ([]schema.KpiRollup, error)); ok {
-		return rf(orgID, kpiKey, span, op, from, to, scopeFilter)
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time, map[string]string) ([]schema.KpiRollup, error)); ok {
+		return rf(orgID, kpiKey, span, from, to, scopeFilter)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, time.Time, time.Time, map[string]string) []schema.KpiRollup); ok {
-		r0 = rf(orgID, kpiKey, span, op, from, to, scopeFilter)
+	if rf, ok := ret.Get(0).(func(string, string, string, time.Time, time.Time, map[string]string) []schema.KpiRollup); ok {
+		r0 = rf(orgID, kpiKey, span, from, to, scopeFilter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]schema.KpiRollup)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, time.Time, time.Time, map[string]string) error); ok {
-		r1 = rf(orgID, kpiKey, span, op, from, to, scopeFilter)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ScopesSeen provides a mock function with given fields: orgID, kpiKey, span
-func (_m *RollupRepo) ScopesSeen(orgID string, kpiKey string, span string) ([]string, error) {
-	ret := _m.Called(orgID, kpiKey, span)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ScopesSeen")
-	}
-
-	var r0 []string
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) ([]string, error)); ok {
-		return rf(orgID, kpiKey, span)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string) []string); ok {
-		r0 = rf(orgID, kpiKey, span)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(orgID, kpiKey, span)
+	if rf, ok := ret.Get(1).(func(string, string, string, time.Time, time.Time, map[string]string) error); ok {
+		r1 = rf(orgID, kpiKey, span, from, to, scopeFilter)
 	} else {
 		r1 = ret.Error(1)
 	}

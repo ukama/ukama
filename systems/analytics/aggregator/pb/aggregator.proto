@@ -18,6 +18,11 @@ service AggregatorService {
     // ListKpis returns the KPI registry (self-describing catalog).
     rpc ListKpis(ListKpisRequest) returns (ListKpisResponse);
 
+    // Query is the primary read API: one question shape for latest values,
+    // time series and top-N breakdowns. Aggregation is derived from each
+    // KPI's kind (flow|gauge) — callers never pick a fold function.
+    rpc Query(QueryRequest) returns (QueryResponse);
+
     // GetKpis returns the latest rollup value per KPI/scope for a span.
     rpc GetKpis(GetKpisRequest) returns (GetKpisResponse);
 
@@ -91,6 +96,54 @@ message KpiInfo {
     string unit = 6;
     string symbol = 7;
     string positive_direction = 8;
+    string kind = 9;      // flow|gauge — drives the default aggregation
+    string scope_agg = 10; // gauges: sum|avg across scopes
+}
+
+// QueryRequest is the single question shape: KPIs + filters + dimensions +
+// time range + granularity. Filters ALWAYS fold: the answer's grain is
+// exactly (filter keys ∪ group_by keys).
+message QueryRequest {
+    repeated string kpis = 1;       // required
+    map<string, string> filter = 2; // scope filters; unknown keys -> InvalidArgument
+    repeated string group_by = 3;   // extra dimensions; default none -> one row per KPI
+    // Relative range token: today|this_week|this_month|last_24h|last_7d|last_30d.
+    // Mutually exclusive with from/to. Default: this_month.
+    string range = 4;
+    string from = 5;                // RFC3339 inclusive (custom range)
+    string to = 6;                  // RFC3339 exclusive
+    // total (default) = one point per row; day|week|month = a series of
+    // calendar buckets intersecting the range.
+    string granularity = 7;
+    string sort = 8;                // value|-value; rows ordered by their latest point
+    int32 top = 9;                  // keep only the first N rows after sorting
+    // Expert override of the kind-derived aggregation: sum|avg|min|max|count.
+    // Omit in normal use.
+    string agg = 10;
+}
+
+message QueryPoint {
+    string from = 1;  // RFC3339
+    string to = 2;    // RFC3339
+    double value = 3;
+    Trend trend = 4;  // vs the previous point (series) or previous range (total)
+    bool is_partial = 5;
+}
+
+message QueryRow {
+    string kpi = 1;
+    map<string, string> dims = 2; // the answer's grain: filter ∪ group_by keys
+    repeated QueryPoint points = 3;
+    string type = 4;
+    string unit = 5;
+    string symbol = 6;
+}
+
+message QueryResponse {
+    repeated QueryRow rows = 1;
+    string granularity = 2;
+    string from = 3;
+    string to = 4;
 }
 
 message ListKpisRequest {
@@ -131,7 +184,18 @@ message GetKpisRequest {
     repeated string keys = 1;
     string span = 2;               // daily|weekly|monthly
     string op = 3;                 // optional; defaults per KPI spec
-    map<string, string> scope = 4; // optional scope filters, e.g. network_id
+    // Optional scope filters, e.g. network_id. Filtering also sets the
+    // answer's grain: for component ops (SUM/COUNT/AVG/MIN/MAX) the matching
+    // rows are folded into ONE row per distinct combination of the filter
+    // keys — DATA_USAGE with scope={network_id: X} returns one total for
+    // network X, not one row per sim-series. Groups with a single row pass
+    // through unchanged (full scope + trend). LAST/DELTA reads stay per-row.
+    map<string, string> scope = 4;
+    // Optional explicit fold grain for breakdown-style reads WITHOUT a
+    // filter (exact component fold — SUM/COUNT/AVG/MIN/MAX only). E.g.
+    // DATA_USAGE group_by=[network_id] returns one total per network.
+    // When set, it overrides the filter-derived grain above.
+    repeated string group_by = 5;
 }
 
 message GetKpisResponse {
@@ -145,6 +209,7 @@ message GetKpiTimeSeriesRequest {
     string from = 4; // RFC3339, inclusive
     string to = 5;   // RFC3339, exclusive
     map<string, string> scope = 6;
+    repeated string group_by = 7;  // fold per span bucket (see GetKpisRequest)
 }
 
 message GetKpiTimeSeriesResponse {
@@ -157,6 +222,9 @@ message GetKpiBreakdownRequest {
     string op = 3;
     string by = 4; // scope dimension to rank by, e.g. network_id
     int32 top = 5;
+    // Optional scope filters applied BEFORE ranking — e.g. top packages
+    // WITHIN network X: by=package_id, scope={network_id: X}.
+    map<string, string> scope = 6;
 }
 
 message BreakdownRow {

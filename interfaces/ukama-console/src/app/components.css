@@ -324,17 +324,11 @@
   }
 }
 /* Leaflet controls + popup in dark mode (tiles switch to a dark basemap). */
-.dark .leaflet-control-zoom a,
-.dark .leaflet-control-layers {
+.dark .leaflet-control-zoom a {
   background: var(--uk-card);
   color: var(--uk-ink);
   border-color: var(--uk-line);
-}
-.dark .leaflet-control-zoom a {
   border-bottom-color: var(--uk-line);
-}
-.dark .leaflet-control-layers-toggle {
-  filter: invert(0.9);
 }
 .dark .leaflet-popup-content-wrapper,
 .dark .leaflet-popup-tip {

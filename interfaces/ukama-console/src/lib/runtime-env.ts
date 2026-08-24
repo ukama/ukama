@@ -32,6 +32,10 @@ export interface PublicEnv {
   authAppUrl: string;
   /** SIM type used for pool/allocation (e.g. ukama_data, test). */
   simType: string;
+  /** Backend status app (sidebar "Backend status" launch target). */
+  statusAppUrl: string;
+  /** Feature flag: show the "Service status" sidebar item ('true'/'false'). */
+  statusAppEnabled: string;
 }
 
 /** Local-dev fallbacks (mirror src/env.ts defaults). */
@@ -41,6 +45,8 @@ const DEFAULTS: PublicEnv = {
   apiGw4ss: 'http://localhost:8080',
   authAppUrl: 'http://localhost:4455',
   simType: 'test',
+  statusAppUrl: 'http://localhost:3001',
+  statusAppEnabled: 'false',
 };
 
 /** Global key the server injects and the client reads. */
@@ -62,6 +68,11 @@ export function readServerEnv(): PublicEnv {
     apiGw4ss: pick('NEXT_PUBLIC_API_GW_4SS', DEFAULTS.apiGw4ss),
     authAppUrl: pick('NEXT_PUBLIC_AUTH_APP_URL', DEFAULTS.authAppUrl),
     simType: pick('NEXT_PUBLIC_SIM_TYPE', DEFAULTS.simType),
+    statusAppUrl: pick('NEXT_PUBLIC_STATUS_APP_URL', DEFAULTS.statusAppUrl),
+    statusAppEnabled: pick(
+      'NEXT_PUBLIC_STATUS_APP_ENABLED',
+      DEFAULTS.statusAppEnabled,
+    ),
   };
 }
 

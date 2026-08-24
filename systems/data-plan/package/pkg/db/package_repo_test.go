@@ -773,12 +773,11 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin()
 		setup.Mock.ExpectQuery(`^UPDATE "packages" SET.*WHERE.*uuid.*RETURNING`).
-			WithArgs(sqlmock.AnyArg(), "Updated Name", packID).
+			WithArgs("Updated Name", sqlmock.AnyArg(), packID).
 			WillReturnRows(sqlmock.NewRows([]string{"uuid", "name"}).AddRow(packID, "Updated Name"))
 		setup.Mock.ExpectCommit()
 
-		pkg := &Package{Name: "Updated Name"}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{"name": "Updated Name"})
 		assert.NoError(t, err)
 
 		err = setup.Mock.ExpectationsWereMet()
@@ -791,8 +790,7 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin().WillReturnError(errors.New("transaction begin error"))
 
-		pkg := &Package{Name: "Updated Name"}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{"name": "Updated Name"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "transaction begin error")
 	})
@@ -803,12 +801,11 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin()
 		setup.Mock.ExpectQuery(`^UPDATE "packages" SET.*WHERE.*uuid.*RETURNING`).
-			WithArgs(sqlmock.AnyArg(), "Updated Name", packID).
+			WithArgs("Updated Name", sqlmock.AnyArg(), packID).
 			WillReturnRows(sqlmock.NewRows([]string{}))
 		setup.Mock.ExpectRollback()
 
-		pkg := &Package{Name: "Updated Name"}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{"name": "Updated Name"})
 		assert.Error(t, err)
 		assert.Equal(t, gorm.ErrRecordNotFound, err)
 	})
@@ -819,12 +816,11 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin()
 		setup.Mock.ExpectQuery(`^UPDATE "packages" SET.*WHERE.*uuid.*RETURNING`).
-			WithArgs(sqlmock.AnyArg(), "Updated Name", packID).
+			WithArgs("Updated Name", sqlmock.AnyArg(), packID).
 			WillReturnError(errors.New("database error"))
 		setup.Mock.ExpectRollback()
 
-		pkg := &Package{Name: "Updated Name"}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{"name": "Updated Name"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "database error")
 	})
@@ -835,12 +831,11 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin()
 		setup.Mock.ExpectQuery(`^UPDATE "packages" SET.*WHERE.*uuid.*RETURNING`).
-			WithArgs(sqlmock.AnyArg(), "Updated Name", packID).
+			WithArgs("Updated Name", sqlmock.AnyArg(), packID).
 			WillReturnRows(sqlmock.NewRows([]string{"uuid", "name"}).AddRow(packID, "Updated Name"))
 		setup.Mock.ExpectCommit().WillReturnError(errors.New("commit error"))
 
-		pkg := &Package{Name: "Updated Name"}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{"name": "Updated Name"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "commit error")
 	})
@@ -851,16 +846,15 @@ func Test_Package_Update(t *testing.T) {
 
 		setup.Mock.ExpectBegin()
 		setup.Mock.ExpectQuery(`^UPDATE "packages" SET.*WHERE.*uuid.*RETURNING`).
-			WithArgs(sqlmock.AnyArg(), "Premium Plan", true, 60, packID).
+			WithArgs(true, 60, "Premium Plan", sqlmock.AnyArg(), packID).
 			WillReturnRows(sqlmock.NewRows([]string{"uuid", "name", "active", "duration"}).AddRow(packID, "Premium Plan", true, 60))
 		setup.Mock.ExpectCommit()
 
-		pkg := &Package{
-			Name:     "Premium Plan",
-			Active:   true,
-			Duration: 60,
-		}
-		err := setup.Repo.Update(packID, pkg)
+		err := setup.Repo.Update(packID, map[string]interface{}{
+			"name":     "Premium Plan",
+			"active":   true,
+			"duration": 60,
+		})
 		assert.NoError(t, err)
 
 		err = setup.Mock.ExpectationsWereMet()

@@ -85,6 +85,10 @@ json_t* jserdes_status_json(Space *spaceList) {
             ja = json_object();
             json_object_set_new(ja, "name",
                                 json_string(a->name ? a->name : ""));
+            json_object_set_new(ja, "service",
+                                json_string(a->service ?
+                                            a->service :
+                                            a->name ? a->name : ""));
             json_object_set_new(ja, "tag",
                                 json_string(a->tag ? a->tag : ""));
             json_object_set_new(ja, "state",

@@ -11,6 +11,8 @@ package metrics
 import (
 	"fmt"
 	"net/http"
+	"sync"
+	"time"
 
 	"github.com/ukama/ukama/systems/common/config"
 
@@ -18,16 +20,29 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+var startOnce sync.Once
+
 func StartMetricsServer(conf *config.Metrics) {
-	if conf.Enabled {
+	if conf == nil || !conf.Enabled {
+		return
+	}
+
+	startOnce.Do(func() {
+		mux := http.NewServeMux()
+		mux.Handle("/metrics", promhttp.Handler())
+
+		srv := &http.Server{
+			Addr:              fmt.Sprintf(":%d", conf.Port),
+			Handler:           mux,
+			ReadHeaderTimeout: 5 * time.Second,
+		}
+
 		go func() {
-			http.Handle("/metrics", promhttp.Handler())
 			logrus.Infof("Starting metrics server on port %d", conf.Port)
-			err := http.ListenAndServe(fmt.Sprintf(":%d", conf.Port), nil)
-			if err != nil {
+
+			if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 				logrus.WithError(err).Error("Error starting metrics server")
 			}
 		}()
-
-	}
+	})
 }

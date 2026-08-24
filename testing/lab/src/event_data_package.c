@@ -122,6 +122,8 @@ static int event_update_package(event_ctx_t *ctx,
                                 const event_spec_t *event,
                                 ulab_error_t *err) {
     package_t *pkg;
+    package_t *other;
+    const char *name;
 
     pkg = world_package_by_base_ref(ctx->world, event->package_ref);
     if (pkg == NULL) {
@@ -129,7 +131,22 @@ static int event_update_package(event_ctx_t *ctx,
                  "unknown package %.128s", event->package_ref);
         return ULAB_ERR;
     }
-    return bff_update_package_name(ctx->bff, pkg, event->name, err);
+
+    name = event->name;
+    if (event->other_package_ref[0] != '\0') {
+        other = world_package_for_network(ctx->world,
+                                          event->other_package_ref,
+                                          pkg->network_ref);
+        if (other == NULL) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "unknown other package %.128s for package %.128s",
+                     event->other_package_ref, event->package_ref);
+            return ULAB_ERR;
+        }
+        name = other->name;
+    }
+
+    return bff_update_package_name(ctx->bff, pkg, name, err);
 }
 
 static int event_create_invalid_package(event_ctx_t *ctx,

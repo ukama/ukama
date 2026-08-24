@@ -11,9 +11,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"math"
 	"sync"
 
 	"github.com/prometheus/prometheus/prompb"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -27,12 +30,17 @@ import (
 )
 
 const (
-	name         = "__name__"
-	env          = "env"
-	job          = "job"
-	nodeLabel    = "nodeid"
-	networkLabel = "network"
-	siteLabel    = "site"
+	name = "__name__"
+
+	// Node scrape jobs are not consistent on how they name the node label:
+	// the k8s mesh-nodes job stamps `node_id` while some paths stamp `nodeid`.
+	// Both are accepted as the node identifier on the way in, and the
+	// republished metrics always carry `node_id`.
+	nodeLabel    = pkg.NodeIdLabel
+	altNodeLabel = "nodeid"
+
+	networkLabel = pkg.NetworkLabel
+	siteLabel    = pkg.SiteIdLabel
 )
 
 type NodeMetaData struct {
@@ -42,9 +50,11 @@ type NodeMetaData struct {
 }
 
 type NodeMetricMetaData struct {
-	MainLabelValue   string
-	AdditionalLabels map[string]string
-	Value            float64
+	// MetricName is the sanitized name the sample is republished under.
+	MetricName string
+	NodeId     string
+	Labels     map[string]string
+	Value      float64
 }
 
 type SanitizerServer struct {
@@ -58,6 +68,7 @@ type SanitizerServer struct {
 	orgName         string
 	msgbus          mb.MsgBusServiceClient
 	m               *sync.RWMutex
+	pushMutex       *sync.Mutex
 }
 
 func NewSanitizerServer(registryHost, pushGatewayHost, orgName string, org string,
@@ -70,6 +81,7 @@ func NewSanitizerServer(registryHost, pushGatewayHost, orgName string, org strin
 		org:             org,
 		msgbus:          msgBus,
 		m:               &sync.RWMutex{},
+		pushMutex:       &sync.Mutex{},
 	}
 
 	if msgBus != nil {
@@ -94,76 +106,135 @@ func (s *SanitizerServer) Sanitize(ctx context.Context, req *pb.SanitizeRequest)
 
 	metricsToPush := []NodeMetricMetaData{}
 
+	if len(req.Data) == 0 {
+		log.Warn("Got a sanitize request with no data")
+
+		return nil, status.Error(codes.InvalidArgument,
+			"empty remote_write payload: expected a snappy compressed prompb.WriteRequest")
+	}
+
 	data, err := snappy.Decode(nil, req.Data)
 	if err != nil {
 		log.Errorf("Failed to decode remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("failed to decode remote_write data. Error: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to decode remote_write data: %v. Expected a snappy compressed prompb.WriteRequest",
+			err)
 	}
 
 	err = metricsPayload.Unmarshal(data)
 	if err != nil {
 		log.Errorf("Failed to unmarshal remote_write data. Error: %v", err)
 
-		return nil, fmt.Errorf("failed to unmarshal remote_write data. Error: %w", err)
+		return nil, status.Errorf(codes.InvalidArgument,
+			"failed to unmarshal remote_write data: %v. Expected a prompb.WriteRequest", err)
 	}
 
 	for _, ts := range metricsPayload.Timeseries {
-		metric := NodeMetricMetaData{
-			AdditionalLabels: make(map[string]string)}
+		if len(ts.Samples) == 0 {
+			continue
+		}
 
-		if len(ts.Samples) > 0 {
-			metric.Value = ts.Samples[0].Value
+		rawName, nodeId := metricAndNodeId(ts.Labels)
 
-			log.Info("processing sample value: ", metric.Value)
-			for _, label := range ts.Labels {
-				if label.Name == name || label.Name == env || label.Name == job {
-					continue
-				}
+		sanitized, ok := pkg.SanitizedMetrics[rawName]
+		if !ok {
+			log.Debugf("metric %q is not sanitized by this service, moving on to next metric...",
+				rawName)
 
-				if label.Name == nodeLabel {
-					metric.MainLabelValue = label.Value
-					continue
-				}
-				metric.AdditionalLabels[label.Name] = label.Value
-			}
+			continue
+		}
 
-			if metric.MainLabelValue == "" {
-				log.Warnf("main label %q not found in timeseries data, moving on to next metric...",
-					nodeLabel)
+		if nodeId == "" {
+			log.Warnf("node label (%q or %q) not found on metric %q, moving on to next metric...",
+				nodeLabel, altNodeLabel, rawName)
+
+			continue
+		}
+
+		// A remote_write batch may carry several samples for the same series:
+		// the most recent one is what's worth republishing.
+		value := latestSampleValue(ts.Samples)
+
+		log.Infof("processing metric %q for node %s with sample value: %v",
+			rawName, nodeId, value)
+
+		if sanitized.SkipUnchanged {
+			cached, ok := s.getNodeMetricFromCache(sanitized.Name, nodeId)
+			if ok && cached == value {
+				log.Infof("No new value to cache for metric %q on node %s: %f, skipping ...",
+					sanitized.Name, nodeId, cached)
 
 				continue
 			}
+		}
 
-			value, ok := s.getNodeMetricFromCache(metric.MainLabelValue)
-			if !ok || value != metric.Value {
-				log.Infof("Got new metric value to cache: %f", metric.Value)
-				s.updateNodeMetricCache(metric.MainLabelValue, metric.Value)
+		cachedNode, ok := s.getNodeFromCache(nodeId)
+		if !ok {
+			log.Warnf("metadata not found in cache for nodeId: %s, we'll be skipping...", nodeId)
+			log.Warn("make sure all physical nodes are correctly registered under registry, nodes")
 
-				cachedNode, ok := s.getNodeFromCache(metric.MainLabelValue)
-				if !ok {
-					log.Warnf("metadata not found in cache for nodeId: %s, we'll be skipping...",
-						metric.MainLabelValue)
-					log.Warn("make sure all physical nodes are correctly registered under registry, nodes")
+			continue
+		}
 
-					continue
-				}
-				metric.AdditionalLabels[networkLabel] = cachedNode.NetworkId
-				metric.AdditionalLabels[siteLabel] = cachedNode.SiteId
-				metric.AdditionalLabels[nodeLabel] = metric.MainLabelValue
+		if sanitized.SkipUnchanged {
+			s.updateNodeMetricCache(sanitized.Name, nodeId, value)
+		}
 
-				metricsToPush = append(metricsToPush, metric)
-			} else {
-				log.Infof("No new metric to cache for value: %f, skipping ...", value)
+		// Only the declared label set is forwarded: common/metrics pins a
+		// metric's label dimensions on the first push, so letting arbitrary
+		// scrape labels (instance, pod, ...) through would break every
+		// subsequent push of that same metric.
+		metricsToPush = append(metricsToPush, NodeMetricMetaData{
+			MetricName: sanitized.Name,
+			NodeId:     nodeId,
+			Value:      value,
+			Labels: map[string]string{
+				nodeLabel:    nodeId,
+				siteLabel:    cachedNode.SiteId,
+				networkLabel: cachedNode.NetworkId,
+			},
+		})
+	}
+
+	for _, m := range metricsToPush {
+		s.pushSanitizedNodeMetric(m)
+	}
+
+	return &pb.SanitizeResponse{}, nil
+}
+
+// latestSampleValue returns the value of the most recent sample of a series.
+// Samples reach us in timestamp order, but the order is not guaranteed by the
+// remote write protocol, so the timestamps are compared rather than trusted.
+func latestSampleValue(samples []prompb.Sample) float64 {
+	latest := samples[0]
+
+	for _, sample := range samples[1:] {
+		if sample.Timestamp > latest.Timestamp {
+			latest = sample
+		}
+	}
+
+	return latest.Value
+}
+
+// metricAndNodeId extracts the metric name and the node identifier out of a
+// timeseries label set. Every other label is dropped: the sanitizer rebuilds
+// the label set of the republished metric from the node cache.
+func metricAndNodeId(labels []prompb.Label) (metricName string, nodeId string) {
+	for _, label := range labels {
+		switch label.Name {
+		case name:
+			metricName = label.Value
+		case nodeLabel, altNodeLabel:
+			if nodeId == "" {
+				nodeId = label.Value
 			}
 		}
 	}
 
-	for _, m := range metricsToPush {
-		pushUpdatedNodeMetrics(m.Value, m.AdditionalLabels, s.pushGatewayHost)
-	}
-
-	return &pb.SanitizeResponse{}, nil
+	return metricName, nodeId
 }
 
 func (s *SanitizerServer) updateNodeCache(n map[string]NodeMetaData) {
@@ -182,18 +253,25 @@ func (s *SanitizerServer) getNodeFromCache(nodeId string) (NodeMetaData, bool) {
 	return node, ok
 }
 
-func (s *SanitizerServer) updateNodeMetricCache(nodeId string, value float64) {
+// metricCacheKey scopes the last seen value to a metric/node pair: without the
+// metric name, the several metrics sanitized for a same node would overwrite
+// each other's cached value.
+func metricCacheKey(metricName, nodeId string) string {
+	return metricName + "/" + nodeId
+}
+
+func (s *SanitizerServer) updateNodeMetricCache(metricName, nodeId string, value float64) {
 	s.m.Lock()
 	defer s.m.Unlock()
 
-	s.nodeMetricCache[nodeId] = value
+	s.nodeMetricCache[metricCacheKey(metricName, nodeId)] = value
 }
 
-func (s *SanitizerServer) getNodeMetricFromCache(nodeId string) (float64, bool) {
+func (s *SanitizerServer) getNodeMetricFromCache(metricName, nodeId string) (float64, bool) {
 	s.m.RLock()
 	defer s.m.RUnlock()
 
-	value, ok := s.nodeMetricCache[nodeId]
+	value, ok := s.nodeMetricCache[metricCacheKey(metricName, nodeId)]
 
 	return value, ok
 }
@@ -229,14 +307,29 @@ func (s *SanitizerServer) syncNodeCache() error {
 	return nil
 }
 
-func pushUpdatedNodeMetrics(value float64, labels map[string]string, pushGatewayHost string) {
-	log.Infof("Collecting and pushing node active subscribers metric to push gateway host: %s",
-		pushGatewayHost)
+func (s *SanitizerServer) pushSanitizedNodeMetric(m NodeMetricMetaData) {
+	if math.IsNaN(m.Value) {
+		// Prometheus turns a series that stopped reporting into a staleness
+		// marker, which travels over remote_write as a NaN sample. It is
+		// forwarded as is: the sanitizer only appends labels, it does not
+		// decide whether a node is up.
+		log.Infof("Pushing metric %q for node %s with no value (NaN) to push gateway host: %s",
+			m.MetricName, m.NodeId, s.pushGatewayHost)
+	} else {
+		log.Infof("Pushing metric %q for node %s to push gateway host: %s",
+			m.MetricName, m.NodeId, s.pushGatewayHost)
+	}
 
-	err := pmetric.CollectAndPushSystemMetrics(pushGatewayHost, pkg.NodeActiveSubscribersMetric,
-		pkg.NodeActiveSubscribers, float64(value), labels, pkg.SystemName)
+	// common/metrics keeps its collectors in a package level map and merges the
+	// caller labels into the shared metric config, neither of which is
+	// goroutine safe, so the pushes issued by this server are serialised.
+	s.pushMutex.Lock()
+	defer s.pushMutex.Unlock()
+
+	err := pmetric.CollectAndPushSystemMetrics(s.pushGatewayHost, pkg.NodeMetrics,
+		m.MetricName, m.Value, m.Labels, pkg.SystemName)
 	if err != nil {
-		log.Errorf("Error while pushing node active subscribers metric to push gateway %s",
-			err.Error())
+		log.Errorf("Error while pushing metric %q for node %s to push gateway: %v",
+			m.MetricName, m.NodeId, err)
 	}
 }

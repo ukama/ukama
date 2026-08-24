@@ -68,10 +68,13 @@ static JsonObj *status_json(ServiceContext *ctx) {
     JsonObj *root;
     JsonObj *pcrf;
     JsonObj *initNetwork;
+    JsonObj *service;
     JsonObj *ues;
     JsonObj *userPlane;
     EpcemuState state;
     bool ready;
+    bool serviceOn;
+    bool dataPlaneStarted;
     char reason[EPCEMU_MAX_REASON];
 
     if (ctx == NULL || ctx->config == NULL || ctx->status == NULL) return NULL;
@@ -82,6 +85,11 @@ static JsonObj *status_json(ServiceContext *ctx) {
     snprintf(reason, sizeof(reason), "%s", ctx->status->reason);
     pthread_mutex_unlock(&ctx->status->mutex);
 
+    pthread_mutex_lock(&ctx->serviceMutex);
+    serviceOn = ctx->serviceOn;
+    dataPlaneStarted = ctx->dataPlaneStarted;
+    pthread_mutex_unlock(&ctx->serviceMutex);
+
     root = json_object();
     if (root == NULL) return NULL;
 
@@ -89,12 +97,24 @@ static JsonObj *status_json(ServiceContext *ctx) {
 
     pcrf = json_object();
     initNetwork = json_object();
+    service = json_object();
     ues = ue_summary_json();
-    userPlane = data_plane_json(&gDataPlane, ctx->config);
+    userPlane = dataPlaneStarted ?
+        data_plane_json(&gDataPlane, ctx->config) : json_object();
+
+    if (userPlane != NULL && !dataPlaneStarted) {
+        json_object_set_new(userPlane, "enabled", json_false());
+    }
 
     json_object_set_new(root, "ready",  json_boolean(ready));
     json_object_set_new(root, "state",  json_string(status_state_str(state)));
     json_object_set_new(root, "reason", json_string(reason));
+
+    json_object_set_new(service, "state",
+                        json_string(serviceOn ? "on" : "off"));
+    json_object_set_new(service, "admission",
+                        json_string(serviceOn ? "enabled" : "disabled"));
+    json_object_set_new(root, "service", service);
 
     json_object_set_new(pcrf, "url",   json_string(ctx->config->pcrfUrl));
     json_object_set_new(pcrf, "ready", json_boolean(ctx->config->pcrfReady));
@@ -158,6 +178,60 @@ int web_service_cb_version(const URequest *request,
     return U_CALLBACK_CONTINUE;
 }
 
+int web_service_cb_ready(const URequest *request,
+                         UResponse *response,
+                         void *data) {
+
+    ServiceContext *ctx;
+    JsonObj *json;
+    EpcemuState state;
+    char reason[EPCEMU_MAX_REASON];
+    int httpStatus;
+
+    (void)request;
+
+    ctx = (ServiceContext *)data;
+    if (ctx == NULL || ctx->status == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    pthread_mutex_lock(&ctx->status->mutex);
+    state = ctx->status->state;
+    snprintf(reason, sizeof(reason), "%s", ctx->status->reason);
+    pthread_mutex_unlock(&ctx->status->mutex);
+
+    httpStatus = HttpStatus_Accepted;
+    if (state == EpcemuStateReady) {
+        httpStatus = HttpStatus_OK;
+    } else if (state == EpcemuStateFailed) {
+        httpStatus = HttpStatus_ServiceUnavailable;
+    }
+
+    json = json_object();
+    if (json == NULL) {
+        ulfius_set_string_body_response(
+            response,
+            HttpStatus_InternalServerError,
+            HttpStatusStr(HttpStatus_InternalServerError));
+        return U_CALLBACK_CONTINUE;
+    }
+
+    json_object_set_new(json,
+                        "ready",
+                        json_boolean(state == EpcemuStateReady));
+    if (state != EpcemuStateReady) {
+        json_object_set_new(json, "reason", json_string(reason));
+    }
+
+    ulfius_set_json_body_response(response, httpStatus, json);
+    json_decref(json);
+    return U_CALLBACK_CONTINUE;
+}
+
 int web_service_cb_status(const URequest *request,
                           UResponse *response,
                           void *data) {
@@ -177,6 +251,68 @@ int web_service_cb_status(const URequest *request,
 
     ulfius_set_json_body_response(response, HttpStatus_OK, json);
     json_decref(json);
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_service(const URequest *request,
+                           UResponse *response,
+                           void *data) {
+
+    ServiceContext *ctx;
+    JsonObj *body;
+    JsonObj *reply;
+    const char *state;
+    bool serviceOn;
+
+    ctx = (ServiceContext *)data;
+    body = NULL;
+    reply = NULL;
+
+    if (ctx == NULL || ctx->config == NULL || !status_is_ready(ctx->status)) {
+        set_error(response, HttpStatus_ServiceUnavailable, "epcemu not ready");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    body = ulfius_get_json_body_request(request, NULL);
+    if (body == NULL) {
+        set_error(response, HttpStatus_BadRequest, "invalid JSON body");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    state = json_string_default(body, "state", NULL);
+    if (state == NULL ||
+        (strcmp(state, "on") != 0 && strcmp(state, "off") != 0)) {
+        json_decref(body);
+        set_error(response, HttpStatus_BadRequest, "state must be on or off");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    serviceOn = strcmp(state, "on") == 0;
+
+    pthread_mutex_lock(&ctx->serviceMutex);
+    ctx->serviceOn = serviceOn;
+    if (!serviceOn) {
+        ue_clear_all();
+    }
+    pthread_mutex_unlock(&ctx->serviceMutex);
+
+    json_decref(body);
+
+    reply = json_pack("{s:s, s:s, s:i}",
+                      "state", serviceOn ? "on" : "off",
+                      "admission", serviceOn ? "enabled" : "disabled",
+                      "attachedUes", ue_count_attached());
+    if (reply == NULL) {
+        set_error(response, HttpStatus_InternalServerError,
+                  "failed to build service response");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    usys_log_info("service: %s", serviceOn ? "on" : "off");
+
+    ulfius_set_json_body_response(response, HttpStatus_OK, reply);
+    json_decref(reply);
 
     return U_CALLBACK_CONTINUE;
 }
@@ -251,18 +387,21 @@ int web_service_cb_attach(const URequest *request,
     json_decref(body);
     body = NULL;
 
-    /*
-     * Attach is idempotent for the same IMSI/IP pair.
-     *
-     * This is important for lab scripts because the UE agent/container may
-     * retry after a previous request committed UE/PCRF state but failed while
-     * building the HTTP response.
-     */
+    pthread_mutex_lock(&ctx->serviceMutex);
+
+    if (!ctx->serviceOn) {
+        pthread_mutex_unlock(&ctx->serviceMutex);
+        set_error(response, HttpStatus_ServiceUnavailable, "service is off");
+        return U_CALLBACK_CONTINUE;
+    }
+
     if (ue_get(imsiBuf, &existing)) {
         if (existing.state == UeStateAttached &&
             strcmp(existing.ip, ipBuf) == 0) {
 
             reply = ue_get_json(imsiBuf);
+            pthread_mutex_unlock(&ctx->serviceMutex);
+
             if (reply == NULL) {
                 set_error(response, HttpStatus_InternalServerError,
                           "failed to read attached ue");
@@ -274,6 +413,7 @@ int web_service_cb_attach(const URequest *request,
             return U_CALLBACK_CONTINUE;
         }
 
+        pthread_mutex_unlock(&ctx->serviceMutex);
         set_error(response, HttpStatus_Conflict, "imsi already attached");
         return U_CALLBACK_CONTINUE;
     }
@@ -284,12 +424,14 @@ int web_service_cb_attach(const URequest *request,
                          apnBuf,
                          reason,
                          sizeof(reason))) {
+        pthread_mutex_unlock(&ctx->serviceMutex);
         set_error(response, HttpStatus_Conflict, reason);
         return U_CALLBACK_CONTINUE;
     }
 
     if (!pcrf_is_ready(ctx->config)) {
         ue_attach_fail(imsiBuf, "pcrf not ready");
+        pthread_mutex_unlock(&ctx->serviceMutex);
         set_error(response, HttpStatus_ServiceUnavailable,
                   "pcrf not ready");
         return U_CALLBACK_CONTINUE;
@@ -297,14 +439,17 @@ int web_service_cb_attach(const URequest *request,
 
     if (!pcrf_create_session(ctx->config, imsiBuf, ipBuf, apnBuf)) {
         ue_attach_fail(imsiBuf, "pcrf session create failed");
+        pthread_mutex_unlock(&ctx->serviceMutex);
         set_error(response, HttpStatus_ServiceUnavailable,
                   "pcrf session create failed");
         return U_CALLBACK_CONTINUE;
     }
 
     ue_attach_complete(imsiBuf);
-
     reply = ue_get_json(imsiBuf);
+
+    pthread_mutex_unlock(&ctx->serviceMutex);
+
     if (reply == NULL) {
         set_error(response, HttpStatus_InternalServerError,
                   "failed to read attached ue");

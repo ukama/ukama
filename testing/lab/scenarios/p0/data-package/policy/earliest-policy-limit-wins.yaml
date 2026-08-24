@@ -82,7 +82,7 @@ phases:
         package: time_first_plan
         offset_seconds: 2
     checks:
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: all
         amount_mb: 1
       - type: package_state

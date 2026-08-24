@@ -56,6 +56,13 @@ phases:
         expect:
           result: failure
     checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
       - type: traffic_unavailable
         ues: all
         amount_mb: 1
@@ -89,6 +96,14 @@ phases:
         expect:
           result: failure
     checks:
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
       - type: traffic_unavailable
         ues: all
         amount_mb: 1
@@ -122,6 +137,14 @@ phases:
         expect:
           result: failure
     checks:
+      - type: node_status_equals
+        type_selector: amplifier
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
       - type: traffic_unavailable
         ues: all
         amount_mb: 1
@@ -155,6 +178,14 @@ phases:
         expect:
           result: failure
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
       - type: traffic_unavailable
         ues: all
         amount_mb: 1
@@ -173,6 +204,13 @@ phases:
         expect:
           result: failure
     checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
       - type: traffic_unavailable
         ues: all
         amount_mb: 1

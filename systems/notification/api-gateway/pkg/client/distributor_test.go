@@ -57,7 +57,7 @@ func TestDIstributor_GetNotificationStream(t *testing.T) {
 		},
 	}
 
-	stream := mocks.DistributorService_GetNotificationStreamClient{}
+	stream := mocks.DistributorService_GetNotificationStreamClient[pb.Notification]{}
 
 	stream.On("Recv").Return(&data[0], nil)
 

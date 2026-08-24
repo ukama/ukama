@@ -150,3 +150,45 @@ func TestState_GetStateHistory(t *testing.T) {
 }
 
 
+
+func TestState_ListLatestStates(t *testing.T) {
+	t.Run("returns one row per node", func(t *testing.T) {
+		first := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		second := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"node_id", "created_at"}).
+			AddRow(first.String(), time.Now()).
+			AddRow(second.String(), time.Now())
+
+		mock.ExpectQuery(`SELECT DISTINCT ON \(node_id\) \* FROM "states"`).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := NewStateRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		states, err := r.ListLatestStates()
+
+		assert.NoError(t, err)
+		assert.Len(t, states, 2)
+		assert.Equal(t, first.String(), states[0].NodeId)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+}
