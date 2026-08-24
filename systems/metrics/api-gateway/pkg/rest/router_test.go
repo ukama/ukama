@@ -164,6 +164,50 @@ func Test_GetMetrics(t *testing.T) {
 		assert.Equal(t, "last_over_time(data_usage {}[7d])", q.Get("query"))
 	})
 
+	t.Run("LastMetricWithDeltaFn", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET",
+			"/v1/last/metrics/com_uptime?node=uk-sa2634-tnode-v0-4945&lookback=5m&fn=delta", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 200, w.Code)
+
+		q, err := url.ParseQuery(body)
+		assert.NoError(t, err)
+		assert.Equal(t, "delta(com_node_uptime {node_id='uk-sa2634-tnode-v0-4945'}[5m])", q.Get("query"))
+	})
+
+	// com_uptime is defined only in the system bucket: a node id must not 404.
+	t.Run("LastMetricWithNodeFilterResolvesSystemMetric", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET",
+			"/v1/last/metrics/com_uptime?node=uk-sa2634-tnode-v0-4945&lookback=5m", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 200, w.Code)
+
+		q, err := url.ParseQuery(body)
+		assert.NoError(t, err)
+		assert.Equal(t, "last_over_time(com_node_uptime {node_id='uk-sa2634-tnode-v0-4945'}[5m])", q.Get("query"))
+	})
+
+	t.Run("LastMetricRejectsUnknownFn", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/last/metrics/data_usage?fn=sum", nil)
+
+		// act
+		r.ServeHTTP(w, req)
+
+		// assert
+		assert.Equal(t, 400, w.Code)
+	})
+
 	t.Run("LastMetricRejectsBadLookback", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		req, _ := http.NewRequest("GET", "/v1/last/metrics/data_usage?lookback=7", nil)

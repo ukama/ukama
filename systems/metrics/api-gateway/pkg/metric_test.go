@@ -51,7 +51,7 @@ func TestGetLastQuery(t *testing.T) {
 	// `last_over_time(data_usage[7d])` against Prometheus would return it.
 	t.Run("NoFilters", func(t *testing.T) {
 		m := Metric{Metric: "data_usage"}
-		r := m.getLastQuery(NewFilter(), "7d")
+		r := m.getLastQuery(NewFilter(), "7d", "last_over_time")
 
 		assert.Equal(t, "last_over_time(data_usage {}[7d])", r)
 	})
@@ -59,7 +59,7 @@ func TestGetLastQuery(t *testing.T) {
 	t.Run("Filtered", func(t *testing.T) {
 		m := Metric{Metric: "data_usage"}
 		f := NewFilter().WithNetwork("net-1").WithPackage("pkg-1").WithIccid("8910309414559836625")
-		r := m.getLastQuery(f, "24h")
+		r := m.getLastQuery(f, "24h", "last_over_time")
 
 		assert.Equal(t,
 			"last_over_time(data_usage {network='net-1',package='pkg-1',iccid='8910309414559836625'}[24h])",
@@ -69,9 +69,79 @@ func TestGetLastQuery(t *testing.T) {
 	// NeedRate is a range-vector concern; the instant KPI query never rates.
 	t.Run("IgnoresNeedRate", func(t *testing.T) {
 		m := Metric{Metric: "data_usage", NeedRate: true, RateInterval: "1m"}
-		r := m.getLastQuery(NewFilter(), "7d")
+		r := m.getLastQuery(NewFilter(), "7d", "last_over_time")
 
 		assert.Equal(t, "last_over_time(data_usage {}[7d])", r)
+	})
+
+	t.Run("Delta", func(t *testing.T) {
+		m := Metric{Metric: "com_node_uptime"}
+		r := m.getLastQuery(NewFilter().WithNodeId("uk-sa2634-tnode-v0-4945"), "5m", "delta")
+
+		assert.Equal(t, "delta(com_node_uptime {node_id='uk-sa2634-tnode-v0-4945'}[5m])", r)
+	})
+}
+
+func TestResolveLastFunc(t *testing.T) {
+	t.Run("DefaultsToLast", func(t *testing.T) {
+		fn, err := ResolveLastFunc("")
+
+		assert.NoError(t, err)
+		assert.Equal(t, "last_over_time", fn)
+	})
+
+	t.Run("Mapped", func(t *testing.T) {
+		for in, want := range map[string]string{
+			"last":     "last_over_time",
+			"delta":    "delta",
+			"increase": "increase",
+			"rate":     "rate",
+			"min":      "min_over_time",
+			"max":      "max_over_time",
+			"avg":      "avg_over_time",
+			"  DELTA ": "delta",
+		} {
+			fn, err := ResolveLastFunc(in)
+
+			assert.NoError(t, err, in)
+			assert.Equal(t, want, fn, in)
+		}
+	})
+
+	// Resolved unquoted into the query, so anything unmapped must be rejected.
+	t.Run("Rejected", func(t *testing.T) {
+		for _, bad := range []string{"sum", "delta(x)", "last_over_time", "1) or vector("} {
+			_, err := ResolveLastFunc(bad)
+
+			assert.Error(t, err, bad)
+		}
+	})
+}
+
+func TestResolveMetric(t *testing.T) {
+	m := &Metrics{conf: &MetricsConfig{Metrics: map[string]map[string]Metric{
+		"tnode":  {"cpu": {Metric: "com_soc_cpu_usage"}},
+		"system": {"com_uptime": {Metric: "com_node_uptime"}},
+	}}}
+
+	t.Run("NodeTypeBucket", func(t *testing.T) {
+		metric, ok := m.resolveMetric("cpu", "tnode")
+
+		assert.True(t, ok)
+		assert.Equal(t, "com_soc_cpu_usage", metric.Metric)
+	})
+
+	t.Run("FallsBackToSystemBucket", func(t *testing.T) {
+		metric, ok := m.resolveMetric("com_uptime", "tnode")
+
+		assert.True(t, ok)
+		assert.Equal(t, "com_node_uptime", metric.Metric)
+	})
+
+	t.Run("UnknownStillMisses", func(t *testing.T) {
+		_, ok := m.resolveMetric("test-metrics-miss", "tnode")
+
+		assert.False(t, ok)
 	})
 }
 
