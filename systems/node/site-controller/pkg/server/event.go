@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -20,9 +21,9 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
-	pb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg/reconciler"
 )
 
 var defaultSiteIntent = db.SiteIntent{
@@ -37,6 +38,24 @@ var defaultSiteState = db.SiteState{
 	RadioState:   "unknown",
 	AccessState:  "unavailable",
 	Reason:       "site_created",
+}
+
+const (
+	reasonHealthReport = "health_report"
+	reasonNodeRestart  = "node_restart"
+)
+
+func normalizeNodeType(nodeType string) string {
+	switch strings.ToLower(nodeType) {
+	case ukama.NODE_ID_TYPE_TOWERNODE, "tower":
+		return ukama.NODE_ID_TYPE_TOWERNODE
+	case ukama.NODE_ID_TYPE_AMPNODE, "amplifier":
+		return ukama.NODE_ID_TYPE_AMPNODE
+	case ukama.NODE_ID_TYPE_CNODE, "control", "controller":
+		return ukama.NODE_ID_TYPE_CNODE
+	default:
+		return strings.ToLower(nodeType)
+	}
 }
 
 type SiteControllerEventServer struct {
@@ -93,6 +112,20 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 		return &epb.EventResponse{}, nil
 
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
+		cfg := evt.EventToEventConfig[evt.EventNodeOnline]
+		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, cfg.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = c.handleNodeOnline(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
+
+		return &epb.EventResponse{}, nil
+
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
 		cfg := evt.EventToEventConfig[evt.EventSiteCreate]
 		msg, err := epb.UnmarshalEventAddSite(e.Msg, cfg.Name)
@@ -122,7 +155,7 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 	}
 
 	nodeId := msg.NodeId
-	nodeType := msg.NodeType
+	nodeType := normalizeNodeType(msg.NodeType)
 	if _, err := c.s.nodeClient.Get(nodeId); err != nil {
 		return fmt.Errorf("failed to get node %s: %w", nodeId, err)
 	}
@@ -155,7 +188,14 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 
 	switch nodeType {
 	case ukama.NODE_ID_TYPE_TOWERNODE:
-		// TODO: Handle tower node health report
+		if c.s == nil || c.s.reconciler == nil {
+			return nil
+		}
+
+		if err := c.s.reconciler.ReconcileSite(ctx, siteId, false); err != nil {
+			log.Warnf("site-controller: reconcile site %s after tower health report: %v", siteId, err)
+		}
+
 		return nil
 
 	case ukama.NODE_ID_TYPE_AMPNODE:
@@ -163,15 +203,10 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 			return fmt.Errorf("no radio found for node %s", nodeId)
 		}
 
-		radioState := report.Interfaces.Radio.State
-		_, err = c.s.SetRadio(ctx, &pb.SetRadioRequest{
-			SiteId: siteId,
-			State:  radioState,
+		return c.recordObservedState(ctx, siteId, &db.SiteState{
+			RadioState: report.Interfaces.Radio.State,
+			Reason:     reasonHealthReport,
 		})
-		if err != nil {
-			return err
-		}
-		return nil
 
 	case ukama.NODE_ID_TYPE_CNODE:
 		// TODO: Handle dnode health report
@@ -180,6 +215,52 @@ func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg 
 	default:
 		return fmt.Errorf("unsupported node type %s", nodeType)
 	}
+}
+
+func (c *SiteControllerEventServer) handleNodeOnline(ctx context.Context, msg *epb.NodeOnlineEvent) error {
+	nodeId := msg.NodeId
+
+	nodeType := ukama.GetNodeType(nodeId)
+	if nodeType == nil {
+		return fmt.Errorf("failed to resolve node type for node %s", nodeId)
+	}
+	if normalizeNodeType(*nodeType) != ukama.NODE_ID_TYPE_TOWERNODE {
+		return nil
+	}
+
+	nodes, err := c.getNodesBySite("", nodeId)
+	if err != nil {
+		return fmt.Errorf("failed to get nodes for node %s: %w", nodeId, err)
+	}
+	if len(nodes.Nodes) == 0 || nodes.Nodes[0] == nil || nodes.Nodes[0].Site.SiteId == "" {
+		return fmt.Errorf("no site found for node %s", nodeId)
+	}
+	siteId := nodes.Nodes[0].Site.SiteId
+
+	log.Infof("site-controller: tower %s back online for site %s, resetting observed service", nodeId, siteId)
+
+	return c.recordObservedState(ctx, siteId, &db.SiteState{
+		ServiceState: reconciler.StateOff,
+		Reason:       reasonNodeRestart,
+	})
+}
+
+func (c *SiteControllerEventServer) recordObservedState(ctx context.Context, siteID string, observed *db.SiteState) error {
+	observed.SiteID = siteID
+
+	if err := c.states.Upsert(observed); err != nil {
+		return fmt.Errorf("failed to record observed state for site %s: %w", siteID, err)
+	}
+
+	if c.s == nil || c.s.reconciler == nil {
+		return nil
+	}
+
+	if err := c.s.reconciler.ReconcileSite(ctx, siteID, false); err != nil {
+		log.Warnf("site-controller: reconcile site %s after health report: %v", siteID, err)
+	}
+
+	return nil
 }
 
 func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.EventAddSite) error {

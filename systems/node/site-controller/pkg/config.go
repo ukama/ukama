@@ -48,6 +48,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
 				"event.cloud.local.ukama.node.health.report.store",
+				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 			},
 		},
 	}

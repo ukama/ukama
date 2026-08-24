@@ -14,8 +14,10 @@ import (
 
 // SiteSnapshot aggregates intent, observed site state, component JSON, and static port map.
 type SiteSnapshot struct {
-	Intent          *db.SiteIntent
-	ObservedState   *db.SiteState
-	ComponentsJSON  string
-	Ports           []db.SitePortMap
+	Intent         *db.SiteIntent
+	ObservedState  *db.SiteState
+	ComponentsJSON string
+	Ports          []db.SitePortMap
+	SyncStatus     string
+	SyncReason     string
 }

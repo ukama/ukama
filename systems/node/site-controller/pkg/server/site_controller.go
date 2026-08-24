@@ -265,6 +265,17 @@ func siteStateToPB(st *db.SiteState, intent *db.SiteIntent) *pb.DerivedStateMsg 
 	return out
 }
 
+func derivedToPB(s *reconciler.SiteSnapshot) *pb.DerivedStateMsg {
+	out := siteStateToPB(s.ObservedState, s.Intent)
+	if out == nil {
+		return nil
+	}
+	out.SyncStatus = s.SyncStatus
+	out.SyncReason = s.SyncReason
+
+	return out
+}
+
 func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 	if s == nil {
 		return nil
@@ -277,7 +288,7 @@ func snapshotToPB(s *reconciler.SiteSnapshot) *pb.SiteSnapshot {
 	}
 	return &pb.SiteSnapshot{
 		Intent:         intentToPB(s.Intent),
-		Derived:        siteStateToPB(s.ObservedState, s.Intent),
+		Derived:        derivedToPB(s),
 		ComponentsJson: s.ComponentsJSON,
 		Ports:          ports,
 	}
