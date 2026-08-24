@@ -503,3 +503,66 @@ func TestUpdateSoftware(t *testing.T) {
 		msgBus.AssertExpectations(t)
 	})
 }
+
+func TestUpdateSoftware_OfflineNode(t *testing.T) {
+	ctx := context.Background()
+
+	offlineNode := &creg.NodeInfo{
+		Id:     testNodeIdNormalized,
+		Status: creg.NodeStatusInfo{Connectivity: "Offline"},
+	}
+
+	t.Run("rejected_with_not_found", func(t *testing.T) {
+		nodeClient := &cmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
+
+		opMgr := &cmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		resp, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		nodeClient.AssertExpectations(t)
+	})
+
+	t.Run("takes_no_lock", func(t *testing.T) {
+		nodeClient := &cmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
+
+		opMgr := &cmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		_, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		opMgr.AssertNotCalled(t, "Start", mock.Anything)
+	})
+
+	t.Run("registry_unreachable_is_internal", func(t *testing.T) {
+		nodeClient := &cmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(nil, assert.AnError).Once()
+
+		opMgr := &cmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		_, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		assert.Equal(t, codes.Internal, status.Code(err))
+		opMgr.AssertNotCalled(t, "Start", mock.Anything)
+	})
+}
