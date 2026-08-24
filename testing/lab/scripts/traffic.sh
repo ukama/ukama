@@ -16,6 +16,19 @@ UE_KEY="$1"
 AMOUNT_MB="$2"
 RUN_DIR="$3"
 STATE_FILE="$RUN_DIR/runtime-ues/$(printf "%s" "$UE_KEY" | tr -c 'A-Za-z0-9_.-' '-').env"
+ATTEMPT_TIMEOUT_SEC="${ULAB_TRAFFIC_ATTEMPT_TIMEOUT_SEC:-60}"
+
+case "$ATTEMPT_TIMEOUT_SEC" in
+    ''|*[!0-9]*)
+        echo "invalid ULAB_TRAFFIC_ATTEMPT_TIMEOUT_SEC: $ATTEMPT_TIMEOUT_SEC" >&2
+        exit 2
+        ;;
+esac
+
+if [ "$ATTEMPT_TIMEOUT_SEC" -eq 0 ]; then
+    echo "ULAB_TRAFFIC_ATTEMPT_TIMEOUT_SEC must be greater than zero" >&2
+    exit 2
+fi
 
 if [ ! -f "$STATE_FILE" ]; then
     echo "UE state not found: $STATE_FILE" >&2
@@ -80,9 +93,18 @@ dump_datapath() {
 }
 
 echo "traffic ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB media=$MEDIA_IP"
-if ! MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
+if timeout -k 5s "${ATTEMPT_TIMEOUT_SEC}s" \
+    env MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
     "$UE_DIR/scripts/traffic-ue.sh" --imsi "$IMSI" --mode iperf \
     --mb "$AMOUNT_MB"; then
+    :
+else
+    traffic_rc=$?
+    if [ "$traffic_rc" -eq 124 ] || [ "$traffic_rc" -eq 137 ]; then
+        echo "traffic transfer timed out after ${ATTEMPT_TIMEOUT_SEC}s" >&2
+    else
+        echo "traffic transfer failed rc=$traffic_rc" >&2
+    fi
     echo "traffic transfer failed; dumping datapath state" >&2
     dump_datapath
     exit 1

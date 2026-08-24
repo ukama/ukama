@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
 
 static unsigned int env_seconds(const char *name,
@@ -382,12 +383,14 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         uint64_t amount;
         unsigned int timeout;
         unsigned int attempt;
+        time_t deadline;
         int rc;
         int expected;
         int n;
 
         amount = check->expected_used_mb ? check->expected_used_mb : 1;
         timeout = control_wait_seconds();
+        deadline = time(NULL) + (time_t)timeout;
         rc = ULAB_ERR;
         expected = 0;
         attempt = 0;
@@ -410,6 +413,7 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         }
 
         do {
+            attempt++;
             memset(&tmp, 0, sizeof(tmp));
             rc = runtime_generate_traffic(ctx->runtime, ctx->world, &sel,
                                           amount, &tmp);
@@ -419,11 +423,10 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                 expected = rc != ULAB_OK;
             }
 
-            if (expected || attempt >= timeout) {
+            if (expected || time(NULL) >= deadline) {
                 break;
             }
             sleep(1);
-            attempt++;
         } while (1);
 
         if (expected && check->type == CHECK_TRAFFIC_BLOCKED) {
@@ -438,7 +441,7 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         n = snprintf(res->detail, sizeof(res->detail),
                      "ues=%zu amount_mb=%llu runtime_rc=%d attempts=%u",
                      sel.count, (unsigned long long)amount, rc,
-                     attempt + 1);
+                     attempt);
         if (n > 0 && (size_t)n < sizeof(res->detail) && tmp.msg[0]) {
             n += snprintf(res->detail + n,
                           sizeof(res->detail) - (size_t)n,

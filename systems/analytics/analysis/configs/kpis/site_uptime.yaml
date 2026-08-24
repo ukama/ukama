@@ -1,33 +1,29 @@
-# SITE_UPTIME (%): a site is up in a window when every node that makes it up
-# is both ALIVE and SERVING.
-#   alive   — the node is still pushing its system uptime counter. The
-#             sanitizer republishes those counters with node_id/site/network
-#             stamped on them: com_node_uptime for the tnode and the cnode,
-#             ctl_node_uptime for the anode. A node that stopped pushing does
-#             not disappear — Prometheus turns the series into a staleness
-#             marker, which arrives as the literal NaN, and that reads as
-#             down. A series that aged out of the pull's lookback is down for
-#             the same reason.
-#   service — digital cellular service, from the tnode health report
-#             (interfaces.cellular.available); the anode has no cellular
-#             interface and reports "cellular": null
-#   radio   — interfaces.radio.available, on tnode and anode alike
-# The cnode carries neither interface and is not probed, so liveness is all it
-# is judged on. A node is down when its uptime reading is NaN or absent,
-# either interface flag is false, its probe is unreachable, or it never
-# reported. A site is up when it has at least one tnode/anode/cnode and every
-# one of them is up; a site carrying none of the three reads down. An hnode
-# attached to a site is ignored.
-# radio.state is NOT read: uptime tracks interface availability, so a radio
+# SITE_UPTIME (%): how much of each window the site was serving for.
+#
+#   node % = clamp(increase / L, 0, 1) x 100, forced to 0 by a health flag
+#            reported false: interfaces.cellular.available (service; tnode
+#            only, as the anode reports "cellular": null) or
+#            interfaces.radio.available
+#   site % = min over the site's tnode/anode/cnode
+#
+# L is the window length floored at 60s — `increase` needs its range to span
+# several scrape intervals. Ingest pulls each node's uptime counter as
+# `increase` over that range, so the value is seconds of uptime gained over it:
+# ~L for a node up throughout, 0 for one whose counter stalled or never
+# reported. Below the floor consecutive windows overlap.
+#
+# Taking the minimum collapses to "any node down means the site is down"
+# whenever the per-node values are 0 or 100. A site carrying no tnode/anode/
+# cnode reports 100; an hnode is ignored.
+#
+# radio.state is not read — uptime tracks interface availability, so a radio
 # that is available but switched off is still up, and there is no
-# planned/unplanned distinction.
-# Degraded mode: when BOTH uptime datasets come back with no rows at all, the
-# metrics path delivered nothing rather than every node dying, so the liveness
-# term is dropped for that window and the health rule alone decides — a broken
-# sanitizer or remote_write cannot zero the KPI org-wide.
-# Per window: Sum = 100 when up else 0, Count = 1 always — so the aggregator's
-# AVG is exactly up_windows / total_windows x 100.
-# Query with op=AVG at span daily/weekly/monthly for the timeseries.
+# planned/unplanned distinction. Node lifecycle state and node-gateway
+# reachability are not read either: the node's own counter is the authority.
+#
+# Per window: Sum = the site's percentage, Count = 1, so the aggregator's AVG
+# is the mean of the windows in any span. Query with op=AVG at
+# daily/weekly/monthly or last_24h/last_7d/last_30d.
 kpi: SITE_UPTIME
 domain: network
 algo: site_uptime@v3
@@ -35,20 +31,22 @@ kind: gauge
 scope_agg: avg
 scope: [network_id, site_id]
 inputs:
-  health:
-    dataset: node.health.interfaces
-    fields: [node_id, site_id, network_id, type, cellular_available, radio_available, unreachable]
+  # Site membership only; `state` and `connectivity` are not read.
   nodes:
     dataset: registry.node.list
     fields: [node_id, site_id, network_id, type]
-  # Liveness. Registry stays authoritative for site membership: a site whose
-  # nodes are all dark still has to produce a row, and a dark node has no
-  # metric left to carry a site label on.
+  health:
+    dataset: node.health.interfaces
+    fields: [node_id, site_id, network_id, type, cellular_available, radio_available]
+  # mode: window — these measure the window rather than state as of it, so a
+  # failed pull reads as missing instead of inheriting the previous reading.
   com_uptime:
     dataset: metrics.com_uptime.last
+    mode: window
     fields: [node_id, site_id, network_id, value]
   ctl_uptime:
     dataset: metrics.ctl_uptime.last
+    mode: window
     fields: [node_id, site_id, network_id, value]
 output:
   type: float

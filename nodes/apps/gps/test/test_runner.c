@@ -21,6 +21,7 @@ void tearDown(void) {
     pthread_mutex_destroy(&gData->mutex);
     free(gData->latitude);
     free(gData->longitude);
+    free(gData->time);
     free(gData);
 }
 
@@ -35,4 +36,3 @@ int main(void) {
 
     return UNITY_END();
 }
-

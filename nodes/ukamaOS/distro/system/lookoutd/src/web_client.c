@@ -586,59 +586,83 @@ static void wc_free_status_data(LookoutStatusData *status) {
 
 static int get_gps_data(GPSClientData *gps) {
 
-    int  ret = STATUS_NOK;
+    int ret = STATUS_NOK;
     int  port = 0;
-    long status = 0;
-
-    char url[MAX_BUFFER] = {0};
-    char *body = NULL;
+    const char *value = NULL;
+    JsonObj *json = NULL;
+    JsonObj *lock = NULL;
+    JsonObj *coordinates = NULL;
+    JsonObj *gpsTime = NULL;
 
     if (gps == NULL) {
         return STATUS_NOK;
     }
 
     memset(gps, 0, sizeof(GPSClientData));
-    gps->available = USYS_TRUE;
-    gps->lock      = USYS_FALSE;
     port           = usys_find_service_port(SERVICE_GPS);
     if (port <= 0) {
         usys_log_error("Failed to resolve gps service port");
         return STATUS_NOK;
     }
 
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/lock", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    usys_free(body);
-    body = NULL;
-
-    if (ret != STATUS_OK) {
-        usys_log_error("Failed to read gps lock from %s", url);
+    if (wc_get_json_from_service(port, "/v1/status", &json) != STATUS_OK) {
         return STATUS_NOK;
     }
 
-    gps->lock = status == HttpStatus_OK ? USYS_TRUE : USYS_FALSE;
+    lock = json_object_get(json, "lock");
+    coordinates = json_object_get(json, "coordinates");
+    gpsTime = json_object_get(json, "time");
 
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/coordinates", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    if (ret == STATUS_OK && status == HttpStatus_OK &&
-        body && body[0] != '\0') {
-        gps->coordinates = strdup(body);
+    if (!json_is_boolean(lock) ||
+        !(json_is_string(coordinates) || json_is_null(coordinates)) ||
+        !(json_is_string(gpsTime) || json_is_null(gpsTime))) {
+        usys_log_error("Invalid response from gps /v1/status");
+        goto cleanup;
     }
 
-    usys_free(body);
-    body = NULL;
+    gps->lock = json_boolean_value(lock) ? USYS_TRUE : USYS_FALSE;
 
-    snprintf(url, sizeof(url), "http://localhost:%d/v1/time", port);
-    ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
-    if (ret == STATUS_OK && status == HttpStatus_OK &&
-        body && body[0] != '\0') {
-        gps->time = strdup(body);
+    if (json_is_string(coordinates)) {
+        value = json_string_value(coordinates);
+        if (value == NULL || value[0] == '\0') {
+            goto cleanup;
+        }
+
+        gps->coordinates = strdup(value);
+        if (gps->coordinates == NULL) {
+            goto cleanup;
+        }
     }
 
-    usys_free(body);
-    body = NULL;
+    if (json_is_string(gpsTime)) {
+        value = json_string_value(gpsTime);
+        if (value == NULL || value[0] == '\0') {
+            goto cleanup;
+        }
 
-    return STATUS_OK;
+        gps->time = strdup(value);
+        if (gps->time == NULL) {
+            goto cleanup;
+        }
+    }
+
+    if (gps->lock &&
+        (gps->coordinates == NULL || gps->coordinates[0] == '\0' ||
+         gps->time == NULL || gps->time[0] == '\0')) {
+        usys_log_error("Incomplete locked response from gps /v1/status");
+        goto cleanup;
+    }
+
+    gps->available = USYS_TRUE;
+    ret = STATUS_OK;
+
+cleanup:
+    json_decref(json);
+    if (ret != STATUS_OK) {
+        wc_free_gps_data(gps);
+    }
+
+    return ret;
 }
 
 static void collect_radio_data(RadioStatusData *radio) {
@@ -838,8 +862,7 @@ int send_health_report(Config *config) {
         collect_radio_data(&statusData.radio);
 
         if (get_gps_data(&statusData.gps) != STATUS_OK) {
-            statusData.gps.available = USYS_TRUE;
-            statusData.gps.lock = USYS_FALSE;
+            usys_log_error("Unable to get status from gps");
         }
 
         collect_backhaul_data(&statusData.backhaul);

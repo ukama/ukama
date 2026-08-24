@@ -31,6 +31,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
       - type: node_health_ok
         type_selector: controller
@@ -46,6 +47,7 @@ phases:
         count_per_network: 1
         app: example
         current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        immediate: true
 
   - name: expose_update_available
     events:
@@ -61,6 +63,7 @@ phases:
         app: example
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 120
 
   - name: start_first_update
@@ -77,29 +80,32 @@ phases:
         app: example
         status: update_in_progress
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 60
       - type: node_operation_status_equals
         type_selector: controller
         count_per_network: 1
         busy: true
+        immediate: true
         timeout_seconds: 60
       - type: node_status_equals
         type_selector: controller
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 60
 
   - name: reject_competing_target
     events:
       - type: promote_release
         app: example
-        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+        tag: 1.2.4-accdefgh
       - type: software_update
         type_selector: controller
         count_per_network: 1
         app: example
-        tag: ${ULAB_SOFTWARE_NEXT_VERSION}
+        tag: 1.2.4-accdefgh
         expect:
           result: failure
     checks:
@@ -118,7 +124,7 @@ phases:
         app: example
         status: update_available
         current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
-        desired_version: ${ULAB_SOFTWARE_NEXT_VERSION}
+        desired_version: 1.2.4-accdefgh
         timeout_seconds: 300
       - type: node_operation_status_equals
         type_selector: controller
@@ -130,4 +136,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

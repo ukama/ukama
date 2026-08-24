@@ -13,85 +13,42 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Node types that make up a site and are judged by the uptime KPIs. Any other
-// type attached to a site (hnode) is ignored rather than allowed to drag the
-// site down — the same rule SITES_ONLINE uses.
+// minUptimeLookback floors the range the increase is measured over: it has to
+// span several scrape intervals, or Prometheus returns a single sample (and
+// drops the series) or two identical ones (increase 0), reading a live node as
+// down. Below the floor consecutive windows overlap, each reporting the
+// trailing 60s. Ingest applies the same floor via {{ atLeast .WindowSeconds
+// 60 }}, so the two cannot drift.
+const minUptimeLookback = 60 * time.Second
+
+// The node types that make up a site. Any other type attached to a site
+// (hnode) is ignored by the uptime KPIs.
 const (
 	nodeTypeTower      = "tnode"
 	nodeTypeAmplifier  = "anode"
 	nodeTypeController = "cnode"
 )
 
-// SiteUptime (SITE_UPTIME @ scope network_id+site_id), percentage.
+// SiteUptime (SITE_UPTIME @ network_id+site_id), percentage of the window.
 //
-// v3 judges a node on TWO independent signals, and it has to pass both:
+//	node % = clamp(increase / L, 0, 1) x 100, forced to 0 by a health flag
+//	         reported false
+//	site % = min over the site's tnode/anode/cnode
 //
-//	LIVENESS — the node is powering the metrics path. The sanitizer
-//	           republishes each node's system uptime counter with its
-//	           node_id/site/network stamped on it (com_node_uptime for the
-//	           tnode and the cnode, ctl_node_uptime for the anode), so a
-//	           reading exists for every node type. A node that stopped
-//	           pushing does not vanish — Prometheus turns the series into a
-//	           staleness marker, which arrives as the literal NaN, and that
-//	           is what reads as down here. No sample at all (the series aged
-//	           out of the pull's lookback) is down for the same reason.
-//	SERVICE + RADIO — the interfaces the site actually serves with, from the
-//	           node-gateway health probe: service is the tnode's
-//	           interfaces.cellular.available (the anode reports
-//	           "cellular": null and carries no service), radio is
-//	           interfaces.radio.available on tnode and anode alike.
+// L is the window length floored at minUptimeLookback. Ingest pulls each
+// node's uptime counter as `increase` over that same range, so the input
+// value is seconds of uptime gained over it: ~L for a node up throughout, 0
+// for one whose counter stalled or that never reported.
 //
-// Per-window node state:
-//
-//	tnode UP: uptime reported && cellular.available && radio.available
-//	anode UP: uptime reported && radio.available
-//	cnode UP: uptime reported          (it is not probed: node.health.
-//	          interfaces only fans out over tnode/anode, and the cnode
-//	          carries neither a cellular nor a radio interface)
-//	DOWN:     a NaN/absent uptime reading, either flag false, an unreachable
-//	          probe, or no health row at all
-//
-// radio.state is deliberately NOT read. Uptime tracks interface
-// AVAILABILITY — a radio that is available but switched off is still up, and
-// there is no planned/unplanned distinction to carry.
-//
-// Per-window site state:
-//
-//	UP   — the site has at least one tnode/anode/cnode and every one of them
-//	       is up
-//	DOWN — any of them is down, or the site has none of the three
-//
-// v2 judged only the tnode and the anode, and only on the health probe: a
-// node whose gateway probe answered from a stale cache read up while the box
-// itself was dark, and a site was never held to its cnode. v3 requires
-// liveness on every site node type, matching what sites_online@v3 calls a
-// site.
-//
-// Every window counts: Sum = 100 when up else 0, Count = 1 always. The
-// aggregator's weighted AVG is then exactly
-//
-//	uptime % = up_windows / total_windows x 100
-//
-// at daily/weekly/monthly. Query with op=AVG for the timeseries.
-//
-// Inputs:
-//
-//	nodes      — registry.node.list: site membership (EVERY node type, so a
-//	             site is never invisible) and the expected node set. Registry
-//	             stays authoritative for membership rather than the metric's
-//	             own site label: a site whose nodes are ALL dark still has to
-//	             produce a row, and a dark node has no metric to carry a
-//	             label on.
-//	health     — node.health.interfaces (state): cellular_available,
-//	             radio_available, unreachable
-//	com_uptime — metrics.com_uptime.last: tnode + cnode liveness
-//	ctl_uptime — metrics.ctl_uptime.last: anode liveness
+// Emits Sum = the site's percentage, Count = 1, so the aggregator's AVG over
+// any span is the mean of its windows. Query with op=AVG.
 func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sites, err := classifySites(in, "SITE_UPTIME")
+	sites, err := classifySites(in, lookbackSeconds(win), "SITE_UPTIME")
 	if err != nil {
 		return nil, err
 	}
@@ -99,15 +56,10 @@ func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, 
 	results := make([]Result, 0, len(sites))
 
 	for siteID, agg := range sites {
-		scope := map[string]string{"network_id": agg.networkID, "site_id": siteID}
-
-		value := 0.0
-		if agg.isUp() {
-			value = 100
-		}
+		value := agg.percent()
 
 		results = append(results, Result{
-			Scope: scope,
+			Scope: map[string]string{"network_id": agg.networkID, "site_id": siteID},
 			Value: value,
 			Sum:   value,
 			Count: 1,
@@ -119,25 +71,23 @@ func SiteUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, 
 	return results, nil
 }
 
-// NetworkUptime (NETWORK_UPTIME @ scope network_id), percentage: the uptime of
-// all the sites under the network.
+// NetworkUptime (NETWORK_UPTIME @ network_id), percentage of the window:
 //
-//	network uptime % = sites_up / sites_total x 100
+//	network % = sum(site %) / site count
 //
-// Per window each network emits Sum = 100 x sites_up and Count = sites_total,
-// so the aggregator's weighted AVG equals the pooled formula exactly at every
-// span — NOT an average of per-site percentages. Pooling this way weights each
-// site by the site-time it actually lost: one site down for a day and
-// twenty-four sites down for an hour each cost the same.
+// Emits Sum = the total of its sites' percentages, Count = its site count, so
+// the aggregator's AVG spans every (site, window) pair rather than averaging
+// per-site averages: each site is weighted by the site-time it lost, and a
+// site that joined mid-span counts only for the windows it existed for.
 //
-// Inputs and per-site rule: identical to SITE_UPTIME.
+// Per-site rule and inputs: identical to SITE_UPTIME.
 func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
-	sites, err := classifySites(in, "NETWORK_UPTIME")
+	sites, err := classifySites(in, lookbackSeconds(win), "NETWORK_UPTIME")
 	if err != nil {
 		return nil, err
 	}
 
-	type netAgg struct{ up, total float64 }
+	type netAgg struct{ total, count float64 }
 
 	networks := map[string]*netAgg{}
 
@@ -148,26 +98,23 @@ func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 			networks[agg.networkID] = n
 		}
 
-		n.total++
-
-		if agg.isUp() {
-			n.up++
-		}
+		n.total += agg.percent()
+		n.count++
 	}
 
 	results := make([]Result, 0, len(networks))
 
 	for networkID, n := range networks {
 		value := 0.0
-		if n.total > 0 {
-			value = n.up / n.total * 100
+		if n.count > 0 {
+			value = n.total / n.count
 		}
 
 		results = append(results, Result{
 			Scope: map[string]string{"network_id": networkID},
 			Value: value,
-			Sum:   n.up * 100,
-			Count: n.total,
+			Sum:   n.total,
+			Count: n.count,
 			Min:   value,
 			Max:   value,
 		})
@@ -176,24 +123,37 @@ func NetworkUptime(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resul
 	return results, nil
 }
 
-// siteAgg accumulates one site's node states for a window. judged counts the
-// nodes that make up a site (tnode/anode/cnode); a site with none of them has
-// nothing to serve with.
+// lookbackSeconds is the denominator every node's uptime gain is measured
+// against: the window length floored at minUptimeLookback, which is the range
+// ingest asked Prometheus for.
+func lookbackSeconds(win schema.Window) float64 {
+	seconds := win.End.Sub(win.Start).Seconds()
+	if floor := minUptimeLookback.Seconds(); seconds < floor {
+		return floor
+	}
+
+	return seconds
+}
+
+// siteAgg holds one site's state for a window. The site is only as available
+// as its least available node, so worst starts at 100 — a site with no node
+// to judge is up — and each node pulls it down in turn.
 type siteAgg struct {
 	networkID string
-	judged    int
-	upNodes   int
-	downNodes int
+	worst     float64
 }
 
-// isUp: the site has something to serve with, and none of it is down.
-func (a *siteAgg) isUp() bool {
-	return a.judged > 0 && a.downNodes == 0
+func (a *siteAgg) observe(nodePercent float64) {
+	if nodePercent < a.worst {
+		a.worst = nodePercent
+	}
 }
+
+func (a *siteAgg) percent() float64 { return a.worst }
 
 // classifySites builds the per-window site state shared by SITE_UPTIME and
-// NETWORK_UPTIME from the health + uptime + nodes inputs.
-func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
+// NETWORK_UPTIME.
+func classifySites(in Datasets, lookback float64, kpi string) (map[string]*siteAgg, error) {
 	health, ok := in["health"]
 	if !ok {
 		return nil, fmt.Errorf("%s: missing input 'health'", kpi)
@@ -215,10 +175,12 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 	}
 
 	healthByNode := indexHealthByNode(health)
-	reportingByNode, uptimeKnown := indexUptimeByNode(com, ctl)
+	gainByNode := indexUptimeGainByNode(com, ctl)
 
 	sites := map[string]*siteAgg{}
 
+	// Registry is the authority on site membership, not the metric's own site
+	// label: a dark node has no metric left to carry a label on.
 	for _, node := range nodes {
 		siteID, networkID := str(node["site_id"]), str(node["network_id"])
 		if siteID == "" || networkID == "" {
@@ -226,42 +188,117 @@ func classifySites(in Datasets, kpi string) (map[string]*siteAgg, error) {
 		}
 
 		// Every node type registers the site, so a site made only of hnodes
-		// still produces a row (classified down) instead of vanishing.
+		// still produces a row.
 		agg, ok := sites[siteID]
 		if !ok {
-			agg = &siteAgg{networkID: networkID}
+			agg = &siteAgg{networkID: networkID, worst: 100}
 			sites[siteID] = agg
 		}
 
 		nodeType := strings.ToLower(str(node["type"]))
 		if !isSiteNodeType(nodeType) {
-			continue // not part of what makes a site
+			continue
 		}
-
-		agg.judged++
 
 		nodeID := str(node["node_id"])
 
-		if nodeIsUp(nodeType, healthByNode[nodeID], reportingByNode[nodeID], uptimeKnown) {
-			agg.upNodes++
-		} else {
-			agg.downNodes++
-		}
+		agg.observe(nodeUptimePercent(nodeType, healthByNode[nodeID],
+			gainByNode[nodeID], lookback))
 	}
 
 	return sites, nil
 }
 
-// isSiteNodeType reports whether a node type is one of the three that make up
-// a site and is therefore judged by the uptime KPIs.
 func isSiteNodeType(nodeType string) bool {
 	return nodeType == nodeTypeTower ||
 		nodeType == nodeTypeAmplifier ||
 		nodeType == nodeTypeController
 }
 
-// indexHealthByNode keys the node.health.interfaces rows of a window by node
-// id.
+// nodeUptimePercent is how much of the window this node was serving for. The
+// uptime counter sets the ceiling; a health flag reported false overrides it,
+// since an unavailable interface means the node was not serving however alive
+// its counter looked.
+//
+// radio.state is not read: uptime tracks interface AVAILABILITY, so a radio
+// that is available but switched off is still up. Neither is node lifecycle
+// state or node-gateway reachability — the node's own counter is the
+// authority on whether it is alive.
+func nodeUptimePercent(nodeType string, h map[string]interface{},
+	gain float64, lookback float64) float64 {
+	if flagIsFalse(h, "radio_available") {
+		return 0
+	}
+
+	// Cellular is the service interface, and tnode-only: the anode reports
+	// "cellular": null, so the field never reaches its row.
+	if nodeType == nodeTypeTower && flagIsFalse(h, "cellular_available") {
+		return 0
+	}
+
+	if lookback <= 0 {
+		return 0
+	}
+
+	// increase() extrapolates to the edges of its range, so a node up
+	// throughout can come back a little over (or under) the lookback.
+	ratio := gain / lookback
+	if ratio > 1 {
+		ratio = 1
+	}
+
+	if ratio < 0 {
+		ratio = 0
+	}
+
+	return ratio * 100
+}
+
+// flagIsFalse reports whether a health flag is present AND says false. A
+// missing field is not a false one: the ingest mapper writes a field only when
+// its path resolves, so an unreachable probe records the bare
+// `unreachable: true` marker with no interface flags at all.
+func flagIsFalse(h map[string]interface{}, key string) bool {
+	if h == nil {
+		return false
+	}
+
+	v, ok := h[key]
+	if !ok || v == nil {
+		return false
+	}
+
+	if s, isStr := v.(string); isStr && s == "" {
+		return false
+	}
+
+	return !asBool(v)
+}
+
+// indexUptimeGainByNode folds the com (tnode + cnode) and ctl (anode) series
+// into one node_id -> seconds-gained map. A node absent from the map gained
+// nothing, the same as one whose counter stalled: both read as downtime.
+func indexUptimeGainByNode(sets ...[]map[string]interface{}) map[string]float64 {
+	out := map[string]float64{}
+
+	for _, set := range sets {
+		for _, row := range set {
+			nodeID := str(row["node_id"])
+			if nodeID == "" {
+				continue // a series without its node label is unattributable
+			}
+
+			// A node belongs to exactly one of the two series; if it somehow
+			// appears in both, the larger gain counts.
+			if gain := uptimeGain(row["value"]); gain > out[nodeID] {
+				out[nodeID] = gain
+			}
+		}
+	}
+
+	return out
+}
+
 func indexHealthByNode(health []map[string]interface{}) map[string]map[string]interface{} {
 	out := make(map[string]map[string]interface{}, len(health))
 	for _, h := range health {
@@ -271,70 +308,45 @@ func indexHealthByNode(health []map[string]interface{}) map[string]map[string]in
 	return out
 }
 
-// indexUptimeByNode folds the com (tnode + cnode) and ctl (anode) uptime
-// series into one node_id -> is-reporting map.
+// uptimeGain reads the seconds of uptime a node gained over the window out of
+// a Prometheus [unix_ts, "value"] sample pair:
 //
-// The second return value says whether the uptime datasets carried ANY row at
-// all. Empty means the metrics path delivered nothing this window — which is
-// a statement about the pipeline, not about the nodes — so the caller drops
-// the liveness term rather than reporting every site in the org as down. A
-// node that is genuinely dead is NOT absent: it arrives with a NaN reading.
-func indexUptimeByNode(sets ...[]map[string]interface{}) (map[string]bool, bool) {
-	out := map[string]bool{}
-	seen := false
-
-	for _, set := range sets {
-		for _, row := range set {
-			seen = true
-
-			nodeID := str(row["node_id"])
-			if nodeID == "" {
-				continue // a series without its node label is unattributable
-			}
-
-			// A node should appear in exactly one of the two series; if it
-			// somehow appears in both, any live reading counts.
-			out[nodeID] = out[nodeID] || uptimeReported(row["value"])
-		}
+//	[1787257964.364, "59.87"] -> up for the whole 60s window
+//	[1787257964.364, "0"]     -> counter stalled: down
+//	[1787257964.364, "NaN"]   -> no usable reading: down
+//
+// Anything unparseable, infinite or negative reads as no gain at all.
+func uptimeGain(v interface{}) float64 {
+	seconds, ok := uptimeSeconds(v)
+	if !ok || math.IsNaN(seconds) || math.IsInf(seconds, 0) || seconds < 0 {
+		return 0
 	}
 
-	return out, seen
+	return seconds
 }
 
-// nodeIsUp judges one node from the signals its type actually has.
-//
-// uptimeKnown = false means the uptime datasets were empty for the window
-// (see indexUptimeByNode): the liveness term is dropped and the rule degrades
-// to the v2 health-only one, with the cnode left unjudged because nothing
-// probes it.
-func nodeIsUp(nodeType string, h map[string]interface{}, reporting, uptimeKnown bool) bool {
-	if uptimeKnown && !reporting {
-		return false
-	}
+// uptimeSeconds pulls the numeric half out of a Prometheus sample pair. Be
+// liberal on the way in: a bare number or numeric string is accepted too.
+func uptimeSeconds(v interface{}) (float64, bool) {
+	switch t := v.(type) {
+	case []interface{}:
+		if len(t) == 0 {
+			return 0, false
+		}
 
-	if nodeType == nodeTypeController {
-		// The cnode carries neither a cellular nor a radio interface and is
-		// not probed by node.health.interfaces, so liveness is its only
-		// signal — already checked above.
-		return true
-	}
+		return uptimeSeconds(t[len(t)-1])
+	case float64:
+		return t, true
+	case string:
+		f, err := strconv.ParseFloat(t, 64)
+		if err != nil {
+			return 0, false
+		}
 
-	// A missing health row (never probed) and an unreachable probe both count
-	// as down: neither can confirm the interfaces are there.
-	if h == nil || asBool(h["unreachable"]) {
-		return false
+		return f, true
+	default:
+		return 0, false
 	}
-
-	if !asBool(h["radio_available"]) {
-		return false
-	}
-
-	// Cellular is the service interface, and it is tnode-only.
-	if nodeType == nodeTypeTower && !asBool(h["cellular_available"]) {
-		return false
-	}
-
-	return true
 }
 
 // uptimeReported reports whether a mapped uptime sample is a real reading.

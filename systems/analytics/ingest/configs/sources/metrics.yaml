@@ -43,45 +43,55 @@ pulls:
       value: $.value
 
   # Node liveness for SITE_UPTIME / NETWORK_UPTIME. The sanitizer republishes
-  # each node's raw system uptime counter with node_id/site/network appended:
-  # com_node_uptime covers the tnode and the cnode, ctl_node_uptime the anode.
-  # ONE unfiltered pull per window per series — the algo joins on node_id.
+  # each node's system uptime counter with node_id/site/network appended:
+  # com_node_uptime covers the tnode and cnode, ctl_node_uptime the anode.
   #
-  # A node that stopped pushing does NOT drop out: Prometheus turns its series
-  # into a staleness marker, the sanitizer forwards it untouched, and it comes
-  # back as the literal "NaN" — which is what the algo reads as down. Absence
-  # only happens once the series ages past the lookback.
+  # The counter gains one second per second of wall clock, so `increase` over
+  # the window is the seconds the node was up for. A node that stopped
+  # reporting holds its last value in the pushgateway, so its increase is 0 —
+  # stalled reads as down without waiting on a staleness marker. `increase`
+  # rather than `delta` because it corrects for counter resets: a window
+  # containing a reboot would otherwise go negative.
   #
-  # lookback 15m (3 windows), not the 30m data_usage uses: this is a liveness
-  # signal, so every extra minute is a minute a node that vanished outright,
-  # rather than going stale, still reads as reporting. 15m still absorbs a
-  # scrape gap or two.
+  # strategy: window, not full_snapshot — this measures a window rather than
+  # state as of one, and carrying the last value forward would let a single
+  # failed pull replay one reading across every window behind it.
   #
-  # site_id/network_id are the sanitizer's own labels, kept for traceability;
-  # site membership itself comes from registry.node.list, which also covers
-  # the nodes that are dark and therefore have no sample.
+  # lookback is the window length floored at 60s: `increase` needs its range to
+  # span several scrape intervals, and the pushgateway is scraped every 10s. A
+  # 10s range holds one sample (Prometheus drops the series) or two identical
+  # ones (increase 0). The algo applies the same floor, so the two cannot drift.
+  #
+  # time is the window end, so retry, catchup and replay evaluate the same
+  # range.
+  #
+  # site_id/network_id are the sanitizer's labels, kept for traceability; site
+  # membership comes from registry.node.list, which also covers dark nodes.
   - key: metrics.com_uptime.last
     endpoint: /v1/last/metrics/com_uptime
-    strategy: full_snapshot
+    strategy: window
     items: $.data.result
-    # One series per node: the sanitizer emits exactly node_id/site/network.
     entity: node_id
     params:
-      lookback: 15m
+      fn: increase
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
+      time: "{{.WindowEndUnix}}"
     map:
       node_id: $.metric.node_id
       site_id: $.metric.site
       network_id: $.metric.network
-      # Prometheus sample pair [ts, "value"]; "NaN" for a stale series.
+      # Prometheus sample pair [ts, "value"]: seconds gained over the window.
       value: $.value
 
   - key: metrics.ctl_uptime.last
     endpoint: /v1/last/metrics/ctl_uptime
-    strategy: full_snapshot
+    strategy: window
     items: $.data.result
     entity: node_id
     params:
-      lookback: 15m
+      fn: increase
+      lookback: "{{ atLeast .WindowSeconds 60 }}s"
+      time: "{{.WindowEndUnix}}"
     map:
       node_id: $.metric.node_id
       site_id: $.metric.site

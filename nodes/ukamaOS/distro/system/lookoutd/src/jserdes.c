@@ -675,27 +675,35 @@ static void json_add_gps(JsonObj *interfaces,
         return;
     }
 
-    if (gps->available != USYS_TRUE) {
-        return;
-    }
-
     jGps = json_object();
     if (jGps == NULL) {
         return;
     }
 
-    json_object_set_new(jGps, "available", json_true());
+    json_object_set_new(jGps,
+                        "available",
+                        json_boolean(gps->available));
     json_object_set_new(jGps, "lock", json_boolean(gps->lock));
-    json_object_set_new(jGps,
-                        "coordinates",
-                        json_string(gps->coordinates ?
-                                    gps->coordinates :
-                                    LOOKOUT_GPS_COORD_NA));
-    json_object_set_new(jGps,
-                        "time",
-                        json_string(gps->time ?
-                                    gps->time :
-                                    LOOKOUT_GPS_TIME_NA));
+
+    if (gps->available != USYS_TRUE) {
+        json_object_set_new(jGps,
+                            "coordinates",
+                            json_string(LOOKOUT_GPS_COORD_NA));
+        json_object_set_new(jGps,
+                            "time",
+                            json_string(LOOKOUT_GPS_TIME_NA));
+    } else {
+        json_object_set_new(jGps,
+                            "coordinates",
+                            gps->coordinates ?
+                                json_string(gps->coordinates) :
+                                json_null());
+        json_object_set_new(jGps,
+                            "time",
+                            gps->time ?
+                                json_string(gps->time) :
+                                json_null());
+    }
 
     json_object_set_new(interfaces, "gps", jGps);
 }
@@ -1031,7 +1039,8 @@ static void json_add_fem(JsonObj *interfaces,
 }
 
 static void json_add_interfaces(JsonObj *root,
-                                LookoutStatusData *status) {
+                                LookoutStatusData *status,
+                                LookoutNodeType nodeType) {
 
     JsonObj *interfaces = NULL;
 
@@ -1046,7 +1055,9 @@ static void json_add_interfaces(JsonObj *root,
 
     json_add_cellular(interfaces, &status->cellular);
     json_add_radio(interfaces, &status->radio);
-    json_add_gps(interfaces, &status->gps);
+    if (nodeType == LOOKOUT_NODE_TOWER) {
+        json_add_gps(interfaces, &status->gps);
+    }
     json_add_switch(interfaces, &status->sw);
     json_add_controller(interfaces, &status->controller);
     json_add_backhaul(interfaces, &status->backhaul);
@@ -1088,7 +1099,7 @@ bool json_serialize_health_report(JsonObj **json,
 
     json_add_capabilities(*json, config->nodeType);
     json_add_system(*json, status);
-    json_add_interfaces(*json, status);
+    json_add_interfaces(*json, status, config->nodeType);
     json_add_apps(*json, list);
     json_object_set_new(*json, "events", json_array());
 

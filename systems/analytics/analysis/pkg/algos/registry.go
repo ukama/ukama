@@ -64,11 +64,9 @@ func Default() *Registry {
 
 	// v3: site online = ALL its nodes are online (v2: only its cnode).
 	r.Register("sites_online@v3", SitesOnline)
-	// v3: a node must be ALIVE (still pushing its com_/ctl_node_uptime
-	// counter — a stale series arrives as NaN) and SERVING (tnode cellular +
-	// radio available). The cnode is judged too, on liveness alone, so
-	// uptime and SITES_ONLINE agree on what a site is. v2 read the health
-	// probe only, so a dark node with a stale probe answer still read up.
+	// Per window: each node's uptime increase over the window length, floored
+	// to 0 by a health flag reported false; the site takes its least
+	// available node. Judges the tnode, anode and cnode.
 	r.Register("site_uptime@v3", SiteUptime)
 	r.Register("network_uptime@v3", NetworkUptime)
 	// v3: reads the shared all-sims dataset (subscriber.sim.list) and

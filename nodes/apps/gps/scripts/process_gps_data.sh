@@ -70,6 +70,7 @@ checksum_check() {
 # --- Mock mode helpers ---
 mock_write_coords() {
 	local coords="${UKAMA_GPS_COORDS:-$UKAMA_GPS_COORDS_DEFAULT}"
+	local machine_time
 
 	# Basic validation: must contain exactly one comma
 	if [[ "$coords" != *,* ]]; then
@@ -77,7 +78,8 @@ mock_write_coords() {
 		exit 1
 	fi
 
-	echo "$coords" > "$GPS_LOC_FILE"
+	machine_time=$(date -u '+%Y-%m-%dT%H:%M:%SZ')
+	echo "$coords,$machine_time" > "$GPS_LOC_FILE"
 	exit 0
 }
 
@@ -149,8 +151,10 @@ gps_fix() {
 
 	gps_fix_str=$(grep -a -m 1 "GPGSA" "$GPS_RAW_FILE")
 	checksum_check "$gps_fix_str"
+	fix_type=$(echo "$gps_fix_str" | awk -F "," '{print $3}')
 
-	if [ $checksum_ok -eq -1 ]; then
+	if [ $checksum_ok -eq -1 ] ||
+	   { [ "$fix_type" != "2" ] && [ "$fix_type" != "3" ]; }; then
 		exit 1
 	else
 		exit 0
@@ -159,21 +163,36 @@ gps_fix() {
 
 # Function to get coordinates from GPS data
 get_coordinates() {
+	local rmc_status
+	local gps_utc_time
+	local gps_utc_date
+	local gps_time
 
 	rmc_str=$(grep -a -m 1 "G*RMC" "$GPS_RAW_FILE")
 	checksum_check "$rmc_str"
+	rmc_status=$(echo "$rmc_str" | awk -F "," '{print $3}')
 
-	if [ $checksum_ok -eq -1 ]; then
+	if [ $checksum_ok -eq -1 ] || [ "$rmc_status" != "A" ]; then
 		exit 1
 	else
 		Latitude=$(echo "$rmc_str" | awk -F "," '{print $4","$5}')
 		Longitude=$(echo "$rmc_str" | awk -F "," '{print $6","$7}')
+		gps_utc_time=$(echo "$rmc_str" | awk -F "," '{print $2}')
+		gps_utc_date=$(echo "$rmc_str" | awk -F "," '{print $10}')
 	fi
+
+	if [[ ! "$gps_utc_time" =~ ^[0-9]{6} ]] ||
+	   [[ ! "$gps_utc_date" =~ ^[0-9]{6}$ ]]; then
+		exit 1
+	fi
+
+	gps_time="20${gps_utc_date:4:2}-${gps_utc_date:2:2}-${gps_utc_date:0:2}"
+	gps_time+="T${gps_utc_time:0:2}:${gps_utc_time:2:2}:${gps_utc_time:4:2}Z"
 
 	google_lat=$(google_api_convert "$Latitude")
 	google_long=$(google_api_convert "$Longitude")
 
-	echo "$google_lat,$google_long" > "$GPS_LOC_FILE"
+	echo "$google_lat,$google_long,$gps_time" > "$GPS_LOC_FILE"
 }
 
 # Main
