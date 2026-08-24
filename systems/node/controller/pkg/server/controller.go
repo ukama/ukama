@@ -131,6 +131,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		c.failOperation(op, "RestartNode", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
+
 	return &pb.RestartNodeResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 

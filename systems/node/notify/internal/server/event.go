@@ -129,7 +129,7 @@ func (n *NotifiyEventServer) handleNodeRestartEvent(msg *epb.NodeFeederMessage) 
 	targetParts := strings.Split(msg.Target, ".")
 	nodeId := targetParts[len(targetParts)-1]
 	
-	if !strings.Contains(msg.Path, "/v1/reboot/") {
+	if !strings.Contains(msg.Path, "/v1/reboot") {
 		return fmt.Errorf("not a reboot path: %s", msg.Path)
 	}
 	

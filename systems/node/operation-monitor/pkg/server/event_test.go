@@ -95,7 +95,7 @@ func TestHandleStateTransition_DepartureArmsIntent(t *testing.T) {
 	repo.On("Arm", intent.OperationId).Return(nil).Once()
 
 	s := newEventServer(repo, mb)
-	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Configured", "reboot"))
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Configured", "off"))
 
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
