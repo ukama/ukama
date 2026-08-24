@@ -729,7 +729,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
              "network_id:\"%s\",sim_type:\"%s\","
              "package_id:\"%s\",subscriber_id:\"%s\","
              "traffic_policy:1}) { id subscriber_id network_id iccid imsi "
-             "status package { packageId isActive startDate endDate } } }",
+             "status package { packageId isCurrentlyInUse startDate endDate } } }",
              iccid_esc, net_esc, type_esc, pkg_esc, sub_esc);
 
     if (sim_graphql_call(c, "allocateSim", query, &root, err)) {

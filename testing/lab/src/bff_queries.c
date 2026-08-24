@@ -149,7 +149,7 @@ const char *BFF_ADD_SUBSCRIBER =
 const char *BFF_ALLOCATE_SIM =
 "mutation AllocateSim($data: AllocateSimInputDto!) {"
 " allocateSim(data: $data) { id subscriber_id network_id iccid imsi status "
-" package { packageId isActive startDate endDate } } }";
+" package { packageId isCurrentlyInUse startDate endDate } } }";
 
 const char *BFF_GET_DATA_USAGE =
 "query GetDataUsage($data: SimUsageInputDto!) {"
