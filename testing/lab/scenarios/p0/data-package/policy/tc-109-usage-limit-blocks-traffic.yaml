@@ -1,8 +1,6 @@
 version: 1
 name: p0-usage-limit-blocks-traffic
-description: >-
-  Verify reaching the data allowance ends the only entitlement, prevents a
-  later session or traffic attempt, and produces no additional BFF usage.
+description:  Verify reaching the data allowance ends the only entitlement, prevents a later session or traffic attempt, and produces no additional BFF usage.
 seed: 4302
 suite: p0
 priority: p0
