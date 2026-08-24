@@ -112,7 +112,6 @@ func (r *Reconciler) finishReconcileAttempt(siteID string, intent *db.SiteIntent
 }
 
 func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent, state *db.SiteState) error {
-	siteID := intent.SiteID
 	radioMismatch := !radioStateMatches(intent.DesiredRadio, stateRadio(state))
 	serviceMismatch := !serviceStateMatches(intent.DesiredService, stateService(state))
 	if !radioMismatch && !serviceMismatch {
@@ -122,8 +121,8 @@ func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent
 	var errs []error
 
 	if radioMismatch {
-		if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
-			errs = append(errs, fmt.Errorf("radio action: %w", err))
+		if err := r.applyRadioState(ctx, intent); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
@@ -134,6 +133,22 @@ func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent
 	}
 
 	return errors.Join(errs...)
+}
+
+func (r *Reconciler) applyRadioState(ctx context.Context, intent *db.SiteIntent) error {
+	siteID := intent.SiteID
+
+	if intent.DesiredRadio == StateOn {
+		if err := r.ensureRadioPoe(ctx, siteID); err != nil {
+			return fmt.Errorf("ensure radio poe: %w", err)
+		}
+	}
+
+	if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
+		return fmt.Errorf("radio action: %w", err)
+	}
+
+	return nil
 }
 
 func (r *Reconciler) applyServiceState(ctx context.Context, intent *db.SiteIntent) error {

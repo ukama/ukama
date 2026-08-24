@@ -265,6 +265,15 @@ func (r *Reconciler) getIntent(siteID string) (*db.SiteIntent, error) {
 	return intent, nil
 }
 func (r *Reconciler) ensureCriticalPoe(ctx context.Context, siteID string) error {
+	return r.ensureRolePoe(ctx, siteID, "site_on",
+		policy.RoleTower, policy.RoleBackhaul, policy.RoleUplink)
+}
+
+func (r *Reconciler) ensureRadioPoe(ctx context.Context, siteID string) error {
+	return r.ensureRolePoe(ctx, siteID, "radio_on", policy.RoleAmplifier)
+}
+
+func (r *Reconciler) ensureRolePoe(ctx context.Context, siteID, reason string, roles ...string) error {
 	ports, err := r.ports.GetBySite(siteID)
 	if err != nil {
 		return err
@@ -273,9 +282,13 @@ func (r *Reconciler) ensureCriticalPoe(ctx context.Context, siteID string) error
 	if err != nil {
 		return err
 	}
+	wanted := make(map[string]bool, len(roles))
+	for _, role := range roles {
+		wanted[role] = true
+	}
 	for _, p := range ports {
-		if p.Role == policy.RoleTower || p.Role == policy.RoleAmplifier || p.Role == policy.RoleBackhaul || p.Role == policy.RoleUplink {
-			if err := r.cnode.SetPortPoe(ctx, cnodePort.NodeID, p.Port, true, "site_on"); err != nil {
+		if wanted[p.Role] {
+			if err := r.cnode.SetPortPoe(ctx, cnodePort.NodeID, p.Port, true, reason); err != nil {
 				return err
 			}
 		}

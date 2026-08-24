@@ -10,6 +10,7 @@ package reconciler
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -86,6 +87,8 @@ func newHarness(t *testing.T) *harness {
 	provider := &fakeProvider{client: controller}
 
 	states.On("Upsert", mock.Anything).Return(nil).Maybe()
+	controller.On("SendNodeCommand", mock.Anything, mock.Anything).
+		Return(&contpb.SendNodeCommandResponse{}, nil).Maybe()
 
 	ports.On("GetBySite", testSiteID).Return([]db.SitePortMap{
 		{Port: 1, Role: policy.RoleCNode, NodeID: testCNodeID},
@@ -351,4 +354,52 @@ func TestApplyIntentState_ServiceAppliedWhenRadioFails(t *testing.T) {
 	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, true)
 
 	h.controller.AssertExpectations(t)
+}
+
+func poePortsFor(controller *contmocks.ControllerServiceClient) []string {
+	var paths []string
+	for _, c := range controller.Calls {
+		if c.Method != "SendNodeCommand" {
+			continue
+		}
+		req, ok := c.Arguments.Get(1).(*contpb.SendNodeCommandRequest)
+		if !ok {
+			continue
+		}
+		if strings.Contains(req.Path, "/poe") {
+			paths = append(paths, req.Path)
+		}
+	}
+	return paths
+}
+
+func TestServiceOnDoesNotPowerAmplifierPort(t *testing.T) {
+	h := newHarness(t).
+		withIntent(StateOn, StateOff).
+		withState(StateOff, StateOff).
+		withFlight(db.IntentFlightStatusSucceeded, 0, time.Now().UTC())
+
+	h.controller.On("ToggleService", mock.Anything, mock.Anything).
+		Return(&contpb.ToggleServiceResponse{}, nil).Maybe()
+
+	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, true)
+
+	paths := poePortsFor(h.controller)
+	assert.Contains(t, paths, "/v1/ports/2/poe", "tower port must be powered for service on")
+	assert.NotContains(t, paths, "/v1/ports/3/poe", "amplifier port belongs to radio intent, not service")
+}
+
+func TestRadioOnPowersAmplifierPort(t *testing.T) {
+	h := newHarness(t).
+		withIntent(StateOff, StateOn).
+		withState(StateOff, StateOff).
+		withFlight(db.IntentFlightStatusSucceeded, 0, time.Now().UTC())
+
+	h.controller.On("ToggleRadio", mock.Anything, mock.Anything).
+		Return(&contpb.ToggleRadioResponse{}, nil).Maybe()
+
+	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, true)
+
+	assert.Contains(t, poePortsFor(h.controller), "/v1/ports/3/poe",
+		"amplifier port must be powered for radio on")
 }
