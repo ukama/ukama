@@ -69,6 +69,7 @@ func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *
 		nil,
 		0,
 		0,
+		nil,
 	)
 }
 

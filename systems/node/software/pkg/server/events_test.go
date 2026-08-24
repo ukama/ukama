@@ -49,7 +49,7 @@ func newEventServer(t *testing.T, sRepo *mocks.SoftwareRepo, releaseRepo *mocks.
 	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
 
 	swServer := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), nodeRepo, releaseRepo, nil,
-		fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0)
+		fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0, nil)
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 

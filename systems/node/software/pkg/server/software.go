@@ -18,6 +18,9 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -25,8 +28,6 @@ import (
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
-	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"github.com/ukama/ukama/systems/node/software/providers"
@@ -54,9 +55,10 @@ type SoftwareServer struct {
 	opMonitor            swclient.OperationMonitor
 	opLeaseSecs          uint32
 	opDeadlineSecs       uint32
+	nodeClient           creg.NodeClient
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr copr.ManagerClient, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr copr.ManagerClient, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32, nodeClient creg.NodeClient) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
@@ -73,6 +75,7 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 		opMonitor:            opMon,
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
+		nodeClient:           nodeClient,
 	}
 }
 
