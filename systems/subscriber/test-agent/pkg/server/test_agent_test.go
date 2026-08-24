@@ -38,7 +38,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 			&storage.SimInfo{
 				Iccid:  iccid,
 				Imsi:   imsi,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -83,7 +83,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -112,7 +112,7 @@ func TestTestAgentServer_BindSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -144,7 +144,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 			&storage.SimInfo{
 				Iccid:  iccid,
 				Imsi:   imsi,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -155,7 +155,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, iccid, resp.GetSimInfo().Iccid)
 		assert.Equal(t, imsi, resp.GetSimInfo().Imsi)
-		assert.Equal(t, ukama.SimStatusInactive.String(), resp.GetSimInfo().Status)
+		assert.Equal(t, ukama.SimStatusServiceOff.String(), resp.GetSimInfo().Status)
 		store.AssertExpectations(t)
 	})
 
@@ -190,7 +190,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -204,7 +204,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, iccid, resp.GetSimInfo().Iccid)
 		assert.Equal(t, imsi, resp.GetSimInfo().Imsi)
-		assert.Equal(t, ukama.SimStatusInactive.String(), resp.GetSimInfo().Status)
+		assert.Equal(t, ukama.SimStatusServiceOff.String(), resp.GetSimInfo().Status)
 		store.AssertExpectations(t)
 	})
 
@@ -221,7 +221,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		store.On("Get", iccid).Return(nil, storage.ErrNotFound).Once()
@@ -238,7 +238,7 @@ func TestTestAgentServer_GetSim(t *testing.T) {
 }
 
 func TestTestAgentServer_ActivateSim(t *testing.T) {
-	t.Run("SimFoundAndSimStatusInactive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOff", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -250,7 +250,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(nil).Once()
@@ -264,7 +264,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimStatusInactiveAndFailToUpdateStatus", func(t *testing.T) {
+	t.Run("SimStatusServiceOffAndFailToUpdateStatus", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -277,7 +277,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -291,7 +291,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimFoundAndSimStatusActive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOn", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -303,7 +303,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -337,7 +337,7 @@ func TestTestAgentServer_ActivateSim(t *testing.T) {
 }
 
 func TestTestAgentServer_DeactivateSim(t *testing.T) {
-	t.Run("SimFoundAndSimStatusActive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOn", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -350,7 +350,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(nil).Once()
@@ -364,7 +364,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimStatusActiveAndFailToUpdateStatus", func(t *testing.T) {
+	t.Run("SimStatusServiceOnAndFailToUpdateStatus", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -376,7 +376,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 			}, nil).Once()
 
 		store.On("Put", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -390,7 +390,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimFoundAndSimStatusInactive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOff", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -402,7 +402,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
@@ -436,7 +436,7 @@ func TestTestAgentServer_DeactivateSim(t *testing.T) {
 }
 
 func TestTestAgentServer_TerminateSim(t *testing.T) {
-	t.Run("SimFoundAndSimStatusInactive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOff", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -448,7 +448,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		store.On("Delete", iccid, mock.Anything).Return(nil).Once()
@@ -462,7 +462,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimStatusInactiveAndFailToUpdateStatus", func(t *testing.T) {
+	t.Run("SimStatusServiceOffAndFailToUpdateStatus", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -474,7 +474,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusInactive,
+				Status: ukama.SimStatusServiceOff,
 			}, nil).Once()
 
 		store.On("Delete", iccid, mock.Anything).Return(storage.ErrInternal).Once()
@@ -488,7 +488,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.AssertExpectations(t)
 	})
 
-	t.Run("SimFoundAndSimStatusActive", func(t *testing.T) {
+	t.Run("SimFoundAndSimStatusServiceOn", func(t *testing.T) {
 		t.Parallel()
 
 		const (
@@ -500,7 +500,7 @@ func TestTestAgentServer_TerminateSim(t *testing.T) {
 		store.On("Get", iccid).Return(
 			&storage.SimInfo{
 				Iccid:  iccid,
-				Status: ukama.SimStatusActive,
+				Status: ukama.SimStatusServiceOn,
 			}, nil).Once()
 
 		s := server.NewTestAgentServer(store)
