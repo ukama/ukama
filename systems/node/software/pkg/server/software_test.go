@@ -18,8 +18,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/software/mocks"
@@ -64,12 +66,16 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
+	nodeClient := &cmocks.NodeClient{}
+	nodeClient.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil).Maybe()
+
 	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, nil, nil, msgBus, false, []string{testNodeGwIP},
 		nil,
 		nil,
 		0,
 		0,
-		nil,
+		nodeClient,
 	)
 }
 

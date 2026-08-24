@@ -21,6 +21,8 @@ import (
 	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"strings"
+
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -339,12 +341,30 @@ func (s *SoftwareServer) GetSoftwareList(ctx context.Context, req *pb.GetSoftwar
 	return &pb.GetSoftwareListResponse{Software: softwarePb}, nil
 }
 
+func (s *SoftwareServer) ensureNodeOnline(nodeID string) error {
+	node, err := s.nodeClient.Get(nodeID)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to resolve node %s: %v", nodeID, err)
+	}
+
+	if !strings.EqualFold(node.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
+		return status.Errorf(codes.NotFound, "node %s is not available for updates: connectivity is %s",
+			nodeID, node.Status.Connectivity)
+	}
+
+	return nil
+}
+
 func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
 	log.Infof("Updating software for node %s app %s to tag %s", req.NodeId, req.Name, req.Tag)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id: %s", err.Error())
+	}
+
+	if err := s.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
 	}
 
 	list, err := s.sRepo.List(nId.String(), ukama.UpdateAvailable, req.Name)
