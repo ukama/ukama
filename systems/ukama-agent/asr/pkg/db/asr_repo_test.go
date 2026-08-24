@@ -21,6 +21,7 @@ import (
 	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	int_db "github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
 )
@@ -164,7 +165,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(sub.Imsi).
+			WithArgs(sub.Imsi, 1).
 			WillReturnRows(hrow)
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
@@ -206,6 +207,133 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 
 	})
 
+	t.Run("UpdatePackageImsiNotFound", func(t *testing.T) {
+		// Arrange
+		var db *sql.DB
+		var err error
+		PackageId := uuid.NewV4()
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		emptyRows := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id", "last_status_chang_at", "allowed_time_of_service", "last_status_change_reasons"})
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*asrs.*`).
+			WithArgs(sub.Imsi, 1).
+			WillReturnRows(emptyRows)
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewAsrRecordRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.UpdatePackage(Imsi, PackageId, &sub.Policy)
+
+		// Assert: a nonexistent imsi must surface as an error, not a silent
+		// no-op (First returns gorm.ErrRecordNotFound where Find would not).
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+}
+
+func TestAsrRecordRepo_UpdateRecord(t *testing.T) {
+	t.Run("UpdateServiceStatus", func(t *testing.T) {
+		// Arrange
+		var db *sql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewAsrRecordRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act: mirrors updateServiceStatus's real call shape - a partial
+		// struct update carrying only the changed fields.
+		err = r.Update(Imsi, &int_db.Asr{
+			ServiceStatus:           ukama.SimStatusServiceOff,
+			LastStatusChangeAt:      time.Now(),
+			LastStatusChangeReasons: int_db.SERVICE_STATUS_UPDATE,
+		})
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("UpdateConsumedData", func(t *testing.T) {
+		// Arrange
+		var db *sql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "policies"`)).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), subID).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewAsrRecordRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act: a narrow write scoped to the policies table by asr_id, so it
+		// can never touch (and race with) the asrs row's own fields.
+		err = r.UpdateConsumedData(subID, 1024)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 }
 
 func TestAsrRecordRepo_Delete(t *testing.T) {
@@ -222,7 +350,7 @@ func TestAsrRecordRepo_Delete(t *testing.T) {
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*asrs.*`).
-			WithArgs(sub.Imsi).
+			WithArgs(sub.Imsi, 1).
 			WillReturnRows(hrow)
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
@@ -262,6 +390,48 @@ func TestAsrRecordRepo_Delete(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 
+	})
+
+	t.Run("DeleteImsiNotFound", func(t *testing.T) {
+		// Arrange
+		var db *sql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		emptyRows := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id", "last_status_chang_at", "allowed_time_of_service", "last_status_change_reasons"})
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*asrs.*`).
+			WithArgs(sub.Imsi, 1).
+			WillReturnRows(emptyRows)
+		mock.ExpectRollback()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewAsrRecordRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(Imsi, int_db.PROFILE_DELETION, nil)
+
+		// Assert: a nonexistent imsi must surface as an error, not a silent
+		// no-op (First returns gorm.ErrRecordNotFound where Find would not).
+		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
 	})
 
 }

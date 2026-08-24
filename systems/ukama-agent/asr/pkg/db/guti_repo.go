@@ -9,6 +9,7 @@
 package db
 
 import (
+	dbsql "database/sql"
 	"time"
 
 	"github.com/pkg/errors"
@@ -20,7 +21,7 @@ const GutiNotUpdatedErr = "more recent guti for imsi exist"
 
 type GutiRepo interface {
 	Update(guti *Guti) error
-	GetImsi(guti string) (string, error)
+	GetImsi(plmnId string, mmegi, mmec, mTmsi uint32) (string, error)
 }
 
 type gutiRepo struct {
@@ -35,6 +36,11 @@ func NewGutiRepo(db sql.Db) *gutiRepo {
 func (g gutiRepo) Update(guti *Guti) error {
 	var count int64
 
+	// Two concurrent Update() calls for the same imsi can both
+	// pass the "no newer guti" count check before either commits, breaking
+	// the "only one guti per imsi" invariant this function is meant to
+	// enforce. Serializable makes the DB abort the losing transaction
+	// instead.
 	err := g.db.GetGormDb().Transaction(
 		func(tx *gorm.DB) error {
 			err := tx.Model(&Guti{}).Where("imsi = ? and device_updated_at > ?", guti.Imsi, guti.DeviceUpdatedAt).Count(&count).Error
@@ -52,12 +58,16 @@ func (g gutiRepo) Update(guti *Guti) error {
 
 			guti.CreatedAt = time.Now().UTC()
 			return tx.Create(guti).Error
-		})
+		}, &dbsql.TxOptions{Isolation: dbsql.LevelSerializable})
 	return err
 }
 
-func (g gutiRepo) GetImsi(guti string) (string, error) {
+func (g gutiRepo) GetImsi(plmnId string, mmegi, mmec, mTmsi uint32) (string, error) {
 	res := Guti{}
-	r := g.db.GetGormDb().First(&res, guti)
-	return res.Imsi, r.Error
+
+	err := g.db.GetGormDb().
+		Where("plmn_id = ? AND mmegi = ? AND mmec = ? AND m_tmsi = ?", plmnId, mmegi, mmec, mTmsi).
+		First(&res).Error
+
+	return res.Imsi, err
 }

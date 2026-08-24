@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -185,6 +186,33 @@ func TestAsr_Read(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("ReadUlAmbrDoesNotUseDlAmbr", func(t *testing.T) {
+		asymSub := sub
+		asymSub.UeDlAmbrBps = 3000000
+		asymSub.UeUlAmbrBps = 1000000
+
+		reqPb := pb.ReadReq{
+			Id: &pb.ReadReq_Imsi{
+				Imsi: asymSub.Imsi,
+			},
+		}
+
+		asrRepo.On("GetByImsi", reqPb.GetImsi()).Return(&asymSub, nil).Once()
+		cdr.On("GetUsage", reqPb.GetImsi()).Return(&usage, nil).Once()
+
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, Atos)
+		assert.NoError(t, err)
+
+		hs, err := s.Read(context.TODO(), &reqPb)
+		assert.NoError(t, err)
+
+		assert.Equal(t, asymSub.UeDlAmbrBps, hs.Record.UeDlAmbrBps)
+		assert.Equal(t, asymSub.UeUlAmbrBps, hs.Record.UeUlAmbrBps)
+
+		asrRepo.AssertExpectations(t)
+		gutiRepo.AssertExpectations(t)
+	})
+
 }
 
 func TestAsr_UpdatePackage(t *testing.T) {
@@ -339,6 +367,87 @@ func TestAsr_CreateProfile(t *testing.T) {
 		gutiRepo.AssertExpectations(t)
 		assert.NoError(t, err)
 	})
+
+	t.Run("CreateProfileSucceedsDespitePcrfSyncFailure", func(t *testing.T) {
+		reqPb := pb.CreateProfileReq{
+			NetworkId:    networkId.String(),
+			Iccid:        "0123456789012345678912",
+			PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136300",
+			SimPackageId: "107f7b15-a8c5-4711-b1e0-f2329bffaba1",
+			TotalData:    1024000000,
+			Dlbr:         15000,
+			Ulbr:         2000,
+			StartTime:    1700000000,
+			EndTime:      1700100000,
+		}
+
+		pId, err := uuid.FromString(reqPb.PackageId)
+		assert.NoError(t, err)
+
+		spId, err := uuid.FromString(reqPb.SimPackageId)
+		assert.NoError(t, err)
+
+		nId, err := uuid.FromString(reqPb.NetworkId)
+		assert.NoError(t, err)
+
+		pcrfData := &pm.SimInfo{
+			Imsi:      sub.Imsi,
+			Iccid:     sub.Iccid,
+			PackageId: pId,
+			NetworkId: sub.NetworkId,
+			Visitor:   false,
+		}
+
+		asr := &db.Asr{
+			Iccid:                   reqPb.Iccid,
+			Imsi:                    Sim.Imsi,
+			Op:                      Sim.Op,
+			Key:                     Sim.Key,
+			Amf:                     Sim.Amf,
+			AlgoType:                Sim.AlgoType,
+			UeDlAmbrBps:             Sim.UeDlAmbrBps,
+			UeUlAmbrBps:             Sim.UeUlAmbrBps,
+			Sqn:                     uint64(Sim.Sqn),
+			CsgIdPrsent:             Sim.CsgIdPrsent,
+			CsgId:                   Sim.CsgId,
+			DefaultApnName:          Sim.DefaultApnName,
+			PackageId:               pId,
+			SimPackageId:            spId,
+			NetworkId:               nId,
+			Policy:                  Policy,
+			LastStatusChangeAt:      time.Now(),
+			AllowedTimeOfService:    Atos,
+			LastStatusChangeReasons: db.PROFILE_CREATION,
+		}
+
+		network.On("Get", reqPb.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
+		factory.On("ReadSimCardInfo", reqPb.Iccid).Return(&Sim, nil).Once()
+		ctrl.On("NewPolicy", pm.PolicyInput{
+			TotalData: reqPb.TotalData,
+			Dlbr:      reqPb.Dlbr,
+			Ulbr:      reqPb.Ulbr,
+			StartTime: reqPb.StartTime,
+			EndTime:   reqPb.EndTime,
+		}).Return(&Policy, nil).Once()
+		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
+			return a1.Iccid == asr.Iccid
+		})).Return(nil).Once()
+		ctrl.On("RunPolicyControl", sub.Imsi, false).Return(nil, false).Once()
+		ctrl.On("SyncProfile", pcrfData, mock.MatchedBy(func(a1 *db.Asr) bool {
+			return a1.Iccid == asr.Iccid
+		}), msgbus.ACTION_CRUD_CREATE, "activesubscriber", true).Return(fmt.Errorf("pcrf unreachable")).Once()
+
+		s, err := NewAsrRecordServer(asrRepo, gutiRepo, factory, network, ctrl, cdr, OrgId, Org, mbC, Atos)
+		assert.NoError(t, err)
+
+		hs, err := s.CreateProfile(context.TODO(), &reqPb)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, hs)
+
+		asrRepo.AssertExpectations(t)
+		gutiRepo.AssertExpectations(t)
+	})
 }
 
 func TestAsr_DeleteProfile(t *testing.T) {
@@ -475,7 +584,7 @@ func TestAsr_UpdateAndSyncAsrProfileFromCdr(t *testing.T) {
 
 	asrRepo.On("GetByImsi", usub.Imsi).Return(&usub, nil).Once()
 	cdr.On("GetUsage", usub.Imsi).Return(&cpb.UsageResp{Usage: 1024}, nil).Once()
-	asrRepo.On("Update", usub.Imsi, mock.Anything).Return(nil).Once()
+	asrRepo.On("UpdateConsumedData", usub.ID, uint64(1024)).Return(nil).Once()
 
 	ctrl.On("RunPolicyControl", usub.Imsi, true).Return(nil, false).Once()
 	ctrl.On("SyncProfile", mock.Anything, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", false).Return(nil).Once()
@@ -489,4 +598,5 @@ func TestAsr_UpdateAndSyncAsrProfileFromCdr(t *testing.T) {
 	asrRepo.AssertExpectations(t)
 	ctrl.AssertExpectations(t)
 	cdr.AssertExpectations(t)
+	asrRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
 }

@@ -139,7 +139,7 @@ func (ar *AsrRecordServer) Read(c context.Context, req *pb.ReadReq) (*pb.ReadRes
 		CsgIdPrsent:       sub.CsgIdPrsent,
 		Sqn:               sub.Sqn,
 		UeDlAmbrBps:       sub.UeDlAmbrBps,
-		UeUlAmbrBps:       sub.UeDlAmbrBps,
+		UeUlAmbrBps:       sub.UeUlAmbrBps,
 		IsServiceStatusOn: sub.ServiceStatus == ukama.SimStatusServiceOn,
 		NetworkId:         sub.NetworkId.String(),
 		PackageId:         sub.PackageId.String(),
@@ -212,21 +212,13 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
-	err, removed := ar.pc.RunPolicyControl(asrRecord.Imsi, false)
+	err, _ = ar.pc.RunPolicyControl(asrRecord.Imsi, false)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error %v",
 			asrRecord.Imsi, err)
 
 		return nil, fmt.Errorf("error running policy control for imsi %s. Error %w",
 			asrRecord.Imsi, err)
-	}
-
-	if removed {
-		log.Infof("Profile removed from repo as one or more policies were failed for %s",
-			asrRecord.Imsi)
-
-		return nil, fmt.Errorf("profile removed from repo as one or more policies were failed for imsi %s",
-			asrRecord.Imsi)
 	}
 
 	/* read the updated profile */
@@ -483,24 +475,18 @@ func (ar *AsrRecordServer) UpdateAndSyncAsrProfileFromCdr(imsi string) error {
 
 	sub.Policy.ConsumedData = r.Usage
 
-	err = ar.asrRepo.Update(imsi, sub)
+	err = ar.asrRepo.UpdateConsumedData(sub.ID, r.Usage)
 	if err != nil {
 		log.Errorf("Failed to update usage: %v for imsi %s. Error: %v", r, imsi, err)
 
 		return fmt.Errorf("failed to update usage for imsi %s. Error: %w", imsi, err)
 	}
 
-	err, removed := ar.pc.RunPolicyControl(imsi, true)
+	err, _ = ar.pc.RunPolicyControl(imsi, true)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error: %v", sub.Imsi, err)
 
 		return fmt.Errorf("error running policy control for imsi %s. Error: %w", sub.Imsi, err)
-	}
-
-	if removed {
-		log.Infof("Profile removed from repo as one or more policies were failed for imsi %s", sub.Imsi)
-
-		return fmt.Errorf("profile removed from repo as one or more policies were failed for imsi %s", sub.Imsi)
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -604,17 +590,11 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, policyI
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
-	err, removed := policyController.RunPolicyControl(asr.Imsi, false)
+	err, _ = policyController.RunPolicyControl(asr.Imsi, false)
 	if err != nil {
 		log.Errorf("Error running policy control for imsi %s. Error %v", asr.Imsi, err)
 
 		return nil, fmt.Errorf("error running policy control for imsi %s. Error: %w", asr.Imsi, err)
-	}
-
-	if removed {
-		log.Infof("Profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
-
-		return nil, fmt.Errorf("profile not added to repo as one or more policies were failed for imsi %s", asr.Imsi)
 	}
 
 	err = policyController.SyncProfile(pcrfData, asr, msgbus.ACTION_CRUD_CREATE, activeSubscriberEventObject, true)
@@ -625,7 +605,7 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, policyI
 
 	log.Debugf("Imsi %s added with profile %+v", asr.Imsi, asr)
 
-	return &pb.CreateProfileResp{}, err
+	return &pb.CreateProfileResp{}, nil
 }
 
 func deleteProfile(iccid string, asrRepo db.AsrRecordRepo, policyController pm.Controller) (*pb.DeleteProfileResp, error) {

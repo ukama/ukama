@@ -59,13 +59,15 @@ func initConfig() {
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
-	} else if pkg.IsDebugMode {
+	}
+	pkg.IsDebugMode = serviceConfig.DebugMode
+
+	if pkg.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
-	pkg.IsDebugMode = serviceConfig.DebugMode
 
 	if serviceConfig.DebugMode {
 		log.SetLevel(log.DebugLevel)

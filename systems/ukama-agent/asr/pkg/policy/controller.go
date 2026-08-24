@@ -11,6 +11,7 @@ package policy
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
@@ -33,6 +34,8 @@ type policyController struct {
 	asrRepo          db.AsrRecordRepo
 	period           time.Duration
 	pR               chan bool
+	monitorMu        sync.Mutex
+	monitorRunning   bool
 	msgbus           mb.MsgBusServiceClient
 	MsgBusRoutingKey msgbus.RoutingKeyBuilder
 	OrgName          string
@@ -269,27 +272,33 @@ func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.Policy
 }
 
 func (p *policyController) RunPolicyControl(imsi string, event bool) (error, bool) {
-	log.Infof("Running policy control for subscriber %s", imsi)
-
-	removed := false
 	pf, err := p.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("failed to read profile for %s. Error %s", imsi, err.Error())
 
-		return fmt.Errorf("failed to read profile for %s. Error %s", imsi, err), removed
+		return fmt.Errorf("failed to read profile for %s. Error %s", imsi, err), false
 	}
+
+	return p.runPolicyControlForProfile(*pf, event)
+}
+
+func (p *policyController) runPolicyControlForProfile(pf db.Asr, event bool) (error, bool) {
+	log.Infof("Running policy control for subscriber %s", pf.Imsi)
+
+	removed := false
 
 	for _, pt := range p.Rules {
 		if pt.Check != nil {
 
-			valid := pt.Check(*pf)
+			valid := pt.Check(pf)
 			if valid {
 				continue
 			}
 			log.Infof("Policy Controller found profile %s has failed to comply policy type %s", pf.Imsi, pt.Name)
 			/* if policy check failed, try the action */
 			if pt.Action != nil {
-				err, removed := pt.Action(p, *pf, event)
+				var err error
+				err, removed = pt.Action(p, pf, event)
 				if err != nil {
 					log.Errorf("Error while applying action for failing policy compliance (%s, %s). Error: %v",
 						pf.Imsi, pt.Name, err)
@@ -360,12 +369,26 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 
 func (p *policyController) StartPolicyControllerRoutine() {
 	log.Infof("Starting policy check routine with period %s.", p.period)
+
+	p.monitorMu.Lock()
+	p.monitorRunning = true
+	p.monitorMu.Unlock()
+
 	p.monitor()
 }
 
 func (p *policyController) StopPolicyControllerRoutine() {
+	p.monitorMu.Lock()
+	defer p.monitorMu.Unlock()
+
+	if !p.monitorRunning {
+		log.Infof("Policy check routine was never started; nothing to stop.")
+		return
+	}
+
 	log.Infof("Stoping policy check routine with period %s.", p.period)
 	p.pR <- true
+	p.monitorRunning = false
 }
 
 func (p *policyController) doPolicyCheck() error {
@@ -378,14 +401,15 @@ func (p *policyController) doPolicyCheck() error {
 	}
 
 	for _, profile := range pf {
-		_, _ = p.RunPolicyControl(profile.Imsi, true)
+		_, _ = p.runPolicyControlForProfile(profile, true)
 	}
+
 	log.Infof("Policy check routine ended at %s.", time.Now().String())
+
 	return nil
 }
 
 func (p *policyController) monitor() {
-
 	t := time.NewTicker(p.period)
 
 	go func() {

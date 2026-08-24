@@ -123,7 +123,6 @@ func TestController_StartStopPolicyController(t *testing.T) {
 	assert.NotNil(t, pc)
 	lp := []db.Asr{sub}
 	asrRepo.On("List").Return(lp, nil).Once()
-	asrRepo.On("GetByImsi", Imsi).Return(&sub, nil).Once()
 
 	time.Sleep(2 * time.Second)
 
@@ -131,6 +130,26 @@ func TestController_StartStopPolicyController(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 
+}
+
+func TestController_StopPolicyControllerRoutine_NeverStartedDoesNotHang(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+	assert.NotNil(t, pc)
+
+	done := make(chan struct{})
+	go func() {
+		pc.StopPolicyControllerRoutine()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("StopPolicyControllerRoutine hung on a controller that was never started with monitoring on")
+	}
 }
 
 func TestController_NewPolicy(t *testing.T) {
@@ -201,4 +220,50 @@ func TestController_SyncProfile(t *testing.T) {
 
 	err := pc.SyncProfile(&simInfo, &sub, msgbus.ACTION_CRUD_CREATE, "activesubscriber", true)
 	assert.NoError(t, err)
+}
+
+func TestController_RunPolicyControl_AllowedServiceTimeExpired_DoesNotRemoveProfile(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+	assert.NotNil(t, pc)
+
+	expiredSub := sub
+	expiredSub.LastStatusChangeAt = time.Now().Add(-3 * time.Hour)
+
+	asrRepo.On("GetByImsi", Imsi).Return(&expiredSub, nil).Once()
+
+	err, removed := pc.RunPolicyControl(Imsi, true)
+
+	assert.NoError(t, err)
+	assert.False(t, removed)
+	asrRepo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything)
+}
+
+func TestController_RunPolicyControl_RemovedPropagatesToCaller(t *testing.T) {
+	asrRepo := &mocks.AsrRecordRepo{}
+	mbC := &cmocks.MsgBusServiceClient{}
+
+	pc := ip.NewPolicyController(asrRepo, mbC, OrgName, OrgId, Reroute, MonitoringPeriod, false)
+	assert.NotNil(t, pc)
+
+	pc.Rules = []ip.Rule{
+		{
+			Name:   "AlwaysFail",
+			ID:     999,
+			Check:  func(pf db.Asr) bool { return false },
+			Action: ip.RemoveProfile,
+		},
+	}
+
+	asrRepo.On("GetByImsi", Imsi).Return(&sub, nil).Once()
+	asrRepo.On("Delete", Imsi, db.POLICY_FAILURE).Return(nil).Once()
+	mbC.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+
+	err, removed := pc.RunPolicyControl(Imsi, true)
+
+	assert.NoError(t, err)
+	assert.True(t, removed)
+	asrRepo.AssertExpectations(t)
 }

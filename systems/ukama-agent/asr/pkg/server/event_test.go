@@ -95,6 +95,59 @@ func TestUkamaAgentEventServer_HandleSimAllocationEvent(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("ASRActivationSucceedsDespitePcrfSyncFailure", func(t *testing.T) {
+		asrRepo := &mocks.AsrRecordRepo{}
+		noRollbackMsgbus := &cmocks.MsgBusServiceClient{}
+
+		startDate := timestamppb.New(time.Unix(1700000000, 0))
+		endDate := timestamppb.New(time.Unix(1700100000, 0))
+
+		evt := &epb.EventSimAllocation{
+			Iccid:            server.Iccid,
+			Imsi:             server.Imsi,
+			DataPlanId:       uuid.NewV4().String(),
+			NetworkId:        uuid.NewV4().String(),
+			Type:             ukama.SimTypeUkamaData.String(),
+			PackageId:        uuid.NewV4().String(),
+			PackageTotalData: 1024000000,
+			PackageDlbr:      15000,
+			PackageUlbr:      2000,
+			PackageStartDate: startDate,
+			PackageEndDate:   endDate,
+		}
+
+		anyE, err := anypb.New(evt)
+		assert.NoError(t, err)
+
+		msg := &epb.Event{
+			RoutingKey: routingKey,
+			Msg:        anyE,
+		}
+
+		network.On("Get", evt.NetworkId).Return(&registry.NetworkInfo{}, nil).Once()
+		factory.On("ReadSimCardInfo", evt.Iccid).Return(&server.Sim, nil).Once()
+		pc.On("NewPolicy", pm.PolicyInput{
+			TotalData: evt.PackageTotalData,
+			Dlbr:      evt.PackageDlbr,
+			Ulbr:      evt.PackageUlbr,
+			StartTime: uint64(startDate.AsTime().Unix()),
+			EndTime:   uint64(endDate.AsTime().Unix()),
+		}).Return(&server.Policy, nil).Once()
+		asrRepo.On("Add", mock.MatchedBy(func(a1 *db.Asr) bool {
+			return a1.Iccid == evt.Iccid
+		})).Return(nil).Once()
+		pc.On("RunPolicyControl", evt.Imsi, false).Return(nil, false).Once()
+		pc.On("SyncProfile", mock.Anything, mock.MatchedBy(func(a1 *db.Asr) bool {
+			return a1.Iccid == evt.Iccid
+		}), msgbus.ACTION_CRUD_CREATE, "activesubscriber", true).Return(errors.New("pcrf unreachable")).Once()
+
+		s := server.NewAsrEventServer(asrRepo, nil, nil, factory, network, pc, noRollbackMsgbus, server.Atos, server.Org)
+		_, err = s.EventNotification(context.TODO(), msg)
+
+		assert.NoError(t, err)
+		noRollbackMsgbus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	})
+
 	t.Run("ASRActivationError", func(t *testing.T) {
 		repo := &mocks.AsrRecordRepo{}
 		evt := &epb.EventSimAllocation{
