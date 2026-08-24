@@ -37,23 +37,21 @@ static void gps_mark_unlocked(void) {
     pthread_mutex_unlock(&gData->mutex);
 }
 
-static void gps_mark_locked(void) {
-
-    if (gData == NULL) return;
-
-    pthread_mutex_lock(&gData->mutex);
-    gData->gpsLock = USYS_TRUE;
-    gData->lastLockAt = time(NULL);
-    gData->lockLostAt = 0;
-    pthread_mutex_unlock(&gData->mutex);
-}
-
-STATIC bool read_last_lat_long(char **lat, char **lon) {
+STATIC bool read_last_gps_data(char **lat, char **lon, char **gpsTime) {
 
     FILE *file = NULL;
     char line[MAX_LINE_LENGTH]      = {0};
     char lastLat[MAX_LAT_LONG_SIZE] = {0};
     char lastLon[MAX_LAT_LONG_SIZE] = {0};
+    char lastTime[MAX_GPS_TIME_SIZE] = {0};
+
+    if (lat == NULL || lon == NULL || gpsTime == NULL) {
+        return USYS_FALSE;
+    }
+
+    *lat = NULL;
+    *lon = NULL;
+    *gpsTime = NULL;
 
     file = fopen(GPS_LOC_FILE, "r");
     if (!file) {
@@ -64,9 +62,13 @@ STATIC bool read_last_lat_long(char **lat, char **lon) {
 
     /* Reading file line by line and only storing the last entry */
     while (fgets(line, sizeof(line), file)) {
-        /* Parse the latitude and longitude from the line */
-        if (sscanf(line, "%[^,],%s", lastLat, lastLon) == 2) {
-            /* Continue updating the lat, lon with each line
+        /* Parse latitude, longitude and GPS time from the line. */
+        if (sscanf(line,
+                   "%31[^,],%31[^,],%31s",
+                   lastLat,
+                   lastLon,
+                   lastTime) == 3) {
+            /* Continue updating the values with each line
              * (only the last one will remain) 
              */
         } else {
@@ -76,15 +78,22 @@ STATIC bool read_last_lat_long(char **lat, char **lon) {
 
     fclose(file);
     
-    if (strlen(lastLat) == 0 && strlen(lastLon) == 0) {
-
-        *lat = NULL;
-        *lon = NULL;
+    if (lastLat[0] == '\0' ||
+        lastLon[0] == '\0' ||
+        lastTime[0] == '\0') {
         return USYS_FALSE;
     }
 
     *lat = strdup(lastLat);
     *lon = strdup(lastLon);
+    *gpsTime = strdup(lastTime);
+
+    if (*lat == NULL || *lon == NULL || *gpsTime == NULL) {
+        usys_free(*lat);
+        usys_free(*lon);
+        usys_free(*gpsTime);
+        return USYS_FALSE;
+    }
 
     return USYS_TRUE;
 }
@@ -93,7 +102,7 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
 
     int ret;
     char runMe[MAX_BUFFER] = {0};
-    char *lat = NULL, *lon = NULL;
+    char *lat = NULL, *lon = NULL, *gpsTime = NULL;
 
     pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,  NULL);
     pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL);
@@ -121,33 +130,41 @@ STATIC bool gps_data_collection_and_processing_thread(Config *config) {
         if (ret != -1 &&
             WIFEXITED(ret) &&
             WEXITSTATUS(ret) == 0) {
-            gps_mark_locked();
-
             /* gps is locked, get coordinates */
             snprintf(runMe, MAX_BUFFER, "%s get_coordinates", GPS_SCRIPT);
             ret = system(runMe);
 
-            if (WIFEXITED(ret) && WEXITSTATUS(ret) == 0) {
-                /* read /tmp/gps_loc.log file: lat,lon */
-                if (read_last_lat_long(&lat, &lon)) {
+            if (ret != -1 &&
+                WIFEXITED(ret) &&
+                WEXITSTATUS(ret) == 0) {
+                /* read /tmp/gps_loc.log file: lat,lon,time */
+                if (read_last_gps_data(&lat, &lon, &gpsTime)) {
 
                     if (gData == NULL) continue;
 
-                    /* update record */
+                    /* Update the complete GPS snapshot atomically. */
                     pthread_mutex_lock(&gData->mutex);
 
                     gData->gpsLock  = USYS_TRUE;
                     usys_free(gData->latitude);
                     usys_free(gData->longitude);
-                    gData->latitude  = strdup(lat);
-                    gData->longitude = strdup(lon);
+                    usys_free(gData->time);
+                    gData->latitude  = lat;
+                    gData->longitude = lon;
+                    gData->time      = gpsTime;
+                    gData->lastLockAt = time(NULL);
+                    gData->lockLostAt = 0;
+
+                    lat = NULL;
+                    lon = NULL;
+                    gpsTime = NULL;
 
                     pthread_mutex_unlock(&gData->mutex);
-
-                    usys_free(lat);
-                    usys_free(lon);
+                } else {
+                    gps_mark_unlocked();
                 }
             } else {
+                gps_mark_unlocked();
                 continue;
             }
         } else {

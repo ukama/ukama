@@ -31,6 +31,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 120
   - name: verify_offline_last_known_state
     events:
@@ -49,6 +50,7 @@ phases:
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
   - name: restore_node
     events:
@@ -67,4 +69,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

@@ -49,6 +49,60 @@ func ValidateLookback(l string) error {
 	return nil
 }
 
+// promTime matches an instant-query evaluation timestamp: Unix seconds
+// (optionally fractional) or an RFC3339 instant.
+var promTime = regexp.MustCompile(`^([0-9]+(\.[0-9]+)?|[0-9]{4}-[0-9]{2}-[0-9]{2}T[^ ]+)$`)
+
+// ValidateQueryTime reports whether t is a usable evaluation timestamp. Like
+// the lookback it reaches Prometheus unquoted, so it is validated not escaped.
+func ValidateQueryTime(t string) error {
+	if !promTime.MatchString(t) {
+		return errors.Errorf("invalid time %q: expected Unix seconds or an RFC3339 timestamp", t)
+	}
+	return nil
+}
+
+const DefaultLastFunc = "last"
+
+// lastFuncs maps the API's `fn` values onto the Prometheus function wrapped
+// around the lookback range vector. All yield one value per series.
+// Note `delta` does not correct for counter resets: on an uptime series a
+// window containing a reboot goes negative, use `increase` there.
+var lastFuncs = map[string]string{
+	"last":     "last_over_time",
+	"delta":    "delta",
+	"increase": "increase",
+	"rate":     "rate",
+	"min":      "min_over_time",
+	"max":      "max_over_time",
+	"avg":      "avg_over_time",
+}
+
+func LastFuncs() []string {
+	fns := make([]string, 0, len(lastFuncs))
+	for f := range lastFuncs {
+		fns = append(fns, f)
+	}
+	sort.Strings(fns)
+	return fns
+}
+
+// ResolveLastFunc maps an API `fn` value to the Prometheus function to apply.
+// The result is interpolated into the query unquoted, so it comes from the map
+// rather than from caller input.
+func ResolveLastFunc(fn string) (string, error) {
+	normalized := strings.ToLower(strings.TrimSpace(fn))
+	if normalized == "" {
+		normalized = DefaultLastFunc
+	}
+
+	promFn, ok := lastFuncs[normalized]
+	if !ok {
+		return "", errors.Errorf("invalid fn %q: expected one of %s", fn, strings.Join(LastFuncs(), ", "))
+	}
+	return promFn, nil
+}
+
 // ExtractNodeType parses a node ID such as "uk-sa2602-tnode-v0-344c" and returns the embedded
 // node type token ("tnode", "anode", or "cnode"). Returns NodeTypeSystem when the ID is empty
 // or does not contain a recognised type, so callers always receive a valid YAML bucket name.
@@ -210,12 +264,16 @@ func (m *Metrics) GetMetricRange(metricType string, nodeType string, metricFilte
 	return m.processPromRequest(ctx, metricType, metric, u, data, w, false)
 }
 
-// GetMetricLast returns the most recent sample of a metric within the lookback
-// window, for every series matching the filters. It is the instant counterpart
-// of GetMetricRange: same filters, one data point per series, no aggregation —
-// the Prometheus vector response is passed through as-is.
+// GetMetricLast returns one value per matching series, computed over the
+// lookback window by fn (see lastFuncs). It is the instant counterpart of
+// GetMetricRange: same filters, no aggregation across series — the Prometheus
+// vector response is passed through as-is.
 // nodeType is one of "tnode", "anode", "cnode", or "system".
-func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter *Filter, lookback string, w io.Writer) (httpStatus int, err error) {
+//
+// queryTime is the instant the query is evaluated at; empty means now. A
+// caller measuring a bounded window must pass that window's end, or the
+// lookback range trails the clock at call time.
+func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter *Filter, lookback string, fn string, queryTime string, w io.Writer) (httpStatus int, err error) {
 	metric, ok := m.resolveMetric(metricType, nodeType)
 	if !ok {
 		return http.StatusNotFound, errors.New("metric type not found for node type")
@@ -228,13 +286,29 @@ func (m *Metrics) GetMetricLast(metricType string, nodeType string, metricFilter
 		return http.StatusBadRequest, err
 	}
 
+	promFn, err := ResolveLastFunc(fn)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	if queryTime != "" {
+		if err := ValidateQueryTime(queryTime); err != nil {
+			return http.StatusBadRequest, err
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(m.conf.Timeout))
 	defer cancel()
 
 	u := fmt.Sprintf("%s/api/v1/query", strings.TrimSuffix(m.conf.MetricsServer, "/"))
 
 	data := url.Values{}
-	data.Set("query", metric.getLastQuery(metricFilter, lookback))
+	data.Set("query", metric.getLastQuery(metricFilter, lookback, promFn))
+
+	// Omitted when empty: Prometheus then evaluates at now.
+	if queryTime != "" {
+		data.Set("time", queryTime)
+	}
 
 	log.Infof("GetMetricLast query: %s", data.Encode())
 
@@ -466,14 +540,24 @@ func UpdatedName(oldName string, slice string, newSlice string) string {
 	return strings.Replace(oldName, slice, newSlice, 1)
 }
 
-// resolveMetric looks up the Metric definition for the given generic key and node type.
+// resolveMetric looks up the Metric definition for the given generic key and
+// node type, falling back to the platform-level "system" bucket: a few
+// node-scoped KPIs (com_uptime, ctl_uptime) are defined only there, and would
+// otherwise 404 whenever a node id resolved the request to a node-type bucket.
 func (m *Metrics) resolveMetric(metricType, nodeType string) (Metric, bool) {
-	keyMap, ok := m.conf.Metrics[nodeType]
-	if !ok {
-		return Metric{}, false
+	if keyMap, ok := m.conf.Metrics[nodeType]; ok {
+		if metric, ok := keyMap[metricType]; ok {
+			return metric, true
+		}
 	}
-	metric, ok := keyMap[metricType]
-	return metric, ok
+
+	if nodeType != NodeTypeSystem {
+		if metric, ok := m.conf.Metrics[NodeTypeSystem][metricType]; ok {
+			return metric, true
+		}
+	}
+
+	return Metric{}, false
 }
 
 // MetricsExist reports whether the generic metric key is defined for the given node type.
@@ -548,11 +632,10 @@ func (m Metric) getQuery(metricFilter *Filter, defaultRateInterval string, aggre
 	return fmt.Sprintf("%s(%s {%s}) %s", aggregateFunc, m.Metric, metricFilter.GetFilter(), getExcludeStatements())
 }
 
-// getLastQuery builds the instant KPI query: the last sample each matching
-// series reported within the lookback window. Deliberately unaggregated — the
-// caller gets every series Prometheus returns, narrowed only by the filters.
-func (m Metric) getLastQuery(metricFilter *Filter, lookback string) string {
-	return fmt.Sprintf("last_over_time(%s {%s}[%s])", m.Metric,
+// getLastQuery builds the instant KPI query: promFn (from ResolveLastFunc)
+// applied to the lookback range vector of every series the filters match.
+func (m Metric) getLastQuery(metricFilter *Filter, lookback string, promFn string) string {
+	return fmt.Sprintf("%s(%s {%s}[%s])", promFn, m.Metric,
 		metricFilter.GetFilter(), lookback)
 }
 

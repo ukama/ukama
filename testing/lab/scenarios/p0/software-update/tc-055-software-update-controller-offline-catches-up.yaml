@@ -40,6 +40,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
       - type: node_health_ok
         type_selector: controller
@@ -79,6 +80,7 @@ phases:
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
 
   - name: reconnect_and_apply_update
@@ -118,4 +120,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

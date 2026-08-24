@@ -18,23 +18,17 @@ import (
 // siteNodes indexes nodes per network per site.
 type siteNodes map[string]map[string][]map[string]interface{} // network -> site -> nodes
 
-// SitesOnline (SITES_ONLINE @ scope network_id), definition v3: a site is
-// online when every one of its tnode, anode and cnode is online — a plain
-// count of fully-connected sites, judged only on each node's registry
-// connectivity, with no health report involved.
+// SitesOnline (SITES_ONLINE @ scope network_id): a count of the sites whose
+// every tnode, anode and cnode is connectivity == Online AND state ==
+// Operational. Judged only on the registry — no health report or metric.
 //
-// v2 counted a site online on the strength of its cnode alone, so a site whose
-// tower node had dropped off still read as online. v3 requires all three site
-// node types to be connected. A site carrying none of them is not online.
-//
-// Only tnode/anode/cnode are judged: those are the nodes that make up a site.
-// Any other node type attached to the site (hnode) is ignored rather than
-// allowed to drag the site offline.
+// A site carrying none of those node types is not online; any other type
+// attached to it (hnode) is ignored rather than allowed to drag it offline.
 //
 // Inputs:
 //
 //	nodes    — registry.node.list (node_id, site_id, network_id, type,
-//	           connectivity)
+//	           connectivity, state)
 //	networks — registry.network.getAll (network_id) — zero-fill.
 func SitesOnline(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	sites, networks, err := groupSites(in, "SITES_ONLINE")
@@ -99,7 +93,8 @@ func groupSites(in Datasets, kpi string) (siteNodes, []map[string]interface{}, e
 }
 
 // siteAllNodesOnline: every tnode/anode/cnode of the site reports online
-// connectivity. A site carrying none of those node types is not online.
+// connectivity and operational state. A site carrying none of those node types
+// is not online.
 func siteAllNodesOnline(nodes []map[string]interface{}) bool {
 	seen := 0
 
@@ -111,7 +106,7 @@ func siteAllNodesOnline(nodes []map[string]interface{}) bool {
 			continue // not part of the site's own equipment
 		}
 
-		if !isOnline(node["connectivity"]) {
+		if !isOnline(node["connectivity"]) || !isOperational(node["state"]) {
 			return false
 		}
 	}
@@ -125,6 +120,19 @@ func siteAllNodesOnline(nodes []map[string]interface{}) bool {
 func isOnline(v interface{}) bool {
 	switch strings.ToLower(str(v)) {
 	case "online", "1":
+		return true
+	default:
+		return false
+	}
+}
+
+// isOperational handles both serializations of the node state enum: the string
+// name ("Operational") and the numeric ukama.NodeState value (2), emitted when
+// protobuf enums pass through encoding/json. Every other state means the node
+// is not yet, or no longer, in service.
+func isOperational(v interface{}) bool {
+	switch strings.ToLower(str(v)) {
+	case "operational", "2":
 		return true
 	default:
 		return false

@@ -23,6 +23,17 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: verify_operational_baseline
+    checks:
+      - type: node_status_equals
+        view: nodes_list
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
+
   - name: disconnect_operational_node
     events:
       - type: disconnect_nodes
@@ -40,6 +51,7 @@ phases:
         count_per_network: 1
         connectivity: Offline
         state: Operational
+        immediate: true
         timeout_seconds: 120
   - name: reconnect_node
     events:
@@ -58,4 +70,5 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180

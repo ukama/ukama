@@ -35,12 +35,20 @@ phases:
       - type: wait
         seconds: 30
     checks:
+      - type: node_status_equals
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 180
       - type: software_status_equals
         type_selector: controller
         count_per_network: 1
         app: example
         status: update_available
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        immediate: true
         timeout_seconds: 120
 
   - name: start_update_timeout
@@ -58,6 +66,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: true
+        immediate: true
         timeout_seconds: 60
 
   - name: wait_for_update_timeout
@@ -66,6 +75,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         busy: false
+        immediate: true
         timeout_seconds: 300
 
   - name: restore_controller

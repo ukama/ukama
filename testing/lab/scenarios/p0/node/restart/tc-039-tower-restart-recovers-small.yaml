@@ -60,6 +60,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
 
       - type: traffic_allowed
@@ -72,8 +73,21 @@ phases:
         type_selector: tower
         count_per_network: 1
 
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+
+      - type: wait_node_connectivity
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
+
       - type: wait_nodes_ready
-        nodes: all
+        type_selector: tower
+        count_per_network: 1
 
       - type: wait_ues_attached
         ues: ue-000001
@@ -84,6 +98,7 @@ phases:
         count_per_network: 1
         connectivity: Online
         state: Operational
+        immediate: true
         timeout_seconds: 180
 
       - type: traffic_allowed

@@ -50,8 +50,20 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 120
       - type: restart_nodes
         nodes: all
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 300
       - type: wait_nodes_ready
         nodes: all
       - type: toggle_service
