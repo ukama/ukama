@@ -23,17 +23,9 @@ int web_service_cb_ready(const URequest *request,
                          UResponse *response,
                          void *config);
 
-int web_service_cb_lock(const URequest *request,
-                        UResponse *response,
-                        void *config);
-
-int web_service_cb_coordinates(const URequest *request,
-                               UResponse *response,
-                               void *config);
-
-int web_service_cb_time(const URequest *request,
-                        UResponse *response,
-                        void *config);
+int web_service_cb_status(const URequest *request,
+                          UResponse *response,
+                          void *config);
 
 int web_service_cb_default(const URequest *request,
                            UResponse *response,

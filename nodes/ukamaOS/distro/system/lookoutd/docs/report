@@ -133,7 +133,7 @@
     "gps": {
       "available": true,
       "lock": true,
-      "coordinates": "-114.0719,51.0447",
+      "coordinates": "51.0447,-114.0719",
       "time": "2026-05-10T18:29:55Z"
     },
     "backhaul": {
