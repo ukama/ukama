@@ -934,14 +934,14 @@ static int write_one_event(FILE *f, const char *event,
         fprintf(f,
                 "      - type: set_sim_status\n"
                 "        ues: all\n"
-                "        status: inactive\n");
+                "        status: service_off\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "set_sim_active")) {
         fprintf(f,
                 "      - type: set_sim_status\n"
                 "        ues: all\n"
-                "        status: active\n");
+                "        status: service_on\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "check")) {

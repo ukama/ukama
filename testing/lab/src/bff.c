@@ -5717,11 +5717,11 @@ static int bff_cleanup_call(bff_client_t *c,
             return ULAB_OK;
         }
 
-        if (ulab_streq(op, "toggleSimStatus") &&
-            strstr(err.msg, "inactive is invalid for deactivation") != NULL) {
+        if (ulab_streq(op, "toggleSimServiceStatus") &&
+            strstr(err.msg, "is invalid for turning off") != NULL) {
             if (c != NULL && c->logf != NULL) {
                 fprintf(c->logf,
-                        "cleanup ignore: %s: sim already inactive\n",
+                        "cleanup ignore: %s: sim already off\n",
                         op);
                 fflush(c->logf);
             }
@@ -5897,11 +5897,11 @@ int bff_cleanup_world(bff_client_t *c,
         }
 
         n = snprintf(query, sizeof(query),
-                     "mutation { toggleSimStatus(data: {sim_id: \"%s\", "
-                     "status: \"inactive\"}) { success } }",
+                     "mutation { toggleSimServiceStatus(data: {sim_id: \"%s\", "
+                     "status: \"service_off\"}) { success } }",
                      ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
-            bff_cleanup_call(c, "toggleSimStatus", query)) {
+            bff_cleanup_call(c, "toggleSimServiceStatus", query)) {
             failures++;
         }
 

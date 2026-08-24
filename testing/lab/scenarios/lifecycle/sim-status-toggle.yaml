@@ -46,7 +46,7 @@ phases:
     events:
       - type: set_sim_status
         ues: all
-        status: inactive
+        status: service_off
     checks:
       - type: backend_count
         target: sims
@@ -56,7 +56,7 @@ phases:
     events:
       - type: set_sim_status
         ues: all
-        status: active
+        status: service_on
     checks:
       - type: backend_count
         target: sims
