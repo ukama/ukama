@@ -70,6 +70,24 @@ func (_m *SessionManager) EndSession(ctx context.Context, sub *store.Subscriber)
 	return r0
 }
 
+// HasActiveSession provides a mock function with given fields: imsi
+func (_m *SessionManager) HasActiveSession(imsi string) bool {
+	ret := _m.Called(imsi)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasActiveSession")
+	}
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(string) bool); ok {
+		r0 = rf(imsi)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
 // IfSessionExist provides a mock function with given fields: ctx, imsi, ip
 func (_m *SessionManager) IfSessionExist(ctx context.Context, imsi string, ip string) bool {
 	ret := _m.Called(ctx, imsi, ip)
@@ -83,6 +101,42 @@ func (_m *SessionManager) IfSessionExist(ctx context.Context, imsi string, ip st
 		r0 = rf(ctx, imsi, ip)
 	} else {
 		r0 = ret.Get(0).(bool)
+	}
+
+	return r0
+}
+
+// PauseSession provides a mock function with given fields: ctx, sub
+func (_m *SessionManager) PauseSession(ctx context.Context, sub *store.Subscriber) error {
+	ret := _m.Called(ctx, sub)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PauseSession")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *store.Subscriber) error); ok {
+		r0 = rf(ctx, sub)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// ResumeSession provides a mock function with given fields: ctx, sub
+func (_m *SessionManager) ResumeSession(ctx context.Context, sub *store.Subscriber) error {
+	ret := _m.Called(ctx, sub)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ResumeSession")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *store.Subscriber) error); ok {
+		r0 = rf(ctx, sub)
+	} else {
+		r0 = ret.Error(0)
 	}
 
 	return r0

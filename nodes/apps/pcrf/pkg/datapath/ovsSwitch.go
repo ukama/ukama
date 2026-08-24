@@ -386,7 +386,7 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 		log.Errorf("Failed to create RX flow for UE %s with meter id %d. Error: %v",
 			ipString, rxMeter, err)
 
-		fmt.Errorf("failed to create RX flow for UE %s with meter id %d. Error: %w",
+		return fmt.Errorf("failed to create RX flow for UE %s with meter id %d. Error: %w",
 			ipString, rxMeter, err)
 	}
 
@@ -421,7 +421,7 @@ func (o *OvsSwitch) updateFlowForUE(ipString string, rxMeter, txMeter uint32, rx
 		log.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %v",
 			ipString, txMeter, err)
 
-		return fmt.Errorf("Failed to submit TX flow for UE %s with meter id %d. Error: %w",
+		return fmt.Errorf("failed to submit TX flow for UE %s with meter id %d. Error: %w",
 			ipString, txMeter, err)
 	}
 
@@ -549,7 +549,7 @@ func (o *OvsSwitch) deleteFlowForTXPath(ip net.IP) error {
 		log.Errorf("Deleting TX path for UE %v flow from table failed. Error: %v",
 			ip, err)
 
-		return fmt.Errorf("Deleting TX path for UE %v flow from table failed. Error: %w",
+		return fmt.Errorf("deleting TX path for UE %v flow from table failed. Error: %w",
 			ip, err)
 	}
 
