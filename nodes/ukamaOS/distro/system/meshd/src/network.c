@@ -55,6 +55,8 @@ STATIC void setup_webservice_endpoints(Config *config, UInst *instance) {
 			     &callback_forward_service, config);
   ulfius_add_endpoint_by_val(instance, "PUT", PREFIX_FWDSERVICE, NULL, 0,
 			     &callback_forward_service, config);
+  ulfius_add_endpoint_by_val(instance, "PATCH", PREFIX_FWDSERVICE, NULL, 0,
+			     &callback_forward_service, config);
   ulfius_add_endpoint_by_val(instance, "DELETE", PREFIX_FWDSERVICE, NULL, 0,
 			     &callback_forward_service, config);
 
