@@ -36,7 +36,7 @@ require_value() {
 
 require_value UE_CONTAINER
 require_value TNODE_CONTAINER
-require_value TNODE_IP
+require_value TOWER_IP
 require_value MEDIA_CONTAINER
 require_value MEDIA_IP
 require_value IMSI
@@ -51,8 +51,8 @@ if ! podman exec "$UE_CONTAINER" ip route get "$MEDIA_IP" 2>/dev/null | \
 fi
 
 if ! podman exec "$MEDIA_CONTAINER" ip route get "$UE_IP" 2>/dev/null | \
-    grep -q "via $TNODE_IP"; then
-    echo "media return route is not using site tower: ue=$UE_KEY via=$TNODE_IP" >&2
+    grep -q "via $TOWER_IP"; then
+    echo "media return route is not using site tower: ue=$UE_KEY via=$TOWER_IP" >&2
     exit 1
 fi
 
