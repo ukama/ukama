@@ -55,7 +55,6 @@ phases:
         ues: all
         package: topup
         expected_count: 1
-      # The analytics pipeline is asynchronous; same deadline as the KPI check.
       - type: performance_report_cell
         report: package_performance
         span: daily
@@ -64,7 +63,6 @@ phases:
         column: revenue
         expected_value: 5.00
         tolerance: 0.001
-        timeout_seconds: 600
       - type: performance_report_cell
         report: package_performance
         span: daily
@@ -72,7 +70,6 @@ phases:
         package: topup
         column: sold
         expected_value: 1
-        timeout_seconds: 600
       - type: kpi_value
         key: PACKAGE_SALES
         span: daily
