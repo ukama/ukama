@@ -21,6 +21,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
@@ -146,4 +147,51 @@ func TestEventNotification(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 	})
+}
+
+func TestApplyDesiredToNode_LeavesInFlightAndFailedRowsAlone(t *testing.T) {
+	const app = "example"
+	const nodeID = "uk-sa2156-hnode-a1-xxxx"
+
+	desired := &db.AppDesiredRelease{Name: app, Type: "app", DesiredVersion: "2.0.0"}
+
+	cases := []struct {
+		name    string
+		status  ukama.SoftwareStatusType
+		updated bool
+	}{
+		{"in progress is owned by the update watcher", ukama.SoftwareStatusType(ukama.UpdateInProgress), false},
+		{"failed is a real outcome someone must see", ukama.SoftwareStatusType(ukama.UpdateFailed), false},
+		{"idle rows are recomputed", ukama.SoftwareStatusType(ukama.UpToDate), true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			sRepo := mocks.NewSoftwareRepo(t)
+			releaseRepo := mocks.NewReleaseRepo(t)
+
+			row := &db.Software{
+				Id:             uuid.NewV4(),
+				NodeId:         nodeID,
+				AppName:        app,
+				CurrentVersion: "1.0.0",
+				Status:         tc.status,
+			}
+
+			sRepo.On("List", nodeID, ukama.Unknown, "").Return([]*db.Software{row}, nil).Once()
+			releaseRepo.On("GetDesired", app, "app").Return(desired, nil).Once()
+			if tc.updated {
+				sRepo.On("Update", mock.Anything).Return(nil).Once()
+			}
+
+			s := newEventServer(t, sRepo, releaseRepo)
+			require.NoError(t, s.applyDesiredToNode(nodeID))
+
+			if !tc.updated {
+				sRepo.AssertNotCalled(t, "Update", mock.Anything)
+				assert.Equal(t, tc.status, row.Status)
+			}
+			sRepo.AssertExpectations(t)
+		})
+	}
 }
