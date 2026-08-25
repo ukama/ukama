@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
@@ -66,7 +65,7 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
-	nodeClient := &cmocks.NodeClient{}
+	nodeClient := &mbmocks.NodeClient{}
 	nodeClient.On("Get", mock.Anything).
 		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil).Maybe()
 
@@ -513,10 +512,10 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 	}
 
 	t.Run("rejected_with_not_found", func(t *testing.T) {
-		nodeClient := &cmocks.NodeClient{}
+		nodeClient := &mbmocks.NodeClient{}
 		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
 
-		opMgr := &cmocks.ManagerClient{}
+		opMgr := &mbmocks.ManagerClient{}
 
 		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
 			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
@@ -532,10 +531,10 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 	})
 
 	t.Run("takes_no_lock", func(t *testing.T) {
-		nodeClient := &cmocks.NodeClient{}
+		nodeClient := &mbmocks.NodeClient{}
 		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
 
-		opMgr := &cmocks.ManagerClient{}
+		opMgr := &mbmocks.ManagerClient{}
 
 		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
 			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
@@ -549,10 +548,10 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 	})
 
 	t.Run("registry_unreachable_is_internal", func(t *testing.T) {
-		nodeClient := &cmocks.NodeClient{}
+		nodeClient := &mbmocks.NodeClient{}
 		nodeClient.On("Get", testNodeIdNormalized).Return(nil, assert.AnError).Once()
 
-		opMgr := &cmocks.ManagerClient{}
+		opMgr := &mbmocks.ManagerClient{}
 
 		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
 			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
