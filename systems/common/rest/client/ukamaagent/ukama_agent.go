@@ -28,13 +28,12 @@ const (
 )
 
 type UkamaAgentClient interface {
-	BindSim(req client.AgentRequestData) (*UkamaSimInfo, error)
+	CreateProfile(req client.AgentRequestData) (*UkamaSimInfo, error)
 	GetSimInfo(iccid string) (*UkamaSimInfo, error)
 	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
-	ActivateSim(req client.AgentRequestData) error
-	DeactivateSim(req client.AgentRequestData) error
 	UpdatePackage(req client.AgentRequestData) error
-	TerminateSim(iccid string) error
+	Update(req client.AgentRequestData) error
+	DeleteProfile(req client.AgentRequestData) error
 }
 
 type ukamaAgentClient struct {
@@ -55,10 +54,17 @@ func NewUkamaAgentClient(h string) *ukamaAgentClient {
 	}
 }
 
-// Bind sim calls ActivateSim, which calls asr activate in order
-// to add the ukama sims into ukama agent asr.
-func (u *ukamaAgentClient) BindSim(req client.AgentRequestData) (*UkamaSimInfo, error) {
-	return &UkamaSimInfo{}, u.ActivateSim(req)
+func (u *ukamaAgentClient) CreateProfile(req client.AgentRequestData) (*UkamaSimInfo, error) {
+	log.Debugf("Creating profile for ukama sim: %v", req.Iccid)
+
+	_, err := u.R.C.R().SetBody(req).Put(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	if err != nil {
+		log.Errorf("CreateProfile failure. error: %v", err)
+
+		return nil, fmt.Errorf("CreateProfile failure: %w", err)
+	}
+
+	return &UkamaSimInfo{}, nil
 }
 
 func (u *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
@@ -68,14 +74,14 @@ func (u *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 
 	resp, err := u.R.Get(u.u.String() + UkamaSimsEndpoint + "/" + iccid)
 	if err != nil {
-		log.Errorf("GetSimInfo failure. error: %s", err.Error())
+		log.Errorf("GetSimInfo failure. error: %v", err)
 
 		return nil, fmt.Errorf("GetSimInfo failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &sim)
 	if err != nil {
-		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
+		log.Tracef("Failed to deserialize ukama sim info. Error message is: %v", err)
 
 		return nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
@@ -96,7 +102,7 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	if from != "" {
 		frm, err := validation.FromString(from)
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %s", from, err)
+			return nil, nil, fmt.Errorf("invalid format for from: %s. Error: %w", from, err)
 		}
 		startTime = frm.Unix()
 	}
@@ -104,7 +110,7 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	if to != "" {
 		t, err := validation.FromString(to)
 		if err != nil {
-			return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %s", to, err)
+			return nil, nil, fmt.Errorf("invalid format for to: %s. Error: %w", to, err)
 		}
 		endTime = t.Unix()
 	}
@@ -112,14 +118,14 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	resp, err := u.R.Get(u.u.String() + UkamaUsageEndpoint +
 		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime))
 	if err != nil {
-		log.Errorf("GetSim usages failure. error: %s", err.Error())
+		log.Errorf("GetSim usages failure. error: %v", err)
 
 		return nil, nil, fmt.Errorf("GetSim usages failure: %w", err)
 	}
 
 	err = json.Unmarshal(resp.Body(), &usage)
 	if err != nil {
-		log.Tracef("Failed to deserialize ukama sim info. Error message is: %s", err.Error())
+		log.Tracef("Failed to deserialize ukama sim info. Error message is: %v", err)
 
 		return nil, nil, fmt.Errorf("ukama sim info deserialization failure: %w", err)
 	}
@@ -129,38 +135,12 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 	return map[string]any{iccid: usage.Usage}, nil, nil
 }
 
-func (u *ukamaAgentClient) ActivateSim(req client.AgentRequestData) error {
-	log.Debugf("Activating ukama sim: %v", req.Iccid)
-
-	_, err := u.R.C.R().SetBody(req).Put(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
-	if err != nil {
-		log.Errorf("ActivateSim failure. error: %s", err.Error())
-
-		return fmt.Errorf("ActivateSim failure: %w", err)
-	}
-
-	return nil
-}
-
-func (u *ukamaAgentClient) DeactivateSim(req client.AgentRequestData) error {
-	log.Debugf("Deactivating ukama sim: %v", req.Iccid)
-
-	_, err := u.R.C.R().SetBody(req).Delete(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
-	if err != nil {
-		log.Errorf("DeactivateSim failure. error: %s", err.Error())
-
-		return fmt.Errorf("DeactivateSim failure: %w", err)
-	}
-
-	return nil
-}
-
 func (u *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
 	log.Debugf("Updating ukama sim's package: %v", req.Iccid)
 
-	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid + "/package")
 	if err != nil {
-		log.Errorf("Update sim's package failure. error: %s", err.Error())
+		log.Errorf("Update sim's package failure. error: %v", err)
 
 		return fmt.Errorf("update sim's package failure: %w", err)
 	}
@@ -168,8 +148,28 @@ func (u *ukamaAgentClient) UpdatePackage(req client.AgentRequestData) error {
 	return nil
 }
 
-func (u *ukamaAgentClient) TerminateSim(iccid string) error {
-	log.Debugf("Terminating ukama sim: %v", iccid)
+func (u *ukamaAgentClient) Update(req client.AgentRequestData) error {
+	log.Debugf("Updating ukama sim's service status: %v", req.Iccid)
+
+	_, err := u.R.C.R().SetBody(req).Patch(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	if err != nil {
+		log.Errorf("Update sim's service status failure. error: %v", err)
+
+		return fmt.Errorf("update sim's service status failure: %w", err)
+	}
+
+	return nil
+}
+
+func (u *ukamaAgentClient) DeleteProfile(req client.AgentRequestData) error {
+	log.Debugf("Deleting profile for ukama sim: %v", req.Iccid)
+
+	_, err := u.R.C.R().SetBody(req).Delete(u.u.String() + UkamaSimsEndpoint + "/" + req.Iccid)
+	if err != nil {
+		log.Errorf("DeleteProfile failure. error: %v", err)
+
+		return fmt.Errorf("DeleteProfile failure: %w", err)
+	}
 
 	return nil
 }
@@ -183,20 +183,21 @@ type UkamaSim struct {
 }
 
 type UkamaSimInfo struct {
-	Imsi        string  `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
-	Iccid       string  `protobuf:"bytes,3,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
-	Key         []byte  `protobuf:"bytes,4,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
-	Op          []byte  `protobuf:"bytes,5,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
-	Amf         []byte  `protobuf:"bytes,6,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
-	Apn         *Apn    `protobuf:"bytes,7,opt,name=Apn,json=apn,proto3" json:"Apn,omitempty"`
-	AlgoType    uint32  `protobuf:"varint,8,opt,name=AlgoType,json=algo_type,proto3" json:"AlgoType,omitempty"`
-	UeDlAmbrBps uint32  `protobuf:"varint,9,opt,name=UeDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"UeDlAmbrBps,omitempty"`
-	UeUlAmbrBps uint32  `protobuf:"varint,10,opt,name=UeUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"UeUlAmbrBps,omitempty"`
-	Sqn         string  `protobuf:"varint,11,opt,name=Sqn,json=sqn,proto3" json:"Sqn,omitempty"`
-	CsgIdPrsent bool    `protobuf:"varint,12,opt,name=CsgIdPrsent,json=csg_id_prsent,proto3" json:"CsgIdPrsent,omitempty"`
-	CsgId       uint32  `protobuf:"varint,13,opt,name=CsgId,json=csg_id,proto3" json:"CsgId,omitempty"`
-	PackageId   string  `protobuf:"bytes,14,opt,name=PackageId,json=package_id,proto3" json:"PackageId,omitempty"`
-	Policy      *Policy `protobuf:"bytes,17,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
+	Imsi              string  `protobuf:"bytes,1,opt,name=Imsi,json=imsi,proto3" json:"Imsi,omitempty"`
+	Iccid             string  `protobuf:"bytes,3,opt,name=Iccid,json=iccid,proto3" json:"Iccid,omitempty"`
+	Key               []byte  `protobuf:"bytes,4,opt,name=Key,json=k,proto3" json:"Key,omitempty"`
+	Op                []byte  `protobuf:"bytes,5,opt,name=Op,json=op,proto3" json:"Op,omitempty"`
+	Amf               []byte  `protobuf:"bytes,6,opt,name=Amf,json=amf,proto3" json:"Amf,omitempty"`
+	Apn               *Apn    `protobuf:"bytes,7,opt,name=Apn,json=apn,proto3" json:"Apn,omitempty"`
+	AlgoType          uint32  `protobuf:"varint,8,opt,name=AlgoType,json=algo_type,proto3" json:"AlgoType,omitempty"`
+	UeDlAmbrBps       uint32  `protobuf:"varint,9,opt,name=UeDlAmbrBps,json=ue_dl_ambr_bps,proto3" json:"UeDlAmbrBps,omitempty"`
+	UeUlAmbrBps       uint32  `protobuf:"varint,10,opt,name=UeUlAmbrBps,json=ue_ul_ambr_bps,proto3" json:"UeUlAmbrBps,omitempty"`
+	Sqn               string  `protobuf:"varint,11,opt,name=Sqn,json=sqn,proto3" json:"Sqn,omitempty"`
+	CsgIdPrsent       bool    `protobuf:"varint,12,opt,name=CsgIdPrsent,json=csg_id_prsent,proto3" json:"CsgIdPrsent,omitempty"`
+	CsgId             uint32  `protobuf:"varint,13,opt,name=CsgId,json=csg_id,proto3" json:"CsgId,omitempty"`
+	PackageId         string  `protobuf:"bytes,14,opt,name=PackageId,json=package_id,proto3" json:"PackageId,omitempty"`
+	Policy            *Policy `protobuf:"bytes,17,opt,name=Policy,json=policy,proto3" json:"Policy,omitempty"`
+	IsServiceStatusOn bool    `protobuf:"varint,18,opt,name=IsServiceStatusOn,json=is_service_status_on,proto3" json:"IsServiceStatusOn,omitempty"`
 }
 
 type Apn struct {

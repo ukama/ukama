@@ -7,7 +7,7 @@
  */
 'use client';
 import { useGetPackagesForSimQuery } from '@/client/graphql/packages.generated';
-import { useToggleSimStatusMutation } from '@/client/graphql/sims.generated';
+import { useToggleSimServiceStatusMutation } from '@/client/graphql/sims.generated';
 import AppDrawer, { DetailRow } from '@/components/AppDrawer';
 import AppModal from '@/components/AppModal';
 import Meter from '@/components/Meter';
@@ -42,13 +42,13 @@ type SimPackage = {
   package_id: string;
   start_date: string;
   end_date: string;
-  is_active: boolean;
+  is_currently_in_use: boolean;
 };
 
 type PackageKind = 'current' | 'upcoming' | 'ended';
 
 const classify = (p: SimPackage, now: number): PackageKind => {
-  if (p.is_active) return 'current';
+  if (p.is_currently_in_use) return 'current';
   // A queued package chains off the previous package's end date, so its start
   // can already be in the past while it is still waiting to activate. Decide
   // "ended" by the END date, not the start — otherwise a queued package whose
@@ -123,32 +123,36 @@ export default function SubscriberDrawer({
   const simSuspended = sub.sim === 'suspended';
   const [confirmSim, setConfirmSim] = useState(false);
 
-  const [toggleSim, { loading: togglingSim }] = useToggleSimStatusMutation({
-    onCompleted: (d) => {
-      setConfirmSim(false);
-      const res = d.toggleSimStatus;
-      if (res.success) {
-        // Activation/deactivation runs asynchronously on the backend, so the
-        // toast reports that the process has started, not that it's applied.
-        toast(
-          `SIM ${simActive ? 'deactivation' : 'activation'} process initiated`,
-        );
-        onChanged?.(); // refresh the list + this subscriber's sim status
-      } else {
-        toast(res.message ?? "Couldn't update SIM status");
-      }
-    },
-    onError: (e) => {
-      setConfirmSim(false);
-      toast(e.message || "Couldn't update SIM status");
-    },
-  });
+  const [toggleSim, { loading: togglingSim }] =
+    useToggleSimServiceStatusMutation({
+      onCompleted: (d) => {
+        setConfirmSim(false);
+        const res = d.toggleSimServiceStatus;
+        if (res.success) {
+          // Activation/deactivation runs asynchronously on the backend, so the
+          // toast reports that the process has started, not that it's applied.
+          toast(
+            `SIM ${simActive ? 'deactivation' : 'activation'} process initiated`,
+          );
+          onChanged?.(); // refresh the list + this subscriber's sim status
+        } else {
+          toast(res.message ?? "Couldn't update SIM status");
+        }
+      },
+      onError: (e) => {
+        setConfirmSim(false);
+        toast(e.message || "Couldn't update SIM status");
+      },
+    });
 
   const doToggleSim = () => {
     if (!sub.simId) return;
     toggleSim({
       variables: {
-        data: { sim_id: sub.simId, status: simActive ? 'inactive' : 'active' },
+        data: {
+          sim_id: sub.simId,
+          status: simActive ? 'service_off' : 'service_on',
+        },
       },
     });
   };

@@ -1102,18 +1102,18 @@ func TestEventNotification(t *testing.T) {
 		unRepo.AssertExpectations(t)
 	})
 
-	t.Run("EventSimActivate_SimActivatedEvent", func(t *testing.T) {
+	t.Run("EventSimServiceOn_SimServiceOnEvent", func(t *testing.T) {
 		eventServer, nRepo, uRepo, emRepo, _, _, unRepo := createTestEventServer()
 
-		eventSimActivate := &epb.EventSimActivation{}
+		eventSimServiceOn := &epb.EventSimServiceOn{}
 		testEvent := createTestEventFromRaw(
-			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSimActivate]),
+			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSimServiceOn]),
 			createEventJSON("id", "subscriberId", "iccid", "imsi", "networkId", "packageId"),
-			eventSimActivate,
+			eventSimServiceOn,
 		)
 
 		expectedEventMsg := &db.EventMsg{
-			Key: evt.EventToEventConfig[evt.EventSimActivate].Name,
+			Key: evt.EventToEventConfig[evt.EventSimServiceOn].Name,
 		}
 		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
@@ -1133,7 +1133,7 @@ func TestEventNotification(t *testing.T) {
 		}
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimActivate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
+		uRepo.On("GetSubscriber", eventSimServiceOn.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		unRepo.On("Add", mock.Anything).Return(nil)
 

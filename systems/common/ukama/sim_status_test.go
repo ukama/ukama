@@ -18,10 +18,10 @@ import (
 
 func TestSimStatus(t *testing.T) {
 	t.Run("SimTypeValidString", func(tt *testing.T) {
-		simStatus := ukama.ParseSimStatus("active")
+		simStatus := ukama.ParseSimStatus("service_on")
 
 		assert.NotNil(t, simStatus)
-		assert.Equal(t, simStatus.String(), ukama.SimStatusActive.String())
+		assert.Equal(t, simStatus.String(), ukama.SimStatusServiceOn.String())
 		assert.Equal(t, uint8(simStatus), uint8(1))
 	})
 

@@ -285,11 +285,17 @@ func (e *ErrorStatus) Error() string {
 }
 
 type AgentRequestData struct {
-	Iccid        string `json:"iccid"`
-	Imsi         string `json:"imsi,omitempty"`
-	SimPackageId string `json:"sim_package_id,omitempty"`
-	PackageId    string `json:"package_id,omitempty"`
-	NetworkId    string `json:"network_id,omitempty"`
+	Iccid             string `json:"iccid"`
+	Imsi              string `json:"imsi,omitempty"`
+	SimPackageId      string `json:"sim_package_id,omitempty"`
+	PackageId         string `json:"package_id,omitempty"`
+	NetworkId         string `json:"network_id,omitempty"`
+	IsServiceStatusOn bool   `json:"is_service_status_on,omitempty"`
+	TotalData         uint64 `json:"total_data,omitempty"` // bytes
+	Dlbr              uint64 `json:"dlbr,omitempty"`
+	Ulbr              uint64 `json:"ulbr,omitempty"`
+	StartTime         uint64 `json:"start_time,omitempty"` // unix seconds
+	EndTime           uint64 `json:"end_time,omitempty"`   // unix seconds
 }
 
 func HandleRestErrorStatus(err error) error {

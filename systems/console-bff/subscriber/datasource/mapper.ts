@@ -90,7 +90,7 @@ export const dtoToSimPackageDto = (res: SimPackageAPIDto): SimPackageDto => {
     package_id: res.package_id,
     start_date: res.start_date,
     end_date: res.end_date,
-    is_active: res.is_active,
+    is_currently_in_use: res.is_currently_in_use,
     created_at: res.created_at,
     updated_at: res.updated_at,
   };

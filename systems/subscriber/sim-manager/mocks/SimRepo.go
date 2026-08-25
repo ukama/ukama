@@ -222,6 +222,24 @@ func (_m *SimRepo) Update(sim *db.Sim, nestedFunc func(*db.Sim, *gorm.DB) error)
 	return r0
 }
 
+// UpdateWithStatusGuard provides a mock function with given fields: sim, expectedStatus, nestedFunc
+func (_m *SimRepo) UpdateWithStatusGuard(sim *db.Sim, expectedStatus ukama.SimStatus, nestedFunc func(*db.Sim, *gorm.DB) error) error {
+	ret := _m.Called(sim, expectedStatus, nestedFunc)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateWithStatusGuard")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Sim, ukama.SimStatus, func(*db.Sim, *gorm.DB) error) error); ok {
+		r0 = rf(sim, expectedStatus, nestedFunc)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // NewSimRepo creates a new instance of SimRepo. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewSimRepo(t interface {

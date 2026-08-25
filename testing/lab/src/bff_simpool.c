@@ -729,7 +729,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
              "network_id:\"%s\",sim_type:\"%s\","
              "package_id:\"%s\",subscriber_id:\"%s\","
              "traffic_policy:1}) { id subscriber_id network_id iccid imsi "
-             "status package { packageId isActive startDate endDate } } }",
+             "status package { packageId isCurrentlyInUse startDate endDate } } }",
              iccid_esc, net_esc, type_esc, pkg_esc, sub_esc);
 
     if (sim_graphql_call(c, "allocateSim", query, &root, err)) {
@@ -819,10 +819,10 @@ static int sim_remove_package_from_sim(bff_client_t *c,
 
     root = NULL;
     snprintf(query, sizeof(query),
-             "mutation { setInactivePackageForSim(data:{"
+             "mutation { unsetPackageInUseForSim(data:{"
              "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
              pkg_esc, sim_esc);
-    if (sim_graphql_call(c, "setInactivePackageForSim", query, &root, err)) {
+    if (sim_graphql_call(c, "unsetPackageInUseForSim", query, &root, err)) {
         if (strstr(err->msg, "package record not found") == NULL) {
             return ULAB_ERR;
         }
@@ -869,7 +869,7 @@ int bff_clear_sim_packages(bff_client_t *c,
     ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
     snprintf(query, sizeof(query),
              "query { getPackagesForSim(data:{sim_id:\"%s\"}) { "
-             "sim_id packages { id package_id is_active } } }",
+             "sim_id packages { id package_id is_currently_in_use } } }",
              sim_esc);
 
     root = NULL;
@@ -1003,12 +1003,12 @@ int bff_toggle_sim_status(bff_client_t *c,
     root = NULL;
 
     if (ue == NULL || ue->bff_id[0] == '\0') {
-        snprintf(err->msg, sizeof(err->msg), "toggleSimStatus missing SIM id");
+        snprintf(err->msg, sizeof(err->msg), "toggleSimServiceStatus missing SIM id");
         return ULAB_ERR;
     }
 
     if (status == NULL || status[0] == '\0') {
-        snprintf(err->msg, sizeof(err->msg), "toggleSimStatus missing status");
+        snprintf(err->msg, sizeof(err->msg), "toggleSimServiceStatus missing status");
         return ULAB_ERR;
     }
 
@@ -1016,19 +1016,19 @@ int bff_toggle_sim_status(bff_client_t *c,
     ulab_json_escape(status, status_esc, sizeof(status_esc));
 
     snprintf(query, sizeof(query),
-             "mutation { toggleSimStatus(data:{sim_id:\"%s\",status:\"%s\"}) "
+             "mutation { toggleSimServiceStatus(data:{sim_id:\"%s\",status:\"%s\"}) "
              "{ success message } }",
              sim_esc, status_esc);
 
-    if (sim_graphql_call(c, "toggleSimStatus", query, &root, err)) {
+    if (sim_graphql_call(c, "toggleSimServiceStatus", query, &root, err)) {
         return ULAB_ERR;
     }
 
-    obj = sim_dig(root, "data", "toggleSimStatus");
+    obj = sim_dig(root, "data", "toggleSimServiceStatus");
     success = obj ? json_object_get(obj, "success") : NULL;
     if (success == NULL || !json_is_boolean(success)) {
         snprintf(err->msg, sizeof(err->msg),
-                 "toggleSimStatus missing boolean success");
+                 "toggleSimServiceStatus missing boolean success");
         json_decref(root);
         return ULAB_ERR;
     }
@@ -1037,7 +1037,7 @@ int bff_toggle_sim_status(bff_client_t *c,
         reason = message && json_is_string(message) ?
             json_string_value(message) : NULL;
         snprintf(err->msg, sizeof(err->msg),
-                 "toggleSimStatus failed%s%.512s",
+                 "toggleSimServiceStatus failed%s%.512s",
                  reason && reason[0] ? ": " : "",
                  reason && reason[0] ? reason : "");
         json_decref(root);

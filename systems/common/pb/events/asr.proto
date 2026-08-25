@@ -16,11 +16,11 @@ message Subscriber {
     string SimPackage = 7 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name="sim_package"];
 }
 
-message AsrActivated {
+message AsrProfileCreated {
     Subscriber Subscriber = 1;
 }
 
-message AsrInactivated{
+message AsrProfileDeleted{
     Subscriber Subscriber = 1;
 }
 

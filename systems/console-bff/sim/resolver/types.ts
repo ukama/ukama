@@ -73,13 +73,19 @@ export class SimPackage {
   endDate: string;
 
   @Field()
+  initialData: string;
+
+  @Field()
+  usedDataAtExpiry: string;
+
+  @Field()
   defaultDuration: string; // in minutes (max 1000 years); minutes since #1496
 
   @Field()
-  isActive: boolean;
+  isCurrentlyInUse: boolean;
 
   @Field()
-  asExpired: boolean;
+  isExpired: boolean;
 }
 
 @ObjectType()
@@ -201,7 +207,7 @@ export class SimToPackagesDto {
   end_date: string;
 
   @Field()
-  is_active: boolean;
+  is_currently_in_use: boolean;
 }
 @ObjectType()
 export class SimToPackagesResDto {
@@ -218,10 +224,10 @@ export class SimToPackagesResDto {
   endDate: string;
 
   @Field()
-  isActive: boolean;
+  isCurrentlyInUse: boolean;
 }
 @InputType()
-export class ToggleSimStatusInputDto {
+export class ToggleSimServiceStatusInputDto {
   @Field()
   sim_id: string;
 
@@ -286,7 +292,7 @@ export class SimAllocatePackageDto {
   endDate?: string;
 
   @Field({ nullable: true })
-  isActive?: boolean;
+  isCurrentlyInUse?: boolean;
 }
 @ObjectType()
 export class AllocateSimAPIDto {
@@ -345,13 +351,19 @@ export class SimPackageAPI {
   end_date: string;
 
   @Field()
+  initial_data: string;
+
+  @Field()
+  used_data_at_expiry: string;
+
+  @Field()
   default_duration: string; // in minutes (max 1000 years); minutes since #1496
 
   @Field()
-  is_active: boolean;
+  is_currently_in_use: boolean;
 
   @Field()
-  as_expired: boolean;
+  is_expired: boolean;
 }
 @ObjectType()
 export class SimAPIDto {

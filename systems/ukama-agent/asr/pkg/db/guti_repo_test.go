@@ -104,7 +104,7 @@ func TestGutiRepo_GetImsi(t *testing.T) {
 			AddRow(now, now, Guti.Imsi, Guti.PlmnId, Guti.Mmegi, Guti.Mmec, Guti.MTmsi)
 
 		mock.ExpectQuery(`^SELECT.*gutis.*`).
-			WithArgs(Imsi, 1).
+			WithArgs(Guti.PlmnId, Guti.Mmegi, Guti.Mmec, Guti.MTmsi, 1).
 			WillReturnRows(rows)
 		dialector := postgres.New(postgres.Config{
 			DSN:                  "sqlmock_db_0",
@@ -122,7 +122,7 @@ func TestGutiRepo_GetImsi(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		i, err := r.GetImsi(Imsi)
+		i, err := r.GetImsi(Guti.PlmnId, Guti.Mmegi, Guti.Mmec, Guti.MTmsi)
 
 		// Assert
 		assert.NoError(t, err)
@@ -133,7 +133,5 @@ func TestGutiRepo_GetImsi(t *testing.T) {
 		if assert.NotNil(t, i) {
 			assert.EqualValues(t, i, Imsi)
 		}
-
 	})
-
 }

@@ -26,7 +26,7 @@ fragment SubscriberSim on SubscriberDto {
       package_id
       start_date
       end_date
-      is_active
+      is_currently_in_use
       created_at
       updated_at
     }

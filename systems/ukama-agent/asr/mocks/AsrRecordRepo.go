@@ -222,6 +222,24 @@ func (_m *AsrRecordRepo) Update(imsi string, record *db.Asr) error {
 	return r0
 }
 
+// UpdateConsumedData provides a mock function with given fields: asrID, consumedData
+func (_m *AsrRecordRepo) UpdateConsumedData(asrID uint, consumedData uint64) error {
+	ret := _m.Called(asrID, consumedData)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateConsumedData")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint, uint64) error); ok {
+		r0 = rf(asrID, consumedData)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // UpdatePackage provides a mock function with given fields: imsi, packageId, policy
 func (_m *AsrRecordRepo) UpdatePackage(imsi string, packageId uuid.UUID, policy *db.Policy) error {
 	ret := _m.Called(imsi, packageId, policy)

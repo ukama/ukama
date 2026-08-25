@@ -108,14 +108,16 @@ type RequestSubscriber struct {
 }
 
 type CreateSubscriber struct {
-	Imsi    string `json:"imsi" path:"imsi" validate:"required"`
-	Policy  Policy `json:"policy" validate:"required"`
-	ReRoute string `json:"reroute" validate:"required"`
+	Imsi        string `json:"imsi" path:"imsi" validate:"required"`
+	Policy      Policy `json:"policy" validate:"required"`
+	ReRoute     string `json:"reroute" validate:"required"`
+	IsServiceOn *bool  `json:"is_service_on,omitempty"`
 }
 
 type UpdateSubscriber struct {
-	Imsi   string `json:"imsi" path:"imsi" validate:"required"`
-	Policy Policy `json:"policy" validate:"required"`
+	Imsi        string `json:"imsi" path:"imsi" validate:"required"`
+	Policy      Policy `json:"policy" validate:"required"`
+	IsServiceOn *bool  `json:"is_service_on,omitempty"`
 }
 
 type GetFlowsForImsi struct {
@@ -123,10 +125,11 @@ type GetFlowsForImsi struct {
 }
 
 type SubscriberResponse struct {
-	ID       int       `json:"id" validate:"required"`
-	Imsi     string    `json:"imsi" path:"imsi" validate:"required"`
-	PolicyID uuid.UUID `json:"policy_id"`
-	ReRoute  string    `json:"reroute"`
+	ID        int       `json:"id" validate:"required"`
+	Imsi      string    `json:"imsi" path:"imsi" validate:"required"`
+	PolicyID  uuid.UUID `json:"policy_id"`
+	ReRoute   string    `json:"reroute"`
+	ServiceOn bool      `json:"service_on"`
 }
 
 type PolicyResponse struct {

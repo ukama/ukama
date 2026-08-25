@@ -29,17 +29,17 @@ const (
 	SimManagerService_AllocateSim_FullMethodName              = "/ukama.subscriber.sim_manager.v1.SimManagerService/AllocateSim"
 	SimManagerService_GetSim_FullMethodName                   = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSim"
 	SimManagerService_ListSims_FullMethodName                 = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListSims"
+	SimManagerService_ToggleSimServiceStatus_FullMethodName   = "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimServiceStatus"
+	SimManagerService_TerminateSim_FullMethodName             = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminateSim"
 	SimManagerService_GetSimsBySubscriber_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsBySubscriber"
 	SimManagerService_GetSimsByNetwork_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetSimsByNetwork"
-	SimManagerService_ToggleSimStatus_FullMethodName          = "/ukama.subscriber.sim_manager.v1.SimManagerService/ToggleSimStatus"
-	SimManagerService_TerminateSim_FullMethodName             = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminateSim"
 	SimManagerService_AddPackageForSim_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/AddPackageForSim"
 	SimManagerService_ListPackagesForSim_FullMethodName       = "/ukama.subscriber.sim_manager.v1.SimManagerService/ListPackagesForSim"
-	SimManagerService_GetPackagesForSim_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesForSim"
-	SimManagerService_SetActivePackageForSim_FullMethodName   = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetActivePackageForSim"
-	SimManagerService_SetInactivePackageForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetInactivePackageForSim"
-	SimManagerService_TerminatePackageForSim_FullMethodName   = "/ukama.subscriber.sim_manager.v1.SimManagerService/TerminatePackageForSim"
+	SimManagerService_SetPackageInUseForSim_FullMethodName    = "/ukama.subscriber.sim_manager.v1.SimManagerService/SetPackageInUseForSim"
+	SimManagerService_UnsetPackageInUseForSim_FullMethodName  = "/ukama.subscriber.sim_manager.v1.SimManagerService/UnsetPackageInUseForSim"
+	SimManagerService_MarkPackageExpiredForSim_FullMethodName = "/ukama.subscriber.sim_manager.v1.SimManagerService/MarkPackageExpiredForSim"
 	SimManagerService_RemovePackageForSim_FullMethodName      = "/ukama.subscriber.sim_manager.v1.SimManagerService/RemovePackageForSim"
+	SimManagerService_GetPackagesForSim_FullMethodName        = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetPackagesForSim"
 	SimManagerService_GenerateSimToken_FullMethodName         = "/ukama.subscriber.sim_manager.v1.SimManagerService/GenerateSimToken"
 	SimManagerService_GetUsages_FullMethodName                = "/ukama.subscriber.sim_manager.v1.SimManagerService/GetUsages"
 )
@@ -49,24 +49,24 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SimManagerServiceClient interface {
 	// Sim
-	AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*AllocateSimResponse, error)
-	GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error)
+	AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*SimResponse, error)
+	GetSim(ctx context.Context, in *SimRequest, opts ...grpc.CallOption) (*SimResponse, error)
 	ListSims(ctx context.Context, in *ListSimsRequest, opts ...grpc.CallOption) (*ListSimsResponse, error)
+	ToggleSimServiceStatus(ctx context.Context, in *ToggleSimServiceStatusRequest, opts ...grpc.CallOption) (*ToggleSimServiceStatusResponse, error)
+	TerminateSim(ctx context.Context, in *SimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
 	// Deprecated: Use pkg.server.ListSims with subscriberId as filtering param instead.
 	GetSimsBySubscriber(ctx context.Context, in *GetSimsBySubscriberRequest, opts ...grpc.CallOption) (*GetSimsBySubscriberResponse, error)
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
 	GetSimsByNetwork(ctx context.Context, in *GetSimsByNetworkRequest, opts ...grpc.CallOption) (*GetSimsByNetworkResponse, error)
-	ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error)
-	TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error)
 	// Sim package
-	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error)
+	AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
 	ListPackagesForSim(ctx context.Context, in *ListPackagesForSimRequest, opts ...grpc.CallOption) (*ListPackagesForSimResponse, error)
+	SetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
+	UnsetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
+	MarkPackageExpiredForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
+	RemovePackageForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
 	GetPackagesForSim(ctx context.Context, in *GetPackagesForSimRequest, opts ...grpc.CallOption) (*GetPackagesForSimResponse, error)
-	SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error)
-	SetInactivePackageForSim(ctx context.Context, in *SetInactivePackageRequest, opts ...grpc.CallOption) (*SetInactivePackageResponse, error)
-	TerminatePackageForSim(ctx context.Context, in *TerminatePackageRequest, opts ...grpc.CallOption) (*TerminatePackageResponse, error)
-	RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error)
 	// Sim token
 	GenerateSimToken(ctx context.Context, in *SimTokenRequest, opts ...grpc.CallOption) (*SimTokenResponse, error)
 	// Usage
@@ -81,9 +81,9 @@ func NewSimManagerServiceClient(cc grpc.ClientConnInterface) SimManagerServiceCl
 	return &simManagerServiceClient{cc}
 }
 
-func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*AllocateSimResponse, error) {
+func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateSimRequest, opts ...grpc.CallOption) (*SimResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AllocateSimResponse)
+	out := new(SimResponse)
 	err := c.cc.Invoke(ctx, SimManagerService_AllocateSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -91,9 +91,9 @@ func (c *simManagerServiceClient) AllocateSim(ctx context.Context, in *AllocateS
 	return out, nil
 }
 
-func (c *simManagerServiceClient) GetSim(ctx context.Context, in *GetSimRequest, opts ...grpc.CallOption) (*GetSimResponse, error) {
+func (c *simManagerServiceClient) GetSim(ctx context.Context, in *SimRequest, opts ...grpc.CallOption) (*SimResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetSimResponse)
+	out := new(SimResponse)
 	err := c.cc.Invoke(ctx, SimManagerService_GetSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -105,6 +105,26 @@ func (c *simManagerServiceClient) ListSims(ctx context.Context, in *ListSimsRequ
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListSimsResponse)
 	err := c.cc.Invoke(ctx, SimManagerService_ListSims_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) ToggleSimServiceStatus(ctx context.Context, in *ToggleSimServiceStatusRequest, opts ...grpc.CallOption) (*ToggleSimServiceStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ToggleSimServiceStatusResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_ToggleSimServiceStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) TerminateSim(ctx context.Context, in *SimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(TerminateSimResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_TerminateSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -131,29 +151,9 @@ func (c *simManagerServiceClient) GetSimsByNetwork(ctx context.Context, in *GetS
 	return out, nil
 }
 
-func (c *simManagerServiceClient) ToggleSimStatus(ctx context.Context, in *ToggleSimStatusRequest, opts ...grpc.CallOption) (*ToggleSimStatusResponse, error) {
+func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ToggleSimStatusResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_ToggleSimStatus_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) TerminateSim(ctx context.Context, in *TerminateSimRequest, opts ...grpc.CallOption) (*TerminateSimResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TerminateSimResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_TerminateSim_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) AddPackageForSim(ctx context.Context, in *AddPackageRequest, opts ...grpc.CallOption) (*AddPackageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(AddPackageResponse)
+	out := new(PackageResponse)
 	err := c.cc.Invoke(ctx, SimManagerService_AddPackageForSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -171,50 +171,50 @@ func (c *simManagerServiceClient) ListPackagesForSim(ctx context.Context, in *Li
 	return out, nil
 }
 
+func (c *simManagerServiceClient) SetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PackageResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_SetPackageInUseForSim_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) UnsetPackageInUseForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PackageResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_UnsetPackageInUseForSim_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) MarkPackageExpiredForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PackageResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_MarkPackageExpiredForSim_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *PackageRequest, opts ...grpc.CallOption) (*PackageResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(PackageResponse)
+	err := c.cc.Invoke(ctx, SimManagerService_RemovePackageForSim_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *simManagerServiceClient) GetPackagesForSim(ctx context.Context, in *GetPackagesForSimRequest, opts ...grpc.CallOption) (*GetPackagesForSimResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetPackagesForSimResponse)
 	err := c.cc.Invoke(ctx, SimManagerService_GetPackagesForSim_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) SetActivePackageForSim(ctx context.Context, in *SetActivePackageRequest, opts ...grpc.CallOption) (*SetActivePackageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetActivePackageResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_SetActivePackageForSim_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) SetInactivePackageForSim(ctx context.Context, in *SetInactivePackageRequest, opts ...grpc.CallOption) (*SetInactivePackageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(SetInactivePackageResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_SetInactivePackageForSim_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) TerminatePackageForSim(ctx context.Context, in *TerminatePackageRequest, opts ...grpc.CallOption) (*TerminatePackageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(TerminatePackageResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_TerminatePackageForSim_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *simManagerServiceClient) RemovePackageForSim(ctx context.Context, in *RemovePackageRequest, opts ...grpc.CallOption) (*RemovePackageResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RemovePackageResponse)
-	err := c.cc.Invoke(ctx, SimManagerService_RemovePackageForSim_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -246,24 +246,24 @@ func (c *simManagerServiceClient) GetUsages(ctx context.Context, in *UsageReques
 // for forward compatibility.
 type SimManagerServiceServer interface {
 	// Sim
-	AllocateSim(context.Context, *AllocateSimRequest) (*AllocateSimResponse, error)
-	GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error)
+	AllocateSim(context.Context, *AllocateSimRequest) (*SimResponse, error)
+	GetSim(context.Context, *SimRequest) (*SimResponse, error)
 	ListSims(context.Context, *ListSimsRequest) (*ListSimsResponse, error)
+	ToggleSimServiceStatus(context.Context, *ToggleSimServiceStatusRequest) (*ToggleSimServiceStatusResponse, error)
+	TerminateSim(context.Context, *SimRequest) (*TerminateSimResponse, error)
 	// Deprecated: Use pkg.server.ListSims with subscriberId as filtering param instead.
 	GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error)
 	// Deprecated: Use pkg.server.ListSims with networkId as filtering param instead.
 	GetSimsByNetwork(context.Context, *GetSimsByNetworkRequest) (*GetSimsByNetworkResponse, error)
-	ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error)
-	TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error)
 	// Sim package
-	AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error)
+	AddPackageForSim(context.Context, *AddPackageRequest) (*PackageResponse, error)
 	ListPackagesForSim(context.Context, *ListPackagesForSimRequest) (*ListPackagesForSimResponse, error)
+	SetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error)
+	UnsetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error)
+	MarkPackageExpiredForSim(context.Context, *PackageRequest) (*PackageResponse, error)
+	RemovePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error)
 	// Deprecated: Use pkg.server.ListPackagesForSim with simId as filtering param instead.
 	GetPackagesForSim(context.Context, *GetPackagesForSimRequest) (*GetPackagesForSimResponse, error)
-	SetActivePackageForSim(context.Context, *SetActivePackageRequest) (*SetActivePackageResponse, error)
-	SetInactivePackageForSim(context.Context, *SetInactivePackageRequest) (*SetInactivePackageResponse, error)
-	TerminatePackageForSim(context.Context, *TerminatePackageRequest) (*TerminatePackageResponse, error)
-	RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error)
 	// Sim token
 	GenerateSimToken(context.Context, *SimTokenRequest) (*SimTokenResponse, error)
 	// Usage
@@ -278,14 +278,20 @@ type SimManagerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedSimManagerServiceServer struct{}
 
-func (UnimplementedSimManagerServiceServer) AllocateSim(context.Context, *AllocateSimRequest) (*AllocateSimResponse, error) {
+func (UnimplementedSimManagerServiceServer) AllocateSim(context.Context, *AllocateSimRequest) (*SimResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AllocateSim not implemented")
 }
-func (UnimplementedSimManagerServiceServer) GetSim(context.Context, *GetSimRequest) (*GetSimResponse, error) {
+func (UnimplementedSimManagerServiceServer) GetSim(context.Context, *SimRequest) (*SimResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) ListSims(context.Context, *ListSimsRequest) (*ListSimsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListSims not implemented")
+}
+func (UnimplementedSimManagerServiceServer) ToggleSimServiceStatus(context.Context, *ToggleSimServiceStatusRequest) (*ToggleSimServiceStatusResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ToggleSimServiceStatus not implemented")
+}
+func (UnimplementedSimManagerServiceServer) TerminateSim(context.Context, *SimRequest) (*TerminateSimResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method TerminateSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) GetSimsBySubscriber(context.Context, *GetSimsBySubscriberRequest) (*GetSimsBySubscriberResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSimsBySubscriber not implemented")
@@ -293,32 +299,26 @@ func (UnimplementedSimManagerServiceServer) GetSimsBySubscriber(context.Context,
 func (UnimplementedSimManagerServiceServer) GetSimsByNetwork(context.Context, *GetSimsByNetworkRequest) (*GetSimsByNetworkResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetSimsByNetwork not implemented")
 }
-func (UnimplementedSimManagerServiceServer) ToggleSimStatus(context.Context, *ToggleSimStatusRequest) (*ToggleSimStatusResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ToggleSimStatus not implemented")
-}
-func (UnimplementedSimManagerServiceServer) TerminateSim(context.Context, *TerminateSimRequest) (*TerminateSimResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method TerminateSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *AddPackageRequest) (*AddPackageResponse, error) {
+func (UnimplementedSimManagerServiceServer) AddPackageForSim(context.Context, *AddPackageRequest) (*PackageResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddPackageForSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) ListPackagesForSim(context.Context, *ListPackagesForSimRequest) (*ListPackagesForSimResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListPackagesForSim not implemented")
 }
+func (UnimplementedSimManagerServiceServer) SetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SetPackageInUseForSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) UnsetPackageInUseForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UnsetPackageInUseForSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) MarkPackageExpiredForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method MarkPackageExpiredForSim not implemented")
+}
+func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *PackageRequest) (*PackageResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemovePackageForSim not implemented")
+}
 func (UnimplementedSimManagerServiceServer) GetPackagesForSim(context.Context, *GetPackagesForSimRequest) (*GetPackagesForSimResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetPackagesForSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) SetActivePackageForSim(context.Context, *SetActivePackageRequest) (*SetActivePackageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetActivePackageForSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) SetInactivePackageForSim(context.Context, *SetInactivePackageRequest) (*SetInactivePackageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method SetInactivePackageForSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) TerminatePackageForSim(context.Context, *TerminatePackageRequest) (*TerminatePackageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method TerminatePackageForSim not implemented")
-}
-func (UnimplementedSimManagerServiceServer) RemovePackageForSim(context.Context, *RemovePackageRequest) (*RemovePackageResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemovePackageForSim not implemented")
 }
 func (UnimplementedSimManagerServiceServer) GenerateSimToken(context.Context, *SimTokenRequest) (*SimTokenResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GenerateSimToken not implemented")
@@ -366,7 +366,7 @@ func _SimManagerService_AllocateSim_Handler(srv interface{}, ctx context.Context
 }
 
 func _SimManagerService_GetSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetSimRequest)
+	in := new(SimRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -378,7 +378,7 @@ func _SimManagerService_GetSim_Handler(srv interface{}, ctx context.Context, dec
 		FullMethod: SimManagerService_GetSim_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).GetSim(ctx, req.(*GetSimRequest))
+		return srv.(SimManagerServiceServer).GetSim(ctx, req.(*SimRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -397,6 +397,42 @@ func _SimManagerService_ListSims_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).ListSims(ctx, req.(*ListSimsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_ToggleSimServiceStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleSimServiceStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).ToggleSimServiceStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_ToggleSimServiceStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).ToggleSimServiceStatus(ctx, req.(*ToggleSimServiceStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_TerminateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SimRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).TerminateSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_TerminateSim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).TerminateSim(ctx, req.(*SimRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -437,42 +473,6 @@ func _SimManagerService_GetSimsByNetwork_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SimManagerService_ToggleSimStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ToggleSimStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).ToggleSimStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_ToggleSimStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).ToggleSimStatus(ctx, req.(*ToggleSimStatusRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_TerminateSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TerminateSimRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).TerminateSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_TerminateSim_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).TerminateSim(ctx, req.(*TerminateSimRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _SimManagerService_AddPackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddPackageRequest)
 	if err := dec(in); err != nil {
@@ -509,6 +509,78 @@ func _SimManagerService_ListPackagesForSim_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SimManagerService_SetPackageInUseForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).SetPackageInUseForSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_SetPackageInUseForSim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).SetPackageInUseForSim(ctx, req.(*PackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_UnsetPackageInUseForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).UnsetPackageInUseForSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_UnsetPackageInUseForSim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).UnsetPackageInUseForSim(ctx, req.(*PackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_MarkPackageExpiredForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).MarkPackageExpiredForSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_MarkPackageExpiredForSim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).MarkPackageExpiredForSim(ctx, req.(*PackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(PackageRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SimManagerServiceServer).RemovePackageForSim(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SimManagerService_RemovePackageForSim_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SimManagerServiceServer).RemovePackageForSim(ctx, req.(*PackageRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _SimManagerService_GetPackagesForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(GetPackagesForSimRequest)
 	if err := dec(in); err != nil {
@@ -523,78 +595,6 @@ func _SimManagerService_GetPackagesForSim_Handler(srv interface{}, ctx context.C
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SimManagerServiceServer).GetPackagesForSim(ctx, req.(*GetPackagesForSimRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_SetActivePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetActivePackageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).SetActivePackageForSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_SetActivePackageForSim_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).SetActivePackageForSim(ctx, req.(*SetActivePackageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_SetInactivePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetInactivePackageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).SetInactivePackageForSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_SetInactivePackageForSim_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).SetInactivePackageForSim(ctx, req.(*SetInactivePackageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_TerminatePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TerminatePackageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).TerminatePackageForSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_TerminatePackageForSim_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).TerminatePackageForSim(ctx, req.(*TerminatePackageRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _SimManagerService_RemovePackageForSim_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RemovePackageRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SimManagerServiceServer).RemovePackageForSim(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: SimManagerService_RemovePackageForSim_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SimManagerServiceServer).RemovePackageForSim(ctx, req.(*RemovePackageRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -655,20 +655,20 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SimManagerService_ListSims_Handler,
 		},
 		{
+			MethodName: "ToggleSimServiceStatus",
+			Handler:    _SimManagerService_ToggleSimServiceStatus_Handler,
+		},
+		{
+			MethodName: "TerminateSim",
+			Handler:    _SimManagerService_TerminateSim_Handler,
+		},
+		{
 			MethodName: "GetSimsBySubscriber",
 			Handler:    _SimManagerService_GetSimsBySubscriber_Handler,
 		},
 		{
 			MethodName: "GetSimsByNetwork",
 			Handler:    _SimManagerService_GetSimsByNetwork_Handler,
-		},
-		{
-			MethodName: "ToggleSimStatus",
-			Handler:    _SimManagerService_ToggleSimStatus_Handler,
-		},
-		{
-			MethodName: "TerminateSim",
-			Handler:    _SimManagerService_TerminateSim_Handler,
 		},
 		{
 			MethodName: "AddPackageForSim",
@@ -679,24 +679,24 @@ var SimManagerService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _SimManagerService_ListPackagesForSim_Handler,
 		},
 		{
-			MethodName: "GetPackagesForSim",
-			Handler:    _SimManagerService_GetPackagesForSim_Handler,
+			MethodName: "SetPackageInUseForSim",
+			Handler:    _SimManagerService_SetPackageInUseForSim_Handler,
 		},
 		{
-			MethodName: "SetActivePackageForSim",
-			Handler:    _SimManagerService_SetActivePackageForSim_Handler,
+			MethodName: "UnsetPackageInUseForSim",
+			Handler:    _SimManagerService_UnsetPackageInUseForSim_Handler,
 		},
 		{
-			MethodName: "SetInactivePackageForSim",
-			Handler:    _SimManagerService_SetInactivePackageForSim_Handler,
-		},
-		{
-			MethodName: "TerminatePackageForSim",
-			Handler:    _SimManagerService_TerminatePackageForSim_Handler,
+			MethodName: "MarkPackageExpiredForSim",
+			Handler:    _SimManagerService_MarkPackageExpiredForSim_Handler,
 		},
 		{
 			MethodName: "RemovePackageForSim",
 			Handler:    _SimManagerService_RemovePackageForSim_Handler,
+		},
+		{
+			MethodName: "GetPackagesForSim",
+			Handler:    _SimManagerService_GetPackagesForSim_Handler,
 		},
 		{
 			MethodName: "GenerateSimToken",

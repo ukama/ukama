@@ -35,11 +35,20 @@ const (
 	SessionSyncCompleted             /* Sync is compeleted */
 )
 
+type FlowState int
+
+const (
+	FlowStateUnknown FlowState = iota
+	FlowsActive                /* Flow rules installed, traffic flows and is counted */
+	FlowsPaused                /* Session alive, but no flow rules installed: no traffic, no counting */
+)
+
 type Subscriber struct {
 	ID        int
 	Imsi      string
 	PolicyID  Policy
 	ReRouteID ReRoute
+	ServiceOn bool
 }
 
 type Policy struct {
@@ -77,6 +86,7 @@ type Session struct {
 	TxMeterID    Meter
 	RxMeterID    Meter
 	State        SessionState
+	FlowState    FlowState
 	Sync         SessionSync
 	UpdatedAt    uint64
 }
@@ -126,6 +136,28 @@ func ParseSessionSync(s string) SessionSync {
 		return SessionSyncCompleted
 	default:
 		return SessionSyncUnknown
+	}
+}
+
+func (f FlowState) String() string {
+	switch f {
+	case FlowsActive:
+		return "FlowsActive"
+	case FlowsPaused:
+		return "FlowsPaused"
+	default:
+		return "FlowStateUnknown"
+	}
+}
+
+func ParseFlowState(s string) FlowState {
+	switch s {
+	case "FlowsActive":
+		return FlowsActive
+	case "FlowsPaused":
+		return FlowsPaused
+	default:
+		return FlowStateUnknown
 	}
 }
 

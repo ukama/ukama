@@ -78,11 +78,11 @@ func (s *TestAgentServer) ActivateSim(ctx context.Context, req *pb.ActivateSimRe
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != ukama.SimStatusInactive {
+	if sim.Status != ukama.SimStatusServiceOff {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for operation", sim.Status)
 	}
 
-	sim.Status = ukama.SimStatusActive
+	sim.Status = ukama.SimStatusServiceOn
 
 	err = s.storage.Put(req.Iccid, sim)
 	if err != nil {
@@ -100,11 +100,11 @@ func (s *TestAgentServer) DeactivateSim(ctx context.Context, req *pb.DeactivateS
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != ukama.SimStatusActive {
+	if sim.Status != ukama.SimStatusServiceOn {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for operation", sim.Status)
 	}
 
-	sim.Status = ukama.SimStatusInactive
+	sim.Status = ukama.SimStatusServiceOff
 
 	err = s.storage.Put(req.Iccid, sim)
 	if err != nil {
@@ -122,7 +122,7 @@ func (s *TestAgentServer) TerminateSim(ctx context.Context, req *pb.TerminateSim
 		return nil, status.Errorf(codes.NotFound, "sim not found.")
 	}
 
-	if sim.Status != ukama.SimStatusInactive {
+	if sim.Status != ukama.SimStatusServiceOff {
 		return nil, status.Errorf(codes.FailedPrecondition, "invalid sim state %q for deletion", sim.Status)
 	}
 
@@ -149,7 +149,7 @@ func (s *TestAgentServer) getOrCreateSimInfo(ctx context.Context, iccid string) 
 		sim = &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		err := s.storage.Put(iccid, sim)

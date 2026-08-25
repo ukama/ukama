@@ -14,6 +14,11 @@ type ReqData struct {
 	SimPackageId string `json:"sim_package_id,omitempty"`
 	PackageId    string `json:"package_id,omitempty"`
 	NetworkId    string `json:"network_id,omitempty"`
+	TotalData    uint64 `json:"total_data,omitempty"`
+	Dlbr         uint64 `json:"dlbr,omitempty"`
+	Ulbr         uint64 `json:"ulbr,omitempty"`
+	StartTime    uint64 `json:"start_time,omitempty"`
+	EndTime      uint64 `json:"end_time,omitempty"`
 }
 
 type UsageForPeriodRequest struct {
@@ -26,11 +31,17 @@ type UsageRequest struct {
 	Iccid string `json:"iccid" path:"iccid" validate:"required"`
 }
 
-type ActivateReq ReqData
+type CreateProfileReq ReqData
 
-type DeactivateReq ReqData
+type DeleteProfileReq ReqData
 
 type UpdatePackageReq ReqData
+
+type UpdateReq struct {
+	Iccid             string `json:"iccid" path:"iccid" validate:"required"`
+	Imsi              string `json:"imsi,omitempty"`
+	IsServiceStatusOn bool   `json:"is_service_status_on"`
+}
 
 type ReadSubscriberReq struct {
 	Iccid string `path:"iccid" validate:"required"`

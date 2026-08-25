@@ -70,10 +70,10 @@ func (this *ReadResp) Validate() error {
 	return nil
 }
 
-var _regex_ActivateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+var _regex_CreateProfileReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
 
-func (this *ActivateReq) Validate() error {
-	if !_regex_ActivateReq_Iccid.MatchString(this.Iccid) {
+func (this *CreateProfileReq) Validate() error {
+	if !_regex_CreateProfileReq_Iccid.MatchString(this.Iccid) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
 	}
 	if this.Iccid == "" {
@@ -81,14 +81,14 @@ func (this *ActivateReq) Validate() error {
 	}
 	return nil
 }
-func (this *ActivateResp) Validate() error {
+func (this *CreateProfileResp) Validate() error {
 	return nil
 }
 
-var _regex_InactivateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+var _regex_DeleteProfileReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
 
-func (this *InactivateReq) Validate() error {
-	if !_regex_InactivateReq_Iccid.MatchString(this.Iccid) {
+func (this *DeleteProfileReq) Validate() error {
+	if !_regex_DeleteProfileReq_Iccid.MatchString(this.Iccid) {
 		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
 	}
 	if this.Iccid == "" {
@@ -96,7 +96,7 @@ func (this *InactivateReq) Validate() error {
 	}
 	return nil
 }
-func (this *InactivateResp) Validate() error {
+func (this *DeleteProfileResp) Validate() error {
 	return nil
 }
 
@@ -112,6 +112,21 @@ func (this *UpdatePackageReq) Validate() error {
 	return nil
 }
 func (this *UpdatePackageResp) Validate() error {
+	return nil
+}
+
+var _regex_UpdateReq_Iccid = regexp.MustCompile(`^[0-9]{18,22}$`)
+
+func (this *UpdateReq) Validate() error {
+	if !_regex_UpdateReq_Iccid.MatchString(this.Iccid) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must be a string conforming to regex "^[0-9]{18,22}$"`, this.Iccid))
+	}
+	if this.Iccid == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Iccid", fmt.Errorf(`value '%v' must not be an empty string`, this.Iccid))
+	}
+	return nil
+}
+func (this *UpdateResp) Validate() error {
 	return nil
 }
 

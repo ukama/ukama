@@ -107,7 +107,7 @@ export class CommerceViewResolver {
       const simPackages = sims
         ? sims.sims.map(sim => ({
             packageId: sim.package?.package_id,
-            isActive: sim.package?.is_active,
+            isCurrentlyInUse: sim.package?.is_currently_in_use,
           }))
         : null;
       const plans = derivePlanStats(

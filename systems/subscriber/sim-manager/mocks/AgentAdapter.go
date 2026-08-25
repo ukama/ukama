@@ -156,7 +156,7 @@ func (_m *AgentAdapter) GetUsages(_a0 context.Context, _a1 string, _a2 string, _
 }
 
 // TerminateSim provides a mock function with given fields: _a0, _a1
-func (_m *AgentAdapter) TerminateSim(_a0 context.Context, _a1 string) error {
+func (_m *AgentAdapter) TerminateSim(_a0 context.Context, _a1 client.AgentRequestData) error {
 	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
@@ -164,7 +164,25 @@ func (_m *AgentAdapter) TerminateSim(_a0 context.Context, _a1 string) error {
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) error); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// Update provides a mock function with given fields: _a0, _a1
+func (_m *AgentAdapter) Update(_a0 context.Context, _a1 client.AgentRequestData) error {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Update")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, client.AgentRequestData) error); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)

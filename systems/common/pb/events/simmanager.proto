@@ -55,6 +55,10 @@ message EventSimAllocation {
     string packageDataUnit = 23 [json_name = "package_data_unit"];
     string packageAmount = 24 [json_name = "package_amount"];
     string packageDuration = 25 [json_name = "package_duration"];
+    uint64 packageTotalData = 26 [json_name = "package_total_data"];
+    uint64 packageDlbr = 27 [json_name = "package_dlbr"];
+    uint64 packageUlbr = 28 [json_name = "package_ulbr"];
+    google.protobuf.Timestamp packageStartDate = 29 [json_name = "start_date"];
 }
 
 
@@ -76,9 +80,10 @@ message EventSimTermination {
     string iccid = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
     string imsi = 4;
     string networkId = 5;
+    string type = 6;
 }
 
-message EventSimActivation {
+message EventSimServiceOn {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string iccid = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];
@@ -87,7 +92,7 @@ message EventSimActivation {
     string packageId = 6;
 }
 
-message EventSimDeactivation {
+message EventSimServiceOff {
     string id = 1 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "id"];
     string subscriberId = 2 [(validator.field) = {uuid_ver: 4, string_not_empty: true}, json_name = "subscriber_id"];
     string iccid = 3 [(validator.field) = {string_not_empty: true, regex: "^[0-9]{18,22}$"}, json_name = "iccid" ];

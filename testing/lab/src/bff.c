@@ -1812,7 +1812,7 @@ int bff_get_package_metrics(bff_client_t *c,
             !ulab_streq(package_id, pkg->bff_id)) {
             continue;
         }
-        active = json_object_get(assignment, "is_active");
+        active = json_object_get(assignment, "is_currently_in_use");
         if (active != NULL && json_is_true(active)) {
             metrics->attach_count++;
         }
@@ -3305,7 +3305,7 @@ int bff_get_sim_packages(bff_client_t *c,
             json_decref(root);
             return ULAB_ERR;
         }
-        act = it ? json_object_get(it, "is_active") : NULL;
+        act = it ? json_object_get(it, "is_currently_in_use") : NULL;
         packages[i].active = act != NULL && json_is_true(act);
     }
 
@@ -4912,7 +4912,7 @@ static int parse_entity_snapshot(const char *entity,
             json_get_optional_str(package, "package_id",
                                   snapshot->package_id,
                                   sizeof(snapshot->package_id));
-            snapshot_optional_bool(package, "is_active",
+            snapshot_optional_bool(package, "is_currently_in_use",
                                    &snapshot->active,
                                    &snapshot->has_active);
         }
@@ -5705,7 +5705,7 @@ static int bff_cleanup_call(bff_client_t *c,
     }
 
     if (bff_call(c, op, query, "{}", &root, &err)) {
-        if ((ulab_streq(op, "setInactivePackageForSim") ||
+        if ((ulab_streq(op, "unsetPackageInUseForSim") ||
              ulab_streq(op, "removePackageForSim")) &&
             strstr(err.msg, "package record not found") != NULL) {
             if (c != NULL && c->logf != NULL) {
@@ -5717,11 +5717,11 @@ static int bff_cleanup_call(bff_client_t *c,
             return ULAB_OK;
         }
 
-        if (ulab_streq(op, "toggleSimStatus") &&
-            strstr(err.msg, "inactive is invalid for deactivation") != NULL) {
+        if (ulab_streq(op, "toggleSimServiceStatus") &&
+            strstr(err.msg, "is invalid for turning off") != NULL) {
             if (c != NULL && c->logf != NULL) {
                 fprintf(c->logf,
-                        "cleanup ignore: %s: sim already inactive\n",
+                        "cleanup ignore: %s: sim already off\n",
                         op);
                 fflush(c->logf);
             }
@@ -5823,11 +5823,11 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     for (i = 0; i < count; i++) {
 
         n = snprintf(query, sizeof(query),
-                     "mutation { setInactivePackageForSim(data: {"
+                     "mutation { unsetPackageInUseForSim(data: {"
                      "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
                      package_record_ids[i], ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
-            bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+            bff_cleanup_call(c, "unsetPackageInUseForSim", query)) {
             (*failures)++;
         }
 
@@ -5877,11 +5877,11 @@ int bff_cleanup_world(bff_client_t *c,
             pkg_id = cleanup_package_for_ue(w, ue);
             if (pkg_id != NULL && pkg_id[0] != '\0') {
                 n = snprintf(query, sizeof(query),
-                             "mutation { setInactivePackageForSim(data: {"
+                             "mutation { unsetPackageInUseForSim(data: {"
                              "packageId: \"%s\", simId: \"%s\"}) { packageId } }",
                              pkg_id, ue->bff_id);
                 if (n >= 0 && (size_t)n < sizeof(query) &&
-                    bff_cleanup_call(c, "setInactivePackageForSim", query)) {
+                    bff_cleanup_call(c, "unsetPackageInUseForSim", query)) {
                     failures++;
                 }
 
@@ -5897,11 +5897,11 @@ int bff_cleanup_world(bff_client_t *c,
         }
 
         n = snprintf(query, sizeof(query),
-                     "mutation { toggleSimStatus(data: {sim_id: \"%s\", "
-                     "status: \"inactive\"}) { success } }",
+                     "mutation { toggleSimServiceStatus(data: {sim_id: \"%s\", "
+                     "status: \"service_off\"}) { success } }",
                      ue->bff_id);
         if (n >= 0 && (size_t)n < sizeof(query) &&
-            bff_cleanup_call(c, "toggleSimStatus", query)) {
+            bff_cleanup_call(c, "toggleSimServiceStatus", query)) {
             failures++;
         }
 

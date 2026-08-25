@@ -42,7 +42,7 @@ phases:
         ues: all
         amount_mb: 4
       - type: wait
-        seconds: 60
+        seconds: 30
     checks:
       - type: usage_aggregate
         target: network

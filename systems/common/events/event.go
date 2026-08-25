@@ -43,7 +43,7 @@ const (
 	EventInviteUpdate
 	EventNodeOnline
 	EventNodeOffline
-	EventSimActivate
+	EventSimServiceOn
 	EventSimAllocate
 	EventSimDelete
 	EventSimAddPackage
@@ -97,7 +97,7 @@ var EventRoutingKey = [...]string{
 	EventInviteUpdate:       "event.cloud.local.{{ .Org}}.registry.invitation.invite.update",
 	EventNodeOnline:         "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	EventNodeOffline:        "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-	EventSimActivate:        "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activate",
+	EventSimServiceOn:       "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.serviceon",
 	EventSimAllocate:        "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate",
 	EventSimDelete:          "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.delete",
 	EventSimAddPackage:      "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.addpackage",
@@ -306,11 +306,11 @@ var EventToEventConfig = map[EventId]EventConfig{
 		Scope:       notif.SCOPE_ORG,
 		Type:        notif.TYPE_INFO,
 	},
-	EventSimActivate: {
-		Key:         EventSimActivate,
-		Name:        "EventSimActivate",
-		Title:       "Sim Activated",
-		Description: "Sim Activated",
+	EventSimServiceOn: {
+		Key:         EventSimServiceOn,
+		Name:        "EventSimServiceOn",
+		Title:       "Sim Service On",
+		Description: "Sim Service On",
 		Scope:       notif.SCOPE_SUBSCRIBER,
 		Type:        TypeDefault,
 	},

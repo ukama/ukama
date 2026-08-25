@@ -23,8 +23,8 @@ func UnmarshalAddMemberEventRequest(msg *anypb.Any, emsg string) (*AddMemberEven
 	return p, nil
 }
 
-func UnmarshalAsrActivated(msg *anypb.Any, emsg string) (*AsrActivated, error) {
-	p := &AsrActivated{}
+func UnmarshalAsrProfileCreated(msg *anypb.Any, emsg string) (*AsrProfileCreated, error) {
+	p := &AsrProfileCreated{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
@@ -33,8 +33,8 @@ func UnmarshalAsrActivated(msg *anypb.Any, emsg string) (*AsrActivated, error) {
 	return p, nil
 }
 
-func UnmarshalAsrInactivated(msg *anypb.Any, emsg string) (*AsrInactivated, error) {
-	p := &AsrInactivated{}
+func UnmarshalAsrProfileDeleted(msg *anypb.Any, emsg string) (*AsrProfileDeleted, error) {
+	p := &AsrProfileDeleted{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
@@ -393,8 +393,8 @@ func UnmarshalEventResponse(msg *anypb.Any, emsg string) (*EventResponse, error)
 	return p, nil
 }
 
-func UnmarshalEventSimActivation(msg *anypb.Any, emsg string) (*EventSimActivation, error) {
-	p := &EventSimActivation{}
+func UnmarshalEventSimServiceOn(msg *anypb.Any, emsg string) (*EventSimServiceOn, error) {
+	p := &EventSimServiceOn{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
@@ -433,8 +433,8 @@ func UnmarshalEventSimAllocation(msg *anypb.Any, emsg string) (*EventSimAllocati
 	return p, nil
 }
 
-func UnmarshalEventSimDeactivation(msg *anypb.Any, emsg string) (*EventSimDeactivation, error) {
-	p := &EventSimDeactivation{}
+func UnmarshalEventSimServiceOff(msg *anypb.Any, emsg string) (*EventSimServiceOff, error) {
+	p := &EventSimServiceOff{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
@@ -805,6 +805,16 @@ func UnmarshalOrgIPUpdateEvent(msg *anypb.Any, emsg string) (*OrgIPUpdateEvent, 
 
 func UnmarshalPayment(msg *anypb.Any, emsg string) (*Payment, error) {
 	p := &Payment{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())
+		return nil, err
+	}
+	return p, nil
+}
+
+func UnmarshalPolicyViolation(msg *anypb.Any, emsg string) (*PolicyViolation, error) {
+	p := &PolicyViolation{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("%s : %+v. Error %s.", emsg, msg, err.Error())

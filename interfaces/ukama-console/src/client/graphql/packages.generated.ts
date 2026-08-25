@@ -7,7 +7,7 @@ export type PackageRateFragment = { __typename?: 'PackageDto', rate: { __typenam
 
 export type PackageMarkupFragment = { __typename?: 'PackageDto', markup: { __typename?: 'PackageMarkupAPIDto', baserate: string, markup: number } };
 
-export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean };
+export type SimPackagesFragment = { __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_currently_in_use: boolean };
 
 export type SubscriberSimsFragment = { __typename?: 'SubscriberToSimsDto', subscriberId: string, sims: Array<{ __typename?: 'SubscriberSimsDto', id: string, subscriberId: string, networkId: string, iccid: string, msisdn: string, imsi: string, type: string, status: string, allocatedAt: string, isPhysical: boolean }> };
 
@@ -67,7 +67,7 @@ export type GetPackagesForSimQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_active: boolean }> } };
+export type GetPackagesForSimQuery = { __typename?: 'Query', getPackagesForSim: { __typename?: 'GetSimPackagesDtoAPI', sim_id: string, packages: Array<{ __typename?: 'SimToPackagesDto', id: string, package_id: string, start_date: string, end_date: string, is_currently_in_use: boolean }> } };
 
 export type AddPackagesToSimMutationVariables = Types.Exact<{
   data: Types.AddPackagesToSimInputDto;
@@ -104,7 +104,7 @@ export const SimPackagesFragmentDoc = gql`
   package_id
   start_date
   end_date
-  is_active
+  is_currently_in_use
 }
     `;
 export const SubscriberSimsFragmentDoc = gql`

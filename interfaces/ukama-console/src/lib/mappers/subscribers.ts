@@ -28,7 +28,7 @@ type QueryPlan = NonNullable<
 
 const toSimStatus = (status?: string): Subscriber['sim'] => {
   const s = (status ?? '').toLowerCase();
-  if (s === 'active') return 'active';
+  if (s === 'service_on') return 'active';
   if (s === 'suspended') return 'suspended';
   return 'inactive';
 };
@@ -40,7 +40,7 @@ export const toSubscriber = (
   const firstSim = sub.sim?.[0];
   const activePackage = sub.sim
     ?.flatMap((s) => (s.package ? [s.package] : []))
-    .find((p) => p.is_active);
+    .find((p) => p.is_currently_in_use);
   const planName = activePackage
     ? (plansById.get(activePackage.package_id)?.name ?? 'No plan')
     : 'No plan';

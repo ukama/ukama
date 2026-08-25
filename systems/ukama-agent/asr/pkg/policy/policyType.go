@@ -14,7 +14,9 @@ import (
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -64,14 +66,14 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 		},
 	}
 
-	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy)
+	err = p.syncSubscriberPolicy(http.MethodDelete, pf.Imsi, pf.NetworkId.String(), &pf.Policy, false)
 	if err != nil {
 		log.Errorf("Failed to sync subscriber policy after profile removal: %v", err)
 		//TODO: any push to pcrf retries policies?
 	}
 
 	if event {
-		err = p.publishEvent(msgbus.ACTION_CRUD_DELETE, "activesubscriber", e)
+		err = utils.PublishEvent(p.OrgName, msgbus.ACTION_CRUD_DELETE, "activesubscriber", e, p.msgbus)
 		if err != nil {
 			log.Errorf("Failed to publish subscriber profile removal event to backend: %v", err)
 			//TODO: msgb retries policies???
@@ -79,4 +81,26 @@ func RemoveProfile(p *policyController, pf db.Asr, event bool) (error, bool) {
 	}
 
 	return nil, true
+}
+
+func NotifyDataCapExceeded(p *policyController, pf db.Asr, event bool) (error, bool) {
+	log.Infof("Data cap exceeded for subscriber %s. Notifying sim manager.", pf.Imsi)
+
+	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonDataCapExceeded)
+	if err != nil {
+		log.Errorf("Failed to publish data cap exceeded policy violation for subscriber %s: %v", pf.Imsi, err)
+	}
+
+	return nil, false
+}
+
+func NotifyPackageExpired(p *policyController, pf db.Asr, event bool) (error, bool) {
+	log.Infof("Package expired for subscriber %s. Notifying sim manager.", pf.Imsi)
+
+	err := p.publishPolicyViolation(pf, ukama.PolicyViolationReasonPackageExpired)
+	if err != nil {
+		log.Errorf("Failed to publish package expired policy violation for subscriber %s: %v", pf.Imsi, err)
+	}
+
+	return nil, false
 }

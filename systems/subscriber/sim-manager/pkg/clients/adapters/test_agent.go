@@ -13,7 +13,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
 
@@ -28,7 +30,6 @@ type TestAgentAdapter struct {
 }
 
 func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgentAdapter, error) {
-
 	testAgentConn, err := grpc.NewClient(testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 	if err != nil {
@@ -50,7 +51,7 @@ func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error
 }
 
 func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
-	return nil, nil, nil
+	return nil, nil, status.Error(codes.Unimplemented, "usage reporting is not supported for test sims")
 }
 
 func (t *TestAgentAdapter) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
@@ -70,8 +71,16 @@ func (t *TestAgentAdapter) UpdatePackage(ctx context.Context, req client.AgentRe
 	return nil
 }
 
-func (t *TestAgentAdapter) TerminateSim(ctx context.Context, iccid string) error {
-	_, err := t.client.TerminateSim(ctx, &pb.TerminateSimRequest{Iccid: iccid})
+func (t *TestAgentAdapter) Update(ctx context.Context, req client.AgentRequestData) error {
+	if req.IsServiceStatusOn {
+		return t.ActivateSim(ctx, req)
+	}
+
+	return t.DeactivateSim(ctx, req)
+}
+
+func (t *TestAgentAdapter) TerminateSim(ctx context.Context, req client.AgentRequestData) error {
+	_, err := t.client.TerminateSim(ctx, &pb.TerminateSimRequest{Iccid: req.Iccid})
 
 	return err
 }

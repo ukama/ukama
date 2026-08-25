@@ -116,27 +116,27 @@ func (x *AllocateSimRequest) GetTrafficPolicy() uint32 {
 	return 0
 }
 
-type AllocateSimResponse struct {
+type SimResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Sim           *Sim                   `protobuf:"bytes,1,opt,name=sim,proto3" json:"sim,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AllocateSimResponse) Reset() {
-	*x = AllocateSimResponse{}
+func (x *SimResponse) Reset() {
+	*x = SimResponse{}
 	mi := &file_sim_manager_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AllocateSimResponse) String() string {
+func (x *SimResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AllocateSimResponse) ProtoMessage() {}
+func (*SimResponse) ProtoMessage() {}
 
-func (x *AllocateSimResponse) ProtoReflect() protoreflect.Message {
+func (x *SimResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_sim_manager_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -148,39 +148,39 @@ func (x *AllocateSimResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AllocateSimResponse.ProtoReflect.Descriptor instead.
-func (*AllocateSimResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use SimResponse.ProtoReflect.Descriptor instead.
+func (*SimResponse) Descriptor() ([]byte, []int) {
 	return file_sim_manager_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AllocateSimResponse) GetSim() *Sim {
+func (x *SimResponse) GetSim() *Sim {
 	if x != nil {
 		return x.Sim
 	}
 	return nil
 }
 
-type GetSimRequest struct {
+type SimRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetSimRequest) Reset() {
-	*x = GetSimRequest{}
+func (x *SimRequest) Reset() {
+	*x = SimRequest{}
 	mi := &file_sim_manager_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetSimRequest) String() string {
+func (x *SimRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetSimRequest) ProtoMessage() {}
+func (*SimRequest) ProtoMessage() {}
 
-func (x *GetSimRequest) ProtoReflect() protoreflect.Message {
+func (x *SimRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_sim_manager_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -192,60 +192,16 @@ func (x *GetSimRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetSimRequest.ProtoReflect.Descriptor instead.
-func (*GetSimRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use SimRequest.ProtoReflect.Descriptor instead.
+func (*SimRequest) Descriptor() ([]byte, []int) {
 	return file_sim_manager_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *GetSimRequest) GetSimId() string {
+func (x *SimRequest) GetSimId() string {
 	if x != nil {
 		return x.SimId
 	}
 	return ""
-}
-
-type GetSimResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Sim           *Sim                   `protobuf:"bytes,1,opt,name=sim,proto3" json:"sim,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetSimResponse) Reset() {
-	*x = GetSimResponse{}
-	mi := &file_sim_manager_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetSimResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetSimResponse) ProtoMessage() {}
-
-func (x *GetSimResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetSimResponse.ProtoReflect.Descriptor instead.
-func (*GetSimResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetSimResponse) GetSim() *Sim {
-	if x != nil {
-		return x.Sim
-	}
-	return nil
 }
 
 type ListSimsRequest struct {
@@ -266,7 +222,7 @@ type ListSimsRequest struct {
 
 func (x *ListSimsRequest) Reset() {
 	*x = ListSimsRequest{}
-	mi := &file_sim_manager_proto_msgTypes[4]
+	mi := &file_sim_manager_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -278,7 +234,7 @@ func (x *ListSimsRequest) String() string {
 func (*ListSimsRequest) ProtoMessage() {}
 
 func (x *ListSimsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[4]
+	mi := &file_sim_manager_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -291,7 +247,7 @@ func (x *ListSimsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSimsRequest.ProtoReflect.Descriptor instead.
 func (*ListSimsRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{4}
+	return file_sim_manager_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *ListSimsRequest) GetIccid() string {
@@ -373,7 +329,7 @@ type ListSimsResponse struct {
 
 func (x *ListSimsResponse) Reset() {
 	*x = ListSimsResponse{}
-	mi := &file_sim_manager_proto_msgTypes[5]
+	mi := &file_sim_manager_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -385,7 +341,7 @@ func (x *ListSimsResponse) String() string {
 func (*ListSimsResponse) ProtoMessage() {}
 
 func (x *ListSimsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[5]
+	mi := &file_sim_manager_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -398,7 +354,7 @@ func (x *ListSimsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListSimsResponse.ProtoReflect.Descriptor instead.
 func (*ListSimsResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{5}
+	return file_sim_manager_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *ListSimsResponse) GetSims() []*Sim {
@@ -417,7 +373,7 @@ type GetSimsBySubscriberRequest struct {
 
 func (x *GetSimsBySubscriberRequest) Reset() {
 	*x = GetSimsBySubscriberRequest{}
-	mi := &file_sim_manager_proto_msgTypes[6]
+	mi := &file_sim_manager_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -429,7 +385,7 @@ func (x *GetSimsBySubscriberRequest) String() string {
 func (*GetSimsBySubscriberRequest) ProtoMessage() {}
 
 func (x *GetSimsBySubscriberRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[6]
+	mi := &file_sim_manager_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -442,7 +398,7 @@ func (x *GetSimsBySubscriberRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSimsBySubscriberRequest.ProtoReflect.Descriptor instead.
 func (*GetSimsBySubscriberRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{6}
+	return file_sim_manager_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *GetSimsBySubscriberRequest) GetSubscriberId() string {
@@ -462,7 +418,7 @@ type GetSimsBySubscriberResponse struct {
 
 func (x *GetSimsBySubscriberResponse) Reset() {
 	*x = GetSimsBySubscriberResponse{}
-	mi := &file_sim_manager_proto_msgTypes[7]
+	mi := &file_sim_manager_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -474,7 +430,7 @@ func (x *GetSimsBySubscriberResponse) String() string {
 func (*GetSimsBySubscriberResponse) ProtoMessage() {}
 
 func (x *GetSimsBySubscriberResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[7]
+	mi := &file_sim_manager_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -487,7 +443,7 @@ func (x *GetSimsBySubscriberResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSimsBySubscriberResponse.ProtoReflect.Descriptor instead.
 func (*GetSimsBySubscriberResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{7}
+	return file_sim_manager_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetSimsBySubscriberResponse) GetSubscriberId() string {
@@ -513,7 +469,7 @@ type GetSimsByNetworkRequest struct {
 
 func (x *GetSimsByNetworkRequest) Reset() {
 	*x = GetSimsByNetworkRequest{}
-	mi := &file_sim_manager_proto_msgTypes[8]
+	mi := &file_sim_manager_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +481,7 @@ func (x *GetSimsByNetworkRequest) String() string {
 func (*GetSimsByNetworkRequest) ProtoMessage() {}
 
 func (x *GetSimsByNetworkRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[8]
+	mi := &file_sim_manager_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -538,7 +494,7 @@ func (x *GetSimsByNetworkRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSimsByNetworkRequest.ProtoReflect.Descriptor instead.
 func (*GetSimsByNetworkRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{8}
+	return file_sim_manager_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetSimsByNetworkRequest) GetNetworkId() string {
@@ -558,7 +514,7 @@ type GetSimsByNetworkResponse struct {
 
 func (x *GetSimsByNetworkResponse) Reset() {
 	*x = GetSimsByNetworkResponse{}
-	mi := &file_sim_manager_proto_msgTypes[9]
+	mi := &file_sim_manager_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -570,7 +526,7 @@ func (x *GetSimsByNetworkResponse) String() string {
 func (*GetSimsByNetworkResponse) ProtoMessage() {}
 
 func (x *GetSimsByNetworkResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[9]
+	mi := &file_sim_manager_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -583,7 +539,7 @@ func (x *GetSimsByNetworkResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetSimsByNetworkResponse.ProtoReflect.Descriptor instead.
 func (*GetSimsByNetworkResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{9}
+	return file_sim_manager_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetSimsByNetworkResponse) GetNetworkId() string {
@@ -600,7 +556,7 @@ func (x *GetSimsByNetworkResponse) GetSims() []*Sim {
 	return nil
 }
 
-type ToggleSimStatusRequest struct {
+type ToggleSimServiceStatusRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
 	Status        string                 `protobuf:"bytes,2,opt,name=status,proto3" json:"status,omitempty"`
@@ -608,21 +564,21 @@ type ToggleSimStatusRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ToggleSimStatusRequest) Reset() {
-	*x = ToggleSimStatusRequest{}
-	mi := &file_sim_manager_proto_msgTypes[10]
+func (x *ToggleSimServiceStatusRequest) Reset() {
+	*x = ToggleSimServiceStatusRequest{}
+	mi := &file_sim_manager_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ToggleSimStatusRequest) String() string {
+func (x *ToggleSimServiceStatusRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ToggleSimStatusRequest) ProtoMessage() {}
+func (*ToggleSimServiceStatusRequest) ProtoMessage() {}
 
-func (x *ToggleSimStatusRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[10]
+func (x *ToggleSimServiceStatusRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -633,46 +589,46 @@ func (x *ToggleSimStatusRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ToggleSimStatusRequest.ProtoReflect.Descriptor instead.
-func (*ToggleSimStatusRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{10}
+// Deprecated: Use ToggleSimServiceStatusRequest.ProtoReflect.Descriptor instead.
+func (*ToggleSimServiceStatusRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{9}
 }
 
-func (x *ToggleSimStatusRequest) GetSimId() string {
+func (x *ToggleSimServiceStatusRequest) GetSimId() string {
 	if x != nil {
 		return x.SimId
 	}
 	return ""
 }
 
-func (x *ToggleSimStatusRequest) GetStatus() string {
+func (x *ToggleSimServiceStatusRequest) GetStatus() string {
 	if x != nil {
 		return x.Status
 	}
 	return ""
 }
 
-type ToggleSimStatusResponse struct {
+type ToggleSimServiceStatusResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *ToggleSimStatusResponse) Reset() {
-	*x = ToggleSimStatusResponse{}
-	mi := &file_sim_manager_proto_msgTypes[11]
+func (x *ToggleSimServiceStatusResponse) Reset() {
+	*x = ToggleSimServiceStatusResponse{}
+	mi := &file_sim_manager_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *ToggleSimStatusResponse) String() string {
+func (x *ToggleSimServiceStatusResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*ToggleSimStatusResponse) ProtoMessage() {}
+func (*ToggleSimServiceStatusResponse) ProtoMessage() {}
 
-func (x *ToggleSimStatusResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[11]
+func (x *ToggleSimServiceStatusResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -683,53 +639,9 @@ func (x *ToggleSimStatusResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use ToggleSimStatusResponse.ProtoReflect.Descriptor instead.
-func (*ToggleSimStatusResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{11}
-}
-
-type TerminateSimRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TerminateSimRequest) Reset() {
-	*x = TerminateSimRequest{}
-	mi := &file_sim_manager_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TerminateSimRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TerminateSimRequest) ProtoMessage() {}
-
-func (x *TerminateSimRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TerminateSimRequest.ProtoReflect.Descriptor instead.
-func (*TerminateSimRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *TerminateSimRequest) GetSimId() string {
-	if x != nil {
-		return x.SimId
-	}
-	return ""
+// Deprecated: Use ToggleSimServiceStatusResponse.ProtoReflect.Descriptor instead.
+func (*ToggleSimServiceStatusResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{10}
 }
 
 type TerminateSimResponse struct {
@@ -740,7 +652,7 @@ type TerminateSimResponse struct {
 
 func (x *TerminateSimResponse) Reset() {
 	*x = TerminateSimResponse{}
-	mi := &file_sim_manager_proto_msgTypes[13]
+	mi := &file_sim_manager_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -752,7 +664,7 @@ func (x *TerminateSimResponse) String() string {
 func (*TerminateSimResponse) ProtoMessage() {}
 
 func (x *TerminateSimResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[13]
+	mi := &file_sim_manager_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -765,7 +677,7 @@ func (x *TerminateSimResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TerminateSimResponse.ProtoReflect.Descriptor instead.
 func (*TerminateSimResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{13}
+	return file_sim_manager_proto_rawDescGZIP(), []int{11}
 }
 
 type SimTokenRequest struct {
@@ -777,7 +689,7 @@ type SimTokenRequest struct {
 
 func (x *SimTokenRequest) Reset() {
 	*x = SimTokenRequest{}
-	mi := &file_sim_manager_proto_msgTypes[14]
+	mi := &file_sim_manager_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -789,7 +701,7 @@ func (x *SimTokenRequest) String() string {
 func (*SimTokenRequest) ProtoMessage() {}
 
 func (x *SimTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[14]
+	mi := &file_sim_manager_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -802,7 +714,7 @@ func (x *SimTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SimTokenRequest.ProtoReflect.Descriptor instead.
 func (*SimTokenRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{14}
+	return file_sim_manager_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *SimTokenRequest) GetIccid() string {
@@ -821,7 +733,7 @@ type SimTokenResponse struct {
 
 func (x *SimTokenResponse) Reset() {
 	*x = SimTokenResponse{}
-	mi := &file_sim_manager_proto_msgTypes[15]
+	mi := &file_sim_manager_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -833,7 +745,7 @@ func (x *SimTokenResponse) String() string {
 func (*SimTokenResponse) ProtoMessage() {}
 
 func (x *SimTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[15]
+	mi := &file_sim_manager_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -846,7 +758,7 @@ func (x *SimTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SimTokenResponse.ProtoReflect.Descriptor instead.
 func (*SimTokenResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{15}
+	return file_sim_manager_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *SimTokenResponse) GetToken() string {
@@ -867,7 +779,7 @@ type AddPackageRequest struct {
 
 func (x *AddPackageRequest) Reset() {
 	*x = AddPackageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[16]
+	mi := &file_sim_manager_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -879,7 +791,7 @@ func (x *AddPackageRequest) String() string {
 func (*AddPackageRequest) ProtoMessage() {}
 
 func (x *AddPackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[16]
+	mi := &file_sim_manager_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -892,7 +804,7 @@ func (x *AddPackageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddPackageRequest.ProtoReflect.Descriptor instead.
 func (*AddPackageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{16}
+	return file_sim_manager_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *AddPackageRequest) GetSimId() string {
@@ -916,61 +828,25 @@ func (x *AddPackageRequest) GetStartDate() string {
 	return ""
 }
 
-type AddPackageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *AddPackageResponse) Reset() {
-	*x = AddPackageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[17]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *AddPackageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*AddPackageResponse) ProtoMessage() {}
-
-func (x *AddPackageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[17]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use AddPackageResponse.ProtoReflect.Descriptor instead.
-func (*AddPackageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{17}
-}
-
 type ListPackagesForSimRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	DataPlanId    string                 `protobuf:"bytes,2,opt,name=dataPlanId,json=data_plan_id,proto3" json:"dataPlanId,omitempty"`
-	FromStartDate string                 `protobuf:"bytes,3,opt,name=fromStartDate,json=from_start_date,proto3" json:"fromStartDate,omitempty"`
-	ToStartDate   string                 `protobuf:"bytes,4,opt,name=toStartDate,json=to_start_date,proto3" json:"toStartDate,omitempty"`
-	FromEndDate   string                 `protobuf:"bytes,5,opt,name=fromEndDate,json=from_end_date,proto3" json:"fromEndDate,omitempty"`
-	ToEndDate     string                 `protobuf:"bytes,6,opt,name=toEndDate,json=to_end_date,proto3" json:"toEndDate,omitempty"`
-	IsActive      bool                   `protobuf:"varint,7,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
-	AsExpired     bool                   `protobuf:"varint,8,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
-	Count         uint32                 `protobuf:"varint,9,opt,name=count,proto3" json:"count,omitempty"`
-	Sort          bool                   `protobuf:"varint,10,opt,name=sort,proto3" json:"sort,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	SimId            string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
+	DataPlanId       string                 `protobuf:"bytes,2,opt,name=dataPlanId,json=data_plan_id,proto3" json:"dataPlanId,omitempty"`
+	FromStartDate    string                 `protobuf:"bytes,3,opt,name=fromStartDate,json=from_start_date,proto3" json:"fromStartDate,omitempty"`
+	ToStartDate      string                 `protobuf:"bytes,4,opt,name=toStartDate,json=to_start_date,proto3" json:"toStartDate,omitempty"`
+	FromEndDate      string                 `protobuf:"bytes,5,opt,name=fromEndDate,json=from_end_date,proto3" json:"fromEndDate,omitempty"`
+	ToEndDate        string                 `protobuf:"bytes,6,opt,name=toEndDate,json=to_end_date,proto3" json:"toEndDate,omitempty"`
+	IsCurrentlyInUse bool                   `protobuf:"varint,7,opt,name=isCurrentlyInUse,json=is_currently_in_use,proto3" json:"isCurrentlyInUse,omitempty"`
+	IsExpired        bool                   `protobuf:"varint,8,opt,name=isExpired,json=is_expired,proto3" json:"isExpired,omitempty"`
+	Count            uint32                 `protobuf:"varint,9,opt,name=count,proto3" json:"count,omitempty"`
+	Sort             bool                   `protobuf:"varint,10,opt,name=sort,proto3" json:"sort,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *ListPackagesForSimRequest) Reset() {
 	*x = ListPackagesForSimRequest{}
-	mi := &file_sim_manager_proto_msgTypes[18]
+	mi := &file_sim_manager_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -982,7 +858,7 @@ func (x *ListPackagesForSimRequest) String() string {
 func (*ListPackagesForSimRequest) ProtoMessage() {}
 
 func (x *ListPackagesForSimRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[18]
+	mi := &file_sim_manager_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -995,7 +871,7 @@ func (x *ListPackagesForSimRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPackagesForSimRequest.ProtoReflect.Descriptor instead.
 func (*ListPackagesForSimRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{18}
+	return file_sim_manager_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListPackagesForSimRequest) GetSimId() string {
@@ -1040,16 +916,16 @@ func (x *ListPackagesForSimRequest) GetToEndDate() string {
 	return ""
 }
 
-func (x *ListPackagesForSimRequest) GetIsActive() bool {
+func (x *ListPackagesForSimRequest) GetIsCurrentlyInUse() bool {
 	if x != nil {
-		return x.IsActive
+		return x.IsCurrentlyInUse
 	}
 	return false
 }
 
-func (x *ListPackagesForSimRequest) GetAsExpired() bool {
+func (x *ListPackagesForSimRequest) GetIsExpired() bool {
 	if x != nil {
-		return x.AsExpired
+		return x.IsExpired
 	}
 	return false
 }
@@ -1077,7 +953,7 @@ type ListPackagesForSimResponse struct {
 
 func (x *ListPackagesForSimResponse) Reset() {
 	*x = ListPackagesForSimResponse{}
-	mi := &file_sim_manager_proto_msgTypes[19]
+	mi := &file_sim_manager_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1089,7 +965,7 @@ func (x *ListPackagesForSimResponse) String() string {
 func (*ListPackagesForSimResponse) ProtoMessage() {}
 
 func (x *ListPackagesForSimResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[19]
+	mi := &file_sim_manager_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1102,7 +978,7 @@ func (x *ListPackagesForSimResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListPackagesForSimResponse.ProtoReflect.Descriptor instead.
 func (*ListPackagesForSimResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{19}
+	return file_sim_manager_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ListPackagesForSimResponse) GetPackages() []*Package {
@@ -1121,7 +997,7 @@ type GetPackagesForSimRequest struct {
 
 func (x *GetPackagesForSimRequest) Reset() {
 	*x = GetPackagesForSimRequest{}
-	mi := &file_sim_manager_proto_msgTypes[20]
+	mi := &file_sim_manager_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1133,7 +1009,7 @@ func (x *GetPackagesForSimRequest) String() string {
 func (*GetPackagesForSimRequest) ProtoMessage() {}
 
 func (x *GetPackagesForSimRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[20]
+	mi := &file_sim_manager_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1146,7 +1022,7 @@ func (x *GetPackagesForSimRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPackagesForSimRequest.ProtoReflect.Descriptor instead.
 func (*GetPackagesForSimRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{20}
+	return file_sim_manager_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *GetPackagesForSimRequest) GetSimId() string {
@@ -1166,7 +1042,7 @@ type GetPackagesForSimResponse struct {
 
 func (x *GetPackagesForSimResponse) Reset() {
 	*x = GetPackagesForSimResponse{}
-	mi := &file_sim_manager_proto_msgTypes[21]
+	mi := &file_sim_manager_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1178,7 +1054,7 @@ func (x *GetPackagesForSimResponse) String() string {
 func (*GetPackagesForSimResponse) ProtoMessage() {}
 
 func (x *GetPackagesForSimResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[21]
+	mi := &file_sim_manager_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1191,7 +1067,7 @@ func (x *GetPackagesForSimResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetPackagesForSimResponse.ProtoReflect.Descriptor instead.
 func (*GetPackagesForSimResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{21}
+	return file_sim_manager_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *GetPackagesForSimResponse) GetSimId() string {
@@ -1208,7 +1084,7 @@ func (x *GetPackagesForSimResponse) GetPackages() []*Package {
 	return nil
 }
 
-type SetInactivePackageRequest struct {
+type PackageRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
 	PackageId     string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
@@ -1216,21 +1092,21 @@ type SetInactivePackageRequest struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetInactivePackageRequest) Reset() {
-	*x = SetInactivePackageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[22]
+func (x *PackageRequest) Reset() {
+	*x = PackageRequest{}
+	mi := &file_sim_manager_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetInactivePackageRequest) String() string {
+func (x *PackageRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetInactivePackageRequest) ProtoMessage() {}
+func (*PackageRequest) ProtoMessage() {}
 
-func (x *SetInactivePackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[22]
+func (x *PackageRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1241,46 +1117,46 @@ func (x *SetInactivePackageRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetInactivePackageRequest.ProtoReflect.Descriptor instead.
-func (*SetInactivePackageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{22}
+// Deprecated: Use PackageRequest.ProtoReflect.Descriptor instead.
+func (*PackageRequest) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{19}
 }
 
-func (x *SetInactivePackageRequest) GetSimId() string {
+func (x *PackageRequest) GetSimId() string {
 	if x != nil {
 		return x.SimId
 	}
 	return ""
 }
 
-func (x *SetInactivePackageRequest) GetPackageId() string {
+func (x *PackageRequest) GetPackageId() string {
 	if x != nil {
 		return x.PackageId
 	}
 	return ""
 }
 
-type SetInactivePackageResponse struct {
+type PackageResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *SetInactivePackageResponse) Reset() {
-	*x = SetInactivePackageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[23]
+func (x *PackageResponse) Reset() {
+	*x = PackageResponse{}
+	mi := &file_sim_manager_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *SetInactivePackageResponse) String() string {
+func (x *PackageResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*SetInactivePackageResponse) ProtoMessage() {}
+func (*PackageResponse) ProtoMessage() {}
 
-func (x *SetInactivePackageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[23]
+func (x *PackageResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_sim_manager_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1291,273 +1167,9 @@ func (x *SetInactivePackageResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use SetInactivePackageResponse.ProtoReflect.Descriptor instead.
-func (*SetInactivePackageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{23}
-}
-
-type SetActivePackageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId     string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetActivePackageRequest) Reset() {
-	*x = SetActivePackageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[24]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetActivePackageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetActivePackageRequest) ProtoMessage() {}
-
-func (x *SetActivePackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[24]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetActivePackageRequest.ProtoReflect.Descriptor instead.
-func (*SetActivePackageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{24}
-}
-
-func (x *SetActivePackageRequest) GetSimId() string {
-	if x != nil {
-		return x.SimId
-	}
-	return ""
-}
-
-func (x *SetActivePackageRequest) GetPackageId() string {
-	if x != nil {
-		return x.PackageId
-	}
-	return ""
-}
-
-type SetActivePackageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *SetActivePackageResponse) Reset() {
-	*x = SetActivePackageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[25]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *SetActivePackageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*SetActivePackageResponse) ProtoMessage() {}
-
-func (x *SetActivePackageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[25]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use SetActivePackageResponse.ProtoReflect.Descriptor instead.
-func (*SetActivePackageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{25}
-}
-
-type TerminatePackageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId     string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TerminatePackageRequest) Reset() {
-	*x = TerminatePackageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[26]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TerminatePackageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TerminatePackageRequest) ProtoMessage() {}
-
-func (x *TerminatePackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[26]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TerminatePackageRequest.ProtoReflect.Descriptor instead.
-func (*TerminatePackageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{26}
-}
-
-func (x *TerminatePackageRequest) GetSimId() string {
-	if x != nil {
-		return x.SimId
-	}
-	return ""
-}
-
-func (x *TerminatePackageRequest) GetPackageId() string {
-	if x != nil {
-		return x.PackageId
-	}
-	return ""
-}
-
-type TerminatePackageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *TerminatePackageResponse) Reset() {
-	*x = TerminatePackageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[27]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *TerminatePackageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*TerminatePackageResponse) ProtoMessage() {}
-
-func (x *TerminatePackageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[27]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use TerminatePackageResponse.ProtoReflect.Descriptor instead.
-func (*TerminatePackageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{27}
-}
-
-type RemovePackageRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	SimId         string                 `protobuf:"bytes,1,opt,name=simId,json=sim_id,proto3" json:"simId,omitempty"`
-	PackageId     string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemovePackageRequest) Reset() {
-	*x = RemovePackageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[28]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemovePackageRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemovePackageRequest) ProtoMessage() {}
-
-func (x *RemovePackageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[28]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemovePackageRequest.ProtoReflect.Descriptor instead.
-func (*RemovePackageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{28}
-}
-
-func (x *RemovePackageRequest) GetSimId() string {
-	if x != nil {
-		return x.SimId
-	}
-	return ""
-}
-
-func (x *RemovePackageRequest) GetPackageId() string {
-	if x != nil {
-		return x.PackageId
-	}
-	return ""
-}
-
-type RemovePackageResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RemovePackageResponse) Reset() {
-	*x = RemovePackageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[29]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RemovePackageResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RemovePackageResponse) ProtoMessage() {}
-
-func (x *RemovePackageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[29]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RemovePackageResponse.ProtoReflect.Descriptor instead.
-func (*RemovePackageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{29}
+// Deprecated: Use PackageResponse.ProtoReflect.Descriptor instead.
+func (*PackageResponse) Descriptor() ([]byte, []int) {
+	return file_sim_manager_proto_rawDescGZIP(), []int{20}
 }
 
 type UsageRequest struct {
@@ -1574,7 +1186,7 @@ type UsageRequest struct {
 
 func (x *UsageRequest) Reset() {
 	*x = UsageRequest{}
-	mi := &file_sim_manager_proto_msgTypes[30]
+	mi := &file_sim_manager_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1586,7 +1198,7 @@ func (x *UsageRequest) String() string {
 func (*UsageRequest) ProtoMessage() {}
 
 func (x *UsageRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[30]
+	mi := &file_sim_manager_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1599,7 +1211,7 @@ func (x *UsageRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageRequest.ProtoReflect.Descriptor instead.
 func (*UsageRequest) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{30}
+	return file_sim_manager_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *UsageRequest) GetSimId() string {
@@ -1654,7 +1266,7 @@ type UsageResponse struct {
 
 func (x *UsageResponse) Reset() {
 	*x = UsageResponse{}
-	mi := &file_sim_manager_proto_msgTypes[31]
+	mi := &file_sim_manager_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1666,7 +1278,7 @@ func (x *UsageResponse) String() string {
 func (*UsageResponse) ProtoMessage() {}
 
 func (x *UsageResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[31]
+	mi := &file_sim_manager_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1679,7 +1291,7 @@ func (x *UsageResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UsageResponse.ProtoReflect.Descriptor instead.
 func (*UsageResponse) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{31}
+	return file_sim_manager_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *UsageResponse) GetUsage() *structpb.Struct {
@@ -1697,23 +1309,25 @@ func (x *UsageResponse) GetCost() *structpb.Struct {
 }
 
 type Package struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Id              string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	PackageId       string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
-	StartDate       string                 `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
-	EndDate         string                 `protobuf:"bytes,4,opt,name=endDate,json=end_date,proto3" json:"endDate,omitempty"`
-	DefaultDuration uint64                 `protobuf:"varint,5,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
-	IsActive        bool                   `protobuf:"varint,6,opt,name=isActive,json=is_active,proto3" json:"isActive,omitempty"`
-	AsExpired       bool                   `protobuf:"varint,7,opt,name=asExpired,json=as_expired,proto3" json:"asExpired,omitempty"`
-	CreatedAt       string                 `protobuf:"bytes,8,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
-	UpdatedAt       string                 `protobuf:"bytes,9,opt,name=updatedAt,json=updated_at,proto3" json:"updatedAt,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	Id               string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	PackageId        string                 `protobuf:"bytes,2,opt,name=packageId,json=package_id,proto3" json:"packageId,omitempty"`
+	StartDate        string                 `protobuf:"bytes,3,opt,name=startDate,json=start_date,proto3" json:"startDate,omitempty"`
+	EndDate          string                 `protobuf:"bytes,4,opt,name=endDate,json=end_date,proto3" json:"endDate,omitempty"`
+	InitialData      uint64                 `protobuf:"varint,5,opt,name=initialData,json=initial_data,proto3" json:"initialData,omitempty"`
+	UsedDataAtExpiry uint64                 `protobuf:"varint,6,opt,name=usedDataAtExpiry,json=used_data_at_expiry,proto3" json:"usedDataAtExpiry,omitempty"`
+	DefaultDuration  uint64                 `protobuf:"varint,7,opt,name=defaultDuration,json=default_duration,proto3" json:"defaultDuration,omitempty"` /// in minutes, cannot be more than 1000 years
+	IsCurrentlyInUse bool                   `protobuf:"varint,8,opt,name=isCurrentlyInUse,json=is_currently_in_use,proto3" json:"isCurrentlyInUse,omitempty"`
+	IsExpired        bool                   `protobuf:"varint,9,opt,name=isExpired,json=is_expired,proto3" json:"isExpired,omitempty"`
+	CreatedAt        string                 `protobuf:"bytes,10,opt,name=createdAt,json=created_at,proto3" json:"createdAt,omitempty"`
+	UpdatedAt        string                 `protobuf:"bytes,11,opt,name=updatedAt,json=updated_at,proto3" json:"updatedAt,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *Package) Reset() {
 	*x = Package{}
-	mi := &file_sim_manager_proto_msgTypes[32]
+	mi := &file_sim_manager_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1725,7 +1339,7 @@ func (x *Package) String() string {
 func (*Package) ProtoMessage() {}
 
 func (x *Package) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[32]
+	mi := &file_sim_manager_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1738,7 +1352,7 @@ func (x *Package) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Package.ProtoReflect.Descriptor instead.
 func (*Package) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{32}
+	return file_sim_manager_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *Package) GetId() string {
@@ -1769,6 +1383,20 @@ func (x *Package) GetEndDate() string {
 	return ""
 }
 
+func (x *Package) GetInitialData() uint64 {
+	if x != nil {
+		return x.InitialData
+	}
+	return 0
+}
+
+func (x *Package) GetUsedDataAtExpiry() uint64 {
+	if x != nil {
+		return x.UsedDataAtExpiry
+	}
+	return 0
+}
+
 func (x *Package) GetDefaultDuration() uint64 {
 	if x != nil {
 		return x.DefaultDuration
@@ -1776,16 +1404,16 @@ func (x *Package) GetDefaultDuration() uint64 {
 	return 0
 }
 
-func (x *Package) GetIsActive() bool {
+func (x *Package) GetIsCurrentlyInUse() bool {
 	if x != nil {
-		return x.IsActive
+		return x.IsCurrentlyInUse
 	}
 	return false
 }
 
-func (x *Package) GetAsExpired() bool {
+func (x *Package) GetIsExpired() bool {
 	if x != nil {
-		return x.AsExpired
+		return x.IsExpired
 	}
 	return false
 }
@@ -1829,7 +1457,7 @@ type Sim struct {
 
 func (x *Sim) Reset() {
 	*x = Sim{}
-	mi := &file_sim_manager_proto_msgTypes[33]
+	mi := &file_sim_manager_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1841,7 +1469,7 @@ func (x *Sim) String() string {
 func (*Sim) ProtoMessage() {}
 
 func (x *Sim) ProtoReflect() protoreflect.Message {
-	mi := &file_sim_manager_proto_msgTypes[33]
+	mi := &file_sim_manager_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1854,7 +1482,7 @@ func (x *Sim) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Sim.ProtoReflect.Descriptor instead.
 func (*Sim) Descriptor() ([]byte, []int) {
-	return file_sim_manager_proto_rawDescGZIP(), []int{33}
+	return file_sim_manager_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *Sim) GetId() string {
@@ -1988,13 +1616,12 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\tnetworkId\x18\x04 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"network_id\x12\x18\n" +
 	"\asimType\x18\x05 \x01(\tR\asimType\x12%\n" +
-	"\rtrafficPolicy\x18\x06 \x01(\rR\x0etraffic_policy\"M\n" +
-	"\x13AllocateSimResponse\x126\n" +
-	"\x03sim\x18\x01 \x01(\v2$.ukama.subscriber.sim_manager.v1.SimR\x03sim\".\n" +
-	"\rGetSimRequest\x12\x1d\n" +
-	"\x05simId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06sim_id\"H\n" +
-	"\x0eGetSimResponse\x126\n" +
-	"\x03sim\x18\x01 \x01(\v2$.ukama.subscriber.sim_manager.v1.SimR\x03sim\"\xab\x02\n" +
+	"\rtrafficPolicy\x18\x06 \x01(\rR\x0etraffic_policy\"E\n" +
+	"\vSimResponse\x126\n" +
+	"\x03sim\x18\x01 \x01(\v2$.ukama.subscriber.sim_manager.v1.SimR\x03sim\"+\n" +
+	"\n" +
+	"SimRequest\x12\x1d\n" +
+	"\x05simId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06sim_id\"\xab\x02\n" +
 	"\x0fListSimsRequest\x12\x14\n" +
 	"\x05iccid\x18\x01 \x01(\tR\x05iccid\x12\x12\n" +
 	"\x04imsi\x18\x02 \x01(\tR\x04imsi\x12#\n" +
@@ -2023,13 +1650,11 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x18GetSimsByNetworkResponse\x12\x1d\n" +
 	"\tnetworkId\x18\x01 \x01(\tR\n" +
 	"network_id\x128\n" +
-	"\x04sims\x18\x02 \x03(\v2$.ukama.subscriber.sim_manager.v1.SimR\x04sims\"O\n" +
-	"\x16ToggleSimStatusRequest\x12\x1d\n" +
+	"\x04sims\x18\x02 \x03(\v2$.ukama.subscriber.sim_manager.v1.SimR\x04sims\"V\n" +
+	"\x1dToggleSimServiceStatusRequest\x12\x1d\n" +
 	"\x05simId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06sim_id\x12\x16\n" +
-	"\x06status\x18\x02 \x01(\tR\x06status\"\x19\n" +
-	"\x17ToggleSimStatusResponse\"4\n" +
-	"\x13TerminateSimRequest\x12\x1d\n" +
-	"\x05simId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06sim_id\"\x16\n" +
+	"\x06status\x18\x02 \x01(\tR\x06status\" \n" +
+	"\x1eToggleSimServiceStatusResponse\"\x16\n" +
 	"\x14TerminateSimResponse\"?\n" +
 	"\x0fSimTokenRequest\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
@@ -2041,8 +1666,7 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"package_id\x12\x1d\n" +
 	"\tstartDate\x18\x03 \x01(\tR\n" +
-	"start_date\"\x14\n" +
-	"\x12AddPackageResponse\"\xd5\x02\n" +
+	"start_date\"\xe7\x02\n" +
 	"\x19ListPackagesForSimRequest\x12 \n" +
 	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12 \n" +
 	"\n" +
@@ -2050,10 +1674,10 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\rfromStartDate\x18\x03 \x01(\tR\x0ffrom_start_date\x12\"\n" +
 	"\vtoStartDate\x18\x04 \x01(\tR\rto_start_date\x12\"\n" +
 	"\vfromEndDate\x18\x05 \x01(\tR\rfrom_end_date\x12\x1e\n" +
-	"\ttoEndDate\x18\x06 \x01(\tR\vto_end_date\x12\x1b\n" +
-	"\bisActive\x18\a \x01(\bR\tis_active\x12\x1d\n" +
-	"\tasExpired\x18\b \x01(\bR\n" +
-	"as_expired\x12\x14\n" +
+	"\ttoEndDate\x18\x06 \x01(\tR\vto_end_date\x12-\n" +
+	"\x10isCurrentlyInUse\x18\a \x01(\bR\x13is_currently_in_use\x12\x1d\n" +
+	"\tisExpired\x18\b \x01(\bR\n" +
+	"is_expired\x12\x14\n" +
 	"\x05count\x18\t \x01(\rR\x05count\x12\x12\n" +
 	"\x04sort\x18\n" +
 	" \x01(\bR\x04sort\"b\n" +
@@ -2063,27 +1687,12 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\"x\n" +
 	"\x19GetPackagesForSimResponse\x12\x15\n" +
 	"\x05simId\x18\x01 \x01(\tR\x06sim_id\x12D\n" +
-	"\bpackages\x18\x02 \x03(\v2(.ukama.subscriber.sim_manager.v1.PackageR\bpackages\"g\n" +
-	"\x19SetInactivePackageRequest\x12 \n" +
+	"\bpackages\x18\x02 \x03(\v2(.ukama.subscriber.sim_manager.v1.PackageR\bpackages\"\\\n" +
+	"\x0ePackageRequest\x12 \n" +
 	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12(\n" +
 	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
-	"package_id\"\x1c\n" +
-	"\x1aSetInactivePackageResponse\"e\n" +
-	"\x17SetActivePackageRequest\x12 \n" +
-	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12(\n" +
-	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
-	"package_id\"\x1a\n" +
-	"\x18SetActivePackageResponse\"e\n" +
-	"\x17TerminatePackageRequest\x12 \n" +
-	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12(\n" +
-	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
-	"package_id\"\x1a\n" +
-	"\x18TerminatePackageResponse\"b\n" +
-	"\x14RemovePackageRequest\x12 \n" +
-	"\x05simId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06sim_id\x12(\n" +
-	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
-	"package_id\"\x17\n" +
-	"\x15RemovePackageResponse\"\x91\x01\n" +
+	"package_id\"\x11\n" +
+	"\x0fPackageResponse\"\x91\x01\n" +
 	"\fUsageRequest\x12\x15\n" +
 	"\x05simId\x18\x01 \x01(\tR\x06sim_id\x12\x1a\n" +
 	"\bsim_type\x18\x02 \x01(\tR\bsim_type\x12\x12\n" +
@@ -2093,21 +1702,24 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x06region\x18\x06 \x01(\tR\x06region\"k\n" +
 	"\rUsageResponse\x12-\n" +
 	"\x05usage\x18\x01 \x01(\v2\x17.google.protobuf.StructR\x05usage\x12+\n" +
-	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\xad\x02\n" +
+	"\x04cost\x18\x02 \x01(\v2\x17.google.protobuf.StructR\x04cost\"\x91\x03\n" +
 	"\aPackage\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12(\n" +
 	"\tpackageId\x18\x02 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\n" +
 	"package_id\x12\x1d\n" +
 	"\tstartDate\x18\x03 \x01(\tR\n" +
 	"start_date\x12\x19\n" +
-	"\aendDate\x18\x04 \x01(\tR\bend_date\x12)\n" +
-	"\x0fdefaultDuration\x18\x05 \x01(\x04R\x10default_duration\x12\x1b\n" +
-	"\bisActive\x18\x06 \x01(\bR\tis_active\x12\x1d\n" +
-	"\tasExpired\x18\a \x01(\bR\n" +
-	"as_expired\x12\x1d\n" +
-	"\tcreatedAt\x18\b \x01(\tR\n" +
+	"\aendDate\x18\x04 \x01(\tR\bend_date\x12!\n" +
+	"\vinitialData\x18\x05 \x01(\x04R\finitial_data\x12-\n" +
+	"\x10usedDataAtExpiry\x18\x06 \x01(\x04R\x13used_data_at_expiry\x12)\n" +
+	"\x0fdefaultDuration\x18\a \x01(\x04R\x10default_duration\x12-\n" +
+	"\x10isCurrentlyInUse\x18\b \x01(\bR\x13is_currently_in_use\x12\x1d\n" +
+	"\tisExpired\x18\t \x01(\bR\n" +
+	"is_expired\x12\x1d\n" +
+	"\tcreatedAt\x18\n" +
+	" \x01(\tR\n" +
 	"created_at\x12\x1d\n" +
-	"\tupdatedAt\x18\t \x01(\tR\n" +
+	"\tupdatedAt\x18\v \x01(\tR\n" +
 	"updated_at\"\x9f\a\n" +
 	"\x03Sim\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12.\n" +
@@ -2132,22 +1744,22 @@ const file_sim_manager_proto_rawDesc = "" +
 	"\x12deactivationsCount\x18\x0f \x01(\x04R\x12deactivationsCount\x12=\n" +
 	"\vallocatedAt\x18\x10 \x01(\v2\x1a.google.protobuf.TimestampR\fallocated_at\x12\x1f\n" +
 	"\n" +
-	"syncStatus\x18\x11 \x01(\tR\vsync_status2\xc6\x10\n" +
-	"\x11SimManagerService\x12x\n" +
-	"\vAllocateSim\x123.ukama.subscriber.sim_manager.v1.AllocateSimRequest\x1a4.ukama.subscriber.sim_manager.v1.AllocateSimResponse\x12i\n" +
-	"\x06GetSim\x12..ukama.subscriber.sim_manager.v1.GetSimRequest\x1a/.ukama.subscriber.sim_manager.v1.GetSimResponse\x12o\n" +
-	"\bListSims\x120.ukama.subscriber.sim_manager.v1.ListSimsRequest\x1a1.ukama.subscriber.sim_manager.v1.ListSimsResponse\x12\x90\x01\n" +
+	"syncStatus\x18\x11 \x01(\tR\vsync_status2\xf7\x0f\n" +
+	"\x11SimManagerService\x12p\n" +
+	"\vAllocateSim\x123.ukama.subscriber.sim_manager.v1.AllocateSimRequest\x1a,.ukama.subscriber.sim_manager.v1.SimResponse\x12c\n" +
+	"\x06GetSim\x12+.ukama.subscriber.sim_manager.v1.SimRequest\x1a,.ukama.subscriber.sim_manager.v1.SimResponse\x12o\n" +
+	"\bListSims\x120.ukama.subscriber.sim_manager.v1.ListSimsRequest\x1a1.ukama.subscriber.sim_manager.v1.ListSimsResponse\x12\x99\x01\n" +
+	"\x16ToggleSimServiceStatus\x12>.ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusRequest\x1a?.ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusResponse\x12r\n" +
+	"\fTerminateSim\x12+.ukama.subscriber.sim_manager.v1.SimRequest\x1a5.ukama.subscriber.sim_manager.v1.TerminateSimResponse\x12\x90\x01\n" +
 	"\x13GetSimsBySubscriber\x12;.ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest\x1a<.ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse\x12\x87\x01\n" +
-	"\x10GetSimsByNetwork\x128.ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest\x1a9.ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse\x12\x84\x01\n" +
-	"\x0fToggleSimStatus\x127.ukama.subscriber.sim_manager.v1.ToggleSimStatusRequest\x1a8.ukama.subscriber.sim_manager.v1.ToggleSimStatusResponse\x12{\n" +
-	"\fTerminateSim\x124.ukama.subscriber.sim_manager.v1.TerminateSimRequest\x1a5.ukama.subscriber.sim_manager.v1.TerminateSimResponse\x12{\n" +
-	"\x10AddPackageForSim\x122.ukama.subscriber.sim_manager.v1.AddPackageRequest\x1a3.ukama.subscriber.sim_manager.v1.AddPackageResponse\x12\x8d\x01\n" +
-	"\x12ListPackagesForSim\x12:.ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest\x1a;.ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse\x12\x8a\x01\n" +
-	"\x11GetPackagesForSim\x129.ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest\x1a:.ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse\x12\x8d\x01\n" +
-	"\x16SetActivePackageForSim\x128.ukama.subscriber.sim_manager.v1.SetActivePackageRequest\x1a9.ukama.subscriber.sim_manager.v1.SetActivePackageResponse\x12\x93\x01\n" +
-	"\x18SetInactivePackageForSim\x12:.ukama.subscriber.sim_manager.v1.SetInactivePackageRequest\x1a;.ukama.subscriber.sim_manager.v1.SetInactivePackageResponse\x12\x8d\x01\n" +
-	"\x16TerminatePackageForSim\x128.ukama.subscriber.sim_manager.v1.TerminatePackageRequest\x1a9.ukama.subscriber.sim_manager.v1.TerminatePackageResponse\x12\x84\x01\n" +
-	"\x13RemovePackageForSim\x125.ukama.subscriber.sim_manager.v1.RemovePackageRequest\x1a6.ukama.subscriber.sim_manager.v1.RemovePackageResponse\x12w\n" +
+	"\x10GetSimsByNetwork\x128.ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest\x1a9.ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse\x12x\n" +
+	"\x10AddPackageForSim\x122.ukama.subscriber.sim_manager.v1.AddPackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12\x8d\x01\n" +
+	"\x12ListPackagesForSim\x12:.ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest\x1a;.ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse\x12z\n" +
+	"\x15SetPackageInUseForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12|\n" +
+	"\x17UnsetPackageInUseForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12}\n" +
+	"\x18MarkPackageExpiredForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12x\n" +
+	"\x13RemovePackageForSim\x12/.ukama.subscriber.sim_manager.v1.PackageRequest\x1a0.ukama.subscriber.sim_manager.v1.PackageResponse\x12\x8a\x01\n" +
+	"\x11GetPackagesForSim\x129.ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest\x1a:.ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse\x12w\n" +
 	"\x10GenerateSimToken\x120.ukama.subscriber.sim_manager.v1.SimTokenRequest\x1a1.ukama.subscriber.sim_manager.v1.SimTokenResponse\x12j\n" +
 	"\tGetUsages\x12-.ukama.subscriber.sim_manager.v1.UsageRequest\x1a..ukama.subscriber.sim_manager.v1.UsageResponseB>Z<github.com/ukama/ukama/systems/subscriber/sim-manager/pb/genb\x06proto3"
 
@@ -2163,96 +1775,86 @@ func file_sim_manager_proto_rawDescGZIP() []byte {
 	return file_sim_manager_proto_rawDescData
 }
 
-var file_sim_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 34)
+var file_sim_manager_proto_msgTypes = make([]protoimpl.MessageInfo, 25)
 var file_sim_manager_proto_goTypes = []any{
-	(*AllocateSimRequest)(nil),          // 0: ukama.subscriber.sim_manager.v1.AllocateSimRequest
-	(*AllocateSimResponse)(nil),         // 1: ukama.subscriber.sim_manager.v1.AllocateSimResponse
-	(*GetSimRequest)(nil),               // 2: ukama.subscriber.sim_manager.v1.GetSimRequest
-	(*GetSimResponse)(nil),              // 3: ukama.subscriber.sim_manager.v1.GetSimResponse
-	(*ListSimsRequest)(nil),             // 4: ukama.subscriber.sim_manager.v1.ListSimsRequest
-	(*ListSimsResponse)(nil),            // 5: ukama.subscriber.sim_manager.v1.ListSimsResponse
-	(*GetSimsBySubscriberRequest)(nil),  // 6: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
-	(*GetSimsBySubscriberResponse)(nil), // 7: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
-	(*GetSimsByNetworkRequest)(nil),     // 8: ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
-	(*GetSimsByNetworkResponse)(nil),    // 9: ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
-	(*ToggleSimStatusRequest)(nil),      // 10: ukama.subscriber.sim_manager.v1.ToggleSimStatusRequest
-	(*ToggleSimStatusResponse)(nil),     // 11: ukama.subscriber.sim_manager.v1.ToggleSimStatusResponse
-	(*TerminateSimRequest)(nil),         // 12: ukama.subscriber.sim_manager.v1.TerminateSimRequest
-	(*TerminateSimResponse)(nil),        // 13: ukama.subscriber.sim_manager.v1.TerminateSimResponse
-	(*SimTokenRequest)(nil),             // 14: ukama.subscriber.sim_manager.v1.SimTokenRequest
-	(*SimTokenResponse)(nil),            // 15: ukama.subscriber.sim_manager.v1.SimTokenResponse
-	(*AddPackageRequest)(nil),           // 16: ukama.subscriber.sim_manager.v1.AddPackageRequest
-	(*AddPackageResponse)(nil),          // 17: ukama.subscriber.sim_manager.v1.AddPackageResponse
-	(*ListPackagesForSimRequest)(nil),   // 18: ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest
-	(*ListPackagesForSimResponse)(nil),  // 19: ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse
-	(*GetPackagesForSimRequest)(nil),    // 20: ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest
-	(*GetPackagesForSimResponse)(nil),   // 21: ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse
-	(*SetInactivePackageRequest)(nil),   // 22: ukama.subscriber.sim_manager.v1.SetInactivePackageRequest
-	(*SetInactivePackageResponse)(nil),  // 23: ukama.subscriber.sim_manager.v1.SetInactivePackageResponse
-	(*SetActivePackageRequest)(nil),     // 24: ukama.subscriber.sim_manager.v1.SetActivePackageRequest
-	(*SetActivePackageResponse)(nil),    // 25: ukama.subscriber.sim_manager.v1.SetActivePackageResponse
-	(*TerminatePackageRequest)(nil),     // 26: ukama.subscriber.sim_manager.v1.TerminatePackageRequest
-	(*TerminatePackageResponse)(nil),    // 27: ukama.subscriber.sim_manager.v1.TerminatePackageResponse
-	(*RemovePackageRequest)(nil),        // 28: ukama.subscriber.sim_manager.v1.RemovePackageRequest
-	(*RemovePackageResponse)(nil),       // 29: ukama.subscriber.sim_manager.v1.RemovePackageResponse
-	(*UsageRequest)(nil),                // 30: ukama.subscriber.sim_manager.v1.UsageRequest
-	(*UsageResponse)(nil),               // 31: ukama.subscriber.sim_manager.v1.UsageResponse
-	(*Package)(nil),                     // 32: ukama.subscriber.sim_manager.v1.Package
-	(*Sim)(nil),                         // 33: ukama.subscriber.sim_manager.v1.Sim
-	(*structpb.Struct)(nil),             // 34: google.protobuf.Struct
-	(*timestamppb.Timestamp)(nil),       // 35: google.protobuf.Timestamp
+	(*AllocateSimRequest)(nil),             // 0: ukama.subscriber.sim_manager.v1.AllocateSimRequest
+	(*SimResponse)(nil),                    // 1: ukama.subscriber.sim_manager.v1.SimResponse
+	(*SimRequest)(nil),                     // 2: ukama.subscriber.sim_manager.v1.SimRequest
+	(*ListSimsRequest)(nil),                // 3: ukama.subscriber.sim_manager.v1.ListSimsRequest
+	(*ListSimsResponse)(nil),               // 4: ukama.subscriber.sim_manager.v1.ListSimsResponse
+	(*GetSimsBySubscriberRequest)(nil),     // 5: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
+	(*GetSimsBySubscriberResponse)(nil),    // 6: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
+	(*GetSimsByNetworkRequest)(nil),        // 7: ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
+	(*GetSimsByNetworkResponse)(nil),       // 8: ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
+	(*ToggleSimServiceStatusRequest)(nil),  // 9: ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusRequest
+	(*ToggleSimServiceStatusResponse)(nil), // 10: ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusResponse
+	(*TerminateSimResponse)(nil),           // 11: ukama.subscriber.sim_manager.v1.TerminateSimResponse
+	(*SimTokenRequest)(nil),                // 12: ukama.subscriber.sim_manager.v1.SimTokenRequest
+	(*SimTokenResponse)(nil),               // 13: ukama.subscriber.sim_manager.v1.SimTokenResponse
+	(*AddPackageRequest)(nil),              // 14: ukama.subscriber.sim_manager.v1.AddPackageRequest
+	(*ListPackagesForSimRequest)(nil),      // 15: ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest
+	(*ListPackagesForSimResponse)(nil),     // 16: ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse
+	(*GetPackagesForSimRequest)(nil),       // 17: ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest
+	(*GetPackagesForSimResponse)(nil),      // 18: ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse
+	(*PackageRequest)(nil),                 // 19: ukama.subscriber.sim_manager.v1.PackageRequest
+	(*PackageResponse)(nil),                // 20: ukama.subscriber.sim_manager.v1.PackageResponse
+	(*UsageRequest)(nil),                   // 21: ukama.subscriber.sim_manager.v1.UsageRequest
+	(*UsageResponse)(nil),                  // 22: ukama.subscriber.sim_manager.v1.UsageResponse
+	(*Package)(nil),                        // 23: ukama.subscriber.sim_manager.v1.Package
+	(*Sim)(nil),                            // 24: ukama.subscriber.sim_manager.v1.Sim
+	(*structpb.Struct)(nil),                // 25: google.protobuf.Struct
+	(*timestamppb.Timestamp)(nil),          // 26: google.protobuf.Timestamp
 }
 var file_sim_manager_proto_depIdxs = []int32{
-	33, // 0: ukama.subscriber.sim_manager.v1.AllocateSimResponse.sim:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	33, // 1: ukama.subscriber.sim_manager.v1.GetSimResponse.sim:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	33, // 2: ukama.subscriber.sim_manager.v1.ListSimsResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	33, // 3: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	33, // 4: ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
-	32, // 5: ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
-	32, // 6: ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
-	34, // 7: ukama.subscriber.sim_manager.v1.UsageResponse.usage:type_name -> google.protobuf.Struct
-	34, // 8: ukama.subscriber.sim_manager.v1.UsageResponse.cost:type_name -> google.protobuf.Struct
-	32, // 9: ukama.subscriber.sim_manager.v1.Sim.package:type_name -> ukama.subscriber.sim_manager.v1.Package
-	35, // 10: ukama.subscriber.sim_manager.v1.Sim.firstActivatedOn:type_name -> google.protobuf.Timestamp
-	35, // 11: ukama.subscriber.sim_manager.v1.Sim.lastActivatedOn:type_name -> google.protobuf.Timestamp
-	35, // 12: ukama.subscriber.sim_manager.v1.Sim.allocatedAt:type_name -> google.protobuf.Timestamp
-	0,  // 13: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:input_type -> ukama.subscriber.sim_manager.v1.AllocateSimRequest
-	2,  // 14: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:input_type -> ukama.subscriber.sim_manager.v1.GetSimRequest
-	4,  // 15: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:input_type -> ukama.subscriber.sim_manager.v1.ListSimsRequest
-	6,  // 16: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:input_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
-	8,  // 17: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:input_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
-	10, // 18: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:input_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusRequest
-	12, // 19: ukama.subscriber.sim_manager.v1.SimManagerService.TerminateSim:input_type -> ukama.subscriber.sim_manager.v1.TerminateSimRequest
-	16, // 20: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:input_type -> ukama.subscriber.sim_manager.v1.AddPackageRequest
-	18, // 21: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest
-	20, // 22: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest
-	24, // 23: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.SetActivePackageRequest
-	22, // 24: ukama.subscriber.sim_manager.v1.SimManagerService.SetInactivePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.SetInactivePackageRequest
-	26, // 25: ukama.subscriber.sim_manager.v1.SimManagerService.TerminatePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.TerminatePackageRequest
-	28, // 26: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.RemovePackageRequest
-	14, // 27: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:input_type -> ukama.subscriber.sim_manager.v1.SimTokenRequest
-	30, // 28: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:input_type -> ukama.subscriber.sim_manager.v1.UsageRequest
-	1,  // 29: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:output_type -> ukama.subscriber.sim_manager.v1.AllocateSimResponse
-	3,  // 30: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:output_type -> ukama.subscriber.sim_manager.v1.GetSimResponse
-	5,  // 31: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:output_type -> ukama.subscriber.sim_manager.v1.ListSimsResponse
-	7,  // 32: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:output_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
-	9,  // 33: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:output_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
-	11, // 34: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimStatus:output_type -> ukama.subscriber.sim_manager.v1.ToggleSimStatusResponse
-	13, // 35: ukama.subscriber.sim_manager.v1.SimManagerService.TerminateSim:output_type -> ukama.subscriber.sim_manager.v1.TerminateSimResponse
-	17, // 36: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:output_type -> ukama.subscriber.sim_manager.v1.AddPackageResponse
-	19, // 37: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse
-	21, // 38: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse
-	25, // 39: ukama.subscriber.sim_manager.v1.SimManagerService.SetActivePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.SetActivePackageResponse
-	23, // 40: ukama.subscriber.sim_manager.v1.SimManagerService.SetInactivePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.SetInactivePackageResponse
-	27, // 41: ukama.subscriber.sim_manager.v1.SimManagerService.TerminatePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.TerminatePackageResponse
-	29, // 42: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.RemovePackageResponse
-	15, // 43: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:output_type -> ukama.subscriber.sim_manager.v1.SimTokenResponse
-	31, // 44: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:output_type -> ukama.subscriber.sim_manager.v1.UsageResponse
-	29, // [29:45] is the sub-list for method output_type
-	13, // [13:29] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	24, // 0: ukama.subscriber.sim_manager.v1.SimResponse.sim:type_name -> ukama.subscriber.sim_manager.v1.Sim
+	24, // 1: ukama.subscriber.sim_manager.v1.ListSimsResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
+	24, // 2: ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
+	24, // 3: ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse.sims:type_name -> ukama.subscriber.sim_manager.v1.Sim
+	23, // 4: ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
+	23, // 5: ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse.packages:type_name -> ukama.subscriber.sim_manager.v1.Package
+	25, // 6: ukama.subscriber.sim_manager.v1.UsageResponse.usage:type_name -> google.protobuf.Struct
+	25, // 7: ukama.subscriber.sim_manager.v1.UsageResponse.cost:type_name -> google.protobuf.Struct
+	23, // 8: ukama.subscriber.sim_manager.v1.Sim.package:type_name -> ukama.subscriber.sim_manager.v1.Package
+	26, // 9: ukama.subscriber.sim_manager.v1.Sim.firstActivatedOn:type_name -> google.protobuf.Timestamp
+	26, // 10: ukama.subscriber.sim_manager.v1.Sim.lastActivatedOn:type_name -> google.protobuf.Timestamp
+	26, // 11: ukama.subscriber.sim_manager.v1.Sim.allocatedAt:type_name -> google.protobuf.Timestamp
+	0,  // 12: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:input_type -> ukama.subscriber.sim_manager.v1.AllocateSimRequest
+	2,  // 13: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:input_type -> ukama.subscriber.sim_manager.v1.SimRequest
+	3,  // 14: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:input_type -> ukama.subscriber.sim_manager.v1.ListSimsRequest
+	9,  // 15: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimServiceStatus:input_type -> ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusRequest
+	2,  // 16: ukama.subscriber.sim_manager.v1.SimManagerService.TerminateSim:input_type -> ukama.subscriber.sim_manager.v1.SimRequest
+	5,  // 17: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:input_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberRequest
+	7,  // 18: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:input_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkRequest
+	14, // 19: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:input_type -> ukama.subscriber.sim_manager.v1.AddPackageRequest
+	15, // 20: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimRequest
+	19, // 21: ukama.subscriber.sim_manager.v1.SimManagerService.SetPackageInUseForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
+	19, // 22: ukama.subscriber.sim_manager.v1.SimManagerService.UnsetPackageInUseForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
+	19, // 23: ukama.subscriber.sim_manager.v1.SimManagerService.MarkPackageExpiredForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
+	19, // 24: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:input_type -> ukama.subscriber.sim_manager.v1.PackageRequest
+	17, // 25: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:input_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimRequest
+	12, // 26: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:input_type -> ukama.subscriber.sim_manager.v1.SimTokenRequest
+	21, // 27: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:input_type -> ukama.subscriber.sim_manager.v1.UsageRequest
+	1,  // 28: ukama.subscriber.sim_manager.v1.SimManagerService.AllocateSim:output_type -> ukama.subscriber.sim_manager.v1.SimResponse
+	1,  // 29: ukama.subscriber.sim_manager.v1.SimManagerService.GetSim:output_type -> ukama.subscriber.sim_manager.v1.SimResponse
+	4,  // 30: ukama.subscriber.sim_manager.v1.SimManagerService.ListSims:output_type -> ukama.subscriber.sim_manager.v1.ListSimsResponse
+	10, // 31: ukama.subscriber.sim_manager.v1.SimManagerService.ToggleSimServiceStatus:output_type -> ukama.subscriber.sim_manager.v1.ToggleSimServiceStatusResponse
+	11, // 32: ukama.subscriber.sim_manager.v1.SimManagerService.TerminateSim:output_type -> ukama.subscriber.sim_manager.v1.TerminateSimResponse
+	6,  // 33: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsBySubscriber:output_type -> ukama.subscriber.sim_manager.v1.GetSimsBySubscriberResponse
+	8,  // 34: ukama.subscriber.sim_manager.v1.SimManagerService.GetSimsByNetwork:output_type -> ukama.subscriber.sim_manager.v1.GetSimsByNetworkResponse
+	20, // 35: ukama.subscriber.sim_manager.v1.SimManagerService.AddPackageForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	16, // 36: ukama.subscriber.sim_manager.v1.SimManagerService.ListPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.ListPackagesForSimResponse
+	20, // 37: ukama.subscriber.sim_manager.v1.SimManagerService.SetPackageInUseForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	20, // 38: ukama.subscriber.sim_manager.v1.SimManagerService.UnsetPackageInUseForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	20, // 39: ukama.subscriber.sim_manager.v1.SimManagerService.MarkPackageExpiredForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	20, // 40: ukama.subscriber.sim_manager.v1.SimManagerService.RemovePackageForSim:output_type -> ukama.subscriber.sim_manager.v1.PackageResponse
+	18, // 41: ukama.subscriber.sim_manager.v1.SimManagerService.GetPackagesForSim:output_type -> ukama.subscriber.sim_manager.v1.GetPackagesForSimResponse
+	13, // 42: ukama.subscriber.sim_manager.v1.SimManagerService.GenerateSimToken:output_type -> ukama.subscriber.sim_manager.v1.SimTokenResponse
+	22, // 43: ukama.subscriber.sim_manager.v1.SimManagerService.GetUsages:output_type -> ukama.subscriber.sim_manager.v1.UsageResponse
+	28, // [28:44] is the sub-list for method output_type
+	12, // [12:28] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_sim_manager_proto_init() }
@@ -2266,7 +1868,7 @@ func file_sim_manager_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_sim_manager_proto_rawDesc), len(file_sim_manager_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   34,
+			NumMessages:   25,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

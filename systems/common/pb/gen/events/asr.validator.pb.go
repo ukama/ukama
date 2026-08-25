@@ -70,7 +70,7 @@ func (this *Subscriber) Validate() error {
 	}
 	return nil
 }
-func (this *AsrActivated) Validate() error {
+func (this *AsrProfileCreated) Validate() error {
 	if this.Subscriber != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)
@@ -78,7 +78,7 @@ func (this *AsrActivated) Validate() error {
 	}
 	return nil
 }
-func (this *AsrInactivated) Validate() error {
+func (this *AsrProfileDeleted) Validate() error {
 	if this.Subscriber != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Subscriber); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Subscriber", err)

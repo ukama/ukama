@@ -64,9 +64,17 @@ func (o *OperatorAgentAdaper) UpdatePackage(ctx context.Context, req client.Agen
 	return nil
 }
 
-func (o *OperatorAgentAdaper) TerminateSim(ctx context.Context, iccid string) error {
+func (o *OperatorAgentAdaper) Update(ctx context.Context, req client.AgentRequestData) error {
+	if req.IsServiceStatusOn {
+		return o.ActivateSim(ctx, req)
+	}
+
+	return o.DeactivateSim(ctx, req)
+}
+
+func (o *OperatorAgentAdaper) TerminateSim(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
-	return o.client.TerminateSim(iccid)
+	return o.client.TerminateSim(req.Iccid)
 }
 
 func (t *OperatorAgentAdaper) Close() {
