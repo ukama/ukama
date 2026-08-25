@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
+	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/rollup"
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
@@ -35,7 +36,9 @@ type Composer struct {
 	rollups db.RollupRepo
 	windows db.KpiWindowReader
 	grid    schema.Grid
-	window  time.Duration // fallback window when the read span isn't a rolling one
+	window  time.Duration // trailing window used when the span names no period
+	// loc anchors calendar span boundaries — the rollup engine's timezone.
+	loc *time.Location
 }
 
 // Cell is one KPI value attached to an entity row.
@@ -72,10 +75,14 @@ type Report struct {
 
 func NewComposer(org string, reports []schema.ReportSpec, state db.RawStateReader,
 	rollups db.RollupRepo, windows db.KpiWindowReader, grid schema.Grid,
-	window time.Duration) *Composer {
+	window time.Duration, loc *time.Location) *Composer {
 	byKey := map[string]schema.ReportSpec{}
 	for _, r := range reports {
 		byKey[r.Report] = r
+	}
+
+	if loc == nil {
+		loc = time.UTC
 	}
 
 	return &Composer{
@@ -86,6 +93,7 @@ func NewComposer(org string, reports []schema.ReportSpec, state db.RawStateReade
 		windows: windows,
 		grid:    grid,
 		window:  window,
+		loc:     loc,
 	}
 }
 
@@ -113,24 +121,53 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		return nil, err
 	}
 
-	// Cells are aggregated over a trailing window of DAILY rollups. The window
-	// follows the UI filter (last 24h / 7 days / 30 days) so the report matches
-	// the rest of the page; an empty/unknown span falls back to the configured
-	// default. Trend compares the current window against the one before it.
-	window := c.window
-	rolling := false
-	if d, ok := rollingWindow(span); ok {
-		window = d
+	// Aggregation period, and trend against the one before it:
+	//   last_24h|last_7d|last_30d  rolling window, from raw kpi_windows
+	//   daily|weekly|monthly       current calendar span, from its rollups
+	//   anything else              the configured trailing ReportWindow
+	now := time.Now().UTC()
+
+	var (
+		window   time.Duration
+		rolling  bool
+		calendar string
+		from     time.Time
+		prevFrom time.Time
+		label    string
+	)
+
+	switch {
+	case isRollingSpan(span):
+		window, _ = rollingWindow(span)
 		rolling = true
+		from = now.Add(-window)
+		prevFrom = now.Add(-2 * window)
+		label = reportWindowLabel(window)
+
+	case isCalendarSpan(span):
+		calendar = strings.ToLower(span)
+
+		start, err := rollup.SpanStart(calendar, now, c.loc)
+		if err != nil {
+			return nil, err
+		}
+
+		prevStart, err := rollup.PrevSpanStart(calendar, start)
+		if err != nil {
+			return nil, err
+		}
+
+		from, prevFrom, label = start, prevStart, calendar
+
+	default:
+		window = c.window
+		from = now.Add(-window)
+		prevFrom = now.Add(-2 * window)
+		label = reportWindowLabel(window)
 	}
 
-	now := time.Now().UTC()
-	from := now.Add(-window)
-	prevFrom := now.Add(-2 * window)
-
-	// Rolling spans aggregate the raw kpi_windows over the exact window (precise
-	// last 24h / 7 days / 30 days, matching the values endpoint); a non-rolling
-	// span falls back to daily rollups over the configured window.
+	// Rolling spans fold raw kpi_windows for an exact total, matching the
+	// values endpoint.
 	var fromID, toID, prevFromID int64
 	if rolling {
 		fromID = c.grid.WindowAt(from).ID
@@ -146,10 +183,15 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 
 		var err error
 
+		readSpan := spanDaily
+		if calendar != "" {
+			readSpan = calendar
+		}
+
 		if rolling {
 			curr, err = c.windowRollups(col.Kpi, fromID, toID, scopeFilter)
 		} else {
-			curr, err = c.rollups.Range(c.org, col.Kpi, spanDaily, from, now, scopeFilter)
+			curr, err = c.rollups.Range(c.org, col.Kpi, readSpan, from, now, scopeFilter)
 		}
 
 		if err != nil {
@@ -159,7 +201,7 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		if rolling {
 			prev, err = c.windowRollups(col.Kpi, prevFromID, fromID, scopeFilter)
 		} else {
-			prev, err = c.rollups.Range(c.org, col.Kpi, spanDaily, prevFrom, from, scopeFilter)
+			prev, err = c.rollups.Range(c.org, col.Kpi, readSpan, prevFrom, from, scopeFilter)
 		}
 
 		if err != nil {
@@ -215,7 +257,7 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 		rows = rows[:top]
 	}
 
-	return &Report{Report: spec.Report, Title: spec.Title, Span: reportWindowLabel(window), Rows: rows}, nil
+	return &Report{Report: spec.Report, Title: spec.Title, Span: label, Rows: rows}, nil
 }
 
 // entities loads the latest state of the resource dataset, applying the
@@ -446,6 +488,23 @@ func windowScopeMatches(scope string, filter map[string]string) bool {
 	}
 
 	return true
+}
+
+// isRollingSpan reports whether span names a trailing window.
+func isRollingSpan(span string) bool {
+	_, ok := rollingWindow(span)
+
+	return ok
+}
+
+// isCalendarSpan reports whether span names a materialized calendar span.
+func isCalendarSpan(span string) bool {
+	switch strings.ToLower(span) {
+	case rollup.SpanDaily, rollup.SpanWeekly, rollup.SpanMonthly:
+		return true
+	default:
+		return false
+	}
 }
 
 // rollingWindow maps the UI filter span (last_24h / last_7d / last_30d) to the

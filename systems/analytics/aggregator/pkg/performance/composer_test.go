@@ -106,3 +106,25 @@ func TestReportWindowLabel(t *testing.T) {
 	assert.Equal(t, "8w", reportWindowLabel(1344*time.Hour))
 	assert.Equal(t, "3d", reportWindowLabel(72*time.Hour))
 }
+
+// Rolling and calendar spans classify distinctly; anything else keeps the
+// configured ReportWindow.
+func TestSpanClassification(t *testing.T) {
+	rolling := []string{"last_24h", "last_7d", "last_30d"}
+	for _, s := range rolling {
+		assert.True(t, isRollingSpan(s), "%s is a rolling span", s)
+		assert.False(t, isCalendarSpan(s), "%s is not a calendar span", s)
+	}
+
+	calendar := []string{"daily", "weekly", "monthly", "DAILY"}
+	for _, s := range calendar {
+		assert.True(t, isCalendarSpan(s), "%s is a calendar span", s)
+		assert.False(t, isRollingSpan(s), "%s is not a rolling span", s)
+	}
+
+	// Anything else keeps the configured ReportWindow.
+	for _, s := range []string{"", "8w", "nonsense"} {
+		assert.False(t, isRollingSpan(s))
+		assert.False(t, isCalendarSpan(s))
+	}
+}

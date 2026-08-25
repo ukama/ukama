@@ -31,14 +31,22 @@ import (
 //   op=COUNT -> number of purchases
 //   op=AVG   -> average purchase value (weighted, exact)
 
-// Revenue (REVENUE @ scope network_id): settled payments with paid_at inside
-// the window, grouped by the network their SIM belongs to. Value = collected
+// Revenue (REVENUE @ scope network_id): payments that became settled in this
+// window, grouped by the network their SIM belongs to. Value = collected
 // cents; components carry count and per-payment min/max. Known networks are
-// zero-filled so a network with no sales reads $0 rather than "—".
+// zero-filled so a network with no sales reads $0 rather than "-".
+//
+// Settlement is a state transition (settled now, not settled one window ago)
+// rather than paid_at falling in the window, so each payment counts once.
 func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
 		return nil, fmt.Errorf("REVENUE: missing input 'payments'")
+	}
+
+	previous, ok := in["payments_prev"]
+	if !ok {
+		return nil, fmt.Errorf("REVENUE: missing input 'payments_prev' (state_prev baseline)")
 	}
 
 	sims, ok := in["sims"]
@@ -72,14 +80,14 @@ func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, err
 	// org-wide row and the org series stays continuous even at $0.
 	ensure("")
 
-	// Zero-fill every known network so one with no sales reads $0, not "—".
+	// Zero-fill every known network so one with no sales reads $0, not "-".
 	for _, n := range networks {
 		if nid := str(n["network_id"]); nid != "" {
 			ensure(nid)
 		}
 	}
 
-	for _, p := range settledIn(payments, win.Start, win.End) {
+	for _, p := range newlySettled(payments, previous) {
 		cents := math.Round(num(p["amount"]) * 100)
 		net := simNet[paymentSim(p)] // "" when the SIM can't be mapped
 
@@ -114,6 +122,39 @@ func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, err
 	}
 
 	return results, nil
+}
+
+// newlySettled returns payments that read settled now and did not one window
+// ago.
+func newlySettled(current, previous []map[string]interface{}) []map[string]interface{} {
+	was := make(map[string]bool, len(previous))
+
+	for _, p := range previous {
+		if !isSettled(str(p["status"])) {
+			continue
+		}
+
+		if k := entityKey(p, "payment_id"); k != "" {
+			was[k] = true
+		}
+	}
+
+	out := make([]map[string]interface{}, 0)
+
+	for _, p := range current {
+		if !isSettled(str(p["status"])) {
+			continue
+		}
+
+		k := entityKey(p, "payment_id")
+		if k == "" || was[k] {
+			continue
+		}
+
+		out = append(out, p)
+	}
+
+	return out
 }
 
 // PaidCustomers (PAID_CUSTOMERS @ scope network_id): distinct SIMs with at

@@ -22,7 +22,8 @@ const (
 	oneMiB = 1024 * 1024
 )
 
-// window covering all of 2026-07-21 UTC.
+// window covering all of 2026-07-21 UTC. Flow KPIs count on first appearance
+// in state, so the bounds only matter for gauges.
 func testWindow() schema.Window {
 	return schema.Window{
 		ID:    1,
@@ -45,13 +46,16 @@ func resultFor(results []Result, networkID string) (float64, bool) {
 func TestDataSold_SumsAllowanceBytesPerNetwork(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
-			// two 1 GB sales on net-a inside the window
-			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
-			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-21T18:00:00Z"},
-			// one 500 MB sale on net-b inside the window
-			{"package_id": "pkg-mb", "network_id": "net-b", "created_at": "2026-07-21T12:00:00Z"},
-			// a sale purchased OUTSIDE the window — must be ignored
-			{"package_id": "pkg-gb", "network_id": "net-a", "created_at": "2026-07-20T23:59:00Z"},
+			// two 1 GB assignments on net-a, new this window
+			{"sim_package_id": "a1", "package_id": "pkg-gb", "network_id": "net-a"},
+			{"sim_package_id": "a2", "package_id": "pkg-gb", "network_id": "net-a"},
+			// one 500 MB assignment on net-b, new this window
+			{"sim_package_id": "b1", "package_id": "pkg-mb", "network_id": "net-b"},
+			// already known one window ago — must NOT be counted again
+			{"sim_package_id": "old", "package_id": "pkg-gb", "network_id": "net-a"},
+		},
+		"sim_packages_prev": {
+			{"sim_package_id": "old"},
 		},
 		"packages": {
 			{"package_id": "pkg-gb", "network_id": "net-a", "data_volume": 1.0, "data_unit": "gigabytes"},
@@ -84,8 +88,9 @@ func TestDataSold_SumsAllowanceBytesPerNetwork(t *testing.T) {
 func TestDataSold_OrgLevelPackageAppliesToNetwork(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
-			{"package_id": "pkg-org", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
+			{"sim_package_id": "a1", "package_id": "pkg-org", "network_id": "net-a"},
 		},
+		"sim_packages_prev": {},
 		"packages": {
 			{"package_id": "pkg-org", "network_id": "", "data_volume": 2.0, "data_unit": "gigabytes"},
 		},
@@ -106,8 +111,9 @@ func TestDataSold_OrgLevelPackageAppliesToNetwork(t *testing.T) {
 func TestDataSold_UnknownUnitTreatedAsBytes(t *testing.T) {
 	in := Datasets{
 		"sim_packages": {
-			{"package_id": "pkg-x", "network_id": "net-a", "created_at": "2026-07-21T09:00:00Z"},
+			{"sim_package_id": "a1", "package_id": "pkg-x", "network_id": "net-a"},
 		},
+		"sim_packages_prev": {},
 		"packages": {
 			{"package_id": "pkg-x", "network_id": "net-a", "data_volume": 1048576.0},
 		},
@@ -122,4 +128,69 @@ func TestDataSold_UnknownUnitTreatedAsBytes(t *testing.T) {
 	a, ok := resultFor(results, "net-a")
 	assert.True(t, ok)
 	assert.Equal(t, float64(1048576), a, "raw volume counted as bytes")
+}
+
+// A sale counts once even when the assignment first appears long after it was
+// created.
+func TestPackageSales_CountsLateObservationExactlyOnce(t *testing.T) {
+	assignment := map[string]interface{}{
+		"sim_package_id": "late-1",
+		"package_id":     "pkg-a",
+		"network_id":     "net-a",
+		// created hours before the window that finally observes it
+		"created_at": "2026-07-20T03:00:00Z",
+	}
+
+	// Window that first sees it: counted.
+	first, err := PackageSales(testWindow(), Datasets{
+		"sim_packages":      {assignment},
+		"sim_packages_prev": {},
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Len(t, first, 1)
+	assert.Equal(t, float64(1), first[0].Value)
+
+	// Every later window already knows it: not counted again.
+	later, err := PackageSales(testWindow(), Datasets{
+		"sim_packages":      {assignment},
+		"sim_packages_prev": {assignment},
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Empty(t, later)
+}
+
+// A content change (queued package activating) is not a new sale.
+func TestPackageSales_ContentChangeIsNotASale(t *testing.T) {
+	results, err := PackageSales(testWindow(), Datasets{
+		"sim_packages": {
+			{"sim_package_id": "p1", "package_id": "pkg-a", "network_id": "net-a", "is_active": true},
+		},
+		"sim_packages_prev": {
+			{"sim_package_id": "p1", "package_id": "pkg-a", "network_id": "net-a", "is_active": false},
+		},
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Empty(t, results)
+}
+
+// _entity_key from the change-log wins over any mapped id field.
+func TestPackageSales_PrefersChangeLogEntityKey(t *testing.T) {
+	results, err := PackageSales(testWindow(), Datasets{
+		"sim_packages": {
+			{FieldEntityKey: "e1", "package_id": "pkg-a", "network_id": "net-a"},
+		},
+		"sim_packages_prev": {
+			{FieldEntityKey: "e1"},
+		},
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Empty(t, results, "same entity key -> already counted")
+}
+
+// Missing the lag-1 baseline is a spec error, not a silent zero.
+func TestPackageSales_RequiresPrevBaseline(t *testing.T) {
+	_, err := PackageSales(testWindow(), Datasets{
+		"sim_packages": {},
+	}, schema.KpiSpec{})
+	assert.Error(t, err)
 }

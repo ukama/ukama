@@ -15,6 +15,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -33,112 +34,86 @@ type Puller struct {
 	rest     *client.Resty
 	retry    int
 	org      string
+	// concurrency bounds the parallel for_each fan-out within one window.
+	concurrency int
 }
 
-func NewPuller(res resolver.Resolver, raw db.RawRepo, org string, retry int, debug bool) *Puller {
+func NewPuller(res resolver.Resolver, raw db.RawRepo, org string, retry, concurrency int, debug bool) *Puller {
+	if concurrency < 1 {
+		concurrency = 1
+	}
+
 	return &Puller{
-		resolver: res,
-		raw:      raw,
-		rest:     client.NewResty(client.WithDebug(debug)),
-		retry:    retry,
-		org:      org,
+		resolver:    res,
+		raw:         raw,
+		rest:        client.NewResty(client.WithDebug(debug)),
+		retry:       retry,
+		org:         org,
+		concurrency: concurrency,
 	}
 }
 
 // Execute runs the pull for one window. Returns the number of records
 // written (for snapshots: change rows).
+//
+// for_each iterations are independent HTTP calls and run concurrently, bounded
+// by concurrency; results are reassembled in spec order.
 func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 	iterations, err := p.iterations(pull, win)
 	if err != nil {
 		return 0, err
 	}
 
-	records := make([]schema.RawRecord, 0)
+	if len(iterations) == 0 {
+		// No parents means no observable state. An empty snapshot would
+		// tombstone every entity, so abstain and let StateAsOf carry the
+		// previous state forward.
+		log.Warnf("dataset %s window %d: parent dataset produced no rows, skipping (previous state retained)",
+			pull.Key, win.ID)
+
+		return 0, nil
+	}
+
 	now := time.Now().UTC()
+	perIteration := make([][]schema.RawRecord, len(iterations))
+	errs := make([]error, len(iterations))
 
-	for _, binds := range iterations {
-		items, err := p.fetchWithRetry(pull, win, binds)
-		if err != nil {
-			// on_error: record — for health-probe style pulls where an
-			// unreachable target IS the signal: write a synthetic row with
-			// the binds + unreachable:true instead of failing the window.
-			if pull.OnError == "record" {
-				log.Warnf("dataset %s window %d iteration %v unreachable, recording: %v",
-					pull.Key, win.ID, binds, err)
+	workers := p.concurrency
+	if workers > len(iterations) {
+		workers = len(iterations)
+	}
 
-				items = []interface{}{map[string]interface{}{"unreachable": true}}
-			} else {
-				return 0, fmt.Errorf("dataset %s window %d iteration %v: %w",
-					pull.Key, win.ID, binds, err)
+	jobs := make(chan int)
+
+	var wg sync.WaitGroup
+
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			for idx := range jobs {
+				perIteration[idx], errs[idx] = p.executeIteration(pull, win, iterations[idx], now)
 			}
+		}()
+	}
+
+	for i := range iterations {
+		jobs <- i
+	}
+
+	close(jobs)
+	wg.Wait()
+
+	records := make([]schema.RawRecord, 0)
+
+	for i := range iterations {
+		if errs[i] != nil {
+			return 0, errs[i]
 		}
 
-		for _, item := range items {
-			fields := MapItem(item, pull.Map, binds)
-
-			// Propagate the unreachable marker from on_error:record rows.
-			if u, ok := item.(map[string]interface{}); ok {
-				if unreachable, ok := u["unreachable"].(bool); ok && unreachable {
-					fields["unreachable"] = true
-				}
-			}
-
-			// Entity key: single mapped field, or a composite ("a,b,c") whose
-			// component values are joined with "|" in spec order.
-			entity := ""
-
-			if entityFields := pull.EntityFields(); len(entityFields) > 0 {
-				parts := make([]string, 0, len(entityFields))
-
-				for _, ef := range entityFields {
-					value := ""
-					if v, ok := fields[ef.Name]; ok && v != nil {
-						value = fmt.Sprintf("%v", v)
-					}
-
-					if value == "" && !ef.Optional {
-						// A snapshot row without its entity key would collapse
-						// the change-log — fail loudly instead of storing junk.
-						return 0, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
-							pull.Key, win.ID, ef.Name)
-					}
-
-					parts = append(parts, value)
-				}
-
-				entity = strings.Join(parts, "|")
-			}
-
-			hash := HashFields(fields)
-
-			payloadJSON, err := json.Marshal(item)
-			if err != nil {
-				return 0, fmt.Errorf("dataset %s: marshaling payload: %w", pull.Key, err)
-			}
-
-			fieldsJSON, err := json.Marshal(fields)
-			if err != nil {
-				return 0, fmt.Errorf("dataset %s: marshaling fields: %w", pull.Key, err)
-			}
-
-			dedup := hash
-			if entity != "" {
-				dedup = entity + ":" + hash
-			}
-
-			records = append(records, schema.RawRecord{
-				OrgID:       p.org,
-				DatasetKey:  pull.Key,
-				WindowID:    win.ID,
-				EntityKey:   entity,
-				ContentHash: hash,
-				DedupKey:    dedup,
-				EventTime:   win.Start,
-				Payload:     string(payloadJSON),
-				Fields:      string(fieldsJSON),
-				IngestedAt:  now,
-			})
-		}
+		records = append(records, perIteration[i]...)
 	}
 
 	if pull.Strategy == schema.StrategyFullSnapshot {
@@ -150,6 +125,98 @@ func (p *Puller) Execute(pull schema.PullSpec, win schema.Window) (int, error) {
 	}
 
 	return len(records), nil
+}
+
+// executeIteration fetches and maps one for_each iteration (or the single
+// empty bind set of a plain pull).
+func (p *Puller) executeIteration(pull schema.PullSpec, win schema.Window,
+	binds map[string]string, now time.Time) ([]schema.RawRecord, error) {
+	items, err := p.fetchWithRetry(pull, win, binds)
+	if err != nil {
+		// on_error: record — for health-probe style pulls where an
+		// unreachable target IS the signal: write a synthetic row with
+		// the binds + unreachable:true instead of failing the window.
+		if pull.OnError != "record" {
+			return nil, fmt.Errorf("dataset %s window %d iteration %v: %w",
+				pull.Key, win.ID, binds, err)
+		}
+
+		log.Warnf("dataset %s window %d iteration %v unreachable, recording: %v",
+			pull.Key, win.ID, binds, err)
+
+		items = []interface{}{map[string]interface{}{"unreachable": true}}
+	}
+
+	records := make([]schema.RawRecord, 0, len(items))
+
+	for _, item := range items {
+		fields := MapItem(item, pull.Map, binds)
+
+		// Propagate the unreachable marker from on_error:record rows.
+		if u, ok := item.(map[string]interface{}); ok {
+			if unreachable, ok := u["unreachable"].(bool); ok && unreachable {
+				fields["unreachable"] = true
+			}
+		}
+
+		// Entity key: single mapped field, or a composite ("a,b,c") whose
+		// component values are joined with "|" in spec order.
+		entity := ""
+
+		if entityFields := pull.EntityFields(); len(entityFields) > 0 {
+			parts := make([]string, 0, len(entityFields))
+
+			for _, ef := range entityFields {
+				value := ""
+				if v, ok := fields[ef.Name]; ok && v != nil {
+					value = fmt.Sprintf("%v", v)
+				}
+
+				if value == "" && !ef.Optional {
+					// A snapshot row without its entity key would collapse
+					// the change-log — fail loudly instead of storing junk.
+					return nil, fmt.Errorf("dataset %s window %d: entity field %q missing/empty in mapped item (check the spec's map paths against the source response)",
+						pull.Key, win.ID, ef.Name)
+				}
+
+				parts = append(parts, value)
+			}
+
+			entity = strings.Join(parts, "|")
+		}
+
+		hash := HashFields(fields)
+
+		payloadJSON, err := json.Marshal(item)
+		if err != nil {
+			return nil, fmt.Errorf("dataset %s: marshaling payload: %w", pull.Key, err)
+		}
+
+		fieldsJSON, err := json.Marshal(fields)
+		if err != nil {
+			return nil, fmt.Errorf("dataset %s: marshaling fields: %w", pull.Key, err)
+		}
+
+		dedup := hash
+		if entity != "" {
+			dedup = entity + ":" + hash
+		}
+
+		records = append(records, schema.RawRecord{
+			OrgID:       p.org,
+			DatasetKey:  pull.Key,
+			WindowID:    win.ID,
+			EntityKey:   entity,
+			ContentHash: hash,
+			DedupKey:    dedup,
+			EventTime:   win.Start,
+			Payload:     string(payloadJSON),
+			Fields:      string(fieldsJSON),
+			IngestedAt:  now,
+		})
+	}
+
+	return records, nil
 }
 
 // iterations builds the bind sets: one empty set for plain pulls, one per

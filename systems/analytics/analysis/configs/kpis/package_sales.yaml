@@ -1,6 +1,7 @@
-# PACKAGE_SALES: sim-package assignments PURCHASED (created_at) in the window
-# (sold count). Counts by purchase time, not activation, so a queued package
-# (future start_date) still counts as sold now — consistent with REVENUE.
+# PACKAGE_SALES: sim-package assignments SOLD (count).
+#
+# Counted in the window the assignment was first observed, not the window its
+# created_at falls in, so each counts once whichever windows the ingest pulled.
 kpi: PACKAGE_SALES
 domain: business
 algo: package_sales@v1
@@ -10,5 +11,10 @@ inputs:
   sim_packages:
     dataset: subscriber.simpackage.listBySim
     fields: [sim_package_id, package_id, sim_id, network_id, created_at]
+  # Lag-1 baseline; the difference is this window's new sales.
+  sim_packages_prev:
+    dataset: subscriber.simpackage.listBySim
+    mode: state_prev
+    fields: [sim_package_id]
 output: { type: int, unit: count, symbol: "" }
 positive_direction: up

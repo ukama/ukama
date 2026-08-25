@@ -42,9 +42,15 @@ type WindowConfig struct {
 
 type EngineConfig struct {
 	// TickInterval is how often the scheduler looks for eligible windows.
+	// Keep it <= Window.W so at most one window closes per tick.
 	TickInterval time.Duration `default:"30s"`
-	// CatchupWindows bounds how far back a cold/behind ingest reaches.
-	CatchupWindows int64 `default:"12"`
+	// Catchup is how far back the engine reaches for unpulled windows. A
+	// duration, so the horizon is independent of Window.W.
+	Catchup time.Duration `default:"1h"`
+	// CatchupWindows pins an explicit window count. 0 = derive from Catchup.
+	CatchupWindows int64 `default:"0"`
+	// Concurrency bounds the parallel for_each fan-out within one window pull.
+	Concurrency int `default:"8"`
 	// SpecsDir holds the source specs (*.yaml).
 	SpecsDir string `default:"configs/sources"`
 	// RetryCount is the per-pull retry budget within an eligibility period.
