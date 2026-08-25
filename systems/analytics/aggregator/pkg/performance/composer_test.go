@@ -19,7 +19,7 @@ import (
 
 func day(d int) time.Time { return time.Date(2026, 7, 1+d, 0, 0, 0, 0, time.UTC) }
 
-func rollup(net, pkg string, value float64, spanStart time.Time) schema.KpiRollup {
+func rollupRow(net, pkg string, value float64, spanStart time.Time) schema.KpiRollup {
 	return schema.KpiRollup{
 		Scope:     schema.CanonicalScope(map[string]string{"network_id": net, "package_id": pkg}),
 		Value:     value,
@@ -34,9 +34,9 @@ func rollup(net, pkg string, value float64, spanStart time.Time) schema.KpiRollu
 
 func TestGroupByEntity(t *testing.T) {
 	rows := []schema.KpiRollup{
-		rollup("n1", "pkgA", 5, day(0)),
-		rollup("n2", "pkgA", 3, day(1)),
-		rollup("n1", "pkgB", 100, day(2)),
+		rollupRow("n1", "pkgA", 5, day(0)),
+		rollupRow("n2", "pkgA", 3, day(1)),
+		rollupRow("n1", "pkgB", 100, day(2)),
 	}
 
 	byEntity := groupByEntity(rows, "package_id")
@@ -48,9 +48,9 @@ func TestGroupByEntity(t *testing.T) {
 // whole point of the rolling report window (stable totals vs a single day).
 func TestFoldValue_SumAcrossWindow(t *testing.T) {
 	rows := []schema.KpiRollup{
-		rollup("n1", "pkgA", 5, day(0)),
-		rollup("n1", "pkgA", 7, day(1)),
-		rollup("n2", "pkgA", 3, day(1)),
+		rollupRow("n1", "pkgA", 5, day(0)),
+		rollupRow("n1", "pkgA", 7, day(1)),
+		rollupRow("n2", "pkgA", 3, day(1)),
 	}
 
 	v, ok := foldValue("SUM", rows)
@@ -69,9 +69,9 @@ func TestFoldValue_SumAcrossWindow(t *testing.T) {
 
 func TestFoldValue_LastByMostRecentDay(t *testing.T) {
 	rows := []schema.KpiRollup{
-		rollup("n1", "pkgA", 10, day(0)),
-		rollup("n1", "pkgA", 42, day(3)), // most recent
-		rollup("n1", "pkgA", 20, day(1)),
+		rollupRow("n1", "pkgA", 10, day(0)),
+		rollupRow("n1", "pkgA", 42, day(3)), // most recent
+		rollupRow("n1", "pkgA", 20, day(1)),
 	}
 
 	v, _ := foldValue("LAST", rows)
@@ -80,7 +80,7 @@ func TestFoldValue_LastByMostRecentDay(t *testing.T) {
 
 func TestComposeCell_Trend(t *testing.T) {
 	col := schema.ReportColumn{Name: "sold", Op: "SUM"}
-	rows := []schema.KpiRollup{rollup("n1", "pkgA", 15, day(1))}
+	rows := []schema.KpiRollup{rollupRow("n1", "pkgA", 15, day(1))}
 
 	// no previous window -> new
 	assert.Equal(t, "new", composeCell(col, rows, 0, false).Trend)
@@ -112,14 +112,14 @@ func TestReportWindowLabel(t *testing.T) {
 func TestSpanClassification(t *testing.T) {
 	rolling := []string{"last_24h", "last_7d", "last_30d"}
 	for _, s := range rolling {
-		assert.True(t, isRollingSpan(s), "%s is a rolling span", s)
-		assert.False(t, isCalendarSpan(s), "%s is not a calendar span", s)
+		assert.Truef(t, isRollingSpan(s), "%s is a rolling span", s)
+		assert.Falsef(t, isCalendarSpan(s), "%s is not a calendar span", s)
 	}
 
 	calendar := []string{"daily", "weekly", "monthly", "DAILY"}
 	for _, s := range calendar {
-		assert.True(t, isCalendarSpan(s), "%s is a calendar span", s)
-		assert.False(t, isRollingSpan(s), "%s is not a rolling span", s)
+		assert.Truef(t, isCalendarSpan(s), "%s is a calendar span", s)
+		assert.Falsef(t, isRollingSpan(s), "%s is not a rolling span", s)
 	}
 
 	// Anything else keeps the configured ReportWindow.

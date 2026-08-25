@@ -21,11 +21,6 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// spanDaily is the rollup span the report aggregates over its rolling window.
-// Daily granularity keeps the read cheap (~one row per scope per day) while
-// still covering the full config window.
-const spanDaily = "daily"
-
 // Composer builds resource performance reports at read time: entity rows
 // from the raw zone's change-log state + KPI cells aggregated over a rolling
 // report window (config, default 8 weeks) of daily rollups. No new state.
@@ -183,7 +178,9 @@ func (c *Composer) Compose(report, span string, scopeFilter map[string]string, t
 
 		var err error
 
-		readSpan := spanDaily
+		// Daily granularity keeps a trailing-window read cheap (~one row per
+		// scope per day) while covering the whole configured window.
+		readSpan := rollup.SpanDaily
 		if calendar != "" {
 			readSpan = calendar
 		}
