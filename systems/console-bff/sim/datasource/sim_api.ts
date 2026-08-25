@@ -149,7 +149,7 @@ class SimApi extends BaseRESTDataSource {
       params: {
         simId: req.simId,
       },
-    }).then(res => dtoToSimResDto(res));
+    }).then(res => dtoToSimResDto(res.sim));
   };
 
   getSimsFromPool = async (
