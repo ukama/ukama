@@ -1,6 +1,6 @@
 version: 1
 name: software_update_controller_partial_rollout
-description: Verify an example app rollout upgrades the online controller while a second controller is offline, then automatically brings the offline controller to the same target after it reconnects.
+description: Verify an example app rollout upgrades the online controller while a second controller is offline, and that the offline controller is rejected outright and stays on its current version after it reconnects.
 seed: 1744158695
 suite: p0
 priority: p0
@@ -73,6 +73,9 @@ phases:
         nodes: controller-site-002-001
         app: example
         tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+        expect:
+          result: failure
+          error_contains: "not available for updates"
       - type: wait
         seconds: 30
     checks:
@@ -94,20 +97,28 @@ phases:
         seconds: 300
     checks:
       - type: node_version_equals
-        type_selector: controller
-        count_per_network: 2
+        nodes: controller-site-001-001
         app: example
         version: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: node_version_equals
+        nodes: controller-site-002-001
+        app: example
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
       - type: node_health_ok
         type_selector: controller
         count_per_network: 2
         app: example
       - type: software_status_equals
-        type_selector: controller
-        count_per_network: 2
+        nodes: controller-site-001-001
         app: example
         status: up_to_date
         current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+      - type: software_status_equals
+        nodes: controller-site-002-001
+        app: example
+        status: update_available
+        current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
         timeout_seconds: 300
       - type: node_operation_status_equals
         type_selector: controller
