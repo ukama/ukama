@@ -819,10 +819,10 @@ static int sim_remove_package_from_sim(bff_client_t *c,
 
     root = NULL;
     snprintf(query, sizeof(query),
-             "mutation { setInactivePackageForSim(data:{"
+             "mutation { unsetPackageInUseForSim(data:{"
              "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
              pkg_esc, sim_esc);
-    if (sim_graphql_call(c, "setInactivePackageForSim", query, &root, err)) {
+    if (sim_graphql_call(c, "unsetPackageInUseForSim", query, &root, err)) {
         if (strstr(err->msg, "package record not found") == NULL) {
             return ULAB_ERR;
         }
@@ -869,7 +869,7 @@ int bff_clear_sim_packages(bff_client_t *c,
     ulab_json_escape(ue->bff_id, sim_esc, sizeof(sim_esc));
     snprintf(query, sizeof(query),
              "query { getPackagesForSim(data:{sim_id:\"%s\"}) { "
-             "sim_id packages { id package_id is_active } } }",
+             "sim_id packages { id package_id is_currently_in_use } } }",
              sim_esc);
 
     root = NULL;
