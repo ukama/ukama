@@ -514,6 +514,12 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
 	}
 
+	if s.FlowState == store.FlowsPaused {
+		log.Infof("Session for Imsi %s is paused; reporting flow as withdrawn", req.Imsi)
+
+		return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "flow withdrawn (service paused)"}
+	}
+
 	fRx, err := c.store.GetFlowForMeter(s.RxMeterID.ID)
 	if err != nil {
 		log.Errorf("Failed to get RX flow for Imsi %s. Error: %v", req.Imsi, err)
