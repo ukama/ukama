@@ -38,7 +38,7 @@ import (
 )
 
 const DefaultUpdateWatchInterval = 32 * time.Second
-const DefaultUpdateWatchExpiry = 10 * time.Minute
+const DefaultUpdateWatchExpiry = 5 * time.Minute
 
 type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
