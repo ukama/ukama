@@ -222,17 +222,28 @@ function GroupCharts({
  *  Reflects the node's operation-lock so the button stays busy for the whole
  *  async reboot (not just the HTTP call) and disables when another user's
  *  operation holds the lock. */
-function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
+function RestartAction({
+  nodeId,
+  name,
+  connectivity,
+}: {
+  nodeId: string;
+  name: string;
+  connectivity?: string | null;
+}) {
   const [open, setOpen] = useState(false);
   const toast = useToast();
   const lock = useNodeOperationStatus(nodeId);
   const op = lock.operation;
   const elapsed = useElapsed(op?.startedAt);
 
+  const offline = (connectivity ?? '').toLowerCase() !== 'online';
   const busyLabel = `Restarting…${elapsed ? ` (${elapsed})` : ''}`;
-  const busyReason = op
-    ? `${prettyOpType(op.type)} in progress${byWhom(op.requestedBy)}`
-    : undefined;
+  const busyReason = offline
+    ? `${name} is offline — it can't be restarted until it reconnects`
+    : op
+      ? `${prettyOpType(op.type)} in progress${byWhom(op.requestedBy)}`
+      : undefined;
 
   const [restart, { loading }] = useRestartNodeMutation({
     onCompleted: (d) => {
@@ -258,7 +269,7 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
   };
   // Guard against firing into a guaranteed conflict if the node turned busy
   // (by someone else) while the confirm dialog was open.
-  const submitBlocked = loading || (lock.busy && !loading);
+  const submitBlocked = offline || loading || (lock.busy && !loading);
 
   return (
     <>
@@ -269,6 +280,7 @@ function RestartAction({ nodeId, name }: { nodeId: string; name: string }) {
         onClick={() => setOpen(true)}
         busy={lock.busy}
         busyLabel={busyLabel}
+        blocked={offline}
         reason={busyReason}
       >
         Restart node
@@ -475,7 +487,13 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
           </span>
         }
         onBack={() => router.push('/network/nodes')}
-        actions={<RestartAction nodeId={n.id} name={nodeName} />}
+        actions={
+          <RestartAction
+            nodeId={n.id}
+            name={nodeName}
+            connectivity={n.connectivity}
+          />
+        }
       />
 
       <div className="detail-subrow">
@@ -503,6 +521,7 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
           apps={apps}
           error={!!softwareSection?.error}
           nodeId={nodeId}
+          connectivity={n.connectivity}
         />
       ) : (
         <div className="detail-grid">
@@ -745,6 +764,7 @@ function NodeApps({
   apps,
   error,
   nodeId,
+  connectivity,
 }: {
   apps: {
     name: string;
@@ -755,8 +775,16 @@ function NodeApps({
   }[];
   error: boolean;
   nodeId: string;
+  connectivity?: string | null;
 }) {
   const toast = useToast();
+  const lock = useNodeOperationStatus(nodeId);
+  const offline = (connectivity ?? '').toLowerCase() !== 'online';
+  const updateBlockedReason = offline
+    ? "Node is offline — software can't be updated until it reconnects"
+    : lock.busy
+      ? `${prettyOpType(lock.operation?.type)} in progress${byWhom(lock.operation?.requestedBy)}`
+      : undefined;
   const [updatingName, setUpdatingName] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
   const [updateSoftware] = useUpdateSoftwareMutation({
@@ -883,7 +911,10 @@ function NodeApps({
                   <Button
                     size="small"
                     variant="contained"
-                    disabled={updatingName !== null}
+                    disabled={
+                      updatingName !== null || offline || lock.busy
+                    }
+                    title={updateBlockedReason}
                     onClick={(e) => {
                       e.stopPropagation(); // don't open the resource dialog
                       runUpdate(app.name, app.desiredVersion);
