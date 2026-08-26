@@ -18,15 +18,13 @@
 
 #define SIMPOOL_HTTP_TIMEOUT_SEC 30L
 
-typedef struct
-{
+typedef struct {
     char *buf;
     size_t len;
 } sim_http_buf_t;
 
 static size_t sim_write_cb(void *ptr, size_t size, size_t nmemb,
-                           void *data)
-{
+                           void *data) {
     sim_http_buf_t *b;
     size_t n;
     char *p;
@@ -34,8 +32,7 @@ static size_t sim_write_cb(void *ptr, size_t size, size_t nmemb,
     b = data;
     n = size * nmemb;
     p = realloc(b->buf, b->len + n + 1);
-    if (p == NULL)
-    {
+    if (p == NULL) {
         return 0;
     }
 
@@ -47,25 +44,21 @@ static size_t sim_write_cb(void *ptr, size_t size, size_t nmemb,
     return n;
 }
 
-static json_t *sim_dig(json_t *root, const char *a, const char *b)
-{
+static json_t *sim_dig(json_t *root, const char *a, const char *b) {
     json_t *x;
     json_t *y;
 
     x = json_object_get(root, a);
-    if (x == NULL)
-    {
+    if (x == NULL) {
         return NULL;
     }
 
-    if (b == NULL)
-    {
+    if (b == NULL) {
         return x;
     }
 
     y = json_object_get(x, b);
-    if (y == NULL)
-    {
+    if (y == NULL) {
         return NULL;
     }
 
@@ -75,20 +68,17 @@ static json_t *sim_dig(json_t *root, const char *a, const char *b)
 static int sim_json_get_str(json_t *obj,
                             const char *key,
                             char *out,
-                            size_t out_len)
-{
+                            size_t out_len) {
     json_t *v;
     const char *s;
 
     v = json_object_get(obj, key);
-    if (v == NULL || !json_is_string(v))
-    {
+    if (v == NULL || !json_is_string(v)) {
         return ULAB_ERR;
     }
 
     s = json_string_value(v);
-    if (s == NULL)
-    {
+    if (s == NULL) {
         return ULAB_ERR;
     }
 
@@ -97,45 +87,39 @@ static int sim_json_get_str(json_t *obj,
 
 static char *sim_read_file_all(const char *path,
                                size_t *len,
-                               ulab_error_t *err)
-{
+                               ulab_error_t *err) {
     FILE *f;
     long n;
     char *buf;
     size_t got;
 
     f = fopen(path, "rb");
-    if (f == NULL)
-    {
+    if (f == NULL) {
         snprintf(err->msg, sizeof(err->msg), "failed to open %s", path);
         return NULL;
     }
 
-    if (fseek(f, 0, SEEK_END) != 0)
-    {
+    if (fseek(f, 0, SEEK_END) != 0) {
         snprintf(err->msg, sizeof(err->msg), "failed to seek %s", path);
         fclose(f);
         return NULL;
     }
 
     n = ftell(f);
-    if (n < 0)
-    {
+    if (n < 0) {
         snprintf(err->msg, sizeof(err->msg), "failed to size %s", path);
         fclose(f);
         return NULL;
     }
 
-    if (fseek(f, 0, SEEK_SET) != 0)
-    {
+    if (fseek(f, 0, SEEK_SET) != 0) {
         snprintf(err->msg, sizeof(err->msg), "failed to rewind %s", path);
         fclose(f);
         return NULL;
     }
 
     buf = calloc(1, (size_t)n + 1);
-    if (buf == NULL)
-    {
+    if (buf == NULL) {
         snprintf(err->msg, sizeof(err->msg), "out of memory reading %s",
                  path);
         fclose(f);
@@ -145,8 +129,7 @@ static char *sim_read_file_all(const char *path,
     got = fread(buf, 1, (size_t)n, f);
     fclose(f);
 
-    if (got != (size_t)n)
-    {
+    if (got != (size_t)n) {
         snprintf(err->msg, sizeof(err->msg), "failed to read %s", path);
         free(buf);
         return NULL;
@@ -160,8 +143,7 @@ static char *sim_read_file_all(const char *path,
 
 static char *sim_base64_encode(const unsigned char *src,
                                size_t len,
-                               ulab_error_t *err)
-{
+                               ulab_error_t *err) {
     static const char tbl[] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
     char *out;
@@ -177,16 +159,14 @@ static char *sim_base64_encode(const unsigned char *src,
 
     out_len = ((len + 2) / 3) * 4;
     out = calloc(1, out_len + 1);
-    if (out == NULL)
-    {
+    if (out == NULL) {
         snprintf(err->msg, sizeof(err->msg), "out of memory base64 encode");
         return NULL;
     }
 
     i = 0;
     j = 0;
-    while (i < len)
-    {
+    while (i < len) {
         a = src[i++];
         have_b = i < len;
         b = have_b ? src[i++] : 0;
@@ -205,19 +185,15 @@ static char *sim_base64_encode(const unsigned char *src,
     return out;
 }
 
-static void sim_shell_quote(FILE *f, const char *s)
-{
+
+static void sim_shell_quote(FILE *f, const char *s) {
     const char *p;
 
     fputc('\'', f);
-    for (p = s; p != NULL && *p != '\0'; p++)
-    {
-        if (*p == '\'')
-        {
+    for (p = s; p != NULL && *p != '\0'; p++) {
+        if (*p == '\'') {
             fprintf(f, "'\\''");
-        }
-        else
-        {
+        } else {
             fputc(*p, f);
         }
     }
@@ -226,18 +202,15 @@ static void sim_shell_quote(FILE *f, const char *s)
 
 static void sim_dump_curl(bff_client_t *c,
                           const char *op,
-                          const char *body)
-{
+                          const char *body) {
     const char *dump;
 
     dump = getenv("UKAMA_LAB_DUMP_BFF_CURL");
-    if (dump == NULL || dump[0] == '\0' || ulab_streq(dump, "0"))
-    {
+    if (dump == NULL || dump[0] == '\0' || ulab_streq(dump, "0")) {
         return;
     }
 
-    if (c == NULL || c->logf == NULL)
-    {
+    if (c == NULL || c->logf == NULL) {
         return;
     }
 
@@ -257,8 +230,7 @@ static void sim_dump_curl(bff_client_t *c,
 }
 
 static char *sim_make_graphql_body(const char *query,
-                                   ulab_error_t *err)
-{
+                                   ulab_error_t *err) {
     char *qesc;
     char *body;
     size_t q_len;
@@ -272,8 +244,7 @@ static char *sim_make_graphql_body(const char *query,
 
     qesc = calloc(1, qesc_len);
     body = calloc(1, body_len);
-    if (qesc == NULL || body == NULL)
-    {
+    if (qesc == NULL || body == NULL) {
         snprintf(err->msg, sizeof(err->msg), "out of memory bff body");
         free(qesc);
         free(body);
@@ -285,8 +256,7 @@ static char *sim_make_graphql_body(const char *query,
                  qesc);
     free(qesc);
 
-    if (n < 0 || (size_t)n >= body_len)
-    {
+    if (n < 0 || (size_t)n >= body_len) {
         snprintf(err->msg, sizeof(err->msg), "bff request body too long");
         free(body);
         return NULL;
@@ -295,30 +265,27 @@ static char *sim_make_graphql_body(const char *query,
     return body;
 }
 
+
 static int sim_ensure_authenticated(bff_client_t *c,
-                                    ulab_error_t *err)
-{
+                                    ulab_error_t *err) {
     const char *session;
     const char *token;
     const char *identifier;
     const char *password;
 
-    if (c == NULL)
-    {
+    if (c == NULL) {
         snprintf(err->msg, sizeof(err->msg), "BFF client is not initialized");
         return ULAB_ERR;
     }
 
-    if (c->authenticated && c->token[0] != '\0')
-    {
+    if (c->authenticated && c->token[0] != '\0') {
         return ULAB_OK;
     }
 
     session = getenv("UKAMA_SESSION_TOKEN");
     token = getenv("UKAMA_BFF_TOKEN");
     if (session != NULL && session[0] != '\0' &&
-        token != NULL && token[0] != '\0')
-    {
+        token != NULL && token[0] != '\0') {
         ulab_copy(c->session_token, sizeof(c->session_token), session);
         ulab_copy(c->token, sizeof(c->token), token);
         c->authenticated = ULAB_TRUE;
@@ -328,8 +295,7 @@ static int sim_ensure_authenticated(bff_client_t *c,
     identifier = getenv("UKAMA_IDENTIFIER");
     password = getenv("UKAMA_PASSWORD");
     if (identifier != NULL && identifier[0] != '\0' &&
-        password != NULL && password[0] != '\0')
-    {
+        password != NULL && password[0] != '\0') {
         return bff_login(c, identifier, password, err);
     }
 
@@ -344,8 +310,7 @@ static int sim_graphql_call(bff_client_t *c,
                             const char *op,
                             const char *query,
                             json_t **out,
-                            ulab_error_t *err)
-{
+                            ulab_error_t *err) {
     CURL *curl;
     CURLcode ret;
     struct curl_slist *hdr;
@@ -365,26 +330,22 @@ static int sim_graphql_call(bff_client_t *c,
     resp.buf = NULL;
     resp.len = 0;
 
-    if (sim_ensure_authenticated(c, err))
-    {
+    if (sim_ensure_authenticated(c, err)) {
         return ULAB_ERR;
     }
 
     body = sim_make_graphql_body(query, err);
-    if (body == NULL)
-    {
+    if (body == NULL) {
         return ULAB_ERR;
     }
 
-    if (c->logf)
-    {
+    if (c->logf) {
         fprintf(c->logf, "--- %s request ---\n%s\n", op, body);
         fflush(c->logf);
     }
 
     curl = curl_easy_init();
-    if (curl == NULL)
-    {
+    if (curl == NULL) {
         snprintf(err->msg, sizeof(err->msg), "%s: curl init failed", op);
         free(body);
         return ULAB_ERR;
@@ -392,8 +353,7 @@ static int sim_graphql_call(bff_client_t *c,
 
     hdr = curl_slist_append(hdr, "Content-Type: application/json");
 
-    if (c->authenticated)
-    {
+    if (c->authenticated) {
         snprintf(token_hdr, sizeof(token_hdr),
                  "X-Session-Token: %s", c->token);
         hdr = curl_slist_append(hdr, token_hdr);
@@ -409,8 +369,7 @@ static int sim_graphql_call(bff_client_t *c,
     sim_dump_curl(c, op, body);
 
     ret = curl_easy_perform(curl);
-    if (ret != CURLE_OK)
-    {
+    if (ret != CURLE_OK) {
         snprintf(err->msg, sizeof(err->msg), "%s: HTTP request failed: %s",
                  op, curl_easy_strerror(ret));
         curl_slist_free_all(hdr);
@@ -424,8 +383,7 @@ static int sim_graphql_call(bff_client_t *c,
     curl_slist_free_all(hdr);
     curl_easy_cleanup(curl);
 
-    if (c->logf)
-    {
+    if (c->logf) {
         fprintf(c->logf, "--- %s response %ld ---\n%s\n", op, code,
                 resp.buf ? resp.buf : "");
         fflush(c->logf);
@@ -433,8 +391,7 @@ static int sim_graphql_call(bff_client_t *c,
 
     free(body);
 
-    if (code < 200 || code >= 300)
-    {
+    if (code < 200 || code >= 300) {
         snprintf(err->msg, sizeof(err->msg), "%s: HTTP %ld", op, code);
         free(resp.buf);
         return ULAB_ERR;
@@ -443,16 +400,14 @@ static int sim_graphql_call(bff_client_t *c,
     root = json_loads(resp.buf ? resp.buf : "", 0, &json_err);
     free(resp.buf);
 
-    if (root == NULL)
-    {
+    if (root == NULL) {
         snprintf(err->msg, sizeof(err->msg), "%s: invalid JSON: %s",
                  op, json_err.text);
         return ULAB_ERR;
     }
 
     errors = json_object_get(root, "errors");
-    if (errors != NULL)
-    {
+    if (errors != NULL) {
         char *err_json;
 
         err_json = json_dumps(errors, JSON_COMPACT);
@@ -465,11 +420,9 @@ static int sim_graphql_call(bff_client_t *c,
         if (ulab_streq(op, "uploadSims") &&
             err_json != NULL &&
             (strstr(err_json, "duplicate key value") != NULL ||
-             strstr(err_json, "idx_iccid") != NULL))
-        {
+             strstr(err_json, "idx_iccid") != NULL)) {
 
-            if (c->logf)
-            {
+            if (c->logf) {
                 fprintf(c->logf,
                         "--- uploadSims duplicate ignored ---\n%s\n",
                         err_json);
@@ -480,8 +433,7 @@ static int sim_graphql_call(bff_client_t *c,
             json_decref(root);
 
             *out = json_object();
-            if (*out == NULL)
-            {
+            if (*out == NULL) {
                 snprintf(err->msg, sizeof(err->msg),
                          "%s: failed to allocate empty JSON response", op);
                 return ULAB_ERR;
@@ -504,36 +456,27 @@ static int sim_graphql_call(bff_client_t *c,
 
 static int sim_copy_pool_iccid(json_t *item,
                                char *out,
-                               size_t out_len)
-{
+                               size_t out_len) {
     json_t *v;
     const char *s;
 
-    if (item == NULL)
-    {
+    if (item == NULL) {
         return ULAB_ERR;
     }
 
-    if (json_is_string(item))
-    {
+    if (json_is_string(item)) {
         s = json_string_value(item);
-    }
-    else if (json_is_object(item))
-    {
+    } else if (json_is_object(item)) {
         v = json_object_get(item, "iccid");
-        if (v == NULL || !json_is_string(v))
-        {
+        if (v == NULL || !json_is_string(v)) {
             return ULAB_ERR;
         }
         s = json_string_value(v);
-    }
-    else
-    {
+    } else {
         return ULAB_ERR;
     }
 
-    if (s == NULL || s[0] == '\0')
-    {
+    if (s == NULL || s[0] == '\0') {
         return ULAB_ERR;
     }
 
@@ -542,31 +485,26 @@ static int sim_copy_pool_iccid(json_t *item,
 
 static int sim_copy_pool_id(json_t *item,
                             char *out,
-                            size_t out_len)
-{
+                            size_t out_len) {
     json_t *v;
     const char *s;
 
-    if (out == NULL || out_len == 0)
-    {
+    if (out == NULL || out_len == 0) {
         return ULAB_ERR;
     }
     out[0] = '\0';
 
-    if (item == NULL || !json_is_object(item))
-    {
+    if (item == NULL || !json_is_object(item)) {
         return ULAB_ERR;
     }
 
     v = json_object_get(item, "id");
-    if (v == NULL || !json_is_string(v))
-    {
+    if (v == NULL || !json_is_string(v)) {
         return ULAB_ERR;
     }
 
     s = json_string_value(v);
-    if (s == NULL || s[0] == '\0')
-    {
+    if (s == NULL || s[0] == '\0') {
         return ULAB_ERR;
     }
 
@@ -576,8 +514,7 @@ static int sim_copy_pool_id(json_t *item,
 int bff_upload_sims_from_csv(bff_client_t *c,
                              const char *csv_path,
                              const char *sim_type,
-                             ulab_error_t *err)
-{
+                             ulab_error_t *err) {
     char *csv;
     char *b64;
     char *b64_esc;
@@ -596,35 +533,30 @@ int bff_upload_sims_from_csv(bff_client_t *c,
     query = NULL;
     root = NULL;
 
-    if (csv_path == NULL || csv_path[0] == '\0')
-    {
+    if (csv_path == NULL || csv_path[0] == '\0') {
         return ULAB_OK;
     }
 
-    if (sim_type == NULL || sim_type[0] == '\0')
-    {
+    if (sim_type == NULL || sim_type[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "missing SIM type");
         return ULAB_ERR;
     }
 
     csv = sim_read_file_all(csv_path, &csv_len, err);
-    if (csv == NULL)
-    {
+    if (csv == NULL) {
         return ULAB_ERR;
     }
 
     b64 = sim_base64_encode((const unsigned char *)csv, csv_len, err);
     free(csv);
-    if (b64 == NULL)
-    {
+    if (b64 == NULL) {
         return ULAB_ERR;
     }
 
     b64_len = strlen(b64);
     b64_esc = calloc(1, (b64_len * 2) + 1);
     type_esc = calloc(1, (strlen(sim_type) * 2) + 1);
-    if (b64_esc == NULL || type_esc == NULL)
-    {
+    if (b64_esc == NULL || type_esc == NULL) {
         snprintf(err->msg, sizeof(err->msg), "out of memory upload sims");
         free(b64);
         free(b64_esc);
@@ -638,8 +570,7 @@ int bff_upload_sims_from_csv(bff_client_t *c,
 
     query_len = strlen(b64_esc) + strlen(type_esc) + 256;
     query = calloc(1, query_len);
-    if (query == NULL)
-    {
+    if (query == NULL) {
         snprintf(err->msg, sizeof(err->msg), "out of memory upload query");
         free(b64_esc);
         free(type_esc);
@@ -653,15 +584,13 @@ int bff_upload_sims_from_csv(bff_client_t *c,
     free(b64_esc);
     free(type_esc);
 
-    if (n < 0 || (size_t)n >= query_len)
-    {
+    if (n < 0 || (size_t)n >= query_len) {
         snprintf(err->msg, sizeof(err->msg), "upload sims query too long");
         free(query);
         return ULAB_ERR;
     }
 
-    if (sim_graphql_call(c, "uploadSims", query, &root, err))
-    {
+    if (sim_graphql_call(c, "uploadSims", query, &root, err)) {
         free(query);
         return ULAB_ERR;
     }
@@ -678,8 +607,7 @@ int bff_get_sims_from_pool(bff_client_t *c,
                            char pool_sim_ids[][ULAB_MAX_ID],
                            size_t max_iccids,
                            size_t *iccid_count,
-                           ulab_error_t *err)
-{
+                           ulab_error_t *err) {
     char type_esc[ULAB_MAX_REF * 2];
     char query[ULAB_MAX_QUERY];
     json_t *root;
@@ -694,16 +622,14 @@ int bff_get_sims_from_pool(bff_client_t *c,
     arr = NULL;
     n = 0;
 
-    if (iccid_count == NULL)
-    {
+    if (iccid_count == NULL) {
         snprintf(err->msg, sizeof(err->msg), "invalid SIM pool count arg");
         return ULAB_ERR;
     }
 
     *iccid_count = 0;
 
-    if (sim_type == NULL || sim_type[0] == '\0')
-    {
+    if (sim_type == NULL || sim_type[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "missing SIM type");
         return ULAB_ERR;
     }
@@ -714,36 +640,28 @@ int bff_get_sims_from_pool(bff_client_t *c,
              "status:UNASSIGNED}) { sims { id iccid } } }",
              type_esc);
 
-    if (sim_graphql_call(c, "getSimsFromPool", query, &root, err))
-    {
+    if (sim_graphql_call(c, "getSimsFromPool", query, &root, err)) {
         return ULAB_ERR;
     }
 
     obj = sim_dig(root, "data", "getSimsFromPool");
-    if (obj != NULL && json_is_object(obj))
-    {
+    if (obj != NULL && json_is_object(obj)) {
         arr = json_object_get(obj, "sims");
-    }
-    else if (obj != NULL && json_is_array(obj))
-    {
+    } else if (obj != NULL && json_is_array(obj)) {
         arr = obj;
     }
 
-    if (arr == NULL || !json_is_array(arr))
-    {
+    if (arr == NULL || !json_is_array(arr)) {
         snprintf(err->msg, sizeof(err->msg),
                  "getSimsFromPool missing sims list");
         json_decref(root);
         return ULAB_ERR;
     }
 
-    for (i = 0; i < json_array_size(arr) && n < max_iccids; i++)
-    {
+    for (i = 0; i < json_array_size(arr) && n < max_iccids; i++) {
         it = json_array_get(arr, i);
-        if (sim_copy_pool_iccid(it, iccids[n], ULAB_MAX_ID) == ULAB_OK)
-        {
-            if (pool_sim_ids != NULL)
-            {
+        if (sim_copy_pool_iccid(it, iccids[n], ULAB_MAX_ID) == ULAB_OK) {
+            if (pool_sim_ids != NULL) {
                 sim_copy_pool_id(it, pool_sim_ids[n], ULAB_MAX_ID);
             }
             n++;
@@ -762,8 +680,7 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
                                const network_t *net,
                                const package_t *pkg,
                                const char *sim_type,
-                               ulab_error_t *err)
-{
+                               ulab_error_t *err) {
     char iccid_esc[ULAB_MAX_ID * 2];
     char net_esc[ULAB_MAX_ID * 2];
     char type_esc[ULAB_MAX_REF * 2];
@@ -775,33 +692,28 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
 
     root = NULL;
 
-    if (ue == NULL || ue->iccid[0] == '\0')
-    {
+    if (ue == NULL || ue->iccid[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "allocateSim missing ICCID");
         return ULAB_ERR;
     }
 
-    if (sub == NULL || sub->bff_id[0] == '\0')
-    {
+    if (sub == NULL || sub->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
                  "allocateSim missing subscriber id");
         return ULAB_ERR;
     }
 
-    if (net == NULL || net->bff_id[0] == '\0')
-    {
+    if (net == NULL || net->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "allocateSim missing network id");
         return ULAB_ERR;
     }
 
-    if (pkg == NULL || pkg->bff_id[0] == '\0')
-    {
+    if (pkg == NULL || pkg->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "allocateSim missing package id");
         return ULAB_ERR;
     }
 
-    if (sim_type == NULL || sim_type[0] == '\0')
-    {
+    if (sim_type == NULL || sim_type[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "allocateSim missing SIM type");
         return ULAB_ERR;
     }
@@ -820,15 +732,13 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
              "status package { packageId isCurrentlyInUse startDate endDate } } }",
              iccid_esc, net_esc, type_esc, pkg_esc, sub_esc);
 
-    if (sim_graphql_call(c, "allocateSim", query, &root, err))
-    {
+    if (sim_graphql_call(c, "allocateSim", query, &root, err)) {
         return ULAB_ERR;
     }
 
     obj = sim_dig(root, "data", "allocateSim");
     if (obj == NULL ||
-        sim_json_get_str(obj, "id", ue->bff_id, sizeof(ue->bff_id)))
-    {
+        sim_json_get_str(obj, "id", ue->bff_id, sizeof(ue->bff_id))) {
         snprintf(err->msg, sizeof(err->msg), "allocateSim missing id");
         json_decref(root);
         return ULAB_ERR;
@@ -839,15 +749,13 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
 
         memset(tmp, 0, sizeof(tmp));
         if (sim_json_get_str(obj, "iccid", tmp, sizeof(tmp)) == ULAB_OK &&
-            tmp[0] != '\0')
-        {
+            tmp[0] != '\0') {
             ulab_copy(ue->iccid, sizeof(ue->iccid), tmp);
         }
 
         memset(tmp, 0, sizeof(tmp));
         if (sim_json_get_str(obj, "imsi", tmp, sizeof(tmp)) == ULAB_OK &&
-            tmp[0] != '\0')
-        {
+            tmp[0] != '\0') {
             ulab_copy(ue->imsi, sizeof(ue->imsi), tmp);
         }
 
@@ -855,13 +763,10 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
             json_t *pkg_obj;
 
             pkg_obj = json_object_get(obj, "package");
-            if (pkg_obj != NULL && json_is_object(pkg_obj))
-            {
+            if (pkg_obj != NULL && json_is_object(pkg_obj)) {
                 memset(tmp, 0, sizeof(tmp));
                 if (sim_json_get_str(pkg_obj, "packageId", tmp,
-                                     sizeof(tmp)) == ULAB_OK &&
-                    tmp[0] != '\0')
-                {
+                    sizeof(tmp)) == ULAB_OK && tmp[0] != '\0') {
                     ulab_copy(ue->sim_package_id,
                               sizeof(ue->sim_package_id), tmp);
                 }
@@ -874,21 +779,18 @@ int bff_allocate_sim_from_pool(bff_client_t *c,
     return ULAB_OK;
 }
 
-static void sim_now_iso(char *out, size_t out_len)
-{
+static void sim_now_iso(char *out, size_t out_len) {
     time_t now;
     struct tm tmv;
     struct tm *tmp;
 
-    if (out == NULL || out_len == 0)
-    {
+    if (out == NULL || out_len == 0) {
         return;
     }
 
     now = time(NULL);
     tmp = gmtime(&now);
-    if (tmp == NULL)
-    {
+    if (tmp == NULL) {
         snprintf(out, out_len, "1970-01-01T00:00:00Z");
         return;
     }
@@ -897,20 +799,19 @@ static void sim_now_iso(char *out, size_t out_len)
     strftime(out, out_len, "%Y-%m-%dT%H:%M:%SZ", &tmv);
 }
 
+
 static int sim_remove_package_from_sim(bff_client_t *c,
                                        const ue_t *ue,
                                        const char *package_id,
-                                       int package_in_use,
-                                       ulab_error_t *err)
-{
+                                       int package_active,
+                                       ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char pkg_esc[ULAB_MAX_ID * 2];
     char query[ULAB_MAX_QUERY];
     json_t *root;
 
     if (ue == NULL || ue->bff_id[0] == '\0' ||
-        package_id == NULL || package_id[0] == '\0')
-    {
+        package_id == NULL || package_id[0] == '\0') {
         return ULAB_OK;
     }
 
@@ -918,22 +819,18 @@ static int sim_remove_package_from_sim(bff_client_t *c,
     ulab_json_escape(package_id, pkg_esc, sizeof(pkg_esc));
 
     root = NULL;
-    if (package_in_use)
-    {
+    if (package_active) {
         snprintf(query, sizeof(query),
                  "mutation { unsetPackageInUseForSim(data:{"
                  "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
                  pkg_esc, sim_esc);
-        if (sim_graphql_call(c, "unsetPackageInUseForSim", query, &root, err))
-        {
+        if (sim_graphql_call(c, "unsetPackageInUseForSim", query, &root, err)) {
             if (strstr(err->msg, "package record not found") == NULL &&
-                strstr(err->msg, "cannot set not in-use package") == NULL)
-            {
+                strstr(err->msg, "cannot set not in-use package") == NULL) {
                 return ULAB_ERR;
             }
         }
-        if (root != NULL)
-        {
+        if (root != NULL) {
             json_decref(root);
             root = NULL;
         }
@@ -943,15 +840,12 @@ static int sim_remove_package_from_sim(bff_client_t *c,
              "mutation { removePackageForSim(data:{"
              "packageId:\"%s\",simId:\"%s\"}) { packageId } }",
              pkg_esc, sim_esc);
-    if (sim_graphql_call(c, "removePackageForSim", query, &root, err))
-    {
-        if (strstr(err->msg, "package record not found") == NULL)
-        {
+    if (sim_graphql_call(c, "removePackageForSim", query, &root, err)) {
+        if (strstr(err->msg, "package record not found") == NULL) {
             return ULAB_ERR;
         }
     }
-    if (root != NULL)
-    {
+    if (root != NULL) {
         json_decref(root);
     }
 
@@ -960,12 +854,11 @@ static int sim_remove_package_from_sim(bff_client_t *c,
 
 int bff_clear_sim_packages(bff_client_t *c,
                            const ue_t *ue,
-                           ulab_error_t *err)
-{
+                           ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char query[ULAB_MAX_QUERY];
     char package_record_ids[32][ULAB_MAX_ID];
-    int package_in_use[32];
+    int package_active[32];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -975,8 +868,7 @@ int bff_clear_sim_packages(bff_client_t *c,
     size_t i;
     size_t count;
 
-    if (ue == NULL || ue->bff_id[0] == '\0')
-    {
+    if (ue == NULL || ue->bff_id[0] == '\0') {
         return ULAB_OK;
     }
 
@@ -987,8 +879,7 @@ int bff_clear_sim_packages(bff_client_t *c,
              sim_esc);
 
     root = NULL;
-    if (sim_graphql_call(c, "getPackagesForSim", query, &root, err))
-    {
+    if (sim_graphql_call(c, "getPackagesForSim", query, &root, err)) {
         return ULAB_ERR;
     }
 
@@ -996,27 +887,23 @@ int bff_clear_sim_packages(bff_client_t *c,
     arr = obj ? json_object_get(obj, "packages") : NULL;
     count = 0;
 
-    if (arr != NULL && json_is_array(arr))
-    {
-        for (i = 0; i < json_array_size(arr) && count < 32; i++)
-        {
+    if (arr != NULL && json_is_array(arr)) {
+        for (i = 0; i < json_array_size(arr) && count < 32; i++) {
             it = json_array_get(arr, i);
             pid = it ? json_object_get(it, "id") : NULL;
             if (pid == NULL || !json_is_string(pid) ||
                 json_string_value(pid) == NULL ||
-                json_string_value(pid)[0] == '\0')
-            {
+                json_string_value(pid)[0] == '\0') {
                 pid = it ? json_object_get(it, "package_id") : NULL;
             }
             if (pid != NULL && json_is_string(pid) &&
                 json_string_value(pid) != NULL &&
-                json_string_value(pid)[0] != '\0')
-            {
+                json_string_value(pid)[0] != '\0') {
                 ulab_copy(package_record_ids[count],
                           sizeof(package_record_ids[count]),
                           json_string_value(pid));
                 act = it ? json_object_get(it, "is_currently_in_use") : NULL;
-                package_in_use[count] = act != NULL && json_is_true(act);
+                package_active[count] = act != NULL && json_is_true(act);
                 count++;
             }
         }
@@ -1024,11 +911,9 @@ int bff_clear_sim_packages(bff_client_t *c,
 
     json_decref(root);
 
-    for (i = 0; i < count; i++)
-    {
+    for (i = 0; i < count; i++) {
         if (sim_remove_package_from_sim(c, ue, package_record_ids[i],
-                                        package_in_use[i], err))
-        {
+                                        package_active[i], err)) {
             return ULAB_ERR;
         }
     }
@@ -1039,8 +924,7 @@ int bff_clear_sim_packages(bff_client_t *c,
 int bff_add_package_to_sim(bff_client_t *c,
                            ue_t *ue,
                            const package_t *pkg,
-                           ulab_error_t *err)
-{
+                           ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char pkg_esc[ULAB_MAX_ID * 2];
     char start_date[32];
@@ -1054,14 +938,12 @@ int bff_add_package_to_sim(bff_client_t *c,
 
     root = NULL;
 
-    if (ue == NULL || ue->bff_id[0] == '\0')
-    {
+    if (ue == NULL || ue->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "addPackagesToSim missing SIM id");
         return ULAB_ERR;
     }
 
-    if (pkg == NULL || pkg->bff_id[0] == '\0')
-    {
+    if (pkg == NULL || pkg->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "addPackagesToSim missing package id");
         return ULAB_ERR;
     }
@@ -1071,30 +953,28 @@ int bff_add_package_to_sim(bff_client_t *c,
     sim_now_iso(start_date, sizeof(start_date));
 
     snprintf(query, sizeof(query),
-             "mutation { addPackagesToSim(data:{sim_id:\"%s\","
+             "mutation { addPackagesToSim(data:{sim_id:\"%s\"," 
              "packages:[{package_id:\"%s\",start_date:\"%s\"}]}) "
              "{ packages { packageId success error } } }",
              sim_esc, pkg_esc, start_date);
 
-    if (sim_graphql_call(c, "addPackagesToSim", query, &root, err))
-    {
+    if (sim_graphql_call(c, "addPackagesToSim", query, &root, err)) {
         return ULAB_ERR;
     }
 
     obj = sim_dig(root, "data", "addPackagesToSim");
     arr = obj ? json_object_get(obj, "packages") : NULL;
-    item = (arr && json_is_array(arr) && json_array_size(arr) > 0) ? json_array_get(arr, 0) : NULL;
+    item = (arr && json_is_array(arr) && json_array_size(arr) > 0) ?
+        json_array_get(arr, 0) : NULL;
 
     success = item ? json_object_get(item, "success") : NULL;
     ok = success && json_is_boolean(success) && json_is_true(success);
 
-    if (!ok)
-    {
+    if (!ok) {
         const char *msg = NULL;
         json_t *e = item ? json_object_get(item, "error") : NULL;
 
-        if (e != NULL && json_is_string(e))
-        {
+        if (e != NULL && json_is_string(e)) {
             msg = json_string_value(e);
         }
 
@@ -1107,8 +987,7 @@ int bff_add_package_to_sim(bff_client_t *c,
     }
 
     if (sim_json_get_str(item, "packageId", ue->sim_package_id,
-                         sizeof(ue->sim_package_id)) != ULAB_OK)
-    {
+        sizeof(ue->sim_package_id)) != ULAB_OK) {
         ulab_copy(ue->sim_package_id, sizeof(ue->sim_package_id),
                   pkg->bff_id);
     }
@@ -1120,8 +999,7 @@ int bff_add_package_to_sim(bff_client_t *c,
 int bff_toggle_sim_status(bff_client_t *c,
                           const ue_t *ue,
                           const char *status,
-                          ulab_error_t *err)
-{
+                          ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char status_esc[ULAB_MAX_REF * 2];
     char query[ULAB_MAX_QUERY];
@@ -1133,14 +1011,12 @@ int bff_toggle_sim_status(bff_client_t *c,
 
     root = NULL;
 
-    if (ue == NULL || ue->bff_id[0] == '\0')
-    {
+    if (ue == NULL || ue->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "toggleSimServiceStatus missing SIM id");
         return ULAB_ERR;
     }
 
-    if (status == NULL || status[0] == '\0')
-    {
+    if (status == NULL || status[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "toggleSimServiceStatus missing status");
         return ULAB_ERR;
     }
@@ -1153,24 +1029,22 @@ int bff_toggle_sim_status(bff_client_t *c,
              "{ success message } }",
              sim_esc, status_esc);
 
-    if (sim_graphql_call(c, "toggleSimServiceStatus", query, &root, err))
-    {
+    if (sim_graphql_call(c, "toggleSimServiceStatus", query, &root, err)) {
         return ULAB_ERR;
     }
 
     obj = sim_dig(root, "data", "toggleSimServiceStatus");
     success = obj ? json_object_get(obj, "success") : NULL;
-    if (success == NULL || !json_is_boolean(success))
-    {
+    if (success == NULL || !json_is_boolean(success)) {
         snprintf(err->msg, sizeof(err->msg),
                  "toggleSimServiceStatus missing boolean success");
         json_decref(root);
         return ULAB_ERR;
     }
-    if (!json_is_true(success))
-    {
+    if (!json_is_true(success)) {
         message = json_object_get(obj, "message");
-        reason = message && json_is_string(message) ? json_string_value(message) : NULL;
+        reason = message && json_is_string(message) ?
+            json_string_value(message) : NULL;
         snprintf(err->msg, sizeof(err->msg),
                  "toggleSimServiceStatus failed%s%.512s",
                  reason && reason[0] ? ": " : "",
@@ -1187,8 +1061,7 @@ int bff_get_sim_status(bff_client_t *c,
                        const ue_t *ue,
                        char *status,
                        size_t status_len,
-                       ulab_error_t *err)
-{
+                       ulab_error_t *err) {
     char sim_esc[ULAB_MAX_ID * 2];
     char query[ULAB_MAX_QUERY];
     json_t *root;
@@ -1196,13 +1069,11 @@ int bff_get_sim_status(bff_client_t *c,
 
     root = NULL;
 
-    if (ue == NULL || ue->bff_id[0] == '\0')
-    {
+    if (ue == NULL || ue->bff_id[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg), "getSim missing SIM id");
         return ULAB_ERR;
     }
-    if (status == NULL || status_len == 0)
-    {
+    if (status == NULL || status_len == 0) {
         snprintf(err->msg, sizeof(err->msg),
                  "getSim missing status output");
         return ULAB_ERR;
@@ -1213,14 +1084,12 @@ int bff_get_sim_status(bff_client_t *c,
              "query { getSim(data:{simId:\"%s\"}) { id status } }",
              sim_esc);
 
-    if (sim_graphql_call(c, "getSim", query, &root, err))
-    {
+    if (sim_graphql_call(c, "getSim", query, &root, err)) {
         return ULAB_ERR;
     }
 
     obj = sim_dig(root, "data", "getSim");
-    if (obj == NULL || sim_json_get_str(obj, "status", status, status_len))
-    {
+    if (obj == NULL || sim_json_get_str(obj, "status", status, status_len)) {
         snprintf(err->msg, sizeof(err->msg),
                  "getSim missing SIM status");
         json_decref(root);
