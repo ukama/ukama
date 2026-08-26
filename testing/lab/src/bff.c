@@ -6459,6 +6459,19 @@ static int bff_cleanup_call(bff_client_t *c,
             return ULAB_OK;
         }
 
+        if (ulab_streq(op, "unsetPackageInUseForSim") &&
+            strstr(err.msg, "cannot set not in-use package") != NULL)
+        {
+            if (c != NULL && c->logf != NULL)
+            {
+                fprintf(c->logf,
+                        "cleanup ignore: %s: package already not in use\n",
+                        op);
+                fflush(c->logf);
+            }
+            return ULAB_OK;
+        }
+
         if (ulab_streq(op, "toggleSimServiceStatus") &&
             strstr(err.msg, "is invalid for turning off") != NULL)
         {
@@ -6513,7 +6526,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     char vars[ULAB_MAX_QUERY];
     char query[ULAB_MAX_QUERY];
     char package_record_ids[32][ULAB_MAX_ID];
-    int package_active[32];
+    int package_in_use[32];
     json_t *root;
     json_t *obj;
     json_t *arr;
@@ -6571,8 +6584,8 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
                 ulab_copy(package_record_ids[count],
                           sizeof(package_record_ids[count]),
                           json_string_value(pid));
-                act = it ? json_object_get(it, "is_active") : NULL;
-                package_active[count] = act != NULL && json_is_true(act);
+                act = it ? json_object_get(it, "is_currently_in_use") : NULL;
+                package_in_use[count] = act != NULL && json_is_true(act);
                 count++;
             }
         }
@@ -6583,7 +6596,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     for (i = 0; i < count; i++)
     {
 
-        if (package_active[i])
+        if (package_in_use[i])
         {
             n = snprintf(query, sizeof(query),
                          "mutation { unsetPackageInUseForSim(data: {"
