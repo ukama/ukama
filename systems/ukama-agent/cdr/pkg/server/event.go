@@ -35,7 +35,7 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch msgbus.UpdateToAcceptFromAllOrg(e.RoutingKey) {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.ukamaagent.asr.activesubscriber.create"):
-		msg, err := cpb.UnmarshalProtoEvent[epb.AsrActivated](e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AsrProfileCreated](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -61,7 +61,7 @@ func (n *CDREventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	return &epb.EventResponse{}, nil
 }
 
-func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrActivated) error {
+func (n *CDREventServer) handleEventActiveSubscriberCreate(key string, msg *epb.AsrProfileCreated) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 	err := n.s.InitUsage(msg.Subscriber.Imsi, msg.Subscriber.Policy)
 	if err != nil {

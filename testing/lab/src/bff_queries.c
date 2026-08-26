@@ -121,18 +121,18 @@ const char *BFF_GET_SUBSCRIBERS_BY_NETWORK =
 "query GetSubscribersByNetwork($networkId: String!) {"
 " getSubscribersByNetwork(networkId: $networkId) { subscribers {"
 " uuid name email phone networkId sim { id status networkId package {"
-" package_id is_active } } } } }";
+" package_id is_currently_in_use } } } } }";
 
 const char *BFF_GET_SUBSCRIBER =
 "query GetSubscriber($subscriberId: String!) {"
 " getSubscriber(subscriberId: $subscriberId) {"
 " uuid name email phone networkId sim { id status networkId package {"
-" package_id is_active } } } }";
+" package_id is_currently_in_use } } } }";
 
 const char *BFF_GET_SIMS_BY_NETWORK =
 "query GetSimsByNetwork($networkId: String!) {"
 " getSimsByNetwork(networkId: $networkId) { sims {"
-" id subscriberId networkId status package { package_id is_active } } } }";
+" id subscriberId networkId status package { package_id is_currently_in_use } } } }";
 
 const char *BFF_SIM_POOL_OVERVIEW =
 "query SimPoolOverview($simType: String!, $limit: Int!) {"
@@ -149,7 +149,7 @@ const char *BFF_ADD_SUBSCRIBER =
 const char *BFF_ALLOCATE_SIM =
 "mutation AllocateSim($data: AllocateSimInputDto!) {"
 " allocateSim(data: $data) { id subscriber_id network_id iccid imsi status "
-" package { packageId isActive startDate endDate } } }";
+" package { packageId isCurrentlyInUse startDate endDate } } }";
 
 const char *BFF_GET_DATA_USAGE =
 "query GetDataUsage($data: SimUsageInputDto!) {"
@@ -162,7 +162,7 @@ const char *BFF_GET_SIMS_USAGE_BY_NETWORK =
 const char *BFF_GET_SIM_PACKAGES =
 "query GetPackagesForSim($data: GetPackagesForSimInputDto!) {"
 " getPackagesForSim(data: $data) { sim_id packages { "
-" id package_id start_date end_date is_active } } }";
+" id package_id start_date end_date is_currently_in_use } } }";
 
 const char *BFF_ADD_PAYMENT =
 "mutation addPayment($data: AddPaymentInputDto!) {"

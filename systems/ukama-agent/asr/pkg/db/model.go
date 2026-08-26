@@ -15,6 +15,7 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -22,11 +23,12 @@ type StatusReason int64
 
 const (
 	UNKNOWN StatusReason = iota
-	ACTIVATION
+	PROFILE_CREATION
 	PACKAGE_UPDATE
-	DEACTIVATION
+	PROFILE_DELETION
 	NO_DATA_AVAILABLE
 	POLICY_FAILURE
+	SERVICE_STATUS_UPDATE
 )
 
 // Represents record in HSS db
@@ -58,6 +60,7 @@ type Asr struct {
 	Policy                  Policy
 	LastStatusChangeAt      time.Time
 	AllowedTimeOfService    int64
+	ServiceStatus           ukama.SimStatus
 	LastStatusChangeReasons StatusReason
 }
 
@@ -99,16 +102,18 @@ type Policy struct {
 
 func StatusReasonFromString(s string) StatusReason {
 	switch s {
-	case "ACTIVATION", "activation":
-		return StatusReason(ACTIVATION)
+	case "PROFILE_CREATION", "profile_creation":
+		return StatusReason(PROFILE_CREATION)
 	case "PACKAGE_UPDATE", "package_update":
 		return StatusReason(PACKAGE_UPDATE)
-	case "DEACTIVATION", "deactivation":
-		return StatusReason(DEACTIVATION)
+	case "PROFILE_DELETION", "profile_deletion":
+		return StatusReason(PROFILE_DELETION)
 	case "NO_DATA_AVAILABLE", "no_data_available":
 		return StatusReason(NO_DATA_AVAILABLE)
 	case "POLICY_FAILURE", "policy_failure":
 		return StatusReason(POLICY_FAILURE)
+	case "SERVICE_STATUS_UPDATE", "service_status_update":
+		return StatusReason(SERVICE_STATUS_UPDATE)
 	default:
 		return StatusReason(UNKNOWN)
 	}
@@ -116,16 +121,18 @@ func StatusReasonFromString(s string) StatusReason {
 
 func (s StatusReason) String() string {
 	switch s {
-	case ACTIVATION:
-		return "ACTIVATION"
+	case PROFILE_CREATION:
+		return "PROFILE_CREATION"
 	case PACKAGE_UPDATE:
 		return "PACKAGE_UPDATE"
-	case DEACTIVATION:
-		return "DEACTIVATION"
+	case PROFILE_DELETION:
+		return "PROFILE_DELETION"
 	case NO_DATA_AVAILABLE:
 		return "NO_DATA_AVAILABLE"
 	case POLICY_FAILURE:
 		return "POLICY_FAILURE"
+	case SERVICE_STATUS_UPDATE:
+		return "SERVICE_STATUS_UPDATE"
 	default:
 		return "UNKNOWN"
 	}
@@ -142,7 +149,7 @@ func (s *StatusReason) Scan(value interface{}) error {
 	}
 
 	switch StatusReason(val) {
-	case ACTIVATION, PACKAGE_UPDATE, DEACTIVATION, NO_DATA_AVAILABLE, POLICY_FAILURE:
+	case PROFILE_CREATION, PACKAGE_UPDATE, PROFILE_DELETION, NO_DATA_AVAILABLE, POLICY_FAILURE, SERVICE_STATUS_UPDATE:
 		*s = StatusReason(val)
 	default:
 		*s = UNKNOWN

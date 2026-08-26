@@ -29,7 +29,7 @@ func TestMemStorage_Get(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		data := map[string]*storage.SimInfo{
@@ -69,7 +69,7 @@ func TestMemStorage_Put(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		s := storage.NewMemStorage(make(map[string]*storage.SimInfo))
@@ -92,7 +92,7 @@ func TestMemStorage_Delete(t *testing.T) {
 		sim := &storage.SimInfo{
 			Iccid:  iccid,
 			Imsi:   imsi,
-			Status: ukama.SimStatusInactive,
+			Status: ukama.SimStatusServiceOff,
 		}
 
 		data := map[string]*storage.SimInfo{

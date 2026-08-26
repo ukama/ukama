@@ -30,6 +30,10 @@ type dataPath struct {
 type DataPath interface {
 	AddNewDataPath(ip string, rxMeter, txMeter, rxRate, txRate, burstSize uint32, rxCookie, txCookie uint64) error
 	DeleteDataPath(ip string, rxMeter, txMeter uint32) error
+	AddFlowOnly(ip string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error
+	DeleteFlowOnly(ip string) error
+	AddMetersOnly(rxMeter, txMeter, rxRate, txRate, burstSize uint32) error
+	DeleteMetersOnly(rxMeter, txMeter uint32) error
 	DataPathCount() uint32
 	DataPathStats(rxCookieID, txCookieID uint64) (uint64, uint64, uint64, uint64, error)
 	Status() Status
@@ -72,6 +76,55 @@ func (d *dataPath) DeleteDataPath(ip string, rxMeter, txMeter uint32) error {
 
 	if d.ueCount > 0 {
 		d.ueCount--
+	}
+
+	return nil
+}
+
+func (d *dataPath) AddFlowOnly(ip string, rxMeter, txMeter uint32, rxCookie, txCookie uint64) error {
+	err := d.ovs.AddFlowForUE(ip, rxMeter, txMeter, rxCookie, txCookie)
+	if err != nil {
+		log.Errorf("Failed to add flow for UE %s. Error: %v", ip, err)
+
+		return fmt.Errorf("failed to add flow for UE %s. Error: %w", ip, err)
+	}
+
+	d.ueCount++
+	return nil
+}
+
+func (d *dataPath) DeleteFlowOnly(ip string) error {
+	err := d.ovs.DeleteFlowForUE(ip)
+	if err != nil {
+		log.Errorf("Failed to delete flow for UE %s. Error: %v", ip, err)
+
+		return fmt.Errorf("failed to delete flow for UE %s. Error: %w", ip, err)
+	}
+
+	if d.ueCount > 0 {
+		d.ueCount--
+	}
+
+	return nil
+}
+
+func (d *dataPath) AddMetersOnly(rxMeter, txMeter, rxRate, txRate, burstSize uint32) error {
+	err := d.ovs.CreateMetersForUE(rxMeter, txMeter, rxRate, txRate, burstSize)
+	if err != nil {
+		log.Errorf("Failed to create meters for UE. Error: %v", err)
+
+		return fmt.Errorf("failed to create meters for UE. Error: %w", err)
+	}
+
+	return nil
+}
+
+func (d *dataPath) DeleteMetersOnly(rxMeter, txMeter uint32) error {
+	err := d.ovs.DeleteMetersForUE(rxMeter, txMeter)
+	if err != nil {
+		log.Errorf("Failed to delete meters for UE. Error: %v", err)
+
+		return fmt.Errorf("failed to delete meters for UE. Error: %w", err)
 	}
 
 	return nil

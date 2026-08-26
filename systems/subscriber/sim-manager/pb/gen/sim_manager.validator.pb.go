@@ -45,7 +45,7 @@ func (this *AllocateSimRequest) Validate() error {
 	}
 	return nil
 }
-func (this *AllocateSimResponse) Validate() error {
+func (this *SimResponse) Validate() error {
 	if this.Sim != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
@@ -53,17 +53,9 @@ func (this *AllocateSimResponse) Validate() error {
 	}
 	return nil
 }
-func (this *GetSimRequest) Validate() error {
+func (this *SimRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
-	return nil
-}
-func (this *GetSimResponse) Validate() error {
-	if this.Sim != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Sim); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Sim", err)
-		}
 	}
 	return nil
 }
@@ -124,19 +116,13 @@ func (this *GetSimsByNetworkResponse) Validate() error {
 	}
 	return nil
 }
-func (this *ToggleSimStatusRequest) Validate() error {
+func (this *ToggleSimServiceStatusRequest) Validate() error {
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
 	return nil
 }
-func (this *ToggleSimStatusResponse) Validate() error {
-	return nil
-}
-func (this *TerminateSimRequest) Validate() error {
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
+func (this *ToggleSimServiceStatusResponse) Validate() error {
 	return nil
 }
 func (this *TerminateSimResponse) Validate() error {
@@ -174,9 +160,6 @@ func (this *AddPackageRequest) Validate() error {
 	if this.PackageId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
 	}
-	return nil
-}
-func (this *AddPackageResponse) Validate() error {
 	return nil
 }
 
@@ -224,17 +207,17 @@ func (this *GetPackagesForSimResponse) Validate() error {
 	return nil
 }
 
-var _regex_SetInactivePackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_SetInactivePackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_PackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+var _regex_PackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
 
-func (this *SetInactivePackageRequest) Validate() error {
-	if !_regex_SetInactivePackageRequest_SimId.MatchString(this.SimId) {
+func (this *PackageRequest) Validate() error {
+	if !_regex_PackageRequest_SimId.MatchString(this.SimId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
 	}
 	if this.SimId == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
 	}
-	if !_regex_SetInactivePackageRequest_PackageId.MatchString(this.PackageId) {
+	if !_regex_PackageRequest_PackageId.MatchString(this.PackageId) {
 		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
 	}
 	if this.PackageId == "" {
@@ -242,73 +225,7 @@ func (this *SetInactivePackageRequest) Validate() error {
 	}
 	return nil
 }
-func (this *SetInactivePackageResponse) Validate() error {
-	return nil
-}
-
-var _regex_SetActivePackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_SetActivePackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *SetActivePackageRequest) Validate() error {
-	if !_regex_SetActivePackageRequest_SimId.MatchString(this.SimId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
-	}
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
-	if !_regex_SetActivePackageRequest_PackageId.MatchString(this.PackageId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
-	}
-	if this.PackageId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
-	}
-	return nil
-}
-func (this *SetActivePackageResponse) Validate() error {
-	return nil
-}
-
-var _regex_TerminatePackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_TerminatePackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *TerminatePackageRequest) Validate() error {
-	if !_regex_TerminatePackageRequest_SimId.MatchString(this.SimId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
-	}
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
-	if !_regex_TerminatePackageRequest_PackageId.MatchString(this.PackageId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
-	}
-	if this.PackageId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
-	}
-	return nil
-}
-func (this *TerminatePackageResponse) Validate() error {
-	return nil
-}
-
-var _regex_RemovePackageRequest_SimId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-var _regex_RemovePackageRequest_PackageId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
-
-func (this *RemovePackageRequest) Validate() error {
-	if !_regex_RemovePackageRequest_SimId.MatchString(this.SimId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.SimId))
-	}
-	if this.SimId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SimId", fmt.Errorf(`value '%v' must not be an empty string`, this.SimId))
-	}
-	if !_regex_RemovePackageRequest_PackageId.MatchString(this.PackageId) {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.PackageId))
-	}
-	if this.PackageId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("PackageId", fmt.Errorf(`value '%v' must not be an empty string`, this.PackageId))
-	}
-	return nil
-}
-func (this *RemovePackageResponse) Validate() error {
+func (this *PackageResponse) Validate() error {
 	return nil
 }
 func (this *UsageRequest) Validate() error {

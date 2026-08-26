@@ -33,7 +33,7 @@ export class GetSimsUsageByNetworkResolver {
 
     const sims = await ctx.dataSources.sim.list(baseURL, {
       networkId,
-      status: "active",
+      status: "service_on",
     });
     const items = (sims.sims ?? []).filter((s: SimDto) => s?.id && s?.iccid);
 

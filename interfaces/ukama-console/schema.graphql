@@ -1227,7 +1227,7 @@ type SimPackageDto {
   package_id: String!
   start_date: String!
   end_date: String!
-  is_active: Boolean!
+  is_currently_in_use: Boolean!
   created_at: String!
   updated_at: String!
 }
@@ -1713,7 +1713,7 @@ type SimToPackagesDto {
   package_id: String!
   start_date: String!
   end_date: String!
-  is_active: Boolean!
+  is_currently_in_use: Boolean!
 }
 
 input GetPackagesForSimInputDto {
@@ -1745,9 +1745,11 @@ type SimPackage {
   packageId: String!
   startDate: String!
   endDate: String!
+  initialData: String!
+  usedDataAtExpiry: String!
   defaultDuration: String!
-  isActive: Boolean!
-  asExpired: Boolean!
+  isCurrentlyInUse: Boolean!
+  isExpired: Boolean!
 }
 
 input GetSimInputDto {
@@ -1908,8 +1910,8 @@ type Mutation {
   deleteSim(data: DeleteSimInputDto!): DeleteSimResDto!
   deleteSimFromPool(simId: String!): CBooleanResponse!
   removePackageForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
-  setInactivePackageForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
-  toggleSimStatus(data: ToggleSimStatusInputDto!): SimStatusResDto!
+  toggleSimServiceStatus(data: ToggleSimServiceStatusInputDto!): SimStatusResDto!
+  unsetPackageInUseForSim(data: RemovePackageFormSimInputDto!): RemovePackageFromSimResDto!
   uploadSims(data: UploadSimsInputDto!): UploadSimsResDto!
   addSite(data: AddSiteInputDto!): SiteDto!
   deleteSite(id: String!): CBooleanResponse!
@@ -2152,7 +2154,7 @@ type SimAllocatePackageDto {
   packageId: String
   startDate: String
   endDate: String
-  isActive: Boolean
+  isCurrentlyInUse: Boolean
 }
 
 input AllocateSimInputDto {
@@ -2186,7 +2188,7 @@ type SimStatusResDto {
   message: String
 }
 
-input ToggleSimStatusInputDto {
+input ToggleSimServiceStatusInputDto {
   sim_id: String!
   status: String!
 }

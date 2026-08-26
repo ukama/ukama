@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	//"github.com/ukama/ukama/systems/init/lookup/gen/mocks"
-
 	pb "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen"
 	amocks "github.com/ukama/ukama/systems/ukama-agent/asr/pb/gen/mocks"
 )
@@ -26,21 +24,21 @@ var network = "40987edb-ebb6-4f84-a27c-99db7c136127"
 // var orgId = "880f7c63-eb57-461a-b514-248ce91e9b3e"
 var packageId = "8adcdfb4-ed30-405d-b32f-d0b2dda4a1e0"
 
-func TestAsrClient_Activate(t *testing.T) {
+func TestAsrClient_CreateProfile(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 	l := &Asr{
 		client: m,
 	}
 
-	pReq := &pb.ActivateReq{
+	pReq := &pb.CreateProfileReq{
 		Iccid:     iccid,
 		NetworkId: network,
 		PackageId: packageId,
 	}
 
-	m.On("Activate", mock.Anything, pReq).Return(&pb.ActivateResp{}, nil)
+	m.On("CreateProfile", mock.Anything, pReq).Return(&pb.CreateProfileResp{}, nil)
 
-	_, err := l.Activate(pReq)
+	_, err := l.CreateProfile(pReq)
 	assert.NoError(t, err)
 }
 
@@ -101,20 +99,20 @@ func TestAsrClient_Read(t *testing.T) {
 	}
 }
 
-func TestAsrClient_Inactivate(t *testing.T) {
+func TestAsrClient_DeleteProfile(t *testing.T) {
 	m := &amocks.AsrRecordServiceClient{}
 
 	l := &Asr{
 		client: m,
 	}
 
-	pReq := &pb.InactivateReq{
+	pReq := &pb.DeleteProfileReq{
 		Iccid: iccid,
 	}
 
-	m.On("Inactivate", mock.Anything, pReq).Return(&pb.InactivateResp{}, nil)
+	m.On("DeleteProfile", mock.Anything, pReq).Return(&pb.DeleteProfileResp{}, nil)
 
-	_, err := l.Inactivate(pReq)
+	_, err := l.DeleteProfile(pReq)
 	assert.NoError(t, err)
 }
 

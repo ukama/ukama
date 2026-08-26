@@ -36,7 +36,7 @@ func NewUkamaAgentAdapter(ukamaAgentHost string, debug bool) (*UkamaAgentAdaper,
 
 func (u *UkamaAgentAdaper) BindSim(ctx context.Context, req client.AgentRequestData) (any, error) {
 	// think of how to use ctx with restclient
-	return u.client.BindSim(req)
+	return u.client.CreateProfile(req)
 }
 
 func (u *UkamaAgentAdaper) GetSim(ctx context.Context, iccid string) (any, error) {
@@ -50,13 +50,11 @@ func (u *UkamaAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, 
 }
 
 func (u *UkamaAgentAdaper) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
-	// think of how to use ctx with restclient
-	return u.client.ActivateSim(req)
+	return nil
 }
 
 func (u *UkamaAgentAdaper) DeactivateSim(ctx context.Context, req client.AgentRequestData) error {
-	// think of how to use ctx with restclient
-	return u.client.DeactivateSim(req)
+	return nil
 }
 
 func (u *UkamaAgentAdaper) UpdatePackage(ctx context.Context, req client.AgentRequestData) error {
@@ -64,9 +62,14 @@ func (u *UkamaAgentAdaper) UpdatePackage(ctx context.Context, req client.AgentRe
 	return u.client.UpdatePackage(req)
 }
 
-func (u *UkamaAgentAdaper) TerminateSim(ctx context.Context, iccid string) error {
+func (u *UkamaAgentAdaper) Update(ctx context.Context, req client.AgentRequestData) error {
 	// think of how to use ctx with restclient
-	return u.client.TerminateSim(iccid)
+	return u.client.Update(req)
+}
+
+func (u *UkamaAgentAdaper) TerminateSim(ctx context.Context, req client.AgentRequestData) error {
+	// think of how to use ctx with restclient
+	return u.client.DeleteProfile(req)
 }
 
 func (t *UkamaAgentAdaper) Close() {

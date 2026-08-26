@@ -7,12 +7,12 @@
 - [Directory structure](#directory-structure)
 - [How to use?](#how-to)
  - [asr.proto](#asr.proto)
-   - [ActivateReq Messages](#ukama.subscriber.asr.v1.ActivateReq)
-   - [ActivateResp Messages](#ukama.subscriber.asr.v1.ActivateResp)
+   - [CreateProfileReq Messages](#ukama.subscriber.asr.v1.CreateProfileReq)
+   - [CreateProfileResp Messages](#ukama.subscriber.asr.v1.CreateProfileResp)
    - [Apn Messages](#ukama.subscriber.asr.v1.Apn)
    - [Guti Messages](#ukama.subscriber.asr.v1.Guti)
-   - [InactivateReq Messages](#ukama.subscriber.asr.v1.InactivateReq)
-   - [InactivateResp Messages](#ukama.subscriber.asr.v1.InactivateResp)
+   - [DeleteProfileReq Messages](#ukama.subscriber.asr.v1.DeleteProfileReq)
+   - [DeleteProfileResp Messages](#ukama.subscriber.asr.v1.DeleteProfileResp)
    - [ReadReq Messages](#ukama.subscriber.asr.v1.ReadReq)
    - [ReadResp Messages](#ukama.subscriber.asr.v1.ReadResp)
    - [Record Messages](#ukama.subscriber.asr.v1.Record)
@@ -34,8 +34,8 @@
 <a name="ukama.subscriber.asr.v1.AsrRecordService"></a>
 
 # ASR aka Active Subscriber Registry
-ASR maintains the record of all the active subscribers of a organization. All the network with in the organization share same ASR.
-Subscriber is added to ASr as soon as its activated and removed from ASR as soon as its deactivated.
+ASR maintains the record of all the active subscribers of a organization. All the network within the organization share same ASR.
+Subscriber is added to ASR as soon as it has one sim allocated and removed from ASR as soon as its last sim is terminated.
 
 ASR has REST ineterfaces to the servics like 
 -  Factory, for reading sim data
@@ -45,8 +45,8 @@ ASR has REST ineterfaces to the servics like
 For now subscriber can only be a part on one network under organization. If he needs to join other network a new sim needs to be allocated.
 
 RPC exposed by ASR
-- Activate
-- Inactivate
+- CreateProfile
+- DeleteProfile
 - UpdatePackage
 - UpdateGuti
 - UpdateTai
@@ -56,8 +56,8 @@ RPC exposed by ASR
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
-| Activate | [ActivateReq](#ukama.subscriber.asr.v1.ActivateReq) | [ActivateResp](#ukama.subscriber.asr.v1.ActivateReq) | Use this RPC to activate or add a new subscriber to ASR |
-| Inactivate | [InactivateReq](#ukama.subscriber.asr.v1.InactivateReq) | [InactivateResp](#ukama.subscriber.asr.v1.InactivateReq) | Use this RPC to inactivate or remove a subscriber to ASR |
+| CreateProfile | [CreateProfileReq](#ukama.subscriber.asr.v1.CreateProfileReq) | [CreateProfileResp](#ukama.subscriber.asr.v1.CreateProfileReq) | Use this RPC to add a new subscriber to ASR |
+| DeleteProfile | [DeleteProfileReq](#ukama.subscriber.asr.v1.DeleteProfileReq) | [DeleteProfileResp](#ukama.subscriber.asr.v1.DeleteProfileReq) | Use this RPC to remove a subscriber to ASR |
 | UpdatePackage | [UpdatePackageReq](#ukama.subscriber.asr.v1.UpdatePackageReq) | [UpdatePackageResp](#ukama.subscriber.asr.v1.UpdatePackageReq) | Use this RPC to update a subscriber package in ASR |
 | UpdateGuti | [UpdateGutiReq](#ukama.subscriber.asr.v1.UpdateGutiReq) | [UpdateGutiResp](#ukama.subscriber.asr.v1.UpdateGutiReq) | This RPC is called when a Update GUTI message is sent by node |
 | UpdateTai | [UpdateTaiReq](#ukama.subscriber.asr.v1.UpdateTaiReq) | [UpdateTaiResp](#ukama.subscriber.asr.v1.UpdateTaiReq) | This RPC is called when a Update TAI message is sent by node |
@@ -125,9 +125,9 @@ make
 
 
 
-<a name="ukama.subscriber.asr.v1.ActivateReq"></a>
+<a name="ukama.subscriber.asr.v1.CreateProfileReq"></a>
 
-### ActivateReq
+### CreateProfileReq
 
 
 
@@ -140,9 +140,9 @@ make
 
 
 
-<a name="ukama.subscriber.asr.v1.ActivateResp"></a>
+<a name="ukama.subscriber.asr.v1.CreateProfileResp"></a>
 
-### ActivateResp
+### CreateProfileResp
 Empty
 
 
@@ -177,9 +177,9 @@ Empty
 
 
 
-<a name="ukama.subscriber.asr.v1.InactivateReq"></a>
+<a name="ukama.subscriber.asr.v1.DeleteProfileReq"></a>
 
-### InactivateReq
+### DeleteProfileReq
 Could be called by subscriber manager with ICCID and by billing service with imsi
 
 
@@ -191,9 +191,9 @@ Could be called by subscriber manager with ICCID and by billing service with ims
 
 
 
-<a name="ukama.subscriber.asr.v1.InactivateResp"></a>
+<a name="ukama.subscriber.asr.v1.DeleteProfileResp"></a>
 
-### InactivateResp
+### DeleteProfileResp
 Empty
 
 

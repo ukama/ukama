@@ -12,6 +12,42 @@ type DataPath struct {
 	mock.Mock
 }
 
+// AddFlowOnly provides a mock function with given fields: ip, rxMeter, txMeter, rxCookie, txCookie
+func (_m *DataPath) AddFlowOnly(ip string, rxMeter uint32, txMeter uint32, rxCookie uint64, txCookie uint64) error {
+	ret := _m.Called(ip, rxMeter, txMeter, rxCookie, txCookie)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddFlowOnly")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, uint32, uint32, uint64, uint64) error); ok {
+		r0 = rf(ip, rxMeter, txMeter, rxCookie, txCookie)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// AddMetersOnly provides a mock function with given fields: rxMeter, txMeter, rxRate, txRate, burstSize
+func (_m *DataPath) AddMetersOnly(rxMeter uint32, txMeter uint32, rxRate uint32, txRate uint32, burstSize uint32) error {
+	ret := _m.Called(rxMeter, txMeter, rxRate, txRate, burstSize)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddMetersOnly")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint32, uint32, uint32, uint32, uint32) error); ok {
+		r0 = rf(rxMeter, txMeter, rxRate, txRate, burstSize)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // AddNewDataPath provides a mock function with given fields: ip, rxMeter, txMeter, rxRate, txRate, burstSize, rxCookie, txCookie
 func (_m *DataPath) AddNewDataPath(ip string, rxMeter uint32, txMeter uint32, rxRate uint32, txRate uint32, burstSize uint32, rxCookie uint64, txCookie uint64) error {
 	ret := _m.Called(ip, rxMeter, txMeter, rxRate, txRate, burstSize, rxCookie, txCookie)
@@ -108,6 +144,42 @@ func (_m *DataPath) DeleteDataPath(ip string, rxMeter uint32, txMeter uint32) er
 	var r0 error
 	if rf, ok := ret.Get(0).(func(string, uint32, uint32) error); ok {
 		r0 = rf(ip, rxMeter, txMeter)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteFlowOnly provides a mock function with given fields: ip
+func (_m *DataPath) DeleteFlowOnly(ip string) error {
+	ret := _m.Called(ip)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteFlowOnly")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(ip)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// DeleteMetersOnly provides a mock function with given fields: rxMeter, txMeter
+func (_m *DataPath) DeleteMetersOnly(rxMeter uint32, txMeter uint32) error {
+	ret := _m.Called(rxMeter, txMeter)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteMetersOnly")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(uint32, uint32) error); ok {
+		r0 = rf(rxMeter, txMeter)
 	} else {
 		r0 = ret.Error(0)
 	}

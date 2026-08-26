@@ -10,6 +10,7 @@ package reconciler
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -17,8 +18,6 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 )
 
-// ReconcileSite drives service/radio actions until SiteState (device-reported, external)
-// matches SiteIntent. This service never writes SiteState.
 func (r *Reconciler) ReconcileSite(ctx context.Context, siteID string, force bool) error {
 	intent, err := r.getIntent(siteID)
 	if err != nil {
@@ -32,16 +31,33 @@ func (r *Reconciler) ReconcileSite(ctx context.Context, siteID string, force boo
 	if err != nil {
 		return err
 	}
-	if flight != nil && flight.IsTerminal() {
-		return nil
-	}
 
 	state, err := r.states.Get(siteID)
 	if err != nil {
 		return err
 	}
 	if intentMatchesState(intent, state) {
-		return r.markFlightStatus(intent, db.IntentFlightStatusSucceeded)
+		return r.markConverged(intent, flight)
+	}
+
+	if flight != nil && flight.IsTerminal() {
+		if !force && !r.rearmDue(flight) {
+			return nil
+		}
+
+		log.Infof("site-controller: site %s drifted from intent %s after a %s flight, re-arming",
+			siteID, intent.ID, flight.Status)
+
+		if err := r.resetIntentReconcile(intent); err != nil {
+			return err
+		}
+
+		flight, err = r.getFlight(intent)
+		if err != nil {
+			return err
+		}
+
+		force = true
 	}
 
 	if r.flightExpired(flight) {
@@ -96,28 +112,65 @@ func (r *Reconciler) finishReconcileAttempt(siteID string, intent *db.SiteIntent
 }
 
 func (r *Reconciler) applyIntentState(ctx context.Context, intent *db.SiteIntent, state *db.SiteState) error {
-	siteID := intent.SiteID
 	radioMismatch := !radioStateMatches(intent.DesiredRadio, stateRadio(state))
 	serviceMismatch := !serviceStateMatches(intent.DesiredService, stateService(state))
 	if !radioMismatch && !serviceMismatch {
 		return nil
 	}
 
-	if intent.DesiredService == StateOn && serviceMismatch {
+	var errs []error
+
+	if radioMismatch {
+		if err := r.applyRadioState(ctx, intent); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if serviceMismatch {
+		if err := r.applyServiceState(ctx, intent); err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	return errors.Join(errs...)
+}
+
+func (r *Reconciler) applyRadioState(ctx context.Context, intent *db.SiteIntent) error {
+	siteID := intent.SiteID
+
+	if intent.DesiredRadio == StateOn {
+		if err := r.ensureRadioPoe(ctx, siteID); err != nil {
+			return fmt.Errorf("ensure radio poe: %w", err)
+		}
+	}
+
+	if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
+		return fmt.Errorf("radio action: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Reconciler) applyServiceState(ctx context.Context, intent *db.SiteIntent) error {
+	siteID := intent.SiteID
+
+	if intent.DesiredService == StateOn {
 		if err := r.ensureCriticalPoe(ctx, siteID); err != nil {
 			return fmt.Errorf("ensure critical poe: %w", err)
 		}
 	}
 
-	if radioMismatch {
-		if err := r.applyRadio(ctx, siteID, intent.DesiredRadio); err != nil {
-			return fmt.Errorf("radio action: %w", err)
-		}
+	if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
+		return fmt.Errorf("service action: %w", err)
 	}
-	if serviceMismatch {
-		if err := r.applyService(ctx, siteID, intent.DesiredService); err != nil {
-			return fmt.Errorf("service action: %w", err)
-		}
+
+	if err := r.states.Upsert(&db.SiteState{
+		SiteID:       siteID,
+		ServiceState: expectedServiceState(intent.DesiredService),
+		Reason:       reasonServiceApplied,
+	}); err != nil {
+		return fmt.Errorf("record applied service state: %w", err)
 	}
+
 	return nil
 }

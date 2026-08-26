@@ -1,9 +1,6 @@
 version: 1
 name: p0-expiration-limit-blocks-traffic
-description: >-
-  Verify service is unavailable after the BFF-provided package end date and no
-  usage is added when unused allowance remains and no queued entitlement
-  exists.
+description: Verify service is unavailable after the BFF-provided package end date and no usage is added when unused allowance remains and no queued entitlement exists.
 seed: 4304
 suite: p0
 priority: p0

@@ -132,9 +132,9 @@ describe("commerce derivations (Phase 3)", () => {
       pay("70", "success", "2026-06-01", "invoice", "p1"), // not a package
     ];
     const sims = [
-      { packageId: "p1", isActive: true },
-      { packageId: "p1", isActive: true },
-      { packageId: "p2", isActive: false },
+      { packageId: "p1", isCurrentlyInUse: true },
+      { packageId: "p1", isCurrentlyInUse: true },
+      { packageId: "p2", isCurrentlyInUse: false },
     ];
     const stats = derivePlanStats(plans, payments, sims);
     expect(stats[0]).toMatchObject({

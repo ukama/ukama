@@ -12,9 +12,9 @@ type GutiRepo struct {
 	mock.Mock
 }
 
-// GetImsi provides a mock function with given fields: guti
-func (_m *GutiRepo) GetImsi(guti string) (string, error) {
-	ret := _m.Called(guti)
+// GetImsi provides a mock function with given fields: plmnId, mmegi, mmec, mTmsi
+func (_m *GutiRepo) GetImsi(plmnId string, mmegi uint32, mmec uint32, mTmsi uint32) (string, error) {
+	ret := _m.Called(plmnId, mmegi, mmec, mTmsi)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetImsi")
@@ -22,17 +22,17 @@ func (_m *GutiRepo) GetImsi(guti string) (string, error) {
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (string, error)); ok {
-		return rf(guti)
+	if rf, ok := ret.Get(0).(func(string, uint32, uint32, uint32) (string, error)); ok {
+		return rf(plmnId, mmegi, mmec, mTmsi)
 	}
-	if rf, ok := ret.Get(0).(func(string) string); ok {
-		r0 = rf(guti)
+	if rf, ok := ret.Get(0).(func(string, uint32, uint32, uint32) string); ok {
+		r0 = rf(plmnId, mmegi, mmec, mTmsi)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(guti)
+	if rf, ok := ret.Get(1).(func(string, uint32, uint32, uint32) error); ok {
+		r1 = rf(plmnId, mmegi, mmec, mTmsi)
 	} else {
 		r1 = ret.Error(1)
 	}

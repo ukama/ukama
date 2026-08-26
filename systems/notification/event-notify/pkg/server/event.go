@@ -199,13 +199,13 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 		}
 		return handleEventNodeOffline(es, msg, &c)
 
-	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivate]):
-		c := evt.EventToEventConfig[evt.EventSimActivate]
-		msg, err := epb.UnmarshalEventSimActivation(e.Msg, c.Name)
+	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimServiceOn]):
+		c := evt.EventToEventConfig[evt.EventSimServiceOn]
+		msg, err := epb.UnmarshalEventSimServiceOn(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
-		return handleEventSimActivate(es, msg, &c)
+		return handleEventSimServiceOn(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
@@ -581,7 +581,7 @@ func handleEventNodeOffline(es *EventToNotifyEventServer, msg *epb.NodeOfflineEv
 	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventSimActivate(es *EventToNotifyEventServer, msg *epb.EventSimActivation, c *evt.EventConfig) (*epb.EventResponse, error) {
+func handleEventSimServiceOn(es *EventToNotifyEventServer, msg *epb.EventSimServiceOn, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)

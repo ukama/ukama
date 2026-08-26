@@ -114,27 +114,27 @@ func (x *Subscriber) GetSimPackage() string {
 	return ""
 }
 
-type AsrActivated struct {
+type AsrProfileCreated struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Subscriber    *Subscriber            `protobuf:"bytes,1,opt,name=Subscriber,proto3" json:"Subscriber,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AsrActivated) Reset() {
-	*x = AsrActivated{}
+func (x *AsrProfileCreated) Reset() {
+	*x = AsrProfileCreated{}
 	mi := &file_events_asr_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AsrActivated) String() string {
+func (x *AsrProfileCreated) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AsrActivated) ProtoMessage() {}
+func (*AsrProfileCreated) ProtoMessage() {}
 
-func (x *AsrActivated) ProtoReflect() protoreflect.Message {
+func (x *AsrProfileCreated) ProtoReflect() protoreflect.Message {
 	mi := &file_events_asr_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -146,39 +146,39 @@ func (x *AsrActivated) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AsrActivated.ProtoReflect.Descriptor instead.
-func (*AsrActivated) Descriptor() ([]byte, []int) {
+// Deprecated: Use AsrProfileCreated.ProtoReflect.Descriptor instead.
+func (*AsrProfileCreated) Descriptor() ([]byte, []int) {
 	return file_events_asr_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *AsrActivated) GetSubscriber() *Subscriber {
+func (x *AsrProfileCreated) GetSubscriber() *Subscriber {
 	if x != nil {
 		return x.Subscriber
 	}
 	return nil
 }
 
-type AsrInactivated struct {
+type AsrProfileDeleted struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Subscriber    *Subscriber            `protobuf:"bytes,1,opt,name=Subscriber,proto3" json:"Subscriber,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *AsrInactivated) Reset() {
-	*x = AsrInactivated{}
+func (x *AsrProfileDeleted) Reset() {
+	*x = AsrProfileDeleted{}
 	mi := &file_events_asr_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *AsrInactivated) String() string {
+func (x *AsrProfileDeleted) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*AsrInactivated) ProtoMessage() {}
+func (*AsrProfileDeleted) ProtoMessage() {}
 
-func (x *AsrInactivated) ProtoReflect() protoreflect.Message {
+func (x *AsrProfileDeleted) ProtoReflect() protoreflect.Message {
 	mi := &file_events_asr_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -190,12 +190,12 @@ func (x *AsrInactivated) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use AsrInactivated.ProtoReflect.Descriptor instead.
-func (*AsrInactivated) Descriptor() ([]byte, []int) {
+// Deprecated: Use AsrProfileDeleted.ProtoReflect.Descriptor instead.
+func (*AsrProfileDeleted) Descriptor() ([]byte, []int) {
 	return file_events_asr_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *AsrInactivated) GetSubscriber() *Subscriber {
+func (x *AsrProfileDeleted) GetSubscriber() *Subscriber {
 	if x != nil {
 		return x.Subscriber
 	}
@@ -262,12 +262,12 @@ const file_events_asr_proto_rawDesc = "" +
 	"\x03Org\x18\x05 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x03org\x12!\n" +
 	"\x06Policy\x18\x06 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x06policy\x12*\n" +
 	"\n" +
-	"SimPackage\x18\a \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\vsim_package\"K\n" +
-	"\fAsrActivated\x12;\n" +
+	"SimPackage\x18\a \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\vsim_package\"P\n" +
+	"\x11AsrProfileCreated\x12;\n" +
 	"\n" +
 	"Subscriber\x18\x01 \x01(\v2\x1b.ukama.events.v1.SubscriberR\n" +
-	"Subscriber\"M\n" +
-	"\x0eAsrInactivated\x12;\n" +
+	"Subscriber\"P\n" +
+	"\x11AsrProfileDeleted\x12;\n" +
 	"\n" +
 	"Subscriber\x18\x01 \x01(\v2\x1b.ukama.events.v1.SubscriberR\n" +
 	"Subscriber\"I\n" +
@@ -291,14 +291,14 @@ func file_events_asr_proto_rawDescGZIP() []byte {
 
 var file_events_asr_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_events_asr_proto_goTypes = []any{
-	(*Subscriber)(nil),     // 0: ukama.events.v1.Subscriber
-	(*AsrActivated)(nil),   // 1: ukama.events.v1.AsrActivated
-	(*AsrInactivated)(nil), // 2: ukama.events.v1.AsrInactivated
-	(*AsrUpdated)(nil),     // 3: ukama.events.v1.AsrUpdated
+	(*Subscriber)(nil),        // 0: ukama.events.v1.Subscriber
+	(*AsrProfileCreated)(nil), // 1: ukama.events.v1.AsrProfileCreated
+	(*AsrProfileDeleted)(nil), // 2: ukama.events.v1.AsrProfileDeleted
+	(*AsrUpdated)(nil),        // 3: ukama.events.v1.AsrUpdated
 }
 var file_events_asr_proto_depIdxs = []int32{
-	0, // 0: ukama.events.v1.AsrActivated.Subscriber:type_name -> ukama.events.v1.Subscriber
-	0, // 1: ukama.events.v1.AsrInactivated.Subscriber:type_name -> ukama.events.v1.Subscriber
+	0, // 0: ukama.events.v1.AsrProfileCreated.Subscriber:type_name -> ukama.events.v1.Subscriber
+	0, // 1: ukama.events.v1.AsrProfileDeleted.Subscriber:type_name -> ukama.events.v1.Subscriber
 	0, // 2: ukama.events.v1.AsrUpdated.Subscriber:type_name -> ukama.events.v1.Subscriber
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type

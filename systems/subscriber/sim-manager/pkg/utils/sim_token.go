@@ -93,11 +93,15 @@ func encrypt(plaintext string, key string) (string, error) {
 }
 
 func decrypt(base64Str string, key string) (string, error) {
+	if len(key) != 32 {
+		return "", fmt.Errorf("key must be 32 bytes")
+	}
+
 	ciphertext, err := base64.StdEncoding.DecodeString(base64Str)
 	if err != nil {
 		return "", err
 	}
-	c, err := aes.NewCipher([]byte(key)[:32])
+	c, err := aes.NewCipher([]byte(key))
 	if err != nil {
 		return "", err
 	}

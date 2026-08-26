@@ -37,7 +37,6 @@ import (
 
 const (
 	registrySystem = "registry"
-	dataPlanSystem = "dataplan"
 	factorySystem  = "factory"
 )
 
@@ -60,13 +59,15 @@ func initConfig() {
 	err := config.NewConfReader(pkg.ServiceName).Read(serviceConfig)
 	if err != nil {
 		log.Fatal("Error reading config ", err)
-	} else if pkg.IsDebugMode {
+	}
+	pkg.IsDebugMode = serviceConfig.DebugMode
+
+	if pkg.IsDebugMode {
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
-	pkg.IsDebugMode = serviceConfig.DebugMode
 
 	if serviceConfig.DebugMode {
 		log.SetLevel(log.DebugLevel)
@@ -131,13 +132,6 @@ func runGrpcServer(gormdb sql.Db) {
 
 	networkClient := registry.NewNetworkClient(networkServiceUrl.String(), cclient.WithDebug(serviceConfig.DebugMode))
 
-	// Looking up data plan system's host from initClient
-	dataPlanUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, cclient.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, dataPlanSystem), &serviceConfig.OrgName)
-	if err != nil {
-		log.Fatalf("Failed to resolve %s system address from initClient: %v", dataPlanSystem, err)
-	}
-
 	cdr, err := client.NewCDR(serviceConfig.CDRHost, serviceConfig.Timeout)
 	if err != nil {
 		log.Fatalf("CDR Client initilization failed. Error: %v", err)
@@ -145,7 +139,7 @@ func runGrpcServer(gormdb sql.Db) {
 
 	//pcrf := pcrf.NewPCRFController(policyRepo, serviceConfig.DataplanHost, mbClient, serviceConfig.OrgName, serviceConfig.Reroute)
 
-	controller := pm.NewPolicyController(asrRepo, mbClient, dataPlanUrl.String(),
+	controller := pm.NewPolicyController(asrRepo, mbClient,
 		serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.Reroute, serviceConfig.Period, serviceConfig.Monitor)
 
 	// ASR service

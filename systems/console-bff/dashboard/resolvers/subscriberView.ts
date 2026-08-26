@@ -88,7 +88,7 @@ export class SubscriberViewResolver {
       const activeIds = new Set(
         (subscriber.sim ?? [])
           .map(sim => sim.package)
-          .filter(pkg => pkg?.is_active)
+          .filter(pkg => pkg?.is_currently_in_use)
           .map(pkg => pkg?.package_id as string)
       );
       return Array.from(

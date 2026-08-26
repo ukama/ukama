@@ -593,7 +593,7 @@ export const ALLOCATE_SIM = `mutation AllocateSim($data: AllocateSimInputDto!) {
       packageId
       startDate
       endDate
-      isActive
+      isCurrentlyInUse
     }
     iccid
     msisdn
@@ -651,7 +651,7 @@ export const GET_SIM_PACKAGES = `query GetPackagesForSim($data: GetPackagesForSi
       package_id
       start_date
       end_date
-      is_active
+      is_currently_in_use
     }
   }
 }`;

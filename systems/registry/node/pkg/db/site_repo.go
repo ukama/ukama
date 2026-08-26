@@ -67,9 +67,12 @@ func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) 
 func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
+	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Where("sites.site_id=? AND sites.deleted_at IS NULL",
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
+		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
+		Where("sites.site_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
 			siteId.String()).Find(&nodes)
 
 	if result.Error != nil {
@@ -86,9 +89,12 @@ func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().Joins("JOIN sites on sites.node_id=nodes.id").
+	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Where("sites.network_id=? AND sites.deleted_at IS NULL",
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
+		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
+		Where("sites.network_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
 			networkId.String()).Find(&nodes)
 
 	if result.Error != nil {

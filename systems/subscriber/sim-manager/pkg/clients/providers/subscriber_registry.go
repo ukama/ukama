@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -26,6 +27,7 @@ type SubscriberRegistryClientProvider interface {
 }
 
 type subscriberRegistryClientProvider struct {
+	mu                        sync.Mutex
 	subscriberRegistryService pb.RegistryServiceClient
 	subscriberRegistryHost    string
 	timeout                   time.Duration
@@ -36,13 +38,17 @@ func NewSubscriberRegistryClientProvider(subscriberRegistryHost string, timeout 
 }
 
 func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient, error) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	if p.subscriberRegistryService == nil {
 		var conn *grpc.ClientConn
 
 		log.Infoln("Connecting to Subscriber Registry service ", p.subscriberRegistryHost)
 
 		conn, err := grpc.NewClient(p.subscriberRegistryHost,
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(timeoutUnaryClientInterceptor(p.timeout)))
 		if err != nil {
 			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", p.subscriberRegistryHost, err)
 

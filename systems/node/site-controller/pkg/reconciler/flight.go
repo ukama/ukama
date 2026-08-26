@@ -60,6 +60,33 @@ func (r *Reconciler) saveFlight(flight *db.SiteIntentFlight) error {
 	return r.flights.Upsert(flight)
 }
 
+func (r *Reconciler) markConverged(intent *db.SiteIntent, flight *db.SiteIntentFlight) error {
+	if r.flights == nil || intent == nil || intent.ID == uuid.Nil {
+		return nil
+	}
+	if flight != nil && flight.Status == db.IntentFlightStatusSucceeded && flight.RetryCount == 0 {
+		return nil
+	}
+
+	return r.flights.Upsert(&db.SiteIntentFlight{
+		SiteIntentID: intent.ID,
+		Status:       db.IntentFlightStatusSucceeded,
+		RetryCount:   0,
+		ExpiresAt:    time.Now().UTC().Add(r.flightTTL),
+	})
+}
+
+func (r *Reconciler) rearmDue(flight *db.SiteIntentFlight) bool {
+	if flight == nil {
+		return true
+	}
+	if flight.Status == db.IntentFlightStatusSucceeded {
+		return true
+	}
+
+	return time.Since(flight.UpdatedAt) >= r.reconcileInterval
+}
+
 func (r *Reconciler) flightExpired(flight *db.SiteIntentFlight) bool {
 	return flight != nil && !flight.ExpiresAt.IsZero() && time.Now().UTC().After(flight.ExpiresAt)
 }

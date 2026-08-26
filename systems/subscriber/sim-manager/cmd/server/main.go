@@ -76,7 +76,7 @@ func initConfig() {
 	} else if serviceConfig.DebugMode {
 		// output config in debug mode
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
 		}
 	}
@@ -146,13 +146,14 @@ func runGrpcServer(gormDB sql.Db) {
 	nucleusOrgClient := cnuc.NewOrgClient(serviceConfig.Http.NucleusClient)
 	nucleusUserClient := cnuc.NewUserClient(serviceConfig.Http.NucleusClient)
 	paymentClient := cpay.NewPaymentClient(paymentsUrl.String())
+	agentFactory := adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent,
+		ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode)
 
 	simManagerServer := server.NewSimManagerServer(
 		serviceConfig.OrgName,
 		db.NewSimRepo(gormDB),
 		db.NewPackageRepo(gormDB),
-		adapters.NewAgentFactory(serviceConfig.TestAgent, serviceConfig.OperatorAgent,
-			ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode),
+		agentFactory,
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
 		providers.NewSimPoolClientProvider(serviceConfig.SimPool, serviceConfig.Timeout),
@@ -167,8 +168,7 @@ func runGrpcServer(gormDB sql.Db) {
 	)
 
 	simManagerEventServer := server.NewSimManagerEventServer(serviceConfig.OrgName,
-		serviceConfig.OrgId, db.NewSimRepo(gormDB), db.NewPackageRepo(gormDB), adapters.NewAgentFactory(serviceConfig.TestAgent,
-			serviceConfig.OperatorAgent, ukamaAgentUrl.String(), serviceConfig.Timeout, pkg.IsDebugMode),
+		serviceConfig.OrgId, db.NewSimRepo(gormDB), db.NewPackageRepo(gormDB), agentFactory,
 		pckgClient,
 		providers.NewSubscriberRegistryClientProvider(serviceConfig.Registry, serviceConfig.Timeout),
 		netClient,

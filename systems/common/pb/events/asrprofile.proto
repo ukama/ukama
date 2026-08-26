@@ -37,3 +37,8 @@
  message ProfileUpdated {
      Profile profile = 1 [(validator.field) = {msg_exists : true}, json_name="profile"];
  }
+
+ message PolicyViolation {
+     Profile profile = 1 [(validator.field) = {msg_exists : true}, json_name="profile"];
+     string reason = 2 [(validator.field) = {string_not_empty: true}, json_name="reason"];
+ }

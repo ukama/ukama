@@ -16,15 +16,14 @@ const (
 )
 
 const (
-	DefaultDeadlineTTL = 2 * time.Minute
+	DefaultDeadlineTTL = 4 * time.Minute
 	SweeperInterval    = 30 * time.Second
 )
 
 // Action → completion rule fallback when caller doesn't supply one.
-// A reboot cycles the node substate on→reboot→on without changing the main
-// state (Configured stays Configured), so completion is the node reporting
-// substate=on again — state=Operational only ever fires after a "ready"
-// event and never on reboot, which left locks held until the deadline.
+// A reboot takes the node offline then back online (substate: on→off→on)
+// without changing the main state (Operational stays Operational), so
+// completion is the node reporting substate=on again.
 // TODO: move to config or per-action proto when we add more actions.
 var DefaultCompletionRule = map[string]string{
 	"SendNodeCommand":      "substate=on",

@@ -51,10 +51,10 @@ phases:
     events:
       - type: toggle_sim_status
         ues: all
-        status: inactive
+        status: service_off
       - type: wait_sim_status
         ues: all
-        status: inactive
+        status: service_off
         seconds: 120
     checks:
       - type: traffic_unavailable
@@ -69,10 +69,10 @@ phases:
     events:
       - type: toggle_sim_status
         ues: all
-        status: active
+        status: service_on
       - type: wait_sim_status
         ues: all
-        status: active
+        status: service_on
         seconds: 120
       - type: wait_ues_attached
         ues: all

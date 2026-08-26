@@ -45,7 +45,7 @@ phases:
         ues: ue-000002
         amount_mb: 7
       - type: wait
-        seconds: 60
+        seconds: 30
     checks:
       # No key: the target picks DATA_USAGE. No op: kind=flow derives SUM.
       # The target's dimension is sent as a scope FILTER, so the gateway folds

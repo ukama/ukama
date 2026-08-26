@@ -253,84 +253,10 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 	})
 }
 
-func TestUkamaClient_ActivateSim(t *testing.T) {
-	t.Run("SimFound", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
-
-			return &http.Response{
-				StatusCode: 201,
-				Header:     make(http.Header),
-			}
-		}
-
-		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
-
-		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
-
-		err := testUkamaClient.ActivateSim(req)
-
-		assert.NoError(tt, err)
-	})
-
-	t.Run("RequestFailure", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
-
-			return nil
-		}
-
-		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
-
-		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
-
-		err := testUkamaClient.ActivateSim(req)
-
-		assert.Error(tt, err)
-	})
-}
-
-func TestUkamaClient_DeactivateSim(t *testing.T) {
-	t.Run("SimFound", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
-
-			return &http.Response{
-				StatusCode: 200,
-				Header:     make(http.Header),
-			}
-		}
-
-		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
-
-		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
-
-		err := testUkamaClient.DeactivateSim(req)
-
-		assert.NoError(tt, err)
-	})
-
-	t.Run("RequestFailure", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
-
-			return nil
-		}
-
-		testUkamaClient := ukamaagent.NewUkamaAgentClient("")
-
-		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
-
-		err := testUkamaClient.DeactivateSim(req)
-
-		assert.Error(tt, err)
-	})
-}
-
 func TestUkamaClient_UpdateSimPackage(t *testing.T) {
 	t.Run("SimFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid+"/package")
 
 			return &http.Response{
 				StatusCode: 200,
@@ -349,7 +275,7 @@ func TestUkamaClient_UpdateSimPackage(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid)
+			assert.Equal(tt, req.URL.String(), ukamaagent.UkamaSimsEndpoint+"/"+testIccid+"/package")
 
 			return nil
 		}

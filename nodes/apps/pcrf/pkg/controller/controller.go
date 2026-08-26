@@ -183,10 +183,11 @@ func reRouteResponse(route *store.ReRoute) *api.ReRouteResponse {
 
 func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 	return &api.SubscriberResponse{
-		ID:       s.ID,
-		Imsi:     s.Imsi,
-		PolicyID: s.PolicyID.ID,
-		ReRoute:  s.ReRouteID.IpAddr,
+		ID:        s.ID,
+		Imsi:      s.Imsi,
+		PolicyID:  s.PolicyID.ID,
+		ReRoute:   s.ReRouteID.IpAddr,
+		ServiceOn: s.ServiceOn,
 	}
 }
 
@@ -591,22 +592,84 @@ func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscrib
 }
 
 func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
-	_, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
+	sub, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
 	if err != nil {
 		log.Errorf("Failed to create subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to create subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
+
+	// New subscribers already default to service-on; only act if the request
+	// explicitly asks for something else.
+	if req.IsServiceOn == nil || *req.IsServiceOn == sub.ServiceOn {
+		return nil
+	}
+
+	if c.sm.HasActiveSession(sub.Imsi) {
+		if *req.IsServiceOn {
+			if err := c.sm.ResumeSession(ctx, sub); err != nil {
+				return err
+			}
+		} else {
+			if err := c.sm.PauseSession(ctx, sub); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
+		log.Errorf("Failed to set initial service status for imsi %s. Error: %v", req.Imsi, err)
+
+		return fmt.Errorf("failed to set initial service status for imsi %s. Error: %w", req.Imsi, err)
+	}
+
 	return nil
 }
 
 func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscriber) error {
-	_, err := c.store.UpdateSubscriber(req.Imsi, &req.Policy)
+	oldServiceOn := true
+
+	sub, err := c.store.GetSubscriber(req.Imsi)
+	switch {
+	case err == nil:
+		oldServiceOn = sub.ServiceOn
+	case errors.Is(err, store.ErrSubscriberNotFound):
+		// fall through with the default above
+	default:
+		log.Errorf("Failed to get subscriber with imsi %s. Error: %v", req.Imsi, err)
+
+		return fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", req.Imsi, err)
+	}
+
+	sub, err = c.store.UpdateSubscriber(req.Imsi, &req.Policy)
 	if err != nil {
 		log.Errorf("Failed to update subscriber with imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to update subscriber with imsi %s. Error: %w", req.Imsi, err)
 	}
+
+	if req.IsServiceOn == nil || *req.IsServiceOn == oldServiceOn {
+		return nil
+	}
+
+	if c.sm.HasActiveSession(sub.Imsi) {
+		if *req.IsServiceOn {
+			if err := c.sm.ResumeSession(ctx, sub); err != nil {
+				return err
+			}
+		} else {
+			if err := c.sm.PauseSession(ctx, sub); err != nil {
+				return err
+			}
+		}
+	}
+
+	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
+		log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
+
+		return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
+	}
+
 	return nil
 }
 

@@ -11,17 +11,18 @@ package policy
 import (
 	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
-	"github.com/ukama/ukama/systems/common/rest/client/dataplan"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg"
 	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/db"
+	"github.com/ukama/ukama/systems/ukama-agent/asr/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -29,11 +30,12 @@ import (
 )
 
 type policyController struct {
-	dp               dataplan.PackageClient
 	Rules            []Rule
 	asrRepo          db.AsrRecordRepo
 	period           time.Duration
 	pR               chan bool
+	monitorMu        sync.Mutex
+	monitorRunning   bool
 	msgbus           mb.MsgBusServiceClient
 	MsgBusRoutingKey msgbus.RoutingKeyBuilder
 	OrgName          string
@@ -73,20 +75,20 @@ type MsgPolicy struct {
 }
 
 type MsgSubscriber struct {
-	Policy  MsgPolicy `json:"policy"`
-	Reroute string    `json:"reroute"`
+	Policy      MsgPolicy `json:"policy"`
+	Reroute     string    `json:"reroute"`
+	IsServiceOn bool      `json:"is_service_on"`
 }
 
 type Controller interface {
 	InitPolicyController()
-	NewPolicy(packageId uuid.UUID) (*db.Policy, error)
+	NewPolicy(in PolicyInput) (*db.Policy, error)
 	SyncProfile(s *SimInfo, as *db.Asr, action string, object string, event bool) error
 	RunPolicyControl(imsi string, event bool) (error, bool)
 }
 
-func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, dataplanHost string, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
+func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, orgName string, orgId string, reroute string, period time.Duration, monitor bool) *policyController {
 	p := &policyController{
-		dp:               dataplan.NewPackageClient(dataplanHost),
 		asrRepo:          asrRepo,
 		msgbus:           msgB,
 		MsgBusRoutingKey: msgbus.NewRoutingKeyBuilder().SetEventType().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
@@ -106,7 +108,7 @@ func NewPolicyController(asrRepo db.AsrRecordRepo, msgB mb.MsgBusServiceClient, 
 	return p
 }
 
-func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
+func createMessage(p *db.Policy, reroute string, isServiceOn bool) *MsgSubscriber {
 	return &MsgSubscriber{
 		Policy: MsgPolicy{
 			Uuid:         p.Id.String(),
@@ -118,7 +120,8 @@ func createMessage(p *db.Policy, reroute string) *MsgSubscriber {
 			StartTime:    p.StartTime,
 			EndTime:      p.EndTime,
 		},
-		Reroute: reroute,
+		Reroute:     reroute,
+		IsServiceOn: isServiceOn,
 	}
 }
 
@@ -129,59 +132,62 @@ func (p *policyController) InitPolicyController() {
 			Name:   "DataCap",
 			ID:     1,
 			Check:  DataCapCheck,
-			Action: RemoveProfile,
+			Action: NotifyDataCapExceeded,
 		},
 		{
-			Name:   "AllowedServiceTime",
-			ID:     2,
-			Check:  AllowedTimeOfServiceCheck,
-			Action: RemoveProfile,
+			Name:  "AllowedServiceTime",
+			ID:    2,
+			Check: AllowedTimeOfServiceCheck,
+			// Action intentionally left nil (was RemoveProfile) - this
+			// check's clock (LastStatusChangeAt) runs regardless of the
+			// subscriber's service on/off status, so it fires just from a
+			// sim being left off longer than AllowedTimeOfService, with no
+			// regard for the package's own validity. RemoveProfile's actual
+			// effect is deleting the ASR profile entirely, which cascades to
+			// sim-manager terminating the whole sim - not what's wanted for
+			// "sim has been off a while". Left as a detected-but-no-action
+			// violation (still logged) until the correct behavior for this
+			// scenario is decided.
+			Action: nil,
 		},
 		{
 			Name:   "ValidityCheck",
 			ID:     3,
 			Check:  ValidityCheck,
-			Action: RemoveProfile,
+			Action: NotifyPackageExpired,
 		},
 	}
 }
 
-func (p *policyController) NewPolicy(packageId uuid.UUID) (*db.Policy, error) {
-	log.Infof("Creating new policy based on package %s", packageId.String())
+type PolicyInput struct {
+	TotalData uint64 // bytes
+	Dlbr      uint64
+	Ulbr      uint64
+	StartTime uint64 // unix seconds
+	EndTime   uint64 // unix seconds
+}
 
-	pack, err := p.dp.Get(packageId.String())
-	if err != nil {
-		log.Errorf("Failed to get package %s.Error: %v", packageId.String(), err)
+func (p *policyController) NewPolicy(in PolicyInput) (*db.Policy, error) {
+	log.Infof("Creating new policy from input %+v", in)
 
-		return nil, fmt.Errorf("failed to get package %s. Error: %w", packageId.String(), err)
+	if in.TotalData == 0 {
+		return nil, fmt.Errorf("invalid policy input: total data must be greater than 0")
 	}
 
-	// should we use sim manager startDate instead ?
-	startTime := uint64(time.Now().Unix())
-
-	// starttime is in seconds and pack.Duration is in minutes
-	endTime := uint64(startTime) + (pack.Duration * 60)
-
-	// totalData is in bytes and pack.DataVolume depends on pack.DataUnit
-	dataUnit := ukama.ParseDataUnitType(pack.DataUnit)
-	if dataUnit == ukama.DataUnitTypeUnknown {
-		log.Errorf("Invalid data unit type (%s) for data package (%s)", pack.DataUnit, pack.Id)
-
-		return nil, fmt.Errorf("invalid data unit type (%s) for data package (%s)", pack.DataUnit, pack.Id)
+	if in.EndTime <= in.StartTime {
+		return nil, fmt.Errorf("invalid policy input: end time (%d) must be after start time (%d)",
+			in.EndTime, in.StartTime)
 	}
-
-	dataUnitInBytes := ukama.ReturnDataUnitsInBytes(dataUnit)
-	totalData := pack.DataVolume * dataUnitInBytes
 
 	policy := db.Policy{
 		Id:           uuid.NewV4(),
 		Burst:        1500,
-		TotalData:    totalData,
+		TotalData:    in.TotalData,
 		ConsumedData: 0,
-		Dlbr:         pack.PackageDetails.Dlbr,
-		Ulbr:         pack.PackageDetails.Ulbr,
-		StartTime:    startTime,
-		EndTime:      endTime,
+		Dlbr:         in.Dlbr,
+		Ulbr:         in.Ulbr,
+		StartTime:    in.StartTime,
+		EndTime:      in.EndTime,
 	}
 
 	log.Infof("Returning new policy object %v", policy)
@@ -209,13 +215,13 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 	switch action {
 
 	case "create":
-		e := &epb.AsrActivated{
+		e := &epb.AsrProfileCreated{
 			Subscriber: subscriber,
 		}
 		httpMethod = "POST"
 		msg = e
 	case "delete":
-		e := &epb.AsrInactivated{
+		e := &epb.AsrProfileDeleted{
 			Subscriber: subscriber,
 		}
 		msg = e
@@ -231,45 +237,68 @@ func (p *policyController) SyncProfile(s *SimInfo, as *db.Asr, action string, ob
 		return nil
 	}
 
-	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy)
+	isServiceOn := as.ServiceStatus == ukama.SimStatusServiceOn
+
+	err := p.syncSubscriberPolicy(httpMethod, s.Imsi, s.NetworkId.String(), &as.Policy, isServiceOn)
 	if err != nil {
 		return fmt.Errorf("error while syncing subscriber policy for imsi %s. Error: %w", s.Imsi, err)
 	}
 
 	if event {
-		return p.publishEvent(action, object, msg)
+		return utils.PublishEvent(p.OrgName, action, object, msg, p.msgbus)
 	} else {
 		return nil
 	}
 }
 
-/*
-For now all the policies are by default applicable for the profiles.
-There might be more policies which are applicable for certain profiles
-that can be easily managed by adding policy db and adding applicable policy id for each susbcriber.
-*/
-func (p *policyController) RunPolicyControl(imsi string, event bool) (error, bool) {
-	log.Infof("Running policy control for subscriber %s", imsi)
+func (p *policyController) publishPolicyViolation(pf db.Asr, reason ukama.PolicyViolationReason) error {
+	log.Infof("Reporting policy violation (%s) for subscriber %s", reason, pf.Imsi)
 
-	removed := false
+	e := &epb.PolicyViolation{
+		Profile: &epb.Profile{
+			Imsi:                 pf.Imsi,
+			Iccid:                pf.Iccid,
+			Network:              pf.NetworkId.String(),
+			Package:              pf.PackageId.String(),
+			SimPackage:           pf.SimPackageId.String(),
+			Org:                  p.OrgId,
+			AllowedTimeOfService: pf.AllowedTimeOfService,
+			TotalDataBytes:       pf.Policy.ConsumedData,
+		},
+		Reason: reason.String(),
+	}
+
+	return utils.PublishEvent(p.OrgName, "violation", "policy", e, p.msgbus)
+}
+
+func (p *policyController) RunPolicyControl(imsi string, event bool) (error, bool) {
 	pf, err := p.asrRepo.GetByImsi(imsi)
 	if err != nil {
 		log.Errorf("failed to read profile for %s. Error %s", imsi, err.Error())
 
-		return fmt.Errorf("failed to read profile for %s. Error %s", imsi, err), removed
+		return fmt.Errorf("failed to read profile for %s. Error %s", imsi, err), false
 	}
+
+	return p.runPolicyControlForProfile(*pf, event)
+}
+
+func (p *policyController) runPolicyControlForProfile(pf db.Asr, event bool) (error, bool) {
+	log.Infof("Running policy control for subscriber %s", pf.Imsi)
+
+	removed := false
 
 	for _, pt := range p.Rules {
 		if pt.Check != nil {
 
-			valid := pt.Check(*pf)
+			valid := pt.Check(pf)
 			if valid {
 				continue
 			}
 			log.Infof("Policy Controller found profile %s has failed to comply policy type %s", pf.Imsi, pt.Name)
 			/* if policy check failed, try the action */
 			if pt.Action != nil {
-				err, removed := pt.Action(p, *pf, event)
+				var err error
+				err, removed = pt.Action(p, pf, event)
 				if err != nil {
 					log.Errorf("Error while applying action for failing policy compliance (%s, %s). Error: %v",
 						pf.Imsi, pt.Name, err)
@@ -289,11 +318,11 @@ func (p *policyController) RunPolicyControl(imsi string, event bool) (error, boo
 	return nil, removed
 }
 
-func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy) error {
+func (p *policyController) syncSubscriberPolicy(method string, imsi string, network string, policy *db.Policy, isServiceOn bool) error {
 	log.Infof("Syncing policy for subscriber %s", imsi)
 
 	route := p.MsgBusRoutingKey.SetObject("policies").SetAction("publish").MustBuild()
-	pMsg := createMessage(policy, p.reroute)
+	pMsg := createMessage(policy, p.reroute, isServiceOn)
 
 	jd, err := json.Marshal(pMsg)
 	if err != nil {
@@ -338,28 +367,28 @@ func (p *policyController) syncSubscriberPolicy(method string, imsi string, netw
 	return nil
 }
 
-func (p *policyController) publishEvent(action string, object string, msg protoreflect.ProtoMessage) error {
-	var err error
-	if p.msgbus != nil {
-		route := p.MsgBusRoutingKey.SetObject(object).SetAction(action).MustBuild()
-		err = p.msgbus.PublishRequest(route, msg)
-		if err != nil {
-			log.Errorf("Failed to publish event message %+v with key %+v. Error: %s", msg, route, err.Error())
-
-			return fmt.Errorf("failed to publish event message %+v with key %+v. Error: %w", msg, route, err)
-		}
-	}
-	return err
-}
-
 func (p *policyController) StartPolicyControllerRoutine() {
 	log.Infof("Starting policy check routine with period %s.", p.period)
+
+	p.monitorMu.Lock()
+	p.monitorRunning = true
+	p.monitorMu.Unlock()
+
 	p.monitor()
 }
 
 func (p *policyController) StopPolicyControllerRoutine() {
+	p.monitorMu.Lock()
+	defer p.monitorMu.Unlock()
+
+	if !p.monitorRunning {
+		log.Infof("Policy check routine was never started; nothing to stop.")
+		return
+	}
+
 	log.Infof("Stoping policy check routine with period %s.", p.period)
 	p.pR <- true
+	p.monitorRunning = false
 }
 
 func (p *policyController) doPolicyCheck() error {
@@ -372,14 +401,15 @@ func (p *policyController) doPolicyCheck() error {
 	}
 
 	for _, profile := range pf {
-		_, _ = p.RunPolicyControl(profile.Imsi, true)
+		_, _ = p.runPolicyControlForProfile(profile, true)
 	}
+
 	log.Infof("Policy check routine ended at %s.", time.Now().String())
+
 	return nil
 }
 
 func (p *policyController) monitor() {
-
 	t := time.NewTicker(p.period)
 
 	go func() {

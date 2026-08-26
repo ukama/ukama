@@ -17,8 +17,6 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	log "github.com/sirupsen/logrus"
 )
 
 const TaiNotUpdatedErr = "more recent tai for imsi exist"
@@ -32,6 +30,7 @@ type AsrRecordRepo interface {
 	GetByIccid(iccid string) (*Asr, error)
 	Update(imsi string, record *Asr) error
 	UpdatePackage(imsi string, packageId uuid.UUID, policy *Policy) error
+	UpdateConsumedData(asrID uint, consumedData uint64) error
 	DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	Delete(imsi string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
@@ -57,15 +56,18 @@ func (r *asrRecordRepo) Update(imsiToUpdate string, rec *Asr) error {
 	return d.Error
 }
 
+func (r *asrRecordRepo) UpdateConsumedData(asrID uint, consumedData uint64) error {
+	d := r.db.GetGormDb().Model(&Policy{}).Where("asr_id=?", asrID).Update("consumed_data", consumedData)
+	return d.Error
+}
+
 func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy *Policy) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-
 		asrRec := &Asr{}
-		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).Find(&asrRec).Error
+		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).First(&asrRec).Error
 		if err != nil {
 			return errors.Wrap(err, "unable to find record for subscriber "+imsiToUpdate)
 		}
-		log.Debugf("Updating ASR record %+v", asrRec)
 
 		err = tx.Where("asr_id=?", asrRec.ID).Delete(&Policy{}).Error
 		if err != nil {
@@ -135,11 +137,10 @@ func (r *asrRecordRepo) Delete(imsi string, reason StatusReason, nestedFuncs ...
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 
 		asrRec := &Asr{}
-		err := tx.Model(&Asr{}).Where("imsi=?", imsi).Find(&asrRec).Error
+		err := tx.Model(&Asr{}).Where("imsi=?", imsi).First(&asrRec).Error
 		if err != nil {
 			return errors.Wrap(err, "unable to find record for subscriber "+imsi)
 		}
-		log.Debugf("Deleting ASR record %+v", asrRec)
 
 		asrRec.LastStatusChangeAt = time.Now()
 		asrRec.LastStatusChangeReasons = reason

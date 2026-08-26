@@ -43,9 +43,10 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -73,9 +74,10 @@ func TestPackageRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
-				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(pkg.Id, pkg.SimId, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnError(sql.ErrNoRows)
 
 		r := db.NewPackageRepo(&UkamaDbMock{
@@ -188,7 +190,7 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
-		list, err := r.List("", "", "", "", "", "", false, false, 0, false)
+		list, err := r.List("", "", "", "", "", "", nil, nil, 0, false)
 
 		// Assert
 		assert.NoError(t, err)
@@ -216,8 +218,9 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
+		filterTrue := true
 		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
-			true, true, 1, true)
+			&filterTrue, &filterTrue, 1, true)
 
 		// Assert
 		assert.NoError(t, err)
@@ -242,8 +245,9 @@ func TestPackageRepo_List(t *testing.T) {
 		})
 
 		// Act
+		filterTrue := true
 		list, err := r.List(simId.String(), dataplanId.String(), from, to, from, to,
-			true, true, 1, true)
+			&filterTrue, &filterTrue, 1, true)
 
 		// Assert
 		assert.Error(t, err)
@@ -317,14 +321,11 @@ func TestPackageRepo_Update(t *testing.T) {
 
 		mock, gdb := prepareDb(t)
 
-		packageRow := sqlmock.NewRows([]string{"id", "sim_id"}).
-			AddRow(packageId, simId)
-
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(`^UPDATE.*packages.*`).
+		mock.ExpectExec(`^UPDATE.*packages.*`).
 			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
-			WillReturnRows(packageRow)
+			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
@@ -333,7 +334,7 @@ func TestPackageRepo_Update(t *testing.T) {
 		})
 
 		// Act
-		err := r.Update(&pckg, nil)
+		err := r.Update([]uuid.UUID{packageId}, &pckg, nil)
 
 		// Assert
 		assert.NoError(t, err)
@@ -352,19 +353,18 @@ func TestPackageRepo_Update(t *testing.T) {
 		}
 
 		mock, gdb := prepareDb(t)
-		packageRow := sqlmock.NewRows([]string{"id", "sim_id"})
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(`^UPDATE.*packages.*`).
+		mock.ExpectExec(`^UPDATE.*packages.*`).
 			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
-			WillReturnRows(packageRow)
+			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		r := db.NewPackageRepo(&UkamaDbMock{
 			GormDb: gdb,
 		})
 
 		// Act
-		err := r.Update(&pckg, validNestedPackageFunc)
+		err := r.Update([]uuid.UUID{packageId}, &pckg, validNestedPackageFunc)
 
 		// Assert
 		assert.Error(t, err)
@@ -386,7 +386,7 @@ func TestPackageRepo_Update(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(`^UPDATE.*packages.*`).
+		mock.ExpectExec(`^UPDATE.*packages.*`).
 			WithArgs(false, false, sqlmock.AnyArg(), pckg.Id).
 			WillReturnError(sql.ErrNoRows)
 
@@ -395,7 +395,7 @@ func TestPackageRepo_Update(t *testing.T) {
 		})
 
 		// Act
-		err := r.Update(&pckg, nil)
+		err := r.Update([]uuid.UUID{packageId}, &pckg, nil)
 
 		// Assert
 		assert.Error(t, err)
@@ -420,10 +420,43 @@ func TestPackageRepo_Update(t *testing.T) {
 		})
 
 		// Act
-		err := r.Update(&pckg, unvalidNestedPackageFunc)
+		err := r.Update([]uuid.UUID{packageId}, &pckg, unvalidNestedPackageFunc)
 
 		// Assert
 		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("MultiplePackagesFound", func(t *testing.T) {
+		var (
+			packageId1 = uuid.NewV4()
+			packageId2 = uuid.NewV4()
+			simId      = uuid.NewV4()
+		)
+
+		pckg := db.Package{
+			SimId: simId,
+		}
+
+		mock, gdb := prepareDb(t)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(`^UPDATE.*packages.*`).
+			WithArgs(false, false, sqlmock.AnyArg(), packageId1, packageId2).
+			WillReturnResult(sqlmock.NewResult(0, 2))
+
+		mock.ExpectCommit()
+
+		r := db.NewPackageRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		err := r.Update([]uuid.UUID{packageId1, packageId2}, &pckg, nil)
+
+		// Assert
+		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

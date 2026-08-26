@@ -102,3 +102,17 @@ func (this *ProfileUpdated) Validate() error {
 	}
 	return nil
 }
+func (this *PolicyViolation) Validate() error {
+	if nil == this.Profile {
+		return github_com_mwitkow_go_proto_validators.FieldError("Profile", fmt.Errorf("message must exist"))
+	}
+	if this.Profile != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Profile); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Profile", err)
+		}
+	}
+	if this.Reason == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Reason", fmt.Errorf(`value '%v' must not be an empty string`, this.Reason))
+	}
+	return nil
+}

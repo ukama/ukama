@@ -28,7 +28,7 @@ query NetworkCustomers($networkId: String!) {
           type
           package {
             package_id
-            is_active
+            is_currently_in_use
             updated_at
           }
         }
