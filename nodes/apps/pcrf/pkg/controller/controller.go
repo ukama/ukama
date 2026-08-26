@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/session"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/datapath"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -488,6 +490,12 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
+		if errors.Is(err, store.ErrSubscriberNotFound) {
+			log.Infof("No subscriber for Imsi %s; reporting flow as withdrawn", req.Imsi)
+
+			return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "subscriber not found"}
+		}
+
 		log.Errorf("Failed to get subscriber with Imsi %s. Error: %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get subscriber with Imsi %s. Error: %w", req.Imsi, err)
@@ -495,6 +503,12 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
+		if errors.Is(err, store.ErrSessionNotFound) {
+			log.Infof("No active session for Imsi %s; reporting flow as withdrawn", req.Imsi)
+
+			return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "active session not found"}
+		}
+
 		log.Errorf("Failed to get active session for Imsi %s. Error: %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
