@@ -167,6 +167,8 @@ static void setup_forward_endpoints(Config *config, UInst *instance) {
 							   &callback_forward, config);
     ulfius_add_endpoint_by_val(instance, "PUT", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
+    ulfius_add_endpoint_by_val(instance, "PATCH", EP_FORWARD, NULL, 0,
+							   &callback_forward, config);
     ulfius_add_endpoint_by_val(instance, "DELETE", EP_FORWARD, NULL, 0,
 							   &callback_forward, config);
 
