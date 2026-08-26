@@ -676,12 +676,56 @@ func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscribe
 				return err
 			}
 		}
+	} else if *req.IsServiceOn {
+		// No live session to resume
+		if err := c.recreateSessionFromHistory(ctx, sub); err != nil {
+			return err
+		}
 	}
 
 	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
 		log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
+	}
+
+	return nil
+}
+
+func (c *Controller) recreateSessionFromHistory(ctx *gin.Context, sub *store.Subscriber) error {
+	sessions, err := c.store.GetSessionsByImsi(sub.Imsi)
+	if err != nil {
+		log.Errorf("Failed to get session history for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to get session history for imsi %s. Error: %w", sub.Imsi, err)
+	}
+
+	if len(sessions) == 0 {
+		log.Infof("No session history for imsi %s; nothing to recreate until next UE attach", sub.Imsi)
+
+		return nil
+	}
+
+	last := sessions[0]
+	for _, se := range sessions[1:] {
+		if se.ID > last.ID {
+			last = se
+		}
+	}
+
+	sub.ServiceOn = true
+
+	s, rxF, txF, err := c.store.CreateSession(sub, last.UeIpAddr, c.nodeId)
+	if err != nil {
+		log.Errorf("Failed to recreate session for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to recreate session for imsi %s. Error: %w", sub.Imsi, err)
+	}
+
+	if err := c.sm.CreateSesssion(ctx, sub, s, rxF, txF); err != nil {
+		log.Errorf("Failed to wire up recreated session for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to wire up recreated session for imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	return nil
