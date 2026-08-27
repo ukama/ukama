@@ -272,7 +272,7 @@ func (c *Controller) SetService(ctx context.Context, req *api.ServiceRequest) er
 	default:
 		log.Errorf("Invalid service state %q", req.State)
 
-		return fmt.Errorf("invalid service state %q", req.State)
+		return rest.HttpError{HttpCode: http.StatusBadRequest, Message: fmt.Sprintf("invalid service state %q", req.State)}
 	}
 }
 
@@ -461,7 +461,7 @@ func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*a
 	if err != nil {
 		log.Errorf("Invalid policy id. Error: %v", err)
 
-		return nil, fmt.Errorf("invalid policy id. Error: %w", err)
+		return nil, rest.HttpError{HttpCode: http.StatusBadRequest, Message: "invalid policy id"}
 	}
 
 	p, err := c.store.GetPolicyByID(id)
