@@ -29,7 +29,7 @@ type AsrRecordRepo interface {
 	GetByImsi(imsi string) (*Asr, error)
 	GetByIccid(iccid string) (*Asr, error)
 	Update(imsi string, record *Asr) error
-	UpdatePackage(imsi string, packageId uuid.UUID, policy *Policy) error
+	UpdatePackage(imsi string, packageId uuid.UUID, simPackageId uuid.UUID, policy *Policy) error
 	UpdateConsumedData(asrID uint, consumedData uint64) error
 	DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	Delete(imsi string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
@@ -61,7 +61,7 @@ func (r *asrRecordRepo) UpdateConsumedData(asrID uint, consumedData uint64) erro
 	return d.Error
 }
 
-func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, policy *Policy) error {
+func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, simPackageId uuid.UUID, policy *Policy) error {
 	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		asrRec := &Asr{}
 		err := tx.Model(&Asr{}).Where("imsi=?", imsiToUpdate).First(&asrRec).Error
@@ -80,6 +80,7 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 			return errors.Wrap(err, "error adding policy")
 		}
 		asrRec.PackageId = packageId
+		asrRec.SimPackageId = simPackageId
 		asrRec.LastStatusChangeAt = time.Now()
 		asrRec.LastStatusChangeReasons = PACKAGE_UPDATE
 

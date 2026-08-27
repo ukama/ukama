@@ -226,16 +226,20 @@ func TestAsr_UpdatePackage(t *testing.T) {
 	cdr := &mocks.CDRService{}
 
 	reqPb := pb.UpdatePackageReq{
-		Iccid:     "0123456789012345678912",
-		PackageId: "40987edb-ebb6-4f84-a27c-99db7c136127",
-		TotalData: 1024000000,
-		Dlbr:      15000,
-		Ulbr:      2000,
-		StartTime: 1700000000,
-		EndTime:   1700100000,
+		Iccid:        "0123456789012345678912",
+		PackageId:    "40987edb-ebb6-4f84-a27c-99db7c136127",
+		SimPackageId: "40987edb-ebb6-4f84-a27c-99db7c136300",
+		TotalData:    1024000000,
+		Dlbr:         15000,
+		Ulbr:         2000,
+		StartTime:    1700000000,
+		EndTime:      1700100000,
 	}
 
 	pId, err := uuid.FromString(reqPb.PackageId)
+	assert.NoError(t, err)
+
+	spId, err := uuid.FromString(reqPb.SimPackageId)
 	assert.NoError(t, err)
 
 	pcrfData := &pm.SimInfo{
@@ -258,7 +262,7 @@ func TestAsr_UpdatePackage(t *testing.T) {
 		StartTime: reqPb.StartTime,
 		EndTime:   reqPb.EndTime,
 	}).Return(&Policy, nil).Once()
-	asrRepo.On("UpdatePackage", sub.Imsi, pId, &Policy).Return(nil).Once()
+	asrRepo.On("UpdatePackage", sub.Imsi, pId, spId, &Policy).Return(nil).Once()
 	ctrl.On("RunPolicyControl", sub.Imsi, false).Return(nil, false).Once()
 	ctrl.On("SyncProfile", pcrfData, mock.Anything, msgbus.ACTION_CRUD_UPDATE, "activesubscriber", true).Return(nil, false).Once()
 

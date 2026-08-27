@@ -777,7 +777,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Pack
 
 	sim, err := getSim(req.SimId, s.simRepo)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
+		return nil, err
 	}
 
 	err = s.packageRepo.Delete(packageId, nil)
@@ -1241,7 +1241,7 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	if sim.Package.Id != uuid.Nil {
@@ -1493,7 +1493,7 @@ func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRep
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	packageToExpire := &sims.Package{
@@ -1565,7 +1565,7 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	packageToDrain := &sims.Package{
