@@ -403,16 +403,20 @@ int check_usage(check_ctx_t *ctx, const check_spec_t *check,
         upper_bytes = 0;
         matched = 0;
 
+        if (network == NULL) {
+            selector_result_free(&ues);
+            return ULAB_ERR;
+        }
+
         do {
-            if (network == NULL ||
-                bff_get_sim_usage(ctx->bff, ue, network,
+            if (bff_get_sim_usage(ctx->bff, ue, network,
                                   &actual_bytes, err)) {
-                selector_result_free(&ues);
-                return ULAB_ERR;
+                matched = 0;
+            } else {
+                matched = usage_within_range(expected_bytes, actual_bytes,
+                                             lower_tol, upper_tol,
+                                             &lower_bytes, &upper_bytes);
             }
-            matched = usage_within_range(expected_bytes, actual_bytes,
-                                         lower_tol, upper_tol,
-                                         &lower_bytes, &upper_bytes);
             if (!matched && time(NULL) < deadline) {
                 sleep(poll > 60u ? 60u : poll);
             }
