@@ -26,7 +26,7 @@ packages:
   - ref: time_first_plan
     name: Time First Plan
     data_mb: 100
-    duration_minutes: 1
+    duration_minutes: 5
     amount: 2.00
     assign_percent: 0
 setup:
