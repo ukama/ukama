@@ -35,6 +35,7 @@ type BrdigeConfig struct {
 	Period          time.Duration `default:"2s"`
 	Management      string
 	SessionIdleTime time.Duration `default:"60s"`
+	NewSessionGrace time.Duration `default:"10m"`
 }
 
 func NewConfig(name string) *Config {
@@ -50,6 +51,7 @@ func NewConfig(name string) *Config {
 		Bridge: BrdigeConfig{
 			Period:          2 * time.Second,
 			SessionIdleTime: 60 * time.Second,
+			NewSessionGrace: 10 * time.Minute,
 		},
 		Server: rest.HttpConfig{
 			Port: 0,
