@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"sync"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/session"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/datapath"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	log "github.com/sirupsen/logrus"
@@ -488,6 +490,12 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 
 	_, err := c.store.GetSubscriber(req.Imsi)
 	if err != nil {
+		if errors.Is(err, store.ErrSubscriberNotFound) {
+			log.Infof("No subscriber for Imsi %s; reporting flow as withdrawn", req.Imsi)
+
+			return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "subscriber not found"}
+		}
+
 		log.Errorf("Failed to get subscriber with Imsi %s. Error: %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get subscriber with Imsi %s. Error: %w", req.Imsi, err)
@@ -495,9 +503,21 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 
 	s, err := c.store.GetActiveSessionByImsi(req.Imsi)
 	if err != nil {
+		if errors.Is(err, store.ErrSessionNotFound) {
+			log.Infof("No active session for Imsi %s; reporting flow as withdrawn", req.Imsi)
+
+			return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "active session not found"}
+		}
+
 		log.Errorf("Failed to get active session for Imsi %s. Error: %v", req.Imsi, err)
 
 		return nil, fmt.Errorf("failed to get active session for Imsi %s. Error: %w", req.Imsi, err)
+	}
+
+	if s.FlowState == store.FlowsPaused {
+		log.Infof("Session for Imsi %s is paused; reporting flow as withdrawn", req.Imsi)
+
+		return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "flow withdrawn (service paused)"}
 	}
 
 	fRx, err := c.store.GetFlowForMeter(s.RxMeterID.ID)
@@ -662,12 +682,56 @@ func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscribe
 				return err
 			}
 		}
+	} else if *req.IsServiceOn {
+		// No live session to resume
+		if err := c.recreateSessionFromHistory(ctx, sub); err != nil {
+			return err
+		}
 	}
 
 	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
 		log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
 
 		return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
+	}
+
+	return nil
+}
+
+func (c *Controller) recreateSessionFromHistory(ctx *gin.Context, sub *store.Subscriber) error {
+	sessions, err := c.store.GetSessionsByImsi(sub.Imsi)
+	if err != nil {
+		log.Errorf("Failed to get session history for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to get session history for imsi %s. Error: %w", sub.Imsi, err)
+	}
+
+	if len(sessions) == 0 {
+		log.Infof("No session history for imsi %s; nothing to recreate until next UE attach", sub.Imsi)
+
+		return nil
+	}
+
+	last := sessions[0]
+	for _, se := range sessions[1:] {
+		if se.ID > last.ID {
+			last = se
+		}
+	}
+
+	sub.ServiceOn = true
+
+	s, rxF, txF, err := c.store.CreateSession(sub, last.UeIpAddr, c.nodeId)
+	if err != nil {
+		log.Errorf("Failed to recreate session for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to recreate session for imsi %s. Error: %w", sub.Imsi, err)
+	}
+
+	if err := c.sm.CreateSesssion(ctx, sub, s, rxF, txF); err != nil {
+		log.Errorf("Failed to wire up recreated session for imsi %s. Error: %v", sub.Imsi, err)
+
+		return fmt.Errorf("failed to wire up recreated session for imsi %s. Error: %w", sub.Imsi, err)
 	}
 
 	return nil

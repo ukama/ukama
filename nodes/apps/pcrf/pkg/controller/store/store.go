@@ -31,6 +31,7 @@ const PCRFDB = "/ukama/apps/db/pcrf.db"
 
 var (
 	ErrSubscriberNotFound = errors.New("subscriber not found")
+	ErrSessionNotFound    = errors.New("active session not found")
 	ErrPolicyInvalid      = errors.New("policy invalid for subscriber")
 	ErrDataCapExceeded    = errors.New("data cap exceeded")
 )
@@ -1145,6 +1146,10 @@ func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
 	SELECT id, node_id, subscriber_id, policy_id, apnname, ueipaddr, starttime, endtime , txbytes , rxbytes , totalbytes , txmeter_id, rxmeter_id, state, flowstate, sync, updatedat FROM sessions WHERE subscriber_id = (SELECT id FROM subscribers WHERE imsi = ?) AND state = 1
 	`, imsi).Scan(&session.ID, &session.NodeId, &session.SubscriberID.ID, &bid, &session.ApnName, &session.UeIpAddr, &session.StartTime, &session.EndTime, &session.TxBytes, &session.RxBytes, &session.TotalBytes, &session.TxMeterID.ID, &session.RxMeterID.ID, &session.State, &session.FlowState, &session.Sync, &session.UpdatedAt)
 	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("%w: imsi %s", ErrSessionNotFound, imsi)
+		}
+
 		return nil, err
 	}
 

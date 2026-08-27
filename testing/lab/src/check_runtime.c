@@ -429,7 +429,8 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
             sleep(1);
         } while (1);
 
-        if (expected && check->type == CHECK_TRAFFIC_BLOCKED) {
+        if (expected && (check->type == CHECK_TRAFFIC_BLOCKED ||
+                        check->type == CHECK_TRAFFIC_UNAVAILABLE)) {
             memset(&session_err, 0, sizeof(session_err));
             if (runtime_verify_ue_policy_blocks(ctx->runtime, ctx->world,
                                                 &sel, &session_err) != ULAB_OK) {
@@ -447,7 +448,8 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                           sizeof(res->detail) - (size_t)n,
                           " traffic_error=%.256s", tmp.msg);
         }
-        if (!expected && check->type == CHECK_TRAFFIC_BLOCKED &&
+        if (!expected && (check->type == CHECK_TRAFFIC_BLOCKED ||
+                         check->type == CHECK_TRAFFIC_UNAVAILABLE) &&
             n > 0 && (size_t)n < sizeof(res->detail) && session_err.msg[0]) {
             snprintf(res->detail + n,
                      sizeof(res->detail) - (size_t)n,
