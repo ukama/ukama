@@ -15,7 +15,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
@@ -33,7 +32,7 @@ import (
 const testOrgName = "test-org"
 
 func onlineNodeClient() creg.NodeClient {
-	c := &cmocks.NodeClient{}
+	c := &mbmocks.NodeClient{}
 	c.On("Get", mock.Anything).
 		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil).Maybe()
 
@@ -294,7 +293,7 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 }
 
 func offlineNodeClient() creg.NodeClient {
-	c := &cmocks.NodeClient{}
+	c := &mbmocks.NodeClient{}
 	c.On("Get", mock.Anything).
 		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Offline"}}, nil).Maybe()
 
@@ -326,7 +325,7 @@ func TestControllerServer_OfflineNodeIsRejectedWithoutLocking(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			conRepo := &mocks.NodeLogRepo{}
 			conRepo.On("Get", nodeId).Return(&db.NodeLog{NodeId: nodeId}, nil).Maybe()
-			opMgr := &cmocks.ManagerClient{}
+			opMgr := &mbmocks.ManagerClient{}
 
 			s := NewControllerServer(testOrgName, conRepo, nil, nil, nil,
 				offlineNodeClient(), opMgr, nil, 30, 60, pkg.IsDebugMode)
