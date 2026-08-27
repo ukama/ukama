@@ -1578,7 +1578,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 		mockSql.ExpectBegin()
 		mockSql.ExpectExec(`UPDATE "packages" SET`).
-			WithArgs(false, false, uint64(500), sqlmock.AnyArg(), packageId).
+			WithArgs(sqlmock.AnyArg(), false, false, uint64(500), sqlmock.AnyArg(), packageId).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mockSql.ExpectCommit()
 

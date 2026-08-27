@@ -1573,7 +1573,11 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 		UsedDataAtExpiry: totalDataUsed,
 	}
 
-	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToDrain, nil)
+	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToDrain, func(pckg *sims.Package, tx *gorm.DB) error {
+		packageToDrain.EndDate = time.Now().UTC()
+
+		return nil
+	})
 	if err != nil {
 		return status.Errorf(codes.Internal,
 			"failed to mark package as drained. Error %s", err.Error())
@@ -1583,7 +1587,7 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 	evtMsg := &epb.EventSimPackageExpire{
 		Id:              sim.Id.String(),
 		StartDate:       pckg.StartDate.String(),
-		EndDate:         pckg.EndDate.String(),
+		EndDate:         packageToDrain.EndDate.String(),
 		DefaultDuration: pckg.DefaultDuration,
 		PackageId:       pckg.Id.String(),
 		DataPlanId:      pckg.PackageId.String(),
