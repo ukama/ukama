@@ -12,7 +12,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
@@ -122,8 +121,8 @@ func (u *ukamaAgentClient) GetUsages(iccid string, simPackageIds []string, cdrTy
 
 	usageUrl := u.u.String() + UkamaUsageEndpoint +
 		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime)
-	if len(simPackageIds) > 0 {
-		usageUrl += "&sim_package_ids=" + strings.Join(simPackageIds, ",")
+	for _, spid := range simPackageIds {
+		usageUrl += "&sim_package_ids=" + spid
 	}
 
 	resp, err := u.R.Get(usageUrl)
