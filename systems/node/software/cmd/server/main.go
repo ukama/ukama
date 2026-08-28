@@ -27,11 +27,12 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/node/software/cmd/version"
 
-	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
-	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	"github.com/ukama/ukama/systems/common/rest/client"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 
@@ -43,6 +44,7 @@ import (
 )
 
 const operationSystemName = "operation"
+const registrySystemName = "registry"
 
 var svcConf *pkg.Config
 
@@ -125,6 +127,13 @@ func runGrpcServer(gormdb sql.Db) {
 	opMgr := copr.NewManagerClient(operationUrl.String())
 	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
 
+	registryUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve registry address: %v", err)
+	}
+	nodeClient := creg.NewNodeClient(registryUrl.String())
+
 	releaseRepo := db.NewReleaseRepo(gormdb)
 	hub := hubclient.NewHubClient(svcConf.Http.HubHost)
 
@@ -132,7 +141,7 @@ func runGrpcServer(gormdb sql.Db) {
 		db.NewAppRepo(gormdb), db.NewNodeRepo(gormdb), releaseRepo, hub,
 		providers.NewHealthClientProvider(svcConf.Health),
 		mbClient, svcConf.DebugMode, svcConf.NodeGwIPs,
-		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs)
+		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs, nodeClient)
 	eventServer := server.NewSoftwareEventServer(svcConf.OrgName, softServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

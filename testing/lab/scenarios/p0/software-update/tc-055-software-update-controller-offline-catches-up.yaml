@@ -1,6 +1,6 @@
 version: 1
-name: software_update_controller_offline_catches_up
-description: Verify an example app update requested while the controller is offline is retained and applied automatically after the same node reconnects, without reissuing the update.
+name: software_update_controller_offline_rejected
+description: Verify an example app update requested while the controller is offline is rejected, takes no node lock, and leaves the node on its current version after it reconnects.
 seed: 1744158693
 suite: p0
 priority: p0
@@ -52,7 +52,7 @@ phases:
         app: example
         version: ${ULAB_SOFTWARE_CURRENT_VERSION}
 
-  - name: request_update_while_controller_is_offline
+  - name: reject_update_while_controller_is_offline
     events:
       - type: promote_release
         app: example
@@ -72,6 +72,9 @@ phases:
         count_per_network: 1
         app: example
         tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+        expect:
+          result: failure
+          error_contains: "not available for updates"
       - type: wait
         seconds: 30
     checks:
@@ -83,7 +86,7 @@ phases:
         immediate: true
         timeout_seconds: 120
 
-  - name: reconnect_and_apply_update
+  - name: reconnect_and_stay_on_current_version
     events:
       - type: reconnect_nodes
         type_selector: controller
@@ -98,7 +101,7 @@ phases:
         type_selector: controller
         count_per_network: 1
         app: example
-        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
       - type: node_health_ok
         type_selector: controller
         count_per_network: 1
@@ -107,8 +110,8 @@ phases:
         type_selector: controller
         count_per_network: 1
         app: example
-        status: up_to_date
-        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        status: update_available
+        current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
         timeout_seconds: 300
       - type: node_operation_status_equals
         type_selector: controller

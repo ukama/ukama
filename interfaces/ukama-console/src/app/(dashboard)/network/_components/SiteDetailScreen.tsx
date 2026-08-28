@@ -323,10 +323,12 @@ function SwitchPortRow({
   port,
   cnodeId,
   siteId,
+  blockedReason,
 }: {
   port: { n: number; name: string };
   cnodeId: string | null;
   siteId: string;
+  blockedReason?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [enabled, setEnabled] = useState(true);
@@ -366,17 +368,18 @@ function SwitchPortRow({
           Port {port.n}: {port.name}
         </div>
         <label
+          title={blockedReason}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
-            cursor: 'pointer',
+            cursor: blockedReason ? 'not-allowed' : 'pointer',
           }}
         >
           <ToggleState on={enabled} />
           <Switch
             edge="end"
             checked={enabled}
-            disabled={toggling}
+            disabled={toggling || !!blockedReason}
             onChange={(e) => onToggle(e.target.checked)}
           />
         </label>
@@ -446,18 +449,35 @@ function SwitchPortRow({
   );
 }
 
-/** Right panel when the Switch component is selected: its ports + KPIs. */
+/** Right panel when the Switch component is selected: its ports + KPIs.
+ *  Holds the operation-lock poll once for all ports rather than per row. */
 function SwitchPortsPanel({
   cnodeId,
   siteId,
+  controllerOnline,
 }: {
   cnodeId: string | null;
   siteId: string;
+  controllerOnline: boolean;
 }) {
+  const lock = useSiteOperationStatus(siteId);
+  const op = lock.activeOperation;
+  const blockedReason = !controllerOnline
+    ? "Controller node is offline — ports can't be switched"
+    : lock.busy
+      ? `${prettyOpType(op?.type)} in progress${byWhom(op?.requestedBy)}`
+      : undefined;
+
   return (
     <SectionCard title={`Switch ports (${SWITCH_PORTS.length})`}>
       {SWITCH_PORTS.map((p) => (
-        <SwitchPortRow key={p.n} port={p} cnodeId={cnodeId} siteId={siteId} />
+        <SwitchPortRow
+          key={p.n}
+          port={p}
+          cnodeId={cnodeId}
+          siteId={siteId}
+          blockedReason={blockedReason}
+        />
       ))}
     </SectionCard>
   );
@@ -569,11 +589,15 @@ function SiteActions({
   networkId,
   siteName,
   tnodeId,
+  towerOnline,
+  anyNodeOnline,
 }: {
   siteId: string;
   networkId: string;
   siteName: string;
   tnodeId: string | null;
+  towerOnline: boolean;
+  anyNodeOnline: boolean;
 }) {
   const toast = useToast();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -659,30 +683,49 @@ function SiteActions({
   // tower disables Service — independently — and any busy node disables
   // Restart site (it locks every node).
   const rfDisabled =
-    !tnodeId || !lock.actions.rf.available || lock.busy || rfLoading;
+    !tnodeId ||
+    !towerOnline ||
+    !lock.actions.rf.available ||
+    lock.busy ||
+    rfLoading;
   const serviceDisabled =
-    !tnodeId || !lock.actions.service.available || lock.busy || serviceLoading;
+    !tnodeId ||
+    !towerOnline ||
+    !lock.actions.service.available ||
+    lock.busy ||
+    serviceLoading;
   const restartDisabled =
-    !lock.actions.restartSite.available || lock.busy || restarting;
+    !anyNodeOnline ||
+    !lock.actions.restartSite.available ||
+    lock.busy ||
+    restarting;
 
   const noTower = 'No tower node on this site';
+  const towerOffline = "Tower node is offline — it can't be reached";
+  const siteOffline = "Every node on this site is offline — it can't be reached";
   const rfReason = !tnodeId
     ? noTower
-    : !lock.actions.rf.available
-      ? (lock.actions.rf.reason ?? siteBusyReason)
-      : lock.busy
-        ? siteBusyReason
-        : undefined;
+    : !towerOnline
+      ? towerOffline
+      : !lock.actions.rf.available
+        ? (lock.actions.rf.reason ?? siteBusyReason)
+        : lock.busy
+          ? siteBusyReason
+          : undefined;
   const serviceReason = !tnodeId
     ? noTower
-    : !lock.actions.service.available
-      ? (lock.actions.service.reason ?? siteBusyReason)
-      : lock.busy
-        ? siteBusyReason
-        : undefined;
-  const restartReason = restartDisabled
-    ? (lock.actions.restartSite.reason ?? siteBusyReason)
-    : undefined;
+    : !towerOnline
+      ? towerOffline
+      : !lock.actions.service.available
+        ? (lock.actions.service.reason ?? siteBusyReason)
+        : lock.busy
+          ? siteBusyReason
+          : undefined;
+  const restartReason = !anyNodeOnline
+    ? siteOffline
+    : restartDisabled
+      ? (lock.actions.restartSite.reason ?? siteBusyReason)
+      : undefined;
 
   return (
     <>
@@ -933,11 +976,18 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
   // A node counts as "up" when it's reachable (connectivity online) — a
   // configured/operational node, not just status === 'online'. Mirrors the
   // BFF's connectivity-based site node counts.
+  const isOnline = (n: { connectivity?: string | null }) =>
+    (n.connectivity ?? '').toLowerCase() === 'online';
+  // Actions need reachability, not just presence: RF and service are dispatched
+  // to the tower node, restart-site touches every node on the site.
+  const towerOnline = siteNodes.some((n) => n.id === tnodeId && isOnline(n));
+  const controllerOnline = siteNodes.some(
+    (n) => n.id === cnodeId && isOnline(n),
+  );
+  const anyNodeOnline = siteNodes.some(isOnline);
   const s = toSite(siteSection.site, {
     total: siteNodes.length,
-    online: siteNodes.filter(
-      (n) => (n.connectivity ?? '').toLowerCase() === 'online',
-    ).length,
+    online: siteNodes.filter(isOnline).length,
   });
   const dto = siteSection.site;
   const installDate = formatDate(dto.installDate || dto.createdAt);
@@ -979,6 +1029,8 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
             networkId={networkId}
             siteName={s.name}
             tnodeId={tnodeId}
+            towerOnline={towerOnline}
+            anyNodeOnline={anyNodeOnline}
           />
         }
       />
@@ -1185,7 +1237,11 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               onOpen={(id) => router.push(`/network/nodes/${id}`)}
             />
           ) : selected.id === 'switch' ? (
-            <SwitchPortsPanel cnodeId={cnodeId} siteId={siteId} />
+            <SwitchPortsPanel
+              cnodeId={cnodeId}
+              siteId={siteId}
+              controllerOnline={controllerOnline}
+            />
           ) : (
             <ComponentPanel comp={selected} cnodeId={cnodeId} />
           )}

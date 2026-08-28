@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/software/mocks"
@@ -64,11 +65,16 @@ var (
 // ========== Helpers to build server with mocks ==========
 
 func newTestServer(sRepo *mocks.SoftwareRepo, appRepo *mocks.AppRepo, nodeRepo *mocks.NodeRepo, msgBus *mbmocks.MsgBusServiceClient) *SoftwareServer {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil).Maybe()
+
 	return NewSoftwareServer(testOrgName, sRepo, appRepo, nodeRepo, nil, nil, nil, msgBus, false, []string{testNodeGwIP},
 		nil,
 		nil,
 		0,
 		0,
+		nodeClient,
 	)
 }
 
@@ -494,5 +500,68 @@ func TestUpdateSoftware(t *testing.T) {
 
 		sRepo.AssertExpectations(t)
 		msgBus.AssertExpectations(t)
+	})
+}
+
+func TestUpdateSoftware_OfflineNode(t *testing.T) {
+	ctx := context.Background()
+
+	offlineNode := &creg.NodeInfo{
+		Id:     testNodeIdNormalized,
+		Status: creg.NodeStatusInfo{Connectivity: "Offline"},
+	}
+
+	t.Run("rejected_with_not_found", func(t *testing.T) {
+		nodeClient := &mbmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
+
+		opMgr := &mbmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		resp, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		nodeClient.AssertExpectations(t)
+	})
+
+	t.Run("takes_no_lock", func(t *testing.T) {
+		nodeClient := &mbmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(offlineNode, nil).Once()
+
+		opMgr := &mbmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		_, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		opMgr.AssertNotCalled(t, "Start", mock.Anything)
+	})
+
+	t.Run("registry_unreachable_is_internal", func(t *testing.T) {
+		nodeClient := &mbmocks.NodeClient{}
+		nodeClient.On("Get", testNodeIdNormalized).Return(nil, assert.AnError).Once()
+
+		opMgr := &mbmocks.ManagerClient{}
+
+		s := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t),
+			mocks.NewNodeRepo(t), nil, nil, nil, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, opMgr, nil, 0, 0, nodeClient)
+
+		_, err := s.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
+			NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+		require.Error(t, err)
+		assert.Equal(t, codes.Internal, status.Code(err))
+		opMgr.AssertNotCalled(t, "Start", mock.Anything)
 	})
 }

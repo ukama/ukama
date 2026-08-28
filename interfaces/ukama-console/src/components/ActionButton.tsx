@@ -19,6 +19,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 export interface ActionButtonProps extends Omit<ButtonProps, 'disabled'> {
   busy?: boolean;
   busyLabel?: string;
+  /** Disabled without a spinner: the action is unavailable, not in progress. */
+  blocked?: boolean;
   /** Human reason shown as tooltip + aria hint when busy/blocked. */
   reason?: string;
 }
@@ -26,6 +28,7 @@ export interface ActionButtonProps extends Omit<ButtonProps, 'disabled'> {
 export function ActionButton({
   busy = false,
   busyLabel,
+  blocked = false,
   reason,
   children,
   startIcon,
@@ -37,13 +40,13 @@ export function ActionButton({
     <Button
       {...rest}
       startIcon={busy ? <CircularProgress size={15} color="inherit" /> : startIcon}
-      aria-disabled={busy || undefined}
-      aria-label={busy && reason ? reason : undefined}
-      title={busy && reason ? reason : undefined}
-      onClick={busy ? undefined : onClick}
+      aria-disabled={busy || blocked || undefined}
+      aria-label={reason && (busy || blocked) ? reason : undefined}
+      title={reason && (busy || blocked) ? reason : undefined}
+      onClick={busy || blocked ? undefined : onClick}
       sx={[
         ...(Array.isArray(sx) ? sx : [sx]),
-        busy ? { opacity: 0.7, pointerEvents: 'none' } : {},
+        busy || blocked ? { opacity: 0.7, pointerEvents: 'none' } : {},
       ]}
     >
       {busy && busyLabel ? busyLabel : children}

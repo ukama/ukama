@@ -18,7 +18,10 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -27,6 +30,14 @@ import (
 )
 
 const testOrgName = "test-org"
+
+func onlineNodeClient() creg.NodeClient {
+	c := &mbmocks.NodeClient{}
+	c.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil).Maybe()
+
+	return c
+}
 
 func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
@@ -54,7 +65,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	resp, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{NodeId: nodeId})
 
@@ -95,7 +106,7 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
 
@@ -134,7 +145,7 @@ func TestControllerServer_ToggleService(t *testing.T) {
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	_, err = s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
 
@@ -186,7 +197,7 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 	opMgr.On("Complete", "op-i", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	resp, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: true, Port: 2})
 
@@ -215,7 +226,7 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
 	opMgr.On("ForceUnlock", "op-i", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	_, err := s.ToggleSwitchPort(context.TODO(), &pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: true, Port: 2})
 
@@ -272,11 +283,58 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 		NodeId:     nodeId,
 	}).Return(nil).Once()
 
-	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, nil, opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
 	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
 
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
 	assert.NoError(t, err)
+}
+
+func offlineNodeClient() creg.NodeClient {
+	c := &mbmocks.NodeClient{}
+	c.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Offline"}}, nil).Maybe()
+
+	return c
+}
+
+func TestControllerServer_OfflineNodeIsRejectedWithoutLocking(t *testing.T) {
+	const nodeId = "uk-983794-hnode-78-7830"
+
+	cases := []struct {
+		name string
+		call func(*ControllerServer) error
+	}{
+		{"RestartNode", func(s *ControllerServer) error {
+			_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{NodeId: nodeId})
+			return err
+		}},
+		{"ToggleRadio", func(s *ControllerServer) error {
+			_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
+			return err
+		}},
+		{"ToggleService", func(s *ControllerServer) error {
+			_, err := s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
+			return err
+		}},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			conRepo := &mocks.NodeLogRepo{}
+			conRepo.On("Get", nodeId).Return(&db.NodeLog{NodeId: nodeId}, nil).Maybe()
+			opMgr := &mbmocks.ManagerClient{}
+
+			s := NewControllerServer(testOrgName, conRepo, nil, nil, nil,
+				offlineNodeClient(), opMgr, nil, 30, 60, pkg.IsDebugMode)
+
+			err := tc.call(s)
+
+			assert.Error(t, err)
+			assert.Equal(t, codes.NotFound, status.Code(err))
+			opMgr.AssertNotCalled(t, "Start", mock.Anything)
+		})
+	}
 }
