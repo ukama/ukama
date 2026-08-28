@@ -94,6 +94,10 @@ func (u *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting ukama sim usages: %v", iccid)
 
+	if iccid == "" {
+		return nil, nil, fmt.Errorf("ukama agent does not support multi-sim usage queries: iccid is required")
+	}
+
 	var startTime int64 = defaultStartTime
 	var endTime int64 = time.Now().Add(time.Hour).Unix()
 

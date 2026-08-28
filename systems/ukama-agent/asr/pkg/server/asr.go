@@ -392,7 +392,6 @@ func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) 
 
 	var sub *db.Asr
 	var err error
-	var policies []string
 
 	sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
@@ -401,9 +400,7 @@ func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting ASR record for given iccid:")
 	}
 
-	policies = []string{sub.Policy.Id.String()}
-
-	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policies, req.Count, req.Sort)
+	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, nil, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Failed to query usage: for imsi %s. Error: %v", sub.Imsi, err)
 
