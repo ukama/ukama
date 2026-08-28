@@ -194,7 +194,7 @@ func (p *cdrRepo) QueryUsage(imsi, nodeId string, session, from, to uint64,
 	}
 
 	if len(policies) > 0 {
-		tx = tx.Where("policy = ?", policies[0])
+		tx = tx.Where("policy IN ?", policies)
 	}
 
 	if sort {

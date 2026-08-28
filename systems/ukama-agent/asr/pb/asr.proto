@@ -217,7 +217,7 @@ message QueryUsageReq {
     uint64 Session = 3;
     uint64 From = 4;
     uint64 To = 5;
-    string packageId = 6;
+    repeated string SimPackageIds = 6;
     uint32 Count = 7;
     bool Sort = 8;
 }

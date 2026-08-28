@@ -431,6 +431,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 	var simType ukama.SimType
 	var simIccid string
+	var simPackageIds []string
 
 	if req.SimId != "" {
 		sim, err := getSim(req.SimId, s.simRepo)
@@ -440,6 +441,18 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 		simType = sim.Type
 		simIccid = sim.Iccid
+
+		pkgs, err := s.packageRepo.List(req.SimId, "", "", "", "", "", nil, nil, 0, false)
+		if err != nil {
+			log.Errorf("Failed to list packages for sim %s. Error: %v", req.SimId, err)
+
+			return nil, grpc.SqlErrorToGrpc(err, "package")
+		}
+
+		simPackageIds = make([]string, len(pkgs))
+		for i, p := range pkgs {
+			simPackageIds[i] = p.Id.String()
+		}
 	} else {
 		simType = ukama.ParseSimType(req.SimType)
 		if simType == ukama.SimTypeUnknown {
@@ -454,7 +467,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 			"failure to get agent adapter for sim type: %q", simType)
 	}
 
-	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To, req.Region)
+	u, c, err := simAgent.GetUsages(ctx, simIccid, simPackageIds, req.Type, req.From, req.To, req.Region)
 	if err != nil {
 		return nil, err
 	}

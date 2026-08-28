@@ -120,7 +120,7 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst,
 				sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime,
-				sub.Policy.EndTime, subID).WillReturnResult(sqlmock.NewResult(1, 1))
+				sub.Policy.EndTime, subID, sub.Policy.SimPackageId).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
@@ -174,7 +174,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID, SimPackageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).

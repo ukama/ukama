@@ -229,12 +229,13 @@ func (r *Router) getUsageForPeriod(c *gin.Context, req *UsageForPeriodRequest) (
 
 func (r *Router) queryUsage(c *gin.Context, req *QueryUsageRequest) (*pb.QueryUsageResp, error) {
 	return r.clients.a.QueryUsage(&pb.QueryUsageReq{
-		Iccid:   req.Iccid,
-		NodeId:  req.NodeId,
-		Session: req.Session,
-		From:    req.From,
-		To:      req.To,
-		Count:   req.Count,
-		Sort:    req.Sort,
+		Iccid:         req.Iccid,
+		NodeId:        req.NodeId,
+		Session:       req.Session,
+		From:          req.From,
+		To:            req.To,
+		SimPackageIds: req.SimPackageIds,
+		Count:         req.Count,
+		Sort:          req.Sort,
 	})
 }

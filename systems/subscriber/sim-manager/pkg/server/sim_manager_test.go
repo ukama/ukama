@@ -601,6 +601,7 @@ func TestSimManagerServer_GetSim(t *testing.T) {
 func TestSimManagerServer_GetUsages(t *testing.T) {
 	t.Run("SimFound", func(t *testing.T) {
 		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
 		agentFactory := &mocks.AgentFactory{}
 
 		simId := uuid.NewV4()
@@ -615,16 +616,20 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*sims.Sim)
 
+		packageRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{}, nil).Once()
+
 		agentAdapter := agentFactory.On("GetAgentAdapter", sim.Type).
 			Return(&mocks.AgentAdapter{}, true).
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
 		agentAdapter.On("GetUsages", mock.Anything,
-			sim.Iccid, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			sim.Iccid, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(map[string]any{}, map[string]any{}, nil).Once()
 
-		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, agentFactory,
 			nil, nil, nil, nil, nil, "", "", nil, nil, nil, nil)
 		usagesResp, err := s.GetUsages(context.TODO(), &pb.UsageRequest{
 			SimId: simId.String(),
@@ -683,7 +688,7 @@ func TestSimManagerServer_GetUsages(t *testing.T) {
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
 		agentAdapter.On("GetUsages", mock.Anything,
-			"", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			"", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(map[string]any{}, map[string]any{}, nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,

@@ -400,7 +400,40 @@ func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting ASR record for given iccid:")
 	}
 
-	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, nil, req.Count, req.Sort)
+	var policyIds []string
+	if len(req.SimPackageIds) == 0 {
+		policyIds = []string{sub.Policy.Id.String()}
+	} else {
+		simPackageIds := make([]uuid.UUID, len(req.SimPackageIds))
+		for i, s := range req.SimPackageIds {
+			spid, err := uuid.FromString(s)
+			if err != nil {
+				log.Errorf("Sim package id %s not valid. Error: %v", s, err)
+
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sim package id: %v", err)
+			}
+
+			simPackageIds[i] = spid
+		}
+
+		policies, err := ar.asrRepo.GetPoliciesBySimPackageIds(simPackageIds)
+		if err != nil {
+			log.Errorf("Failed to resolve policies for given sim package ids: %v. Error: %v", req.SimPackageIds, err)
+
+			return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error resolving policies for given sim package ids:")
+		}
+
+		if len(policies) == 0 {
+			return &pb.QueryUsageResp{Usage: 0}, nil
+		}
+
+		policyIds = make([]string, len(policies))
+		for i, p := range policies {
+			policyIds[i] = p.Id.String()
+		}
+	}
+
+	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policyIds, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Failed to query usage: for imsi %s. Error: %v", sub.Imsi, err)
 
@@ -571,6 +604,8 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, policyI
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid policy input: %v", err)
 	}
+
+	policy.SimPackageId = spId
 
 	/* Add to ASR */
 	asr := &db.Asr{

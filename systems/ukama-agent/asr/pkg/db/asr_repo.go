@@ -31,6 +31,7 @@ type AsrRecordRepo interface {
 	Update(imsi string, record *Asr) error
 	UpdatePackage(imsi string, packageId uuid.UUID, simPackageId uuid.UUID, policy *Policy) error
 	UpdateConsumedData(asrID uint, consumedData uint64) error
+	GetPoliciesBySimPackageIds(simPackageIds []uuid.UUID) ([]Policy, error)
 	DeleteByIccid(iccid string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	Delete(imsi string, reason StatusReason, nestedFunc ...func(*gorm.DB) error) error
 	UpdateTai(imis string, tai Tai) error
@@ -75,6 +76,7 @@ func (r *asrRecordRepo) UpdatePackage(imsiToUpdate string, packageId uuid.UUID, 
 		}
 
 		policy.AsrID = asrRec.ID
+		policy.SimPackageId = simPackageId
 		err = tx.Create(&policy).Error
 		if err != nil {
 			return errors.Wrap(err, "error adding policy")
@@ -132,6 +134,16 @@ func (r *asrRecordRepo) GetByIccid(iccid string) (*Asr, error) {
 	}
 
 	return &asr, nil
+}
+
+func (r *asrRecordRepo) GetPoliciesBySimPackageIds(simPackageIds []uuid.UUID) ([]Policy, error) {
+	var policies []Policy
+	result := r.db.GetGormDb().Unscoped().Where("sim_package_id IN ?", simPackageIds).Find(&policies)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return policies, nil
 }
 
 func (r *asrRecordRepo) Delete(imsi string, reason StatusReason, nestedFuncs ...func(*gorm.DB) error) error {

@@ -174,6 +174,36 @@ func (_m *AsrRecordRepo) GetByImsi(imsi string) (*db.Asr, error) {
 	return r0, r1
 }
 
+// GetPoliciesBySimPackageIds provides a mock function with given fields: simPackageIds
+func (_m *AsrRecordRepo) GetPoliciesBySimPackageIds(simPackageIds []uuid.UUID) ([]db.Policy, error) {
+	ret := _m.Called(simPackageIds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPoliciesBySimPackageIds")
+	}
+
+	var r0 []db.Policy
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) ([]db.Policy, error)); ok {
+		return rf(simPackageIds)
+	}
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) []db.Policy); ok {
+		r0 = rf(simPackageIds)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Policy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]uuid.UUID) error); ok {
+		r1 = rf(simPackageIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // List provides a mock function with no fields
 func (_m *AsrRecordRepo) List() ([]db.Asr, error) {
 	ret := _m.Called()

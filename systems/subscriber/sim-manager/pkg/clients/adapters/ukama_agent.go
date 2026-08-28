@@ -44,9 +44,9 @@ func (u *UkamaAgentAdaper) GetSim(ctx context.Context, iccid string) (any, error
 	return u.client.GetSimInfo(iccid)
 }
 
-func (u *UkamaAgentAdaper) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
+func (u *UkamaAgentAdaper) GetUsages(ctx context.Context, iccid string, simPackageIds []string, cdrType, from, to, region string) (any, any, error) {
 	// think of how to use ctx with restclient
-	return u.client.GetUsages(iccid, cdrType, from, to, region)
+	return u.client.GetUsages(iccid, simPackageIds, cdrType, from, to, region)
 }
 
 func (u *UkamaAgentAdaper) ActivateSim(ctx context.Context, req client.AgentRequestData) error {
