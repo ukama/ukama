@@ -11,8 +11,8 @@ package pkg
 import (
 	"time"
 
-	uconf "github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/analytics/schema"
+	uconf "github.com/ukama/ukama/systems/common/config"
 )
 
 type Config struct {
@@ -38,8 +38,11 @@ type EngineConfig struct {
 	// SweepInterval is the ledger sweeper cadence: it recovers any window
 	// whose window.ready event was lost.
 	SweepInterval time.Duration `default:"60s"`
-	// CatchupWindows bounds how far back the sweeper looks.
-	CatchupWindows int64 `default:"12"`
+	// Catchup is how far back the sweeper looks for windows whose inputs
+	// became ready late. A duration, so the horizon is independent of Window.W.
+	Catchup time.Duration `default:"1h"`
+	// CatchupWindows pins an explicit window count. 0 = derive from Catchup.
+	CatchupWindows int64 `default:"0"`
 	// SpecsDir holds the KPI specs (*.yaml).
 	SpecsDir string `default:"configs/kpis"`
 }

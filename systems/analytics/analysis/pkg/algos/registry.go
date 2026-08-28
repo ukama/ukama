@@ -104,3 +104,53 @@ func CountResult(scope map[string]string, value float64) Result {
 		Max:   value,
 	}
 }
+
+// Reserved keys the runner stamps onto every input row from its change-log
+// record; prefixed so a source `map:` cannot collide.
+const (
+	// FieldEntityKey identifies the thing the row describes.
+	FieldEntityKey = "_entity_key"
+	// FieldWindowID is the window the row was first observed in, not its own
+	// created_at/paid_at.
+	FieldWindowID = "_window_id"
+)
+
+// entityKey returns a row's identity: the change-log entity key, else the
+// named fallback field (which keeps hand-built test fixtures working).
+func entityKey(row map[string]interface{}, fallback string) string {
+	if k := str(row[FieldEntityKey]); k != "" {
+		return k
+	}
+
+	return str(row[fallback])
+}
+
+// NewlyObserved returns the rows of `current` whose entity is absent from
+// `previous` — the counting primitive for flow KPIs. An entity lands in the
+// diff for exactly one window, so each fact counts once however many windows
+// were skipped, and a content change is not a new entity.
+//
+// Limitation: an entity tombstoned then restored counts again; the diff only
+// knows the previous window.
+func NewlyObserved(current, previous []map[string]interface{}, idField string) []map[string]interface{} {
+	seen := make(map[string]bool, len(previous))
+
+	for _, row := range previous {
+		if k := entityKey(row, idField); k != "" {
+			seen[k] = true
+		}
+	}
+
+	out := make([]map[string]interface{}, 0)
+
+	for _, row := range current {
+		k := entityKey(row, idField)
+		if k == "" || seen[k] {
+			continue
+		}
+
+		out = append(out, row)
+	}
+
+	return out
+}

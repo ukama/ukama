@@ -1,8 +1,14 @@
 version: '3.9'
 
 # Analytics v2 pipeline: ingest -> analysis -> aggregator -> api-gateway.
-# The window grid (WINDOW_W / WINDOW_L) MUST be identical across the three
-# pipeline services.
+#
+# WINDOW_W MUST be identical across the three pipeline services.
+#
+# Sizing rules:
+#   * ENGINE_TICKINTERVAL <= WINDOW_W, so at most one window closes per tick.
+#   * ENGINE_CATCHUP is a duration; windows older than it are never pulled.
+#   * A per-entity fan-out costs the same per window however short W is. W=1m
+#     is the practical floor for dev; below that raise ENGINE_CONCURRENCY.
 services:
  postgresd-analytics:
   image: postgres:13.3
@@ -29,7 +35,10 @@ services:
    - INGEST_SERVICE_HOST=ingest
    - INGEST_SERVICE_PORT=9090
    - HTTP_INITCLIENT=http://api-gateway-init:8080
-   - WINDOW_W=5m
+   - WINDOW_W=1m
+   - ENGINE_TICKINTERVAL=10s
+   - ENGINE_CATCHUP=1h
+   - ENGINE_CONCURRENCY=8
    - ENGINE_SPECSDIR=/configs/sources
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
@@ -52,7 +61,9 @@ services:
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
    - ANALYSIS_SERVICE_HOST=analysis
    - ANALYSIS_SERVICE_PORT=9090
-   - WINDOW_W=5m
+   - WINDOW_W=1m
+   - ENGINE_SWEEPINTERVAL=15s
+   - ENGINE_CATCHUP=1h
    - ENGINE_SPECSDIR=/configs/kpis
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}
@@ -76,8 +87,9 @@ services:
    - PUSHGATEWAY=http://${LOCAL_HOST_IP}:9091
    - AGGREGATOR_SERVICE_HOST=aggregator
    - AGGREGATOR_SERVICE_PORT=9090
-   - WINDOW_W=5m
+   - WINDOW_W=1m
    - ROLLUP_SPECSDIR=/configs/kpis
+   - ROLLUP_SWEEPINTERVAL=30s
    - ROLLUP_TIMEZONE=UTC
    - ORGID=${ORGID}
    - ORGNAME=${ORGNAME}

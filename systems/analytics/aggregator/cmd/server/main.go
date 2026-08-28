@@ -10,6 +10,7 @@ package main
 
 import (
 	"os"
+	"time"
 	_ "time/tzdata" // embedded tzdata so org-timezone spans work on alpine
 
 	"github.com/num30/config"
@@ -116,8 +117,13 @@ func run(sDb sql.Db) {
 
 	log.Infof("Loaded %d report specs from %s", len(reports), serviceConfig.Rollup.ReportsDir)
 
+	rollupLoc, err := time.LoadLocation(serviceConfig.Rollup.Timezone)
+	if err != nil {
+		log.Fatalf("Loading rollup timezone %q failed: %v", serviceConfig.Rollup.Timezone, err)
+	}
+
 	composer := performance.NewComposer(serviceConfig.OrgName, reports, repo, repo, repo, grid,
-		serviceConfig.Rollup.ReportWindow)
+		serviceConfig.Rollup.ReportWindow, rollupLoc)
 
 	readServer, err := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer, grid, repo,
 		serviceConfig.Rollup.Timezone)

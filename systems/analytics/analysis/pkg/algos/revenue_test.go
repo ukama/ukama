@@ -59,9 +59,9 @@ func TestParseTime_PaymentsFormat(t *testing.T) {
 	assert.Error(t, err)
 }
 
-// End-to-end: a "completed" payment inside the window is counted against the
-// network its SIM belongs to (SUM = cents, COUNT = 1).
-func TestRevenue_CountsCompletedPayment(t *testing.T) {
+// A payment that became settled in this window counts against its SIM's
+// network; one already settled, and one not settled yet, do not.
+func TestRevenue_CountsNewlySettledPayment(t *testing.T) {
 	win := schema.Window{
 		Start: time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC),
 		End:   time.Date(2026, 7, 22, 16, 0, 0, 0, time.UTC),
@@ -69,15 +69,20 @@ func TestRevenue_CountsCompletedPayment(t *testing.T) {
 	in := Datasets{
 		"payments": {
 			{
-				"amount":   "1.00",
-				"status":   "completed",
-				"paid_at":  "2026-07-22 15:25:42.989109 +0000 UTC",
-				"metadata": metaFor("sim-A"),
+				"payment_id": "pay-new",
+				"amount":     "1.00",
+				"status":     "completed",
+				"paid_at":    "2026-07-22 15:25:42.989109 +0000 UTC",
+				"metadata":   metaFor("sim-A"),
 			},
-			// excluded: right status, but outside the window
-			{"amount": "5.00", "status": "completed", "paid_at": "2026-07-21T09:00:00Z", "metadata": metaFor("sim-A")},
-			// excluded: in window, but not settled
-			{"amount": "9.00", "status": "pending", "paid_at": "2026-07-22T15:30:00Z", "metadata": metaFor("sim-A")},
+			// excluded: already read settled one window ago
+			{"payment_id": "pay-old", "amount": "5.00", "status": "completed", "metadata": metaFor("sim-A")},
+			// excluded: not settled yet
+			{"payment_id": "pay-pending", "amount": "9.00", "status": "pending", "metadata": metaFor("sim-A")},
+		},
+		"payments_prev": {
+			{"payment_id": "pay-old", "status": "completed"},
+			{"payment_id": "pay-pending", "status": "pending"},
 		},
 		"sims":     {{"sim_id": "sim-A", "network_id": "net-a"}},
 		"networks": {{"network_id": "net-a"}},
@@ -92,6 +97,49 @@ func TestRevenue_CountsCompletedPayment(t *testing.T) {
 	assert.Equal(t, float64(1), row.Count)
 }
 
+// A late settlement counts in the window the transition is observed, once.
+func TestRevenue_CountsLateSettlementExactlyOnce(t *testing.T) {
+	win := schema.Window{
+		Start: time.Date(2026, 7, 22, 15, 0, 0, 0, time.UTC),
+		End:   time.Date(2026, 7, 22, 16, 0, 0, 0, time.UTC),
+	}
+	settled := map[string]interface{}{
+		"payment_id": "pay-1", "amount": "3.00", "status": "completed",
+		// hours before the window that finally observes the transition
+		"paid_at": "2026-07-22T04:00:00Z", "metadata": metaFor("sim-A"),
+	}
+	sims := []map[string]interface{}{{"sim_id": "sim-A", "network_id": "net-a"}}
+	networks := []map[string]interface{}{{"network_id": "net-a"}}
+
+	first, err := Revenue(win, Datasets{
+		"payments":      {settled},
+		"payments_prev": {{"payment_id": "pay-1", "status": "pending"}},
+		"sims":          sims,
+		"networks":      networks,
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Equal(t, float64(300), rowFor(first, "net-a").Sum)
+
+	second, err := Revenue(win, Datasets{
+		"payments":      {settled},
+		"payments_prev": {settled},
+		"sims":          sims,
+		"networks":      networks,
+	}, schema.KpiSpec{})
+	assert.NoError(t, err)
+	assert.Equal(t, float64(0), rowFor(second, "net-a").Sum, "not counted twice")
+}
+
+// Missing the lag-1 baseline is a spec error, not a silent zero.
+func TestRevenue_RequiresPrevBaseline(t *testing.T) {
+	_, err := Revenue(schema.Window{}, Datasets{
+		"payments": {},
+		"sims":     {},
+		"networks": {},
+	}, schema.KpiSpec{})
+	assert.Error(t, err)
+}
+
 // Each payment is attributed to the network of its paying SIM; a SIM that
 // can't be resolved lands in the org bucket (empty scope), not on a network.
 func TestRevenue_AttributesBySim(t *testing.T) {
@@ -101,11 +149,12 @@ func TestRevenue_AttributesBySim(t *testing.T) {
 	}
 	in := Datasets{
 		"payments": {
-			{"amount": "1.00", "status": "completed", "paid_at": "2026-07-22T09:00:00Z", "metadata": metaFor("sim-A")},
-			{"amount": "2.00", "status": "completed", "paid_at": "2026-07-22T10:00:00Z", "metadata": metaFor("sim-B")},
+			{"payment_id": "p1", "amount": "1.00", "status": "completed", "metadata": metaFor("sim-A")},
+			{"payment_id": "p2", "amount": "2.00", "status": "completed", "metadata": metaFor("sim-B")},
 			// SIM not in subscriber.sim.list -> org bucket
-			{"amount": "4.00", "status": "completed", "paid_at": "2026-07-22T11:00:00Z", "metadata": metaFor("sim-Z")},
+			{"payment_id": "p3", "amount": "4.00", "status": "completed", "metadata": metaFor("sim-Z")},
 		},
+		"payments_prev": {},
 		"sims": {
 			{"sim_id": "sim-A", "network_id": "net-a"},
 			{"sim_id": "sim-B", "network_id": "net-b"},

@@ -57,3 +57,26 @@ func (g Grid) Window(id int64) Window {
 func (g Grid) NewestEligible(now time.Time) int64 {
 	return g.WindowAt(now).ID - 1
 }
+
+// MinCatchupWindows floors the catch-up horizon.
+const MinCatchupWindows = 12
+
+// CatchupWindows converts a catch-up duration into a window count, so the
+// horizon is a fixed amount of time regardless of W. override > 0 pins an
+// explicit count instead.
+func CatchupWindows(catchup, w time.Duration, override int64) int64 {
+	if override > 0 {
+		return override
+	}
+
+	if w <= 0 || catchup <= 0 {
+		return MinCatchupWindows
+	}
+
+	n := int64(catchup / w)
+	if n < MinCatchupWindows {
+		n = MinCatchupWindows
+	}
+
+	return n
+}

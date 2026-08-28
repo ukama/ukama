@@ -197,10 +197,23 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		return fmt.Errorf("failed to get interfaces: %w", err)
 	}
 
-	if interfaces.Gps == nil || !interfaces.Gps.Available {
-		log.Errorf("GPS not found/available: %+v", interfaces.Gps)
+	if interfaces.Gps == nil {
+		log.Errorf("GPS not found: %+v", interfaces.Gps)
 		return fmt.Errorf("GPS not found: %+v", interfaces.Gps)
 	}
+
+	if !interfaces.Gps.Lock {
+		log.Infof("Node %s has no GPS lock yet, skipping location update",
+			msg.NodeId)
+		return nil
+	}
+
+	if !interfaces.Gps.Available {
+		log.Infof("Node %s has GPS not available, skipping location update",
+			msg.NodeId)
+		return nil
+	}
+
 	coordinates := interfaces.Gps.Coordinates
 
 	if coordinates == "" {

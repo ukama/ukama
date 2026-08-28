@@ -439,12 +439,22 @@ func (p PullSpec) EntityFields() []EntityField {
 	return out
 }
 
-// InputDatasets returns the set of dataset keys a KPI depends on.
+// InputDatasets is the distinct set of dataset keys this KPI reads; one
+// dataset may appear under several input names (e.g. its state_prev baseline).
 func (k KpiSpec) InputDatasets() []string {
+	seen := make(map[string]bool, len(k.Inputs))
 	out := make([]string, 0, len(k.Inputs))
+
 	for _, in := range k.Inputs {
+		if seen[in.Dataset] {
+			continue
+		}
+
+		seen[in.Dataset] = true
+
 		out = append(out, in.Dataset)
 	}
+
 	sort.Strings(out)
 
 	return out

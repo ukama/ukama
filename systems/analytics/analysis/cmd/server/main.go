@@ -99,11 +99,17 @@ func run(sDb sql.Db) {
 
 	grid := schema.Grid{W: serviceConfig.Window.W}
 
+	catchup := schema.CatchupWindows(serviceConfig.Engine.Catchup,
+		serviceConfig.Window.W, serviceConfig.Engine.CatchupWindows)
+
+	log.Infof("window grid W=%s, sweeper catch-up horizon %s (%d windows)",
+		serviceConfig.Window.W, serviceConfig.Engine.Catchup, catchup)
+
 	repo := db.NewRepo(sDb)
 
 	runner, err := engine.NewRunner(grid, kpis, algos.Default(), repo, repo, repo, repo,
 		mbClient, serviceConfig.OrgName, serviceConfig.Engine.SweepInterval,
-		serviceConfig.Engine.CatchupWindows)
+		catchup)
 	if err != nil {
 		log.Fatalf("Initializing analysis runner failed: %v", err)
 	}
