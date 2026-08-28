@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
@@ -30,7 +31,7 @@ const (
 type UkamaAgentClient interface {
 	CreateProfile(req client.AgentRequestData) (*UkamaSimInfo, error)
 	GetSimInfo(iccid string) (*UkamaSimInfo, error)
-	GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error)
+	GetUsages(iccid string, simPackageIds []string, cdrType, from, to, region string) (map[string]any, map[string]any, error)
 	UpdatePackage(req client.AgentRequestData) error
 	Update(req client.AgentRequestData) error
 	DeleteProfile(req client.AgentRequestData) error
@@ -91,7 +92,7 @@ func (u *ukamaAgentClient) GetSimInfo(iccid string) (*UkamaSimInfo, error) {
 	return sim.Record, nil
 }
 
-func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
+func (u *ukamaAgentClient) GetUsages(iccid string, simPackageIds []string, cdrType, from, to, region string) (map[string]any, map[string]any, error) {
 	log.Debugf("Getting ukama sim usages: %v", iccid)
 
 	if iccid == "" {
@@ -119,8 +120,13 @@ func (u *ukamaAgentClient) GetUsages(iccid, cdrType, from, to, region string) (m
 		endTime = t.Unix()
 	}
 
-	resp, err := u.R.Get(u.u.String() + UkamaUsageEndpoint +
-		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime))
+	usageUrl := u.u.String() + UkamaUsageEndpoint +
+		fmt.Sprintf("/%s?from=%d&to=%d", iccid, startTime, endTime)
+	if len(simPackageIds) > 0 {
+		usageUrl += "&sim_package_ids=" + strings.Join(simPackageIds, ",")
+	}
+
+	resp, err := u.R.Get(usageUrl)
 	if err != nil {
 		log.Errorf("GetSim usages failure. error: %v", err)
 

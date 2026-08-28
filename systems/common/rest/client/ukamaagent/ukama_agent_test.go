@@ -166,7 +166,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 		// so that the test stays a unit test e.g, no server/network call.
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		u, _, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
+		u, _, err := testUkamaClient.GetUsages(testIccid, nil, cdrType, from, to, region)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, u[testIccid])
@@ -188,7 +188,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
+		u, c, err := testUkamaClient.GetUsages(testIccid, nil, cdrType, from, to, region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -207,7 +207,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, "lol", to, region)
+		u, c, err := testUkamaClient.GetUsages(testIccid, nil, cdrType, "lol", to, region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -226,7 +226,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, "to", region)
+		u, c, err := testUkamaClient.GetUsages(testIccid, nil, cdrType, from, "to", region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
@@ -245,7 +245,7 @@ func TestUkamaClient_GetUsages(t *testing.T) {
 
 		testUkamaClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		u, c, err := testUkamaClient.GetUsages(testIccid, cdrType, from, to, region)
+		u, c, err := testUkamaClient.GetUsages(testIccid, nil, cdrType, from, to, region)
 
 		assert.Error(tt, err)
 		assert.Nil(tt, u)
