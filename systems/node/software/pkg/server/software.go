@@ -18,6 +18,11 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	"strings"
+
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
@@ -25,8 +30,6 @@ import (
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
-	hubclient "github.com/ukama/ukama/systems/common/rest/client/hub"
 	swclient "github.com/ukama/ukama/systems/node/software/pkg/client"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"github.com/ukama/ukama/systems/node/software/providers"
@@ -35,7 +38,7 @@ import (
 )
 
 const DefaultUpdateWatchInterval = 32 * time.Second
-const DefaultUpdateWatchExpiry = 10 * time.Minute
+const DefaultUpdateWatchExpiry = 5 * time.Minute
 
 type SoftwareServer struct {
 	pb.UnimplementedSoftwareServiceServer
@@ -54,9 +57,10 @@ type SoftwareServer struct {
 	opMonitor            swclient.OperationMonitor
 	opLeaseSecs          uint32
 	opDeadlineSecs       uint32
+	nodeClient           creg.NodeClient
 }
 
-func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr copr.ManagerClient, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32) *SoftwareServer {
+func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo, nodeRepo db.NodeRepo, releaseRepo db.ReleaseRepo, hub hubclient.HubClient, healthClient providers.HealthClientProvider, msgBus mb.MsgBusServiceClient, debug bool, nodeGwIP []string, opMgr copr.ManagerClient, opMon swclient.OperationMonitor, leaseSecs, deadlineSecs uint32, nodeClient creg.NodeClient) *SoftwareServer {
 	return &SoftwareServer{
 		sRepo:                sRepo,
 		debug:                debug,
@@ -73,6 +77,7 @@ func NewSoftwareServer(orgName string, sRepo db.SoftwareRepo, appRepo db.AppRepo
 		opMonitor:            opMon,
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
+		nodeClient:           nodeClient,
 	}
 }
 
@@ -336,12 +341,30 @@ func (s *SoftwareServer) GetSoftwareList(ctx context.Context, req *pb.GetSoftwar
 	return &pb.GetSoftwareListResponse{Software: softwarePb}, nil
 }
 
+func (s *SoftwareServer) ensureNodeOnline(nodeID string) error {
+	node, err := s.nodeClient.Get(nodeID)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to resolve node %s: %v", nodeID, err)
+	}
+
+	if !strings.EqualFold(node.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
+		return status.Errorf(codes.NotFound, "node %s is not available for updates: connectivity is %s",
+			nodeID, node.Status.Connectivity)
+	}
+
+	return nil
+}
+
 func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
 	log.Infof("Updating software for node %s app %s to tag %s", req.NodeId, req.Name, req.Tag)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id: %s", err.Error())
+	}
+
+	if err := s.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
 	}
 
 	list, err := s.sRepo.List(nId.String(), ukama.UpdateAvailable, req.Name)

@@ -78,35 +78,31 @@ func (p pkgInfo) mrrCents() float64 {
 }
 
 // PackageSales (PACKAGE_SALES @ scope network_id+package_id): sim-package
-// assignments whose start_date falls inside the window. Daily SUM = sold
+// assignments that first became visible in this window. Daily SUM = sold
 // that day. No zero-fill: absent scope rows read as 0 in SUM rollups.
+//
+// Bucketed by first observation, not created_at, so each assignment counts
+// once whichever windows the ingest pulled. See NewlyObserved.
 func PackageSales(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	assignments, ok := in["sim_packages"]
 	if !ok {
 		return nil, fmt.Errorf("PACKAGE_SALES: missing input 'sim_packages'")
 	}
 
+	previous, ok := in["sim_packages_prev"]
+	if !ok {
+		return nil, fmt.Errorf("PACKAGE_SALES: missing input 'sim_packages_prev' (state_prev baseline)")
+	}
+
 	counts := map[[2]string]float64{} // [network, package] -> sold
 
-	for _, a := range assignments {
+	for _, a := range NewlyObserved(assignments, previous, "sim_package_id") {
 		networkID, packageID := str(a["network_id"]), str(a["package_id"])
 		if networkID == "" || packageID == "" {
 			continue
 		}
 
-		// Count a sale when the package was PURCHASED (created_at), not when it
-		// becomes active (start_date). A queued package with a future
-		// start_date is still a sale now — this keeps PACKAGE_SALES /
-		// PACKAGE_REVENUE consistent with REVENUE, which counts the payment at
-		// paid time.
-		created, err := parseTime(str(a["created_at"]))
-		if err != nil {
-			continue
-		}
-
-		if !created.Before(win.Start) && created.Before(win.End) {
-			counts[[2]string{networkID, packageID}]++
-		}
+		counts[[2]string{networkID, packageID}]++
 	}
 
 	results := make([]Result, 0, len(counts))

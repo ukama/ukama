@@ -106,11 +106,11 @@ func (s *AggregatorServer) ListReports(ctx context.Context, req *pb.ListReportsR
 }
 
 func (s *AggregatorServer) GetPerformanceReport(ctx context.Context, req *pb.GetPerformanceReportRequest) (*pb.GetPerformanceReportResponse, error) {
-	// Reports accept the rolling filter tokens (last_24h/7d/30d) as well as the
-	// calendar spans: the composer maps a rolling span to a precise trailing
-	// window and falls back to the config window for anything else.
-	span := strings.ToLower(req.Span)
-	if !isRollingSpan(span) {
+	// Reports accept the rolling tokens (last_24h/7d/30d) and the calendar
+	// spans (daily/weekly/monthly). An omitted span passes through and keeps
+	// the configured trailing ReportWindow.
+	span := strings.ToLower(strings.TrimSpace(req.Span))
+	if span != "" && !isRollingSpan(span) {
 		validated, err := validateSpan(span)
 		if err != nil {
 			return nil, err

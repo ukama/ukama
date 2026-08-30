@@ -86,9 +86,9 @@ phases:
         type_selector: controller
         count_per_network: 1
         app: example
-        status: terminal
+        status: update_failed
         desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
-        timeout_seconds: 300
+        timeout_seconds: 420
       - type: node_operation_status_equals
         type_selector: controller
         count_per_network: 1

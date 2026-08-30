@@ -10,6 +10,7 @@ package engine
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -38,6 +39,10 @@ type Engine struct {
 
 	windowReadyRoute string
 	stop             chan struct{}
+
+	// horizon is the oldest window each dataset's previous tick scanned.
+	mu      sync.Mutex
+	horizon map[string]int64
 }
 
 func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
@@ -60,6 +65,7 @@ func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
 		catchup:          catchup,
 		windowReadyRoute: msgbus.PrepareRoute(org, schema.WindowReadyRoute),
 		stop:             make(chan struct{}),
+		horizon:          map[string]int64{},
 	}, nil
 }
 
@@ -104,14 +110,16 @@ func (e *Engine) runOnce() {
 // high-water mark are retried too. Cheap: completed windows short-circuit on
 // a ledger status read.
 //
-// A window that fails ABORTS the dataset's scan for this tick: every
-// remaining window would fail the same way and burn its full retry budget,
-// starving healthy datasets. Failed windows stay unpulled in the ledger and
-// are retried next tick.
+// Windows fail independently: one failure does not stop the scan.
 func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 	newest := e.grid.NewestEligible(now)
+	oldest := newest - e.catchup + 1
 
-	for w := newest - e.catchup + 1; w <= newest; w++ {
+	e.reportAbandoned(pull.Key, oldest)
+
+	var firstErr error
+
+	for w := oldest; w <= newest; w++ {
 		status, err := e.ledger.Status(e.org, schema.LedgerKindDataset, pull.Key, w)
 		if err != nil {
 			return err
@@ -122,14 +130,42 @@ func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 		}
 
 		if err := e.processWindow(pull, w); err != nil {
-			log.Errorf("dataset %s window %d: %v (skipping the dataset's remaining catchup windows this tick)",
-				pull.Key, w, err)
+			log.Errorf("dataset %s window %d: %v (retried next tick)", pull.Key, w, err)
 
-			return nil
+			if firstErr == nil {
+				firstErr = err
+			}
 		}
 	}
 
-	return nil
+	return firstErr
+}
+
+// reportAbandoned logs windows that aged past the catch-up horizon unpulled.
+// They can never be pulled, so flow KPIs on the dataset are missing that data.
+func (e *Engine) reportAbandoned(key string, oldest int64) {
+	e.mu.Lock()
+	prev, seen := e.horizon[key]
+	e.horizon[key] = oldest
+	e.mu.Unlock()
+
+	if !seen || oldest <= prev {
+		return
+	}
+
+	pulled, err := e.ledger.CountWithStatus(e.org, schema.LedgerKindDataset, key,
+		schema.StatusPulled, prev, oldest-1)
+	if err != nil {
+		log.Errorf("dataset %s: counting pulled windows in [%d,%d]: %v", key, prev, oldest-1, err)
+
+		return
+	}
+
+	expected := oldest - prev
+	if missing := expected - pulled; missing > 0 {
+		log.Errorf("dataset %s: %d of %d window(s) in [%d,%d] aged out of the %d-window catch-up horizon unpulled; flow KPIs on this dataset are missing that data. Raise ENGINE_CATCHUP or ENGINE_CONCURRENCY, lower ENGINE_TICKINTERVAL, or increase WINDOW_W.",
+			key, missing, expected, prev, oldest-1, e.catchup)
+	}
 }
 
 func (e *Engine) processWindow(pull schema.PullSpec, windowID int64) error {

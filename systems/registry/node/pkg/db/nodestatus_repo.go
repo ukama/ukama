@@ -90,11 +90,11 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
 	db := n.Db.GetGormDb()
 
-	if err := db.Model(&NodeStatus{}).Where("conn = ?", ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	if err := db.Model(&NodeStatus{}).Where("conn = ?", ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 

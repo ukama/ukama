@@ -1,8 +1,12 @@
-# REVENUE: settled payments, attributed to a network via the paying SIM.
-# Payments carry no network field — only a SIM id in their metadata — so we
-# join the SIM to subscriber.sim.list (sim_id -> network_id). Payments whose
-# SIM can't be resolved land in the org bucket (empty scope). One KPI, three
-# cards via ops: SUM = revenue collected, COUNT = purchases, AVG = avg purchase.
+# REVENUE: payments that became settled in the window, attributed to a network
+# via the paying SIM. Payments carry no network field - only a SIM id in their
+# metadata - so we join the SIM to subscriber.sim.list (sim_id -> network_id).
+# Payments whose SIM can't be resolved land in the org bucket (empty scope).
+# One KPI, three cards via ops: SUM = revenue collected, COUNT = purchases,
+# AVG = avg purchase.
+#
+# Settlement is a state transition against the previous window rather than
+# paid_at falling in it, so each payment counts once.
 kpi: REVENUE
 domain: business
 algo: revenue@v1
@@ -12,6 +16,11 @@ inputs:
   payments:
     dataset: payments.processor.list
     fields: [payment_id, amount, status, paid_at, metadata]
+  # Lag-1 baseline: which payments already read settled one window ago.
+  payments_prev:
+    dataset: payments.processor.list
+    mode: state_prev
+    fields: [payment_id, status]
   sims:
     dataset: subscriber.sim.list
     fields: [sim_id, network_id]

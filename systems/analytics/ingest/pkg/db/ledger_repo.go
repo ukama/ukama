@@ -39,6 +39,9 @@ type LedgerRepo interface {
 	// WindowsWithStatus lists window ids for (kind, key) with the given
 	// status within [from, to].
 	WindowsWithStatus(orgID, kind, key, status string, from, to int64) ([]int64, error)
+	// CountWithStatus counts entries for (kind, key) with the given status
+	// within [from, to].
+	CountWithStatus(orgID, kind, key, status string, from, to int64) (int64, error)
 }
 
 type ledgerRepo struct {
@@ -166,4 +169,18 @@ func (l *ledgerRepo) WindowsWithStatus(orgID, kind, key, status string, from, to
 	}
 
 	return ids, nil
+}
+
+func (l *ledgerRepo) CountWithStatus(orgID, kind, key, status string, from, to int64) (int64, error) {
+	var n int64
+
+	err := l.db.GetGormDb().Model(&schema.WindowLedger{}).
+		Where("org_id = ? AND kind = ? AND key = ? AND status = ? AND window_id BETWEEN ? AND ?",
+			orgID, kind, key, status, from, to).
+		Count(&n).Error
+	if err != nil {
+		return 0, err
+	}
+
+	return n, nil
 }

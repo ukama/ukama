@@ -5717,6 +5717,17 @@ static int bff_cleanup_call(bff_client_t *c,
             return ULAB_OK;
         }
 
+        if (ulab_streq(op, "unsetPackageInUseForSim") &&
+            strstr(err.msg, "cannot set not in-use package") != NULL) {
+            if (c != NULL && c->logf != NULL) {
+                fprintf(c->logf,
+                        "cleanup ignore: %s: package already not in use\n",
+                        op);
+                fflush(c->logf);
+            }
+            return ULAB_OK;
+        }
+
         if (ulab_streq(op, "toggleSimServiceStatus") &&
             strstr(err.msg, "is invalid for turning off") != NULL) {
             if (c != NULL && c->logf != NULL) {

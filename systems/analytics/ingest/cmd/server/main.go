@@ -97,6 +97,19 @@ func run(sDb sql.Db) {
 
 	grid := schema.Grid{W: serviceConfig.Window.W}
 
+	catchup := schema.CatchupWindows(serviceConfig.Engine.Catchup,
+		serviceConfig.Window.W, serviceConfig.Engine.CatchupWindows)
+
+	if serviceConfig.Engine.TickInterval > serviceConfig.Window.W {
+		log.Warnf("ENGINE_TICKINTERVAL (%s) is longer than WINDOW_W (%s): %d windows close per tick. Set the tick to <= the window.",
+			serviceConfig.Engine.TickInterval, serviceConfig.Window.W,
+			int64(serviceConfig.Engine.TickInterval/serviceConfig.Window.W))
+	}
+
+	log.Infof("window grid W=%s, catch-up horizon %s (%d windows), fan-out concurrency %d",
+		serviceConfig.Window.W, serviceConfig.Engine.Catchup, catchup,
+		serviceConfig.Engine.Concurrency)
+
 	rawRepo := db.NewRawRepo(sDb)
 	ledgerRepo := db.NewLedgerRepo(sDb)
 	errorRepo := db.NewErrorRepo(sDb)
@@ -105,10 +118,11 @@ func run(sDb sql.Db) {
 		serviceConfig.DebugMode)
 
 	puller := engine.NewPuller(res, rawRepo, serviceConfig.OrgName,
-		serviceConfig.Engine.RetryCount, serviceConfig.DebugMode)
+		serviceConfig.Engine.RetryCount, serviceConfig.Engine.Concurrency,
+		serviceConfig.DebugMode)
 
 	eng, err := engine.New(grid, specs, ledgerRepo, errorRepo, puller, mbClient,
-		serviceConfig.OrgName, serviceConfig.Engine.TickInterval, serviceConfig.Engine.CatchupWindows)
+		serviceConfig.OrgName, serviceConfig.Engine.TickInterval, catchup)
 	if err != nil {
 		log.Fatalf("Initializing ingest engine failed: %v", err)
 	}

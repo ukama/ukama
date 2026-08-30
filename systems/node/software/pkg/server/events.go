@@ -132,6 +132,11 @@ func (n *SoftwareUpdateEventServer) handleHealthAppsChangedEvent(ctx context.Con
 	return &epb.EventResponse{}, nil
 }
 
+func isUpdateOutcomeOwned(status ukama.SoftwareStatusType) bool {
+	return status == ukama.SoftwareStatusType(ukama.UpdateInProgress) ||
+		status == ukama.SoftwareStatusType(ukama.UpdateFailed)
+}
+
 // applyDesiredToNode sets each of the node's software rows to the fleet-wide desired
 // version (from the catalog) and flags UpdateAvailable where the node lags.
 func (n *SoftwareUpdateEventServer) applyDesiredToNode(nodeID string) error {
@@ -142,6 +147,11 @@ func (n *SoftwareUpdateEventServer) applyDesiredToNode(nodeID string) error {
 	for _, sw := range rows {
 		d, err := n.s.releaseRepo.GetDesired(sw.AppName, "app")
 		if err != nil || d == nil {
+			continue
+		}
+		if isUpdateOutcomeOwned(sw.Status) {
+			log.Infof("applyDesiredToNode: leaving %s app=%s in %s", sw.Id, sw.AppName, sw.Status)
+
 			continue
 		}
 		sw.DesiredVersion = d.DesiredVersion

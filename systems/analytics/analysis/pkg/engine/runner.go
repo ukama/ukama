@@ -285,6 +285,11 @@ func (r *Runner) loadInputs(kpi schema.KpiSpec, windowID int64) (algos.Datasets,
 				return nil, fmt.Errorf("input %s record %d fields: %w", name, rec.ID, err)
 			}
 
+			// Change-log provenance under reserved keys: the identity flow
+			// algos diff on, and the window the row was first observed in.
+			fields[algos.FieldEntityKey] = rec.EntityKey
+			fields[algos.FieldWindowID] = float64(rec.WindowID)
+
 			rows = append(rows, fields)
 		}
 

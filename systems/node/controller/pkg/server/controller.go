@@ -16,6 +16,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
+	"strings"
+
 	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -78,6 +80,20 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 	}
 }
 
+func (c *ControllerServer) ensureNodeOnline(nodeID string) error {
+	node, err := c.nodeClient.Get(nodeID)
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to resolve node %s: %v", nodeID, err)
+	}
+
+	if !strings.EqualFold(node.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
+		return status.Errorf(codes.NotFound, "node %s is not available: connectivity is %s",
+			nodeID, node.Status.Connectivity)
+	}
+
+	return nil
+}
+
 func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNodeCommandRequest) (*pb.SendNodeCommandResponse, error) {
 	nId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -85,6 +101,10 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 	}
 	if _, err = c.nRepo.Get(nId.String()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
+	}
+
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
 	}
 
 	op, err := c.acquireAndRegister("SendNodeCommand", "node:"+nId.String())
@@ -117,6 +137,10 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 	}
 	if _, err = c.nRepo.Get(nId.String()); err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
+	}
+
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
 	}
 
 	op, err := c.acquireAndRegister("RestartNode", "node:"+nId.String())
@@ -173,6 +197,10 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		return nil, err
 	}
 
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
+	}
+
 	op, err := c.acquireAndRegister("ToggleInternetSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
@@ -202,6 +230,10 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		return nil, err
 	}
 
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
+	}
+
 	op, err := c.acquireAndRegister("ToggleRadio", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
@@ -228,6 +260,10 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 
 	data, err := json.Marshal(map[string]string{"state": req.State})
 	if err != nil {
+		return nil, err
+	}
+
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
 		return nil, err
 	}
 

@@ -1,5 +1,6 @@
 # PACKAGE_REVENUE: sales x package price (org-currency cents). Sales proxy,
-# not settled payments.
+# not settled payments. Sales are counted by first observation — see
+# package_sales.yaml.
 kpi: PACKAGE_REVENUE
 domain: business
 algo: package_revenue@v1
@@ -9,6 +10,10 @@ inputs:
   sim_packages:
     dataset: subscriber.simpackage.listBySim
     fields: [sim_package_id, package_id, network_id, created_at]
+  sim_packages_prev:
+    dataset: subscriber.simpackage.listBySim
+    mode: state_prev
+    fields: [sim_package_id]
   packages:
     dataset: dataplan.package.getAll
     fields: [package_id, network_id, amount, duration, active]

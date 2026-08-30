@@ -156,7 +156,7 @@ func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity, s
 	query := n.Db.GetGormDb().
 		Preload(clause.Associations).
 		Preload("Attached.Site").
-		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Select("nodes.*").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		// Sites are soft deleted on release/reassign: without this predicate a
 		// released node still matches its old site_id/network_id filter.
