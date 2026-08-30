@@ -33,9 +33,11 @@ export class GetSimsUsageByNetworkResolver {
 
     const sims = await ctx.dataSources.sim.list(baseURL, {
       networkId,
-      status: "service_on",
+      status: "",
     });
-    const items = (sims.sims ?? []).filter((s: SimDto) => s?.id && s?.iccid);
+    const items = (sims.sims ?? []).filter(
+      (s: SimDto) => s?.id && s?.iccid && s?.status !== "terminated"
+    );
 
     return mapWithConcurrency(items, (s: SimDto) =>
       ctx.dataSources.sim

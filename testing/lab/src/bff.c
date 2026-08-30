@@ -5775,13 +5775,13 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
     char vars[ULAB_MAX_QUERY];
     char query[ULAB_MAX_QUERY];
     char package_record_ids[32][ULAB_MAX_ID];
-    int package_active[32];
+    int package_in_use[32];
     json_t *root;
     json_t *obj;
     json_t *arr;
     json_t *it;
     json_t *pid;
-    json_t *act;
+    json_t *inuse;
     ulab_error_t qerr;
     size_t i;
     size_t count;
@@ -5826,8 +5826,8 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
                 ulab_copy(package_record_ids[count],
                           sizeof(package_record_ids[count]),
                           json_string_value(pid));
-                act = it ? json_object_get(it, "is_currently_in_use") : NULL;
-                package_active[count] = act != NULL && json_is_true(act);
+                inuse = it ? json_object_get(it, "is_currently_in_use") : NULL;
+                package_in_use[count] = inuse != NULL && json_is_true(inuse);
                 count++;
             }
         }
@@ -5837,7 +5837,7 @@ static int cleanup_sim_packages_from_bff(bff_client_t *c,
 
     for (i = 0; i < count; i++) {
 
-        if (package_active[i]) {
+        if (package_in_use[i]) {
             n = snprintf(query, sizeof(query),
                          "mutation { unsetPackageInUseForSim(data: {"
                          "packageId: \"%s\", simId: \"%s\"}) { packageId } }",

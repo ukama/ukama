@@ -174,6 +174,36 @@ func (_m *AsrRecordRepo) GetByImsi(imsi string) (*db.Asr, error) {
 	return r0, r1
 }
 
+// GetPoliciesBySimPackageIds provides a mock function with given fields: simPackageIds
+func (_m *AsrRecordRepo) GetPoliciesBySimPackageIds(simPackageIds []uuid.UUID) ([]db.Policy, error) {
+	ret := _m.Called(simPackageIds)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetPoliciesBySimPackageIds")
+	}
+
+	var r0 []db.Policy
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) ([]db.Policy, error)); ok {
+		return rf(simPackageIds)
+	}
+	if rf, ok := ret.Get(0).(func([]uuid.UUID) []db.Policy); ok {
+		r0 = rf(simPackageIds)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Policy)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]uuid.UUID) error); ok {
+		r1 = rf(simPackageIds)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // List provides a mock function with no fields
 func (_m *AsrRecordRepo) List() ([]db.Asr, error) {
 	ret := _m.Called()
@@ -240,17 +270,17 @@ func (_m *AsrRecordRepo) UpdateConsumedData(asrID uint, consumedData uint64) err
 	return r0
 }
 
-// UpdatePackage provides a mock function with given fields: imsi, packageId, policy
-func (_m *AsrRecordRepo) UpdatePackage(imsi string, packageId uuid.UUID, policy *db.Policy) error {
-	ret := _m.Called(imsi, packageId, policy)
+// UpdatePackage provides a mock function with given fields: imsi, packageId, simPackageId, policy
+func (_m *AsrRecordRepo) UpdatePackage(imsi string, packageId uuid.UUID, simPackageId uuid.UUID, policy *db.Policy) error {
+	ret := _m.Called(imsi, packageId, simPackageId, policy)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdatePackage")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, uuid.UUID, *db.Policy) error); ok {
-		r0 = rf(imsi, packageId, policy)
+	if rf, ok := ret.Get(0).(func(string, uuid.UUID, uuid.UUID, *db.Policy) error); ok {
+		r0 = rf(imsi, packageId, simPackageId, policy)
 	} else {
 		r0 = ret.Error(0)
 	}

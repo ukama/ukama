@@ -181,9 +181,16 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	/* We assume that packageId is validated by subscriber. */
 	pId, err := uuid.FromString(req.PackageId)
 	if err != nil {
-		log.Errorf("PackageId not valid.")
+		log.Errorf("PackageId %s not valid. Error: %v ", req.PackageId, err)
 
-		return nil, grpc.SqlErrorToGrpc(err, "error invalid package id:")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid package id: %v", err)
+	}
+
+	spId, err := uuid.FromString(req.SimPackageId)
+	if err != nil {
+		log.Errorf("SimPackageId %s not valid. Error: %v ", req.SimPackageId, err)
+
+		return nil, status.Errorf(codes.InvalidArgument, "invalid sim package id: %v", err)
 	}
 
 	pcrfData := &pm.SimInfo{
@@ -203,12 +210,16 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 		EndTime:   req.EndTime,
 	})
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
+		log.Errorf("Invalid policy input: %v", err)
+
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy input: %v", err)
 	}
 
 	//Update policy
-	err = ar.asrRepo.UpdatePackage(asrRecord.Imsi, pId, policy)
+	err = ar.asrRepo.UpdatePackage(asrRecord.Imsi, pId, spId, policy)
 	if err != nil {
+		log.Errorf("Error updating asr record: %v", err)
+
 		return nil, grpc.SqlErrorToGrpc(err, "error updating asr:")
 	}
 
@@ -224,7 +235,9 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	/* read the updated profile */
 	nRec, err := ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error getting ASR record for given iccid:")
+		log.Errorf("Error getting updated ASR record for given iccid: %s. Error: %v", req.Iccid, err)
+
+		return nil, grpc.SqlErrorToGrpc(err, "error getting updated ASR record for given iccid:")
 	}
 
 	err = ar.pc.SyncProfile(pcrfData, nRec, msgbus.ACTION_CRUD_UPDATE, activeSubscriberEventObject, true)
@@ -239,7 +252,9 @@ func (ar *AsrRecordServer) UpdatePackage(c context.Context, req *pb.UpdatePackag
 	}
 
 	asrRecord.Policy = *policy
+
 	log.Debugf("Updated policy for %s imsi to %+v", asrRecord.Imsi, nRec)
+
 	return &pb.UpdatePackageResp{}, nil
 }
 
@@ -377,7 +392,6 @@ func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) 
 
 	var sub *db.Asr
 	var err error
-	var policies []string
 
 	sub, err = ar.asrRepo.GetByIccid(req.GetIccid())
 	if err != nil {
@@ -386,9 +400,40 @@ func (ar *AsrRecordServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) 
 		return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error getting ASR record for given iccid:")
 	}
 
-	policies = []string{sub.Policy.Id.String()}
+	var policyIds []string
+	if len(req.SimPackageIds) == 0 {
+		policyIds = []string{sub.Policy.Id.String()}
+	} else {
+		simPackageIds := make([]uuid.UUID, len(req.SimPackageIds))
+		for i, s := range req.SimPackageIds {
+			spid, err := uuid.FromString(s)
+			if err != nil {
+				log.Errorf("Sim package id %s not valid. Error: %v", s, err)
 
-	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policies, req.Count, req.Sort)
+				return nil, status.Errorf(codes.InvalidArgument, "invalid sim package id: %v", err)
+			}
+
+			simPackageIds[i] = spid
+		}
+
+		policies, err := ar.asrRepo.GetPoliciesBySimPackageIds(simPackageIds)
+		if err != nil {
+			log.Errorf("Failed to resolve policies for given sim package ids: %v. Error: %v", req.SimPackageIds, err)
+
+			return nil, grpc.SqlErrorToGrpc(err, "query usage failure: Error resolving policies for given sim package ids:")
+		}
+
+		if len(policies) == 0 {
+			return &pb.QueryUsageResp{Usage: 0}, nil
+		}
+
+		policyIds = make([]string, len(policies))
+		for i, p := range policies {
+			policyIds[i] = p.Id.String()
+		}
+	}
+
+	r, err := ar.cdr.QueryUsage(sub.Imsi, req.NodeId, req.Session, req.From, req.To, policyIds, req.Count, req.Sort)
 	if err != nil {
 		log.Errorf("Failed to query usage: for imsi %s. Error: %v", sub.Imsi, err)
 
@@ -557,8 +602,10 @@ func createProfile(iccid, imsi, packageId, dataPlanId, networkId string, policyI
 	/* Send message to PCRF */
 	policy, err := policyController.NewPolicy(policyIn)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "error creating policy:")
+		return nil, status.Errorf(codes.InvalidArgument, "invalid policy input: %v", err)
 	}
+
+	policy.SimPackageId = spId
 
 	/* Add to ASR */
 	asr := &db.Asr{

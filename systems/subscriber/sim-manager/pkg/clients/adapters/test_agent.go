@@ -50,7 +50,7 @@ func (t *TestAgentAdapter) GetSim(ctx context.Context, iccid string) (any, error
 	return t.client.GetSim(ctx, &pb.GetSimRequest{Iccid: iccid})
 }
 
-func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid, cdrType, from, to, region string) (any, any, error) {
+func (t *TestAgentAdapter) GetUsages(ctx context.Context, iccid string, simPackageIds []string, cdrType, from, to, region string) (any, any, error) {
 	return nil, nil, status.Error(codes.Unimplemented, "usage reporting is not supported for test sims")
 }
 

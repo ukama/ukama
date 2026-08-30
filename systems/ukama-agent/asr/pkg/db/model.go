@@ -98,6 +98,7 @@ type Policy struct {
 	StartTime    uint64
 	EndTime      uint64
 	AsrID        uint
+	SimPackageId uuid.UUID `gorm:"type:uuid;index"`
 }
 
 func StatusReasonFromString(s string) StatusReason {

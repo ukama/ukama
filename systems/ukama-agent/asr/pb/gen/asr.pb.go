@@ -1468,7 +1468,7 @@ type QueryUsageReq struct {
 	Session       uint64                 `protobuf:"varint,3,opt,name=Session,proto3" json:"Session,omitempty"`
 	From          uint64                 `protobuf:"varint,4,opt,name=From,proto3" json:"From,omitempty"`
 	To            uint64                 `protobuf:"varint,5,opt,name=To,proto3" json:"To,omitempty"`
-	PackageId     string                 `protobuf:"bytes,6,opt,name=packageId,proto3" json:"packageId,omitempty"`
+	SimPackageIds []string               `protobuf:"bytes,6,rep,name=SimPackageIds,proto3" json:"SimPackageIds,omitempty"`
 	Count         uint32                 `protobuf:"varint,7,opt,name=Count,proto3" json:"Count,omitempty"`
 	Sort          bool                   `protobuf:"varint,8,opt,name=Sort,proto3" json:"Sort,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -1540,11 +1540,11 @@ func (x *QueryUsageReq) GetTo() uint64 {
 	return 0
 }
 
-func (x *QueryUsageReq) GetPackageId() string {
+func (x *QueryUsageReq) GetSimPackageIds() []string {
 	if x != nil {
-		return x.PackageId
+		return x.SimPackageIds
 	}
-	return ""
+	return nil
 }
 
 func (x *QueryUsageReq) GetCount() uint32 {
@@ -1729,15 +1729,15 @@ const file_asr_proto_rawDesc = "" +
 	"\x04Dlbr\x18\x06 \x01(\x04R\x04dlbr\x12\x1d\n" +
 	"\tStartTime\x18\a \x01(\x04R\n" +
 	"start_time\x12\x19\n" +
-	"\aEndTime\x18\b \x01(\x04R\bend_time\"\xdb\x01\n" +
+	"\aEndTime\x18\b \x01(\x04R\bend_time\"\xe3\x01\n" +
 	"\rQueryUsageReq\x12,\n" +
 	"\x05iccid\x18\x01 \x01(\tB\x16\xe2\xdf\x1f\x12\n" +
 	"\x0e^[0-9]{18,22}$X\x01R\x05iccid\x12\x16\n" +
 	"\x06NodeId\x18\x02 \x01(\tR\x06NodeId\x12\x18\n" +
 	"\aSession\x18\x03 \x01(\x04R\aSession\x12\x12\n" +
 	"\x04From\x18\x04 \x01(\x04R\x04From\x12\x0e\n" +
-	"\x02To\x18\x05 \x01(\x04R\x02To\x12\x1c\n" +
-	"\tpackageId\x18\x06 \x01(\tR\tpackageId\x12\x14\n" +
+	"\x02To\x18\x05 \x01(\x04R\x02To\x12$\n" +
+	"\rSimPackageIds\x18\x06 \x03(\tR\rSimPackageIds\x12\x14\n" +
 	"\x05Count\x18\a \x01(\rR\x05Count\x12\x12\n" +
 	"\x04Sort\x18\b \x01(\bR\x04Sort\"&\n" +
 	"\x0eQueryUsageResp\x12\x14\n" +

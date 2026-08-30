@@ -24,7 +24,7 @@ export class GetDataUsagesResolver {
 
     const sims = await dataSources.sim.list(baseURL, {
       networkId: data.networkId,
-      status: "service_on",
+      status: "",
     });
 
     const simUsages: any =

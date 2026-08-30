@@ -431,6 +431,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 	var simType ukama.SimType
 	var simIccid string
+	var simPackageIds []string
 
 	if req.SimId != "" {
 		sim, err := getSim(req.SimId, s.simRepo)
@@ -440,6 +441,18 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 
 		simType = sim.Type
 		simIccid = sim.Iccid
+
+		pkgs, err := s.packageRepo.List(req.SimId, "", "", "", "", "", nil, nil, 0, false)
+		if err != nil {
+			log.Errorf("Failed to list packages for sim %s. Error: %v", req.SimId, err)
+
+			return nil, grpc.SqlErrorToGrpc(err, "package")
+		}
+
+		simPackageIds = make([]string, len(pkgs))
+		for i, p := range pkgs {
+			simPackageIds[i] = p.Id.String()
+		}
 	} else {
 		simType = ukama.ParseSimType(req.SimType)
 		if simType == ukama.SimTypeUnknown {
@@ -454,7 +467,7 @@ func (s *SimManagerServer) GetUsages(ctx context.Context, req *pb.UsageRequest) 
 			"failure to get agent adapter for sim type: %q", simType)
 	}
 
-	u, c, err := simAgent.GetUsages(ctx, simIccid, req.Type, req.From, req.To, req.Region)
+	u, c, err := simAgent.GetUsages(ctx, simIccid, simPackageIds, req.Type, req.From, req.To, req.Region)
 	if err != nil {
 		return nil, err
 	}
@@ -777,7 +790,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Pack
 
 	sim, err := getSim(req.SimId, s.simRepo)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "sim")
+		return nil, err
 	}
 
 	err = s.packageRepo.Delete(packageId, nil)
@@ -1241,7 +1254,7 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	if sim.Package.Id != uuid.Nil {
@@ -1493,7 +1506,7 @@ func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRep
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	packageToExpire := &sims.Package{
@@ -1565,7 +1578,7 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 
 	sim, err := getSim(reqSimId, simRepo)
 	if err != nil {
-		return grpc.SqlErrorToGrpc(err, "sim")
+		return err
 	}
 
 	packageToDrain := &sims.Package{
@@ -1573,7 +1586,11 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 		UsedDataAtExpiry: totalDataUsed,
 	}
 
-	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToDrain, nil)
+	err = packageRepo.Update([]uuid.UUID{pckg.Id}, packageToDrain, func(pckg *sims.Package, tx *gorm.DB) error {
+		packageToDrain.EndDate = time.Now().UTC()
+
+		return nil
+	})
 	if err != nil {
 		return status.Errorf(codes.Internal,
 			"failed to mark package as drained. Error %s", err.Error())
@@ -1583,7 +1600,7 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 	evtMsg := &epb.EventSimPackageExpire{
 		Id:              sim.Id.String(),
 		StartDate:       pckg.StartDate.String(),
-		EndDate:         pckg.EndDate.String(),
+		EndDate:         packageToDrain.EndDate.String(),
 		DefaultDuration: pckg.DefaultDuration,
 		PackageId:       pckg.Id.String(),
 		DataPlanId:      pckg.PackageId.String(),

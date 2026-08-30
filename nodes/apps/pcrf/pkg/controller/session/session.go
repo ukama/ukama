@@ -38,12 +38,13 @@ type sessionCache struct {
 }
 
 type sessionManager struct {
-	period time.Duration `default:"2s"`
-	idle   time.Duration `default:"60s"`
-	store  *store.Store
-	d      datapath.DataPath
-	mu     sync.Mutex
-	cache  map[string]*sessionCache
+	period          time.Duration `default:"2s"`
+	idle            time.Duration `default:"60s"`
+	newSessionGrace time.Duration `default:"10m"`
+	store           *store.Store
+	d               datapath.DataPath
+	mu              sync.Mutex
+	cache           map[string]*sessionCache
 }
 
 type SessionManager interface {
@@ -66,11 +67,12 @@ func NewSessionManager(store *store.Store, br pkg.BrdigeConfig) (*sessionManager
 	}
 
 	s := &sessionManager{
-		d:      d,
-		store:  store,
-		period: br.Period,
-		idle:   br.SessionIdleTime,
-		cache:  make(map[string]*sessionCache),
+		d:               d,
+		store:           store,
+		period:          br.Period,
+		idle:            br.SessionIdleTime,
+		newSessionGrace: br.NewSessionGrace,
+		cache:           make(map[string]*sessionCache),
 	}
 
 	return s, nil
@@ -170,13 +172,18 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 				}
 			}
 
-			temp := int64(lastUpdate + uint64(s.idle.Seconds()))
+			threshold := s.idle
+			if sc.s.TotalBytes == 0 {
+				threshold = s.newSessionGrace
+			}
+
+			temp := int64(lastUpdate + uint64(threshold.Seconds()))
 			log.Debugf("[SessionId %d ] Subscriber %s time now %d timeout %d",
 				sc.s.ID, imsi, tNow, temp)
 
 			if tNow > temp {
 				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %s since %d. Ending session.",
-					sc.s.ID, imsi, s.idle, lastUpdate)
+					sc.s.ID, imsi, threshold, lastUpdate)
 
 				_ = s.endSessionLocked(sc.ctx, &store.Subscriber{Imsi: imsi})
 

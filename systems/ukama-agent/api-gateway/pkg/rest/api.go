@@ -48,11 +48,12 @@ type ReadSubscriberReq struct {
 }
 
 type QueryUsageRequest struct {
-	Iccid   string `json:"iccid" path:"iccid" validate:"required"`
-	NodeId  string `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
-	Session uint64 `form:"session" json:"session" query:"session" binding:"required"`
-	From    uint64 `form:"from" json:"from" query:"from" binding:"required"`
-	To      uint64 `form:"to" json:"to" query:"to" binding:"required"`
-	Count   uint32 `form:"count" json:"count" query:"count" binding:"required"`
-	Sort    bool   `form:"sort" json:"sort" query:"sort" binding:"required"`
+	Iccid         string   `json:"iccid" path:"iccid" validate:"required"`
+	NodeId        string   `form:"node_id" json:"node_id" query:"node_id" binding:"required"`
+	Session       uint64   `form:"session" json:"session" query:"session" binding:"required"`
+	From          uint64   `form:"from" json:"from" query:"from" binding:"required"`
+	To            uint64   `form:"to" json:"to" query:"to" binding:"required"`
+	SimPackageIds []string `form:"sim_package_ids" json:"sim_package_ids" query:"sim_package_ids"`
+	Count         uint32   `form:"count" json:"count" query:"count" binding:"required"`
+	Sort          bool     `form:"sort" json:"sort" query:"sort" binding:"required"`
 }

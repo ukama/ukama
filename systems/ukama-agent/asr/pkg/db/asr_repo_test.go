@@ -120,7 +120,7 @@ func TestAsrRecordRepo_Add(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst,
 				sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime,
-				sub.Policy.EndTime, subID).WillReturnResult(sqlmock.NewResult(1, 1))
+				sub.Policy.EndTime, subID, sub.Policy.SimPackageId).WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
 
@@ -158,6 +158,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 		var db *sql.DB
 		var err error
 		PackageId := uuid.NewV4()
+		SimPackageId := uuid.NewV4()
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 		hrow := sqlmock.NewRows([]string{"ID", "iccid", "imsi", "op", "amf", "key", "algo_type", "ue_dl_ambr_bps", "ue_ul_ambr_bps", "sqn", "csg_id_prsent", "csg_id", "default_apn_name", "network_id", "package_id", "last_status_chang_at", "allowed_time_of_service", "last_status_change_reasons"}).
@@ -173,11 +174,11 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sub.Policy.Id, sub.Policy.Burst, sub.Policy.TotalData, sub.Policy.ConsumedData, sub.Policy.Dlbr, sub.Policy.Ulbr, sub.Policy.StartTime, sub.Policy.EndTime, subID, SimPackageId).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(subID, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, PackageId.String(), sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.PACKAGE_UPDATE, sub.Imsi).
+			WithArgs(subID, sqlmock.AnyArg(), sub.Iccid, sub.Imsi, sub.Op, sub.Amf, sub.Key, sub.AlgoType, sub.UeDlAmbrBps, sub.UeUlAmbrBps, sub.Sqn, sub.DefaultApnName, PackageId.String(), SimPackageId.String(), sqlmock.AnyArg(), sub.AllowedTimeOfService, int_db.PACKAGE_UPDATE, sub.Imsi).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
@@ -197,7 +198,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.UpdatePackage(Imsi, PackageId, &sub.Policy)
+		err = r.UpdatePackage(Imsi, PackageId, SimPackageId, &sub.Policy)
 
 		// Assert
 		assert.NoError(t, err)
@@ -212,6 +213,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 		var db *sql.DB
 		var err error
 		PackageId := uuid.NewV4()
+		SimPackageId := uuid.NewV4()
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
@@ -239,7 +241,7 @@ func TestAsrRecordRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.UpdatePackage(Imsi, PackageId, &sub.Policy)
+		err = r.UpdatePackage(Imsi, PackageId, SimPackageId, &sub.Policy)
 
 		// Assert: a nonexistent imsi must surface as an error, not a silent
 		// no-op (First returns gorm.ErrRecordNotFound where Find would not).

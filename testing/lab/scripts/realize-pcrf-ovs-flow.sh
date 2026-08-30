@@ -207,6 +207,28 @@ verify_flow_unmetered() {
     printf '%s\n' "$flows" | grep -q "actions=NORMAL"
 }
 
+# A flow just added can take a beat to show up in a subsequent dump-flows
+# (OVS flow-table visibility is not synchronous with add-flow returning).
+# Retry briefly before treating that as a real absence.
+retry_verify() {
+    check_fn="$1"
+    field="$2"
+    meter="$3"
+    attempt=1
+
+    while [ "$attempt" -le 5 ]; do
+        if [ -n "$meter" ]; then
+            "$check_fn" "$field" "$meter" && return 0
+        else
+            "$check_fn" "$field" && return 0
+        fi
+        sleep 1
+        attempt=$((attempt + 1))
+    done
+
+    return 1
+}
+
 flow_json="$(podman exec "$TNODE_CONTAINER" \
     curl -fsS --max-time 5 "$PCRF_BASE/v1/subscriber/imsi/$IMSI/flow")"
 
@@ -243,13 +265,13 @@ if [ "$metered" -eq 1 ]; then
     add_flow_metered "nw_dst" "$rx_cookie" "$rx_meter"
     add_flow_metered "nw_src" "$tx_cookie" "$tx_meter"
 
-    if ! verify_flow_metered "nw_dst" "$rx_meter"; then
+    if ! retry_verify verify_flow_metered "nw_dst" "$rx_meter"; then
         echo "missing RX metered OVS flow for UE $UE_IP meter=$rx_meter" >&2
         dump_ovs_state
         exit 1
     fi
 
-    if ! verify_flow_metered "nw_src" "$tx_meter"; then
+    if ! retry_verify verify_flow_metered "nw_src" "$tx_meter"; then
         echo "missing TX metered OVS flow for UE $UE_IP meter=$tx_meter" >&2
         dump_ovs_state
         exit 1
@@ -265,7 +287,7 @@ if [ "$ALLOW_UNMETERED_FALLBACK" = "1" ]; then
     add_flow_unmetered "nw_dst" "$rx_cookie"
     add_flow_unmetered "nw_src" "$tx_cookie"
 
-    verify_flow_unmetered "nw_dst" && verify_flow_unmetered "nw_src" || {
+    retry_verify verify_flow_unmetered "nw_dst" "" && retry_verify verify_flow_unmetered "nw_src" "" || {
         echo "missing unmetered fallback OVS flow for UE $UE_IP" >&2
         dump_ovs_state
         exit 1
