@@ -350,8 +350,6 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			return fmt.Errorf("failed to end session on bridge for subscriber %s. Error: %w",
 				req.ImsiStr, err)
 		}
-
-		return nil
 	}
 
 	s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr, c.nodeId)
