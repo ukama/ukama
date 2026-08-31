@@ -244,13 +244,18 @@ void register_callback(UpdateIpCallback cb) {
 void* refresh_lookup(void* args) {
 	Config *c = (Config*) args;
 	char* rIp = NULL;
+
+	block_termination_signals();
+
 	while(TRUE) {
 		rIp = nslookup(c->systemDNS, c->nameServer);
 		if (rIp) {
 			if (strcmp(rIp, c->systemAddr) != 0) {
 				/* update IP */
+				pthread_mutex_lock(&registrationLock);
 				free(c->systemAddr);
 				c->systemAddr = strdup(rIp);
+				pthread_mutex_unlock(&registrationLock);
 				free(rIp);
 
 				/* callback function */

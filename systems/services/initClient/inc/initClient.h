@@ -9,6 +9,7 @@
 #ifndef INIT_CLIENT_H
 #define INIT_CLIENT_H
 
+#include <pthread.h>
 #include <ulfius.h>
 
 #include "config.h"
@@ -33,6 +34,8 @@
 #define REG_STATUS_NO_MATCH     	0x08
 #define REG_STATUS_MATCH        	0x10
 #define REG_STATUS_PARSING_FAILURE  0x20
+#define REG_STATUS_UUID_MISMATCH    0x40
+#define REG_STATUS_NO_RECORD        0x80
 
 #define QUERY_OK    0x00
 #define QUERY_ERROR 0x01
@@ -78,6 +81,7 @@ typedef struct {
 	char *systemID;
 	char *certificate;
 	char *apiGwIp;
+	char *apiGwUrl;
 	int  apiGwPort;
     char *nodeGwIp;
     int  nodeGwPort;
@@ -101,7 +105,16 @@ struct Response {
 	size_t size;
 };
 
+/* Serialises every registration operation against the address refresh, which
+ * rewrites config->systemAddr from its own thread. */
+extern pthread_mutex_t registrationLock;
+
+void block_termination_signals(void);
 void free_query_response(QueryResponse *response);
+void free_system_registration(SystemRegistrationId *sysReg);
+int read_cache_uuid(char *fileName, char** uuid, int global);
+int store_cache_uuid(char *fileName, char* uuid, int global);
+int unregister_system(Config *config, int global);
 int send_request_to_init(ReqType reqType, Config *config, char* org,
 						 char *systemName, char **response, int global );
 int existing_registration(Config *config, char **cacheUUID, char **systemUUID,

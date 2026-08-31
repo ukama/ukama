@@ -37,11 +37,13 @@ int read_config_from_env(Config **config){
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 	char *systemDNS=NULL, *timePeriod=NULL, *dnsServer=NULL, *nameServer=NULL;
+	char *reconcilePeriod=NULL;
 	char *systemDNSNodeGw=NULL;
 	char *systemNodeGwAddr=NULL, *systemNodeGwPort=NULL;
 	char *systemApiGwUrl=NULL;
 
 	int period = 0;
+	int reconcile = 0;
 	int freeSystemAddr = 0;
 	int freeSystemNodeGwAddr = 0;
 	int nodegw_any = 0;
@@ -153,6 +155,15 @@ int read_config_from_env(Config **config){
 	else
 		period = atoi(timePeriod);
 
+	reconcilePeriod = getenv(ENV_INIT_RECONCILE_PERIOD);
+	if (!reconcilePeriod)
+		reconcile = DEFAULT_RECONCILE_PERIOD;
+	else
+		reconcile = atoi(reconcilePeriod);
+
+	if (reconcile <= 0)
+		reconcile = DEFAULT_RECONCILE_PERIOD;
+
 	systemOrg = getenv(ENV_SYSTEM_ORG);
 	if (!systemOrg)
 		systemOrg = DEFAULT_SYSTEM_ORG;
@@ -203,7 +214,9 @@ int read_config_from_env(Config **config){
 		(*config)->dnsServer = strdup(dnsServer);
     }
 
-	(*config)->timePeriod = period;
+	(*config)->timePeriod      = period;
+	(*config)->reconcilePeriod = reconcile;
+	(*config)->nodeGwConfigured = nodegw_any ? 1 : 0;
 
 	(*config)->globalInitSystemEnable =
 		(strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0)

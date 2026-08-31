@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <curl/curl.h>
 #include <curl/easy.h>
 #include <jansson.h>
@@ -16,6 +17,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <errno.h>
+#include <signal.h>
+#include <pthread.h>
 
 #include "initClient.h"
 #include "httpStatus.h"
@@ -24,6 +27,21 @@
 #include "log.h"
 
 /* Functions related to communicate with init system */
+
+pthread_mutex_t registrationLock = PTHREAD_MUTEX_INITIALIZER;
+
+/* Keeps termination signals on the main thread, so the worker threads never
+ * run the handler while holding registrationLock. */
+void block_termination_signals(void) {
+
+	sigset_t set;
+
+	sigemptyset(&set);
+	sigaddset(&set, SIGTERM);
+	sigaddset(&set, SIGINT);
+
+	pthread_sigmask(SIG_BLOCK, &set, NULL);
+}
 
 static size_t response_callback(void *contents, size_t size, size_t nmemb,
                                 void *userp) {
@@ -251,6 +269,7 @@ void free_query_response(QueryResponse *response) {
 	if (response->systemID)    free(response->systemID);
 	if (response->certificate) free(response->certificate);
 	if (response->apiGwIp)     free(response->apiGwIp);
+	if (response->apiGwUrl)    free(response->apiGwUrl);
     if (response->nodeGwIp)    free(response->nodeGwIp);
 
 	free(response);
@@ -299,7 +318,7 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId **sysReg) {
 	return TRUE;
 }
 
-static int read_cache_uuid(char *fileName, char** uuid, int global) {
+int read_cache_uuid(char *fileName, char** uuid, int global) {
 
 	SystemRegistrationId *sysReg = NULL;
 
@@ -398,53 +417,157 @@ int send_request_to_init(ReqType reqType, Config *config, char* org,
 	return ret;
 }
 
+/* Two registrations are the same when every field this system is configured to
+ * publish is already stored in init. Optional fields are compared only when this
+ * system supplies them, so an init-side default is never mistaken for drift. */
+static int str_equal(const char *a, const char *b) {
+
+	if (a == NULL) a = "";
+	if (b == NULL) b = "";
+
+	return (strcmp(a, b) == 0);
+}
+
+static int registration_is_current(Config *config, QueryResponse *reg) {
+
+	if (config == NULL || reg == NULL) return FALSE;
+
+	if (reg->systemName == NULL ||
+	    strcasecmp(config->systemName, reg->systemName) != 0) {
+		return FALSE;
+	}
+
+	if (!str_equal(config->systemAddr, reg->apiGwIp))     return FALSE;
+	if (!str_equal(config->systemCert, reg->certificate)) return FALSE;
+	if (atoi(config->systemPort) != reg->apiGwPort)       return FALSE;
+
+	if (config->systemApiGwUrl &&
+	    !str_equal(config->systemApiGwUrl, reg->apiGwUrl)) {
+		return FALSE;
+	}
+
+	if (config->nodeGwConfigured) {
+		if (!str_equal(config->systemNodeGwAddr, reg->nodeGwIp)) return FALSE;
+		if (atoi(config->systemNodeGwPort) != reg->nodeGwPort)   return FALSE;
+	}
+
+	return TRUE;
+}
+
+/* Reports what init currently holds for this system, and how it relates to both
+ * the local config and the registration id this process last stored. Ownership
+ * is what separates our own record from one a newer instance has replaced:
+ * REG_STATUS_UUID_MISMATCH means the record in init is no longer ours. */
 int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
 		 int global) {
 
 	int status=REG_STATUS_NONE;
 	char *str=NULL;
 	QueryResponse *queryResponse=NULL;
-	if (send_request_to_init(REQ_QUERY, config, config->systemOrg, NULL, &str, global)) {
-		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
-			log_error("Error deserialize query response. Str: %s", str);
-			return -1;
-		}
-	} else {
-		status = REG_STATUS_NO_MATCH;
-		goto return_function;
-	}
+
+	if (cacheUUID)  *cacheUUID  = NULL;
+	if (systemUUID) *systemUUID = NULL;
 
 	status = read_cache_uuid(config->tempFile, cacheUUID, global);
 
-	/* match? */
-	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
-		strcmp(config->systemAddr, queryResponse->apiGwIp) == 0 &&
-		strcmp(config->systemCert, queryResponse->certificate) == 0 &&
-		atoi(config->systemPort) == queryResponse->apiGwPort) {
+	if (!send_request_to_init(REQ_QUERY, config, config->systemOrg, NULL,
+	                          &str, global)) {
+		status |= REG_STATUS_NO_RECORD | REG_STATUS_NO_MATCH;
+		goto return_function;
+	}
 
-		if (status == REG_STATUS_HAVE_UUID) {
-			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){
-				status |= REG_STATUS_MATCH;
-			} else {
-				status |= REG_STATUS_NO_MATCH;
-			}
-		} else {
-			status |= REG_STATUS_MATCH;
-		}
+	if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
+		log_error("Error deserialize query response. Str: %s", str);
+		status |= REG_STATUS_PARSING_FAILURE | REG_STATUS_NO_MATCH;
+		goto return_function;
+	}
+
+	if (queryResponse->systemID && systemUUID) {
+		*systemUUID = strdup(queryResponse->systemID);
+	}
+
+	if (registration_is_current(config, queryResponse)) {
+		status |= REG_STATUS_MATCH;
 	} else {
 		status |= REG_STATUS_NO_MATCH;
 	}
 
-	if (queryResponse->systemID) {
-		*systemUUID = strdup(queryResponse->systemID);
+	if ((status & REG_STATUS_HAVE_UUID) &&
+	    cacheUUID && *cacheUUID && queryResponse->systemID &&
+	    strcmp(*cacheUUID, queryResponse->systemID) != 0) {
+		status |= REG_STATUS_UUID_MISMATCH;
 	}
-	log_info("Returning status 0x%X for %s registration",
-             status, (queryResponse->systemID)?queryResponse->systemID:"null");
+
+	log_info("Registration status 0x%X for system %s. Init holds id %s",
+	         status, config->systemName,
+	         (queryResponse->systemID) ? queryResponse->systemID : "null");
+
  return_function:
-	if (str)  free(str);
-	if (*cacheUUID) free (*cacheUUID);
+	if (str) free(str);
 	free_query_response(queryResponse);
+
 	return status;
+}
+
+/* Removes this system from init only when the stored record is the one this
+ * process registered. A replaced instance therefore leaves the record of the
+ * instance that succeeded it in place. */
+int unregister_system(Config *config, int global) {
+
+	int status=REG_STATUS_NONE, ret=TRUE;
+	char *cacheUUID=NULL, *systemUUID=NULL, *response=NULL;
+
+	if (config == NULL) return FALSE;
+
+	pthread_mutex_lock(&registrationLock);
+
+	status = existing_registration(config, &cacheUUID, &systemUUID, global);
+
+	if (status & REG_STATUS_NO_RECORD) {
+		log_info("System %s is not registered with init. Nothing to unregister",
+		         config->systemName);
+		goto return_function;
+	}
+
+	if (status & REG_STATUS_PARSING_FAILURE) {
+		log_error("Unable to read the init record for system %s. "
+		          "Leaving it untouched", config->systemName);
+		ret = FALSE;
+		goto return_function;
+	}
+
+	if (!(status & REG_STATUS_HAVE_UUID)) {
+		log_info("No cached registration id for system %s. "
+		         "Leaving the init record untouched", config->systemName);
+		goto return_function;
+	}
+
+	if (status & REG_STATUS_UUID_MISMATCH) {
+		log_info("Init record for system %s belongs to another instance "
+		         "(init holds %s, this instance registered %s). "
+		         "Leaving it untouched", config->systemName,
+		         (systemUUID) ? systemUUID : "null", cacheUUID);
+		goto return_function;
+	}
+
+	log_info("Unregistering system %s (registration id %s) from org %s",
+	         config->systemName, cacheUUID, config->systemOrg);
+
+	if (send_request_to_init(REQ_UNREGISTER, config, config->systemOrg, NULL,
+	                         &response, global) != TRUE) {
+		log_error("Error unregistering system %s from init",
+		          config->systemName);
+		ret = FALSE;
+	}
+
+ return_function:
+	pthread_mutex_unlock(&registrationLock);
+
+	if (cacheUUID)  free(cacheUUID);
+	if (systemUUID) free(systemUUID);
+	if (response)   free(response);
+
+	return ret;
 }
 
 int get_system_info(Config *config, char *org,

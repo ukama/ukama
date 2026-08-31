@@ -66,7 +66,7 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 	int ret=TRUE;
 	json_t *json=NULL;
 	json_t *name, *id, *cert, *apiGwIp, *apiGwPort, *health;
-    json_t *nodeGwIp, *nodeGwPort;
+    json_t *nodeGwIp, *nodeGwPort, *apiGwUrl;
 
 	if (str == NULL) return FALSE;
 
@@ -81,6 +81,7 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 	cert       = json_object_get(json, JSON_CERTIFICATE);
 	apiGwIp    = json_object_get(json, JSON_API_GW_IP);
 	apiGwPort  = json_object_get(json, JSON_API_GW_PORT);
+	apiGwUrl   = json_object_get(json, JSON_API_GW_URL);
     nodeGwIp   = json_object_get(json, JSON_NODE_GW_IP);
 	nodeGwPort = json_object_get(json, JSON_NODE_GW_PORT);
 
@@ -113,7 +114,16 @@ int deserialize_response(ReqType reqType, QueryResponse **queryResponse,
 	(*queryResponse)->certificate = strdup(json_string_value(cert));
 	(*queryResponse)->apiGwIp     = strdup(json_string_value(apiGwIp));
 	(*queryResponse)->apiGwPort   = json_integer_value(apiGwPort);
-    (*queryResponse)->nodeGwIp    = strdup(json_string_value(nodeGwIp));
+
+	/* Optional in the init response; absent means the system registered none. */
+	if (apiGwUrl && json_is_string(apiGwUrl)) {
+		(*queryResponse)->apiGwUrl = strdup(json_string_value(apiGwUrl));
+	}
+
+	if (nodeGwIp && json_is_string(nodeGwIp)) {
+		(*queryResponse)->nodeGwIp = strdup(json_string_value(nodeGwIp));
+	}
+
 	(*queryResponse)->nodeGwPort  = json_integer_value(nodeGwPort);
 
 	if (reqType == (ReqType)REQ_QUERY) {
