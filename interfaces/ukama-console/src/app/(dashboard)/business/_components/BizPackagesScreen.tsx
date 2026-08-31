@@ -12,7 +12,7 @@
  *  threshold-derived status. The four headline tiles are report-derived totals:
  *  Package revenue (Σ revenue), Packages sold (Σ sold), Best package (best
  *  seller's allowance / validity) and Data consumed (DATA_USAGE). */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -34,6 +34,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { formatDuration } from '@/lib/duration';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
@@ -69,6 +70,7 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   // Data consumed = total network data usage (DATA_USAGE filtered by network,
@@ -83,7 +85,9 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useMemo(() => new Date(), [data]);
   const usageBytes = kpiValue(
     usageData?.getKpiValues.values,
     KPI_KEYS.dataUsage,
@@ -133,6 +137,7 @@ export default function BizPackagesScreen() {
         title="Packages"
         sub="How your data packages are selling and performing."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       <KpiRow
         cols={4}
