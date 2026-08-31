@@ -102,6 +102,7 @@ struct Response {
 };
 
 void free_query_response(QueryResponse *response);
+void free_system_registration(SystemRegistrationId *sysReg);
 int send_request_to_init(ReqType reqType, Config *config, char* org,
 						 char *systemName, char **response, int global );
 int existing_registration(Config *config, char **cacheUUID, char **systemUUID,

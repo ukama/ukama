@@ -241,28 +241,37 @@ void register_callback(UpdateIpCallback cb) {
 	}
 }
 
+/* Registration is repeated for as long as the system is running, so init
+ * converges on what this client reports without either side tracking who
+ * registered last. The address is re-resolved first when the system is
+ * configured by name, so a changed address is carried by the same pass. */
 void* refresh_lookup(void* args) {
 	Config *c = (Config*) args;
 	char* rIp = NULL;
-	while(TRUE) {
-		rIp = nslookup(c->systemDNS, c->nameServer);
-		if (rIp) {
-			if (strcmp(rIp, c->systemAddr) != 0) {
-				/* update IP */
-				free(c->systemAddr);
-				c->systemAddr = strdup(rIp);
-				free(rIp);
 
-				/* callback function */
-				if (register_fxn_cb) {
-				  int status = register_fxn_cb(c);
-				  if (status) {
-					  log_info("Failed to update IP for the %s to %s.", c->systemName, c->systemAddr);
-				  }
+	while (TRUE) {
+
+		sleep(c->registrationPeriod);
+
+		if (c->systemDNS) {
+			rIp = nslookup(c->systemDNS, c->nameServer);
+			if (rIp) {
+				if (strcmp(rIp, c->systemAddr) != 0) {
+					log_info("Address for %s changed from %s to %s",
+					         c->systemDNS, c->systemAddr, rIp);
+					free(c->systemAddr);
+					c->systemAddr = strdup(rIp);
 				}
+				free(rIp);
 			}
 		}
-		sleep(c->timePeriod);
+
+		if (register_fxn_cb) {
+			if (register_fxn_cb(c)) {
+				log_error("Failed to register system %s with init",
+				          c->systemName);
+			}
+		}
 	}
 
 	pthread_exit (NULL);
