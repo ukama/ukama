@@ -39,6 +39,7 @@ import {
   kpiValue,
 } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
@@ -130,6 +131,7 @@ export default function BizHomeScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   // Last-30-days data-sold total for the "… last 30 days" sub-line. Skipped
   // when the strip is already showing the 30-day window (headline == sub).
@@ -138,6 +140,7 @@ export default function BizHomeScreen() {
       data: { keys: [KPI_KEYS.dataSold], span: 'last_30d', networkId },
     },
     skip: !networkId || span === 'last_30d',
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const {
     data: sitesCurrent,
