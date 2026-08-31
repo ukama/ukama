@@ -116,6 +116,7 @@ export default function BizHomeScreen() {
   // (sitesView) so the map doesn't depend on the analytics collector. No `op`
   // is sent — each key resolves to its spec default (revenue -> SUM,
   // active_customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
+  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
     variables: {
       data: {
@@ -131,6 +132,7 @@ export default function BizHomeScreen() {
       },
     },
     skip: !networkId,
+    onCompleted: () => setFetchedAt(new Date()),
     ...visiblePoll(POLL_LIVE_MS, true),
   });
   // Last-30-days data-sold total for the "… last 30 days" sub-line. Skipped
@@ -142,7 +144,6 @@ export default function BizHomeScreen() {
     skip: !networkId || span === 'last_30d',
     ...visiblePoll(POLL_LIVE_MS, true),
   });
-  const fetchedAt = useMemo(() => new Date(), [homeData]);
   const {
     data: sitesCurrent,
     previousData: sitesPrevious,

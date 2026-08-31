@@ -12,7 +12,7 @@
  *  threshold-derived status. The four headline tiles are report-derived totals:
  *  Package revenue (Σ revenue), Packages sold (Σ sold), Best package (best
  *  seller's allowance / validity) and Data consumed (DATA_USAGE). */
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
@@ -61,6 +61,7 @@ export default function BizPackagesScreen() {
 
   // Every Packages KPI + the table/mix derive from the package_performance
   // report, windowed by the DateChip filter (last 24h / 7 days / 30 days).
+  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const { data, loading, error, refetch } = useGetPerformanceReportQuery({
     variables: {
       data: {
@@ -70,6 +71,7 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
+    onCompleted: () => setFetchedAt(new Date()),
     ...visiblePoll(POLL_LIVE_MS, true),
   });
 
@@ -87,7 +89,6 @@ export default function BizPackagesScreen() {
     skip: !networkId,
     ...visiblePoll(POLL_LIVE_MS, true),
   });
-  const fetchedAt = useMemo(() => new Date(), [data]);
   const usageBytes = kpiValue(
     usageData?.getKpiValues.values,
     KPI_KEYS.dataUsage,
