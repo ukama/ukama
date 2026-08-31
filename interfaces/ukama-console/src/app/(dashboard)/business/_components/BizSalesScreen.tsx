@@ -36,6 +36,7 @@ import {
   kpiDelta,
   kpiText,
 } from '@/lib/kpis';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 // Trend/sub phrasing keyed by the selected rolling span, matching the DateChip.
@@ -68,23 +69,28 @@ export default function BizSalesScreen() {
   // getKpiValues resolves ONE op per call, so REVENUE at SUM/COUNT/AVG needs
   // three calls. The base call uses each KPI's default op: REVENUE -> SUM,
   // PAID_CUSTOMERS -> LAST.
+  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const { data: baseData, loading: baseLoading } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue, KPI_KEYS.paidCustomers], span, networkId },
     },
     skip: !networkId,
+    onCompleted: () => setFetchedAt(new Date()),
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const { data: countData, loading: countLoading } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue], span, op: 'COUNT', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const { data: avgData, loading: avgLoading } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue], span, op: 'AVG', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   const { data: reportData, error: reportError } = useGetPerformanceReportQuery({
@@ -92,6 +98,7 @@ export default function BizSalesScreen() {
       data: { report: 'package_performance', span: 'last_30d', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   // Revenue trend: daily REVENUE (SUM) over the last 30 days.
@@ -151,6 +158,7 @@ export default function BizSalesScreen() {
         title="Revenue"
         sub="Revenue across your network — your single most important number."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
 
       {kpiLoading ? (
