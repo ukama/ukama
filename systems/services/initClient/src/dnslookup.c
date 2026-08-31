@@ -241,10 +241,6 @@ void register_callback(UpdateIpCallback cb) {
 	}
 }
 
-/* Registration is repeated for as long as the system is running, so init
- * converges on what this client reports without either side tracking who
- * registered last. The address is re-resolved first when the system is
- * configured by name, so a changed address is carried by the same pass. */
 void* refresh_lookup(void* args) {
 	Config *c = (Config*) args;
 	char* rIp = NULL;
