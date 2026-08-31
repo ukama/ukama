@@ -350,12 +350,6 @@ int main (int argc, char *argv[]) {
 		goto exit_program;
 	}
 
-	/* Step-3: registration to init systems */
-	if (register_to_inits(config)) {
-		log_error("Registration with init failed. Retrying in %d seconds",
-		          config->registrationPeriod);
-	}
-
 	log_debug("initClient running ...");
 
 	pthread_create(&child, NULL, refresh_lookup, config);

@@ -251,17 +251,11 @@ void* refresh_lookup(void* args) {
 
 	while (TRUE) {
 
-		sleep(c->registrationPeriod);
-
 		if (c->systemDNS) {
 			rIp = nslookup(c->systemDNS, c->nameServer);
 			if (rIp) {
-				if (strcmp(rIp, c->systemAddr) != 0) {
-					log_info("Address for %s changed from %s to %s",
-					         c->systemDNS, c->systemAddr, rIp);
-					free(c->systemAddr);
-					c->systemAddr = strdup(rIp);
-				}
+				free(c->systemAddr);
+				c->systemAddr = strdup(rIp);
 				free(rIp);
 			}
 		}
@@ -272,6 +266,8 @@ void* refresh_lookup(void* args) {
 				          c->systemName);
 			}
 		}
+
+		sleep(c->registrationPeriod);
 	}
 
 	pthread_exit (NULL);
