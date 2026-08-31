@@ -142,6 +142,7 @@ export default function BizHomeScreen() {
     skip: !networkId || span === 'last_30d',
     ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useMemo(() => new Date(), [homeData]);
   const {
     data: sitesCurrent,
     previousData: sitesPrevious,
@@ -211,6 +212,7 @@ export default function BizHomeScreen() {
         title="Home"
         sub="Revenue, customers and sites at a glance."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       {loading ? (
         <Skeleton variant="rounded" sx={{ height: 96 }} />

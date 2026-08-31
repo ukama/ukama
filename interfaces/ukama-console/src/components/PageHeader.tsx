@@ -36,6 +36,9 @@ export interface PageHeaderProps {
   actions?: React.ReactNode;
   /** When set, a back arrow is shown left of the breadcrumb (nested pages). */
   onBack?: () => void;
+  /** When the data on screen last arrived. Defaults to when the page mounted,
+   *  which is only accurate on screens that fetch once and never refresh. */
+  fetchedAt?: Date;
 }
 
 export default function PageHeader({
@@ -45,8 +48,10 @@ export default function PageHeader({
   sub,
   actions,
   onBack,
+  fetchedAt: fetchedAtProp,
 }: PageHeaderProps) {
-  const [fetchedAt] = useState(() => new Date());
+  const [mountedAt] = useState(() => new Date());
+  const fetchedAt = fetchedAtProp ?? mountedAt;
   const [now, setNow] = useState(fetchedAt);
   // Re-tick the relative label without re-fetching anything.
   useEffect(() => {
