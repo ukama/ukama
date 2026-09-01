@@ -45,10 +45,8 @@ static int check_component_count(check_ctx_t *ctx,
                                  const check_spec_t *check,
                                  check_result_t *res,
                                  ulab_error_t *err) {
-    bff_component_t *components;
-    size_t count;
-    size_t wrong_category;
-    size_t i;
+    uint32_t total;
+    uint32_t wrong_category;
 
     if (check->category[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
@@ -61,72 +59,37 @@ static int check_component_count(check_ctx_t *ctx,
         return ULAB_ERR;
     }
 
-    components = calloc(ULAB_MAX_BFF_COMPONENTS, sizeof(*components));
-    if (components == NULL) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "out of memory reading component inventory");
-        return ULAB_ERR;
-    }
-
-    if (bff_get_components_by_category(ctx->bff, check->category,
-                                       components,
-                                       ULAB_MAX_BFF_COMPONENTS,
-                                       &count, err)) {
-        free(components);
-        return ULAB_ERR;
-    }
-
+    total = 0;
     wrong_category = 0;
-    for (i = 0; i < count; i++) {
-        if (strcasecmp(components[i].category, check->category) != 0) {
-            wrong_category++;
-        }
+    if (bff_probe_components_by_category(ctx->bff, check->category, NULL, 0,
+                                         &total, &wrong_category, err)) {
+        return ULAB_ERR;
     }
 
-    res->passed = count == (size_t)check->expected_count &&
-        wrong_category == 0;
+    res->passed = total == check->expected_count && wrong_category == 0;
     snprintf(res->detail, sizeof(res->detail),
-             "category=%.32s expected=%u actual=%zu wrong_category=%zu",
-             check->category, check->expected_count, count, wrong_category);
-    free(components);
+             "category=%.32s expected=%u actual=%u wrong_category=%u",
+             check->category, check->expected_count, total, wrong_category);
 
     return ULAB_OK;
 }
 
-static int component_for_part(const bff_component_t *components,
-                              size_t count,
-                              const char *part_number,
-                              const bff_component_t **out) {
-    size_t i;
-
-    for (i = 0; i < count; i++) {
-        if (ulab_streq(components[i].part_number, part_number)) {
-            if (out != NULL) {
-                *out = &components[i];
-            }
-            return 1;
-        }
-    }
-
-    return 0;
-}
-
 /*
  * The inventory component service polls the node factory and turns every
- * provisioned node into an access component keyed by the factory node id.
- * The lab reserves its node bundle from the same factory, so each node it
- * started must surface as a component within a few sync cycles.
+ * provisioned node allocated to the org into an access component keyed by the
+ * node id. Every node this run put through the factory must surface as a
+ * component within a few sync cycles.
  */
 static int check_node_component(check_ctx_t *ctx,
                                 const check_spec_t *check,
                                 check_result_t *res,
                                 ulab_error_t *err) {
     selector_result_t nodes;
-    bff_component_t *components;
+    bff_component_probe_t *probes;
     const char *category;
     time_t deadline;
     unsigned int poll;
-    size_t count;
+    uint32_t total;
     size_t matched;
     size_t wrong_type;
     size_t i;
@@ -144,28 +107,35 @@ static int check_node_component(check_ctx_t *ctx,
         return ULAB_OK;
     }
 
-    for (i = 0; i < nodes.count; i++) {
-        if (ctx->world->nodes[nodes.idx[i]].bff_id[0] == '\0') {
-            snprintf(err->msg, sizeof(err->msg),
-                     "node %s has no factory id; the scenario must start "
-                     "nodes before checking the component inventory",
-                     ctx->world->nodes[nodes.idx[i]].ref);
-            selector_result_free(&nodes);
-            return ULAB_ERR;
-        }
-    }
-
-    components = calloc(ULAB_MAX_BFF_COMPONENTS, sizeof(*components));
-    if (components == NULL) {
+    probes = calloc(nodes.count, sizeof(*probes));
+    if (probes == NULL) {
         snprintf(err->msg, sizeof(err->msg),
-                 "out of memory reading component inventory");
+                 "out of memory probing component inventory");
         selector_result_free(&nodes);
         return ULAB_ERR;
     }
 
+    for (i = 0; i < nodes.count; i++) {
+        const node_t *node;
+
+        node = &ctx->world->nodes[nodes.idx[i]];
+        if (node->bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "node %s has no factory id; the scenario must start "
+                     "nodes before checking the component inventory",
+                     node->ref);
+            free(probes);
+            selector_result_free(&nodes);
+            return ULAB_ERR;
+        }
+        ulab_copy(probes[i].part_number, sizeof(probes[i].part_number),
+                  node->bff_id);
+        ulab_copy(probes[i].type, sizeof(probes[i].type), node_kind(node));
+    }
+
     deadline = time(NULL) + (time_t)check->timeout_seconds;
     poll = check->poll_seconds ? check->poll_seconds : 5u;
-    count = 0;
+    total = 0;
     matched = 0;
     wrong_type = 0;
     missing[0] = '\0';
@@ -175,28 +145,23 @@ static int check_node_component(check_ctx_t *ctx,
         wrong_type = 0;
         missing[0] = '\0';
 
-        if (bff_get_components_by_category(ctx->bff, category, components,
-                                           ULAB_MAX_BFF_COMPONENTS,
-                                           &count, err)) {
-            free(components);
+        if (bff_probe_components_by_category(ctx->bff, category, probes,
+                                             nodes.count, &total, NULL,
+                                             err)) {
+            free(probes);
             selector_result_free(&nodes);
             return ULAB_ERR;
         }
 
         for (i = 0; i < nodes.count; i++) {
-            const node_t *node;
-            const bff_component_t *component;
-
-            node = &ctx->world->nodes[nodes.idx[i]];
-            component = NULL;
-            if (!component_for_part(components, count, node->bff_id,
-                                    &component)) {
+            if (!probes[i].found) {
                 if (missing[0] == '\0') {
-                    ulab_copy(missing, sizeof(missing), node->bff_id);
+                    ulab_copy(missing, sizeof(missing),
+                              probes[i].part_number);
                 }
                 continue;
             }
-            if (!ulab_streq(component->type, node_kind(node))) {
+            if (!probes[i].type_matches) {
                 wrong_type++;
                 continue;
             }
@@ -211,11 +176,11 @@ static int check_node_component(check_ctx_t *ctx,
 
     res->passed = matched == nodes.count;
     snprintf(res->detail, sizeof(res->detail),
-             "category=%.32s matched=%zu/%zu components=%zu wrong_type=%zu "
+             "category=%.32s matched=%zu/%zu components=%u wrong_type=%zu "
              "first_missing_part=%.96s",
-             category, matched, nodes.count, count, wrong_type,
+             category, matched, nodes.count, total, wrong_type,
              missing[0] != '\0' ? missing : "-");
-    free(components);
+    free(probes);
     selector_result_free(&nodes);
 
     return ULAB_OK;

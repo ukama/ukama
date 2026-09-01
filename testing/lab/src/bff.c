@@ -2178,26 +2178,32 @@ int bff_get_nodes_count(bff_client_t *c,
     return ULAB_OK;
 }
 
-int bff_get_components_by_category(bff_client_t *c,
-                                   const char *category,
-                                   bff_component_t *components,
-                                   size_t max_components,
-                                   size_t *count,
-                                   ulab_error_t *err) {
+int bff_probe_components_by_category(bff_client_t *c,
+                                     const char *category,
+                                     bff_component_probe_t *probes,
+                                     size_t probe_count,
+                                     uint32_t *total,
+                                     uint32_t *category_mismatches,
+                                     ulab_error_t *err) {
     json_t *root;
     json_t *obj;
     json_t *arr;
     size_t i;
-    size_t n;
+    size_t j;
 
-    if (category == NULL || category[0] == '\0' ||
-        components == NULL || count == NULL) {
+    if (category == NULL || category[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "component listing requires category and output storage");
+                 "component listing requires a category");
         return ULAB_ERR;
     }
 
-    *count = 0;
+    for (i = 0; i < probe_count; i++) {
+        probes[i].found = 0;
+        probes[i].type_matches = 0;
+    }
+    if (total != NULL) *total = 0;
+    if (category_mismatches != NULL) *category_mismatches = 0;
+
     root = NULL;
     if (bff_component_query(c, category, &root, err)) {
         return ULAB_ERR;
@@ -2213,39 +2219,51 @@ int bff_get_components_by_category(bff_client_t *c,
         return ULAB_ERR;
     }
 
-    if (json_array_size(arr) > max_components) {
-        snprintf(err->msg, sizeof(err->msg),
-                 "category=%.64s returned %zu components, storage holds %zu",
-                 category, json_array_size(arr), max_components);
-        json_decref(root);
-        return ULAB_ERR;
+    if (total != NULL) {
+        *total = (uint32_t)json_array_size(arr);
     }
 
-    n = 0;
     for (i = 0; i < json_array_size(arr); i++) {
         json_t *item;
+        char item_category[ULAB_MAX_REF];
+        char item_type[ULAB_MAX_REF];
+        char item_part[ULAB_MAX_ID];
 
         item = json_array_get(arr, i);
         if (item == NULL || !json_is_object(item)) {
             continue;
         }
-        memset(&components[n], 0, sizeof(components[n]));
-        json_get_optional_str(item, "id", components[n].id,
-                              sizeof(components[n].id));
-        json_get_optional_str(item, "category", components[n].category,
-                              sizeof(components[n].category));
-        json_get_optional_str(item, "type", components[n].type,
-                              sizeof(components[n].type));
-        json_get_optional_str(item, "partNumber",
-                              components[n].part_number,
-                              sizeof(components[n].part_number));
-        json_get_optional_str(item, "description",
-                              components[n].description,
-                              sizeof(components[n].description));
-        n++;
+
+        json_get_optional_str(item, "category", item_category,
+                              sizeof(item_category));
+        if (category_mismatches != NULL &&
+            strcasecmp(item_category, category) != 0) {
+            (*category_mismatches)++;
+        }
+
+        if (probe_count == 0) {
+            continue;
+        }
+
+        json_get_optional_str(item, "partNumber", item_part,
+                              sizeof(item_part));
+        if (item_part[0] == '\0') {
+            continue;
+        }
+        json_get_optional_str(item, "type", item_type, sizeof(item_type));
+
+        for (j = 0; j < probe_count; j++) {
+            if (probes[j].found ||
+                !ulab_streq(probes[j].part_number, item_part)) {
+                continue;
+            }
+            probes[j].found = 1;
+            probes[j].type_matches =
+                ulab_streq(probes[j].type, item_type);
+            break;
+        }
     }
 
-    *count = n;
     json_decref(root);
 
     return ULAB_OK;
