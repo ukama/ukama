@@ -173,7 +173,7 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 			}
 
 			threshold := s.idle
-			if sc.s.TotalBytes == 0 {
+			if tNow-int64(sc.s.StartTime) < int64(s.newSessionGrace.Seconds()) {
 				threshold = s.newSessionGrace
 			}
 
