@@ -97,3 +97,36 @@ pulls:
       site_id: $.metric.site
       network_id: $.metric.network
       value: $.value
+
+  # SIM counts per network for ACTIVE_CUSTOMERS / CUSTOMERS. sim-manager
+  # recounts from its DB and pushes an absolute gauge per network on every sim
+  # lifecycle change, so the series is a level, not a counter: `last` over the
+  # lookback is the current count. ONE unfiltered pull per window — the
+  # `network` label splits it, never a fan-out.
+  #
+  # 30m matches the data_usage pull: the pushgateway holds the last pushed
+  # value and Prometheus scrapes it every 10s, so a network with no sim
+  # activity still reports. A network whose series is absent entirely is
+  # zero-filled by the algo from registry.network.getAll.
+  - key: metrics.active_sims.last
+    endpoint: /v1/last/metrics/active_sims
+    strategy: full_snapshot
+    items: $.data.result
+    entity: network_id
+    params:
+      lookback: 30m
+    map:
+      network_id: $.metric.network
+      # Prometheus sample pair [ts, "value"].
+      value: $.value
+
+  - key: metrics.inactive_sims.last
+    endpoint: /v1/last/metrics/inactive_sims
+    strategy: full_snapshot
+    items: $.data.result
+    entity: network_id
+    params:
+      lookback: 30m
+    map:
+      network_id: $.metric.network
+      value: $.value

@@ -69,9 +69,10 @@ func Default() *Registry {
 	// available node. Judges the tnode, anode and cnode.
 	r.Register("site_uptime@v3", SiteUptime)
 	r.Register("network_uptime@v3", NetworkUptime)
-	// v3: reads the shared all-sims dataset (subscriber.sim.list) and
-	// filters status=active in-algo — one sims pull feeds all sim KPIs.
-	r.Register("active_customers@v3", ActiveCustomers)
+	// v1: per-network SIM-count gauges from the metrics system, summed per
+	// the spec's inputs — active_sims for ACTIVE_CUSTOMERS, active_sims +
+	// inactive_sims for CUSTOMERS.
+	r.Register("network_sim_count@v1", NetworkSimCount)
 	// v1: per-series increments from the metrics system's cumulative
 	// data_usage counter.
 	r.Register("data_usage@v1", DataUsage)
