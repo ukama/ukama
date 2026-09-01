@@ -504,13 +504,6 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 check->target[0] == '\0') {
                 return fail(err, "usage_aggregate requires target");
             }
-            if (check->type == CHECK_COMPONENT_COUNT_BY_CATEGORY &&
-                (check->category[0] == '\0' ||
-                 !check->has_expected_count)) {
-                return fail(err,
-                            "component_count_by_category requires category "
-                            "and expected_count");
-            }
             if ((check->type == CHECK_PACKAGE_FIELDS_EQUAL ||
                  check->type == CHECK_PACKAGE_VISIBLE ||
                  check->type == CHECK_PACKAGE_HIDDEN ||

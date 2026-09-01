@@ -23,11 +23,11 @@ phases:
   - name: component_catalog_counts
     checks:
       - type: component_count_by_category
-        category: power
+        target: power
         expected_count: 2
       - type: component_count_by_category
-        category: backhaul
+        target: backhaul
         expected_count: 3
       - type: component_count_by_category
-        category: switch
+        target: switch
         expected_count: 2

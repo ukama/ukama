@@ -31,6 +31,6 @@ phases:
     checks:
       - type: node_component_registered
         nodes: all
-        category: access
+        target: access
         timeout_seconds: 300
         poll_seconds: 10

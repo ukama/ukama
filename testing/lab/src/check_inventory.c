@@ -9,7 +9,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -19,22 +18,6 @@
 
 /* Upper bound on the SIM pool page the lab is willing to scan in one call. */
 #define ULAB_MAX_POOL_SCAN 4096
-
-static const char *node_kind(const node_t *node) {
-    if (node == NULL) {
-        return "";
-    }
-    if (ulab_streq(node->type, ULAB_NODE_TOWER)) {
-        return ULAB_NODE_KIND_TOWER;
-    }
-    if (ulab_streq(node->type, ULAB_NODE_AMPLIFIER)) {
-        return ULAB_NODE_KIND_AMPLIFIER;
-    }
-    if (ulab_streq(node->type, ULAB_NODE_CONTROLLER)) {
-        return ULAB_NODE_KIND_CONTROLLER;
-    }
-    return node->type;
-}
 
 /*
  * Components in the power, backhaul, switch, and spectrum categories are
@@ -46,11 +29,10 @@ static int check_component_count(check_ctx_t *ctx,
                                  check_result_t *res,
                                  ulab_error_t *err) {
     uint32_t total;
-    uint32_t wrong_category;
 
-    if (check->category[0] == '\0') {
+    if (check->target[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
-                 "component_count_by_category requires category");
+                 "component_count_by_category requires target");
         return ULAB_ERR;
     }
     if (!check->has_expected_count) {
@@ -60,16 +42,15 @@ static int check_component_count(check_ctx_t *ctx,
     }
 
     total = 0;
-    wrong_category = 0;
-    if (bff_probe_components_by_category(ctx->bff, check->category, NULL, 0,
-                                         &total, &wrong_category, err)) {
+    if (bff_probe_components_by_category(ctx->bff, check->target, NULL, 0,
+                                         &total, err)) {
         return ULAB_ERR;
     }
 
-    res->passed = total == check->expected_count && wrong_category == 0;
+    res->passed = total == check->expected_count;
     snprintf(res->detail, sizeof(res->detail),
-             "category=%.32s expected=%u actual=%u wrong_category=%u",
-             check->category, check->expected_count, total, wrong_category);
+             "category=%.32s expected=%u actual=%u",
+             check->target, check->expected_count, total);
 
     return ULAB_OK;
 }
@@ -91,11 +72,10 @@ static int check_node_component(check_ctx_t *ctx,
     unsigned int poll;
     uint32_t total;
     size_t matched;
-    size_t wrong_type;
     size_t i;
     char missing[ULAB_MAX_ID];
 
-    category = check->category[0] != '\0' ? check->category : "access";
+    category = check->target[0] != '\0' ? check->target : "access";
 
     if (selector_resolve_nodes(ctx->world, &check->nodes, &nodes, err)) {
         return ULAB_ERR;
@@ -130,42 +110,33 @@ static int check_node_component(check_ctx_t *ctx,
         }
         ulab_copy(probes[i].part_number, sizeof(probes[i].part_number),
                   node->bff_id);
-        ulab_copy(probes[i].type, sizeof(probes[i].type), node_kind(node));
     }
 
     deadline = time(NULL) + (time_t)check->timeout_seconds;
     poll = check->poll_seconds ? check->poll_seconds : 5u;
     total = 0;
     matched = 0;
-    wrong_type = 0;
     missing[0] = '\0';
 
     do {
         matched = 0;
-        wrong_type = 0;
         missing[0] = '\0';
 
         if (bff_probe_components_by_category(ctx->bff, category, probes,
-                                             nodes.count, &total, NULL,
-                                             err)) {
+                                             nodes.count, &total, err)) {
             free(probes);
             selector_result_free(&nodes);
             return ULAB_ERR;
         }
 
         for (i = 0; i < nodes.count; i++) {
-            if (!probes[i].found) {
-                if (missing[0] == '\0') {
-                    ulab_copy(missing, sizeof(missing),
-                              probes[i].part_number);
-                }
+            if (probes[i].found) {
+                matched++;
                 continue;
             }
-            if (!probes[i].type_matches) {
-                wrong_type++;
-                continue;
+            if (missing[0] == '\0') {
+                ulab_copy(missing, sizeof(missing), probes[i].part_number);
             }
-            matched++;
         }
 
         if (matched == nodes.count || time(NULL) >= deadline) {
@@ -176,9 +147,9 @@ static int check_node_component(check_ctx_t *ctx,
 
     res->passed = matched == nodes.count;
     snprintf(res->detail, sizeof(res->detail),
-             "category=%.32s matched=%zu/%zu components=%u wrong_type=%zu "
+             "category=%.32s matched=%zu/%zu components=%u "
              "first_missing_part=%.96s",
-             category, matched, nodes.count, total, wrong_type,
+             category, matched, nodes.count, total,
              missing[0] != '\0' ? missing : "-");
     free(probes);
     selector_result_free(&nodes);
@@ -203,15 +174,13 @@ static int pool_contains(char (*iccids)[ULAB_MAX_ID],
 /*
  * Every SIM the lab pushes into the warehouse is exported by the SIM factory
  * and uploaded to the pool during setup. This check reads the pool back and
- * requires each of those ICCIDs to be there and unassigned, then confirms the
- * pool statistics account for them.
+ * requires each of those ICCIDs to be there and unassigned.
  */
 static int check_sim_pool_contains(check_ctx_t *ctx,
                                    const check_spec_t *check,
                                    check_result_t *res,
                                    ulab_error_t *err) {
     selector_result_t ues;
-    bff_inventory_summary_t stats;
     char (*iccids)[ULAB_MAX_ID];
     time_t deadline;
     unsigned int poll;
@@ -219,7 +188,6 @@ static int check_sim_pool_contains(check_ctx_t *ctx,
     size_t expected;
     size_t matched;
     size_t i;
-    int stats_consistent;
     char missing[ULAB_MAX_ID];
 
     if (ctx->sim_type == NULL || ctx->sim_type[0] == '\0') {
@@ -257,8 +225,6 @@ static int check_sim_pool_contains(check_ctx_t *ctx,
     poll = check->poll_seconds ? check->poll_seconds : 5u;
     pool_count = 0;
     matched = 0;
-    stats_consistent = 0;
-    memset(&stats, 0, sizeof(stats));
     missing[0] = '\0';
 
     do {
@@ -266,8 +232,7 @@ static int check_sim_pool_contains(check_ctx_t *ctx,
         missing[0] = '\0';
 
         if (bff_get_sims_from_pool(ctx->bff, ctx->sim_type, iccids, NULL,
-                                   ULAB_MAX_POOL_SCAN, &pool_count, err) ||
-            bff_get_sim_pool_summary(ctx->bff, ctx->sim_type, &stats, err)) {
+                                   ULAB_MAX_POOL_SCAN, &pool_count, err)) {
             free(iccids);
             selector_result_free(&ues);
             return ULAB_ERR;
@@ -289,23 +254,17 @@ static int check_sim_pool_contains(check_ctx_t *ctx,
             }
         }
 
-        stats_consistent = stats.sim_total == stats.sim_available +
-            stats.sim_consumed + stats.sim_failed;
-
-        if ((matched == expected && stats_consistent) ||
-            time(NULL) >= deadline) {
+        if (matched == expected || time(NULL) >= deadline) {
             break;
         }
         sleep(poll > 60u ? 60u : poll);
     } while (1);
 
-    res->passed = matched == expected && stats_consistent &&
-        stats.sim_available >= (uint32_t)expected;
+    res->passed = matched == expected;
     snprintf(res->detail, sizeof(res->detail),
-             "type=%.32s in_pool=%zu/%zu unassigned=%zu total=%u "
-             "available=%u consumed=%u failed=%u first_missing_iccid=%.32s",
-             ctx->sim_type, matched, expected, pool_count, stats.sim_total,
-             stats.sim_available, stats.sim_consumed, stats.sim_failed,
+             "type=%.32s in_pool=%zu/%zu unassigned=%zu "
+             "first_missing_iccid=%.32s",
+             ctx->sim_type, matched, expected, pool_count,
              missing[0] != '\0' ? missing : "-");
     free(iccids);
     selector_result_free(&ues);

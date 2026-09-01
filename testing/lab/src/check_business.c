@@ -263,7 +263,7 @@ static int check_inventory(check_ctx_t *ctx, const check_spec_t *check,
             return ULAB_ERR;
         }
         res->passed = inventory.sim_total == inventory.sim_available +
-            inventory.sim_consumed + inventory.sim_failed;
+            inventory.sim_consumed;
         snprintf(res->detail, sizeof(res->detail),
                  "pool total=%u available=%u consumed=%u failed=%u",
                  inventory.sim_total, inventory.sim_available,

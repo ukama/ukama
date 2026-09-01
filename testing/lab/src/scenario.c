@@ -600,8 +600,6 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->ref), val);
     if (ulab_streq(key, "entity")) return ulab_copy(c->entity,
         sizeof(c->entity), val);
-    if (ulab_streq(key, "category")) return ulab_copy(c->category,
-        sizeof(c->category), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
     if (ulab_streq(key, "active")) return ulab_copy(c->expected_active,

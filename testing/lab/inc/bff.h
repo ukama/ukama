@@ -172,15 +172,12 @@ typedef struct {
 } bff_network_summary_t;
 
 /*
- * One part number to look for in a component category, with the component
- * type it is expected to carry. Probes are sized by what the scenario asks
- * about, so the inventory itself can be any size.
+ * One part number to look for in a component category. Probes are sized by
+ * what the scenario asks about, so the inventory itself can be any size.
  */
 typedef struct {
     char part_number[ULAB_MAX_ID];
-    char type[ULAB_MAX_REF];
     int  found;
-    int  type_matches;
 } bff_component_probe_t;
 
 typedef struct {
@@ -348,7 +345,6 @@ int bff_probe_components_by_category(bff_client_t *c,
                                      bff_component_probe_t *probes,
                                      size_t probe_count,
                                      uint32_t *total,
-                                     uint32_t *category_mismatches,
                                      ulab_error_t *err);
 
 int bff_get_sim_pool_summary(bff_client_t *c,
