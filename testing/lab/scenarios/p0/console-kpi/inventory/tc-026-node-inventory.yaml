@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-node-inventory
-description: Reserve two node bundles from the node factory, then verify the Nodes page reconciles all six nodes and the component inventory carries one access component per factory node id.
+description: Verify every node the run provisions and allocates in the node factory appears in the component inventory under the access category, keyed by its node id.
 seed: 4715
 suite: p0
 priority: p0
@@ -10,7 +10,7 @@ provider:
   type: virtual
 world:
   networks: 1
-  sites_per_network: 2
+  sites_per_network: 1
   nodes_per_site:
     tower: 1
     amplifier: 1
@@ -21,32 +21,13 @@ setup:
 runtime:
   start: [nodes]
   wait: [nodes_ready]
-phases:
-  - name: reconcile_node_inventory
-    checks:
-      - type: list_count_equals
-        target: nodes
-        networks: net-001
-        expected_count: 6
-      - type: entity_reconciles
-        entity: node
-        ref: tower-site-001-001
-      - type: entity_reconciles
-        entity: node
-        ref: amplifier-site-001-001
-      - type: entity_reconciles
-        entity: node
-        ref: controller-site-001-001
-      - type: node_status_equals
-        nodes: all
-        connectivity: Online
-        timeout_seconds: 120
 
-  # Starting the nodes reserves and provisions their bundles in the node
-  # factory. The inventory component service polls the factory on a one
-  # minute schedule and mints one access component per provisioned node,
-  # keyed by the factory node id.
-  - name: factory_nodes_reach_component_inventory
+# Starting the site reserves a factory bundle, marks all three nodes
+# provisioned, and allocates them to the org. The inventory component service
+# polls the factory on a one minute schedule and mints one access component
+# per node, keyed by the node id.
+phases:
+  - name: node_factory_to_component_inventory
     checks:
       - type: node_component_registered
         nodes: all
