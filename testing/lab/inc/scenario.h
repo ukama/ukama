@@ -160,7 +160,10 @@ typedef enum {
     CHECK_AUDIT_EVENT_EXISTS,
     CHECK_RELATIONSHIP_EXISTS,
     CHECK_RELATIONSHIP_ENDED,
-    CHECK_BALANCE_NON_NEGATIVE
+    CHECK_BALANCE_NON_NEGATIVE,
+    CHECK_COMPONENT_COUNT_BY_CATEGORY,
+    CHECK_NODE_COMPONENT_REGISTERED,
+    CHECK_SIM_POOL_CONTAINS_SIMS
 } check_type_t;
 
 typedef struct {
@@ -176,6 +179,7 @@ typedef struct {
     char         view[ULAB_MAX_REF];
     char         ref[ULAB_MAX_REF];
     char         entity[ULAB_MAX_REF];
+    char         category[ULAB_MAX_REF];
     char         status[ULAB_MAX_REF];
     char         expected_active[ULAB_MAX_REF];
     char         expected[ULAB_MAX_REF];

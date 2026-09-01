@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-component-inventory
-description: Query the Console component inventory with GetComponentsByUserId and verify every returned component has a supported category.
+description: Verify the Console component inventory serves the fixed catalog seeded from the networks repository, with exact counts per category.
 seed: 4716
 suite: p0
 priority: p0
@@ -10,19 +10,24 @@ provider:
   type: virtual
 world:
   networks: 1
-  sites_per_network: 1
-  nodes_per_site:
-    tower: 1
-    amplifier: 1
-    controller: 1
+  sites_per_network: 0
   ues_per_site: 0
 setup:
-  create_via_bff: [networks, sites, nodes, node_site_links]
-runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  create_via_bff: [networks]
+
+# Power, backhaul, and switch components are seeded by the component service
+# from the networks repository, so their counts are fixed by the fixture and
+# do not depend on anything this scenario provisions. Access components are
+# excluded here because they are minted per factory node; tc-026 covers those.
 phases:
-  - name: reconcile_component_inventory
+  - name: component_catalog_counts
     checks:
-      - type: console_inventory_reconciles
-        target: component
+      - type: component_count_by_category
+        category: power
+        expected_count: 2
+      - type: component_count_by_category
+        category: backhaul
+        expected_count: 3
+      - type: component_count_by_category
+        category: switch
+        expected_count: 2

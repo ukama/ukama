@@ -2178,6 +2178,79 @@ int bff_get_nodes_count(bff_client_t *c,
     return ULAB_OK;
 }
 
+int bff_get_components_by_category(bff_client_t *c,
+                                   const char *category,
+                                   bff_component_t *components,
+                                   size_t max_components,
+                                   size_t *count,
+                                   ulab_error_t *err) {
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    size_t i;
+    size_t n;
+
+    if (category == NULL || category[0] == '\0' ||
+        components == NULL || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "component listing requires category and output storage");
+        return ULAB_ERR;
+    }
+
+    *count = 0;
+    root = NULL;
+    if (bff_component_query(c, category, &root, err)) {
+        return ULAB_ERR;
+    }
+
+    obj = dig(root, "data", "getComponentsByUserId");
+    arr = obj ? json_object_get(obj, "components") : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "getComponentsByUserId returned no components list for "
+                 "category=%.64s", category);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    if (json_array_size(arr) > max_components) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "category=%.64s returned %zu components, storage holds %zu",
+                 category, json_array_size(arr), max_components);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    n = 0;
+    for (i = 0; i < json_array_size(arr); i++) {
+        json_t *item;
+
+        item = json_array_get(arr, i);
+        if (item == NULL || !json_is_object(item)) {
+            continue;
+        }
+        memset(&components[n], 0, sizeof(components[n]));
+        json_get_optional_str(item, "id", components[n].id,
+                              sizeof(components[n].id));
+        json_get_optional_str(item, "category", components[n].category,
+                              sizeof(components[n].category));
+        json_get_optional_str(item, "type", components[n].type,
+                              sizeof(components[n].type));
+        json_get_optional_str(item, "partNumber",
+                              components[n].part_number,
+                              sizeof(components[n].part_number));
+        json_get_optional_str(item, "description",
+                              components[n].description,
+                              sizeof(components[n].description));
+        n++;
+    }
+
+    *count = n;
+    json_decref(root);
+
+    return ULAB_OK;
+}
+
 int bff_get_component_inventory_summary(
     bff_client_t *c,
     bff_inventory_summary_t *summary,

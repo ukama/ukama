@@ -221,6 +221,12 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_RELATIONSHIP_EXISTS: return "relationship_exists";
     case CHECK_RELATIONSHIP_ENDED: return "relationship_ended";
     case CHECK_BALANCE_NON_NEGATIVE: return "balance_non_negative";
+    case CHECK_COMPONENT_COUNT_BY_CATEGORY:
+        return "component_count_by_category";
+    case CHECK_NODE_COMPONENT_REGISTERED:
+        return "node_component_registered";
+    case CHECK_SIM_POOL_CONTAINS_SIMS:
+        return "sim_pool_contains_sims";
     default: return "unknown";
     }
 }
@@ -370,6 +376,12 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NETWORK_SUMMARY_METRIC;
     } else if (ulab_streq(name, "console_inventory_reconciles")) {
         *out = CHECK_CONSOLE_INVENTORY_RECONCILES;
+    } else if (ulab_streq(name, "component_count_by_category")) {
+        *out = CHECK_COMPONENT_COUNT_BY_CATEGORY;
+    } else if (ulab_streq(name, "node_component_registered")) {
+        *out = CHECK_NODE_COMPONENT_REGISTERED;
+    } else if (ulab_streq(name, "sim_pool_contains_sims")) {
+        *out = CHECK_SIM_POOL_CONTAINS_SIMS;
     } else if (ulab_streq(name, "usage_aggregate")) {
         *out = CHECK_USAGE_AGGREGATE;
     } else if (ulab_streq(name, "node_state")) *out = CHECK_NODE_STATE;
@@ -588,6 +600,8 @@ static int apply_check_field(check_spec_t *c, const char *key,
         sizeof(c->ref), val);
     if (ulab_streq(key, "entity")) return ulab_copy(c->entity,
         sizeof(c->entity), val);
+    if (ulab_streq(key, "category")) return ulab_copy(c->category,
+        sizeof(c->category), val);
     if (ulab_streq(key, "status")) return ulab_copy(c->status,
         sizeof(c->status), val);
     if (ulab_streq(key, "active")) return ulab_copy(c->expected_active,
@@ -1330,7 +1344,7 @@ void scenario_list_events(void) {
 void scenario_list_checks(void) {
     int i;
 
-    for (i = CHECK_BACKEND_COUNT; i <= CHECK_BALANCE_NON_NEGATIVE; i++) {
+    for (i = CHECK_BACKEND_COUNT; i <= CHECK_SIM_POOL_CONTAINS_SIMS; i++) {
         printf("%s\n", scenario_check_name((check_type_t)i));
     }
 }

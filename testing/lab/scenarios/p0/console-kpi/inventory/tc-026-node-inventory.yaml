@@ -1,10 +1,10 @@
 version: 1
 name: p0-console-kpi-node-inventory
-description: Verify the Nodes page count and direct node detail records reconcile for all six nodes in the selected network.
+description: Reserve two node bundles from the node factory, then verify the Nodes page reconciles all six nodes and the component inventory carries one access component per factory node id.
 seed: 4715
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, inventory, node, graphql]
+tags: [virtual, console-kpi, inventory, node, component, graphql]
 status: active
 provider:
   type: virtual
@@ -41,3 +41,15 @@ phases:
         nodes: all
         connectivity: Online
         timeout_seconds: 120
+
+  # Starting the nodes reserves and provisions their bundles in the node
+  # factory. The inventory component service polls the factory on a one
+  # minute schedule and mints one access component per provisioned node,
+  # keyed by the factory node id.
+  - name: factory_nodes_reach_component_inventory
+    checks:
+      - type: node_component_registered
+        nodes: all
+        category: access
+        timeout_seconds: 300
+        poll_seconds: 10

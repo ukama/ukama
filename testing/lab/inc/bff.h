@@ -171,6 +171,16 @@ typedef struct {
     uint32_t nodes_offline;
 } bff_network_summary_t;
 
+#define ULAB_MAX_BFF_COMPONENTS 256
+
+typedef struct {
+    char id[ULAB_MAX_ID];
+    char category[ULAB_MAX_REF];
+    char type[ULAB_MAX_REF];
+    char part_number[ULAB_MAX_ID];
+    char description[ULAB_MAX_NAME];
+} bff_component_t;
+
 typedef struct {
     uint32_t component_total;
     uint32_t component_category_total;
@@ -330,6 +340,13 @@ int bff_get_component_inventory_summary(
     bff_client_t *c,
     bff_inventory_summary_t *summary,
     ulab_error_t *err);
+
+int bff_get_components_by_category(bff_client_t *c,
+                                   const char *category,
+                                   bff_component_t *components,
+                                   size_t max_components,
+                                   size_t *count,
+                                   ulab_error_t *err);
 
 int bff_get_sim_pool_summary(bff_client_t *c,
                              const char *sim_type,

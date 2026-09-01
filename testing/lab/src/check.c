@@ -34,6 +34,8 @@ int check_business(check_ctx_t *ctx, const check_spec_t *check,
                    check_result_t *res, ulab_error_t *err);
 int check_console(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err);
+int check_inventory(check_ctx_t *ctx, const check_spec_t *check,
+                    check_result_t *res, ulab_error_t *err);
 
 static void res_init(check_result_t *res, const check_spec_t *check) {
     memset(res, 0, sizeof(*res));
@@ -108,6 +110,10 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_NETWORK_SUMMARY_METRIC:
     case CHECK_CONSOLE_INVENTORY_RECONCILES:
         return check_business(ctx, check, res, err);
+    case CHECK_COMPONENT_COUNT_BY_CATEGORY:
+    case CHECK_NODE_COMPONENT_REGISTERED:
+    case CHECK_SIM_POOL_CONTAINS_SIMS:
+        return check_inventory(ctx, check, res, err);
     case CHECK_USAGE_AGGREGATE:
         return check_usage(ctx, check, res, err);
     case CHECK_DASHBOARD_LOADS:
