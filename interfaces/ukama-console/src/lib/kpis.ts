@@ -23,7 +23,10 @@ export const KPI_KEYS = {
   networkUptime: 'NETWORK_UPTIME',
   siteUptime: 'SITE_UPTIME',
   sitesOnline: 'SITES_ONLINE',
+  // ACTIVE_CUSTOMERS counts SIMs in active service; CUSTOMERS counts every
+  // SIM whatever its service state (active + inactive). Both are per network.
   activeCustomers: 'ACTIVE_CUSTOMERS',
+  customers: 'CUSTOMERS',
   paidCustomers: 'PAID_CUSTOMERS',
   revenue: 'REVENUE',
   mrr: 'MRR',
