@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-sim-inventory
-description: Query the Console SIM inventory with SimPoolOverview and verify its total, available, and consumed statistics reconcile.
+description: Add five SIMs to the warehouse, then verify every one of them reaches the Console SIM pool inventory as unassigned stock and is counted in the pool statistics.
 seed: 4714
 suite: p0
 priority: p0
@@ -10,19 +10,29 @@ provider:
   type: virtual
 world:
   networks: 1
-  sites_per_network: 1
-  nodes_per_site:
-    tower: 1
-    amplifier: 1
-    controller: 1
+  sites_per_network: 0
+  sims_per_network: 5
   ues_per_site: 0
+packages:
+  - ref: pool_bootstrap
+    name: SIM Pool Inventory Bootstrap
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    currency: USD
+    active: true
+    assign_percent: 100
 setup:
-  create_via_bff: [networks, sites, nodes, node_site_links]
-runtime:
-  start: [nodes]
-  wait: [nodes_ready]
+  create_via_bff: [networks, packages, subscribers]
+
+# Setup writes each SIM to the warehouse, waits for the SIM factory batch,
+# and uploads the exported CSV to the pool. The check reads the pool back and
+# requires those exact ICCIDs, so the assertion holds on a shared pool that
+# already carries SIMs from other runs.
 phases:
-  - name: reconcile_sim_inventory
+  - name: warehouse_sims_reach_sim_pool
     checks:
-      - type: console_inventory_reconciles
-        target: sim
+      - type: sim_pool_contains_sims
+        ues: all
+        timeout_seconds: 180
+        poll_seconds: 5

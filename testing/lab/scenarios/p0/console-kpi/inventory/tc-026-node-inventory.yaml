@@ -1,16 +1,16 @@
 version: 1
 name: p0-console-kpi-node-inventory
-description: Verify the Nodes page count and direct node detail records reconcile for all six nodes in the selected network.
+description: Verify every node the run provisions and allocates in the node factory appears in the component inventory under the access category, keyed by its node id.
 seed: 4715
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, inventory, node, graphql]
+tags: [virtual, console-kpi, inventory, node, component, graphql]
 status: active
 provider:
   type: virtual
 world:
   networks: 1
-  sites_per_network: 2
+  sites_per_network: 1
   nodes_per_site:
     tower: 1
     amplifier: 1
@@ -21,23 +21,16 @@ setup:
 runtime:
   start: [nodes]
   wait: [nodes_ready]
+
+# Starting the site reserves a factory bundle, marks all three nodes
+# provisioned, and allocates them to the org. The inventory component service
+# polls the factory on a one minute schedule and mints one access component
+# per node, keyed by the node id.
 phases:
-  - name: reconcile_node_inventory
+  - name: node_factory_to_component_inventory
     checks:
-      - type: list_count_equals
-        target: nodes
-        networks: net-001
-        expected_count: 6
-      - type: entity_reconciles
-        entity: node
-        ref: tower-site-001-001
-      - type: entity_reconciles
-        entity: node
-        ref: amplifier-site-001-001
-      - type: entity_reconciles
-        entity: node
-        ref: controller-site-001-001
-      - type: node_status_equals
+      - type: node_component_registered
         nodes: all
-        connectivity: Online
-        timeout_seconds: 120
+        target: access
+        timeout_seconds: 300
+        poll_seconds: 10
