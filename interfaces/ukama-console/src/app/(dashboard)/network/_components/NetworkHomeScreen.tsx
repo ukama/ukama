@@ -28,7 +28,7 @@ import StatusBadge from '@/components/StatusBadge';
 import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
 import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
-import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { useNetworkId } from '@/lib/useNetworkId';
@@ -41,6 +41,7 @@ export default function NetworkHomeScreen() {
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
+  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
     variables: {
       data: {
@@ -55,7 +56,8 @@ export default function NetworkHomeScreen() {
       },
     },
     skip: !networkId,
-    ...visiblePoll(POLL_OVERVIEW_MS),
+    onCompleted: () => setFetchedAt(new Date()),
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const {
     data: sitesCurrent,
@@ -66,7 +68,7 @@ export default function NetworkHomeScreen() {
   } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
-    ...visiblePoll(POLL_OVERVIEW_MS),
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   // The SiteDto cache TTL expires mid-session: Apollo hands back an emptied
   // result while it refetches, with `loading` still false. Hold the last
@@ -117,6 +119,7 @@ export default function NetworkHomeScreen() {
       <PageHeader
         title="Home"
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       {loading ? (
         <Skeleton variant="rounded" sx={{ width: '100%', height: 96 }} />
