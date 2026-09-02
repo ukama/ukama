@@ -114,6 +114,7 @@ export default function BizSalesScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   const base = baseData?.getKpiValues.values;
