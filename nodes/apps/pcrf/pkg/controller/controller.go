@@ -302,18 +302,18 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			log.Warnf("Subscriber %s not found on local node: %v", req.ImsiStr, err)
 			log.Infof("Fetching subscriber %s from remote asr", req.ImsiStr)
 
-			sub, err := c.rc.GetSubscriberProfile(req.ImsiStr)
-			if err != nil {
-				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, err)
+			remoteSub, rerr := c.rc.GetSubscriberProfile(req.ImsiStr)
+			if rerr != nil {
+				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, rerr)
 
 				return fmt.Errorf("subscriber %s not found either locally, nor in remote asr %w",
-					req.ImsiStr, err)
+					req.ImsiStr, rerr)
 			}
 
 			log.Infof("Subscriber %s found in remote asr", req.ImsiStr)
 			log.Infof("Registering subscriber %s in local node", req.ImsiStr)
 
-			_, err = c.store.CreateSubscriber(sub.Imsi, &sub.Policy, &sub.ReRoute, nil)
+			sub, err = c.store.CreateSubscriber(remoteSub.Imsi, &remoteSub.Policy, &remoteSub.ReRoute, nil)
 			if err != nil {
 				log.Errorf("Failed to create missing subscriber with imsi %s. Error: %v", req.Imsi, err)
 
@@ -321,9 +321,31 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			}
 
 		case errors.Is(err, store.ErrPolicyInvalid):
-			log.Errorf("Subscriber %s has no valid policy: %v", req.ImsiStr, err)
+			log.Warnf("Subscriber %s has stale/invalid policy locally: %v", req.ImsiStr, err)
+			log.Infof("Reverse-looking up current policy for subscriber %s from remote asr", req.ImsiStr)
 
-			return fmt.Errorf("subscriber %s has no valid policy: %w", req.ImsiStr, err)
+			remoteSub, rerr := c.rc.GetSubscriberProfile(req.ImsiStr)
+			if rerr != nil {
+				log.Errorf("Reverse lookup failed for subscriber %s: %v", req.ImsiStr, rerr)
+
+				return fmt.Errorf("subscriber %s has no valid policy locally and reverse lookup failed: %w",
+					req.ImsiStr, err)
+			}
+
+			if _, rerr := c.store.UpdateSubscriber(remoteSub.Imsi, &remoteSub.Policy); rerr != nil {
+				log.Errorf("Failed to apply reverse-looked-up policy for subscriber %s: %v", req.ImsiStr, rerr)
+
+				return fmt.Errorf("failed to refresh policy for subscriber %s from remote asr: %w",
+					req.ImsiStr, rerr)
+			}
+
+			sub, err = c.validateSubscriber(req.ImsiStr)
+			if err != nil {
+				log.Errorf("Subscriber %s still has no valid policy after reverse lookup: %v", req.ImsiStr, err)
+
+				return fmt.Errorf("subscriber %s has no valid policy even after reverse lookup: %w",
+					req.ImsiStr, err)
+			}
 
 		case errors.Is(err, store.ErrDataCapExceeded):
 			log.Errorf("Subscriber %s exceeded data cap: %v", req.ImsiStr, err)
