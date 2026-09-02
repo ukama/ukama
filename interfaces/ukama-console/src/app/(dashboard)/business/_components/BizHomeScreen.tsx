@@ -152,6 +152,7 @@ export default function BizHomeScreen() {
   } = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   // Hold the last delivered response while a cache-TTL expiry refetches, so
   // the site total never momentarily reads as zero.

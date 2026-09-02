@@ -36,8 +36,6 @@ export interface PageHeaderProps {
   actions?: React.ReactNode;
   /** When set, a back arrow is shown left of the breadcrumb (nested pages). */
   onBack?: () => void;
-  /** When the data on screen last arrived. Defaults to when the page mounted,
-   *  which is only accurate on screens that fetch once and never refresh. */
   fetchedAt?: Date;
 }
 
