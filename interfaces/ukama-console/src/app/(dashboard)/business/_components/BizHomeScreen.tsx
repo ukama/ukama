@@ -30,6 +30,7 @@ import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { useCurrency } from '@/lib/currency';
+import { heldQuery } from '@/lib/heldQuery';
 import {
   KPI_KEYS,
   kpiAmount,
@@ -42,7 +43,7 @@ import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 
 // Period phrasing for the KPI trend/sub lines, keyed by the selected rolling
 // span so the wording matches the DateChip ("Last 24h" -> "vs prev 24h").
@@ -105,6 +106,7 @@ function SiteSummaryList({
 export default function BizHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
   const [showSummary, setShowSummary] = useState(false);
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
@@ -115,7 +117,7 @@ export default function BizHomeScreen() {
   // (sitesView) so the map doesn't depend on the analytics collector. No `op`
   // is sent — each key resolves to its spec default (revenue -> SUM,
   // customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
-  const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
+  const homeResult = useGetKpiValuesQuery({
     variables: {
       data: {
         keys: [
@@ -139,18 +141,19 @@ export default function BizHomeScreen() {
     },
     skip: !networkId || span === 'last_30d',
   });
-  const {
-    data: sitesCurrent,
-    previousData: sitesPrevious,
-    loading: sitesLoading,
-    error: sitesError,
-  } = useSitesListQuery({
+  const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
   });
-  // Hold the last delivered response while a cache-TTL expiry refetches, so
-  // the site total never momentarily reads as zero.
-  const sitesData = sitesCurrent ?? sitesPrevious;
+  const { error: sitesError } = sitesResult;
+  const { data: homeData, loading: homeLoading } = heldQuery(
+    homeResult,
+    networkPending,
+  );
+  const { data: sitesData, loading: sitesLoading } = heldQuery(
+    sitesResult,
+    networkPending,
+  );
   const kpis = homeData?.getKpiValues.values;
   const monthKpis = monthData?.getKpiValues.values;
   const loading = homeLoading || sitesLoading;

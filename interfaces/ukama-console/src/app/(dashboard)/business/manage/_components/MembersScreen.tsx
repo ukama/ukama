@@ -30,6 +30,7 @@ import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
+import { heldQuery } from '@/lib/heldQuery';
 import { useToast } from '@/components/ToastProvider';
 import { ROLE_DESC } from '@/data';
 import { formatDate } from '@/lib/parsers';
@@ -98,7 +99,9 @@ function MemberMenu({ m }: { m: TeamRow }) {
 
 export default function MembersScreen() {
   const [showInvite, setShowInvite] = useState(false);
-  const { data, loading, refetch } = useTeamListQuery();
+  const teamResult = useTeamListQuery();
+  const refetch = teamResult.refetch;
+  const { data, loading } = heldQuery(teamResult);
   const teamSection = data?.membersView.team;
   const rows: TeamRow[] = teamSection?.rows ?? [];
 

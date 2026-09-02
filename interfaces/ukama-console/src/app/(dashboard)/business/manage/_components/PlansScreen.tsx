@@ -19,6 +19,7 @@ import {
 import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
+import { heldQuery } from '@/lib/heldQuery';
 import CreatePlanDialog from '@/features/plans/CreatePlanDialog';
 import PlanCard from '@/features/plans/PlanCard';
 import { packageToPlan } from '@/features/plans/mapPackage';
@@ -30,7 +31,9 @@ export default function PlansScreen() {
   );
   const create = () => setDialog({ pkg: null });
 
-  const { data, loading, error } = useGetPackagesQuery();
+  const packagesResult = useGetPackagesQuery();
+  const { error } = packagesResult;
+  const { data, loading } = heldQuery(packagesResult);
   const packages = useMemo(() => data?.getPackages.packages ?? [], [data]);
 
   // Resolve a plan's networkId → network name for the card chip.

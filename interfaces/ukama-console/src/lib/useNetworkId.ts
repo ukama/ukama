@@ -25,6 +25,23 @@
 import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import { useUiPrefs } from '@/lib/store';
 
+/**
+ * True while a network-scoped query still owes the screen a response: either
+ * getNetworks is validating the id, or it resolved and the query is about to
+ * fire. A query gated on `skip: !networkId` reports `loading: false` with no
+ * data through both, so screens pass this to `heldQuery` as `pending`. An
+ * account with genuinely no networks settles at false, so those screens reach
+ * their empty state.
+ */
+export function useNetworkQueryPending(): boolean {
+  const { loading } = useGetNetworksQuery();
+  // Called unconditionally: `||` short-circuits, so this may not be inlined
+  // into the return expression.
+  const networkId = useNetworkId();
+
+  return loading || !!networkId;
+}
+
 export function useNetworkId(): string {
   const stored = useUiPrefs((s) => s.networkId);
   const { data } = useGetNetworksQuery();

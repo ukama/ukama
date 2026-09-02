@@ -28,20 +28,22 @@ import StatusBadge from '@/components/StatusBadge';
 import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
 import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
+import { heldQuery } from '@/lib/heldQuery';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 
 export default function NetworkHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
   const [sel, setSel] = useState<string | null>(null);
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
-  const { data: kpiData, loading: kpiLoading } = useGetKpiValuesQuery({
+  const kpiResult = useGetKpiValuesQuery({
     variables: {
       data: {
         keys: [
@@ -57,21 +59,20 @@ export default function NetworkHomeScreen() {
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
-  const {
-    data: sitesCurrent,
-    previousData: sitesPrevious,
-    loading: sitesLoading,
-    error: sitesError,
-    refetch,
-  } = useSitesListQuery({
+  const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
-  // The SiteDto cache TTL expires mid-session: Apollo hands back an emptied
-  // result while it refetches, with `loading` still false. Hold the last
-  // delivered response so the screen never reads as "no sites".
-  const sitesData = sitesCurrent ?? sitesPrevious;
+  const { error: sitesError, refetch } = sitesResult;
+  const { data: kpiData, loading: kpiLoading } = heldQuery(
+    kpiResult,
+    networkPending,
+  );
+  const { data: sitesData, loading: sitesLoading } = heldQuery(
+    sitesResult,
+    networkPending,
+  );
   const kpis = kpiData?.getKpiValues.values;
   const loading = kpiLoading || sitesLoading;
 

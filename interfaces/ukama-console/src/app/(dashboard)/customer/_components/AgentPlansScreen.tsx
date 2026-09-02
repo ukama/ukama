@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import PlanCard from '@/features/plans/PlanCard';
+import { heldQuery } from '@/lib/heldQuery';
 import { packageToPlan } from '@/features/plans/mapPackage';
 import { useNetworkId } from '@/lib/useNetworkId';
 
@@ -30,10 +31,12 @@ export default function AgentPlansScreen() {
   // Agent lens only sees plans for the selected network + org-wide plans;
   // the BFF applies that filter when networkId is passed.
   const networkId = useNetworkId();
-  const { data, loading, error } = useGetPackagesQuery({
+  const packagesResult = useGetPackagesQuery({
     // Optional filter: '' (no/invalid network) → undefined = org-wide plans.
     variables: { networkId: networkId || undefined },
   });
+  const { error } = packagesResult;
+  const { data, loading } = heldQuery(packagesResult);
   const { data: networksData } = useGetNetworksQuery();
   const networkNameById = useMemo(() => {
     const m = new Map<string, string>();
