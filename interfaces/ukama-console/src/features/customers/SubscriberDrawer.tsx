@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 'use client';
+import { useGetKpiValuesQuery } from '@/client/graphql/analytics.generated';
 import { useGetPackagesForSimQuery } from '@/client/graphql/packages.generated';
 import { useToggleSimServiceStatusMutation } from '@/client/graphql/sims.generated';
 import AppDrawer, { DetailRow } from '@/components/AppDrawer';
@@ -14,8 +15,9 @@ import Meter from '@/components/Meter';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
 import type { Subscriber } from '@/data';
+import { KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { formatDate, parseTimestamp } from '@/lib/parsers';
-import { bytesToGB, formatBytes } from '@/lib/usage';
+import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
 import {
   NO_DATA_PLANS_MESSAGE,
   NO_POOL_SIMS_MESSAGE,
@@ -177,9 +179,6 @@ export default function SubscriberDrawer({
   // usage is raw bytes (-1 when unknown/none — clamp so we never render "-1").
   const usageBytes = Math.max(0, sub.usage);
   const usageLabel = formatBytes(usageBytes);
-  const pct = sub.cap
-    ? Math.min(100, (bytesToGB(usageBytes) / sub.cap) * 100)
-    : 50;
   const initials = sub.name
     .split(' ')
     .map((x) => x[0])
@@ -209,6 +208,38 @@ export default function SubscriberDrawer({
         KIND_ORDER[a.kind] - KIND_ORDER[b.kind] ||
         parseTimestamp(a.start_date) - parseTimestamp(b.start_date),
     );
+
+  // The allowance shown on the card is the active package's catalog plan
+  // volume, converted from its declared unit to bytes. 0 means no active
+  // package, or a plan the catalog has not resolved yet.
+  const currentPackage = packages.find((p) => p.kind === 'current');
+  const activePlan = currentPackage
+    ? plans.find((pl) => pl.uuid === currentPackage.package_id)
+    : undefined;
+  const allowanceBytes = activePlan
+    ? dataVolumeToBytes(activePlan.dataVolume, activePlan.dataUnit)
+    : 0;
+  const pct =
+    allowanceBytes > 0 ? Math.min(100, (usageBytes / allowanceBytes) * 100) : 0;
+
+  // Total usage over the last 30 days, from the analytics DATA_USAGE KPI.
+  // The KPI is scoped by iccid rather than by subscriber, which resolves to
+  // the same figure while a subscriber holds one SIM.
+  const hasIccid = !!sub.iccid && sub.iccid !== '—';
+  const { data: usageKpiData, loading: usageKpiLoading } = useGetKpiValuesQuery({
+    variables: {
+      data: {
+        keys: [KPI_KEYS.dataUsage],
+        span: 'last_30d',
+        iccid: sub.iccid,
+      },
+    },
+    skip: !hasIccid,
+  });
+  const totalUsageBytes = kpiValue(
+    usageKpiData?.getKpiValues.values,
+    KPI_KEYS.dataUsage,
+  );
 
   return (
     <AppDrawer onClose={onClose} width={430}>
@@ -283,7 +314,7 @@ export default function SubscriberDrawer({
               {sub.sim === 'suspended' ? 'Suspended' : undefined}
             </StatusBadge>
           </div>
-          {sub.cap ? (
+          {allowanceBytes > 0 ? (
             <>
               <Meter
                 value={pct}
@@ -297,7 +328,7 @@ export default function SubscriberDrawer({
                   marginTop: 7,
                 }}
               >
-                {usageLabel} of {sub.cap} GB used this cycle
+                {usageLabel} of {formatBytes(allowanceBytes)} used this cycle
               </div>
             </>
           ) : (
@@ -305,7 +336,7 @@ export default function SubscriberDrawer({
               className="tnum"
               style={{ fontSize: 12.5, color: 'var(--uk-ink-2)' }}
             >
-              {usageLabel} used · unlimited
+              {usageLabel} used
             </div>
           )}
         </div>
@@ -316,6 +347,18 @@ export default function SubscriberDrawer({
           v={<span style={{ textTransform: 'capitalize' }}>{sub.sim}</span>}
         />
         <DetailRow k="Phone" v={sub.phone} />
+        <DetailRow
+          k="Total usage"
+          v={
+            usageKpiLoading && totalUsageBytes == null ? (
+              <Skeleton variant="rounded" width={70} height={14} />
+            ) : totalUsageBytes == null ? (
+              '—'
+            ) : (
+              formatBytes(totalUsageBytes)
+            )
+          }
+        />
 
         {sub.simId && (
           <div style={{ marginTop: 18 }}>

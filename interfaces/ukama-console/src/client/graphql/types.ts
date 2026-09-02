@@ -602,9 +602,13 @@ export type KpiValueDto = {
 };
 
 export type KpiValuesInput = {
+  iccid?: InputMaybe<Scalars['String']['input']>;
   keys: Array<Scalars['String']['input']>;
   networkId?: InputMaybe<Scalars['String']['input']>;
   op?: InputMaybe<Scalars['String']['input']>;
+  packageId?: InputMaybe<Scalars['String']['input']>;
+  simPackageId?: InputMaybe<Scalars['String']['input']>;
+  siteId?: InputMaybe<Scalars['String']['input']>;
   span?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1130,10 +1134,14 @@ export type NodeSite = {
 
 /** Node state enums */
 export enum NodeStateEnum {
-  Configured = 'Configured',
+  Configuring = 'Configuring',
   Faulty = 'Faulty',
+  Initializing = 'Initializing',
+  Offboarded = 'Offboarded',
   Operational = 'Operational',
-  Unknown = 'Unknown'
+  Ready = 'Ready',
+  Unknown = 'Unknown',
+  Updating = 'Updating'
 }
 
 export type NodeStateRes = {
