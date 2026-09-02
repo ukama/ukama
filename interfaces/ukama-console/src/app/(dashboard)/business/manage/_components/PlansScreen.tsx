@@ -26,8 +26,9 @@ import CreatePlanDialog from '@/features/plans/CreatePlanDialog';
 import PlanCard from '@/features/plans/PlanCard';
 import { packageToPlan } from '@/features/plans/mapPackage';
 
-/** Chip selection: every plan, one network's plans, or the org-wide ones. */
+/** Chip selection: every plan, the network-scoped ones, or the org-wide ones. */
 const ALL = 'all';
+const NETWORK_SCOPED = 'network';
 const ORG_WIDE = 'org';
 
 export default function PlansScreen() {
@@ -46,33 +47,24 @@ export default function PlansScreen() {
 
   // Resolve a plan's networkId → network name for the card chip.
   const { data: networksData } = useGetNetworksQuery();
-  const networks = useMemo(
-    () => networksData?.getNetworks.networks ?? [],
-    [networksData],
-  );
   const networkNameById = useMemo(() => {
     const m = new Map<string, string>();
-    for (const n of networks) m.set(n.id, n.name);
+    for (const n of networksData?.getNetworks.networks ?? []) m.set(n.id, n.name);
     return m;
-  }, [networks]);
+  }, [networksData]);
 
-  // A chip per network that actually has plans, plus org-wide plans (which
-  // carry no networkId and are assignable on every network).
-  const orgWideCount = packages.filter((p) => !p.networkId).length;
-  const networkOptions = networks
-    .map((n) => ({
-      value: n.id,
-      label: n.name,
-      count: packages.filter((p) => p.networkId === n.id).length,
-    }))
-    .filter((o) => o.count > 0);
+  // Plans are either scoped to one network or org-wide (no networkId, so
+  // assignable on every network). Each card names its own network, so the
+  // chips split by scope rather than adding one chip per network.
+  const networkScopedCount = packages.filter((p) => p.networkId).length;
+  const orgWideCount = packages.length - networkScopedCount;
   const filtered = packages
     .filter((p) =>
-      scope === ALL
-        ? true
+      scope === NETWORK_SCOPED
+        ? !!p.networkId
         : scope === ORG_WIDE
           ? !p.networkId
-          : p.networkId === scope,
+          : true,
     )
     .filter((p) => p.name.toLowerCase().includes(q.toLowerCase()));
 
@@ -106,11 +98,13 @@ export default function PlansScreen() {
           <SearchField value={q} onChange={setQ} placeholder="Search plans" />
           <FilterChips
             options={[
-              { value: ALL, label: 'All networks', count: packages.length },
-              ...networkOptions,
-              ...(orgWideCount > 0
-                ? [{ value: ORG_WIDE, label: 'Org-wide', count: orgWideCount }]
-                : []),
+              { value: ALL, label: 'All', count: packages.length },
+              {
+                value: NETWORK_SCOPED,
+                label: 'Network-specific',
+                count: networkScopedCount,
+              },
+              { value: ORG_WIDE, label: 'Org-wide', count: orgWideCount },
             ]}
             value={scope}
             onChange={setScope}
@@ -150,11 +144,11 @@ export default function PlansScreen() {
         <div className="card">
           <EmptyState
             art="search"
-            title={q ? 'No plans match' : 'No plans on this network'}
+            title={q ? 'No plans match' : 'No plans in this scope'}
             sub={
               q
-                ? 'Try a different search term or network.'
-                : 'Pick another network, or create a plan scoped to this one.'
+                ? 'Try a different search term or filter.'
+                : 'Pick another filter, or create a plan with this scope.'
             }
             cta={q ? undefined : 'Create plan'}
             onCta={q ? undefined : create}

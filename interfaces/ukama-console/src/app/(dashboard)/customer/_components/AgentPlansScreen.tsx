@@ -93,7 +93,7 @@ export default function AgentPlansScreen() {
   );
   const plans = entries.map((e) => e.plan);
 
-  const networkLabel = networkNameById.get(networkId) ?? 'This network';
+  const networkName = networkNameById.get(networkId);
 
   const bySort = (a: Plan, b: Plan) =>
     sort === 'price-asc'
@@ -191,8 +191,8 @@ export default function AgentPlansScreen() {
       ) : (
         <>
           <PlanSection
-            title={networkLabel}
-            sub="Only on this network"
+            title="Network plans"
+            sub={networkName ? `Only on ${networkName}` : 'Only on this network'}
             plans={networkPlans}
           />
           <PlanSection
