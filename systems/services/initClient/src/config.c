@@ -37,11 +37,13 @@ int read_config_from_env(Config **config){
 	char *globalInitSystemEnable=NULL, *globalInitSystemAddr=NULL, *globalInitSystemPort=NULL;
 	char *systemOrg=NULL, *systemCert=NULL, *apiVersion=NULL;
 	char *systemDNS=NULL, *timePeriod=NULL, *dnsServer=NULL, *nameServer=NULL;
+	char *registrationPeriod=NULL;
 	char *systemDNSNodeGw=NULL;
 	char *systemNodeGwAddr=NULL, *systemNodeGwPort=NULL;
 	char *systemApiGwUrl=NULL;
 
 	int period = 0;
+	int regPeriod = 0;
 	int freeSystemAddr = 0;
 	int freeSystemNodeGwAddr = 0;
 	int nodegw_any = 0;
@@ -153,6 +155,15 @@ int read_config_from_env(Config **config){
 	else
 		period = atoi(timePeriod);
 
+	registrationPeriod = getenv(ENV_INIT_REGISTRATION_PERIOD);
+	if (!registrationPeriod)
+		regPeriod = DEFAULT_REGISTRATION_PERIOD;
+	else
+		regPeriod = atoi(registrationPeriod);
+
+	if (regPeriod <= 0)
+		regPeriod = DEFAULT_REGISTRATION_PERIOD;
+
 	systemOrg = getenv(ENV_SYSTEM_ORG);
 	if (!systemOrg)
 		systemOrg = DEFAULT_SYSTEM_ORG;
@@ -203,7 +214,8 @@ int read_config_from_env(Config **config){
 		(*config)->dnsServer = strdup(dnsServer);
     }
 
-	(*config)->timePeriod = period;
+	(*config)->timePeriod         = period;
+	(*config)->registrationPeriod = regPeriod;
 
 	(*config)->globalInitSystemEnable =
 		(strcmp(globalInitSystemEnable, GLOBAL_INIT_SYSTEM_ENABLE_STR) == 0)

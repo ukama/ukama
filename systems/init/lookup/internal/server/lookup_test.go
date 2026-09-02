@@ -425,3 +425,120 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 	orgRepo.AssertExpectations(t)
 
 }
+
+func TestLookupServer_AddSystemForOrg_NewSystemIsCreatedAndAnnounced(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	systemRepo := &mocks.SystemRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	var orgIp pgtype.Inet
+	err := orgIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
+	org := &db.Org{
+		Model:       gorm.Model{ID: 1},
+		Name:        "ukama",
+		Certificate: "ukama_certs",
+		Ip:          orgIp,
+		OrgId:       uuid.NewV4(),
+	}
+
+	var nodeGwIp pgtype.Inet
+	err = nodeGwIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
+	req := &pb.AddSystemRequest{
+		SystemName:  "sys",
+		OrgName:     org.Name,
+		Certificate: "ukama_certs",
+		ApiGwIp:     "127.0.0.1",
+		ApiGwPort:   sysPort,
+		ApiGwUrl:    "http://localhost:100",
+	}
+
+	stored := &db.System{
+		Name:        "sys",
+		Uuid:        uuid.NewV4().String(),
+		Certificate: "ukama_certs",
+		ApiGwIp:     sysIp,
+		ApiGwPort:   sysPort,
+		ApiGwUrl:    "http://localhost:100",
+		NodeGwIp:    nodeGwIp,
+		NodeGwPort:  8080,
+	}
+
+	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", "sys", org.ID).Return(nil, gorm.ErrRecordNotFound).Once()
+	systemRepo.On("Add", mock.AnythingOfType("*db.System")).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, req).Return(nil).Once()
+	systemRepo.On("GetByName", "sys", org.ID).Return(stored, nil).Once()
+
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
+	resp, err := s.AddSystemForOrg(context.TODO(), req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, stored.Uuid, resp.SystemId)
+	orgRepo.AssertExpectations(t)
+	systemRepo.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
+}
+
+func TestLookupServer_AddSystemForOrg_ExistingSystemKeepsItsId(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	systemRepo := &mocks.SystemRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	var orgIp pgtype.Inet
+	err := orgIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
+	org := &db.Org{
+		Model:       gorm.Model{ID: 1},
+		Name:        "ukama",
+		Certificate: "ukama_certs",
+		Ip:          orgIp,
+		OrgId:       uuid.NewV4(),
+	}
+
+	var nodeGwIp pgtype.Inet
+	err = nodeGwIp.Set("0.0.0.0")
+	assert.NoError(t, err)
+
+	existingId := uuid.NewV4().String()
+
+	existing := &db.System{
+		Name:        "sys",
+		Uuid:        existingId,
+		Certificate: "ukama_certs",
+		ApiGwIp:     sysIp,
+		ApiGwPort:   sysPort,
+		ApiGwUrl:    "http://localhost:100",
+		NodeGwIp:    nodeGwIp,
+		NodeGwPort:  8080,
+	}
+
+	req := &pb.AddSystemRequest{
+		SystemName:  "sys",
+		OrgName:     org.Name,
+		Certificate: "ukama_certs",
+		ApiGwIp:     "127.0.0.1",
+		ApiGwPort:   sysPort,
+		ApiGwUrl:    "http://localhost:100",
+	}
+
+	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", "sys", org.ID).Return(existing, nil).Once()
+	systemRepo.On("Add", mock.MatchedBy(func(sys *db.System) bool {
+		return sys.Uuid == existingId
+	})).Return(nil).Once()
+	systemRepo.On("GetByName", "sys", org.ID).Return(existing, nil).Once()
+
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
+	resp, err := s.AddSystemForOrg(context.TODO(), req)
+
+	assert.NoError(t, err)
+	assert.Equal(t, existingId, resp.SystemId)
+	msgbusClient.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	orgRepo.AssertExpectations(t)
+	systemRepo.AssertExpectations(t)
+}

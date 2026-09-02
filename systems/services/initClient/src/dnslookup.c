@@ -244,25 +244,26 @@ void register_callback(UpdateIpCallback cb) {
 void* refresh_lookup(void* args) {
 	Config *c = (Config*) args;
 	char* rIp = NULL;
-	while(TRUE) {
-		rIp = nslookup(c->systemDNS, c->nameServer);
-		if (rIp) {
-			if (strcmp(rIp, c->systemAddr) != 0) {
-				/* update IP */
+
+	while (TRUE) {
+
+		if (c->systemDNS) {
+			rIp = nslookup(c->systemDNS, c->nameServer);
+			if (rIp) {
 				free(c->systemAddr);
 				c->systemAddr = strdup(rIp);
 				free(rIp);
-
-				/* callback function */
-				if (register_fxn_cb) {
-				  int status = register_fxn_cb(c);
-				  if (status) {
-					  log_info("Failed to update IP for the %s to %s.", c->systemName, c->systemAddr);
-				  }
-				}
 			}
 		}
-		sleep(c->timePeriod);
+
+		if (register_fxn_cb) {
+			if (register_fxn_cb(c)) {
+				log_error("Failed to register system %s with init",
+				          c->systemName);
+			}
+		}
+
+		sleep(c->registrationPeriod);
 	}
 
 	pthread_exit (NULL);

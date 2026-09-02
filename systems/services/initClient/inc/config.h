@@ -29,6 +29,7 @@
 #define ENV_INIT_SYSTEM_PORT "ENV_INIT_SYSTEM_PORT"
 
 #define ENV_DNS_REFRESH_TIME_PERIOD "ENV_DNS_REFRESH_TIME_PERIOD"
+#define ENV_INIT_REGISTRATION_PERIOD "ENV_INIT_REGISTRATION_PERIOD"
 #define ENV_GLOBAL_INIT_ENABLE "ENV_GLOBAL_INIT_ENABLE"
 #define ENV_GLOBAL_INIT_SYSTEM_ADDR "ENV_GLOBAL_INIT_SYSTEM_ADDR"
 #define ENV_GLOBAL_INIT_SYSTEM_PORT "ENV_GLOBAL_INIT_SYSTEM_PORT"
@@ -45,6 +46,7 @@
 #define GLOBAL_INIT_SYSTEM_DISABLE	0
 
 #define DEFAULT_TIME_PERIOD 10
+#define DEFAULT_REGISTRATION_PERIOD 30
 #define DEFAULT_DNS_SERVER "127.0.0.1"
 
 /* Struct to various env variables and runtime config parameters */
@@ -54,6 +56,7 @@ typedef struct {
 	char *tempFile;   /* Temp file to log stuff */
 	char *dnsServer;  /* DNS server */
 	int  timePeriod;  /* time period in seconds.*/
+	int  registrationPeriod; /* seconds between registrations with init */
 
 	char *addr;       /* initClient bind address */
 	char *port;       /* initClient listening port */
