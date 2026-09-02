@@ -320,7 +320,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 				return fmt.Errorf("failed to create missing subscriber with imsi %s. Error: %w", req.Imsi, err)
 			}
 
-		case errors.Is(err, store.ErrPolicyInvalid):
+		case errors.Is(err, store.ErrPolicyInvalid), errors.Is(err, store.ErrDataCapExceeded):
 			log.Warnf("Subscriber %s has stale/invalid policy locally: %v", req.ImsiStr, err)
 			log.Infof("Reverse-looking up current policy for subscriber %s from remote asr", req.ImsiStr)
 
@@ -346,11 +346,6 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 				return fmt.Errorf("subscriber %s has no valid policy even after reverse lookup: %w",
 					req.ImsiStr, err)
 			}
-
-		case errors.Is(err, store.ErrDataCapExceeded):
-			log.Errorf("Subscriber %s exceeded data cap: %v", req.ImsiStr, err)
-
-			return fmt.Errorf("subscriber %s exceeded data cap: %w", req.ImsiStr, err)
 
 		default:
 			log.Errorf("Failed to validate subscriber %s: %v", req.ImsiStr, err)
