@@ -27,6 +27,7 @@ import TableFooter from '@/components/data-table/TableFooter';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import StatusBadge from '@/components/StatusBadge';
+import { heldQuery } from '@/lib/heldQuery';
 import { useNetworkId } from '@/lib/useNetworkId';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 
@@ -108,7 +109,9 @@ function RowAction({ item }: { item: PoolRow }) {
 }
 
 export default function NodePoolScreen() {
-  const { data, loading, refetch } = useNodePoolQuery();
+  const poolResult = useNodePoolQuery();
+  const refetch = poolResult.refetch;
+  const { data, loading } = heldQuery(poolResult);
   const nodesSection = data?.nodesView.nodes;
 
   // Resolve siteId → site name for the Site column. NodePool isn't scoped to

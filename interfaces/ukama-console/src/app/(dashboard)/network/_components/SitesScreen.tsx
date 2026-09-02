@@ -21,8 +21,9 @@ import PageWatermark from '@/components/PageWatermark';
 import SearchField from '@/components/SearchField';
 import StatusBadge from '@/components/StatusBadge';
 import type { Site } from '@/data';
+import { heldQuery } from '@/lib/heldQuery';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 import { toSite } from '@/lib/mappers/sites';
 
 function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
@@ -123,13 +124,16 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
 export default function SitesScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
   const [q, setQ] = useState('');
 
-  const { data, loading, refetch } = useSitesListQuery({
+  const result = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
+  const refetch = result.refetch;
+  const { data, loading } = heldQuery(result, networkPending);
   const sitesSection = data?.sitesView.sites;
   const sites: Site[] = useMemo(() => {
     const countsBySite = new Map(

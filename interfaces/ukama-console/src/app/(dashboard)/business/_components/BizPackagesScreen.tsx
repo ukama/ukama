@@ -37,7 +37,8 @@ import { formatDuration } from '@/lib/duration';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { heldQuery } from '@/lib/heldQuery';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 
 interface Plan {
   packageId: string;
@@ -54,13 +55,14 @@ interface Plan {
 
 export default function BizPackagesScreen() {
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
   // Org currency symbol comes from getCurrencySymbol (shared via CurrencyProvider).
   const { money } = useCurrency();
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
 
   // Every Packages KPI + the table/mix derive from the package_performance
   // report, windowed by the DateChip filter (last 24h / 7 days / 30 days).
-  const { data, loading, error, refetch } = useGetPerformanceReportQuery({
+  const reportResult = useGetPerformanceReportQuery({
     variables: {
       data: {
         report: 'package_performance',
@@ -70,6 +72,8 @@ export default function BizPackagesScreen() {
     },
     skip: !networkId,
   });
+  const { error, refetch } = reportResult;
+  const { data, loading } = heldQuery(reportResult, networkPending);
 
   // Data consumed = total network data usage (DATA_USAGE filtered by network,
   // which folds the per-iccid scope to one network total), read at the selected

@@ -144,7 +144,7 @@ export default function SubscribersScreen({ mode }: { mode: CustomersMode }) {
     cols.push({
       id: 'plan',
       accessorKey: 'plan',
-      header: 'Plan',
+      header: 'Active plan',
       filterFn: 'equalsString',
       meta: { filterOptions: planNames },
       cell: ({ row }) =>

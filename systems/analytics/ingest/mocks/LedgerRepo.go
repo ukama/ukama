@@ -37,6 +37,34 @@ func (_m *LedgerRepo) Claim(orgID string, kind string, key string, windowID int6
 	return r0, r1
 }
 
+// CountWithStatus provides a mock function with given fields: orgID, kind, key, status, from, to
+func (_m *LedgerRepo) CountWithStatus(orgID string, kind string, key string, status string, from int64, to int64) (int64, error) {
+	ret := _m.Called(orgID, kind, key, status, from, to)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountWithStatus")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, string, int64, int64) (int64, error)); ok {
+		return rf(orgID, kind, key, status, from, to)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, string, int64, int64) int64); ok {
+		r0 = rf(orgID, kind, key, status, from, to)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, string, int64, int64) error); ok {
+		r1 = rf(orgID, kind, key, status, from, to)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // LastWithStatus provides a mock function with given fields: orgID, kind, key, status
 func (_m *LedgerRepo) LastWithStatus(orgID string, kind string, key string, status string) (int64, error) {
 	ret := _m.Called(orgID, kind, key, status)
@@ -130,34 +158,6 @@ func (_m *LedgerRepo) WindowsWithStatus(orgID string, kind string, key string, s
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]int64)
 		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string, string, string, string, int64, int64) error); ok {
-		r1 = rf(orgID, kind, key, status, from, to)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// CountWithStatus provides a mock function with given fields: orgID, kind, key, status, from, to
-func (_m *LedgerRepo) CountWithStatus(orgID string, kind string, key string, status string, from int64, to int64) (int64, error) {
-	ret := _m.Called(orgID, kind, key, status, from, to)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CountWithStatus")
-	}
-
-	var r0 int64
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, int64, int64) (int64, error)); ok {
-		return rf(orgID, kind, key, status, from, to)
-	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, int64, int64) int64); ok {
-		r0 = rf(orgID, kind, key, status, from, to)
-	} else {
-		r0 = ret.Get(0).(int64)
 	}
 
 	if rf, ok := ret.Get(1).(func(string, string, string, string, int64, int64) error); ok {

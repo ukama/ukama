@@ -23,11 +23,14 @@ import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import StatusBadge from '@/components/StatusBadge';
+import { heldQuery } from '@/lib/heldQuery';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 
 export default function BizInventoryScreen() {
   const [tab, setTab] = useState('SIMs');
-  const { data, loading, refetch } = useInventoryOverviewQuery();
+  const inventoryResult = useInventoryOverviewQuery();
+  const refetch = inventoryResult.refetch;
+  const { data, loading } = heldQuery(inventoryResult);
   const view = data?.inventoryView;
   const simStock = view?.simStock;
   const componentsSection = view?.components;
