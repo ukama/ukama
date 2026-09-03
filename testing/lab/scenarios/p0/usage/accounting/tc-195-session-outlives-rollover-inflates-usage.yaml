@@ -59,14 +59,14 @@ phases:
         ues: all
       - type: wait_ues_attached
         ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 1
     checks:
       - type: package_state
         ues: all
         package: successor_plan
         expected: active
-      - type: traffic_allowed
-        ues: all
-        amount_mb: 1
       - type: usage_per_sim
         ues: all
         expected: from_model
