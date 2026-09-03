@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/mattn/go-sqlite3"
@@ -38,6 +39,11 @@ var (
 
 type Store struct {
 	db *sql.DB
+
+	// policyMu guards read-compare-write sequences on a subscriber's policy so a
+	// reverse-lookup refresh and a delayed nodefeeder push can't interleave and
+	// let a stale policy clobber a fresher one.
+	policyMu sync.Mutex
 }
 
 // Initialization of the SQLite database and tables (assumed to be done separately)
@@ -552,6 +558,14 @@ func (s *Store) CreateUsage(sub *Subscriber) error {
 
 /* Create a subscriber */
 func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.UsageDetails) (*Subscriber, error) {
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
+
+	return s.createSubscriberLocked(imsi, p, ip, d)
+}
+
+// createSubscriberLocked assumes the caller already holds policyMu.
+func (s *Store) createSubscriberLocked(imsi string, p *api.Policy, ip *string, d *api.UsageDetails) (*Subscriber, error) {
 	var reouteId *int = nil
 
 	/* create a policy */
@@ -601,19 +615,43 @@ func (s *Store) CreateSubscriber(imsi string, p *api.Policy, ip *string, d *api.
 }
 
 func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error) {
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
+
 	sub, err := s.GetSubscriber(imsi)
 	if err != nil {
 		log.Errorf("Failed to get subscriber %s from db. Error: %v", imsi, err)
 
 		if errors.Is(err, ErrSubscriberNotFound) {
 			log.Infof("Converting request to add subscriber for %s", imsi)
-			return s.CreateSubscriber(imsi, p, nil, nil)
+			return s.createSubscriberLocked(imsi, p, nil, nil)
 		}
 
 		return nil, fmt.Errorf("failed to get subscriber %s from db. Error: %w", imsi, err)
 	}
 
+	// A newer policy (reverse-lookup refresh, or a rollover push) may already be
+	// applied by the time this write lands. Reject an incoming policy that's
+	// older than what's already stored so a delayed/out-of-order push can't
+	// clobber a fresher one.
+	if p.StartTime < sub.PolicyID.StartTime {
+		log.Warnf("Ignoring stale policy update for subscriber %s: incoming policy start_time %d is older than stored policy start_time %d",
+			imsi, p.StartTime, sub.PolicyID.StartTime)
+
+		return sub, nil
+	}
+
 	if sub.PolicyID.ID == p.Uuid {
+		// Same policy: start_time can't distinguish ordering between two
+		// consumed-data updates (redelivery/retry can reorder them), so guard
+		// separately on consumed bytes, which only ever grow within a policy.
+		if p.Consumed < sub.PolicyID.Consumed {
+			log.Warnf("Ignoring stale consumed-data update for subscriber %s policy %s: incoming consumed %d is less than stored consumed %d",
+				imsi, sub.PolicyID.ID, p.Consumed, sub.PolicyID.Consumed)
+
+			return sub, nil
+		}
+
 		log.Debugf("Updating policy %s for subscriber %s", sub.PolicyID.ID, imsi)
 
 		sub.PolicyID.Consumed = p.Consumed
@@ -627,7 +665,7 @@ func (s *Store) UpdateSubscriber(imsi string, p *api.Policy) (*Subscriber, error
 		}
 	} else {
 		log.Debugf("Need to create a new policy %s for subscriber %s", p.Uuid, imsi)
-		return s.CreateSubscriber(imsi, p, nil, nil)
+		return s.createSubscriberLocked(imsi, p, nil, nil)
 	}
 
 	/* Rereading sub from db */

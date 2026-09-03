@@ -1,0 +1,88 @@
+version: 1
+name: p0-reattach-recovers-policy-after-missed-push
+description: Deterministically force the node offline for the entire window in which its package expires and the queued successor package rolls over, so the ASR-to-node policy push is guaranteed to miss the node. On reattach, the node must reverse-lookup the current policy from ASR rather than rejecting the attach on its stale local copy.
+seed: 4525
+suite: p0
+priority: p0
+tags: [virtual, data-package, policy, restart, reattach]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+packages:
+  - ref: current_plan
+    name: Missed Push Current
+    data_mb: 10
+    duration_minutes: 2
+    amount: 1.00
+    assign_percent: 100
+  - ref: successor_plan
+    name: Missed Push Successor
+    data_mb: 10
+    duration_minutes: 10
+    amount: 2.00
+    assign_percent: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: miss_the_push_and_reattach
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: purchase_package
+        ues: all
+        package: successor_plan
+      - type: traffic
+        ues: all
+        amount_mb: 1
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 120
+      - type: restart_nodes
+        nodes: all
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Offline
+        seconds: 120
+      - type: wait
+        seconds: 150
+      - type: wait_node_connectivity
+        nodes: all
+        connectivity: Online
+        seconds: 300
+      - type: wait_nodes_ready
+        nodes: all
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: all
+        package: successor_plan
+        expected: active
+      - type: usage_per_sim
+        ues: all
+        expected: from_model

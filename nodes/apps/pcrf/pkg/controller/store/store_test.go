@@ -152,3 +152,83 @@ func TestStore_Migration_UpgradesPreExistingSchema(t *testing.T) {
 
 	assert.NoError(t, upgraded.CreateTables())
 }
+
+func TestStore_UpdateSubscriber_RejectsOlderPolicyRollover(t *testing.T) {
+	s := newSharedTestStore(t)
+
+	now := time.Now()
+	current := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Unix(),
+		EndTime:   now.Add(time.Hour).Unix(),
+	}
+
+	sub, err := s.CreateSubscriber("999991000000002", current, nil, nil)
+	assert.NoError(t, err)
+
+	newer := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      2_000_000,
+		Burst:     100,
+		StartTime: now.Add(time.Minute).Unix(),
+		EndTime:   now.Add(2 * time.Hour).Unix(),
+	}
+	_, err = s.UpdateSubscriber(sub.Imsi, newer)
+	assert.NoError(t, err)
+
+	got, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, newer.Uuid, got.PolicyID.ID, "rollover to a genuinely newer policy must apply")
+
+	// A delayed push for the original (older) rollover arrives after the newer
+	// one already landed - it must not clobber the newer policy.
+	stale := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      500_000,
+		Burst:     100,
+		StartTime: now.Add(-time.Minute).Unix(),
+		EndTime:   now.Add(30 * time.Minute).Unix(),
+	}
+	_, err = s.UpdateSubscriber(sub.Imsi, stale)
+	assert.NoError(t, err)
+
+	got, err = s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, newer.Uuid, got.PolicyID.ID, "a stale/delayed policy push must not overwrite a newer policy")
+}
+
+func TestStore_UpdateSubscriber_RejectsOlderConsumedForSamePolicy(t *testing.T) {
+	s := newSharedTestStore(t)
+
+	now := time.Now()
+	policy := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Unix(),
+		EndTime:   now.Add(time.Hour).Unix(),
+	}
+
+	sub, err := s.CreateSubscriber("999991000000003", policy, nil, nil)
+	assert.NoError(t, err)
+
+	ahead := &api.Policy{Uuid: policy.Uuid, Data: policy.Data, Consumed: 500_000, StartTime: policy.StartTime, EndTime: policy.EndTime}
+	_, err = s.UpdateSubscriber(sub.Imsi, ahead)
+	assert.NoError(t, err)
+
+	got, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(500_000), got.PolicyID.Consumed)
+
+	// A redelivered/retried update for the same policy carrying an older
+	// consumed value must not regress consumed bytes backwards.
+	behind := &api.Policy{Uuid: policy.Uuid, Data: policy.Data, Consumed: 100_000, StartTime: policy.StartTime, EndTime: policy.EndTime}
+	_, err = s.UpdateSubscriber(sub.Imsi, behind)
+	assert.NoError(t, err)
+
+	got, err = s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(500_000), got.PolicyID.Consumed, "an out-of-order consumed-data update must not regress consumed bytes")
+}
