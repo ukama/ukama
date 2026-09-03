@@ -21,8 +21,9 @@ import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import PageWatermark from '@/components/PageWatermark';
 import type { UkamaNode } from '@/data';
+import { heldQuery } from '@/lib/heldQuery';
 import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
@@ -129,12 +130,15 @@ function NodeCard({
 export default function NodesScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
 
-  const { data, loading, refetch } = useNodesListQuery({
+  const nodesResult = useNodesListQuery({
     variables: { networkId },
     skip: !networkId,
     ...visiblePoll(POLL_OVERVIEW_MS),
   });
+  const refetch = nodesResult.refetch;
+  const { data, loading } = heldQuery(nodesResult, networkPending);
 
   // Resolve each node's siteId → site name for the location line.
   const { data: sitesData } = useSitesListQuery({

@@ -34,6 +34,7 @@ import AppModal from '@/components/AppModal';
 import AppTabs from '@/components/AppTabs';
 import MetricChartCard from '@/components/MetricChartCard';
 import DetailPicker from '@/components/DetailPicker';
+import { heldQuery } from '@/lib/heldQuery';
 import { EmptyState } from '@/components/EmptyState';
 import KV from '@/components/KV';
 import PageHeader from '@/components/PageHeader';
@@ -338,9 +339,11 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
 
   // Structural data — node core, site name and sibling nodes — as one
   // composite query (one-shot; no polling).
-  const { data, loading, refetch } = useNodeDetailQuery({
+  const detailResult = useNodeDetailQuery({
     variables: { nodeId },
   });
+  const refetch = detailResult.refetch;
+  const { data, loading } = heldQuery(detailResult);
   // Latest rail KPI values keyed by metric key. Single source of truth is the
   // metricsRange series (chart for charted keys, a batched Day fetch for the
   // rest) — no separate latest query, so a metric is never fetched twice.

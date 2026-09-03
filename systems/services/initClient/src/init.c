@@ -299,28 +299,6 @@ int parse_cache_uuid(char *fileName, SystemRegistrationId **sysReg) {
 	return TRUE;
 }
 
-static int read_cache_uuid(char *fileName, char** uuid, int global) {
-
-	SystemRegistrationId *sysReg = NULL;
-
-	if (parse_cache_uuid(fileName, &sysReg)) {
-		if (global && sysReg->globalUUID) {
-
-			*uuid = strdup(sysReg->globalUUID);
-            free_system_registration(sysReg);
-			return REG_STATUS_HAVE_UUID;
-		} else if (sysReg->localUUID){
-
-			*uuid = strdup(sysReg->localUUID);
-            free_system_registration(sysReg);
-			return REG_STATUS_HAVE_UUID;
-		}
-	}
-
-	free_system_registration(sysReg);
-	return REG_STATUS_NO_UUID;
-}
-
 int send_request_to_init(ReqType reqType, Config *config, char* org,
 						 char *systemName, char **response, int global ) {
 
@@ -396,55 +374,6 @@ int send_request_to_init(ReqType reqType, Config *config, char* org,
 	json_decref(json);
 
 	return ret;
-}
-
-int existing_registration(Config *config, char **cacheUUID, char **systemUUID,
-		 int global) {
-
-	int status=REG_STATUS_NONE;
-	char *str=NULL;
-	QueryResponse *queryResponse=NULL;
-	if (send_request_to_init(REQ_QUERY, config, config->systemOrg, NULL, &str, global)) {
-		if (deserialize_response(REQ_QUERY, &queryResponse, str) != TRUE) {
-			log_error("Error deserialize query response. Str: %s", str);
-			return -1;
-		}
-	} else {
-		status = REG_STATUS_NO_MATCH;
-		goto return_function;
-	}
-
-	status = read_cache_uuid(config->tempFile, cacheUUID, global);
-
-	/* match? */
-	if (strcmp(config->systemName, queryResponse->systemName) == 0 &&
-		strcmp(config->systemAddr, queryResponse->apiGwIp) == 0 &&
-		strcmp(config->systemCert, queryResponse->certificate) == 0 &&
-		atoi(config->systemPort) == queryResponse->apiGwPort) {
-
-		if (status == REG_STATUS_HAVE_UUID) {
-			if (strcmp(*cacheUUID, queryResponse->systemID) == 0){
-				status |= REG_STATUS_MATCH;
-			} else {
-				status |= REG_STATUS_NO_MATCH;
-			}
-		} else {
-			status |= REG_STATUS_MATCH;
-		}
-	} else {
-		status |= REG_STATUS_NO_MATCH;
-	}
-
-	if (queryResponse->systemID) {
-		*systemUUID = strdup(queryResponse->systemID);
-	}
-	log_info("Returning status 0x%X for %s registration",
-             status, (queryResponse->systemID)?queryResponse->systemID:"null");
- return_function:
-	if (str)  free(str);
-	if (*cacheUUID) free (*cacheUUID);
-	free_query_response(queryResponse);
-	return status;
 }
 
 int get_system_info(Config *config, char *org,

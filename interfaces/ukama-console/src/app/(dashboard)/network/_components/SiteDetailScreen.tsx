@@ -42,6 +42,7 @@ import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generate
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
+import { heldQuery } from '@/lib/heldQuery';
 import { EmptyState } from '@/components/EmptyState';
 import UkamaMap from '@/components/Map/UkamaMap';
 import MetricChartCard from '@/components/MetricChartCard';
@@ -856,10 +857,12 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
 
   const networkId = useNetworkId();
 
-  const { data, loading, refetch } = useNetworkSiteDetailQuery({
+  const detailResult = useNetworkSiteDetailQuery({
     variables: { siteId },
     ...visiblePoll(POLL_LIVE_MS),
   });
+  const refetch = detailResult.refetch;
+  const { data, loading } = heldQuery(detailResult);
   const view = data?.siteView;
   const siteSection = view?.site;
   const nodesSection = view?.nodes;

@@ -11,7 +11,7 @@
  * Business Home — KPIs + full-height sites map, wired to the analytics service:
  * `getKpiValues` (headline KPIs) and `getBusinessSites` (per-site coordinates /
  * status). The KPI strip shows the four "at a glance" numbers: revenue,
- * active customers, data sold and network uptime. KPI keys live in
+ * customers, data sold and network uptime. KPI keys live in
  * src/lib/kpis.ts; any not-yet-emitted key degrades to "—".
  */
 import ListAltRounded from '@mui/icons-material/ListAltRounded';
@@ -30,6 +30,7 @@ import { StatusDot } from '@/components/Map/SiteMap';
 import UkamaMap, { HOME_MAP_ZOOM } from '@/components/Map/UkamaMap';
 import PageHeader from '@/components/PageHeader';
 import { useCurrency } from '@/lib/currency';
+import { heldQuery } from '@/lib/heldQuery';
 import {
   KPI_KEYS,
   kpiAmount,
@@ -43,7 +44,7 @@ import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 
 // Period phrasing for the KPI trend/sub lines, keyed by the selected rolling
 // span so the wording matches the DateChip ("Last 24h" -> "vs prev 24h").
@@ -106,6 +107,7 @@ function SiteSummaryList({
 export default function BizHomeScreen() {
   const router = useRouter();
   const networkId = useNetworkId();
+  const networkPending = useNetworkQueryPending();
   const [showSummary, setShowSummary] = useState(false);
   const [range, setRange] = useState<string>(DEFAULT_RANGE);
   const span = rangeToSpan(range);
@@ -115,14 +117,14 @@ export default function BizHomeScreen() {
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector. No `op`
   // is sent — each key resolves to its spec default (revenue -> SUM,
-  // active_customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
+  // customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
   const [fetchedAt, setFetchedAt] = useState(() => new Date());
-  const { data: homeData, loading: homeLoading } = useGetKpiValuesQuery({
+  const homeResult = useGetKpiValuesQuery({
     variables: {
       data: {
         keys: [
           KPI_KEYS.revenue,
-          KPI_KEYS.activeCustomers,
+          KPI_KEYS.customers,
           KPI_KEYS.dataSold,
           KPI_KEYS.networkUptime,
           KPI_KEYS.sitesOnline,
@@ -144,19 +146,20 @@ export default function BizHomeScreen() {
     skip: !networkId || span === 'last_30d',
     ...visiblePoll(POLL_LIVE_MS, true),
   });
-  const {
-    data: sitesCurrent,
-    previousData: sitesPrevious,
-    loading: sitesLoading,
-    error: sitesError,
-  } = useSitesListQuery({
+  const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
     ...visiblePoll(POLL_LIVE_MS, true),
   });
-  // Hold the last delivered response while a cache-TTL expiry refetches, so
-  // the site total never momentarily reads as zero.
-  const sitesData = sitesCurrent ?? sitesPrevious;
+  const { error: sitesError } = sitesResult;
+  const { data: homeData, loading: homeLoading } = heldQuery(
+    homeResult,
+    networkPending,
+  );
+  const { data: sitesData, loading: sitesLoading } = heldQuery(
+    sitesResult,
+    networkPending,
+  );
   const kpis = homeData?.getKpiValues.values;
   const monthKpis = monthData?.getKpiValues.values;
   const loading = homeLoading || sitesLoading;
@@ -185,8 +188,8 @@ export default function BizHomeScreen() {
   // --- KPI strip values ---
   // Revenue (SUM) with a period-over-period trend arrow.
   const revDelta = kpiDelta(kpis, KPI_KEYS.revenue);
-  // Active customers (LAST) with the absolute change over the period.
-  const acDelta = kpiChangeAbs(kpis, KPI_KEYS.activeCustomers);
+  // Customers (LAST) with the absolute change over the period.
+  const custDelta = kpiChangeAbs(kpis, KPI_KEYS.customers);
   // Data sold (SUM, bytes) for the period; monthly total for the sub-line.
   const soldBytes = kpiValue(kpis, KPI_KEYS.dataSold);
   const soldMonthBytes = kpiValue(monthKpis, KPI_KEYS.dataSold);
@@ -235,13 +238,13 @@ export default function BizHomeScreen() {
             {
               icon: 'group',
               color: 'var(--uk-secondary)',
-              label: 'Active customers',
-              value: kpiText(kpis, KPI_KEYS.activeCustomers),
+              label: 'Customers',
+              value: kpiText(kpis, KPI_KEYS.customers),
               delta:
-                acDelta != null
-                  ? `${acDelta >= 0 ? '+' : ''}${Math.round(acDelta)} ${PERIOD_LABEL[span]}`
+                custDelta != null
+                  ? `${custDelta >= 0 ? '+' : ''}${Math.round(custDelta)} ${PERIOD_LABEL[span]}`
                   : undefined,
-              dir: acDelta != null && acDelta < 0 ? 'down' : 'up',
+              dir: custDelta != null && custDelta < 0 ? 'down' : 'up',
             },
             {
               icon: 'data_usage',

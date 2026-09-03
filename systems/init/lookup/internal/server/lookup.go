@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"net"
 	"strings"
 
@@ -25,6 +26,7 @@ import (
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 const (
@@ -369,11 +371,31 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	log.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
 	var sysIp pgtype.Inet
-	sysId := uuid.NewV4().String()
 
 	org, err := l.orgRepo.GetByName(req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
+	}
+
+	systemName := strings.ToLower(req.SystemName)
+
+	/* Registration is repeated for the lifetime of a system, so an existing
+	 * record keeps the id it was created with. Only a system that init does not
+	 * yet know about gets a new one. */
+	isNewSystem := false
+
+	existing, err := l.systemRepo.GetByName(systemName, org.ID)
+	if err != nil {
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, grpc.SqlErrorToGrpc(err, "system")
+		}
+
+		isNewSystem = true
+	}
+
+	sysId := uuid.NewV4().String()
+	if !isNewSystem {
+		sysId = existing.Uuid
 	}
 
 	err = sysIp.Set(req.ApiGwIp)
@@ -395,7 +417,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	}
 
 	sys := &db.System{
-		Name:        strings.ToLower(req.SystemName),
+		Name:        systemName,
 		Certificate: req.Certificate,
 		Uuid:        sysId,
 		ApiGwIp:     sysIp,
@@ -413,10 +435,14 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
 
-	route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
-	if err != nil {
-		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+	/* Published on creation only. A registration that merely refreshes an
+	 * existing record is not a change to announce. */
+	if isNewSystem {
+		route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
+		err = l.msgbus.PublishRequest(route, req)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
+		}
 	}
 
 	resp, err := l.getSystem(sys.Name, org.ID)

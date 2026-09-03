@@ -1,18 +1,22 @@
-# ACTIVE_CUSTOMERS: distinct subscribers per network with at least one
-# active SIM (from the shared all-sims dataset; filtered in the algo).
+# ACTIVE_CUSTOMERS: SIMs in active service per network, read from the metrics
+# system's active_sim_count gauge (sim-manager recounts from its DB and pushes
+# it per network on every sim lifecycle change). One SIM per subscriber, so
+# this is also the count of customers with service on.
+#
+# network_id is the only scope: the gauge carries no other dimension.
 kpi: ACTIVE_CUSTOMERS
 domain: subscriber
-algo: active_customers@v3
+algo: network_sim_count@v1
 kind: gauge
 scope_agg: sum
 scope: [network_id]
 inputs:
-  sims:
-    dataset: subscriber.sim.list
-    fields: [sim_id, subscriber_id, network_id, status]
   networks:
     dataset: registry.network.getAll
     fields: [network_id]
+  active:
+    dataset: metrics.active_sims.last
+    fields: [network_id, value]
 output:
   type: int
   unit: count

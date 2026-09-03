@@ -2294,6 +2294,10 @@ input KpiValuesInput {
   span: String
   op: String
   networkId: String
+  siteId: String
+  packageId: String
+  simPackageId: String
+  iccid: String
 }
 
 type GetPerformanceReportDto {

@@ -16,10 +16,43 @@ import { EmptyState } from '@/components/EmptyState';
 import PageHeader from '@/components/PageHeader';
 import SearchField from '@/components/SearchField';
 import PlanCard from '@/features/plans/PlanCard';
+import type { Plan } from '@/data';
+import { heldQuery } from '@/lib/heldQuery';
 import { packageToPlan } from '@/features/plans/mapPackage';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 type Sort = 'price-asc' | 'price-desc' | 'data-desc';
+
+function PlanSection({
+  title,
+  sub,
+  plans,
+}: {
+  title: string;
+  sub: string;
+  plans: Plan[];
+}) {
+  if (plans.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 26 }}>
+      <div className="sec-head">
+        <div className="sec-title">
+          {title}
+          <span className="cnt">{plans.length}</span>
+        </div>
+        <div style={{ fontSize: 13, color: 'var(--uk-ink-3)' }}>{sub}</div>
+      </div>
+      <div
+        className="tile-grid"
+        style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))' }}
+      >
+        {plans.map((p) => (
+          <PlanCard key={p.id} plan={p} readOnly />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function AgentPlansScreen() {
   const [q, setQ] = useState('');
@@ -27,13 +60,15 @@ export default function AgentPlansScreen() {
   const vol = (data: string) =>
     /unlim/i.test(data) ? Infinity : parseFloat(data) || 0;
 
-  // Agent lens only sees plans for the selected network + org-wide plans;
-  // the BFF applies that filter when networkId is passed.
   const networkId = useNetworkId();
-  const { data, loading, error } = useGetPackagesQuery({
-    // Optional filter: '' (no/invalid network) → undefined = org-wide plans.
+  const packagesResult = useGetPackagesQuery({
+    // The BFF returns this network's plans plus org-wide ones (those with no
+    // networkId). Passing undefined — no validated network id — returns every
+    // plan in the org.
     variables: { networkId: networkId || undefined },
   });
+  const { error } = packagesResult;
+  const { data, loading } = heldQuery(packagesResult);
   const { data: networksData } = useGetNetworksQuery();
   const networkNameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -41,28 +76,45 @@ export default function AgentPlansScreen() {
       m.set(n.id, n.name);
     return m;
   }, [networksData]);
-  const plans = useMemo(
+  // Each plan keeps its own networkId so the scope chips can split the list
+  // without PlanCard needing it. Mapping before filtering keeps a plan's card
+  // colour stable as the chips change.
+  const entries = useMemo(
     () =>
-      (data?.getPackages.packages ?? []).map((p, i) =>
-        packageToPlan(
+      (data?.getPackages.packages ?? []).map((p, i) => ({
+        networkId: p.networkId || '',
+        plan: packageToPlan(
           p,
           i,
           p.networkId ? networkNameById.get(p.networkId) : undefined,
         ),
-      ),
+      })),
     [data, networkNameById],
   );
+  const plans = entries.map((e) => e.plan);
 
-  let list = plans.filter((p) =>
-    p.name.toLowerCase().includes(q.toLowerCase()),
-  );
-  list = [...list].sort((a, b) =>
+  const networkName = networkNameById.get(networkId);
+
+  const bySort = (a: Plan, b: Plan) =>
     sort === 'price-asc'
       ? a.price - b.price
       : sort === 'price-desc'
         ? b.price - a.price
-        : vol(b.data) - vol(a.data),
+        : vol(b.data) - vol(a.data);
+  const matches = entries.filter((e) =>
+    e.plan.name.toLowerCase().includes(q.toLowerCase()),
   );
+  // Two sections: plans scoped to the selected network, and org-wide plans,
+  // which are assignable on any network.
+  const networkPlans = matches
+    .filter((e) => e.networkId)
+    .map((e) => e.plan)
+    .sort(bySort);
+  const orgPlans = matches
+    .filter((e) => !e.networkId)
+    .map((e) => e.plan)
+    .sort(bySort);
+  const list = [...networkPlans, ...orgPlans];
 
   return (
     <div className="page">
@@ -132,21 +184,23 @@ export default function AgentPlansScreen() {
             sub={
               plans.length === 0
                 ? 'Plans created in the business console will appear here.'
-                : 'Try a different search term.'
+                : 'Try a different filter or search term.'
             }
           />
         </div>
       ) : (
-        <div
-          className="tile-grid"
-          style={{
-            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-          }}
-        >
-          {list.map((p) => (
-            <PlanCard key={p.id} plan={p} readOnly />
-          ))}
-        </div>
+        <>
+          <PlanSection
+            title="Network plans"
+            sub={networkName ? `Only on ${networkName}` : 'Only on this network'}
+            plans={networkPlans}
+          />
+          <PlanSection
+            title="Org-wide plans"
+            sub="Assignable on any network"
+            plans={orgPlans}
+          />
+        </>
       )}
     </div>
   );

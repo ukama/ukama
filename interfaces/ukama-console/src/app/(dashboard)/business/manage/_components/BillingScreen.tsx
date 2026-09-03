@@ -26,15 +26,19 @@ import PageHeader from '@/components/PageHeader';
 import { sectionValue } from '@/components/SectionFallback';
 import StatusBadge from '@/components/StatusBadge';
 import { useToast } from '@/components/ToastProvider';
-import { useNetworkId } from '@/lib/useNetworkId';
+import { heldQuery } from '@/lib/heldQuery';
+import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
 
 export default function BillingScreen({ embed }: { embed?: boolean }) {
   const toast = useToast();
   const networkId = useNetworkId();
-  const { data, loading: invLoading, refetch } = useBillingOverviewQuery({
+  const networkPending = useNetworkQueryPending();
+  const billingResult = useBillingOverviewQuery({
     variables: { networkId },
     skip: !networkId,
   });
+  const refetch = billingResult.refetch;
+  const { data, loading: invLoading } = heldQuery(billingResult, networkPending);
   const invoicesSection = data?.commerceView.invoices;
   const balanceSection = data?.commerceView.balance;
   const invoices = invoicesSection?.reports ?? [];

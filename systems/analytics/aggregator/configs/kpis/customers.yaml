@@ -1,0 +1,26 @@
+# CUSTOMERS: every SIM per network whatever its service state — the metrics
+# system's active_sim_count + inactive_sim_count gauges added. One SIM per
+# subscriber, so this is the count of customers on the network.
+#
+# network_id is the only scope: the gauges carry no other dimension.
+kpi: CUSTOMERS
+domain: subscriber
+algo: network_sim_count@v1
+kind: gauge
+scope_agg: sum
+scope: [network_id]
+inputs:
+  networks:
+    dataset: registry.network.getAll
+    fields: [network_id]
+  active:
+    dataset: metrics.active_sims.last
+    fields: [network_id, value]
+  inactive:
+    dataset: metrics.inactive_sims.last
+    fields: [network_id, value]
+output:
+  type: int
+  unit: count
+  symbol: ""
+positive_direction: up
