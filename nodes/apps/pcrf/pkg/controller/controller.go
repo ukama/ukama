@@ -329,7 +329,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 				log.Errorf("Reverse lookup failed for subscriber %s: %v", req.ImsiStr, rerr)
 
 				return fmt.Errorf("subscriber %s has no valid policy locally and reverse lookup failed: %w",
-					req.ImsiStr, err)
+					req.ImsiStr, rerr)
 			}
 
 			if _, rerr := c.store.UpdateSubscriber(remoteSub.Imsi, &remoteSub.Policy); rerr != nil {
