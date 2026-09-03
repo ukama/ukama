@@ -10,6 +10,7 @@ package controller
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
@@ -22,7 +23,9 @@ import (
 
 	"github.com/ukama/ukama/nodes/apps/pcrf/mocks"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller/store"
+	"github.com/ukama/ukama/systems/common/rest"
 	"github.com/ukama/ukama/systems/common/uuid"
 )
 
@@ -376,4 +379,82 @@ func TestController_CreateSession_IgnoresServiceStatus(t *testing.T) {
 	// CreateSession must not gate on ServiceOn anywhere in its path.
 	err := c.CreateSession(&gin.Context{}, req)
 	assert.NoError(t, err)
+}
+
+func TestController_CreateSession_UnknownSubscriber_RemoteNotFound_Returns404(t *testing.T) {
+	s := newTestStore(t)
+	sm := mocks.NewSessionManager(t)
+	rc := mocks.NewRemoteController(t)
+
+	imsi := "999992000000011"
+	rc.On("GetSubscriberProfile", imsi).Return(nil, client.ErrRemoteSubscriberNotFound).Once()
+
+	c := &Controller{store: s, sm: sm, rc: rc, serviceOn: true}
+
+	err := c.CreateSession(&gin.Context{}, &api.CreateSession{ImsiStr: imsi, IpStr: "10.10.10.51"})
+	assert.Error(t, err)
+
+	httpErr, ok := err.(rest.HttpError)
+	assert.True(t, ok, "expected rest.HttpError, got %T: %v", err, err)
+	assert.Equal(t, http.StatusNotFound, httpErr.HttpCode)
+}
+
+func TestController_CreateSession_UnknownSubscriber_RemoteLookupFails_Returns503(t *testing.T) {
+	s := newTestStore(t)
+	sm := mocks.NewSessionManager(t)
+	rc := mocks.NewRemoteController(t)
+
+	imsi := "999992000000012"
+	rc.On("GetSubscriberProfile", imsi).Return(nil, fmt.Errorf("connection refused")).Once()
+
+	c := &Controller{store: s, sm: sm, rc: rc, serviceOn: true}
+
+	err := c.CreateSession(&gin.Context{}, &api.CreateSession{ImsiStr: imsi, IpStr: "10.10.10.52"})
+	assert.Error(t, err)
+
+	httpErr, ok := err.(rest.HttpError)
+	assert.True(t, ok, "expected rest.HttpError, got %T: %v", err, err)
+	assert.Equal(t, http.StatusServiceUnavailable, httpErr.HttpCode)
+}
+
+func TestController_CreateSession_StillInvalidAfterReverseLookup_Returns403(t *testing.T) {
+	s := newTestStore(t)
+	sm := mocks.NewSessionManager(t)
+	rc := mocks.NewRemoteController(t)
+
+	imsi := "999992000000013"
+	now := time.Now()
+
+	expiredPolicy := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Add(-time.Hour).Unix(),
+		EndTime:   now.Add(-time.Minute).Unix(),
+	}
+	ip := "192.168.9.13"
+	_, err := s.CreateSubscriber(imsi, expiredPolicy, &ip, nil)
+	assert.NoError(t, err)
+
+	stillExpiredRemotePolicy := api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Add(-time.Second).Unix(),
+		EndTime:   now.Add(-time.Second).Unix(),
+	}
+	rc.On("GetSubscriberProfile", imsi).Return(&api.Spr{
+		Imsi:    imsi,
+		Policy:  stillExpiredRemotePolicy,
+		ReRoute: ip,
+	}, nil).Once()
+
+	c := &Controller{store: s, sm: sm, rc: rc, serviceOn: true}
+
+	err = c.CreateSession(&gin.Context{}, &api.CreateSession{ImsiStr: imsi, IpStr: "10.10.10.53"})
+	assert.Error(t, err)
+
+	httpErr, ok := err.(rest.HttpError)
+	assert.True(t, ok, "expected rest.HttpError, got %T: %v", err, err)
+	assert.Equal(t, http.StatusForbidden, httpErr.HttpCode)
 }
