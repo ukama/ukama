@@ -30,6 +30,10 @@ runtime:
 #
 # Connectivity waits use 900s, the validate.c cap, because the offline
 # transition depends on a cloud-side heartbeat timeout of unknown length.
+#
+# KPI checks use 900s too. A registry change reaches a rollup only after its
+# 5m window closes, the ingest tick pulls it and the aggregator sweeps, so a
+# 90s budget expired before the pipeline could have moved.
 phases:
   - name: baseline_all_sites_online
     checks:
@@ -41,7 +45,7 @@ phases:
         networks: net-001
         expected_value: 2
         immediate: true
-        timeout_seconds: 90
+        timeout_seconds: 900
         poll_seconds: 10
   - name: tower_outage_takes_one_site_offline
     events:
@@ -62,7 +66,7 @@ phases:
         networks: net-001
         expected_value: 1
         immediate: true
-        timeout_seconds: 90
+        timeout_seconds: 900
         poll_seconds: 10
   - name: amplifier_outage_takes_second_site_offline
     events:
@@ -83,7 +87,7 @@ phases:
         networks: net-001
         expected_value: 0
         immediate: true
-        timeout_seconds: 90
+        timeout_seconds: 900
         poll_seconds: 10
   - name: restore_both_sites
     events:
@@ -110,5 +114,5 @@ phases:
         networks: net-001
         expected_value: 2
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 900
         poll_seconds: 10
