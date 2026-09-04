@@ -30,6 +30,7 @@ import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
 import { heldQuery } from '@/lib/heldQuery';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
@@ -43,7 +44,6 @@ export default function NetworkHomeScreen() {
 
   // KPIs come from the analytics rollup; sites come live from the registry
   // (sitesView) so the map doesn't depend on the analytics collector.
-  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const kpiResult = useGetKpiValuesQuery({
     variables: {
       data: {
@@ -58,9 +58,10 @@ export default function NetworkHomeScreen() {
       },
     },
     skip: !networkId,
-    onCompleted: () => setFetchedAt(new Date()),
+    notifyOnNetworkStatusChange: true,
     ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(kpiResult.networkStatus);
   const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,

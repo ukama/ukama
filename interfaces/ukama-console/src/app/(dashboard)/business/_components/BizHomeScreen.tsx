@@ -41,6 +41,7 @@ import {
 } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
@@ -118,7 +119,6 @@ export default function BizHomeScreen() {
   // (sitesView) so the map doesn't depend on the analytics collector. No `op`
   // is sent — each key resolves to its spec default (revenue -> SUM,
   // customers -> LAST, data_sold -> SUM, network_uptime -> AVG).
-  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const homeResult = useGetKpiValuesQuery({
     variables: {
       data: {
@@ -134,9 +134,10 @@ export default function BizHomeScreen() {
       },
     },
     skip: !networkId,
-    onCompleted: () => setFetchedAt(new Date()),
+    notifyOnNetworkStatusChange: true,
     ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(homeResult.networkStatus);
   // Last-30-days data-sold total for the "… last 30 days" sub-line. Skipped
   // when the strip is already showing the 30-day window (headline == sub).
   const { data: monthData } = useGetKpiValuesQuery({

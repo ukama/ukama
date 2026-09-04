@@ -35,6 +35,7 @@ import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { formatDuration } from '@/lib/duration';
 import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
@@ -63,7 +64,6 @@ export default function BizPackagesScreen() {
 
   // Every Packages KPI + the table/mix derive from the package_performance
   // report, windowed by the DateChip filter (last 24h / 7 days / 30 days).
-  const [fetchedAt, setFetchedAt] = useState(() => new Date());
   const reportResult = useGetPerformanceReportQuery({
     variables: {
       data: {
@@ -73,9 +73,10 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
-    onCompleted: () => setFetchedAt(new Date()),
+    notifyOnNetworkStatusChange: true,
     ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(reportResult.networkStatus);
   const { error, refetch } = reportResult;
   const { data, loading } = heldQuery(reportResult, networkPending);
 
