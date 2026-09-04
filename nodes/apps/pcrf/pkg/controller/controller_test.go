@@ -198,6 +198,36 @@ func TestController_UpdateSubscriber_FlipWithNoActiveSession_PersistsOnly(t *tes
 	assert.False(t, got.ServiceOn, "status must still be persisted for the next attach to respect")
 }
 
+func TestController_UpdateSubscriber_RecreatedSessionIsActiveNotPaused(t *testing.T) {
+	s := newTestStore(t)
+	sm := mocks.NewSessionManager(t)
+
+	sub := newTestSubscriber(t, s, "999992000000014", false)
+
+	sess, _, _, err := s.CreateSession(sub, "10.10.10.60", "node1")
+	assert.NoError(t, err)
+	assert.NoError(t, s.EndSession(sess))
+
+	sm.On("HasActiveSession", sub.Imsi).Return(false).Once()
+	sm.On("CreateSesssion", mock.Anything, mock.Anything, mock.MatchedBy(func(ns *store.Session) bool {
+		return ns.FlowState == store.FlowsActive
+	}), mock.Anything, mock.Anything).Return(nil).Once()
+
+	c := &Controller{store: s, sm: sm}
+
+	on := true
+	err = c.UpdateSubscriber(&gin.Context{}, &api.UpdateSubscriber{
+		Imsi:        sub.Imsi,
+		Policy:      toAPIPolicy(sub.PolicyID),
+		IsServiceOn: &on,
+	})
+	assert.NoError(t, err)
+
+	got, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.True(t, got.ServiceOn)
+}
+
 func TestController_UpdateSubscriber_UnchangedStatus_IsNoOp(t *testing.T) {
 	s := newTestStore(t)
 	sm := mocks.NewSessionManager(t)
