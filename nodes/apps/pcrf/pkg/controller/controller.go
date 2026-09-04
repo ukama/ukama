@@ -708,10 +708,18 @@ func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscribe
 			}
 		}
 	} else if *req.IsServiceOn {
-		// No live session to resume
+		if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
+			log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
+
+			return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
+		}
+		sub.ServiceOn = *req.IsServiceOn
+
 		if err := c.recreateSessionFromHistory(ctx, sub); err != nil {
 			return err
 		}
+
+		return nil
 	}
 
 	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
@@ -743,8 +751,6 @@ func (c *Controller) recreateSessionFromHistory(ctx *gin.Context, sub *store.Sub
 			last = se
 		}
 	}
-
-	sub.ServiceOn = true
 
 	s, rxF, txF, err := c.store.CreateSession(sub, last.UeIpAddr, c.nodeId)
 	if err != nil {
