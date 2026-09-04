@@ -398,6 +398,31 @@ func TestSessionManager_EndSession_ClearsCacheEvenWhenDatapathCleanupFails(t *te
 	assert.False(t, ok, "the cache entry must be cleared even when datapath cleanup fails, or HasActiveSession keeps reporting a session that no longer exists in the store")
 }
 
+func TestSessionManager_StoreStats_IdleTimeoutClearsCacheEvenWhenMeterCleanupFails(t *testing.T) {
+	s := newTestStore(t)
+	d := &fakeDataPath{}
+
+	sm, sub := newSubscriberWithSession(t, s, d, "999990000000011", true)
+
+	sc := sm.cache[sub.Imsi]
+
+	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
+	d.On("DeleteFlowOnly", sc.s.UeIpAddr).Return(nil).Once()
+	assert.NoError(t, sm.PauseSession(context.Background(), sub))
+
+	sc.s.UpdatedAt = uint64(time.Now().Add(-2 * sm.idle).Unix())
+
+	d.On("DeleteMetersOnly", uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(assert.AnError).Once()
+
+	err := sm.storeStats(sub.Imsi, false)
+	assert.Error(t, err)
+
+	_, ok := sm.cache[sub.Imsi]
+	assert.False(t, ok, "the cache entry must be cleared even when meter cleanup fails during an idle-timeout-while-paused end, or HasActiveSession keeps reporting a session already gone from the store")
+
+	d.AssertNotCalled(t, "DeleteDataPath", mock.Anything, mock.Anything, mock.Anything)
+}
+
 func TestSessionManager_ConcurrentTickerAndRequests_NoRace(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}
