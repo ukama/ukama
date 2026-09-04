@@ -380,6 +380,24 @@ func TestSessionManager_EndSession_PausedDeletesMetersOnly(t *testing.T) {
 	assert.False(t, ok)
 }
 
+func TestSessionManager_EndSession_ClearsCacheEvenWhenDatapathCleanupFails(t *testing.T) {
+	s := newTestStore(t)
+	d := &fakeDataPath{}
+
+	sm, sub := newSubscriberWithSession(t, s, d, "999990000000010", true)
+
+	sc := sm.cache[sub.Imsi]
+
+	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
+	d.On("DeleteDataPath", sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(assert.AnError).Once()
+
+	err := sm.EndSession(context.Background(), sub)
+	assert.Error(t, err)
+
+	_, ok := sm.cache[sub.Imsi]
+	assert.False(t, ok, "the cache entry must be cleared even when datapath cleanup fails, or HasActiveSession keeps reporting a session that no longer exists in the store")
+}
+
 func TestSessionManager_ConcurrentTickerAndRequests_NoRace(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}

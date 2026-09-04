@@ -307,6 +307,8 @@ func (s *sessionManager) endSessionLocked(ctx context.Context, sub *store.Subscr
 		return nil
 	}
 
+	defer delete(s.cache, sub.Imsi)
+
 	err := s.StopSessionMonitor(ctx, sub.Imsi)
 	if err != nil {
 		log.Errorf("Failed to stop monitor for Imsi %s. Error: %v", sub.Imsi, err)
@@ -333,8 +335,6 @@ func (s *sessionManager) endSessionLocked(ctx context.Context, sub *store.Subscr
 	}
 
 	_ = s.SendCDR(sub.Imsi)
-
-	delete(s.cache, sub.Imsi)
 
 	return nil
 }
