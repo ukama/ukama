@@ -39,6 +39,7 @@ pulls:
       package_id: $.package_id
       start_date: $.start_date
       end_date: $.end_date
-      is_active: $.is_active
-      as_expired: $.as_expired
+      # sim-manager renamed these in #1606; the analytics-side names stay put.
+      is_active: $.is_currently_in_use
+      as_expired: $.is_expired
       created_at: $.created_at
