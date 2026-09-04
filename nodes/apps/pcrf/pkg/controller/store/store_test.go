@@ -232,3 +232,118 @@ func TestStore_UpdateSubscriber_RejectsOlderConsumedForSamePolicy(t *testing.T) 
 	assert.NoError(t, err)
 	assert.Equal(t, uint64(500_000), got.PolicyID.Consumed, "an out-of-order consumed-data update must not regress consumed bytes")
 }
+
+func TestStore_EndSession_DoesNotCountUsageFromSupersededPolicy(t *testing.T) {
+	s := newSharedTestStore(t)
+
+	now := time.Now()
+	policyA := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Unix(),
+		EndTime:   now.Add(time.Hour).Unix(),
+	}
+	ip := "192.168.9.201"
+
+	sub, err := s.CreateSubscriber("999991000000004", policyA, &ip, nil)
+	assert.NoError(t, err)
+
+	session, _, _, err := s.CreateSession(sub, "10.10.10.30", "node1")
+	assert.NoError(t, err)
+
+	policyB := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      500_000,
+		Burst:     100,
+		StartTime: now.Add(time.Minute).Unix(),
+		EndTime:   now.Add(2 * time.Hour).Unix(),
+	}
+	_, err = s.UpdateSubscriber(sub.Imsi, policyB)
+	assert.NoError(t, err)
+
+	session.TxBytes = 300_000
+	session.RxBytes = 300_000
+	assert.NoError(t, s.EndSession(session))
+
+	usage, err := s.GetUsageByImsi(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(0), usage.Data, "a session ending under a policy the subscriber has since rolled over from must not count against the new policy's usage")
+
+	rolled, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+
+	fresh, _, _, err := s.CreateSession(rolled, "10.10.10.31", "node1")
+	assert.NoError(t, err)
+
+	fresh.TxBytes = 50_000
+	fresh.RxBytes = 50_000
+	assert.NoError(t, s.EndSession(fresh))
+
+	usage, err = s.GetUsageByImsi(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(100_000), usage.Data, "a session ending under the subscriber's current policy must still count normally")
+}
+
+func TestStore_CreateSession_UsesFreshServiceStatus(t *testing.T) {
+	s := newSharedTestStore(t)
+
+	policy := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: time.Now().Unix(),
+		EndTime:   time.Now().Add(time.Hour).Unix(),
+	}
+	ip := "192.168.9.202"
+
+	sub, err := s.CreateSubscriber("999991000000005", policy, &ip, nil)
+	assert.NoError(t, err)
+
+	stale, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+	assert.True(t, stale.ServiceOn)
+
+	assert.NoError(t, s.UpdateSubscriberServiceStatus(sub, false))
+
+	ns, _, _, err := s.CreateSession(stale, "10.10.10.40", "node1")
+	assert.NoError(t, err)
+	assert.Equal(t, FlowsPaused, ns.FlowState,
+		"CreateSession must use the subscriber's current service state, not a caller-held stale snapshot")
+}
+
+func TestStore_CreateSession_UsesFreshPolicyForCapCheck(t *testing.T) {
+	s := newSharedTestStore(t)
+
+	now := time.Now()
+	policyA := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      1_000_000,
+		Burst:     100,
+		StartTime: now.Unix(),
+		EndTime:   now.Add(time.Hour).Unix(),
+	}
+	ip := "192.168.9.203"
+
+	sub, err := s.CreateSubscriber("999991000000006", policyA, &ip, nil)
+	assert.NoError(t, err)
+
+	stale, err := s.GetSubscriber(sub.Imsi)
+	assert.NoError(t, err)
+
+	policyB := &api.Policy{
+		Uuid:      uuid.NewV4(),
+		Data:      500_000,
+		Burst:     100,
+		StartTime: now.Add(time.Minute).Unix(),
+		EndTime:   now.Add(2 * time.Hour).Unix(),
+	}
+	_, err = s.UpdateSubscriber(sub.Imsi, policyB)
+	assert.NoError(t, err)
+
+	ns, _, _, err := s.CreateSession(stale, "10.10.10.41", "node1")
+	assert.NoError(t, err)
+	assert.Equal(t, policyB.Uuid, ns.PolicyID.ID,
+		"session must be created under the subscriber's current policy, not the caller's stale snapshot")
+	assert.Equal(t, FlowsActive, ns.FlowState, "fresh policy with zero usage must not be born paused")
+}

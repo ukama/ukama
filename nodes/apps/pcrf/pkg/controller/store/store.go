@@ -785,6 +785,18 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 }
 
 func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId string) (*Session, *Flow, *Flow, error) {
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
+
+	subscriberID := subscriber.ID
+
+	subscriber, err := s.GetSubscriberByID(subscriberID)
+	if err != nil {
+		log.Errorf("Error getting subscriber %d for session create. Error: %v", subscriberID, err)
+
+		return nil, nil, nil, fmt.Errorf("error getting subscriber %d for session create. Error: %w", subscriberID, err)
+	}
+
 	/* TODO: Check if required here vaildate if user has enough data */
 	usage, err := s.GetUsageByImsi(subscriber.Imsi)
 	if err != nil {
@@ -872,6 +884,9 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId st
 }
 
 func (s *Store) EndSession(session *Session) error {
+	s.policyMu.Lock()
+	defer s.policyMu.Unlock()
+
 	// Update session with TX, RX, and Total bytes
 	t := uint64(time.Now().Unix())
 	session.EndTime = t
@@ -893,6 +908,13 @@ func (s *Store) EndSession(session *Session) error {
 		log.Errorf("Error updating session usage for subscriber %s. Error: %v", subscriber.Imsi, err)
 
 		return fmt.Errorf("error updating session usage for subscriber %s. Error: %w", subscriber.Imsi, err)
+	}
+
+	if session.PolicyID.ID != subscriber.PolicyID.ID {
+		log.Warnf("Session %d for subscriber %s ended under policy %s, which the subscriber has since rolled over from (now on %s); not counting its %d bytes against the current policy's usage",
+			session.ID, subscriber.Imsi, session.PolicyID.ID, subscriber.PolicyID.ID, session.TotalBytes)
+
+		return nil
 	}
 
 	usage, err := s.GetUsageByImsi(subscriber.Imsi)

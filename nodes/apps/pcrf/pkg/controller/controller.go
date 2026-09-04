@@ -282,6 +282,16 @@ func (c *Controller) serviceEnabled() bool {
 	return c.serviceOn
 }
 
+func remoteLookupHttpError(imsi string, rerr error) error {
+	if errors.Is(rerr, client.ErrRemoteSubscriberNotFound) {
+		return rest.HttpError{HttpCode: http.StatusNotFound,
+			Message: fmt.Sprintf("subscriber %s not found", imsi)}
+	}
+
+	return rest.HttpError{HttpCode: http.StatusServiceUnavailable,
+		Message: fmt.Sprintf("subscriber %s: remote asr lookup failed", imsi)}
+}
+
 func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
 	var sub *store.Subscriber
 	var err error
@@ -306,8 +316,7 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			if rerr != nil {
 				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, rerr)
 
-				return fmt.Errorf("subscriber %s not found either locally, nor in remote asr %w",
-					req.ImsiStr, rerr)
+				return remoteLookupHttpError(req.ImsiStr, rerr)
 			}
 
 			log.Infof("Subscriber %s found in remote asr", req.ImsiStr)
@@ -317,7 +326,8 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			if err != nil {
 				log.Errorf("Failed to create missing subscriber with imsi %s. Error: %v", req.Imsi, err)
 
-				return fmt.Errorf("failed to create missing subscriber with imsi %s. Error: %w", req.Imsi, err)
+				return rest.HttpError{HttpCode: http.StatusInternalServerError,
+					Message: fmt.Sprintf("failed to create missing subscriber with imsi %s", req.Imsi)}
 			}
 
 		case errors.Is(err, store.ErrPolicyInvalid), errors.Is(err, store.ErrDataCapExceeded):
@@ -328,29 +338,29 @@ func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) err
 			if rerr != nil {
 				log.Errorf("Reverse lookup failed for subscriber %s: %v", req.ImsiStr, rerr)
 
-				return fmt.Errorf("subscriber %s has no valid policy locally and reverse lookup failed: %w",
-					req.ImsiStr, err)
+				return remoteLookupHttpError(req.ImsiStr, rerr)
 			}
 
 			if _, rerr := c.store.UpdateSubscriber(remoteSub.Imsi, &remoteSub.Policy); rerr != nil {
 				log.Errorf("Failed to apply reverse-looked-up policy for subscriber %s: %v", req.ImsiStr, rerr)
 
-				return fmt.Errorf("failed to refresh policy for subscriber %s from remote asr: %w",
-					req.ImsiStr, rerr)
+				return rest.HttpError{HttpCode: http.StatusInternalServerError,
+					Message: fmt.Sprintf("failed to refresh policy for subscriber %s from remote asr", req.ImsiStr)}
 			}
 
 			sub, err = c.validateSubscriber(req.ImsiStr)
 			if err != nil {
 				log.Errorf("Subscriber %s still has no valid policy after reverse lookup: %v", req.ImsiStr, err)
 
-				return fmt.Errorf("subscriber %s has no valid policy even after reverse lookup: %w",
-					req.ImsiStr, err)
+				return rest.HttpError{HttpCode: http.StatusForbidden,
+					Message: fmt.Sprintf("subscriber %s has no valid policy even after reverse lookup", req.ImsiStr)}
 			}
 
 		default:
 			log.Errorf("Failed to validate subscriber %s: %v", req.ImsiStr, err)
 
-			return fmt.Errorf("failed to validate subscriber %s: %v", req.ImsiStr, err)
+			return rest.HttpError{HttpCode: http.StatusInternalServerError,
+				Message: fmt.Sprintf("failed to validate subscriber %s", req.ImsiStr)}
 		}
 	}
 

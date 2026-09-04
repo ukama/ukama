@@ -10,7 +10,9 @@ package client
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
@@ -21,6 +23,8 @@ import (
 
 const ProfileEndpoint = "/v1/asr"
 const CDREndpoint = "/v1/cdr"
+
+var ErrRemoteSubscriberNotFound = errors.New("remote subscriber not found")
 
 type RemoteController interface {
 	GetSubscriberProfile(imsi string) (*api.Spr, error)
@@ -88,6 +92,14 @@ func (r *remoteControllerClient) GetSubscriberProfile(imsi string) (*api.Spr, er
 		log.Errorf("GetPolicy failure. error: %v", err)
 
 		return nil, fmt.Errorf("GetPolicy failure: %w", err)
+	}
+
+	if resp.StatusCode() == http.StatusNotFound {
+		return nil, fmt.Errorf("%w: imsi %s", ErrRemoteSubscriberNotFound, imsi)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		return nil, fmt.Errorf("remote asr returned http %d for imsi %s", resp.StatusCode(), imsi)
 	}
 
 	err = json.Unmarshal(resp.Body(), &spr)
