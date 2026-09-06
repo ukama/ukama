@@ -68,7 +68,7 @@ p0_validate_simple_id() {
 }
 
 p0_aws() {
-    aws --no-cli-pager "$@"
+    AWS_MAX_ATTEMPTS=3 aws --no-cli-pager --cli-connect-timeout 10 --cli-read-timeout 30 "$@"
 }
 
 p0_s3_batch_root() {
@@ -96,7 +96,7 @@ p0_instance_ids() {
             "Name=tag:UkamaP0Batch,Values=$batch_id" \
             'Name=instance-state-name,Values=pending,running,stopping,stopped' \
         --query 'Reservations[].Instances[].InstanceId' \
-        --output text 2>/dev/null |
+        --output text |
         tr '\t' '\n' |
         sed '/^$/d'
 }
@@ -105,7 +105,9 @@ p0_cleanup_batch() {
     local batch_id="$1"
     local ids=()
 
-    mapfile -t ids < <(p0_instance_ids "$batch_id")
+    local response
+    response="$(p0_instance_ids "$batch_id")" || return 1
+    if [[ -n "$response" ]]; then mapfile -t ids <<<"$response"; fi
     if ((${#ids[@]} == 0)); then
         return 0
     fi

@@ -2,7 +2,9 @@
 # Local controller for disposable EC2 P0 workers.
 # Protocol: tar archives + text files in S3.
 
+set +x
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 LAB_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
@@ -15,19 +17,25 @@ usage() {
 usage:
   $0 [--workers N] [--dry-run] [--batch-id ID] [--scenario PATH ...]
   $0 [--workers N] [--dry-run] [--batch-id ID] --scenario-list FILE
-  $0 [--workers N] [--dry-run] [--batch-id ID] [category ...]
+  $0 [--vpn FILE] [--group-by subcategory|scenario] [--workers LIMIT] [category/subcategory ...]
+  $0 --dry-run [category/subcategory ...]
   $0 --status BATCH_ID
   $0 --resume BATCH_ID
   $0 --collect BATCH_ID
   $0 --cleanup BATCH_ID
 
+Default: one worker per scenario directory; --workers is a maximum (default 100).
+Directories containing deployment-wide scenarios from exclusive.txt are merged
+onto one final worker and run sequentially. The old gateway is not used.
 Normal execution packages the current ukama-lab tree and \$UKAMA_REPO,
 launches disposable EC2 workers, displays live status, downloads all results,
 prints the combined report, and terminates any workers still alive.
 EOF_USAGE
 }
 
-WORKERS="${DEFAULT_WORKERS:-10}"
+WORKERS="${P0_MAX_WORKERS:-100}"
+GROUP_BY=subcategory
+VPN_FILE=""
 DRY_RUN=0
 MODE=run
 BATCH_ID=""
@@ -38,6 +46,12 @@ controller_scenario_list=""
 
 while (($#)); do
     case "$1" in
+        --group-by)
+            (($# >= 2)) || p0_die '--group-by requires subcategory or scenario'
+            GROUP_BY="$2"; shift 2;;
+        --vpn)
+            (($# >= 2)) || p0_die '--vpn requires a profile path'
+            VPN_FILE="$2"; shift 2;;
         --workers)
             (($# >= 2)) || p0_die '--workers requires a number'
             WORKERS="$2"
@@ -103,7 +117,8 @@ while (($#)); do
     esac
 done
 
-p0_require_cmd aws
+if ((!DRY_RUN)); then p0_require_cmd aws; fi
+p0_require_cmd python3
 p0_require_cmd jq
 p0_require_cmd tar
 p0_require_cmd sha256sum
@@ -114,7 +129,7 @@ p0_validate_simple_id S3_PREFIX "$S3_PREFIX"
 p0_validate_simple_id AMI_ID "$AMI_ID"
 
 export AWS_DEFAULT_REGION="$AWS_REGION"
-p0_aws sts get-caller-identity >/dev/null
+if ((!DRY_RUN)); then p0_aws sts get-caller-identity >/dev/null; fi
 
 status_value() {
     local file="$1"
@@ -135,6 +150,8 @@ load_remote_manifest() {
     fi
     # shellcheck disable=SC1090
     . "$local_dir/manifest.env"
+    mkdir -p "$local_dir/input/shards"
+    p0_aws s3 sync "$uri/input/shards/" "$local_dir/input/shards/" --only-show-errors
 }
 
 sync_status() {
@@ -280,17 +297,31 @@ collect_batch() {
                 cp "$local_dir/raw-output/$worker.$suffix" "$worker_dir/"
             fi
         done
+        if [[ -d "$local_dir/raw-output/$worker/results" ]]; then
+            cp -a "$local_dir/raw-output/$worker/results" "$worker_dir/"
+        fi
         if [[ -f "$archive" ]]; then
-            tar -xzf "$archive" -C "$worker_dir"
+            tar -xzf "$archive" -C "$worker_dir" || \
+                printf 'reason=invalid_result_archive\n' >"$worker_dir/$worker.failed"
         fi
     done
 
     "$SCRIPT_DIR/report.sh" "$local_dir"
 }
 
+launched=0
+cleanup_on_exit() {
+    local rc=$?
+    trap - EXIT INT TERM
+    if ((launched)); then
+        p0_cleanup_batch "$BATCH_ID" || { echo "Cleanup failed; run $0 --cleanup $BATCH_ID" >&2; rc=1; }
+    fi
+    exit "$rc"
+}
+
 if [[ "$MODE" != run ]]; then
     BATCH_ID="$MODE_BATCH_ID"
-    p0_validate_simple_id BATCH_ID "$BATCH_ID"
+    [[ "$BATCH_ID" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,44}$ ]] || p0_die 'batch ID must be 1-45 letters, digits, underscores or hyphens'
     LOCAL_BATCH_DIR="$(p0_local_batch_root "$LAB_ROOT" "$BATCH_ID")"
 
     case "$MODE" in
@@ -310,21 +341,30 @@ if [[ "$MODE" != run ]]; then
             exit $?
             ;;
         resume)
+            launched=1
+            trap cleanup_on_exit EXIT
+            trap 'exit 130' INT
+            trap 'exit 143' TERM
             load_remote_manifest "$BATCH_ID" "$LOCAL_BATCH_DIR"
             watch_rc=0
             watch_batch "$BATCH_ID" "$LOCAL_BATCH_DIR" "$WORKER_COUNT" || watch_rc=$?
             report_rc=0
             collect_batch "$BATCH_ID" "$LOCAL_BATCH_DIR" "$WORKER_COUNT" || report_rc=$?
-            p0_cleanup_batch "$BATCH_ID" || true
-            ((watch_rc == 0 && report_rc == 0))
+            cleanup_rc=0
+            p0_cleanup_batch "$BATCH_ID" || { cleanup_rc=$?; echo "Cleanup failed; run $0 --cleanup $BATCH_ID" >&2; }
+            launched=0
+            trap - EXIT INT TERM
+            ((watch_rc == 0 && report_rc == 0 && cleanup_rc == 0))
             exit $?
             ;;
     esac
 fi
 
 [[ "$WORKERS" =~ ^[1-9][0-9]*$ ]] || p0_die '--workers must be a positive integer'
-[[ "${MAX_WORKERS:-20}" =~ ^[1-9][0-9]*$ ]] || p0_die 'MAX_WORKERS must be positive'
-((WORKERS <= MAX_WORKERS)) || p0_die "workers=$WORKERS exceeds MAX_WORKERS=$MAX_WORKERS"
+[[ "$GROUP_BY" == subcategory || "$GROUP_BY" == scenario ]] || p0_die '--group-by must be subcategory or scenario'
+if [[ -n "$VPN_FILE" ]]; then
+    "$SCRIPT_DIR/configure-vpn.sh" --check "$VPN_FILE"
+fi
 
 : "${UKAMA_REPO:?set UKAMA_REPO to the local Ukama source tree}"
 [[ -d "$UKAMA_REPO" ]] || p0_die "UKAMA_REPO does not exist: $UKAMA_REPO"
@@ -332,27 +372,12 @@ fi
 [[ -x "$LAB_ROOT/bin/ukama-lab" ]] ||
     p0_die "build ukama-lab first; missing executable $LAB_ROOT/bin/ukama-lab"
 
-# The udev control plane is private. Route workers through the known-good EC2
-# host that already has the working backend tunnel/route.
-if [[ -n "${BACKEND_GATEWAY_INSTANCE_ID:-}" ]]; then
-    if ((DRY_RUN)); then
-        BACKEND_GATEWAY_PRIVATE_IP="$(p0_aws ec2 describe-instances \
-            --instance-ids "$BACKEND_GATEWAY_INSTANCE_ID" \
-            --query 'Reservations[0].Instances[0].PrivateIpAddress' \
-            --output text)"
-        export BACKEND_GATEWAY_PRIVATE_IP
-    elif [[ "${BACKEND_GATEWAY_AUTO_SETUP:-true}" == "true" ]]; then
-        "$SCRIPT_DIR/setup-backend-gateway.sh" --quiet
-        p0_load_config "$SCRIPT_DIR"
-    fi
-    p0_require_config BACKEND_GATEWAY_PRIVATE_IP BACKEND_ROUTE_CIDR \
-        BACKEND_TEST_IP
-fi
 
 if [[ -z "$BATCH_ID" ]]; then
-    BATCH_ID="$(date -u +%Y%m%dt%H%M%Sz)"
+    BATCH_ID="$(date -u +%Y%m%dt%H%M%Sz)-$(python3 -c 'import secrets; print(secrets.token_hex(3))')"
 fi
-p0_validate_simple_id BATCH_ID "$BATCH_ID"
+[[ "$BATCH_ID" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,44}$ ]] || p0_die 'batch ID must be 1-45 letters, digits, underscores or hyphens'
+((${#BATCH_ID} <= 45)) || p0_die 'batch ID must be at most 45 characters'
 LOCAL_BATCH_DIR="$(p0_local_batch_root "$LAB_ROOT" "$BATCH_ID")"
 [[ ! -e "$LOCAL_BATCH_DIR" ]] || p0_die "local batch already exists: $LOCAL_BATCH_DIR"
 mkdir -p "$LOCAL_BATCH_DIR/input/shards"
@@ -412,7 +437,7 @@ elif ((${#categories[@]} == 0)); then
         sort >"$SCENARIO_LIST.absolute"
 else
     for category in "${categories[@]}"; do
-        [[ "$category" =~ ^[a-z0-9-]+$ ]] || p0_die "invalid category: $category"
+        [[ "$category" =~ ^[a-z0-9-]+(/[a-z0-9-]+)*$ ]] || p0_die "invalid category: $category"
         [[ -d "$LAB_ROOT/scenarios/p0/$category" ]] || p0_die "unknown P0 category: $category"
         find "$LAB_ROOT/scenarios/p0/$category" -type f \
             \( -name '*.yaml' -o -name '*.yml' \) -print
@@ -430,88 +455,53 @@ fi
 
 SCENARIO_COUNT="$(wc -l <"$SCENARIO_LIST" | tr -d ' ')"
 ((SCENARIO_COUNT > 0)) || p0_die 'no scenarios selected'
-if ((WORKERS > SCENARIO_COUNT)); then
-    WORKERS=$SCENARIO_COUNT
-fi
-
+# One directory per worker; individual scenarios are an optional grouping mode.
+# If a directory contains a deployment-wide exclusive scenario, keep the whole
+# directory on the final exclusive worker. This prevents another scenario in
+# that directory from overlapping the deployment-wide mutation.
 EXCLUSIVE_FILE="${P0_EXCLUSIVE_FILE:-$SCRIPT_DIR/exclusive.txt}"
-NORMAL_LIST="$LOCAL_BATCH_DIR/input/normal.txt"
-EXCLUSIVE_LIST="$LOCAL_BATCH_DIR/input/exclusive.txt"
-: >"$NORMAL_LIST"
-: >"$EXCLUSIVE_LIST"
-
-exclusive_patterns=()
-if [[ -r "$EXCLUSIVE_FILE" ]]; then
-    while IFS= read -r pattern; do
-        pattern="${pattern%%#*}"
-        pattern="$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<<"$pattern")"
-        [[ -n "$pattern" ]] || continue
-        exclusive_patterns+=("$pattern")
-    done <"$EXCLUSIVE_FILE"
-fi
-
-is_exclusive() {
-    local candidate="$1"
-    local pattern
-
-    for pattern in "${exclusive_patterns[@]}"; do
-        # Intentional shell-pattern matching from the trusted exclusive file.
-        if [[ "$candidate" == $pattern ]]; then
-            return 0
-        fi
-    done
-    return 1
-}
-
-while IFS= read -r path; do
-    if is_exclusive "$path"; then
-        printf '%s\n' "$path" >>"$EXCLUSIVE_LIST"
-    else
-        printf '%s\n' "$path" >>"$NORMAL_LIST"
-    fi
-done <"$SCENARIO_LIST"
-
-normal_count="$(wc -l <"$NORMAL_LIST" | tr -d ' ')"
-exclusive_count="$(wc -l <"$EXCLUSIVE_LIST" | tr -d ' ')"
-exclusive_worker=0
-if ((exclusive_count > 0 && WORKERS > 1)); then
-    exclusive_worker=1
-fi
-
-normal_workers=$WORKERS
-if ((exclusive_worker)); then
-    normal_workers=$((WORKERS - 1))
-fi
-if ((normal_count == 0)); then
-    normal_workers=0
-elif ((normal_workers > normal_count)); then
-    normal_workers=$normal_count
-fi
-
-worker_index=0
-if ((normal_workers > 0)); then
-    i=0
-    while IFS= read -r scenario; do
-        worker_index=$((i % normal_workers + 1))
-        printf -v worker_id 'worker-%02d' "$worker_index"
-        printf '%s\n' "$scenario" \
-            >>"$LOCAL_BATCH_DIR/input/shards/$worker_id.txt"
-        i=$((i + 1))
-    done <"$NORMAL_LIST"
-fi
-
-WORKER_COUNT=$normal_workers
-if ((exclusive_count > 0)); then
-    WORKER_COUNT=$((WORKER_COUNT + 1))
-    printf -v worker_id 'worker-%02d' "$WORKER_COUNT"
-    cat "$EXCLUSIVE_LIST" >"$LOCAL_BATCH_DIR/input/shards/$worker_id.txt"
-fi
-((WORKER_COUNT > 0)) || p0_die 'no worker shards were created'
+python3 - "$SCENARIO_LIST" "$LOCAL_BATCH_DIR/input" "$GROUP_BY" "$WORKERS" "$EXCLUSIVE_FILE" <<'PY_GROUPS'
+import collections, fnmatch, pathlib, sys
+paths=pathlib.Path(sys.argv[1]).read_text().splitlines()
+out=pathlib.Path(sys.argv[2]);groups=collections.defaultdict(list)
+patterns=[]
+exclusive_file=pathlib.Path(sys.argv[5])
+if exclusive_file.is_file():
+    for line in exclusive_file.read_text().splitlines():
+        pattern=line.split('#',1)[0].strip()
+        if pattern:
+            patterns.append(pattern)
+for path in sorted(set(paths)):
+    rel=pathlib.PurePosixPath(path).relative_to('scenarios/p0')
+    group=str(rel.parent) if sys.argv[3]=='subcategory' else str(rel)
+    groups[group].append(path)
+exclusive_groups={group for group, scenarios in groups.items()
+                  if any(fnmatch.fnmatchcase(path, pattern)
+                         for path in scenarios for pattern in patterns)}
+planned=[(group, scenarios) for group, scenarios in sorted(groups.items())
+         if group not in exclusive_groups]
+if exclusive_groups:
+    exclusive=[]
+    for group in sorted(exclusive_groups):
+        exclusive.extend(groups[group])
+    planned.append(('exclusive', sorted(exclusive)))
+if len(planned)>int(sys.argv[4]):
+    sys.exit(f'Selected {len(planned)} workers exceed --workers {sys.argv[4]}; increase the limit or select fewer directories.')
+with (out/'groups.tsv').open('w') as f:
+    f.write('worker\tgroup\tscenarios\n')
+    for i,(group,scenarios) in enumerate(planned,1):
+        worker=f'worker-{i:02d}'
+        (out/'shards'/(worker+'.txt')).write_text('\n'.join(scenarios)+'\n')
+        f.write(f'{worker}\t{group}\t{len(scenarios)}\n')
+PY_GROUPS
+WORKER_COUNT=$(( $(wc -l <"$LOCAL_BATCH_DIR/input/groups.tsv") - 1 ))
+((WORKER_COUNT > 0)) || p0_die 'no worker groups were created'
 
 cat >"$LOCAL_BATCH_DIR/input/manifest.env" <<EOF_MANIFEST
 BATCH_ID=$BATCH_ID
 WORKER_COUNT=$WORKER_COUNT
 SCENARIO_COUNT=$SCENARIO_COUNT
+GROUP_BY=$GROUP_BY
 CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF_MANIFEST
 
@@ -526,9 +516,6 @@ EOF_MANIFEST
     printf 'ULAB_FACTORY_SEED_URL=%q\n' "${ULAB_FACTORY_SEED_URL:-https://factory-ukama.udev.ukama.com}"
     printf 'ULAB_UKAMA_AGENT_NODE_GW_URL=%q\n' "${ULAB_UKAMA_AGENT_NODE_GW_URL:-https://ukamaagent-nodegateway-ukama.udev.ukama.com:8080/}"
     printf 'ULAB_UKAMA_AGENT_API_GW_URL=%q\n' "${ULAB_UKAMA_AGENT_API_GW_URL:-https://ukamaagent-ukama.udev.ukama.com:8080/}"
-    printf 'BACKEND_GATEWAY_PRIVATE_IP=%q\n' "${BACKEND_GATEWAY_PRIVATE_IP:-}"
-    printf 'BACKEND_ROUTE_CIDR=%q\n' "${BACKEND_ROUTE_CIDR:-10.0.0.0/8}"
-    printf 'BACKEND_TEST_IP=%q\n' "${BACKEND_TEST_IP:-10.0.101.241}"
     printf 'P0_CONNECT_TIMEOUT_SECONDS=%q\n' "${P0_CONNECT_TIMEOUT_SECONDS:-15}"
     printf 'P0_HTTP_TIMEOUT_SECONDS=%q\n' "${P0_HTTP_TIMEOUT_SECONDS:-25}"
     printf 'UKAMA_LAB_DUMP_BFF_CURL=%q\n' "${UKAMA_LAB_DUMP_BFF_CURL:-1}"
@@ -545,10 +532,21 @@ EOF_MANIFEST
 printf '\nBatch: %s\n' "$BATCH_ID"
 printf 'Scenarios: %s\n' "$SCENARIO_COUNT"
 printf 'Workers: %s\n' "$WORKER_COUNT"
-for shard in "$LOCAL_BATCH_DIR"/input/shards/*.txt; do
-    printf '  %-12s %s scenario(s)\n' \
-        "$(basename "$shard" .txt)" "$(wc -l <"$shard" | tr -d ' ')"
-done
+column -t -s $'\t' "$LOCAL_BATCH_DIR/input/groups.tsv" 2>/dev/null || cat "$LOCAL_BATCH_DIR/input/groups.tsv"
+
+# A dry run only creates the local scenario plan: no factory writes, archives,
+# AWS requests, credential updates or instance launches.
+if ((DRY_RUN)); then
+    printf '\nDry run complete. Plan: %s\n' "$LOCAL_BATCH_DIR"
+    exit 0
+fi
+if [[ -n "$VPN_FILE" ]]; then
+    "$SCRIPT_DIR/configure-vpn.sh" "$VPN_FILE"
+fi
+# Check the secret before launching any workers; never print its contents.
+p0_aws secretsmanager get-secret-value --secret-id "$SECRET_ID" --query SecretString --output text |
+    jq -e '(.ULAB_VPN_CONFIG // "") | contains("<key>") and contains("<cert>") and contains("<ca>")' >/dev/null ||
+    p0_die 'worker secret has no inline VPN profile; supply --vpn CLIENT.ovpn'
 
 if [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
     CREDENTIALS_FILE="${P0_AWS_CREDENTIALS:-$SCRIPT_DIR/credentials.env}"
@@ -571,10 +569,12 @@ if [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
 fi
 
 printf '\nPackaging current local source trees...\n'
-tar --exclude-from="$SCRIPT_DIR/lab-excludes.txt" \
+private_input_excludes=(--exclude='*.ovpn')
+if [[ -n "$VPN_FILE" ]]; then private_input_excludes+=(--exclude="$(basename -- "$VPN_FILE")"); fi
+tar "${private_input_excludes[@]}" --exclude-from="$SCRIPT_DIR/lab-excludes.txt" \
     -C "$LAB_ROOT" -czf "$LOCAL_BATCH_DIR/input/ukama-lab.tar.gz" .
 
-ukama_tar_args=(--exclude-from="$SCRIPT_DIR/ukama-excludes.txt")
+ukama_tar_args=("${private_input_excludes[@]}" --exclude-from="$SCRIPT_DIR/ukama-excludes.txt")
 case "$LAB_ROOT/" in
     "$UKAMA_REPO"/*)
         lab_relative="${LAB_ROOT#"$UKAMA_REPO"/}"
@@ -593,12 +593,6 @@ cp "$SCRIPT_DIR/worker.sh" "$LOCAL_BATCH_DIR/input/worker.sh"
     cd "$LOCAL_BATCH_DIR/input"
     sha256sum ukama-lab.tar.gz ukama.tar.gz >checksums.sha256
 )
-
-if ((DRY_RUN)); then
-    printf '\nDry run complete. Nothing was uploaded or launched.\n'
-    printf 'plan: %s\n' "$LOCAL_BATCH_DIR"
-    exit 0
-fi
 
 BATCH_URI="$(p0_s3_batch_root "$BATCH_ID")"
 printf 'Uploading input to %s/input/\n' "$BATCH_URI"
@@ -628,14 +622,9 @@ jq -n \
 
 printf 'worker\tinstance_id\n' >"$LOCAL_BATCH_DIR/instances.tsv"
 launched=1
-cleanup_on_exit() {
-    local rc=$?
-    if ((launched)); then
-        p0_cleanup_batch "$BATCH_ID" || true
-    fi
-    exit "$rc"
-}
-trap cleanup_on_exit EXIT INT TERM
+trap cleanup_on_exit EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 printf '\nLaunching %s EC2 workers...\n' "$WORKER_COUNT"
 for ((i = 1; i <= WORKER_COUNT; i++)); do
@@ -646,6 +635,7 @@ for ((i = 1; i <= WORKER_COUNT; i++)); do
 set -Eeuo pipefail
 exec > >(tee -a /var/log/ukama-p0-bootstrap.log) 2>&1
 trap '/usr/sbin/shutdown -P now || true' EXIT
+/usr/sbin/shutdown -P +${WORKER_TIMEOUT_MINUTES:-180}
 export AWS_DEFAULT_REGION=$(printf '%q' "$AWS_REGION")
 if ! command -v aws >/dev/null 2>&1; then
     if command -v dnf >/dev/null 2>&1; then
@@ -675,6 +665,7 @@ EOF_USER_DATA
 
     instance_id="$(p0_aws ec2 run-instances \
         --image-id "$AMI_ID" \
+        --client-token "$BATCH_ID-$worker_id" \
         --instance-type "$INSTANCE_TYPE" \
         --iam-instance-profile "Name=$INSTANCE_PROFILE_NAME" \
         --network-interfaces "file://$network_file" \
@@ -695,12 +686,13 @@ watch_batch "$BATCH_ID" "$LOCAL_BATCH_DIR" "$WORKER_COUNT" || watch_rc=$?
 report_rc=0
 collect_batch "$BATCH_ID" "$LOCAL_BATCH_DIR" "$WORKER_COUNT" || report_rc=$?
 
-p0_cleanup_batch "$BATCH_ID" || true
+cleanup_rc=0
+p0_cleanup_batch "$BATCH_ID" || { cleanup_rc=$?; echo "Cleanup failed; run $0 --cleanup $BATCH_ID" >&2; }
 launched=0
 trap - EXIT INT TERM
 
-if [[ "${DELETE_S3_AFTER_COLLECT:-false}" == "true" ]]; then
+if [[ "${DELETE_S3_AFTER_COLLECT:-false}" == "true" ]] && ((watch_rc == 0 && report_rc == 0 && cleanup_rc == 0)); then
     p0_aws s3 rm "$BATCH_URI/" --recursive --only-show-errors
 fi
 
-((watch_rc == 0 && report_rc == 0))
+((watch_rc == 0 && report_rc == 0 && cleanup_rc == 0))

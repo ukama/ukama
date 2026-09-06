@@ -7,7 +7,9 @@
 
 # One-time AWS setup for the plain EC2/S3 P0 runner.
 
+set +x
 set -Eeuo pipefail
+umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib.sh
@@ -77,6 +79,9 @@ set +a
 : "${BFF_BASE_URL:?set BFF_BASE_URL in credentials.env}"
 
 secret_file="$(mktemp)"
+previous_secret="$(mktemp)"
+merged_secret="$(mktemp)"
+trap 'rm -f "$secret_file" "$previous_secret" "$merged_secret"' EXIT
 jq -n \
     --arg UKAMA_IDENTIFIER "$UKAMA_IDENTIFIER" \
     --arg UKAMA_PASSWORD "$UKAMA_PASSWORD" \
@@ -92,7 +97,12 @@ jq -n \
 
 if p0_aws secretsmanager describe-secret \
     --secret-id "$SECRET_ID" >/dev/null 2>&1; then
-    printf 'updating Secrets Manager secret %s\n' "$SECRET_ID"
+    # Preserve the separately configured VPN profile when refreshing backend credentials.
+    p0_aws secretsmanager get-secret-value --secret-id "$SECRET_ID" \
+        --query SecretString --output text >"$previous_secret"
+    jq -s '.[0] + .[1]' "$previous_secret" "$secret_file" >"$merged_secret"
+    mv "$merged_secret" "$secret_file"
+    printf 'updating Secrets Manager secret %s\n'  "$SECRET_ID"
     p0_aws secretsmanager put-secret-value \
         --secret-id "$SECRET_ID" \
         --secret-string "file://$secret_file" >/dev/null
@@ -102,7 +112,7 @@ else
         --name "$SECRET_ID" \
         --secret-string "file://$secret_file" >/dev/null
 fi
-rm -f "$secret_file"
+rm -f "$secret_file" "$previous_secret" "$merged_secret"
 unset UKAMA_PASSWORD
 
 SECRET_ARN="$(p0_aws secretsmanager describe-secret \
