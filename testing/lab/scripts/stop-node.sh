@@ -44,4 +44,35 @@ if [ -n "${FACTORY_NODE_ID:-}" ]; then
     done
 fi
 
+if [ -n "${ULAB_KUBECTL:-}" ] && [ -n "${FACTORY_NODE_ID:-}" ]; then
+    MESH_NAMESPACE="${ULAB_MESH_NAMESPACE:-ukama-messaging}"
+    MESH_POD_PREFIX="ukama-mesh-node-${FACTORY_NODE_ID}-"
+
+    if [ ! -x "$ULAB_KUBECTL" ] &&
+       ! command -v "$ULAB_KUBECTL" >/dev/null 2>&1; then
+        echo "stop-node: kubectl not found: $ULAB_KUBECTL" >&2
+        exit 1
+    fi
+
+    if ! MESH_PODS="$("$ULAB_KUBECTL" get pods \
+        -n "$MESH_NAMESPACE" \
+        -o custom-columns=NAME:.metadata.name --no-headers)"; then
+        echo "stop-node: failed to list mesh pods for $FACTORY_NODE_ID" >&2
+        exit 1
+    fi
+
+    MESH_POD="$(printf '%s\n' "$MESH_PODS" |
+        awk -v prefix="$MESH_POD_PREFIX" \
+            'index($0, prefix) == 1 { print; exit }')"
+
+    if [ -n "$MESH_POD" ]; then
+        echo "stop-node: delete mesh pod $MESH_POD"
+        if ! "$ULAB_KUBECTL" delete pod "$MESH_POD" \
+            -n "$MESH_NAMESPACE" --ignore-not-found=true; then
+            echo "stop-node: failed to delete mesh pod $MESH_POD" >&2
+            exit 1
+        fi
+    fi
+fi
+
 exit 0
