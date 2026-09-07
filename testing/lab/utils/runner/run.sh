@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Local controller for disposable EC2 P0 workers.
+# Local controller for disposable EC2 scenario workers.
 # Protocol: tar archives + text files in S3.
 
 set -Eeuo pipefail
@@ -13,13 +13,15 @@ p0_load_config "$SCRIPT_DIR"
 usage() {
     cat <<EOF_USAGE
 usage:
-  $0 [--workers N] [--dry-run] [--batch-id ID] [--scenario PATH ...]
-  $0 [--workers N] [--dry-run] [--batch-id ID] --scenario-list FILE
-  $0 [--workers N] [--dry-run] [--batch-id ID] [category ...]
+  $0 [p0|resilience] [--workers N] [--dry-run] [--batch-id ID] [--scenario PATH ...]
+  $0 [p0|resilience] [--workers N] [--dry-run] [--batch-id ID] --scenario-list FILE
+  $0 [p0|resilience] [--workers N] [--dry-run] [--batch-id ID] [category ...]
   $0 --status BATCH_ID
   $0 --resume BATCH_ID
   $0 --collect BATCH_ID
   $0 --cleanup BATCH_ID
+
+The suite defaults to p0 for existing commands. Select resilience explicitly.
 
 Normal execution packages the current ukama-lab tree and \$UKAMA_REPO,
 launches disposable EC2 workers, displays live status, downloads all results,
@@ -35,9 +37,17 @@ MODE_BATCH_ID=""
 categories=()
 explicit_scenarios=()
 controller_scenario_list=""
+SCENARIO_SUITE=p0
+suite_selected=0
 
 while (($#)); do
     case "$1" in
+        p0|resilience)
+            ((suite_selected == 0)) || p0_die 'select only one scenario suite'
+            SCENARIO_SUITE="$1"
+            suite_selected=1
+            shift
+            ;;
         --workers)
             (($# >= 2)) || p0_die '--workers requires a number'
             WORKERS="$2"
@@ -102,6 +112,8 @@ while (($#)); do
             ;;
     esac
 done
+
+SCENARIO_ROOT="scenarios/$SCENARIO_SUITE"
 
 p0_require_cmd aws
 p0_require_cmd jq
@@ -169,7 +181,7 @@ display_status() {
         printf '\033[2J\033[H'
     fi
 
-    printf 'Ukama distributed P0\n'
+    printf 'Ukama distributed scenarios\n'
     printf 'Batch: %s\n\n' "$batch_id"
     printf '%-10s %-11s %9s %6s %6s %6s  %s\n' \
         WORKER STATE DONE PASS FAIL SKIP CURRENT
@@ -328,7 +340,9 @@ fi
 
 : "${UKAMA_REPO:?set UKAMA_REPO to the local Ukama source tree}"
 [[ -d "$UKAMA_REPO" ]] || p0_die "UKAMA_REPO does not exist: $UKAMA_REPO"
-[[ -d "$LAB_ROOT/scenarios/p0" ]] || p0_die "P0 scenarios not found under $LAB_ROOT"
+[[ -d "$LAB_ROOT/$SCENARIO_ROOT" ]] || p0_die "$SCENARIO_SUITE scenarios not found under $LAB_ROOT"
+[[ -x "$LAB_ROOT/utils/run-scenarios.sh" ]] ||
+    p0_die "missing executable $LAB_ROOT/utils/run-scenarios.sh"
 [[ -x "$LAB_ROOT/bin/ukama-lab" ]] ||
     p0_die "build ukama-lab first; missing executable $LAB_ROOT/bin/ukama-lab"
 
@@ -350,7 +364,7 @@ if [[ -n "${BACKEND_GATEWAY_INSTANCE_ID:-}" ]]; then
 fi
 
 if [[ -z "$BATCH_ID" ]]; then
-    BATCH_ID="$(date -u +%Y%m%dt%H%M%Sz)"
+    BATCH_ID="${SCENARIO_SUITE}-$(date -u +%Y%m%dt%H%M%Sz)-${RANDOM}"
 fi
 p0_validate_simple_id BATCH_ID "$BATCH_ID"
 LOCAL_BATCH_DIR="$(p0_local_batch_root "$LAB_ROOT" "$BATCH_ID")"
@@ -386,10 +400,10 @@ add_scenario_path() {
         p0_die "scenario does not exist: $supplied"
     [[ -f "$absolute" ]] || p0_die "scenario is not a file: $supplied"
     case "$absolute" in
-        "$LAB_ROOT/scenarios/p0/"*.yaml|"$LAB_ROOT/scenarios/p0/"*.yml)
+        "$LAB_ROOT/$SCENARIO_ROOT/"*.yaml|"$LAB_ROOT/$SCENARIO_ROOT/"*.yml)
             ;;
         *)
-            p0_die "scenario must be below scenarios/p0: $supplied"
+            p0_die "scenario must be below $SCENARIO_ROOT: $supplied"
             ;;
     esac
     relative="${absolute#"$LAB_ROOT/"}"
@@ -406,15 +420,15 @@ elif ((${#explicit_scenarios[@]} > 0)); then
     for scenario in "${explicit_scenarios[@]}"; do
         add_scenario_path "$scenario"
     done
-elif ((${#categories[@]} == 0)); then
-    find "$LAB_ROOT/scenarios/p0" -type f \
+elif ((${#categories[@]} == 0)) || [[ "${categories[*]}" == all ]]; then
+    find "$LAB_ROOT/$SCENARIO_ROOT" -type f \
         \( -name '*.yaml' -o -name '*.yml' \) -print |
         sort >"$SCENARIO_LIST.absolute"
 else
     for category in "${categories[@]}"; do
         [[ "$category" =~ ^[a-z0-9-]+$ ]] || p0_die "invalid category: $category"
-        [[ -d "$LAB_ROOT/scenarios/p0/$category" ]] || p0_die "unknown P0 category: $category"
-        find "$LAB_ROOT/scenarios/p0/$category" -type f \
+        [[ -d "$LAB_ROOT/$SCENARIO_ROOT/$category" ]] || p0_die "unknown $SCENARIO_SUITE category: $category"
+        find "$LAB_ROOT/$SCENARIO_ROOT/$category" -type f \
             \( -name '*.yaml' -o -name '*.yml' \) -print
     done | sort -u >"$SCENARIO_LIST.absolute"
 fi
@@ -502,20 +516,25 @@ fi
 
 WORKER_COUNT=$normal_workers
 if ((exclusive_count > 0)); then
-    WORKER_COUNT=$((WORKER_COUNT + 1))
+    # A single requested worker runs both groups in sequence.
+    if ((WORKERS > 1 || WORKER_COUNT == 0)); then
+        WORKER_COUNT=$((WORKER_COUNT + 1))
+    fi
     printf -v worker_id 'worker-%02d' "$WORKER_COUNT"
-    cat "$EXCLUSIVE_LIST" >"$LOCAL_BATCH_DIR/input/shards/$worker_id.txt"
+    cat "$EXCLUSIVE_LIST" >>"$LOCAL_BATCH_DIR/input/shards/$worker_id.txt"
 fi
 ((WORKER_COUNT > 0)) || p0_die 'no worker shards were created'
 
 cat >"$LOCAL_BATCH_DIR/input/manifest.env" <<EOF_MANIFEST
 BATCH_ID=$BATCH_ID
+SCENARIO_SUITE=$SCENARIO_SUITE
 WORKER_COUNT=$WORKER_COUNT
 SCENARIO_COUNT=$SCENARIO_COUNT
 CREATED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 EOF_MANIFEST
 
 {
+    printf 'SCENARIO_SUITE=%q\n' "$SCENARIO_SUITE"
     printf 'AWS_REGION=%q\n' "$AWS_REGION"
     printf 'SECRET_ID=%q\n' "$SECRET_ID"
     printf 'WORKER_TIMEOUT_MINUTES=%q\n' "${WORKER_TIMEOUT_MINUTES:-180}"
@@ -543,6 +562,7 @@ EOF_MANIFEST
 } >"$LOCAL_BATCH_DIR/input/worker.env"
 
 printf '\nBatch: %s\n' "$BATCH_ID"
+printf 'Suite: %s\n' "$SCENARIO_SUITE"
 printf 'Scenarios: %s\n' "$SCENARIO_COUNT"
 printf 'Workers: %s\n' "$WORKER_COUNT"
 for shard in "$LOCAL_BATCH_DIR"/input/shards/*.txt; do
@@ -550,7 +570,7 @@ for shard in "$LOCAL_BATCH_DIR"/input/shards/*.txt; do
         "$(basename "$shard" .txt)" "$(wc -l <"$shard" | tr -d ' ')"
 done
 
-if [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
+if ((DRY_RUN == 0)) && [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
     CREDENTIALS_FILE="${P0_AWS_CREDENTIALS:-$SCRIPT_DIR/credentials.env}"
     [[ -r "$CREDENTIALS_FILE" ]] ||
         p0_die "factory preparation requires $CREDENTIALS_FILE"
@@ -561,8 +581,9 @@ if [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
     printf '\nPreparing factory nodes locally...\n'
     (
         cd "$LAB_ROOT"
+        SCENARIO_ROOT="$SCENARIO_ROOT" \
         ULAB_FACTORY_HEADROOM_PERCENT="${FACTORY_HEADROOM_PERCENT:-10}" \
-        ./utils/run-p0-scenarios.sh \
+        ./utils/run-scenarios.sh "$SCENARIO_SUITE" \
             --scenario-list "$SCENARIO_LIST" \
             --factory-nodes "$FACTORY_NODE_TARGET" \
             --prepare-only \

@@ -94,7 +94,7 @@ skipped="$(jq -r '.skipped' "$COMBINED_JSON")"
 duration="$(jq -r '.duration_sec' "$COMBINED_JSON")"
 
 {
-    printf 'Ukama distributed P0 report\n\n'
+    printf 'Ukama distributed scenario report\n\n'
     printf 'total=%s pass=%s fail=%s skip=%s infra_fail=%s duration_sec=%s\n' \
         "$total" "$passed" "$failed" "$skipped" "$infra_failed" "$duration"
     printf '\nFailed scenarios:\n'
@@ -112,7 +112,7 @@ duration="$(jq -r '.duration_sec' "$COMBINED_JSON")"
 } >"$SUMMARY_TXT"
 
 printf '\n============================================================\n'
-printf 'Distributed P0 summary\n'
+printf 'Distributed scenario summary\n'
 printf '============================================================\n'
 printf '%-7s %-10s %-18s %s\n' RESULT WORKER CATEGORY SCENARIO
 jq -r '.results[] | [

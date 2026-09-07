@@ -228,7 +228,17 @@ export UKAMA_REPO="$WORK_ROOT/ukama"
 git config --global --add safe.directory "$UKAMA_REPO"
 git config --global --add safe.directory "$UKAMA_REPO/.git"
 export LAB_BIN="$LAB_ROOT/bin/ukama-lab"
-export SCENARIO_ROOT="scenarios/p0"
+# Older P0 batches did not record the suite in worker.env.
+SCENARIO_SUITE="${SCENARIO_SUITE:-p0}"
+case "$SCENARIO_SUITE" in
+    p0|resilience)
+        ;;
+    *)
+        write_worker_status FAILED - "unsupported scenario suite: $SCENARIO_SUITE"
+        exit 2
+        ;;
+esac
+export SCENARIO_ROOT="scenarios/$SCENARIO_SUITE"
 export P0_RUNS_DIR="$WORK_ROOT/results"
 export P0_STATUS_FILE="$STATUS_FILE"
 
@@ -241,12 +251,17 @@ TOTAL_SCENARIOS="$(grep -Ev '^[[:space:]]*(#|$)' \
     "$WORK_ROOT/scenarios.txt" | wc -l | tr -d ' ')"
 write_worker_status PREPARING - 'checking worker environment'
 
-if [[ -x "$LAB_ROOT/utils/aws-p0/worker-pre-run.sh" ]]; then
+if [[ -x "$LAB_ROOT/utils/runner/worker-pre-run.sh" ]]; then
     (
         cd "$LAB_ROOT"
-        ./utils/aws-p0/worker-pre-run.sh
+        ./utils/runner/worker-pre-run.sh
     )
 fi
+
+[[ -x "$LAB_ROOT/utils/run-scenarios.sh" ]] || {
+    write_worker_status FAILED - 'utils/run-scenarios.sh is not executable'
+    exit 1
+}
 
 [[ -x "$LAB_BIN" ]] || {
     write_worker_status FAILED - "ukama-lab binary is not executable: $LAB_BIN"
@@ -259,7 +274,7 @@ RUNNER_BATCH_ID="${BATCH_ID}-${WORKER_ID}"
 set +e
 (
     cd "$LAB_ROOT"
-    ./utils/run-p0-scenarios.sh \
+    ./utils/run-scenarios.sh "$SCENARIO_SUITE" \
         --scenario-list "$WORK_ROOT/scenarios.txt" \
         --batch-id "$RUNNER_BATCH_ID" \
         --factory-nodes 0

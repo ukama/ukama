@@ -5,3 +5,7 @@
 scenarios/p0/software-update/*.yaml
 scenarios/p0/data-package/purchase/payment-service-failure-retry.yaml
 scenarios/p0/console/analytics/rollup-retry-idempotency.yaml
+
+# Release promotion is shared by resilience software-update scenarios too.
+scenarios/resilience/software-update/*.yaml
+scenarios/resilience/software-update/*.yml
