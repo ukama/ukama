@@ -7,7 +7,7 @@ set -Eeuo pipefail
 umask 077
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-LAB_ROOT="$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)"
+LAB_ROOT="$(CDPATH= cd -P -- "$SCRIPT_DIR/../.." && pwd)"
 # shellcheck source=lib.sh
 . "$SCRIPT_DIR/lib.sh"
 p0_load_config "$SCRIPT_DIR"
@@ -25,9 +25,10 @@ usage:
   $0 --cleanup BATCH_ID
 
 The scenario suite defaults to p0; use resilience to select resilience scenarios.
-Default: one worker per scenario directory; --workers is a maximum (default 100).
-Directories containing deployment-wide scenarios from exclusive.txt are merged
-onto one final worker and run sequentially. The old gateway is not used.
+Directory groups are distributed across up to --workers N instances (default 100).
+Each directory stays together; workers run their assigned groups sequentially.
+Groups matching exclusive.txt share one final worker. With --workers 1, all
+groups run sequentially on that worker. The old gateway is not used.
 Normal execution packages the current ukama-lab tree and \$UKAMA_REPO,
 launches disposable EC2 workers, displays live status, downloads all results,
 prints the combined report, and terminates any workers still alive.
@@ -379,6 +380,10 @@ fi
 
 : "${UKAMA_REPO:?set UKAMA_REPO to the local Ukama source tree}"
 [[ -d "$UKAMA_REPO" ]] || p0_die "UKAMA_REPO does not exist: $UKAMA_REPO"
+# Compare physical absolute paths so trailing slashes, relative paths and
+# symlinked checkouts cannot bypass the source archive exclusions.
+UKAMA_REPO="$(CDPATH= cd -P -- "$UKAMA_REPO" && pwd)"
+export UKAMA_REPO
 [[ -d "$LAB_ROOT/$SCENARIO_ROOT" ]] || p0_die "$SCENARIO_SUITE scenarios not found under $LAB_ROOT"
 [[ -x "$LAB_ROOT/utils/run-scenarios.sh" ]] ||
     p0_die "missing executable $LAB_ROOT/utils/run-scenarios.sh"
@@ -394,6 +399,7 @@ fi
 LOCAL_BATCH_DIR="$(p0_local_batch_root "$LAB_ROOT" "$BATCH_ID")"
 [[ ! -e "$LOCAL_BATCH_DIR" ]] || p0_die "local batch already exists: $LOCAL_BATCH_DIR"
 mkdir -p "$LOCAL_BATCH_DIR/input/shards"
+LOCAL_BATCH_DIR="$(CDPATH= cd -P -- "$LOCAL_BATCH_DIR" && pwd)"
 
 SCENARIO_LIST="$LOCAL_BATCH_DIR/input/scenarios.txt"
 : >"$SCENARIO_LIST"
@@ -471,44 +477,89 @@ fi
 
 SCENARIO_COUNT="$(wc -l <"$SCENARIO_LIST" | tr -d ' ')"
 ((SCENARIO_COUNT > 0)) || p0_die 'no scenarios selected'
-# One directory per worker; individual scenarios are an optional grouping mode.
-# If a directory contains a deployment-wide exclusive scenario, keep the whole
-# directory on the final exclusive worker. This prevents another scenario in
-# that directory from overlapping the deployment-wide mutation.
+# Keep each group intact and balance normal groups by scenario count.
+# Groups containing shared-state operations stay on one final worker.
 EXCLUSIVE_FILE="${P0_EXCLUSIVE_FILE:-$SCRIPT_DIR/exclusive.txt}"
 python3 - "$SCENARIO_LIST" "$LOCAL_BATCH_DIR/input" "$GROUP_BY" "$WORKERS" "$EXCLUSIVE_FILE" "$SCENARIO_ROOT" <<'PY_GROUPS'
-import collections, fnmatch, pathlib, sys
-paths=pathlib.Path(sys.argv[1]).read_text().splitlines()
-out=pathlib.Path(sys.argv[2]);groups=collections.defaultdict(list)
-patterns=[]
-exclusive_file=pathlib.Path(sys.argv[5])
+import collections
+import fnmatch
+import pathlib
+import sys
+
+paths = pathlib.Path(sys.argv[1]).read_text().splitlines()
+output = pathlib.Path(sys.argv[2])
+group_by = sys.argv[3]
+worker_limit = int(sys.argv[4])
+exclusive_file = pathlib.Path(sys.argv[5])
+scenario_root = sys.argv[6]
+groups = collections.defaultdict(list)
+patterns = []
+
 if exclusive_file.is_file():
     for line in exclusive_file.read_text().splitlines():
-        pattern=line.split('#',1)[0].strip()
+        pattern = line.split('#', 1)[0].strip()
         if pattern:
             patterns.append(pattern)
+
 for path in sorted(set(paths)):
-    rel=pathlib.PurePosixPath(path).relative_to(sys.argv[6])
-    group=str(rel.parent) if sys.argv[3]=='subcategory' else str(rel)
+    relative = pathlib.PurePosixPath(path).relative_to(scenario_root)
+    group = str(relative.parent) if group_by == 'subcategory' else str(relative)
     groups[group].append(path)
-exclusive_groups={group for group, scenarios in groups.items()
-                  if any(fnmatch.fnmatchcase(path, pattern)
-                         for path in scenarios for pattern in patterns)}
-planned=[(group, scenarios) for group, scenarios in sorted(groups.items())
-         if group not in exclusive_groups]
-if exclusive_groups:
-    exclusive=[]
-    for group in sorted(exclusive_groups):
-        exclusive.extend(groups[group])
-    planned.append(('exclusive', sorted(exclusive)))
-if len(planned)>int(sys.argv[4]):
-    sys.exit(f'Selected {len(planned)} workers exceed --workers {sys.argv[4]}; increase the limit or select fewer directories.')
-with (out/'groups.tsv').open('w') as f:
-    f.write('worker\tgroup\tscenarios\n')
-    for i,(group,scenarios) in enumerate(planned,1):
-        worker=f'worker-{i:02d}'
-        (out/'shards'/(worker+'.txt')).write_text('\n'.join(scenarios)+'\n')
-        f.write(f'{worker}\t{group}\t{len(scenarios)}\n')
+
+normal_groups = []
+exclusive_scenarios = []
+for group, scenarios in sorted(groups.items()):
+    exclusive = any(
+        fnmatch.fnmatchcase(path, pattern)
+        for path in scenarios
+        for pattern in patterns
+    )
+    if exclusive:
+        exclusive_scenarios.extend(scenarios)
+    else:
+        normal_groups.append((group, scenarios))
+
+planned = []
+if worker_limit == 1:
+    # Normal groups run first; shared-state scenarios run last.
+    names = [group for group, _ in normal_groups]
+    scenarios = [path for _, paths in normal_groups for path in paths]
+    if exclusive_scenarios:
+        names.append('exclusive')
+        scenarios.extend(exclusive_scenarios)
+    if scenarios:
+        planned.append((names, scenarios))
+else:
+    normal_worker_count = min(
+        len(normal_groups),
+        worker_limit - int(bool(exclusive_scenarios)),
+    )
+    assignments = [[] for _ in range(normal_worker_count)]
+    loads = [0] * normal_worker_count
+
+    # Assign larger groups first to the worker with the fewest scenarios.
+    # Stable tie-breaking makes repeated plans reproducible.
+    for group, scenarios in sorted(normal_groups, key=lambda item: (-len(item[1]), item[0])):
+        index = min(range(normal_worker_count), key=lambda i: (loads[i], i))
+        assignments[index].append((group, scenarios))
+        loads[index] += len(scenarios)
+
+    for assignment in assignments:
+        assignment.sort(key=lambda item: item[0])
+        names = [group for group, _ in assignment]
+        scenarios = [path for _, paths in assignment for path in paths]
+        planned.append((names, scenarios))
+
+    if exclusive_scenarios:
+        planned.append((['exclusive'], exclusive_scenarios))
+
+with (output / 'groups.tsv').open('w') as stream:
+    stream.write('worker\tgroup\tscenarios\n')
+    for index, (names, scenarios) in enumerate(planned, 1):
+        worker = f'worker-{index:02d}'
+        shard = output / 'shards' / f'{worker}.txt'
+        shard.write_text('\n'.join(scenarios) + '\n')
+        stream.write(f"{worker}\t{', '.join(names)}\t{len(scenarios)}\n")
 PY_GROUPS
 WORKER_COUNT=$(( $(wc -l <"$LOCAL_BATCH_DIR/input/groups.tsv") - 1 ))
 ((WORKER_COUNT > 0)) || p0_die 'no worker groups were created'
@@ -590,21 +641,46 @@ fi
 
 printf '\nPackaging current local source trees...\n'
 private_input_excludes=(--exclude='*.ovpn')
-if [[ -n "$VPN_FILE" ]]; then private_input_excludes+=(--exclude="$(basename -- "$VPN_FILE")"); fi
-tar "${private_input_excludes[@]}" --exclude-from="$SCRIPT_DIR/lab-excludes.txt" \
-    -C "$LAB_ROOT" -czf "$LOCAL_BATCH_DIR/input/ukama-lab.tar.gz" .
+if [[ -n "$VPN_FILE" ]]; then
+    private_input_excludes+=(--exclude="$(basename -- "$VPN_FILE")")
+fi
 
-ukama_tar_args=("${private_input_excludes[@]}" --exclude-from="$SCRIPT_DIR/ukama-excludes.txt")
-case "$LAB_ROOT/" in
+lab_tar_args=(
+    "${private_input_excludes[@]}"
+    --exclude-from="$SCRIPT_DIR/lab-excludes.txt"
+)
+ukama_tar_args=(
+    "${private_input_excludes[@]}"
+    --exclude-from="$SCRIPT_DIR/ukama-excludes.txt"
+)
+
+# The lab is packaged separately; omit its entire tree from the Ukama archive.
+if [[ "$LAB_ROOT" != "$UKAMA_REPO" ]]; then
+    case "$LAB_ROOT/" in
+        "$UKAMA_REPO"/*)
+            lab_relative="${LAB_ROOT#"$UKAMA_REPO"/}"
+            ukama_tar_args+=(--exclude="./$lab_relative")
+            ;;
+    esac
+fi
+
+# Also exclude this batch explicitly, including custom LOCAL_RUNS_DIR paths.
+# Neither archive may contain its own output or the other source archive.
+case "$LOCAL_BATCH_DIR/" in
+    "$LAB_ROOT"/*)
+        batch_relative="${LOCAL_BATCH_DIR#"$LAB_ROOT"/}"
+        lab_tar_args+=(--exclude="./$batch_relative")
+        ;;
+esac
+case "$LOCAL_BATCH_DIR/" in
     "$UKAMA_REPO"/*)
-        lab_relative="${LAB_ROOT#"$UKAMA_REPO"/}"
-        ukama_tar_args+=(
-            --exclude="$lab_relative"
-            --exclude="$lab_relative/**"
-        )
+        batch_relative="${LOCAL_BATCH_DIR#"$UKAMA_REPO"/}"
+        ukama_tar_args+=(--exclude="./$batch_relative")
         ;;
 esac
 
+tar "${lab_tar_args[@]}" \
+    -C "$LAB_ROOT" -czf "$LOCAL_BATCH_DIR/input/ukama-lab.tar.gz" .
 tar "${ukama_tar_args[@]}" \
     -C "$UKAMA_REPO" -czf "$LOCAL_BATCH_DIR/input/ukama.tar.gz" .
 cp "$SCRIPT_DIR/worker.sh" "$LOCAL_BATCH_DIR/input/worker.sh"
