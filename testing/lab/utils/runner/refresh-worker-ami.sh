@@ -220,4 +220,4 @@ printf 'Saved in:       %s\n' "$P0_AWS_STATE"
 printf 'Builder:        %s (will now be terminated)\n' "$BUILDER_ID"
 printf '========================================\n'
 printf '\nRun all P0 scenarios with:\n'
-printf '  ./utils/aws-p0/run.sh --workers 20\n'
+printf '  ./utils/runner/run.sh --workers 20\n'
