@@ -5,20 +5,14 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-# Run P0 scenarios sequentially and aggregate their reports.
-#
-# With no category arguments, every top-level directory under scenarios/p0
-# is discovered and run recursively. Scenario status is still respected by
-# ukama-lab: active/xfail scenarios run, while wip/skip scenarios are reported
-# as skipped without provisioning a world.
+# Run a selected scenario suite sequentially and aggregate its reports.
 #
 # Usage:
-#   ./utils/run-p0-scenarios.sh
-#   ./utils/run-p0-scenarios.sh console sites
-#   ./utils/run-p0-scenarios.sh console/sites data-package/allocation
-#   ./utils/run-p0-scenarios.sh software-update/tc-045-software-app-fields.yaml
-#   ./utils/run-p0-scenarios.sh --factory-nodes auto
-#   ./utils/run-p0-scenarios.sh --list
+#   ./utils/run-scenarios.sh p0 --list
+#   ./utils/run-scenarios.sh resilience/allocation --factory-nodes auto
+#   ./utils/run-scenarios.sh resilience billing sim --fail-fast
+#
+# The execution and report implementation below is retained from the P0 runner.
 
 set -uo pipefail
 
@@ -38,9 +32,11 @@ export ULAB_CDR_DIAG_DISABLE="${ULAB_CDR_DIAG_DISABLE:-1}"
 
 usage() {
     cat <<EOF_USAGE
-usage: $0 [options] [selector ...]
+usage: $0 <p0|resilience|resilience-hooks>[/selector] [options] [selector ...]
 
-With no selectors, every P0 scenario below SCENARIO_ROOT is run.
+Select a suite first, optionally with a category or YAML path after a slash.
+Examples: resilience/allocation, p0/billing, or resilience billing sim.
+With no selectors, every scenario below SCENARIO_ROOT is run.
 Selectors are paths relative to SCENARIO_ROOT and may name a top-level
 category, a nested directory, or one scenario YAML file. Examples:
   console
@@ -48,7 +44,7 @@ category, a nested directory, or one scenario YAML file. Examples:
   data-package/allocation
   site/operations
   software-update/tc-045-software-app-fields.yaml
-Use "all" to select the complete P0 suite.
+Use "all" to select the complete selected suite.
 
 Options:
   --factory-nodes auto       Ensure enough complete bundles for runnable scenarios
@@ -71,7 +67,7 @@ Environment overrides:
                              Auto-mode safety margin (default: 10)
   ULAB_FACTORY_SEED_URL      Factory URL used to generate node sets
   P0_RUNS_DIR                Parent directory for batch results
-  SCENARIO_ROOT              P0 scenario root (default: scenarios/p0)
+  SCENARIO_ROOT              Scenario root (default: scenarios/<suite>)
   LAB_BIN                    ukama-lab executable (default: ./bin/ukama-lab)
   P0_STATUS_FILE             Optional live worker status TSV
 EOF_USAGE
@@ -87,15 +83,51 @@ require_env() {
     fi
 }
 
+# Select the scenario tree before parsing the existing runner options.
+# Both "resilience allocation" and "resilience/allocation" are accepted.
+case "${1:-}" in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+
+    p0|resilience|resilience-hooks)
+        suite="$1"
+        shift
+        ;;
+
+    p0/*|resilience/*|resilience-hooks/*)
+        selection="$1"
+        suite="${selection%%/*}"
+        selector="${selection#*/}"
+        shift
+
+        if [[ -n "$selector" ]]; then
+            set -- "$selector" "$@"
+        fi
+        ;;
+
+    *)
+        usage >&2
+        exit 2
+        ;;
+esac
+
+# Catalog rename scenarios need a unique suffix for each invocation.
+if [[ "$suite" == resilience* && -z "${ULAB_RESILIENCE_NAME_SUFFIX:-}" ]]; then
+    name_timestamp="$(date -u +%Y%m%dt%H%M%Sz)"
+    export ULAB_RESILIENCE_NAME_SUFFIX="${name_timestamp}-$$-$RANDOM"
+fi
+
 LAB_BIN="${LAB_BIN:-./bin/ukama-lab}"
-SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/p0}"
+SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/$suite}"
 UKAMA_REPO="${UKAMA_REPO:-}"
 BFF_GRAPHQL_URL="${UKAMA_LAB_BFF:-${BFF_BASE_URL%/}/gateway/graphql}"
 WAREHOUSE_URL="${UKAMA_LAB_WAREHOUSE_URL:-http://warehouse-ukama.udev.ukama.com}"
 FACTORY_URL_FOR_LAB="${UKAMA_LAB_FACTORY_URL:-http://factory-ukama.udev.ukama.com}"
 FACTORY_SEED_URL="${ULAB_FACTORY_SEED_URL:-https://factory-ukama.udev.ukama.com}"
 SIM_TYPE="${UKAMA_LAB_SIM_TYPE:-ukama_data}"
-P0_RUNS_DIR="${P0_RUNS_DIR:-runs/p0-batches}"
+P0_RUNS_DIR="${P0_RUNS_DIR:-runs/$suite-batches}"
 FACTORY_NODE_TARGET="${ULAB_FACTORY_NODE_COUNT:-0}"
 FACTORY_HEADROOM_PERCENT="${ULAB_FACTORY_HEADROOM_PERCENT:-10}"
 LIST_ONLY=0
