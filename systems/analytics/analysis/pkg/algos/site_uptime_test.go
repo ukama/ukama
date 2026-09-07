@@ -158,10 +158,21 @@ func TestSiteUptimePerWindow(t *testing.T) {
 			wantSum: 0,
 		},
 		{
-			name:    "a node with no series at all is down — a missed KPI is downtime",
+			name:    "a node with no series at all is up — silence is not evidence",
 			nodes:   tnode,
 			health:  []map[string]interface{}{health("t1", true, true, "on")},
 			com:     []map[string]interface{}{alive("some-other-node")},
+			wantSum: 100,
+		},
+		{
+			name:    "a node with no series and no health row is up — a freshly onboarded site starts at 100",
+			nodes:   tnode,
+			wantSum: 100,
+		},
+		{
+			name:    "a node with no series is still down when a health flag says so",
+			nodes:   tnode,
+			health:  []map[string]interface{}{health("t1", true, false, "on")},
 			wantSum: 0,
 		},
 		{

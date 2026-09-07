@@ -201,9 +201,10 @@ func classifySites(in Datasets, lookback float64, kpi string) (map[string]*siteA
 		}
 
 		nodeID := str(node["node_id"])
+		gain, seen := gainByNode[nodeID]
 
 		agg.observe(nodeUptimePercent(nodeType, healthByNode[nodeID],
-			gainByNode[nodeID], lookback))
+			gain, seen, lookback))
 	}
 
 	return sites, nil
@@ -220,12 +221,18 @@ func isSiteNodeType(nodeType string) bool {
 // since an unavailable interface means the node was not serving however alive
 // its counter looked.
 //
+// A node with no uptime series in the window (seen == false) is up: uptime is
+// 100 by default and only comes down on evidence of failure, and a series that
+// has not appeared yet — a node still commissioning, a sanitizer that has not
+// picked it up — is silence, not evidence. A series that IS present with no
+// gain is a stalled counter, which is evidence.
+//
 // radio.state is not read: uptime tracks interface AVAILABILITY, so a radio
 // that is available but switched off is still up. Neither is node lifecycle
 // state or node-gateway reachability — the node's own counter is the
 // authority on whether it is alive.
 func nodeUptimePercent(nodeType string, h map[string]interface{},
-	gain float64, lookback float64) float64 {
+	gain float64, seen bool, lookback float64) float64 {
 	if flagIsFalse(h, "radio_available") {
 		return 0
 	}
@@ -234,6 +241,10 @@ func nodeUptimePercent(nodeType string, h map[string]interface{},
 	// "cellular": null, so the field never reaches its row.
 	if nodeType == nodeTypeTower && flagIsFalse(h, "cellular_available") {
 		return 0
+	}
+
+	if !seen {
+		return 100
 	}
 
 	if lookback <= 0 {
@@ -276,8 +287,9 @@ func flagIsFalse(h map[string]interface{}, key string) bool {
 }
 
 // indexUptimeGainByNode folds the com (tnode + cnode) and ctl (anode) series
-// into one node_id -> seconds-gained map. A node absent from the map gained
-// nothing, the same as one whose counter stalled: both read as downtime.
+// into one node_id -> seconds-gained map. Membership records that the node
+// had a series in the window at all: a node absent from the map has reported
+// nothing, which is not the same as one present with a stalled counter.
 func indexUptimeGainByNode(sets ...[]map[string]interface{}) map[string]float64 {
 	out := map[string]float64{}
 
@@ -288,9 +300,11 @@ func indexUptimeGainByNode(sets ...[]map[string]interface{}) map[string]float64 
 				continue // a series without its node label is unattributable
 			}
 
-			// A node belongs to exactly one of the two series; if it somehow
+			// Every row records the node as seen, whatever its gain. A node
+			// belongs to exactly one of the two series; if it somehow
 			// appears in both, the larger gain counts.
-			if gain := uptimeGain(row["value"]); gain > out[nodeID] {
+			gain := uptimeGain(row["value"])
+			if prev, ok := out[nodeID]; !ok || gain > prev {
 				out[nodeID] = gain
 			}
 		}

@@ -9,8 +9,10 @@
 # L is the window length floored at 60s — `increase` needs its range to span
 # several scrape intervals. Ingest pulls each node's uptime counter as
 # `increase` over that range, so the value is seconds of uptime gained over it:
-# ~L for a node up throughout, 0 for one whose counter stalled or never
-# reported. Below the floor consecutive windows overlap.
+# ~L for a node up throughout, 0 for one whose counter stalled. A node with no
+# series in the window at all reads 100: uptime is 100 by default and only
+# comes down on evidence, and a series that has not appeared yet (a site still
+# onboarding) is not evidence. Below the floor consecutive windows overlap.
 #
 # Taking the minimum collapses to "any node down means the site is down"
 # whenever the per-node values are 0 or 100. A site carrying no tnode/anode/
