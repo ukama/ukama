@@ -51,11 +51,8 @@ type PullSpec struct {
 	Params   map[string]string `yaml:"params"`
 	Items    string            `yaml:"items"` // path to result array; "$" = bare array
 	// Entity is the mapped field used as the entity key (snapshots). A
-	// comma-separated list builds a composite key (field values joined with
-	// "|") for sources where no single field identifies the entity — e.g. one
-	// Prometheus series per iccid×package×site. A component suffixed with
-	// "?" is optional: it contributes an empty component when absent rather
-	// than failing the pull.
+	// comma-separated list builds a composite key (values joined with "|");
+	// a component suffixed with "?" is optional.
 	Entity    string            `yaml:"entity"`
 	ForEach   *ForEachSpec      `yaml:"for_each"`
 	Map       map[string]string `yaml:"map"` // field -> $.path into each item
@@ -133,12 +130,9 @@ type KpiSpec struct {
 	Params map[string]string `yaml:"params"`
 }
 
-// DefaultReadOp is the aggregation the query planner computes for this KPI
-// when the caller does not override it:
-// flow → SUM; gauge ratios → AVG (weighted); additive gauges → LAST
-// (current level; folded across scopes as a sum of latest values).
-// Every op is computable at read time from a rollup row's components
-// (Sum/Count/Min/Max/Last) — nothing is materialized per op.
+// DefaultReadOp is the aggregation the query planner uses when the caller
+// does not override it: flow -> SUM; gauge ratios -> AVG (weighted); additive
+// gauges -> LAST (folded across scopes as a sum of latest values).
 func (k KpiSpec) DefaultReadOp() string {
 	if k.Kind == KindGauge {
 		if k.ScopeAgg == ScopeAggAvg {

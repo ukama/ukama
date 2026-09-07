@@ -16,24 +16,14 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// DataUsage stores bytes consumed IN the window, per Prometheus series of the
-// metrics system's cumulative data_usage counter:
+// DataUsage stores bytes consumed in the window per data_usage series:
 //
-//	increment = clamp₀(counter now − counter as of the previous window)
+//	increment = clamp0(counter now - counter as of the previous window)
 //
-// reading metrics.data_usage.last twice — mode state (as of this window) and
-// mode state_prev (as of the previous one). Increments telescope, so any span
-// rollup is an exact SUM under any read-time filter or group_by fold. Rows
-// carry Value = Sum = increment, Count = 1.
-//
-// Edges:
-//   - params.first_value "count" counts a series' first observed value as
-//     consumption; "baseline" (the default) records it as baseline only.
-//   - Idle series stay in /v1/last and emit explicit 0 rows, never a gap.
-//   - Counter reset (cur < prev) clamps to 0; the pre-reset residual is lost.
-//
-// package_id is the CATALOG package (cdr's `dataplan` label, renamed at
-// ingest); sim_package_id is the sim's assignment instance.
+// Rows carry Value = Sum = increment, Count = 1, so any span is an exact SUM.
+// params.first_value "count" counts a series' first value as consumption;
+// "baseline" (default) records it as baseline only. Idle series emit 0 rows;
+// a counter reset clamps to 0.
 func DataUsage(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	usage, ok := in["usage"]
 	if !ok {

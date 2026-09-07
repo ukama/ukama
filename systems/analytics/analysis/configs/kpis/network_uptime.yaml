@@ -1,13 +1,8 @@
-# NETWORK_UPTIME (%): the share of the network's sites that were up.
+# NETWORK_UPTIME (%): sites up / site count x 100, with the same per-site
+# check as SITE_UPTIME.
 #
-#   network % = sites up / site count x 100
-#
-# Same per-site check as SITE_UPTIME (UP = 100, DOWN = 0), pooled over every
-# site the network has. Per window each network emits Sum = the total of its
-# sites' values and Count = its site count, so the aggregator's AVG spans
-# every (site, window) pair rather than averaging per-site averages: each
-# site is weighted by the site-time it lost, and a site that joined mid-span
-# counts only for the windows it existed for.
+# Per window: Sum = total of the sites' values, Count = site count, so the
+# aggregator's AVG is weighted by (site, window) pairs.
 kpi: NETWORK_UPTIME
 domain: network
 algo: network_uptime@v3

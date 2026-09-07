@@ -1,10 +1,6 @@
 # PAID_CUSTOMERS: distinct SIMs with a settled payment month-to-date, per
-# network (state gauge; read with op=LAST, monthly trend = "+N this month").
-# A customer may buy several packages against one SIM (several payments), so we
-# dedupe by the SIM id carried in the payment metadata rather than by
-# per-transaction payer contact fields. The SIM is joined to
-# subscriber.sim.list to attribute the paying customer to a network; SIMs that
-# can't be resolved land in the org bucket (empty scope).
+# network (state gauge; read with op=LAST). The SIM is attributed to a network
+# via subscriber.sim.list; unresolvable SIMs land in the org bucket.
 kpi: PAID_CUSTOMERS
 domain: business
 algo: paid_customers@v1

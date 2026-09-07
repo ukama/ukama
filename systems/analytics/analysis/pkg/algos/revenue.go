@@ -19,25 +19,14 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Revenue KPIs from settled payments (payments.processor.list). A payment
-// record carries no network field, only the paying SIM in its metadata, so we
-// attribute revenue to a network by joining the SIM to subscriber.sim.list
-// (sim_id -> network_id). Payments whose SIM can't be resolved to a network
-// land in the org bucket (empty scope), so no revenue is lost.
-//
-// REVENUE is one KPI with exact components, so the aggregator ops cover
-// three dashboard cards at every span:
-//   op=SUM   -> revenue collected (cents)
-//   op=COUNT -> number of purchases
-//   op=AVG   -> average purchase value (weighted, exact)
+// Revenue KPIs from settled payments. A payment carries only the paying SIM,
+// so it is attributed to a network via subscriber.sim.list; an unresolvable
+// SIM lands in the org bucket (empty scope). Read with op=SUM (collected),
+// COUNT (purchases) or AVG (average purchase).
 
 // Revenue (REVENUE @ scope network_id): payments that became settled in this
-// window, grouped by the network their SIM belongs to. Value = collected
-// cents; components carry count and per-payment min/max. Known networks are
-// zero-filled so a network with no sales reads $0 rather than "-".
-//
-// Settlement is a state transition (settled now, not settled one window ago)
-// rather than paid_at falling in the window, so each payment counts once.
+// window (a state transition against the previous window, so each counts
+// once), per network. Value = cents collected; zero-filled per network.
 func Revenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {
@@ -157,15 +146,9 @@ func newlySettled(current, previous []map[string]interface{}) []map[string]inter
 	return out
 }
 
-// PaidCustomers (PAID_CUSTOMERS @ scope network_id): distinct SIMs with at
-// least one settled payment month-to-date (month of the window, UTC — matches
-// the aggregator's monthly span with the default UTC rollup timezone), grouped
-// by the network the SIM belongs to. A customer can buy several packages
-// (several payments) against the same SIM, so we dedupe by SIM id (from the
-// payment's metadata) rather than counting payments or per-transaction payer
-// contact fields. SIMs that can't be mapped to a network land in the org
-// bucket. State gauge: read with op=LAST; the monthly trend gives "+N this
-// month".
+// PaidCustomers (PAID_CUSTOMERS @ scope network_id): distinct SIMs with a
+// settled payment month-to-date (UTC month of the window), per network.
+// State gauge: read with op=LAST.
 func PaidCustomers(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	payments, ok := in["payments"]
 	if !ok {

@@ -8,18 +8,10 @@
 
 package rest
 
-// ScopeParams are the generic scope filters accepted by the KPI read
-// endpoints. Every non-empty param becomes a scope filter key; the
-// aggregator validates keys against the requested KPIs' scope dimensions
-// (400 on a key no requested KPI carries — never a silent empty result).
-//
-// Filtering also sets the answer's grain: for component ops (SUM/COUNT/AVG/
-// MIN/MAX) matching rows are folded into one row per distinct combination
-// of the filter keys — DATA_USAGE?network_id=X returns ONE total for the
-// network, not one row per sim-series. No group_by needed for that.
-//
-// package_id is the CATALOG package (data plan product); sim_package_id is
-// a sim's package assignment instance.
+// ScopeParams are the scope filters accepted by the KPI read endpoints. Every
+// non-empty param becomes a filter key, validated against the requested KPIs'
+// scopes (400 on an unknown key). Filtering also sets the answer's grain:
+// rows fold to one per distinct combination of the filter keys.
 type ScopeParams struct {
 	NetworkId    string `form:"network_id" query:"network_id"`
 	SiteId       string `form:"site_id" query:"site_id"`

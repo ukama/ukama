@@ -474,17 +474,9 @@ func (s *AggregatorServer) lookupKpi(key string) (schema.KpiSpec, bool) {
 	return kpi, ok
 }
 
-// knownKpis filters requested keys down to the ones this deployment actually
-// has a spec for. An unknown key is SKIPPED, not fatal: a caller asks for one
-// list of keys to fill a whole tile row, so failing the request over a KPI
-// that is not deployed here would blank every other tile alongside
-// it. Consumers already degrade a missing value to "—", which is the intended
-// contract. Single-key endpoints keep the NotFound — there, the unknown key is
-// the entire answer.
-//
-// If NO key resolves there is nothing to degrade to, and every later check
-// (scope validation above all) would report the empty spec set as if the
-// caller's filters were wrong — so that case is an explicit error.
+// knownKpis filters requested keys down to those with a spec. An unknown key
+// is skipped so one undeployed KPI does not blank a whole tile row; if no key
+// resolves that is an error.
 func (s *AggregatorServer) knownKpis(keys []string) ([]schema.KpiSpec, error) {
 	out := make([]schema.KpiSpec, 0, len(keys))
 

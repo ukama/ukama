@@ -1,31 +1,19 @@
-# SITE_UPTIME (%): one availability check per window, the way check-based
-# monitors compute uptime.
+# SITE_UPTIME (%): one availability check per window.
 #
-#   node = DOWN if a health flag is reported false: interfaces.cellular.available
-#          (service; tnode only, as the anode reports "cellular": null) or
-#          interfaces.radio.available. Otherwise DOWN if its uptime counter did
-#          not advance during the window, UP if it did.
-#   site = UP (100) if every tnode/anode/cnode is UP, else DOWN (0)
+#   node = DOWN if a health flag is reported false (interfaces.radio.available;
+#          interfaces.cellular.available on the tnode only), or if its uptime
+#          counter did not advance during the window. UP otherwise — including
+#          when it has no series yet: uptime is 100 by default and only comes
+#          down on evidence.
+#   site = 100 if every tnode/anode/cnode is UP, else 0. A site with none of
+#          those reads 100; an hnode is ignored.
 #
-# Ingest pulls each node's uptime counter as `increase` over the window
-# (floored at 60s so the range spans several scrape intervals), so the value
-# is the seconds it gained: > 0 for a live node, 0 for one whose counter
-# stalled — the pushgateway keeps serving a dead node's last value. A node
-# with no series in the window at all reads UP: uptime is 100 by default and
-# only comes down on evidence, and a series that has not appeared yet (a site
-# still onboarding) is not evidence. A site carrying no tnode/anode/cnode
-# reads 100; an hnode is ignored.
-#
-# The window is the check interval, so it is also the resolution: an outage
-# that does not stop the counter for a whole window is not seen. There is no
-# planned/unplanned distinction. radio.state is not read — uptime tracks
-# interface availability, so a radio that is available but switched off is
-# still up. Node lifecycle state and node-gateway reachability are not read
-# either: the node's own counter is the authority.
+# The window is the check interval and therefore the resolution. radio.state,
+# node lifecycle state and node-gateway reachability are not read: the node's
+# own counter is the authority.
 #
 # Per window: Sum = 100 or 0, Count = 1, so the aggregator's AVG is the share
-# of windows the site was up for in any span. Query with op=AVG at
-# daily/weekly/monthly or last_24h/last_7d/last_30d.
+# of windows the site was up for. Query with op=AVG.
 kpi: SITE_UPTIME
 domain: network
 algo: site_uptime@v3

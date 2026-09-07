@@ -1,9 +1,6 @@
-# SITES_ONLINE: sites per network where every tnode, anode and cnode is
-# connectivity == Online AND state == Operational — judged only on the registry
-# (no health report or metric). Any other state means the node is not yet, or
-# no longer, serving. A site carrying none of those node types is not online;
-# any other node type attached to it (hnode) is ignored rather than allowed to
-# drag it offline.
+# SITES_ONLINE: sites per network whose every tnode/anode/cnode has
+# connectivity Online and state Operational in the registry. A site with none
+# of those types is not online; an hnode is ignored.
 kpi: SITES_ONLINE
 domain: network
 algo: sites_online@v3

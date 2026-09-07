@@ -127,12 +127,8 @@ func entityKey(row map[string]interface{}, fallback string) string {
 }
 
 // NewlyObserved returns the rows of `current` whose entity is absent from
-// `previous` — the counting primitive for flow KPIs. An entity lands in the
-// diff for exactly one window, so each fact counts once however many windows
-// were skipped, and a content change is not a new entity.
-//
-// Limitation: an entity tombstoned then restored counts again; the diff only
-// knows the previous window.
+// `previous`: each entity lands in the diff for exactly one window, so flow
+// KPIs count each fact once. An entity tombstoned then restored counts again.
 func NewlyObserved(current, previous []map[string]interface{}, idField string) []map[string]interface{} {
 	seen := make(map[string]bool, len(previous))
 

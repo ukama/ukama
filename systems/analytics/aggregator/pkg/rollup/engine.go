@@ -19,13 +19,10 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Engine materializes calendar-span rollups from kpi_windows components.
-//
-// One row per (kpi, scope, span, span_start) — schema.RollupRowOp — carrying
-// the folded components (Sum/Count/Min/Max/Last). Every aggregation,
-// group_by fold and trend is computed at READ time from these components;
-// nothing is precomputed per op and no trend state is stored. Recomputation
-// is idempotent (upserts).
+// Engine materializes calendar-span rollups from kpi_windows components: one
+// row per (kpi, scope, span, span_start) carrying Sum/Count/Min/Max/Last.
+// Every aggregation and trend is computed at read time from these;
+// recomputation is idempotent.
 type Engine struct {
 	grid    schema.Grid
 	kpis    map[string]schema.KpiSpec

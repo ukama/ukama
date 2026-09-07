@@ -18,12 +18,9 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 )
 
-// Package KPIs. Shared conventions:
-//   - A package applies to a network when its network_id equals the
-//     network's id OR is empty (org-level package).
-//   - Money is integer org-currency cents (source amounts are float64).
-//   - Revenue here is a SALES PROXY: assignments × package price. Settled
-//     payment revenue comes later from billing/payments sources.
+// Package KPIs. A package applies to a network when its network_id matches
+// or is empty (org-level). Money is integer org-currency cents. Revenue here
+// is a sales proxy (assignments x package price), not settled payments.
 
 // pkgInfo is the decoded package catalog entry.
 type pkgInfo struct {
@@ -78,11 +75,8 @@ func (p pkgInfo) mrrCents() float64 {
 }
 
 // PackageSales (PACKAGE_SALES @ scope network_id+package_id): sim-package
-// assignments that first became visible in this window. Daily SUM = sold
-// that day. No zero-fill: absent scope rows read as 0 in SUM rollups.
-//
-// Bucketed by first observation, not created_at, so each assignment counts
-// once whichever windows the ingest pulled. See NewlyObserved.
+// assignments first observed in this window (see NewlyObserved), so each
+// counts once. No zero-fill.
 func PackageSales(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	assignments, ok := in["sim_packages"]
 	if !ok {
@@ -142,12 +136,8 @@ func PackageRevenue(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Resu
 }
 
 // DataSold (DATA_SOLD @ scope network_id): bytes of package data allowance
-// SOLD in the window — sum over sim-package assignments whose start_date
-// falls in the window of the assigned package's data volume converted to
-// bytes, grouped by network. This is a SALES proxy (allowance purchased),
-// distinct from USAGE_BY_NETWORK which measures data actually consumed.
-// Zero-filled across networks so the daily/monthly SUM series stays
-// continuous.
+// sold in the window — the data volume of every package assigned in it, per
+// network. Allowance purchased, not data consumed. Zero-filled per network.
 func DataSold(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	packages, err := decodePackages(in)
 	if err != nil {
@@ -211,14 +201,10 @@ func Mrr(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) 
 	}), nil
 }
 
-// Arpu (ARPU @ scope network_id): committed spend ÷ distinct subscribers
-// holding an active assignment, per network. Committed spend is the sum of the
-// package's ACTUAL price (not the 30-day-normalized MRR figure) over every
-// currently-active assignment, so a $1 plan bought by one subscriber reads $1
-// regardless of the plan's duration — a per-user spend, not a monthly
-// run-rate. The denominator matches CUSTOMERS_ON_PLAN (distinct subscribers on
-// any active plan) so ARPU × customers reconciles to committed spend. State
-// gauge; networks with no active subscriber read $0.
+// Arpu (ARPU @ scope network_id): sum of the actual price of every active
+// assignment / distinct subscribers with an active assignment, per network.
+// A per-user spend, not a monthly run-rate; the denominator matches
+// CUSTOMERS_ON_PLAN. State gauge; networks with no active subscriber read 0.
 func Arpu(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	packages, err := decodePackages(in)
 	if err != nil {

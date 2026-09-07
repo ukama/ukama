@@ -1,18 +1,10 @@
-# Metrics source spec: the metrics system's api-gateway is the source of truth
-# for data usage (cdr pushes data_usage to pushgateway; Prometheus scrapes it;
-# /v1/last re-exposes the latest sample per series).
+# Metrics source spec: series from the metrics system's Prometheus via
+# /v1/last (one unfiltered pull per window, every series' last sample within
+# the lookback, labels intact).
 #
-# ONE unfiltered pull per window — never fan out per network/sim. /v1/last
-# returns an instant vector: every series' last sample within the lookback,
-# unaggregated, labels intact. Idle sims still report their last value, so
-# zero-fill comes free.
-#
-# The counter is CUMULATIVE; analysis derives per-window increments against
-# the previous window's state (mode: state_prev).
-#
-# Label rename on map: cdr's `dataplan` is the CATALOG package id -> package_id
-# (what package_id means everywhere else in analytics), while cdr's `package`
-# is the sim's package ASSIGNMENT id -> sim_package_id.
+# data_usage is a cumulative counter; analysis derives per-window increments
+# (mode: state_prev). cdr's `dataplan` label is the catalog package
+# (package_id) and its `package` label the sim's assignment (sim_package_id).
 version: 1
 source: metrics
 system: metrics
@@ -22,13 +14,10 @@ pulls:
     endpoint: /v1/last/metrics/data_usage
     strategy: full_snapshot
     items: $.data.result
-    # One Prometheus series = one change-log entity; iccid alone would
-    # collapse series spanning assignments, sites or concurrent sessions.
-    # session_id is optional (`?`) for series pushed without the label.
+    # One series = one entity; session_id is optional (`?`).
     entity: iccid,sim_package_id,site_id,session_id?
     params:
-      # 30m >> the 5m window W: survives scrape gaps without resurrecting
-      # long-dead series the way the 7d default would.
+      # Survives scrape gaps without resurrecting long-dead series.
       lookback: 30m
     map:
       network_id: $.metric.network
@@ -36,38 +25,22 @@ pulls:
       package_id: $.metric.dataplan
       sim_package_id: $.metric.package
       iccid: $.metric.iccid
-      # Series identity only: the algo sums sessions into the scope, and
-      # session is never a KPI dimension.
+      # Series identity only; never a KPI dimension.
       session_id: $.metric.session
       # Prometheus sample pair [ts, "value"].
       value: $.value
 
-  # Node liveness for SITE_UPTIME / NETWORK_UPTIME. The sanitizer republishes
-  # each node's system uptime counter with node_id/site/network appended:
+  # Node liveness for SITE_UPTIME / NETWORK_UPTIME: each node's system uptime
+  # counter, republished by the sanitizer with node_id/site/network labels.
   # com_node_uptime covers the tnode and cnode, ctl_node_uptime the anode.
   #
-  # The counter gains one second per second of wall clock, so `increase` over
-  # the window is > 0 for a node that was alive during it — the algo's one
-  # availability check per window. A node that stopped reporting holds its
-  # last value in the pushgateway, so its increase is 0 — stalled reads as
-  # down without waiting on a staleness marker. `increase` rather than `delta`
-  # because it corrects for counter resets: a window containing a reboot would
-  # otherwise go negative.
-  #
-  # strategy: window, not full_snapshot — this measures a window rather than
-  # state as of one, and carrying the last value forward would let a single
-  # failed pull replay one reading across every window behind it.
-  #
-  # lookback is the window length floored at 60s: `increase` needs its range to
-  # span several scrape intervals, and the pushgateway is scraped every 10s. A
-  # 10s range holds one sample (Prometheus drops the series) or two identical
-  # ones (increase 0).
-  #
-  # time is the window end, so retry, catchup and replay evaluate the same
-  # range.
-  #
-  # site_id/network_id are the sanitizer's labels, kept for traceability; site
-  # membership comes from registry.node.list, which also covers dark nodes.
+  # `increase` over the window is > 0 for a live node and 0 for one whose
+  # counter stalled (the pushgateway keeps serving its last value); it also
+  # corrects for counter resets. strategy: window so a failed pull reads as
+  # missing rather than replaying the last value. lookback is floored at 60s
+  # so the range spans several 10s scrapes; time is the window end so retries
+  # evaluate the same range. Site membership comes from registry.node.list,
+  # not from these labels.
   - key: metrics.com_uptime.last
     endpoint: /v1/last/metrics/com_uptime
     strategy: window
@@ -81,7 +54,7 @@ pulls:
       node_id: $.metric.node_id
       site_id: $.metric.site
       network_id: $.metric.network
-      # Prometheus sample pair [ts, "value"]: seconds gained over the window.
+      # Prometheus sample pair [ts, "value"].
       value: $.value
 
   - key: metrics.ctl_uptime.last
@@ -99,16 +72,9 @@ pulls:
       network_id: $.metric.network
       value: $.value
 
-  # SIM counts per network for ACTIVE_CUSTOMERS / CUSTOMERS. sim-manager
-  # recounts from its DB and pushes an absolute gauge per network on every sim
-  # lifecycle change, so the series is a level, not a counter: `last` over the
-  # lookback is the current count. ONE unfiltered pull per window — the
-  # `network` label splits it, never a fan-out.
-  #
-  # 30m matches the data_usage pull: the pushgateway holds the last pushed
-  # value and Prometheus scrapes it every 10s, so a network with no sim
-  # activity still reports. A network whose series is absent entirely is
-  # zero-filled by the algo from registry.network.getAll.
+  # SIM counts per network for ACTIVE_CUSTOMERS / CUSTOMERS: absolute gauges
+  # pushed by sim-manager on every sim lifecycle change, so `last` is the
+  # current count. A network with no series is zero-filled by the algo.
   - key: metrics.active_sims.last
     endpoint: /v1/last/metrics/active_sims
     strategy: full_snapshot

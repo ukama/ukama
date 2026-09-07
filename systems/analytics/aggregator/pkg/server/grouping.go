@@ -20,17 +20,9 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// Read-time scope folding.
-//
-// Fine-grained KPIs (DATA_USAGE is scoped per network×site×package×
-// assignment×iccid series) would otherwise answer "usage of network X" with
-// N per-series rows. Folding aggregates rows' persisted COMPONENTS
-// (Sum/Count/Min/Max/Last) — the same exact fold the rollup engine applies
-// across windows, so AVG stays weighted (Σsum/Σcount), never an average of
-// averages, and LAST folds as the sum of each member's latest level (the
-// additive-gauge cross-scope semantics). The grain is always
-// (filter keys ∩ kpi scope) ∪ group_by — the Query planner and the legacy
-// adapters both fold through here.
+// Read-time scope folding: rows are folded on their persisted components
+// (Sum/Count/Min/Max/Last), so AVG stays weighted and LAST is the sum of each
+// member's latest level. The grain is (filter keys ∩ kpi scope) ∪ group_by.
 
 // componentOps can be folded across scopes exactly.
 var componentOps = map[string]bool{

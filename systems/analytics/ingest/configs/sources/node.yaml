@@ -1,9 +1,7 @@
-# Node source spec: per-node health interface probes via the node system's
-# NODE-GATEWAY (gateway: node — resolved through initclient NodeGwIp:Port).
-# Only tnode/anode participate in uptime (cnodes excluded by decision).
-# on_error: record — an unreachable node-gateway probe IS the signal: the
-# window records unreachable:true (counted as unplanned down) instead of
-# failing the dataset window.
+# Node source spec: per-node health interface probes via the node-gateway,
+# for tnode/anode (the cnode reports no interfaces). on_error: record — an
+# unreachable probe records unreachable:true instead of failing the dataset
+# window.
 version: 1
 source: node
 system: node

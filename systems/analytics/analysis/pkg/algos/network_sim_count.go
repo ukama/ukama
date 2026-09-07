@@ -18,25 +18,13 @@ import (
 // algo must declare; every OTHER input is a sim-count series to add up.
 const NetworkSimCountNetworksInput = "networks"
 
-// NetworkSimCount sums the metrics system's per-network SIM-count gauges into
-// one value per network. Which gauges are summed is the spec's choice, not the
-// algo's — every input other than "networks" is added:
+// NetworkSimCount sums every input other than "networks" (per-network SIM
+// count gauges) into one value per network:
 //
 //	ACTIVE_CUSTOMERS = active_sims
 //	CUSTOMERS        = active_sims + inactive_sims
 //
-// The series are levels (sim-manager recounts from its DB and pushes an
-// absolute count per network), so the window value is the count as observed,
-// not an increment.
-//
-// Inputs:
-//
-//	networks — registry.network.getAll (network_id): zero-fill, so a network
-//	           with no series at all emits 0 rather than a gap.
-//	others   — a metrics.*_sims.last dataset (network_id, value). Series
-//	           carrying no network label are unattributable and dropped.
-//
-// Scope is network_id alone: the underlying gauges carry no other dimension.
+// "networks" (registry.network.getAll) zero-fills networks with no series.
 func NetworkSimCount(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	networks, ok := in[NetworkSimCountNetworksInput]
 	if !ok {

@@ -1,9 +1,6 @@
-# ACTIVE_CUSTOMERS: SIMs in active service per network, read from the metrics
-# system's active_sim_count gauge (sim-manager recounts from its DB and pushes
-# it per network on every sim lifecycle change). One SIM per subscriber, so
-# this is also the count of customers with service on.
-#
-# network_id is the only scope: the gauge carries no other dimension.
+# ACTIVE_CUSTOMERS: SIMs in active service per network, from the metrics
+# system's active_sim_count gauge. One SIM per subscriber, so this is also the
+# count of customers with service on.
 kpi: ACTIVE_CUSTOMERS
 domain: subscriber
 algo: network_sim_count@v1

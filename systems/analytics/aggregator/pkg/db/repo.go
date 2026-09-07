@@ -158,13 +158,9 @@ func (r *repo) WindowBounds(orgID, kpiKey string) (int64, int64, bool, error) {
 	return *bounds.MinID, *bounds.MaxID, true, nil
 }
 
-// filterScope keeps rows whose canonical scope JSON contains all requested
-// key/value pairs. Done in Go to stay portable (scope is a varchar column).
-//
-// REVENUE / PAID_CUSTOMERS are network-scoped (payments attributed to a
-// network via the paying SIM; unresolvable SIMs go to an org bucket). A
-// per-network read returns only rows whose network_id matches — the org
-// bucket (empty scope) is org-only and never bleeds into a network number.
+// filterScope keeps rows whose scope JSON contains all requested key/value
+// pairs (in Go: scope is a varchar column). The org bucket (empty scope)
+// never matches a per-network read.
 func filterScope(rows []schema.KpiRollup, filter map[string]string) []schema.KpiRollup {
 	if len(filter) == 0 {
 		return rows
