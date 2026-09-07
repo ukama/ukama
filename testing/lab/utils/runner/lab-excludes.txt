@@ -1,5 +1,3 @@
-.git
-.git/**
 runs
 runs/**
 runtime-nodes
@@ -13,3 +11,5 @@ utils/aws-p0/.state.env
 utils/runner/config.env
 utils/runner/credentials.env
 utils/runner/.state.env
+runs
+runs/**
