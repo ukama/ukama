@@ -1,0 +1,91 @@
+version: 1
+name: r027-invalid-status-keeps-current-state
+description: An invalid SIM status must be rejected without changing the known service state or its paid entitlement.
+seed: 6127
+suite: resilience
+priority: p1
+tags: [virtual, sim, backend-only, negative]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+phases:
+  - name: known_state
+    events:
+      - type: toggle_sim_status
+        ues: all
+        status: service_on
+      - type: wait_sim_status
+        ues: all
+        status: service_on
+        seconds: 120
+    checks: []
+  - name: reject_invalid
+    events:
+      - type: toggle_sim_status
+        ues: all
+        status: not_a_service_status
+        expect:
+          result: failure
+      - type: wait_sim_status
+        ues: all
+        status: service_on
+        seconds: 120
+    checks:
+      - type: package_state
+        ues: all
+        package: base
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+  - name: valid_change_still_works
+    events:
+      - type: toggle_sim_status
+        ues: all
+        status: service_off
+      - type: wait_sim_status
+        ues: all
+        status: service_off
+        seconds: 120
+      - type: toggle_sim_status
+        ues: all
+        status: service_on
+      - type: wait_sim_status
+        ues: all
+        status: service_on
+        seconds: 120
+    checks:
+      - type: package_state
+        ues: all
+        package: base
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true

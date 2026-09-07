@@ -1,0 +1,147 @@
+version: 1
+name: r118-duplicate-name-with-queued-entitlements
+description: Apply duplicate-name with queued entitlements; catalog identity and fields, assignment counts, and original payment totals must remain consistent.
+seed: 6218
+suite: resilience
+priority: p1
+tags: [virtual, catalog, backend-only, catalog, history, negative]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 100
+    duration_days: 1
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: other
+    name: Resilience Other
+    data_mb: 100
+    duration_days: 1
+    amount: 3.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+phases:
+  - name: prepare
+    events:
+      - type: purchase_package
+        ues: all
+        package: next
+    checks:
+      - type: package_fields_equal
+        package: next
+        networks: net-001
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 3
+        immediate: true
+  - name: mutate
+    events:
+      - type: update_package
+        package: next
+        other_package: other
+        expect:
+          result: failure
+    checks:
+      - type: package_fields_equal
+        package: next
+        networks: net-001
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 3
+        immediate: true
+  - name: read_after_settle
+    events:
+      - type: wait
+        seconds: 5
+    checks:
+      - type: package_fields_equal
+        package: next
+        networks: net-001
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 3
+        immediate: true
+final_checks:
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 3.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5

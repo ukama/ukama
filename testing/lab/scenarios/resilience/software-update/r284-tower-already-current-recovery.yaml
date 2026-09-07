@@ -1,0 +1,126 @@
+version: 1
+name: r284-tower-already-current-recovery
+description: already-current on a tower must reject the conflicting request and leave observable version, health, and unlocked operations after recovery.
+seed: 6384
+suite: resilience
+priority: p1
+tags: [virtual, software-update, nodes, software, negative, lock]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  ues_per_site: 0
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: baseline
+    checks:
+      - type: node_version_equals
+        nodes: tower-site-001-001
+        app: example
+        version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        timeout_seconds: 300
+        immediate: true
+      - type: node_health_ok
+        nodes: tower-site-001-001
+        app: example
+        timeout_seconds: 300
+        immediate: true
+  - name: target_available
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: software_status_equals
+        nodes: tower-site-001-001
+        app: example
+        status: update_available
+        current_version: ${ULAB_SOFTWARE_CURRENT_VERSION}
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
+  - name: install
+    events:
+      - type: software_update
+        nodes: tower-site-001-001
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: software_status_equals
+        nodes: tower-site-001-001
+        app: example
+        status: up_to_date
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
+      - type: node_version_equals
+        nodes: tower-site-001-001
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+        immediate: true
+      - type: node_health_ok
+        nodes: tower-site-001-001
+        app: example
+        timeout_seconds: 300
+        immediate: true
+      - type: node_operation_status_equals
+        nodes: tower-site-001-001
+        busy: false
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
+  - name: reject_same_release
+    events:
+      - type: software_update
+        nodes: tower-site-001-001
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+        expect:
+          result: failure
+    checks:
+      - type: node_version_equals
+        nodes: tower-site-001-001
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+        immediate: true
+      - type: node_health_ok
+        nodes: tower-site-001-001
+        app: example
+        timeout_seconds: 300
+        immediate: true
+      - type: software_status_equals
+        nodes: tower-site-001-001
+        app: example
+        status: up_to_date
+        current_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
+      - type: node_operation_status_equals
+        nodes: tower-site-001-001
+        busy: false
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300
+        poll_seconds: 2
+        immediate: true
