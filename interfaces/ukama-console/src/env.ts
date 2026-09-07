@@ -28,6 +28,8 @@ const envSchema = z.object({
   NEXT_PUBLIC_STATUS_APP_URL: z.string().url().default('http://localhost:3001'),
   /** Feature flag: show the "Service status" sidebar item ('true'/'false') */
   NEXT_PUBLIC_STATUS_APP_ENABLED: z.enum(['true', 'false']).default('false'),
+  /** CARTO basemap API key (street map tiles) */
+  NEXT_PUBLIC_CARTO_API_KEY: z.string().default(''),
 });
 
 /** Docker/CI pass unset build args through as empty strings — zod
@@ -44,4 +46,5 @@ export const env = envSchema.parse({
   NEXT_PUBLIC_STATUS_APP_ENABLED: blank(
     process.env.NEXT_PUBLIC_STATUS_APP_ENABLED,
   ),
+  NEXT_PUBLIC_CARTO_API_KEY: blank(process.env.NEXT_PUBLIC_CARTO_API_KEY),
 });

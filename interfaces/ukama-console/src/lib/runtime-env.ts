@@ -36,6 +36,8 @@ export interface PublicEnv {
   statusAppUrl: string;
   /** Feature flag: show the "Service status" sidebar item ('true'/'false'). */
   statusAppEnabled: string;
+  /** CARTO basemap API key (street map tiles). */
+  cartoApiKey: string;
 }
 
 /** Local-dev fallbacks (mirror src/env.ts defaults). */
@@ -47,6 +49,7 @@ const DEFAULTS: PublicEnv = {
   simType: 'test',
   statusAppUrl: 'http://localhost:3001',
   statusAppEnabled: 'false',
+  cartoApiKey: '',
 };
 
 /** Global key the server injects and the client reads. */
@@ -73,6 +76,7 @@ export function readServerEnv(): PublicEnv {
       'NEXT_PUBLIC_STATUS_APP_ENABLED',
       DEFAULTS.statusAppEnabled,
     ),
+    cartoApiKey: pick('NEXT_PUBLIC_CARTO_API_KEY', DEFAULTS.cartoApiKey),
   };
 }
 
