@@ -1,30 +1,30 @@
-# SITE_UPTIME (%): how much of each window the site was serving for.
+# SITE_UPTIME (%): one availability check per window, the way check-based
+# monitors compute uptime.
 #
-#   node % = clamp(increase / L, 0, 1) x 100, forced to 0 by a health flag
-#            reported false: interfaces.cellular.available (service; tnode
-#            only, as the anode reports "cellular": null) or
-#            interfaces.radio.available
-#   site % = min over the site's tnode/anode/cnode
+#   node = DOWN if a health flag is reported false: interfaces.cellular.available
+#          (service; tnode only, as the anode reports "cellular": null) or
+#          interfaces.radio.available. Otherwise DOWN if its uptime counter did
+#          not advance during the window, UP if it did.
+#   site = UP (100) if every tnode/anode/cnode is UP, else DOWN (0)
 #
-# L is the window length floored at 60s — `increase` needs its range to span
-# several scrape intervals. Ingest pulls each node's uptime counter as
-# `increase` over that range, so the value is seconds of uptime gained over it:
-# ~L for a node up throughout, 0 for one whose counter stalled. A node with no
-# series in the window at all reads 100: uptime is 100 by default and only
-# comes down on evidence, and a series that has not appeared yet (a site still
-# onboarding) is not evidence. Below the floor consecutive windows overlap.
+# Ingest pulls each node's uptime counter as `increase` over the window
+# (floored at 60s so the range spans several scrape intervals), so the value
+# is the seconds it gained: > 0 for a live node, 0 for one whose counter
+# stalled — the pushgateway keeps serving a dead node's last value. A node
+# with no series in the window at all reads UP: uptime is 100 by default and
+# only comes down on evidence, and a series that has not appeared yet (a site
+# still onboarding) is not evidence. A site carrying no tnode/anode/cnode
+# reads 100; an hnode is ignored.
 #
-# Taking the minimum collapses to "any node down means the site is down"
-# whenever the per-node values are 0 or 100. A site carrying no tnode/anode/
-# cnode reports 100; an hnode is ignored.
+# The window is the check interval, so it is also the resolution: an outage
+# that does not stop the counter for a whole window is not seen. There is no
+# planned/unplanned distinction. radio.state is not read — uptime tracks
+# interface availability, so a radio that is available but switched off is
+# still up. Node lifecycle state and node-gateway reachability are not read
+# either: the node's own counter is the authority.
 #
-# radio.state is not read — uptime tracks interface availability, so a radio
-# that is available but switched off is still up, and there is no
-# planned/unplanned distinction. Node lifecycle state and node-gateway
-# reachability are not read either: the node's own counter is the authority.
-#
-# Per window: Sum = the site's percentage, Count = 1, so the aggregator's AVG
-# is the mean of the windows in any span. Query with op=AVG at
+# Per window: Sum = 100 or 0, Count = 1, so the aggregator's AVG is the share
+# of windows the site was up for in any span. Query with op=AVG at
 # daily/weekly/monthly or last_24h/last_7d/last_30d.
 kpi: SITE_UPTIME
 domain: network

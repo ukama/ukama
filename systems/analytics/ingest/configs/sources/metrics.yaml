@@ -47,11 +47,12 @@ pulls:
   # com_node_uptime covers the tnode and cnode, ctl_node_uptime the anode.
   #
   # The counter gains one second per second of wall clock, so `increase` over
-  # the window is the seconds the node was up for. A node that stopped
-  # reporting holds its last value in the pushgateway, so its increase is 0 —
-  # stalled reads as down without waiting on a staleness marker. `increase`
-  # rather than `delta` because it corrects for counter resets: a window
-  # containing a reboot would otherwise go negative.
+  # the window is > 0 for a node that was alive during it — the algo's one
+  # availability check per window. A node that stopped reporting holds its
+  # last value in the pushgateway, so its increase is 0 — stalled reads as
+  # down without waiting on a staleness marker. `increase` rather than `delta`
+  # because it corrects for counter resets: a window containing a reboot would
+  # otherwise go negative.
   #
   # strategy: window, not full_snapshot — this measures a window rather than
   # state as of one, and carrying the last value forward would let a single
@@ -60,7 +61,7 @@ pulls:
   # lookback is the window length floored at 60s: `increase` needs its range to
   # span several scrape intervals, and the pushgateway is scraped every 10s. A
   # 10s range holds one sample (Prometheus drops the series) or two identical
-  # ones (increase 0). The algo applies the same floor, so the two cannot drift.
+  # ones (increase 0).
   #
   # time is the window end, so retry, catchup and replay evaluate the same
   # range.
