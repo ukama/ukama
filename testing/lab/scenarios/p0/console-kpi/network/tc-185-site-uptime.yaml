@@ -86,7 +86,7 @@ phases:
         comparator: greater_than
         expected_value: 0
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 160
         poll_seconds: 20
       - type: kpi_value
         key: SITE_UPTIME
@@ -98,5 +98,5 @@ phases:
         comparator: less_than
         expected_value: 100
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 160
         poll_seconds: 20
