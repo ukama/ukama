@@ -570,7 +570,13 @@ for shard in "$LOCAL_BATCH_DIR"/input/shards/*.txt; do
         "$(basename "$shard" .txt)" "$(wc -l <"$shard" | tr -d ' ')"
 done
 
-if ((DRY_RUN == 0)) && [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
+if ((DRY_RUN)); then
+    printf '\nDry run complete. No factory preparation, source packaging, uploads, or EC2 launches were performed.\n'
+    printf 'plan: %s\n' "$LOCAL_BATCH_DIR"
+    exit 0
+fi
+
+if [[ "${FACTORY_NODE_TARGET:-0}" != "0" ]]; then
     CREDENTIALS_FILE="${P0_AWS_CREDENTIALS:-$SCRIPT_DIR/credentials.env}"
     [[ -r "$CREDENTIALS_FILE" ]] ||
         p0_die "factory preparation requires $CREDENTIALS_FILE"
@@ -614,12 +620,6 @@ cp "$SCRIPT_DIR/worker.sh" "$LOCAL_BATCH_DIR/input/worker.sh"
     cd "$LOCAL_BATCH_DIR/input"
     sha256sum ukama-lab.tar.gz ukama.tar.gz >checksums.sha256
 )
-
-if ((DRY_RUN)); then
-    printf '\nDry run complete. Nothing was uploaded or launched.\n'
-    printf 'plan: %s\n' "$LOCAL_BATCH_DIR"
-    exit 0
-fi
 
 BATCH_URI="$(p0_s3_batch_root "$BATCH_ID")"
 printf 'Uploading input to %s/input/\n' "$BATCH_URI"
