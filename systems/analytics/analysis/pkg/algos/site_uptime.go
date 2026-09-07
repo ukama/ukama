@@ -186,22 +186,18 @@ func isSiteNodeType(nodeType string) bool {
 
 // nodeUptimePercent is one node's check for the window: 100 (up) or 0 (down).
 //
-// A health flag reported false is down. Otherwise the node is up if its
-// uptime counter advanced (gain > 0) or if it has no series in the window at
-// all: uptime is 100 by default and only comes down on evidence, and a series
-// that has not appeared yet is not evidence. A series present with no gain is
-// a stalled counter, which is.
-//
-// radio.state, node lifecycle state and node-gateway reachability are not
-// read: the node's own counter is the authority.
+// Down if a health flag is reported false, a reported state is off or fault,
+// or the uptime counter did not advance. Up otherwise, including when the
+// node has no series in the window: a missing reading is not evidence.
 func nodeUptimePercent(nodeType string, h map[string]interface{},
 	gain float64, seen bool) float64 {
-	if flagIsFalse(h, "radio_available") {
+	if flagIsFalse(h, "radio_available") || stateIsDown(h, "radio_state") {
 		return 0
 	}
 
 	// Cellular is tnode-only: the anode reports "cellular": null.
-	if nodeType == nodeTypeTower && flagIsFalse(h, "cellular_available") {
+	if nodeType == nodeTypeTower &&
+		(flagIsFalse(h, "cellular_available") || stateIsDown(h, "cellular_service")) {
 		return 0
 	}
 
@@ -229,6 +225,17 @@ func flagIsFalse(h map[string]interface{}, key string) bool {
 	}
 
 	return !asBool(v)
+}
+
+// stateIsDown reports whether a reported subsystem state is off or fault.
+func stateIsDown(h map[string]interface{}, key string) bool {
+	if h == nil {
+		return false
+	}
+
+	s := strings.ToLower(str(h[key]))
+
+	return s == "off" || s == "fault"
 }
 
 // indexUptimeGainByNode folds the com (tnode, cnode) and ctl (anode) series

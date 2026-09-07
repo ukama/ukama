@@ -200,11 +200,35 @@ func TestSiteUptimePerWindow(t *testing.T) {
 			wantSum: 0,
 		},
 		{
-			name:    "radio available but switched off is still up — only availability is read",
+			name:    "radio switched off is down — a planned RF-off is downtime",
 			nodes:   tnode,
 			health:  []map[string]interface{}{health("t1", true, true, "off")},
 			com:     []map[string]interface{}{alive("t1")},
+			wantSum: 0,
+		},
+		{
+			name:    "radio in fault is down",
+			nodes:   tnode,
+			health:  []map[string]interface{}{health("t1", true, true, "fault")},
+			com:     []map[string]interface{}{alive("t1")},
+			wantSum: 0,
+		},
+		{
+			name:    "radio transitioning is not down",
+			nodes:   tnode,
+			health:  []map[string]interface{}{health("t1", true, true, "transitioning")},
+			com:     []map[string]interface{}{alive("t1")},
 			wantSum: 100,
+		},
+		{
+			name:  "cellular service off is down on the tnode",
+			nodes: tnode,
+			health: []map[string]interface{}{{
+				"node_id": "t1", "cellular_available": true, "cellular_service": "off",
+				"radio_available": true, "radio_state": "on",
+			}},
+			com:     []map[string]interface{}{alive("t1")},
+			wantSum: 0,
 		},
 		{
 			name:    "an unreachable probe reports no flags, so the counter decides",
@@ -368,7 +392,7 @@ func TestNetworkUptimePoolsSites(t *testing.T) {
 	healthRows := []map[string]interface{}{
 		health("t1", true, true, "on"),
 		health("t2", true, true, "on"),
-		health("t3", true, true, "off"), // available, just switched off -> up
+		health("t3", true, true, "on"),
 	}
 	com := []map[string]interface{}{alive("t1"), stalled("t2"), alive("t3")}
 

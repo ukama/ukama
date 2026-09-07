@@ -15,7 +15,7 @@ inputs:
     fields: [node_id, site_id, network_id, type]
   health:
     dataset: node.health.interfaces
-    fields: [node_id, site_id, network_id, type, cellular_available, radio_available]
+    fields: [node_id, site_id, network_id, type, cellular_available, cellular_service, radio_available, radio_state]
   com_uptime:
     dataset: metrics.com_uptime.last
     mode: window

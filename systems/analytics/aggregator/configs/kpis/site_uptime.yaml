@@ -1,16 +1,14 @@
 # SITE_UPTIME (%): one availability check per window.
 #
 #   node = DOWN if a health flag is reported false (interfaces.radio.available;
-#          interfaces.cellular.available on the tnode only), or if its uptime
-#          counter did not advance during the window. UP otherwise — including
-#          when it has no series yet: uptime is 100 by default and only comes
-#          down on evidence.
+#          interfaces.cellular.available on the tnode only), a reported state
+#          is off or fault (interfaces.radio.state; interfaces.cellular.service
+#          on the tnode only), or its uptime counter did not advance during
+#          the window. UP otherwise, including when it has no series yet.
 #   site = 100 if every tnode/anode/cnode is UP, else 0. A site with none of
 #          those reads 100; an hnode is ignored.
 #
-# The window is the check interval and therefore the resolution. radio.state,
-# node lifecycle state and node-gateway reachability are not read: the node's
-# own counter is the authority.
+# The window is the check interval and therefore the resolution.
 #
 # Per window: Sum = 100 or 0, Count = 1, so the aggregator's AVG is the share
 # of windows the site was up for. Query with op=AVG.
@@ -27,7 +25,7 @@ inputs:
     fields: [node_id, site_id, network_id, type]
   health:
     dataset: node.health.interfaces
-    fields: [node_id, site_id, network_id, type, cellular_available, radio_available]
+    fields: [node_id, site_id, network_id, type, cellular_available, cellular_service, radio_available, radio_state]
   # mode: window — these measure the window rather than state as of it, so a
   # failed pull reads as missing instead of inheriting the previous reading.
   com_uptime:

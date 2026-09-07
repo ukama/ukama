@@ -25,5 +25,6 @@ pulls:
       # computed over mapped fields, so fluctuating values (gps time etc.)
       # don't create a new row every window.
       cellular_available: $.interfaces.cellular.available
+      cellular_service: $.interfaces.cellular.service
       radio_available: $.interfaces.radio.available
       radio_state: $.interfaces.radio.state
