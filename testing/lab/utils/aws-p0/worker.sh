@@ -7,6 +7,7 @@
 
 # Disposable EC2 worker. Inputs and outputs are regular files in S3.
 
+set +x
 set -Eeuo pipefail
 umask 077
 
@@ -22,17 +23,22 @@ mkdir -p "$HOME"
 : "${AWS_REGION:?}"
 
 export AWS_DEFAULT_REGION="$AWS_REGION"
+export AWS_MAX_ATTEMPTS=2 AWS_RETRY_MODE=standard AWS_PAGER=""
+# Each call is bounded, including retries, so finalization cannot hang forever.
+AWS_BIN="$(command -v aws)"
+aws() { timeout 90 "$AWS_BIN" --no-cli-pager --cli-connect-timeout 10 --cli-read-timeout 20 "$@"; }
 
 WORK_ROOT="${WORK_ROOT:-/opt/ukama-p0}"
 INPUT_URI="s3://${S3_BUCKET}/${S3_PREFIX%/}/${BATCH_ID}/input"
 OUTPUT_URI="s3://${S3_BUCKET}/${S3_PREFIX%/}/${BATCH_ID}/output"
-LOG_FILE="/var/log/ukama-p0-worker.log"
+LOG_FILE="${LOG_FILE:-/var/log/ukama-p0-worker.log}"
 STATUS_FILE="$WORK_ROOT/status.tsv"
 DONE_FILE="$WORK_ROOT/worker.done"
 FAILED_FILE="$WORK_ROOT/worker.failed"
 RESULT_ARCHIVE="$WORK_ROOT/${WORKER_ID}.tar.gz"
 UPLOAD_STOP="$WORK_ROOT/.stop-upload"
 UPLOADER_PID=""
+VPN_PID=""
 FINALIZED=0
 RUNNER_RC=125
 
@@ -46,11 +52,11 @@ now_utc() {
 
 instance_id() {
     local token
-    token="$(curl -fsS -X PUT \
+    token="$(curl --noproxy '*' --connect-timeout 3 --max-time 5 -fsS -X PUT \
         -H 'X-aws-ec2-metadata-token-ttl-seconds: 60' \
         http://169.254.169.254/latest/api/token 2>/dev/null || true)"
     if [[ -n "$token" ]]; then
-        curl -fsS \
+        curl --noproxy '*' --connect-timeout 3 --max-time 5 -fsS \
             -H "X-aws-ec2-metadata-token: $token" \
             http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null || true
     fi
@@ -82,7 +88,7 @@ upload_status_once() {
     if [[ -f "$STATUS_FILE" ]]; then
         aws s3 cp "$STATUS_FILE" \
             "$OUTPUT_URI/${WORKER_ID}.status" \
-            --only-show-errors || true
+            --only-show-errors
     fi
 }
 
@@ -90,7 +96,11 @@ status_uploader() {
     local interval="${STATUS_INTERVAL_SECONDS:-10}"
 
     while [[ ! -e "$UPLOAD_STOP" ]]; do
-        upload_status_once
+        upload_status_once || echo 'status upload failed; will retry' >&2
+        if [[ -d "$WORK_ROOT/results" ]]; then
+            aws s3 sync "$WORK_ROOT/results/" "$OUTPUT_URI/$WORKER_ID/results/" \
+                --only-show-errors || echo 'partial results upload failed; will retry' >&2
+        fi
         sleep "$interval"
     done
 }
@@ -120,59 +130,49 @@ shutdown_worker() {
 }
 
 finalize() {
-    local shell_rc=$?
-
-    if ((FINALIZED)); then
-        return
-    fi
+    local shell_rc=$? upload_rc=1
+    ((FINALIZED == 0)) || return
     FINALIZED=1
     trap - EXIT INT TERM
-
+    set +e
     touch "$UPLOAD_STOP"
     if [[ -n "$UPLOADER_PID" ]]; then
-        wait "$UPLOADER_PID" 2>/dev/null || true
+        wait "$UPLOADER_PID" 2>/dev/null
     fi
-
-    set +e
-
+    # Final upload uses the normal EC2 network, including on a VPN failure.
+    if declare -F p0_vpn_stop >/dev/null; then p0_vpn_stop; fi
+    rm -f "$WORK_ROOT/client.ovpn"
     if [[ -d "$WORK_ROOT/results" ]]; then
-        tar -C "$WORK_ROOT" -czf "$RESULT_ARCHIVE" results
-        aws s3 cp "$RESULT_ARCHIVE" \
-            "$OUTPUT_URI/${WORKER_ID}.tar.gz" \
-            --only-show-errors
+        mkdir -p "$WORK_ROOT/results/diagnostics"
+        [[ ! -f "$WORK_ROOT/vpn.log" ]] || cp "$WORK_ROOT/vpn.log" "$WORK_ROOT/results/diagnostics/vpn.log"
+        tar -C "$WORK_ROOT" -czf "$RESULT_ARCHIVE" results &&
+            aws s3 cp "$RESULT_ARCHIVE" "$OUTPUT_URI/${WORKER_ID}.tar.gz" --only-show-errors
+        upload_rc=$?
     fi
-
-    upload_status_once
-    if [[ -f "$LOG_FILE" ]]; then
-        aws s3 cp "$LOG_FILE" \
-            "$OUTPUT_URI/${WORKER_ID}.log" \
-            --only-show-errors || true
+    if ((shell_rc != 0 || upload_rc != 0)) || [[ ! -f "$DONE_FILE" ]]; then
+        rm -f "$DONE_FILE"
+        printf 'exit_code=%s\narchive_upload_exit=%s\nrunner_exit_code=%s\n' \
+            "$shell_rc" "$upload_rc" "$RUNNER_RC" >>"$FAILED_FILE"
+        write_worker_status FAILED - 'worker incomplete; inspect worker log'
     fi
-
+    upload_status_once || true
+    aws s3 cp "$LOG_FILE" "$OUTPUT_URI/${WORKER_ID}.log" --only-show-errors || true
     if [[ -f "$DONE_FILE" ]]; then
-        aws s3 cp "$DONE_FILE" \
-            "$OUTPUT_URI/${WORKER_ID}.done" \
-            --only-show-errors
+        aws s3 cp "$DONE_FILE" "$OUTPUT_URI/${WORKER_ID}.done" --only-show-errors || true
     else
-        if [[ ! -f "$FAILED_FILE" ]]; then
-            printf 'exit_code=%s\n' "$shell_rc" >"$FAILED_FILE"
-        fi
-        aws s3 cp "$FAILED_FILE" \
-            "$OUTPUT_URI/${WORKER_ID}.failed" \
-            --only-show-errors
+        aws s3 cp "$FAILED_FILE" "$OUTPUT_URI/${WORKER_ID}.failed" --only-show-errors || true
     fi
-
     shutdown_worker
 }
 
-trap finalize EXIT INT TERM
+trap finalize EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 STARTED_AT="$(now_utc)"
 INSTANCE_ID="$(instance_id)"
 write_worker_status STARTING - 'downloading batch input'
-start_watchdog
-status_uploader &
-UPLOADER_PID=$!
+upload_status_once || true
 
 command -v aws >/dev/null 2>&1 || {
     write_worker_status FAILED - 'aws CLI is missing from the worker AMI'
@@ -191,6 +191,7 @@ aws s3 cp "$INPUT_URI/worker.env" "$WORK_ROOT/worker.env" --only-show-errors
 set -a
 . "$WORK_ROOT/worker.env"
 set +a
+start_watchdog
 
 : "${SECRET_ID:?SECRET_ID is missing from worker.env}"
 
@@ -212,8 +213,10 @@ SECRET_JSON="$(aws secretsmanager get-secret-value \
     --secret-id "$SECRET_ID" \
     --query SecretString --output text)"
 
+jq -er '.ULAB_VPN_CONFIG | select(type == "string" and length > 0)' <<<"$SECRET_JSON" >"$WORK_ROOT/client.ovpn"
+chmod 600 "$WORK_ROOT/client.ovpn"
 eval "$(jq -r '
-    to_entries[]
+    to_entries[] | select(.key != "ULAB_VPN_CONFIG" and .value != null and .value != "")
     | select(.key | test("^[A-Za-z_][A-Za-z0-9_]*$"))
     | "export \(.key)=\(.value | tostring | @sh)"
 ' <<<"$SECRET_JSON")"
@@ -232,14 +235,21 @@ export SCENARIO_ROOT="scenarios/p0"
 export P0_RUNS_DIR="$WORK_ROOT/results"
 export P0_STATUS_FILE="$STATUS_FILE"
 
-# Source archives intentionally exclude .git. Use one explicit version for all
+# Use one explicit version for all
 # virtual-node and application builds in this disposable worker.
 export UKAMA_APP_VERSION="${UKAMA_APP_VERSION:-v0.0.0-p0-${BATCH_ID}}"
 printf 'source version: %s\n' "$UKAMA_APP_VERSION"
 
 TOTAL_SCENARIOS="$(grep -Ev '^[[:space:]]*(#|$)' \
     "$WORK_ROOT/scenarios.txt" | wc -l | tr -d ' ')"
-write_worker_status PREPARING - 'checking worker environment'
+write_worker_status PREPARING - 'connecting direct VPN'
+. "$LAB_ROOT/utils/aws-p0/vpn.sh"
+p0_vpn_start "$WORK_ROOT/client.ovpn"
+# A successful tunnel alone is insufficient: verify an authenticated S3 write.
+aws s3 cp "$STATUS_FILE" "$OUTPUT_URI/${WORKER_ID}.vpn-s3-check" --only-show-errors
+status_uploader &
+UPLOADER_PID=$!
+write_worker_status PREPARING - 'checking worker environment' 
 
 if [[ -x "$LAB_ROOT/utils/aws-p0/worker-pre-run.sh" ]]; then
     (
@@ -268,7 +278,8 @@ RUNNER_RC=$?
 set -e
 
 REPORT_FILE="$WORK_ROOT/results/$RUNNER_BATCH_ID/batch-report.json"
-if [[ -f "$REPORT_FILE" ]]; then
+if [[ -f "$REPORT_FILE" ]] && ((RUNNER_RC == 0 || RUNNER_RC == 1)) &&
+    python3 "$LAB_ROOT/utils/aws-p0/validate-worker-report.py" "$WORK_ROOT/scenarios.txt" "$REPORT_FILE"; then
     COMPLETED_SCENARIOS="$(jq -r '.total // 0' "$REPORT_FILE")"
     PASSED_SCENARIOS="$(jq -r '.passed // 0' "$REPORT_FILE")"
     FAILED_SCENARIOS="$(jq -r '.failed // 0' "$REPORT_FILE")"
@@ -276,7 +287,7 @@ if [[ -f "$REPORT_FILE" ]]; then
     write_worker_status DONE - "runner_exit_code=$RUNNER_RC"
     printf 'runner_exit_code=%s\n' "$RUNNER_RC" >"$DONE_FILE"
 else
-    write_worker_status FAILED - "runner exited $RUNNER_RC without batch-report.json"
+    write_worker_status FAILED - "runner exited $RUNNER_RC with missing or incomplete batch report"
     printf 'exit_code=%s\nreason=no_batch_report\n' \
         "$RUNNER_RC" >"$FAILED_FILE"
 fi
