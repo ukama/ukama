@@ -20,11 +20,9 @@ import (
 )
 
 // Resolver resolves a logical system name to its api-gateway base URL via
-// the init system (lookup), with a TTL cache and failure invalidation.
-//
-// This deviates deliberately from the repo's resolve-once-at-boot pattern:
-// resolution is lazy per (org, system) so ingest survives systems that
-// register late and address changes without restarts.
+// the init system, with a TTL cache and failure invalidation. Resolution is
+// lazy per (org, system) so late-registering systems and address changes
+// need no restart.
 type Resolver interface {
 	// Resolve returns the api-gateway base URL for (org, system).
 	Resolve(org, system string) (string, error)

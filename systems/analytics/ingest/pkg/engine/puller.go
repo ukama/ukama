@@ -257,12 +257,8 @@ func (p *Puller) iterations(pull schema.PullSpec, win schema.Window) ([]map[stri
 			}
 		}
 
-		// A parent row missing a bind field cannot produce a meaningful child
-		// pull — e.g. a node the registry serializes without its `site` block
-		// because it is not attached to a site yet, so site_id/network_id are
-		// absent from the mapped fields. Skip that row instead of failing the
-		// whole dataset window: one unassigned node must not blank a KPI for
-		// the entire org.
+		// A parent row missing a bind field (e.g. a node not attached to a
+		// site) is skipped rather than failing the whole dataset window.
 		binds := map[string]string{}
 		skip := false
 

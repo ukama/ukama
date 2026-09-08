@@ -99,15 +99,10 @@ type KpiWindow struct {
 // with any other tag are ignored and superseded by the boot backfill.
 const RollupRowOp = "VAL"
 
-// KpiRollup is the rollup zone: ONE components row per (kpi, org, scope,
-// span, span_start).
-//
-// Sum/Count/Min/Max/Last are the span's aggregated components (folded from
-// the span's kpi_windows): any read-time aggregation — including exact
-// weighted AVG and cross-scope group_by folds — derives from them. Value
-// caches the KPI's kind-default aggregation for debugging/BI convenience.
-// Trend is computed at read time (same question over the previous period),
-// not stored.
+// KpiRollup is the rollup zone: one components row per (kpi, org, scope,
+// span, span_start). Sum/Count/Min/Max/Last are folded from the span's
+// kpi_windows and every read-time aggregation derives from them; Value
+// caches the KPI's default aggregation. Trend is computed at read time.
 type KpiRollup struct {
 	ID         uint64    `gorm:"primaryKey;autoIncrement"`
 	KpiKey     string    `gorm:"size:64;uniqueIndex:uq_rollup,priority:1;index"`
