@@ -44,9 +44,17 @@ static bool get_json_entry(json_t *json, char *key, json_type type,
         return USYS_FALSE;
     }
 
+    if ((type == JSON_STRING && !json_is_string(jEntry)) ||
+        (type == JSON_INTEGER && !json_is_integer(jEntry)) ||
+        (type == JSON_REAL && !json_is_number(jEntry))) {
+        log_error("Invalid type for json key: %s", key);
+        return USYS_FALSE;
+    }
+
     switch(type) {
     case (JSON_STRING): 
         *strValue = strdup(json_string_value(jEntry));
+        if (!*strValue) return USYS_FALSE;
         break;
     case (JSON_INTEGER):
         *intValue = json_integer_value(jEntry);
@@ -197,8 +205,11 @@ bool json_deserialize_notification(JsonObj *json,
 
     bool ret=USYS_TRUE;
 
-    if (json == NULL) {
-        usys_log_error("No data to deserialize");
+    if (notification == NULL) return USYS_FALSE;
+    *notification = NULL;
+
+    if (!json_is_object(json)) {
+        usys_log_error("No notification object to deserialize");
         return USYS_FALSE;
     }
 
@@ -228,14 +239,32 @@ bool json_deserialize_notification(JsonObj *json,
         usys_log_error("Error deserializing the notifiction JSON");
         json_log(json);
         free_notification(*notification);
+        *notification = NULL;
         return USYS_FALSE;
     }
 
-    /* Module and device are optional */
-    get_json_entry(json, JTAG_MODULE, JSON_STRING,
-                              &(*notification)->module, NULL, NULL);
-    get_json_entry(json, JTAG_DEVICE, JSON_STRING,
-                              &(*notification)->device, NULL, NULL);
+    /* Missing optional fields are normal; present fields must be strings. */
+    if (json_object_get(json, JTAG_MODULE) &&
+        !json_is_null(json_object_get(json, JTAG_MODULE))) {
+        ret = get_json_entry(json, JTAG_MODULE, JSON_STRING,
+                            &(*notification)->module, NULL, NULL);
+    } else {
+        (*notification)->module = strdup("none");
+        ret = ((*notification)->module != NULL);
+    }
+
+    if (json_object_get(json, JTAG_DEVICE) &&
+        !json_is_null(json_object_get(json, JTAG_DEVICE))) {
+        ret = get_json_entry(json, JTAG_DEVICE, JSON_STRING,
+                            &(*notification)->device, NULL, NULL) && ret;
+    }
+
+    if (!ret) {
+        free_notification(*notification);
+        *notification = NULL;
+        return USYS_FALSE;
+    }
+
     return USYS_TRUE;
 }
 

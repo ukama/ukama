@@ -113,6 +113,7 @@ static int write_to_log_file(JsonObj *jBuffer) {
                        DEF_LOG_FILE,
                        strerror(errno));
         usys_free(str);
+        pthread_mutex_unlock(&logFileMutex);
         return USYS_FALSE;
     } else {
         fputs(str, fPtr);
@@ -164,11 +165,11 @@ static int write_to_stderr(JsonObj *jBuffer) {
 static int send_notification(JsonObj* jNotify, Config *config) {
 
     if (gData->output == STDOUT) {
-        return write_to_stdout(jNotify);
+        return write_to_stdout(jNotify) == USYS_TRUE ? STATUS_OK : STATUS_NOK;
     } else if (gData->output == STDERR) {
-        return write_to_stderr(jNotify);
+        return write_to_stderr(jNotify) == USYS_TRUE ? STATUS_OK : STATUS_NOK;
     } else if (gData->output == LOG_FILE) {
-        return write_to_log_file(jNotify);
+        return write_to_log_file(jNotify) == USYS_TRUE ? STATUS_OK : STATUS_NOK;
     } else if (gData->output == UKAMA_SERVICE) {
         return wc_forward_notification(config->remoteServer,
                                        DEF_REMOTE_EP,
@@ -176,7 +177,7 @@ static int send_notification(JsonObj* jNotify, Config *config) {
                                        jNotify);
     }
 
-    return USYS_FALSE;
+    return STATUS_NOK;
 }
 
 static int get_code_and_severity(const Entry* entries, int numEntries,
@@ -185,22 +186,48 @@ static int get_code_and_severity(const Entry* entries, int numEntries,
                                  char **severity,
                                  int *code) {
 
-    int found=USYS_FALSE, i;
+    int i;
+    int match = -1;
+    const char *module;
+    const char *level;
+
+    if (!entries || !notif || !type || !severity || !code ||
+        !notif->serviceName || !notif->propertyName) {
+        return USYS_FALSE;
+    }
+
+    module = notif->module ? notif->module : "none";
 
     for (i = 0; i < numEntries; i++) {
-        if (strcmp(notif->serviceName, entries[i].serviceName) == 0 &&
-            strcmp(notif->module, entries[i].moduleName) == 0 &&
-            strcmp(notif->propertyName, entries[i].propertyName) == 0 &&
-            strcmp(type, entries[i].type) == 0) {
+        if (strcmp(notif->serviceName, entries[i].serviceName) != 0 ||
+            strcmp(notif->propertyName, entries[i].propertyName) != 0 ||
+            strcmp(type, entries[i].type) != 0) {
+            continue;
+        }
 
-            *code     = entries[i].code;
-            *severity = strdup(entries[i].severity);
-            found     = USYS_TRUE;
+        if (strcmp(module, entries[i].moduleName) == 0) {
+            match = i;
             break;
+        }
+
+        if (match < 0 && strcmp(entries[i].moduleName, "*") == 0) {
+            match = i;
         }
     }
 
-    return found;
+    if (match < 0) return USYS_FALSE;
+
+    level = entries[match].severity;
+    if (strcmp(level, "*") == 0) {
+        level = notif->severity;
+    }
+    if (!level) return USYS_FALSE;
+
+    *severity = strdup(level);
+    if (!*severity) return USYS_FALSE;
+
+    *code = entries[match].code;
+    return USYS_TRUE;
 }
 
 static int notify_process_incoming_generic_notification(JsonObj *json, char *type,
@@ -265,8 +292,10 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
 int process_incoming_notification(const char *service, char *type,
                                   JsonObj *json, Config *config){
 
-    int ret;
+    int ret = STATUS_NOK;
     ServiceHandler handler = NULL;
+
+    if (!service || !type || !config || !json) return STATUS_NOK;
 
     handler = find_handler(service, type);
     if (handler) {
