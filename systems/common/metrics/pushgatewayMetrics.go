@@ -175,7 +175,7 @@ func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName st
 			pusher.Collector(m.collector)
 		}
 	}
-	if err := pusher.Add(); err != nil {
+	if err := pusher.Push(); err != nil {
 		log.Errorf("Could not push metrics to Pushgateway: %s", err.Error())
 	}
 }
