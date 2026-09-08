@@ -26,6 +26,7 @@ const inFlightLease = 15 * time.Minute
 // RawReader is analysis' read-only view of the ingest zone.
 type RawReader interface {
 	StateAsOf(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error)
+	LastKnownAsOf(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error)
 	WindowRows(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error)
 }
 
@@ -66,6 +67,25 @@ func (r *repo) StateAsOf(orgID, datasetKey string, windowID int64) ([]schema.Raw
 			ORDER BY entity_key, window_id DESC, id DESC
 		) latest
 		WHERE latest.deleted = false`,
+		orgID, datasetKey, windowID).Scan(&rows).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
+}
+
+// LastKnownAsOf is StateAsOf with tombstones included: the latest row per
+// entity with window_id <= windowID, whether or not the entity has since
+// disappeared from the source. A tombstone carries the entity's last fields.
+func (r *repo) LastKnownAsOf(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
+	rows := []schema.RawRecord{}
+
+	err := r.db.GetGormDb().Raw(`
+		SELECT DISTINCT ON (entity_key) *
+		FROM raw_records
+		WHERE org_id = ? AND dataset_key = ? AND window_id <= ?
+		ORDER BY entity_key, window_id DESC, id DESC`,
 		orgID, datasetKey, windowID).Scan(&rows).Error
 	if err != nil {
 		return nil, err

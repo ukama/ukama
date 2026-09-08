@@ -18,18 +18,10 @@ import (
 // siteNodes indexes nodes per network per site.
 type siteNodes map[string]map[string][]map[string]interface{} // network -> site -> nodes
 
-// SitesOnline (SITES_ONLINE @ scope network_id): a count of the sites whose
-// every tnode, anode and cnode is connectivity == Online AND state ==
-// Operational. Judged only on the registry — no health report or metric.
-//
-// A site carrying none of those node types is not online; any other type
-// attached to it (hnode) is ignored rather than allowed to drag it offline.
-//
-// Inputs:
-//
-//	nodes    — registry.node.list (node_id, site_id, network_id, type,
-//	           connectivity, state)
-//	networks — registry.network.getAll (network_id) — zero-fill.
+// SitesOnline (SITES_ONLINE @ scope network_id): sites whose every
+// tnode/anode/cnode has connectivity Online and state Operational in the
+// registry. A site with none of those types is not online; an hnode is
+// ignored. Zero-filled per network.
 func SitesOnline(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, error) {
 	sites, networks, err := groupSites(in, "SITES_ONLINE")
 	if err != nil {

@@ -105,12 +105,10 @@ func (e *Engine) runOnce() {
 	}
 }
 
-// processPull scans the whole catchup range every tick (not just past the
-// newest pulled window) so failed or crashed-in-flight windows behind the
-// high-water mark are retried too. Cheap: completed windows short-circuit on
-// a ledger status read.
-//
-// Windows fail independently: one failure does not stop the scan.
+// processPull scans the whole catchup range every tick so failed or
+// in-flight windows behind the high-water mark are retried; completed windows
+// short-circuit on a ledger status read. One window's failure does not stop
+// the scan.
 func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 	newest := e.grid.NewestEligible(now)
 	oldest := newest - e.catchup + 1
