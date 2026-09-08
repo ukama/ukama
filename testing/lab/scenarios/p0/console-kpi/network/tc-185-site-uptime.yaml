@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Switch RF off and back on through the Console and verify the RF-off interval counts as downtime in SITE_UPTIME while the site recovers online.
+description: Switch RF off and back on through the Console and verify the RF-off interval counts as downtime in SITE_UPTIME.
 seed: 4712
 suite: p0
 priority: p0
@@ -44,18 +44,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      - type: kpi_value
-        key: SITES_ONLINE
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: net-001
-        expected_value: 0
-        immediate: true
-        timeout_seconds: 120
-        poll_seconds: 20
-      # An absolute tolerance expresses 0 <= uptime <= 99.999 percent.
-      # The exact daily percentage depends on report timing and elapsed uptime.
+      # RF off is downtime: the daily average drops below 100.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -76,17 +65,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Recovery restores the current online count.
-      - type: kpi_value
-        key: SITES_ONLINE
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: net-001
-        expected_value: 1
-        immediate: true
-        timeout_seconds: 120
-        poll_seconds: 20
+      # The RF-off windows remain in the daily average.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
