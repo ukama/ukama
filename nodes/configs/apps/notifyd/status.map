@@ -1,9 +1,4 @@
 # service-name module-name propertyName type severity code
-# Module * matches any module; severity * preserves the sender's severity.
-noded           TRX     temp1Sens   alarm   high    8401
-noded           COM     temp2       event   low     8700
-deviced         none    node        event   high    8100
-deviced         none    node        alert   high    8100
-lifecycle       *       state       event   *       8700
-starter         node    ready       event   low     8700
-starter         node    fault       event   high    8100
+noded TRX temp1Sens alarm high 8401
+noded COM temp2 event low 8700
+deviced none node event high 8100
