@@ -95,14 +95,14 @@ static int parse_adc_channel(const URequest *request, int *ch) {
 static json_t* parse_body_json(const URequest *request) {
 
     json_error_t err;
-    const char *body;
 
-    if (!request) return NULL;
+    if (!request || !request->binary_body ||
+        request->binary_body_length == 0) {
+        return NULL;
+    }
 
-    body = request->binary_body;
-    if (!body) return NULL;
-
-    return json_loads(body, 0, &err);
+    return json_loadb((const char *)request->binary_body,
+                     request->binary_body_length, 0, &err);
 }
 
 static void add_err(json_t *errors, const char *scope, const char *msg) {

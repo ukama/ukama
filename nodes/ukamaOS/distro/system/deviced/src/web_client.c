@@ -580,10 +580,16 @@ int wc_put_gpio_to_femd(Config *config,
     *retCode = httpResp->status;
 
     if (httpResp->status != HttpStatus_Accepted) {
-        usys_log_error("femd gpio failed. URL: %s Code: %d Str: %s",
+        usys_log_error("femd gpio failed. URL: %s Code: %d Str: %s "
+                       "Body: %.*s",
                        url,
                        httpResp->status,
-                       HttpStatusStr(httpResp->status));
+                       HttpStatusStr(httpResp->status),
+                       httpResp->binary_body ?
+                       (int)(httpResp->binary_body_length > 512 ?
+                             512 : httpResp->binary_body_length) : 0,
+                       httpResp->binary_body ?
+                       (const char *)httpResp->binary_body : "");
         ret = STATUS_NOK;
         goto cleanup;
     }
