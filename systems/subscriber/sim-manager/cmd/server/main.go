@@ -192,6 +192,8 @@ func runGrpcServer(gormDB sql.Db) {
 
 	go msgBusListener(mbClient)
 
+	simManagerServer.PushSimMetrics()
+
 	grpcServer.StartServer()
 }
 
