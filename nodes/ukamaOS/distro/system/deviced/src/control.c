@@ -263,7 +263,7 @@ bool control_set_pending(ControlCtx *ctx,
      * already applied is idempotent. Reboot is an action and must always be
      * scheduled while idle, even though its bookkeeping state is OFF.
      */
-    if (subsystem != CONTROL_SUBSYS_REBOOT &&
+    if (subsystem == CONTROL_SUBSYS_RADIO &&
         ss->Phase == CONTROL_PHASE_IDLE &&
         ss->Current == desired) {
         status  = HttpStatus_OK;
