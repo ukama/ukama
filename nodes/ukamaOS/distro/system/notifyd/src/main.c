@@ -67,36 +67,16 @@ static int readMapFile(Entry* entries, char *fileName) {
     while (fgets(line, sizeof(line), file) != NULL &&
            numEntries < MAX_ENTRIES) {
 
-        char *entry = line;
-        int fields;
-
-        while (*entry == ' ' || *entry == '\t') entry++;
-        if (*entry == '#' || *entry == '\n' || *entry == '\0') continue;
-
-        memset(&entries[numEntries], 0, sizeof(Entry));
-        fields = sscanf(entry, "%127s %127s %127s %127s %127s %d",
-                        entries[numEntries].serviceName,
-                        entries[numEntries].moduleName,
-                        entries[numEntries].propertyName,
-                        entries[numEntries].type,
-                        entries[numEntries].severity,
-                        &entries[numEntries].code);
-        if (fields != 6) {
-            usys_log_error("Invalid status map entry: %s", entry);
-            continue;
+        if (line[0] != '#') {
+            sscanf(line, "%s %s %s %s %s %d",
+                   entries[numEntries].serviceName,
+                   entries[numEntries].moduleName,
+                   entries[numEntries].propertyName,
+                   entries[numEntries].type,
+                   entries[numEntries].severity,
+                   &entries[numEntries].code);
+            numEntries++;
         }
-
-        /* Existing maps use both names for the alert endpoint. */
-        if (strcmp(entries[numEntries].type, "alarm") == 0) {
-            strcpy(entries[numEntries].type, "alert");
-        }
-        if (strcmp(entries[numEntries].type, "event") != 0 &&
-            strcmp(entries[numEntries].type, "alert") != 0) {
-            usys_log_error("Invalid status map type: %s",
-                           entries[numEntries].type);
-            continue;
-        }
-        numEntries++;
     }
 
     fclose(file);

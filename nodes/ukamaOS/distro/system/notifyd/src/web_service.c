@@ -79,11 +79,7 @@ static int web_service_cb_post_event_and_alert(const URequest *request,
 
     service = u_map_get(request->map_url, "service");
     json = ulfius_get_json_body_request(request, NULL);
-    if (service == NULL || !json_is_object(json) ||
-        !json_is_string(json_object_get(json, "service_name")) ||
-        strcmp(service, json_string_value(
-                        json_object_get(json, "service_name"))) != 0) {
-        json_free(&json);
+    if (service == NULL || json == NULL) {
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));

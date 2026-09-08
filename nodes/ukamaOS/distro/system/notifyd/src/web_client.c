@@ -47,7 +47,6 @@ URequest* wc_create_http_request(char* httpURL,
 
     char urlWithEp[MAX_URL_LENGTH] = {0};
     URequest* httpReq;
-    int length;
 
     httpReq = (URequest *)usys_calloc(1, sizeof(URequest));
     if (!httpReq) {
@@ -61,21 +60,7 @@ URequest* wc_create_http_request(char* httpURL,
         return NULL;
     }
 
-    if (!httpURL || !*httpURL || !urlPath) {
-        ulfius_clean_request(httpReq);
-        usys_free(httpReq);
-        return NULL;
-    }
-
-    while (*urlPath == '/') urlPath++;
-    length = snprintf(urlWithEp, sizeof(urlWithEp), "%s%s%s",
-                      httpURL, httpURL[strlen(httpURL) - 1] == '/' ? "" : "/",
-                      urlPath);
-    if (length < 0 || (size_t)length >= sizeof(urlWithEp)) {
-        ulfius_clean_request(httpReq);
-        usys_free(httpReq);
-        return NULL;
-    }
+    sprintf(urlWithEp, "%s/%s", httpURL, urlPath);
     ulfius_set_request_properties(httpReq,
                                   U_OPT_HTTP_VERB, method,
                                   U_OPT_HTTP_URL, urlWithEp,
@@ -181,16 +166,8 @@ int wc_forward_notification(char* httpURL,
         goto cleanup;
     }
 
-    if (httpResp->status >= 200 && httpResp->status < 300) {
+    if (httpResp->status >= 200 && httpResp->status <= 300) {
         ret = STATUS_OK;
-    } else {
-        usys_log_error("Notification rejected: URL=%s HTTP=%ld body=%.*s",
-                       httpReq->http_url, (long)httpResp->status,
-                       httpResp->binary_body ?
-                       (int)(httpResp->binary_body_length > 512 ?
-                             512 : httpResp->binary_body_length) : 0,
-                       httpResp->binary_body ?
-                       (const char *)httpResp->binary_body : "");
     }
 
     json_decref(json);

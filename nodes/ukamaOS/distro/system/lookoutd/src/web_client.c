@@ -155,9 +155,6 @@ static int wc_send_request(char *url,
     UResponse *httpResp = NULL;
     URequest  *httpReq = NULL;
 
-    if (!buffer) return STATUS_NOK;
-    *buffer = NULL;
-
     httpReq = wc_create_http_request(url, method, body);
     if (!httpReq) {
         return STATUS_NOK;
@@ -169,13 +166,12 @@ static int wc_send_request(char *url,
         goto cleanup;
     }
 
-    ret = STATUS_NOK;
     if (httpResp->status == HttpStatus_OK ||
         httpResp->status == HttpStatus_Created) {
         json = ulfius_get_json_body_response(httpResp, &jErr);
         if (json) {
             *buffer = json_dumps(json, 0);
-            ret = *buffer ? STATUS_OK : STATUS_NOK;
+            ret = STATUS_OK;
         }
     } else {
         *buffer = NULL;
@@ -206,7 +202,7 @@ static int wc_read_from_local_service(Config* config,
     char url[MAX_BUFFER] = {0};
 
     if (service == SERVICE_NODED) {
-        sprintf(url, "http://%s:%d%s",
+        sprintf(url, "http://%s:%d/%s",
                 DEF_NODED_HOST,
                 config->nodedPort,
                 DEF_NODED_EP);
@@ -335,8 +331,7 @@ static int wc_get_json_from_service(int port,
 
     ret = wc_send_request_raw(url, "GET", NULL, &status, &body);
     if (ret != STATUS_OK || status != HttpStatus_OK || body == NULL) {
-        usys_log_error("Failed to read %s HTTP=%ld body=%.512s",
-                       url, status, body ? body : "");
+        usys_log_error("Failed to read %s", url);
         usys_free(body);
         return STATUS_NOK;
     }
@@ -803,45 +798,7 @@ static void collect_fem_data(FemStatusData *fem) {
         return;
     }
 
-    if (wc_get_json_from_service(port, "/v1/fems", &fem->status) == STATUS_OK) {
-        JsonObj *fems = json_object_get(fem->status, "fems");
-        JsonObj *entry;
-        JsonObj *unit;
-        JsonObj *gpio;
-        size_t i;
-        char path[64];
-
-        if (!json_is_array(fems)) {
-            json_decref(fem->status);
-            fem->status = NULL;
-            return;
-        }
-
-        json_array_foreach(fems, i, entry) {
-            unit = json_object_get(entry, "fem_unit");
-            if (!json_is_integer(unit)) {
-                unit = json_object_get(entry, "unit");
-            }
-            if (!json_is_integer(unit) ||
-                (json_integer_value(unit) != 1 &&
-                 json_integer_value(unit) != 2)) {
-                usys_log_error("Invalid FEM unit in /v1/fems response");
-                json_decref(fem->status);
-                fem->status = NULL;
-                return;
-            }
-
-            json_object_set(entry, "unit", unit);
-            snprintf(path, sizeof(path), "/v1/fems/%d/gpio",
-                     (int)json_integer_value(unit));
-            gpio = NULL;
-            if (wc_get_json_from_service(port, path, &gpio) == STATUS_OK) {
-                json_object_set_new(entry, "gpio", gpio);
-            } else {
-                json_object_set_new(entry, "gpio", json_null());
-            }
-        }
-    }
+    wc_get_json_from_service(port, "/v1/fems", &fem->status);
 }
 
 int send_health_report(Config *config) {
@@ -860,7 +817,6 @@ int send_health_report(Config *config) {
 
     int ret    = USYS_TRUE;
     int status = STATUS_NOK;
-    long httpStatus = 0;
 
     memset(&statusData, 0, sizeof(LookoutStatusData));
 
@@ -934,39 +890,20 @@ int send_health_report(Config *config) {
     }
 
     usys_find_ukama_service_address(&ukama);
-    if (!ukama || !*ukama) {
-        usys_log_error("Ukama service address is unavailable");
-        ret = USYS_FALSE;
-        goto cleanup;
-    }
-
-    status = snprintf(url, sizeof(url), "%s%snode/v1/health/nodes/%s/performance",
-                      ukama, ukama[strlen(ukama) - 1] == '/' ? "" : "/",
-                      config->nodeID);
-    if (status < 0 || (size_t)status >= sizeof(url)) {
-        usys_log_error("Node status report URL is too long");
-        ret = USYS_FALSE;
-        goto cleanup;
-    }
+    sprintf(url, "%s/node/v1/health/nodes/%s/performance",
+            ukama,
+            config->nodeID);
 
     report = json_dumps(json, 0);
-    if (!report) {
-        ret = USYS_FALSE;
-        goto cleanup;
-    }
 
     usys_log_debug("Sending to URL: %s the node status report %s",
                    url, report);
 
-    if (wc_send_request_raw(url, "POST", report,
-                            &httpStatus, &buffer) != STATUS_OK ||
-        httpStatus < 200 || httpStatus >= 300) {
-        usys_log_error("Node status report failed: URL=%s HTTP=%ld body=%.512s",
-                       url, httpStatus, buffer ? buffer : "");
+    if (wc_send_request(url, "POST", report, &buffer) == STATUS_NOK) {
+        usys_log_error("failed to send node status report");
         ret = USYS_FALSE;
     }
 
-cleanup:
     json_decref(json);
     usys_free(report);
     usys_free(buffer);
