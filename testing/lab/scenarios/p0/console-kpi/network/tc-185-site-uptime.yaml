@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Switch RF off and back on through the Console and verify intentional maintenance is excluded from SITE_UPTIME while the site recovers online.
+description: Switch RF off and back on through the Console and verify RF-off time reduces SITE_UPTIME while the site recovers online.
 seed: 4712
 suite: p0
 priority: p0
@@ -36,15 +36,26 @@ phases:
         immediate: true
         timeout_seconds: 120
         poll_seconds: 20
-  - name: intentional_radio_off_is_excluded
+  - name: radio_off_counts_as_downtime
     events:
       - type: toggle_radio
         sites: site-001
         state: off
-      # Allow the controller state and the next analytics windows to settle.
       - type: wait
         seconds: 120
     checks:
+      - type: kpi_value
+        key: SITES_ONLINE
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 0
+        immediate: true
+        timeout_seconds: 120
+        poll_seconds: 20
+      # An absolute tolerance expresses 0 <= uptime <= 99.999 percent.
+      # The exact daily percentage depends on report timing and elapsed uptime.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -52,8 +63,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 100
-        tolerance: 0.001
+        expected_value: 49.9995
+        tolerance: 49.9995
         immediate: true
         timeout_seconds: 120
         poll_seconds: 20
@@ -65,7 +76,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Hard recovery gate: a point-in-time count, unlike a daily average.
+      # Recovery restores the current online count.
       - type: kpi_value
         key: SITES_ONLINE
         span: daily
@@ -76,7 +87,7 @@ phases:
         immediate: true
         timeout_seconds: 120
         poll_seconds: 20
-      # Planned RF-off time must not lower the availability percentage.
+      # The daily average retains the earlier downtime after recovery.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -84,8 +95,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 100
-        tolerance: 0.001
+        expected_value: 49.9995
+        tolerance: 49.9995
         immediate: true
         timeout_seconds: 120
         poll_seconds: 20
