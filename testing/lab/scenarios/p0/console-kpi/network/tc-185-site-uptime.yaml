@@ -41,10 +41,21 @@ phases:
       - type: toggle_radio
         sites: site-001
         state: off
-      # Allow the controller state and the next analytics windows to settle.
       - type: wait
         seconds: 120
     checks:
+      - type: kpi_value
+        key: SITES_ONLINE
+        span: daily
+        op: LAST
+        scope_key: network_id
+        networks: net-001
+        expected_value: 0
+        immediate: true
+        timeout_seconds: 120
+        poll_seconds: 20
+      # An absolute tolerance expresses 0 <= uptime <= 99.999 percent.
+      # The exact daily percentage depends on report timing and elapsed uptime.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -65,7 +76,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Hard recovery gate: a point-in-time count, unlike a daily average.
+      # Recovery restores the current online count.
       - type: kpi_value
         key: SITES_ONLINE
         span: daily

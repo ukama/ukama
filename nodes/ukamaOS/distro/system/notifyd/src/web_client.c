@@ -168,6 +168,16 @@ int wc_forward_notification(char* httpURL,
 
     if (httpResp->status >= 200 && httpResp->status <= 300) {
         ret = STATUS_OK;
+    } else {
+        usys_log_error("Notification forwarding rejected: URL=%s "
+                       "HTTP=%ld body=%.*s",
+                       httpReq->http_url,
+                       (long)httpResp->status,
+                       httpResp->binary_body ?
+                       (int)(httpResp->binary_body_length > 512 ?
+                             512 : httpResp->binary_body_length) : 0,
+                       httpResp->binary_body ?
+                       (const char *)httpResp->binary_body : "");
     }
 
     json_decref(json);

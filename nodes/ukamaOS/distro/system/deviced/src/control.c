@@ -255,7 +255,7 @@ bool control_set_pending(ControlCtx *ctx,
             goto done;
         }
 
-        ss->Phase = CONTROL_PHASE_IDLE;
+        /* Keep FAULT until the requested recovery is scheduled. */
     }
 
     /*

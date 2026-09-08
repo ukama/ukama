@@ -1,0 +1,22 @@
+[build-from]
+    rootfs="default"
+    contained="default"
+
+[build-compile]
+    version="0.1"
+    static="false"
+    source="/nodes/ukamaOS/distro/system/deviced"
+    cmd="make"
+    bin_from="/nodes/ukamaOS/distro/system/deviced/device.d"
+    bin_to="/sbin"
+
+[capp-exec]
+    name="device-client"
+    version="latest"
+    bin="device.d"
+    path="/sbin"
+    args="--client-mode"
+    readiness=true
+
+[capp-output]
+    format="tar.gz"
