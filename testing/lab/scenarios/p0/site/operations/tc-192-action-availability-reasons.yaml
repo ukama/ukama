@@ -31,6 +31,7 @@ phases:
         restart_available: true
         rf_available: true
         service_available: true
+
   - name: degraded_site_reported
     events:
       - type: disconnect_nodes
@@ -48,6 +49,7 @@ phases:
         online: 2
         offline: 1
         timeout_seconds: 120
+
   - name: offline_actions_unavailable_with_reasons
     events:
       - type: disconnect_nodes
@@ -70,6 +72,7 @@ phases:
         rf_reason: present
         service_reason: present
         timeout_seconds: 120
+
   - name: recover_and_verify_busy_reasons
     events:
       - type: reconnect_nodes
@@ -81,6 +84,11 @@ phases:
       - type: restart_nodes
         type_selector: controller
         count_per_network: 1
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
     checks:
       - type: site_operation_status_equals
         sites: all
