@@ -1679,6 +1679,30 @@ func expireAllPackagesForSim(simId string, packageRepo sims.PackageRepo, msgbus 
 	return nil
 }
 
+// PushSimMetrics pushes the SIM count gauges of every network that has SIMs,
+// so a restarted instance re-declares all networks instead of only the ones
+// its later events touch.
+func (s *SimManagerServer) PushSimMetrics() {
+	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	if err != nil {
+		log.Errorf("Error while listing sims for metrics push: %v", err)
+
+		return
+	}
+
+	networks := map[string]struct{}{}
+	for _, sim := range sims {
+		networks[sim.NetworkId.String()] = struct{}{}
+	}
+
+	for networkId := range networks {
+		_ = pushTotalSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
+		_ = pushActiveSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
+		_ = pushInactiveSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
+		_ = pushTerminatedSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
+	}
+}
+
 func pushTotalSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId string, metricsPusher MetricsPusher) error {
 	log.Infof("Collecting and pushing total sims count metric to push gateway host: %s", metricsPusher.GetPushMetricsHost())
 

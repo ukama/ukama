@@ -309,6 +309,28 @@ func dbSitesToPbSites(sites []db.Site) []*pb.Site {
 
 	return res
 }
+
+// PushMetrics pushes the site count of every network that has sites, so a
+// restarted instance re-declares all networks instead of only the ones its
+// later events touch.
+func (s *SiteServer) PushMetrics() {
+	sites, err := s.siteRepo.List(nil, false)
+	if err != nil {
+		log.Errorf("failed to list sites for metrics push: %s", err.Error())
+
+		return
+	}
+
+	networks := map[uuid.UUID]struct{}{}
+	for _, site := range sites {
+		networks[site.NetworkId] = struct{}{}
+	}
+
+	for networkId := range networks {
+		s.pushSiteCount(networkId)
+	}
+}
+
 func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
 	siteCount, err := s.siteRepo.GetSiteCount(networkId)
 	if err != nil {

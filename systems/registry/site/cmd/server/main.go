@@ -95,6 +95,8 @@ func runGrpcServer(gormdb sql.Db) {
 
 	go msgBusListener(mbClient)
 
+	siteServer.PushMetrics()
+
 	waitForExit()
 }
 
