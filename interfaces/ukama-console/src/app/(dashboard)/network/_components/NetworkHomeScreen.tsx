@@ -29,7 +29,8 @@ import { KPI_KEYS, kpiText, kpiValue } from '@/lib/kpis';
 import { formatBytes } from '@/lib/usage';
 import { toMapSites } from '@/lib/mappers/sites';
 import { heldQuery } from '@/lib/heldQuery';
-import { POLL_OVERVIEW_MS, visiblePoll } from '@/lib/polling';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { useNetworkId, useNetworkQueryPending } from '@/lib/useNetworkId';
@@ -57,12 +58,14 @@ export default function NetworkHomeScreen() {
       },
     },
     skip: !networkId,
-    ...visiblePoll(POLL_OVERVIEW_MS),
+    notifyOnNetworkStatusChange: true,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(kpiResult.networkStatus);
   const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
-    ...visiblePoll(POLL_OVERVIEW_MS),
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const { error: sitesError, refetch } = sitesResult;
   const { data: kpiData, loading: kpiLoading } = heldQuery(
@@ -118,6 +121,7 @@ export default function NetworkHomeScreen() {
       <PageHeader
         title="Home"
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       {loading ? (
         <Skeleton variant="rounded" sx={{ width: '100%', height: 96 }} />

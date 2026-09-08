@@ -40,6 +40,8 @@ import {
   kpiValue,
 } from '@/lib/kpis';
 import { type MapSite, toMapSites } from '@/lib/mappers/sites';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { sitesOnlineTile } from '@/lib/sitesOnline';
 import { pinColor } from '@/lib/status';
 import { formatBytes } from '@/lib/usage';
@@ -132,7 +134,10 @@ export default function BizHomeScreen() {
       },
     },
     skip: !networkId,
+    notifyOnNetworkStatusChange: true,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(homeResult.networkStatus);
   // Last-30-days data-sold total for the "… last 30 days" sub-line. Skipped
   // when the strip is already showing the 30-day window (headline == sub).
   const { data: monthData } = useGetKpiValuesQuery({
@@ -140,10 +145,12 @@ export default function BizHomeScreen() {
       data: { keys: [KPI_KEYS.dataSold], span: 'last_30d', networkId },
     },
     skip: !networkId || span === 'last_30d',
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const sitesResult = useSitesListQuery({
     variables: { networkId },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const { error: sitesError } = sitesResult;
   const { data: homeData, loading: homeLoading } = heldQuery(
@@ -211,6 +218,7 @@ export default function BizHomeScreen() {
         title="Home"
         sub="Revenue, customers and sites at a glance."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       {loading ? (
         <Skeleton variant="rounded" sx={{ height: 96 }} />

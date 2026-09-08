@@ -36,6 +36,8 @@ import {
   kpiDelta,
   kpiText,
 } from '@/lib/kpis';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { useNetworkId } from '@/lib/useNetworkId';
 
 // Trend/sub phrasing keyed by the selected rolling span, matching the DateChip.
@@ -68,23 +70,32 @@ export default function BizSalesScreen() {
   // getKpiValues resolves ONE op per call, so REVENUE at SUM/COUNT/AVG needs
   // three calls. The base call uses each KPI's default op: REVENUE -> SUM,
   // PAID_CUSTOMERS -> LAST.
-  const { data: baseData, loading: baseLoading } = useGetKpiValuesQuery({
+  const {
+    data: baseData,
+    loading: baseLoading,
+    networkStatus: baseStatus,
+  } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue, KPI_KEYS.paidCustomers], span, networkId },
     },
     skip: !networkId,
+    notifyOnNetworkStatusChange: true,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(baseStatus);
   const { data: countData, loading: countLoading } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue], span, op: 'COUNT', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const { data: avgData, loading: avgLoading } = useGetKpiValuesQuery({
     variables: {
       data: { keys: [KPI_KEYS.revenue], span, op: 'AVG', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   const { data: reportData, error: reportError } = useGetPerformanceReportQuery({
@@ -92,6 +103,7 @@ export default function BizSalesScreen() {
       data: { report: 'package_performance', span: 'last_30d', networkId },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   // Revenue trend: daily REVENUE (SUM) over the last 30 days.
@@ -107,12 +119,16 @@ export default function BizSalesScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
 
   const base = baseData?.getKpiValues.values;
   const countVals = countData?.getKpiValues.values;
   const avgVals = avgData?.getKpiValues.values;
-  const kpiLoading = baseLoading || countLoading || avgLoading;
+  const kpiLoading =
+    (baseLoading && !baseData) ||
+    (countLoading && !countData) ||
+    (avgLoading && !avgData);
   const error = reportError;
 
   // Per-tile trends: revenue/avg are % (changePct); purchases/paid are counts
@@ -151,6 +167,7 @@ export default function BizSalesScreen() {
         title="Revenue"
         sub="Revenue across your network — your single most important number."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
 
       {kpiLoading ? (

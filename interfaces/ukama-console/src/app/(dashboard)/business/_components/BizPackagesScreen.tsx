@@ -34,6 +34,8 @@ import StatusBadge from '@/components/StatusBadge';
 import { BAR_COLORS } from '@/lib/charts';
 import { useCurrency } from '@/lib/currency';
 import { formatDuration } from '@/lib/duration';
+import { POLL_LIVE_MS, visiblePoll } from '@/lib/polling';
+import { useLastFetched } from '@/lib/useLastFetched';
 import { DEFAULT_RANGE, rangeToSpan } from '@/lib/dateRange';
 import { attrValue, cellMoney, cellValue, KPI_KEYS, kpiValue } from '@/lib/kpis';
 import { dataVolumeToBytes, formatBytes } from '@/lib/usage';
@@ -71,7 +73,10 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
+    notifyOnNetworkStatusChange: true,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
+  const fetchedAt = useLastFetched(reportResult.networkStatus);
   const { error, refetch } = reportResult;
   const { data, loading } = heldQuery(reportResult, networkPending);
 
@@ -87,6 +92,7 @@ export default function BizPackagesScreen() {
       },
     },
     skip: !networkId,
+    ...visiblePoll(POLL_LIVE_MS, true),
   });
   const usageBytes = kpiValue(
     usageData?.getKpiValues.values,
@@ -137,6 +143,7 @@ export default function BizPackagesScreen() {
         title="Packages"
         sub="How your data packages are selling and performing."
         actions={<DateChip value={range} onChange={setRange} />}
+        fetchedAt={fetchedAt}
       />
       <KpiRow
         cols={4}
