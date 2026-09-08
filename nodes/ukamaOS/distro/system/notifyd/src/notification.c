@@ -265,7 +265,7 @@ static int notify_process_incoming_generic_notification(JsonObj *json, char *typ
 int process_incoming_notification(const char *service, char *type,
                                   JsonObj *json, Config *config){
 
-    int ret;
+    int ret = STATUS_NOK;
     ServiceHandler handler = NULL;
 
     handler = find_handler(service, type);
