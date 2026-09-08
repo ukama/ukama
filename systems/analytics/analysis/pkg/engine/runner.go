@@ -264,11 +264,10 @@ func (r *Runner) loadInputs(kpi schema.KpiSpec, windowID int64) (algos.Datasets,
 		case "window":
 			records, err = r.raw.WindowRows(r.org, in.Dataset, windowID)
 		case "state_prev":
-			// Lag-1 baseline: the dataset's state as of the PREVIOUS window.
-			// Lets an algo turn a cumulative counter into a per-window
-			// increment (cur − prev). Deterministic on replay: StateAsOf only
-			// considers rows with window_id <= windowID-1.
-			records, err = r.raw.StateAsOf(r.org, in.Dataset, windowID-1)
+			// Lag-1 baseline: each entity's last known value as of the
+			// PREVIOUS window, tombstones included, so a counter's baseline
+			// survives the series disappearing from the source.
+			records, err = r.raw.LastKnownAsOf(r.org, in.Dataset, windowID-1)
 		default:
 			records, err = r.raw.StateAsOf(r.org, in.Dataset, windowID)
 		}
