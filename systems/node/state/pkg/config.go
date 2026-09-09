@@ -26,7 +26,7 @@ type Config struct {
 	OrgName                   string
 	OrgId                     string
 	ConfigPath                string
-	StateTimeoutSweepInterval time.Duration `default:"15s"`
+	StateTimeoutSweepInterval time.Duration `default:"1s"`
 }
 
 func NewConfig(name string) *Config {
