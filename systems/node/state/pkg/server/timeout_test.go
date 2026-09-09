@@ -73,7 +73,7 @@ func TestRunTimeouts(t *testing.T) {
 
 	t.Run("leaves a node that is still inside its window", func(t *testing.T) {
 		now := time.Now().UTC()
-		enteredAt := now.Add(-30 * time.Second)
+		enteredAt := now.Add(-1 * time.Second)
 
 		repo := &mocks.StateRepo{}
 		repo.On("ListLatestStates").
