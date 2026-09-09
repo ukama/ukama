@@ -37,6 +37,7 @@ type InterfaceInfo struct {
 type CellularInterfaceInfo struct {
 	Available bool   `json:"available,omitempty"`
 	Error     string `json:"error,omitempty"`
+	Service   string `json:"service,omitempty"`
 }
 
 type RadioInterfaceInfo struct {

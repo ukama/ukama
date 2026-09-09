@@ -269,6 +269,7 @@ func parseCellularInterfaceToPb(c *parser.CellularInterface) *pb.CellularInterfa
 	return &pb.CellularInterface{
 		Available: c.Available,
 		Error:     c.Error,
+		Service:   c.Service,
 	}
 }
 
