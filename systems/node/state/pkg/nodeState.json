@@ -7,6 +7,7 @@
       "name": "Unknown",
       "description": "Node is registered but not heard from yet",
       "events": ["online", "offline", "health"],
+      "timeout": { "seconds": 60, "to_state": "Initializing" },
       "transition": [
         { "to_state": "Initializing", "trigger": ["online", "health"] }
       ],
@@ -21,11 +22,11 @@
     {
       "name": "Initializing",
       "description": "Node is coming up",
-      "events": ["online", "offline", "update", "platformready", "fault"],
-      "timeout": { "seconds": 60, "to_state": "Updating", "while_substate": "on" },
+      "events": ["online", "offline", "update", "platformready", "ready", "fault"],
+      "timeout": { "seconds": 60, "to_state": "Updating" },
       "transition": [
         { "to_state": "Updating", "trigger": ["update"] },
-        { "to_state": "Ready", "trigger": ["platformready"] },
+        { "to_state": "Ready", "trigger": ["platformready", "ready"] },
         { "to_state": "Faulty", "trigger": ["fault"] }
       ],
       "substate": {
@@ -39,11 +40,11 @@
     {
       "name": "Updating",
       "description": "Node is applying software updates",
-      "events": ["online", "offline", "rebooted", "platformready", "fault"],
-      "timeout": { "seconds": 60, "to_state": "Configuring", "while_substate": "on" },
+      "events": ["online", "offline", "rebooted", "platformready", "ready", "fault"],
+      "timeout": { "seconds": 60, "to_state": "Configuring" },
       "transition": [
         { "to_state": "Initializing", "trigger": ["rebooted"] },
-        { "to_state": "Ready", "trigger": ["platformready"] },
+        { "to_state": "Ready", "trigger": ["platformready", "ready"] },
         { "to_state": "Faulty", "trigger": ["fault"] }
       ],
       "substate": {
@@ -57,10 +58,10 @@
     {
       "name": "Configuring",
       "description": "Node is applying its configuration",
-      "events": ["online", "offline", "configapplied", "platformready", "fault"],
-      "timeout": { "seconds": 60, "to_state": "Ready", "while_substate": "on" },
+      "events": ["online", "offline", "configapplied", "platformready", "ready", "fault"],
+      "timeout": { "seconds": 60, "to_state": "Ready" },
       "transition": [
-        { "to_state": "Ready", "trigger": ["configapplied", "platformready"] },
+        { "to_state": "Ready", "trigger": ["configapplied", "platformready", "ready"] },
         { "to_state": "Faulty", "trigger": ["fault"] }
       ],
       "substate": {
