@@ -9,7 +9,7 @@
       "events": ["online", "offline", "health"],
       "timeout": { "seconds": 2, "to_state": "Initializing" },
       "transition": [
-        { "to_state": "Initializing", "trigger": ["online", "health"] }
+        { "to_state": "Initializing", "trigger": ["health"] }
       ],
       "substate": {
         "events": ["online", "offline"],
