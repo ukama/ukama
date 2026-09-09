@@ -134,6 +134,34 @@ func TestListHealthInfo(t *testing.T) {
 	c.AssertExpectations(t)
 }
 
+// The analytics node ingest spec reads $.interfaces.cellular.service from
+// this response, so the key has to survive JSON serialization.
+func TestListInterfacesEmitsCellularService(t *testing.T) {
+	const testNodeID = "uk-sa2602-tnode-v0-344c"
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/health/interfaces?nodeId="+testNodeID, nil)
+
+	c := &hmocks.HealthServiceClient{}
+	c.On("ListInterfaces", mock.Anything, &hpb.ListInterfacesRequest{NodeId: testNodeID}).
+		Return(&hpb.ListInterfacesResponse{
+			Interfaces: &hpb.Interface{
+				Cellular: &hpb.CellularInterface{Available: true, Service: "on"},
+				Radio:    &hpb.RadioInterface{Available: true, State: "on"},
+			},
+		}, nil).Once()
+
+	r := NewRouter(&Clients{
+		Health: client.NewHealthFromClient(c),
+	}, routerConfig).f.Engine()
+
+	r.ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), `"service":"on"`)
+	c.AssertExpectations(t)
+}
+
 func Test_StoreHealthReport(t *testing.T) {
 	chealth := &hmocks.HealthServiceClient{}
 

@@ -421,6 +421,10 @@ func TestHealthServerListInterfaces(t *testing.T) {
 
 		payload, err := json.Marshal(map[string]interface{}{
 			"interfaces": map[string]interface{}{
+				"cellular": map[string]interface{}{
+					"available": true,
+					"service":   "on",
+				},
 				"gps": map[string]interface{}{
 					"available":   true,
 					"lock":        true,
@@ -470,6 +474,11 @@ func TestHealthServerListInterfaces(t *testing.T) {
 
 		assert.NoError(t, err)
 		if assert.NotNil(t, resp) && assert.NotNil(t, resp.Interfaces) {
+			if assert.NotNil(t, resp.Interfaces.Cellular) {
+				assert.True(t, resp.Interfaces.Cellular.Available)
+				assert.Equal(t, "on", resp.Interfaces.Cellular.Service)
+				assert.Empty(t, resp.Interfaces.Cellular.Error)
+			}
 			if assert.NotNil(t, resp.Interfaces.Gps) {
 				assert.Equal(t, "2026-05-10T18:29:55Z", resp.Interfaces.Gps.Time)
 			}

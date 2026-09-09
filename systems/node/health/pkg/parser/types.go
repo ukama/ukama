@@ -138,6 +138,7 @@ type HealthInterfaces struct {
 type CellularInterface struct {
 	Available bool   `json:"available"`
 	Error     string `json:"error"`
+	Service   string `json:"service"`
 }
 
 type RadioInterface struct {
