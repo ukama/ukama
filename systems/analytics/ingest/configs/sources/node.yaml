@@ -1,15 +1,14 @@
-# Node source spec: per-node health interface probes via the node-gateway,
-# for tnode/anode (the cnode reports no interfaces). on_error: record — an
-# unreachable probe records unreachable:true instead of failing the dataset
-# window.
+# Node source spec: per-node health interface probes via the node
+# api-gateway, for tnode/anode (the cnode reports no interfaces).
+# on_error: record — an unreachable probe records unreachable:true instead
+# of failing the dataset window.
 version: 1
 source: node
 system: node
 
 pulls:
   - key: node.health.interfaces
-    endpoint: /v1/health/interfaces
-    gateway: node
+    endpoint: /v1/health/nodes/{{.node_id}}/interfaces
     strategy: full_snapshot
     items: $
     entity: node_id
@@ -18,8 +17,6 @@ pulls:
       dataset: registry.node.list
       bind: [node_id, site_id, network_id, type]
       filter: { field: type, in: [tnode, anode] }
-    params:
-      nodeId: "{{.node_id}}"
     map:
       # Only uptime-relevant fields are mapped: the change-log hash is
       # computed over mapped fields, so fluctuating values (gps time etc.)

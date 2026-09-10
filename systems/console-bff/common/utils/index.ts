@@ -13,7 +13,7 @@ import { RootDatabase } from "lmdb";
 import InitAPI from "../../init/datasource/init_api";
 import { MetricRes, MetricsRes } from "../../subscriptions/resolvers/types";
 import { verifyToken } from "../auth/token";
-import { INIT_API_GW, IS_PRODUCTION, SUB_GRAPHS } from "../configs";
+import { INIT_API_GW, IS_PRODUCTION } from "../configs";
 import {
   GRAPHS_TYPE,
   NODE_TYPE,
@@ -451,7 +451,6 @@ const getBaseURL = async (
   orgName: string,
   store?: RootDatabase
 ): Promise<ResponseObj> => {
-  const isForNodeGw = SUB_GRAPHS[serviceName]?.isForNodeGw ?? false;
   const sysName = getSystemNameByService(serviceName);
   if (store) logger.debug(`store org: ${store.get("org")}`);
 
@@ -470,12 +469,6 @@ const getBaseURL = async (
   const initAPI = new InitAPI();
   try {
     const intRes = await initAPI.getSystem(orgName, sysName);
-    if (isForNodeGw) {
-      return {
-        status: 200,
-        message: `http://${intRes.nodeGwIp}:${intRes.nodeGwPort}`,
-      };
-    }
     // Production resolves systems by in-cluster address (apiGwIp:apiGwPort);
     // apiGwUrl is the developer-facing address (e.g. http://localhost:8058)
     // and is only trusted outside production. Either path falls back to the

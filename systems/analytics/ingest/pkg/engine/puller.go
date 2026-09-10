@@ -329,17 +329,7 @@ func (p *Puller) fetch(pull schema.PullSpec, win schema.Window, binds map[string
 
 	base := pull.BaseURL
 	if base == "" {
-		var (
-			resolved string
-			err      error
-		)
-
-		if pull.Gateway == "node" {
-			resolved, err = p.resolver.ResolveNodeGw(p.org, pull.System)
-		} else {
-			resolved, err = p.resolver.Resolve(p.org, pull.System)
-		}
-
+		resolved, err := p.resolver.Resolve(p.org, pull.System)
 		if err != nil {
 			return nil, err
 		}

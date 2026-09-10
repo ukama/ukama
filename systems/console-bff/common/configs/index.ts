@@ -114,7 +114,6 @@ export const SUB_GRAPHS: Record<
     name: string;
     port: number;
     url: string;
-    isForNodeGw?: boolean;
     isPingedSuccess: boolean;
   }
 > = {
@@ -200,7 +199,6 @@ export const SUB_GRAPHS: Record<
     name: "health",
     port: HEALTH_PORT,
     url: `http://localhost:${HEALTH_PORT}`,
-    isForNodeGw: true,
     isPingedSuccess: false,
   },
   software: {

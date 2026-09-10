@@ -28,7 +28,7 @@ import { OnboardingStatusDocument } from '@/client/graphql/onboarding-status.gen
 import AppModal from '@/components/AppModal';
 import { Field, TextInput } from '@/components/form/FormField';
 import { useToast } from '@/components/ToastProvider';
-import { useUiPrefs } from '@/lib/store';
+import { useSwitchNetwork } from '@/lib/useSwitchNetwork';
 
 const schema = z.object({
   name: z
@@ -51,7 +51,7 @@ export default function AddNetworkDialog({
   onCreated?: (id: string) => void;
 }) {
   const toast = useToast();
-  const setNetworkId = useUiPrefs((s) => s.setNetworkId);
+  const switchNetwork = useSwitchNetwork();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const {
@@ -66,7 +66,7 @@ export default function AddNetworkDialog({
       { query: GetNetworksDocument },
     ],
     onCompleted: (res) => {
-      setNetworkId(res.addNetwork.id);
+      switchNetwork(res.addNetwork.id);
       toast(`Network "${res.addNetwork.name}" created.`);
       onCreated?.(res.addNetwork.id);
       onClose();

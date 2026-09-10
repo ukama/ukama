@@ -12,7 +12,7 @@ import { mapNodeInterfaces } from "../../health/datasource/mapper";
 const NODE_ID = "uk-sa2637-tnode-v0-6ea4";
 
 describe("mapNodeInterfaces", () => {
-  it("carries cellular service and radio state from the node gateway", () => {
+  it("carries cellular service and radio state from the health response", () => {
     const res = {
       interfaces: {
         cellular: { available: true, error: "", service: "on" },

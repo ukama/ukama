@@ -17,7 +17,6 @@ export class GetApps {
     @Ctx() ctx: AppContext,
     @Arg("data") data: GetAppsInputDto
   ): Promise<Apps> {
-    // health resolves to the node gateway (nodeGwIp:nodeGwPort) via isForNodeGw.
     const baseURL = await ctx.urls.url("health");
     return ctx.dataSources.health.getApps(baseURL, data);
   }

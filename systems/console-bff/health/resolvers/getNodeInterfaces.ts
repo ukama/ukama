@@ -17,7 +17,6 @@ export class GetNodeInterfaces {
     @Ctx() ctx: AppContext,
     @Arg("data") data: GetNodeInterfacesInputDto
   ): Promise<NodeInterfaces> {
-    // health resolves to the node gateway (nodeGwIp:nodeGwPort) via isForNodeGw.
     const baseURL = await ctx.urls.url("health");
     return ctx.dataSources.health.getInterfaces(baseURL, data);
   }
