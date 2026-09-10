@@ -18,9 +18,13 @@ import (
 	"github.com/loopfz/gadgeto/tonic"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/config"
+	ukamaPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/rest"
+	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/node/api-gateway/cmd/version"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
@@ -28,6 +32,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	cfgPb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 	contPb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	healthPb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	sitepb "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 	spb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	nspb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -55,6 +60,13 @@ type Clients struct {
 	SoftwareManager softwareManager
 	State           state
 	SiteController  siteController
+	Health          health
+}
+
+type health interface {
+	ListReports(nodeId, reportId string, reportedAt int64, timeframe ukamaPb.FilterTimeframesType) (*healthPb.ListReportsResponse, error)
+	ListApps(nodeId, reportId, appName string) (*healthPb.ListAppsResponse, error)
+	ListInterfaces(nodeId, reportId string) (*healthPb.ListInterfacesResponse, error)
 }
 
 type state interface {
@@ -104,6 +116,7 @@ func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
 	c.SoftwareManager = client.NewSoftwareManager(endpoints.Software, endpoints.Timeout)
 	c.State = client.NewState(endpoints.State, endpoints.Timeout)
 	c.SiteController = client.NewSiteController(endpoints.SiteController, endpoints.Timeout)
+	c.Health = client.NewHealth(endpoints.Health, endpoints.Timeout)
 	return c
 }
 
@@ -157,6 +170,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 			"state":             {Host: r.config.grpcEndpoints.State, Description: desc.State},
 			"site-controller":   {Host: r.config.grpcEndpoints.SiteController, Description: desc.SiteController},
 			"operation-monitor": {Host: r.config.grpcEndpoints.OperationMonitor, Description: desc.OperationMonitor},
+			"health":            {Host: r.config.grpcEndpoints.Health, Description: desc.Health},
 		}, r.config.grpcEndpoints.Timeout)
 	}
 
@@ -215,6 +229,11 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
 		stateS.POST("/:node_id/enforce/:event", formatDoc("Enforce state transition", "Enforce state transition"), tonic.Handler(r.enforceStateTransitionHandler, http.StatusOK))
 
+		const hlth = "/health"
+		healthS := auth.Group(hlth, "Health", "Node health reports")
+		healthS.GET("/nodes/:node_id/reports", formatDoc("List node health reports", "List stored health reports for a node. timeframe=latest returns only the newest report."), tonic.Handler(r.getNodeHealthReportsHandler, http.StatusOK))
+		healthS.GET("/nodes/:node_id/apps", formatDoc("List node apps", "List app status and resource usage from the node's latest health report"), tonic.Handler(r.getNodeAppsHandler, http.StatusOK))
+		healthS.GET("/nodes/:node_id/interfaces", formatDoc("Get node interfaces", "Get interface status from the node's latest health report"), tonic.Handler(r.getNodeInterfacesHandler, http.StatusOK))
 	}
 }
 
@@ -370,6 +389,45 @@ func (r *Router) postPowerCycleNodeHandler(c *gin.Context, req *PowerCycleNodeRe
 
 func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*sitepb.ToggleInternetSwitchResponse, error) {
 	return r.clients.SiteController.ToggleInternetSwitch(req.SiteId, req.Status, req.Port)
+}
+
+func (r *Router) getNodeHealthReportsHandler(c *gin.Context, req *GetNodeHealthReportsRequest) (*healthPb.ListReportsResponse, error) {
+	nodeId, err := validateHealthNodeId(req.NodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	timeframe := ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe)))
+
+	return r.clients.Health.ListReports(nodeId, req.ReportId, req.ReportedAt, timeframe)
+}
+
+func (r *Router) getNodeAppsHandler(c *gin.Context, req *GetNodeAppsRequest) (*healthPb.ListAppsResponse, error) {
+	nodeId, err := validateHealthNodeId(req.NodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.clients.Health.ListApps(nodeId, req.ReportId, req.AppName)
+}
+
+func (r *Router) getNodeInterfacesHandler(c *gin.Context, req *GetNodeInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
+	nodeId, err := validateHealthNodeId(req.NodeId)
+	if err != nil {
+		return nil, err
+	}
+
+	return r.clients.Health.ListInterfaces(nodeId, req.ReportId)
+}
+
+// Health reports are stored under the lowercase node id, so lookups must use the same form.
+func validateHealthNodeId(id string) (string, error) {
+	nId, err := ukama.ValidateNodeId(id)
+	if err != nil {
+		return "", status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+
+	return nId.StringLowercase(), nil
 }
 
 func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {

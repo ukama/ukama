@@ -14,6 +14,8 @@ replace github.com/ukama/ukama/systems/node/state => ../state
 
 replace github.com/ukama/ukama/systems/node/site-controller => ../site-controller
 
+replace github.com/ukama/ukama/systems/node/health => ../health
+
 replace github.com/ukama/ukama/systems/node/api-gateway => ./
 
 require (
@@ -25,6 +27,7 @@ require (
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/configurator v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/controller v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/node/health v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/site-controller v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/software v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/state v0.0.0-00010101000000-000000000000

@@ -111,6 +111,24 @@ type PowerCycleNodeRequest struct {
 	RequestedBy string `json:"requestedBy"`
 }
 
+type GetNodeHealthReportsRequest struct {
+	NodeId     string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	ReportId   string `json:"reportId" form:"reportId" query:"reportId"`
+	ReportedAt int64  `json:"reportedAt" form:"reportedAt" query:"reportedAt" description:"Unix seconds"`
+	Timeframe  string `json:"timeframe" form:"timeframe" query:"timeframe" default:"all" validate:"oneof=all latest"`
+}
+
+type GetNodeAppsRequest struct {
+	NodeId   string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	ReportId string `json:"reportId" form:"reportId" query:"reportId"`
+	AppName  string `json:"appName" form:"appName" query:"appName"`
+}
+
+type GetNodeInterfacesRequest struct {
+	NodeId   string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	ReportId string `json:"reportId" form:"reportId" query:"reportId"`
+}
+
 type ToggleInternetSwitchRequest struct {
 	SiteId string `json:"site_id" validate:"required" path:"site_id"`
 	Status bool   `json:"status"`

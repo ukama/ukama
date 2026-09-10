@@ -11,6 +11,7 @@ package rest
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,16 +19,21 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg"
 	"github.com/ukama/ukama/systems/node/api-gateway/pkg/client"
 
 	cconfig "github.com/ukama/ukama/systems/common/config"
 	cmmocks "github.com/ukama/ukama/systems/common/mocks"
+	ukamaPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	crest "github.com/ukama/ukama/systems/common/rest"
 	cmocks "github.com/ukama/ukama/systems/node/configurator/pb/gen/mocks"
 	cpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	nmocks "github.com/ukama/ukama/systems/node/controller/pb/gen/mocks"
+	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
+	hmocks "github.com/ukama/ukama/systems/node/health/pb/gen/mocks"
 )
 
 var defaultCors = cors.Config{
@@ -96,4 +102,125 @@ func TestRestartNode(t *testing.T) {
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
 	c.AssertExpectations(t)
+}
+
+const healthNodeId = "uk-sa2341-hnode-v0-a1a0"
+
+func newHealthRouter(h *hmocks.HealthServiceClient) *gin.Engine {
+	arc := &cmmocks.AuthClient{}
+	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
+
+	return NewRouter(&Clients{
+		Health: client.NewHealthFromClient(h),
+	}, routerConfig, arc.AuthenticateUser).f.Engine()
+}
+
+func TestGetNodeHealthReports(t *testing.T) {
+	t.Run("LatestReport", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+		h.On("ListReports", mock.Anything, &hpb.ListReportsRequest{
+			NodeId:     healthNodeId,
+			ReportId:   "",
+			ReportedAt: 1779534357,
+			Timeframe:  ukamaPb.FilterTimeframesType_LATEST,
+		}).Return(&hpb.ListReportsResponse{
+			Reports: []*hpb.HealthReport{{Id: "r1", NodeId: healthNodeId}},
+		}, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/"+strings.ToUpper(healthNodeId)+"/reports?timeframe=latest&reportedAt=1779534357", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "r1")
+		h.AssertExpectations(t)
+	})
+
+	t.Run("DefaultsToAllTimeframe", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+		h.On("ListReports", mock.Anything, mock.MatchedBy(func(r *hpb.ListReportsRequest) bool {
+			return r.NodeId == healthNodeId && r.Timeframe == ukamaPb.FilterTimeframesType_ALL
+		})).Return(&hpb.ListReportsResponse{}, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/"+healthNodeId+"/reports", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		h.AssertExpectations(t)
+	})
+
+	t.Run("InvalidTimeframe", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/"+healthNodeId+"/reports?timeframe=weekly", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		h.AssertNotCalled(t, "ListReports", mock.Anything, mock.Anything)
+	})
+
+	t.Run("InvalidNodeId", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/not-a-node/reports", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusBadRequest, w.Code)
+		h.AssertNotCalled(t, "ListReports", mock.Anything, mock.Anything)
+	})
+}
+
+func TestGetNodeApps(t *testing.T) {
+	t.Run("FilterByAppName", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+		h.On("ListApps", mock.Anything, &hpb.ListAppsRequest{
+			NodeId:  healthNodeId,
+			AppName: "noded",
+		}).Return(&hpb.ListAppsResponse{
+			Apps: []*hpb.App{{Name: "noded", Status: "running"}},
+		}, nil)
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/"+healthNodeId+"/apps?appName=noded", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		assert.Contains(t, w.Body.String(), "noded")
+		h.AssertExpectations(t)
+	})
+
+	t.Run("AppNotFound", func(t *testing.T) {
+		h := &hmocks.HealthServiceClient{}
+		h.On("ListApps", mock.Anything, mock.Anything).
+			Return(nil, status.Error(codes.NotFound, `app "missing" not found`))
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/v1/health/nodes/"+healthNodeId+"/apps?appName=missing", nil)
+		newHealthRouter(h).ServeHTTP(w, req)
+
+		assert.Equal(t, http.StatusNotFound, w.Code)
+		h.AssertExpectations(t)
+	})
+}
+
+func TestGetNodeInterfaces(t *testing.T) {
+	h := &hmocks.HealthServiceClient{}
+	h.On("ListInterfaces", mock.Anything, &hpb.ListInterfacesRequest{
+		NodeId: healthNodeId,
+	}).Return(&hpb.ListInterfacesResponse{
+		Interfaces: &hpb.Interface{
+			Cellular: &hpb.CellularInterface{Available: true, Service: "on"},
+		},
+	}, nil)
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/v1/health/nodes/"+healthNodeId+"/interfaces", nil)
+	newHealthRouter(h).ServeHTTP(w, req)
+
+	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "cellular")
+	h.AssertExpectations(t)
 }

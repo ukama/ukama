@@ -34,6 +34,7 @@ type GrpcEndpoints struct {
 	State            string
 	SiteController   string
 	OperationMonitor string
+	Health           string
 }
 
 // ServiceDescriptions holds a human-readable description per gRPC service,
@@ -47,6 +48,7 @@ type ServiceDescriptions struct {
 	State            string
 	SiteController   string
 	OperationMonitor string
+	Health           string
 }
 
 type HttpEndpoints struct {
@@ -71,6 +73,7 @@ func NewConfig() *Config {
 			State:            "state:9090",
 			SiteController:   "site-controller:9090",
 			OperationMonitor: "operation-monitor:9090",
+			Health:           "health:9090",
 		},
 		Descriptions: ServiceDescriptions{
 			Controller:       "Node controller: node lifecycle control operations",
@@ -79,6 +82,7 @@ func NewConfig() *Config {
 			State:            "Node state: tracking node state transitions",
 			SiteController:   "Site controller: site-level control operations",
 			OperationMonitor: "Operation monitoring: tracking long-running node operations",
+			Health:           "Node health: health reports, app status and interfaces",
 		},
 		Http: HttpEndpoints{
 			Timeout: 3 * time.Second,
