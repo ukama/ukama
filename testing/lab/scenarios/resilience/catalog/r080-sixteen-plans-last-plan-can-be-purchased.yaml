@@ -1,0 +1,202 @@
+version: 1
+name: r080-sixteen-plans-last-plan-can-be-purchased
+description: At the scenario limit of sixteen plan definitions, the last plan must remain visible, purchasable, and attributable without corrupting earlier plans.
+seed: 6180
+suite: resilience
+priority: p1
+tags: [virtual, catalog, backend-only, boundary]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: p01
+    name: Resilience P01
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p02
+    name: Resilience P02
+    data_mb: 100
+    duration_days: 1
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p03
+    name: Resilience P03
+    data_mb: 100
+    duration_days: 1
+    amount: 3.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p04
+    name: Resilience P04
+    data_mb: 100
+    duration_days: 1
+    amount: 4.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p05
+    name: Resilience P05
+    data_mb: 100
+    duration_days: 1
+    amount: 5.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p06
+    name: Resilience P06
+    data_mb: 100
+    duration_days: 1
+    amount: 6.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p07
+    name: Resilience P07
+    data_mb: 100
+    duration_days: 1
+    amount: 7.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p08
+    name: Resilience P08
+    data_mb: 100
+    duration_days: 1
+    amount: 8.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p09
+    name: Resilience P09
+    data_mb: 100
+    duration_days: 1
+    amount: 9.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p10
+    name: Resilience P10
+    data_mb: 100
+    duration_days: 1
+    amount: 10.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p11
+    name: Resilience P11
+    data_mb: 100
+    duration_days: 1
+    amount: 11.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p12
+    name: Resilience P12
+    data_mb: 100
+    duration_days: 1
+    amount: 12.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p13
+    name: Resilience P13
+    data_mb: 100
+    duration_days: 1
+    amount: 13.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p14
+    name: Resilience P14
+    data_mb: 100
+    duration_days: 1
+    amount: 14.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: p15
+    name: Resilience P15
+    data_mb: 100
+    duration_days: 1
+    amount: 15.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+phases:
+  - name: buy_last
+    events:
+      - type: purchase_package
+        ues: all
+        package: p15
+    checks:
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 16
+        immediate: true
+      - type: package_visible
+        package: p15
+        networks: net-001
+        immediate: true
+      - type: package_state
+        ues: all
+        package: p15
+        expected: queued
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_equals
+        ues: all
+        package: p15
+        status: settled
+        payment_method: cash
+        currency: USD
+        expected_value: 15.0
+        tolerance: 0.001
+        required: true
+        immediate: true
+final_checks:
+  - type: payment_count
+    ues: all
+    package: p15
+    expected_count: 1
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: p15
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 16.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5

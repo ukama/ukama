@@ -1,0 +1,15 @@
+runs
+runs/**
+runtime-nodes
+runtime-nodes/**
+utils/aws-p0/config.env
+utils/aws-p0/credentials.env
+utils/aws-p0/.state.env
+
+*.ovpn
+
+utils/runner/config.env
+utils/runner/credentials.env
+utils/runner/.state.env
+runs
+runs/**

@@ -1,0 +1,98 @@
+version: 1
+name: r316-unsold-true-one-minute-minimum-plan
+description: A one-MiB one-cent one-minute plan initially active=True must retain fields and zero sales while renamed and toggled.
+seed: 6416
+suite: resilience
+priority: p1
+tags: [virtual, catalog, backend-only, boundary, empty-state]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, packages]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 1
+    duration_minutes: 1
+    amount: 0.01
+    currency: USD
+    country: USA
+    assign_percent: 100
+    active: true
+phases:
+  - name: initial
+    checks:
+      - type: package_fields_equal
+        package: base
+        networks: net-001
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 0
+        immediate: true
+      - type: list_count_equals
+        target: subscribers
+        networks: net-001
+        expected_count: 0
+        immediate: true
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: base
+        column: sold
+        expected_value: 0
+        tolerance: 0.001
+        timeout_seconds: 600
+        poll_seconds: 5
+        immediate: true
+      - type: performance_report_cell
+        report: package_performance
+        span: daily
+        networks: net-001
+        package: base
+        column: revenue
+        expected_value: 0
+        tolerance: 0.001
+        timeout_seconds: 600
+        poll_seconds: 5
+        immediate: true
+  - name: rename_and_toggle
+    events:
+      - type: update_package
+        package: base
+        name: Minimum unsold ${ULAB_RESILIENCE_NAME_SUFFIX}
+      - type: set_package_active
+        package: base
+        active: false
+    checks:
+      - type: package_fields_equal
+        package: base
+        networks: net-001
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 0
+        immediate: true
+      - type: list_count_equals
+        target: subscribers
+        networks: net-001
+        expected_count: 0
+        immediate: true

@@ -1,0 +1,114 @@
+version: 1
+name: r089-remove-active-plus-0-queued-plans
+description: Clear a SIM with one active and 0 queued assignments; all assignments must disappear while every historical settled payment remains.
+seed: 6189
+suite: resilience
+priority: p1
+tags: [virtual, package-removal, backend-only, removal, history]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 100
+    duration_days: 1
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+phases:
+  - name: prepare_queue
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 0
+        immediate: true
+  - name: clear_all
+    events:
+      - type: remove_package_from_sim
+        ues: all
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 0
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: base
+        expected: absent
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: next
+        expected: absent
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 0
+        immediate: true
+  - name: clear_again
+    events:
+      - type: remove_package_from_sim
+        ues: all
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 0
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 0
+        immediate: true
+final_checks:
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 1
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5

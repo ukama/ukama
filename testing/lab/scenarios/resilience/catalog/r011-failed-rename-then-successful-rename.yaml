@@ -1,0 +1,70 @@
+version: 1
+name: r011-failed-rename-then-successful-rename
+description: A duplicate-name rename must preserve both plans; a later unique rename must succeed without creating a third plan.
+seed: 6111
+suite: resilience
+priority: p1
+tags: [virtual, catalog, backend-only, negative]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, packages]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: other
+    name: Resilience Other
+    data_mb: 100
+    duration_days: 1
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+phases:
+  - name: reject_duplicate
+    events:
+      - type: update_package
+        package: base
+        other_package: other
+        expect:
+          result: failure
+    checks:
+      - type: package_fields_equal
+        package: base
+        networks: all
+        immediate: true
+      - type: package_fields_equal
+        package: other
+        networks: all
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 2
+        immediate: true
+  - name: rename_valid
+    events:
+      - type: update_package
+        package: base
+        name: Resilience renamed ${ULAB_RESILIENCE_NAME_SUFFIX}
+    checks:
+      - type: package_fields_equal
+        package: base
+        networks: all
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 2
+        immediate: true

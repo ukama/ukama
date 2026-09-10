@@ -1,0 +1,219 @@
+version: 1
+name: r068-three-plan-queue-two-exhaustion-handoffs
+description: Consume two small plans in sequence; each successor must activate in FIFO order and the final plan must carry only its own traffic.
+seed: 6168
+suite: resilience
+priority: p1
+tags: [virtual, policy, runtime, fifo, accounting]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  ues_per_site: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 2
+    duration_minutes: 60
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: a
+    name: Resilience A
+    data_mb: 2
+    duration_minutes: 60
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+  - ref: b
+    name: Resilience B
+    data_mb: 10
+    duration_minutes: 60
+    amount: 3.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: queue
+    events:
+      - type: toggle_service
+        sites: all
+        state: 'on'
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+      - type: purchase_package
+        ues: all
+        package: a
+      - type: purchase_package
+        ues: all
+        package: b
+    checks:
+      - type: package_state
+        ues: all
+        package: base
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: a
+        expected: queued
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: b
+        expected: queued
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 3
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_assignment_chain
+        ues: all
+        package: base
+        expected: all
+        expected_count: 3
+        immediate: true
+  - name: exhaust_first
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+    checks:
+      - type: package_state
+        ues: all
+        package: base
+        expected: inactive
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: a
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: b
+        expected: queued
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: exhaust_second
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+    checks:
+      - type: package_state
+        ues: all
+        package: a
+        expected: inactive
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: b
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: use_third
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: all
+        package: b
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+final_checks:
+  - type: usage_per_sim
+    ues: all
+    expected: from_model
+    tolerance_percent: 2
+    timeout_seconds: 300
+    poll_seconds: 5
+  - type: payment_count
+    ues: all
+    package: a
+    expected_count: 1
+  - type: payment_count
+    ues: all
+    package: b
+    expected_count: 1
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: a
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: b
+  - type: package_assignment_chain
+    ues: all
+    package: base
+    expected: all
+    expected_count: 3
+  - type: performance_report_cell
+    report: package_performance
+    span: daily
+    networks: all
+    package: b
+    column: data_used
+    expected_value: 1048576
+    tolerance: 157286
+    timeout_seconds: 600

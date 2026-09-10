@@ -1,0 +1,177 @@
+version: 1
+name: r312-unallocated-network-peer-list-and-metric-isolation
+description: An unallocated target in two networks must preserve each network list/detail identity, zero unsold-package metrics, and independent sale totals.
+seed: 6412
+suite: resilience
+priority: p1
+tags: [virtual, isolation, backend-only, isolation, empty-state, analytics]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 2
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 100
+    duration_days: 1
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+    active: true
+phases:
+  - name: allocate_only_first
+    events:
+      - type: allocate_sim
+        ues: ue-000001
+        package: base
+        variant: specific
+    checks:
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: sims
+        networks: net-002
+        expected_count: 0
+        immediate: true
+      - type: sim_unallocated
+        ues: ue-000002
+        immediate: true
+      - type: payment_count
+        ues: ue-000002
+        package: base
+        expected_count: 0
+        immediate: true
+      - type: payment_count
+        ues: ue-000001
+        package: base
+        expected_count: 1
+        immediate: true
+final_checks:
+  - type: list_count_equals
+    target: subscribers
+    networks: net-001
+    expected_count: 1
+  - type: list_count_equals
+    target: subscribers
+    networks: net-002
+    expected_count: 1
+  - type: entity_fields_equal
+    entity: network
+    ref: net-001
+  - type: entity_reconciles
+    entity: network
+    ref: net-001
+  - type: entity_fields_equal
+    entity: network
+    ref: net-002
+  - type: entity_reconciles
+    entity: network
+    ref: net-002
+  - type: entity_fields_equal
+    entity: subscriber
+    ref: sub-000001
+  - type: entity_reconciles
+    entity: subscriber
+    ref: sub-000001
+  - type: entity_fields_equal
+    entity: subscriber
+    ref: sub-000002
+  - type: entity_reconciles
+    entity: subscriber
+    ref: sub-000002
+  - type: kpi_state_equals
+    key: DATA_USAGE
+    span: daily
+    scope_key: network_id
+    networks: net-001
+    value_state: no_data
+    timeout_seconds: 600
+  - type: package_fields_equal
+    package: next
+    networks: net-001
+  - type: performance_report_cell
+    report: package_performance
+    span: daily
+    networks: net-001
+    package: next
+    column: sold
+    expected_value: 0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
+  - type: performance_report_cell
+    report: package_performance
+    span: daily
+    networks: net-001
+    package: next
+    column: revenue
+    expected_value: 0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
+  - type: kpi_state_equals
+    key: DATA_USAGE
+    span: daily
+    scope_key: network_id
+    networks: net-002
+    value_state: no_data
+    timeout_seconds: 600
+  - type: package_fields_equal
+    package: next
+    networks: net-002
+  - type: performance_report_cell
+    report: package_performance
+    span: daily
+    networks: net-002
+    package: next
+    column: sold
+    expected_value: 0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
+  - type: performance_report_cell
+    report: package_performance
+    span: daily
+    networks: net-002
+    package: next
+    column: revenue
+    expected_value: 0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 1.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-002
+    expected_value: 0.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5
