@@ -25,12 +25,14 @@ import UnfoldMoreRounded from '@mui/icons-material/UnfoldMoreRounded';
 
 import { useGetNetworksQuery } from '@/client/graphql/networks.generated';
 import { useUiPrefs } from '@/lib/store';
+import { useSwitchNetwork } from '@/lib/useSwitchNetwork';
 import AddNetworkDialog from './AddNetworkDialog';
 
 export default function NetSwitch() {
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const { networkId, setNetworkId } = useUiPrefs();
+  const switchNetwork = useSwitchNetwork();
 
   const { data, loading } = useGetNetworksQuery();
   const networks = data?.getNetworks.networks ?? [];
@@ -95,7 +97,7 @@ export default function NetSwitch() {
             key={n.id}
             selected={n.id === current?.id}
             onClick={() => {
-              setNetworkId(n.id);
+              switchNetwork(n.id);
               setAnchor(null);
             }}
             sx={{ alignItems: 'flex-start', py: 1 }}
