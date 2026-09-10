@@ -23,29 +23,14 @@ runtime:
   wait: [nodes_ready]
 phases:
   # A new site's intent is service off and radio off, and the tower boots with
-  # service off, so SITE_UPTIME records the site as down from the tower's
-  # first health report on.
+  # service off. The lab adds the site only after its nodes are ready, so the
+  # tower is already reporting service off in the site's first window and
+  # every window reads 0.
   - name: service_off_by_default
     events:
       - type: wait
         seconds: 120
     checks:
-      # At least one window has recorded the site as down.
-      - type: kpi_value
-        key: SITE_UPTIME
-        span: daily
-        op: MIN
-        scope_key: site_id
-        scope_value: site-001
-        networks: net-001
-        expected_value: 0
-        tolerance: 0.001
-        immediate: true
-        timeout_seconds: 300
-        poll_seconds: 20
-      # Windows before the tower's first health report count as up, so the
-      # daily average starts above 0 and falls below 50 once the down windows
-      # outnumber them.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -53,10 +38,10 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: less_than
-        expected_value: 50
+        expected_value: 0
+        tolerance: 0.001
         immediate: true
-        timeout_seconds: 600
+        timeout_seconds: 300
         poll_seconds: 20
   - name: service_on_restores_uptime
     events:
@@ -71,8 +56,9 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # The up windows now outnumber the down ones. A plain > 0 would already
-      # hold from the windows before the first health report.
+      # Expected values are daily averages seen on the 1m analytics window
+      # (4 of 7 windows up here). The tolerance absorbs one to two windows of
+      # timing drift in either direction.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -80,10 +66,10 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: greater_than
-        expected_value: 50
+        expected_value: 57.1429
+        tolerance: 10
         immediate: true
-        timeout_seconds: 900
+        timeout_seconds: 300
         poll_seconds: 20
   - name: radio_off_counts_as_downtime
     events:
@@ -93,7 +79,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # RF off is downtime: the daily average drops below 100.
+      # RF off is downtime: 4 of 9 windows up.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -101,10 +87,10 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: less_than
-        expected_value: 100
+        expected_value: 44.4444
+        tolerance: 10
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 180
         poll_seconds: 20
   - name: radio_on_restores_service
     events:
@@ -114,7 +100,8 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # The RF-off windows remain in the daily average.
+      # Uptime recovers while the RF-off windows stay in the daily average:
+      # 6 of 11 windows up.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -122,20 +109,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        comparator: greater_than
-        expected_value: 0
+        expected_value: 54.5455
+        tolerance: 10
         immediate: true
-        timeout_seconds: 160
-        poll_seconds: 20
-      - type: kpi_value
-        key: SITE_UPTIME
-        span: daily
-        op: AVG
-        scope_key: site_id
-        scope_value: site-001
-        networks: net-001
-        comparator: less_than
-        expected_value: 100
-        immediate: true
-        timeout_seconds: 160
+        timeout_seconds: 180
         poll_seconds: 20
