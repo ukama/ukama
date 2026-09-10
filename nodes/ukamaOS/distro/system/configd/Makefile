@@ -37,6 +37,7 @@ CFLAGS+=-I./inc
 CFLAGS+=-I./inc/common
 CFLAGS+=-I../common/inc
 CFLAGS+=-D_REENTRANT
+CFLAGS+=-pthread
 
 LDFLAGS+=$(RPATH_FLAGS)
 LDFLAGS+=-L$(VENDOR_LIB)
@@ -54,6 +55,7 @@ endif
 LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS+=-ljansson
 LIBS+=-lusys
+LIBS+=-pthread
 
 # Soruce files
 CFILES   = $(wildcard ./src/*.c)
