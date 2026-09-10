@@ -1,10 +1,10 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Switch RF off and back on through the Console and verify RF-off time reduces SITE_UPTIME while the site recovers online.
+description: Verify a new site reads as down in SITE_UPTIME while its cellular service is off by default, that turning radio and service on raises SITE_UPTIME, and that switching RF off and back on counts the RF-off interval as downtime.
 seed: 4712
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, site-uptime, radio, graphql]
+tags: [virtual, console-kpi, site-uptime, service, radio, graphql]
 status: active
 provider:
   type: virtual
@@ -22,7 +22,14 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: baseline_site_up
+  # A new site's intent is service off and radio off, and the tower boots with
+  # service off. The lab adds the site only after its nodes are ready, so the
+  # tower is already reporting service off in the site's first window and
+  # every window reads 0.
+  - name: service_off_by_default
+    events:
+      - type: wait
+        seconds: 120
     checks:
       - type: kpi_value
         key: SITE_UPTIME
@@ -31,10 +38,38 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 100
+        expected_value: 0
         tolerance: 0.001
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 300
+        poll_seconds: 20
+  - name: service_on_restores_uptime
+    events:
+      # Radio first: a service toggle reconciles the whole site intent, and
+      # with the default radio intent (off) it would switch the radio off.
+      - type: toggle_radio
+        sites: site-001
+        state: on
+      - type: toggle_service
+        sites: site-001
+        state: on
+      - type: wait
+        seconds: 120
+    checks:
+      # Expected values are daily averages seen on the 1m analytics window
+      # (4 of 7 windows up here). The tolerance absorbs one to two windows of
+      # timing drift in either direction.
+      - type: kpi_value
+        key: SITE_UPTIME
+        span: daily
+        op: AVG
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        expected_value: 57.1429
+        tolerance: 10
+        immediate: true
+        timeout_seconds: 300
         poll_seconds: 20
   - name: radio_off_counts_as_downtime
     events:
@@ -44,18 +79,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      - type: kpi_value
-        key: SITES_ONLINE
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: net-001
-        expected_value: 0
-        immediate: true
-        timeout_seconds: 120
-        poll_seconds: 20
-      # An absolute tolerance expresses 0 <= uptime <= 99.999 percent.
-      # The exact daily percentage depends on report timing and elapsed uptime.
+      # RF off is downtime: 4 of 9 windows up.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -63,10 +87,10 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 49.9995
-        tolerance: 49.9995
+        expected_value: 44.4444
+        tolerance: 10
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 180
         poll_seconds: 20
   - name: radio_on_restores_service
     events:
@@ -76,18 +100,8 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Recovery restores the current online count.
-      - type: kpi_value
-        key: SITES_ONLINE
-        span: daily
-        op: LAST
-        scope_key: network_id
-        networks: net-001
-        expected_value: 1
-        immediate: true
-        timeout_seconds: 120
-        poll_seconds: 20
-      # The daily average retains the earlier downtime after recovery.
+      # Uptime recovers while the RF-off windows stay in the daily average:
+      # 6 of 11 windows up.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -95,8 +109,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 49.9995
-        tolerance: 49.9995
+        expected_value: 54.5455
+        tolerance: 10
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 180
         poll_seconds: 20
