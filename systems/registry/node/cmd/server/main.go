@@ -86,13 +86,13 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
-	nodeGwUrl, err := ic.GetNodeGwHostURL(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	nodeSystemUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, NodeSystemName), &serviceConfig.OrgName)
 	if err != nil {
-		log.Fatalf("Failed to resolve node gw system address from initClient: %v", err)
+		log.Fatalf("Failed to resolve node system address from initClient: %v", err)
 	}
 
-	healthClient := node.NewNodeHealthClient(nodeGwUrl.String())
+	healthClient := node.NewNodeHealthClient(nodeSystemUrl.String())
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,

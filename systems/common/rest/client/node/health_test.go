@@ -21,9 +21,8 @@ import (
 )
 
 const (
-	testNodeId        = "03cb753f-5e03-4c97-8e47-625115476c72"
-	testReportId      = "7f8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
-	testInterfaceName = "switch"
+	testNodeId   = "uk-sa2341-tnode-v0-a1a0"
+	testReportId = "7f8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d"
 )
 
 func TestHealthClient_GetInterfaces(t *testing.T) {
@@ -31,11 +30,10 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 
 	t.Run("InterfacesFound", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Contains(tt, req.URL.String(), baseURL+node.HealthEndpoint+"/interfaces?")
+			assert.Equal(tt, node.HealthEndpoint+"/nodes/"+testNodeId+"/interfaces", req.URL.Path)
 			q := req.URL.Query()
 			assert.Equal(tt, testReportId, q.Get("reportId"))
-			assert.Equal(tt, testNodeId, q.Get("nodeId"))
-			assert.Equal(tt, testInterfaceName, q.Get("interfaceName"))
+			assert.Empty(tt, q.Get("nodeId"))
 
 			body := `{"interfaces":{"switch":{"state":"active","policy":{"hash":"hash-123","source":"controller"}}}}`
 
@@ -50,7 +48,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		ifaces, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
+		ifaces, err := testHealthClient.GetInterfaces(testNodeId, testReportId)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, ifaces.Switch)
@@ -75,7 +73,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		ifaces, err := testHealthClient.GetInterfaces("", testNodeId, testReportId)
+		ifaces, err := testHealthClient.GetInterfaces(testNodeId, testReportId)
 
 		assert.NoError(tt, err)
 		assert.NotNil(tt, ifaces.Gps)
@@ -85,7 +83,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 
 	t.Run("InvalidResponse", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Contains(tt, req.URL.String(), baseURL+node.HealthEndpoint+"/interfaces?")
+			assert.Equal(tt, node.HealthEndpoint+"/nodes/"+testNodeId+"/interfaces", req.URL.Path)
 
 			resp := `{"error":"internal server error"}`
 
@@ -99,7 +97,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
+		_, err := testHealthClient.GetInterfaces(testNodeId, testReportId)
 
 		assert.Error(tt, err)
 	})
@@ -116,7 +114,7 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
+		_, err := testHealthClient.GetInterfaces(testNodeId, testReportId)
 
 		assert.Error(tt, err)
 	})
@@ -129,7 +127,22 @@ func TestHealthClient_GetInterfaces(t *testing.T) {
 		testHealthClient := node.NewNodeHealthClient(baseURL)
 		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		_, err := testHealthClient.GetInterfaces(testInterfaceName, testNodeId, testReportId)
+		_, err := testHealthClient.GetInterfaces(testNodeId, testReportId)
+
+		assert.Error(tt, err)
+	})
+
+	t.Run("MissingNodeId", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			tt.Fatalf("unexpected request to %s", req.URL.String())
+
+			return nil
+		}
+
+		testHealthClient := node.NewNodeHealthClient(baseURL)
+		testHealthClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		_, err := testHealthClient.GetInterfaces("", testReportId)
 
 		assert.Error(tt, err)
 	})

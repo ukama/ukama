@@ -12,9 +12,9 @@ type NodeHealthClient struct {
 	mock.Mock
 }
 
-// GetInterfaces provides a mock function with given fields: interfaceName, nodeId, reportId
-func (_m *NodeHealthClient) GetInterfaces(interfaceName string, nodeId string, reportId string) (node.InterfaceInfo, error) {
-	ret := _m.Called(interfaceName, nodeId, reportId)
+// GetInterfaces provides a mock function with given fields: nodeId, reportId
+func (_m *NodeHealthClient) GetInterfaces(nodeId string, reportId string) (node.InterfaceInfo, error) {
+	ret := _m.Called(nodeId, reportId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInterfaces")
@@ -22,17 +22,17 @@ func (_m *NodeHealthClient) GetInterfaces(interfaceName string, nodeId string, r
 
 	var r0 node.InterfaceInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (node.InterfaceInfo, error)); ok {
-		return rf(interfaceName, nodeId, reportId)
+	if rf, ok := ret.Get(0).(func(string, string) (node.InterfaceInfo, error)); ok {
+		return rf(nodeId, reportId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) node.InterfaceInfo); ok {
-		r0 = rf(interfaceName, nodeId, reportId)
+	if rf, ok := ret.Get(0).(func(string, string) node.InterfaceInfo); ok {
+		r0 = rf(nodeId, reportId)
 	} else {
 		r0 = ret.Get(0).(node.InterfaceInfo)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(interfaceName, nodeId, reportId)
+	if rf, ok := ret.Get(1).(func(string, string) error); ok {
+		r1 = rf(nodeId, reportId)
 	} else {
 		r1 = ret.Error(1)
 	}

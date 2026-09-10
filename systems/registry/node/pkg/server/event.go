@@ -191,7 +191,7 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		return nil
 	}
 
-	interfaces, err := n.s.healthClient.GetInterfaces("", msg.NodeId, msg.Id)
+	interfaces, err := n.s.healthClient.GetInterfaces(msg.NodeId, msg.Id)
 	if err != nil {
 		log.Errorf("Failed to get interfaces: %v", err)
 		return fmt.Errorf("failed to get interfaces: %w", err)

@@ -64,10 +64,6 @@ type PullSpec struct {
 	System  string `yaml:"system"`
 	BaseURL string `yaml:"base_url"`
 
-	// Gateway selects which of the system's gateways to resolve via
-	// initclient: "api" (default) or "node" (device-facing node-gateway).
-	Gateway string `yaml:"gateway"`
-
 	// OnError: "fail" (default — the whole dataset window fails and is
 	// retried) or "record" — a failed for_each iteration writes a synthetic
 	// row carrying the binds plus unreachable:true. Use for health probes
@@ -250,9 +246,6 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 				if !bound {
 					return fmt.Errorf("dataset %s: entity field %q is neither mapped nor bound", p.Key, ef.Name)
 				}
-			}
-			if p.Gateway != "" && p.Gateway != "api" && p.Gateway != "node" {
-				return fmt.Errorf("dataset %s: gateway must be api or node, got %q", p.Key, p.Gateway)
 			}
 			if p.OnError != "" && p.OnError != "fail" && p.OnError != "record" {
 				return fmt.Errorf("dataset %s: on_error must be fail or record, got %q", p.Key, p.OnError)

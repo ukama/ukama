@@ -26,9 +26,7 @@ import (
 type Resolver interface {
 	// Resolve returns the api-gateway base URL for (org, system).
 	Resolve(org, system string) (string, error)
-	// ResolveNodeGw returns the node-gateway base URL for (org, system).
-	ResolveNodeGw(org, system string) (string, error)
-	// Invalidate drops the cached entries (called on connection failures so
+	// Invalidate drops the cached entry (called on connection failures so
 	// the next attempt re-resolves).
 	Invalidate(org, system string)
 }
@@ -57,15 +55,7 @@ func New(initHost string, ttl time.Duration, debug bool) Resolver {
 }
 
 func (r *resolver) Resolve(org, system string) (string, error) {
-	return r.resolve(org, system, "api")
-}
-
-func (r *resolver) ResolveNodeGw(org, system string) (string, error) {
-	return r.resolve(org, system, "node")
-}
-
-func (r *resolver) resolve(org, system, gateway string) (string, error) {
-	key := org + "." + system + "." + gateway
+	key := cacheKey(org, system)
 
 	r.mu.Lock()
 	if e, ok := r.cache[key]; ok && time.Now().Before(e.expiresAt) {
@@ -78,23 +68,12 @@ func (r *resolver) resolve(org, system, gateway string) (string, error) {
 	initClient := ic.NewInitClient(r.initHost, client.WithDebug(r.debug))
 	host := ic.CreateHostString(org, system)
 
-	var resolved string
-
-	if gateway == "node" {
-		url, err := ic.GetNodeGwHostURL(initClient, host, &org)
-		if err != nil {
-			return "", fmt.Errorf("resolving node-gw %s via initclient: %w", key, err)
-		}
-
-		resolved = url.String()
-	} else {
-		url, err := ic.GetHostUrl(initClient, host, &org)
-		if err != nil {
-			return "", fmt.Errorf("resolving %s via initclient: %w", key, err)
-		}
-
-		resolved = url.String()
+	url, err := ic.GetHostUrl(initClient, host, &org)
+	if err != nil {
+		return "", fmt.Errorf("resolving %s via initclient: %w", key, err)
 	}
+
+	resolved := url.String()
 
 	r.mu.Lock()
 	r.cache[key] = cacheEntry{url: resolved, expiresAt: time.Now().Add(r.ttl)}
@@ -107,7 +86,10 @@ func (r *resolver) resolve(org, system, gateway string) (string, error) {
 
 func (r *resolver) Invalidate(org, system string) {
 	r.mu.Lock()
-	delete(r.cache, org+"."+system+".api")
-	delete(r.cache, org+"."+system+".node")
+	delete(r.cache, cacheKey(org, system))
 	r.mu.Unlock()
+}
+
+func cacheKey(org, system string) string {
+	return org + "." + system
 }

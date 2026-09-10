@@ -140,7 +140,7 @@ type ControllerLoadMetricsInfo struct {
 }
 
 type NodeHealthClient interface {
-	GetInterfaces(interfaceName, nodeId, reportId string) (InterfaceInfo, error)
+	GetInterfaces(nodeId, reportId string) (InterfaceInfo, error)
 }
 
 type nodeHealthClient struct {
@@ -161,21 +161,19 @@ func NewNodeHealthClient(h string, options ...client.Option) *nodeHealthClient {
 	}
 }
 
-func (h *nodeHealthClient) GetInterfaces(interfaceName, nodeId, reportId string) (InterfaceInfo, error) {
-	log.Debugf("Getting interfaces: interfaceName=%q nodeId=%q reportId=%q", interfaceName, nodeId, reportId)
+func (h *nodeHealthClient) GetInterfaces(nodeId, reportId string) (InterfaceInfo, error) {
+	log.Debugf("Getting interfaces: nodeId=%q reportId=%q", nodeId, reportId)
+
+	if nodeId == "" {
+		return InterfaceInfo{}, fmt.Errorf("GetInterfaces failure: node id is required")
+	}
 
 	q := url.Values{}
 	if reportId != "" {
 		q.Set("reportId", reportId)
 	}
-	if nodeId != "" {
-		q.Set("nodeId", nodeId)
-	}
-	if interfaceName != "" {
-		q.Set("interfaceName", interfaceName)
-	}
 
-	resp, err := h.R.GetWithQuery(h.u.String()+HealthEndpoint+"/interfaces", q.Encode())
+	resp, err := h.R.GetWithQuery(h.u.String()+HealthEndpoint+"/nodes/"+url.PathEscape(nodeId)+"/interfaces", q.Encode())
 	if err != nil {
 		log.Errorf("GetInterfaces failure. error: %s", err.Error())
 
