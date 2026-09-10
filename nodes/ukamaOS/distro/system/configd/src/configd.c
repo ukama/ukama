@@ -17,6 +17,7 @@
 #include "base64.h"
 #include "util.h"
 #include "web_client.h"
+#include "http_status.h"
 
 #include "usys_error.h"
 #include "usys_log.h"
@@ -26,6 +27,10 @@
 #include "usys_services.h"
 
 USysMutex mutex = PTHREAD_MUTEX_INITIALIZER;
+
+/* Serialize complete upload handlers and NOCONFIG decisions. Status readers
+ * use their own short-lived locks and remain available during app restarts. */
+static USysMutex transactionMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void config_status_set(Config *config,
                               ConfigApplyState state,
@@ -307,6 +312,10 @@ static bool process_config_session(Config *config) {
                        s->apps[index].name);
     }
 
+    if (config_store_finish(config->stateStore, ret) != HttpStatus_OK) {
+        ret = USYS_FALSE;
+    }
+
     config_status_set(config,
                       ret ? CONFIG_APPLY_APPLIED : CONFIG_APPLY_FAILED,
                       s->requestId,
@@ -401,11 +410,12 @@ static bool decode_data(SessionData *sd) {
     return USYS_TRUE;
 }
 
-bool process_received_config(JsonObj *json, Config *config) {
+static bool process_config_upload(JsonObj *json, Config *config) {
 
     SessionData *sd;
     ConfigSession *session;
     bool firstForApp;
+    char durableRequestId[CONFIG_REQUEST_ID_LEN];
 
     if (!json || !config) return USYS_FALSE;
 
@@ -433,6 +443,23 @@ bool process_received_config(JsonObj *json, Config *config) {
         return USYS_FALSE;
     }
 
+    /* Persist intent before staging, activation or restart can occur. Older
+     * file envelopes have no requestId; retain their timestamp correlation. */
+    if (!session) {
+        snprintf(durableRequestId, sizeof(durableRequestId), "%s",
+                 sd->requestId ? sd->requestId : "");
+        if (!durableRequestId[0]) {
+            snprintf(durableRequestId, sizeof(durableRequestId),
+                     "config-%d", sd->timestamp);
+        }
+
+        if (config_store_begin(config->stateStore, durableRequestId,
+                               sd->timestamp) != HttpStatus_OK) {
+            free_session_data(sd);
+            return USYS_FALSE;
+        }
+    }
+
     /* No on-going update session going */
     if (!session) {
         pthread_mutex_lock(&mutex);
@@ -454,6 +481,14 @@ bool process_received_config(JsonObj *json, Config *config) {
                           CONFIG_APPLY_IN_PROGRESS,
                           session->requestId,
                           true);
+    }
+
+    if (config_store_track_app(config->stateStore,
+                               sd->app) != HttpStatus_OK) {
+        config_status_set(config, CONFIG_APPLY_FAILED, NULL, false);
+        config_session_clear(config);
+        free_session_data(sd);
+        return USYS_FALSE;
     }
 
     if (!decode_data(sd)) {
@@ -547,6 +582,49 @@ bool process_received_config(JsonObj *json, Config *config) {
                    (session->expectedCount - session->receviedCount));
 
     return USYS_TRUE;
+}
+
+bool process_received_config(JsonObj *json, Config *config) {
+
+    bool result;
+    ConfigRecord before;
+    ConfigRecord after;
+
+    if (!config || !config->stateStore) {
+        return USYS_FALSE;
+    }
+
+    pthread_mutex_lock(&transactionMutex);
+    config_store_snapshot(config->stateStore, &before);
+    result = process_config_upload(json, config);
+    config_store_snapshot(config->stateStore, &after);
+
+    if (!result && !config->updateSession &&
+        after.mode == CONFIG_MODE_CONFIG &&
+        after.phase == CONFIG_PHASE_PENDING &&
+        (before.generation != after.generation ||
+         before.phase == CONFIG_PHASE_PENDING)) {
+
+        config_store_finish(config->stateStore, 0);
+    }
+
+    pthread_mutex_unlock(&transactionMutex);
+
+    return result;
+}
+
+int process_noconfig(const char *requestId, Config *config) {
+    int result;
+
+    if (!config || !config->stateStore) return 503;
+    pthread_mutex_lock(&transactionMutex);
+    if (config->updateSession) {
+        result = 409;
+    } else {
+        result = config_store_noconfig(config->stateStore, requestId);
+    }
+    pthread_mutex_unlock(&transactionMutex);
+    return result;
 }
 
 void free_session_data(SessionData *s) {

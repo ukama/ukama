@@ -104,6 +104,13 @@ static void setup_webservice_endpoints(Config *config, UInst *instance) {
     setup_unsupported_methods(instance, "GET",
                               URL_PREFIX, API_RES_EP("ready"));
 
+    /* consumed by lifecycle.d */
+    ulfius_add_endpoint_by_val(instance, "GET", URL_PREFIX,
+                               API_RES_EP("config/status"), 0,
+                               &web_service_cb_config_status, config);
+    setup_unsupported_methods(instance, "GET",
+                              URL_PREFIX, API_RES_EP("config/status"));
+
     /* config */
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("config"), 0,
