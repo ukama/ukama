@@ -60,3 +60,19 @@ query NetworkSiteDetail($siteId: String!) {
     }
   }
 }
+
+# Radio and cellular service state from a node's latest health report. Seeds
+# the site actions RF / Service toggles.
+query GetNodeInterfaces($data: GetNodeInterfacesInputDto!) {
+  getNodeInterfaces(data: $data) {
+    nodeId
+    cellular {
+      available
+      service
+    }
+    radio {
+      available
+      state
+    }
+  }
+}

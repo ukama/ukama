@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import { Apps, HealthInfo } from "../resolvers/types";
+import { Apps, HealthInfo, NodeInterfaces } from "../resolvers/types";
 
 /* The node app-health endpoint emits camelCase JSON at the REST boundary. */
 interface AppResourceRest {
@@ -38,6 +38,38 @@ export const mapApps = (res: { apps?: AppRest[] | null }): Apps => ({
       : undefined,
   })),
 });
+
+/* GET /v1/health/nodes/{nodeId}/interfaces; any interface may be null or absent. */
+interface NodeInterfacesRest {
+  interfaces?: {
+    cellular?: { available?: boolean; error?: string; service?: string } | null;
+    radio?: { available?: boolean; state?: string } | null;
+  } | null;
+}
+
+export const mapNodeInterfaces = (
+  nodeId: string,
+  res: NodeInterfacesRest | null | undefined
+): NodeInterfaces => {
+  const cellular = res?.interfaces?.cellular;
+  const radio = res?.interfaces?.radio;
+  return {
+    nodeId,
+    cellular: cellular
+      ? {
+          available: cellular.available ?? false,
+          error: cellular.error ?? "",
+          service: cellular.service ?? "",
+        }
+      : undefined,
+    radio: radio
+      ? {
+          available: radio.available ?? false,
+          state: radio.state ?? "",
+        }
+      : undefined,
+  };
+};
 
 /* GET /v1/health/nodes/{nodeId}/reports returns the stored reports newest
  * first; payload is the node's raw health JSON, base64-encoded ([]byte). */

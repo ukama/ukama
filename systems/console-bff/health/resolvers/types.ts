@@ -150,3 +150,45 @@ export class HealthReport {
   @Field(() => [HealthInfo])
   healths: HealthInfo[];
 }
+
+@InputType()
+export class GetNodeInterfacesInputDto {
+  @Field()
+  nodeId: string;
+}
+
+@ObjectType()
+export class CellularInterfaceInfo {
+  @Field()
+  available: boolean;
+
+  @Field()
+  error: string;
+
+  // "on" / "off"; empty when the node's health report omits it.
+  @Field()
+  service: string;
+}
+
+@ObjectType()
+export class RadioInterfaceInfo {
+  @Field()
+  available: boolean;
+
+  // "on" / "off"; empty when the node's health report omits it.
+  @Field()
+  state: string;
+}
+
+/** Interface states from the node's latest health report. */
+@ObjectType()
+export class NodeInterfaces {
+  @Field()
+  nodeId: string;
+
+  @Field(() => CellularInterfaceInfo, { nullable: true })
+  cellular?: CellularInterfaceInfo;
+
+  @Field(() => RadioInterfaceInfo, { nullable: true })
+  radio?: RadioInterfaceInfo;
+}

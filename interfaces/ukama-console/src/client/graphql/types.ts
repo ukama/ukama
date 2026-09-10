@@ -199,6 +199,13 @@ export type CategoryCountDto = {
   count: Scalars['Int']['output'];
 };
 
+export type CellularInterfaceInfo = {
+  __typename?: 'CellularInterfaceInfo';
+  available: Scalars['Boolean']['output'];
+  error: Scalars['String']['output'];
+  service: Scalars['String']['output'];
+};
+
 export type CommerceView = {
   __typename?: 'CommerceView';
   balance: BalanceSection;
@@ -375,6 +382,10 @@ export type GetKpiTimeSeriesDto = {
 export type GetKpiValuesDto = {
   __typename?: 'GetKpiValuesDto';
   values: Array<KpiValueDto>;
+};
+
+export type GetNodeInterfacesInputDto = {
+  nodeId: Scalars['String']['input'];
 };
 
 export type GetNodeLatestMetricInput = {
@@ -1096,6 +1107,13 @@ export type NodeInput = {
   id: Scalars['String']['input'];
 };
 
+export type NodeInterfaces = {
+  __typename?: 'NodeInterfaces';
+  cellular?: Maybe<CellularInterfaceInfo>;
+  nodeId: Scalars['String']['output'];
+  radio?: Maybe<RadioInterfaceInfo>;
+};
+
 export type NodeLatestMetric = {
   __typename?: 'NodeLatestMetric';
   msg: Scalars['String']['output'];
@@ -1513,6 +1531,7 @@ export type Query = {
   getNetwork: NetworkDto;
   getNetworks: NetworksResDto;
   getNode: Node;
+  getNodeInterfaces: NodeInterfaces;
   getNodeLatestMetric: NodeLatestMetric;
   getNodeOperationStatus: NodeOperationStatusDto;
   getNodeState: NodeStateRes;
@@ -1655,6 +1674,11 @@ export type QueryGetNetworkArgs = {
 
 export type QueryGetNodeArgs = {
   data: NodeInput;
+};
+
+
+export type QueryGetNodeInterfacesArgs = {
+  data: GetNodeInterfacesInputDto;
 };
 
 
@@ -1900,6 +1924,12 @@ export enum Role_Type {
   RoleUser = 'ROLE_USER',
   RoleVendor = 'ROLE_VENDOR'
 }
+
+export type RadioInterfaceInfo = {
+  __typename?: 'RadioInterfaceInfo';
+  available: Scalars['Boolean']['output'];
+  state: Scalars['String']['output'];
+};
 
 export type RawReportDto = {
   __typename?: 'RawReportDto';
