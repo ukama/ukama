@@ -696,10 +696,10 @@ function SiteActions({
       await toggleRF({
         variables: { data: { siteId: siteId, status: next } },
       });
-      toast(`RF turned ${next ? 'on' : 'off'}`);
+      toast(`Radio turned ${next ? 'on' : 'off'}`);
     } catch {
       setRfPending(null); // revert
-      toast(`Couldn't turn RF ${next ? 'on' : 'off'}`);
+      toast(`Couldn't turn radio ${next ? 'on' : 'off'}`);
     } finally {
       lock.refetch();
       void ifaces.refetch();
@@ -715,10 +715,10 @@ function SiteActions({
       await toggleService({
         variables: { data: { siteId: siteId, status: next } },
       });
-      toast(`Service turned ${next ? 'on' : 'off'}`);
+      toast(`Cellular turned ${next ? 'on' : 'off'}`);
     } catch {
       setServicePending(null); // revert
-      toast(`Couldn't turn service ${next ? 'on' : 'off'}`);
+      toast(`Couldn't turn cellular ${next ? 'on' : 'off'}`);
     } finally {
       lock.refetch();
       void ifaces.refetch();
@@ -825,7 +825,7 @@ function SiteActions({
         </MenuItem>
         <Divider />
         <MenuItem disabled={rfDisabled} onClick={onToggleRf}>
-          <ListItemText primary="RF" secondary={rfReason} />
+          <ListItemText primary="Radio" secondary={rfReason} />
           <ToggleState on={rfOn} />
           <Switch
             edge="end"
@@ -835,7 +835,7 @@ function SiteActions({
           />
         </MenuItem>
         <MenuItem disabled={serviceDisabled} onClick={onToggleService}>
-          <ListItemText primary="Service" secondary={serviceReason} />
+          <ListItemText primary="Cellular" secondary={serviceReason} />
           <ToggleState on={serviceOn} />
           <Switch
             edge="end"
@@ -1180,7 +1180,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
         </SectionCard>
 
         <SectionCard
-          title="Site overview"
+          title="Service"
           style={{ display: 'flex', flexDirection: 'column' }}
           bodyStyle={{
             flex: 1,
