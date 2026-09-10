@@ -38,7 +38,10 @@ import {
   useToggleServiceMutation,
 } from '@/client/graphql/controller.generated';
 import { useToggleInternetSwitchMutation } from '@/client/graphql/nodes.generated';
-import { useNetworkSiteDetailQuery } from '@/client/graphql/site-detail.generated';
+import {
+  useGetNodeInterfacesQuery,
+  useNetworkSiteDetailQuery,
+} from '@/client/graphql/site-detail.generated';
 import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
 import AppModal from '@/components/AppModal';
 import DetailPicker from '@/components/DetailPicker';
@@ -579,6 +582,29 @@ function ToggleState({ on }: { on: boolean }) {
   );
 }
 
+/** "on" / "off" from a node health report; null when the node didn't report it. */
+function parseOnOff(v: string | null | undefined): boolean | null {
+  const s = v?.trim().toLowerCase();
+  if (s === 'on') return true;
+  if (s === 'off') return false;
+  return null;
+}
+
+/** A toggle the user flipped, remembered against the reported state it flipped. */
+interface PendingToggle {
+  value: boolean;
+  base: boolean | null;
+}
+
+/** A flip holds until the node reports a new state, so a lagging report can't undo it. */
+function toggleValue(
+  pending: PendingToggle | null,
+  reported: boolean | null,
+): boolean {
+  if (pending && pending.base === reported) return pending.value;
+  return reported ?? true;
+}
+
 /**
  * Site actions dropdown — restart the site, plus RF / service radio toggles.
  * Restart is site-scoped; the RF/service toggles act on the site's tower node
@@ -604,9 +630,26 @@ function SiteActions({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [restart, setRestart] = useState(false);
   const [confirm, setConfirm] = useState('');
-  const [rfOn, setRfOn] = useState(true);
-  const [serviceOn, setServiceOn] = useState(true);
+  const [rfPending, setRfPending] = useState<PendingToggle | null>(null);
+  const [servicePending, setServicePending] = useState<PendingToggle | null>(
+    null,
+  );
   const open = Boolean(anchorEl);
+
+  // Seed RF / Service from the tower node's latest health report.
+  const ifaces = useGetNodeInterfacesQuery({
+    variables: { data: { nodeId: tnodeId ?? '' } },
+    skip: !tnodeId,
+    fetchPolicy: 'cache-and-network',
+    errorPolicy: 'all',
+    ...visiblePoll(POLL_LIVE_MS),
+  });
+  const reported = ifaces.data?.getNodeInterfaces;
+  const reportedRf = parseOnOff(reported?.radio?.state);
+  const reportedService = parseOnOff(reported?.cellular?.service);
+  const rfOn = toggleValue(rfPending, reportedRf);
+  const serviceOn = toggleValue(servicePending, reportedService);
+  const ifacesLoading = !!tnodeId && ifaces.loading && !reported;
 
   // Operation-lock status aggregated by the BFF over the site's nodes. Each
   // action depends on a different physical node (RF→amplifier, service→tower,
@@ -647,7 +690,7 @@ function SiteActions({
   const onToggleRf = async () => {
     if (!tnodeId) return;
     const next = !rfOn;
-    setRfOn(next); // optimistic
+    setRfPending({ value: next, base: reportedRf }); // optimistic
     lock.markBusy(); // busy immediately; the tower node lock will confirm
     try {
       await toggleRF({
@@ -655,17 +698,18 @@ function SiteActions({
       });
       toast(`RF turned ${next ? 'on' : 'off'}`);
     } catch {
-      setRfOn(!next); // revert
+      setRfPending(null); // revert
       toast(`Couldn't turn RF ${next ? 'on' : 'off'}`);
     } finally {
       lock.refetch();
+      void ifaces.refetch();
     }
   };
 
   const onToggleService = async () => {
     if (!tnodeId) return;
     const next = !serviceOn;
-    setServiceOn(next); // optimistic
+    setServicePending({ value: next, base: reportedService }); // optimistic
     lock.markBusy();
     try {
       await toggleService({
@@ -673,10 +717,11 @@ function SiteActions({
       });
       toast(`Service turned ${next ? 'on' : 'off'}`);
     } catch {
-      setServiceOn(!next); // revert
+      setServicePending(null); // revert
       toast(`Couldn't turn service ${next ? 'on' : 'off'}`);
     } finally {
       lock.refetch();
+      void ifaces.refetch();
     }
   };
 
@@ -688,12 +733,14 @@ function SiteActions({
     !towerOnline ||
     !lock.actions.rf.available ||
     lock.busy ||
+    ifacesLoading ||
     rfLoading;
   const serviceDisabled =
     !tnodeId ||
     !towerOnline ||
     !lock.actions.service.available ||
     lock.busy ||
+    ifacesLoading ||
     serviceLoading;
   const restartDisabled =
     !anyNodeOnline ||
@@ -704,6 +751,7 @@ function SiteActions({
   const noTower = 'No tower node on this site';
   const towerOffline = "Tower node is offline — it can't be reached";
   const siteOffline = "Every node on this site is offline — it can't be reached";
+  const readingState = 'Reading tower node state…';
   const rfReason = !tnodeId
     ? noTower
     : !towerOnline
@@ -712,7 +760,9 @@ function SiteActions({
         ? (lock.actions.rf.reason ?? siteBusyReason)
         : lock.busy
           ? siteBusyReason
-          : undefined;
+          : ifacesLoading
+            ? readingState
+            : undefined;
   const serviceReason = !tnodeId
     ? noTower
     : !towerOnline
@@ -721,7 +771,9 @@ function SiteActions({
         ? (lock.actions.service.reason ?? siteBusyReason)
         : lock.busy
           ? siteBusyReason
-          : undefined;
+          : ifacesLoading
+            ? readingState
+            : undefined;
   const restartReason = !anyNodeOnline
     ? siteOffline
     : restartDisabled
@@ -740,7 +792,10 @@ function SiteActions({
           )
         }
         endIcon={<KeyboardArrowDownRounded />}
-        onClick={(e) => setAnchorEl(e.currentTarget)}
+        onClick={(e) => {
+          setAnchorEl(e.currentTarget);
+          if (tnodeId) void ifaces.refetch();
+        }}
         aria-haspopup="true"
         aria-expanded={open ? 'true' : undefined}
         title={lock.busy ? siteBusyReason : undefined}

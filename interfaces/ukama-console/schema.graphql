@@ -21,6 +21,7 @@ type Query {
   subscribersView(networkId: String!): SubscribersView!
   getApps(data: GetAppsInputDto!): Apps
   getHealthReport(data: GetHealthReportInputDto!): HealthInfo!
+  getNodeInterfaces(data: GetNodeInterfacesInputDto!): NodeInterfaces!
   getCountries: CountriesRes!
   getCurrencySymbol(code: String!): CurrencyRes!
   getTimezones: TimezoneRes!
@@ -1320,6 +1321,27 @@ enum TIMEFRAME_FILTER {
   UNKNOWN
   ALL
   LATEST
+}
+
+type NodeInterfaces {
+  nodeId: String!
+  cellular: CellularInterfaceInfo
+  radio: RadioInterfaceInfo
+}
+
+type CellularInterfaceInfo {
+  available: Boolean!
+  error: String!
+  service: String!
+}
+
+type RadioInterfaceInfo {
+  available: Boolean!
+  state: String!
+}
+
+input GetNodeInterfacesInputDto {
+  nodeId: String!
 }
 
 type CountriesRes {
