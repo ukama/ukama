@@ -1,10 +1,10 @@
 version: 1
 name: p0-console-kpi-network-uptime
-description: Take one of two sites out of service through GraphQL for a controlled interval and verify NETWORK_UPTIME publishes a Console-visible partial-period percentage within valid bounds.
+description: Verify NETWORK_UPTIME is 0 with service off by default, rises when both sites go into service, and stays partial after a short service outage on one site.
 seed: 4713
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, network-uptime, controller, graphql]
+tags: [virtual, console-kpi, network-uptime, service, radio, controller, graphql]
 status: active
 provider:
   type: virtual
@@ -22,6 +22,55 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
+  # New sites start with service and radio intent off and the towers boot
+  # with service off. The lab adds each site after its nodes are ready, so
+  # every window reads both sites as down.
+  - name: service_off_by_default
+    events:
+      - type: wait
+        seconds: 120
+    checks:
+      - type: kpi_value
+        key: NETWORK_UPTIME
+        span: daily
+        op: AVG
+        scope_key: network_id
+        networks: net-001
+        expected_value: 0
+        tolerance: 0.001
+        immediate: true
+        timeout_seconds: 300
+        poll_seconds: 20
+  # Toggling service off on a site that is already off sends no command to
+  # the tower, so both sites go into service before the off interval below.
+  - name: sites_in_service
+    events:
+      # The radio is already on at the nodes, but each site's radio intent
+      # defaults to off. The service toggle reconciles the whole intent, so
+      # set radio intent to on first or that reconcile switches the radio off.
+      - type: toggle_radio
+        sites: all
+        state: on
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: wait
+        seconds: 120
+    checks:
+      # Both sites share tc-185's timeline, where this point read 50 to 57
+      # on the 1m analytics window. The tolerance absorbs one to two windows
+      # of timing drift.
+      - type: kpi_value
+        key: NETWORK_UPTIME
+        span: daily
+        op: AVG
+        scope_key: network_id
+        networks: net-001
+        expected_value: 50
+        tolerance: 10
+        immediate: true
+        timeout_seconds: 300
+        poll_seconds: 20
   - name: create_network_uptime_window
     events:
       - type: toggle_service
@@ -35,22 +84,15 @@ phases:
       - type: wait
         seconds: 10
     checks:
+      # The off interval costs site-001 at most a window or two, so the daily
+      # value stays near the previous phase and is still a partial period.
       - type: kpi_contract
         key: NETWORK_UPTIME
         span: daily
         op: AVG
         scope_key: network_id
         networks: net-001
-        comparator: greater_than
-        expected_value: 0
+        expected_value: 50
+        tolerance: 15
         expected_partial: true
-        timeout_seconds: 100
-      - type: kpi_value
-        key: NETWORK_UPTIME
-        span: daily
-        op: AVG
-        scope_key: network_id
-        networks: net-001
-        comparator: less_or_equal
-        expected_value: 100
-        timeout_seconds: 100
+        timeout_seconds: 180
