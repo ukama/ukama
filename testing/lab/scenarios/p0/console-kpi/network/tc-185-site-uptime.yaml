@@ -1,10 +1,10 @@
 version: 1
 name: p0-console-kpi-site-uptime
-description: Switch RF off and back on through the Console and verify the RF-off interval counts as downtime in SITE_UPTIME.
+description: Verify a new site reads as down in SITE_UPTIME while its cellular service is off by default, that turning radio and service on raises SITE_UPTIME, and that switching RF off and back on counts the RF-off interval as downtime.
 seed: 4712
 suite: p0
 priority: p0
-tags: [virtual, console-kpi, site-uptime, radio, graphql]
+tags: [virtual, console-kpi, site-uptime, service, radio, graphql]
 status: active
 provider:
   type: virtual
@@ -22,8 +22,30 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
-  - name: baseline_site_up
+  # A new site's intent is service off and radio off, and the tower boots with
+  # service off, so SITE_UPTIME records the site as down from the tower's
+  # first health report on.
+  - name: service_off_by_default
+    events:
+      - type: wait
+        seconds: 120
     checks:
+      # At least one window has recorded the site as down.
+      - type: kpi_value
+        key: SITE_UPTIME
+        span: daily
+        op: MIN
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        expected_value: 0
+        tolerance: 0.001
+        immediate: true
+        timeout_seconds: 300
+        poll_seconds: 20
+      # Windows before the tower's first health report count as up, so the
+      # daily average starts above 0 and falls below 50 once the down windows
+      # outnumber them.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -31,10 +53,37 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 100
-        tolerance: 0.001
+        comparator: less_than
+        expected_value: 50
         immediate: true
-        timeout_seconds: 120
+        timeout_seconds: 600
+        poll_seconds: 20
+  - name: service_on_restores_uptime
+    events:
+      # Radio first: a service toggle reconciles the whole site intent, and
+      # with the default radio intent (off) it would switch the radio off.
+      - type: toggle_radio
+        sites: site-001
+        state: on
+      - type: toggle_service
+        sites: site-001
+        state: on
+      - type: wait
+        seconds: 120
+    checks:
+      # The up windows now outnumber the down ones. A plain > 0 would already
+      # hold from the windows before the first health report.
+      - type: kpi_value
+        key: SITE_UPTIME
+        span: daily
+        op: AVG
+        scope_key: site_id
+        scope_value: site-001
+        networks: net-001
+        comparator: greater_than
+        expected_value: 50
+        immediate: true
+        timeout_seconds: 900
         poll_seconds: 20
   - name: radio_off_counts_as_downtime
     events:
