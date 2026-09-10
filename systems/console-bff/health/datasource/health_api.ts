@@ -11,9 +11,11 @@ import {
   Apps,
   GetAppsInputDto,
   GetHealthReportInputDto,
+  GetNodeInterfacesInputDto,
   HealthInfo,
+  NodeInterfaces,
 } from "../resolvers/types";
-import { dtoToHealthInfo, mapApps } from "./mapper";
+import { dtoToHealthInfo, mapApps, mapNodeInterfaces } from "./mapper";
 
 const HEALTH = "health";
 
@@ -36,6 +38,26 @@ class HealthApi extends BaseRESTDataSource {
       .then(apps => mapApps(apps))
       .catch(error => {
         this.logger.error(`Error getting apps: ${error}`);
+        throw error;
+      });
+  };
+
+  getInterfaces = async (
+    baseURL: string,
+    data: GetNodeInterfacesInputDto
+  ): Promise<NodeInterfaces> => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("nodeId", data.nodeId);
+    this.baseURL = baseURL;
+    this.logger.info(
+      `GetNodeInterfaces [GET]: ${baseURL}/${VERSION}/${HEALTH}/interfaces?${queryParams.toString()}`
+    );
+    return this.get(
+      `/${VERSION}/${HEALTH}/interfaces?${queryParams.toString()}`
+    )
+      .then(res => mapNodeInterfaces(data.nodeId, res))
+      .catch(error => {
+        this.logger.error(`Error getting node interfaces: ${error}`);
         throw error;
       });
   };
