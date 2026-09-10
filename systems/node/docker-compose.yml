@@ -183,6 +183,7 @@ services:
   depends_on:
    - controller
    - site-controller
+   - health
    - postgresd-node
    - initclient-node
 
