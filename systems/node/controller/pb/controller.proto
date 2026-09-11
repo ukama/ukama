@@ -14,6 +14,17 @@ service ControllerService {
   rpc PingNode(PingNodeRequest) returns  (PingNodeResponse);
   rpc SendNodeCommand(SendNodeCommandRequest) returns (SendNodeCommandResponse);
   rpc ConfigNode(ConfigNodeRequest) returns (ConfigNodeResponse);
+  rpc DeleteNodeConfig(DeleteNodeConfigRequest) returns (DeleteNodeConfigResponse);
+}
+
+message DeleteNodeConfigRequest {
+  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+}
+
+message DeleteNodeConfigResponse {
+  string operationId = 1 [json_name = "operation_id"];
+  string resourceKey = 2 [json_name = "resource_key"];
+  string status = 3;
 }
 
 message ConfigNodeRequest {
