@@ -78,7 +78,9 @@ $(VERSION_FILE):
 	$(CC) $(CFLAGS) -c $< -o $@
 
 test: $(TARGET_EXEC)
-	$(MAKE) -C test run LIFECYCLED_BIN=$(abspath $(TARGET_EXEC))
+	$(MAKE) -C test run LIFECYCLED_BIN=$(abspath $(TARGET_EXEC)) \
+		TEST_CPPFLAGS="-I$(VENDOR_INC)" \
+		TEST_LDFLAGS="-L$(VENDOR_LIB) -L$(VENDOR_LIB64) $(RPATH_FLAGS)"
 
 install: $(ARTIFACTS) $(VERSION_FILE)
 	mkdir -p $(TARGET_CONFIG_DIR)

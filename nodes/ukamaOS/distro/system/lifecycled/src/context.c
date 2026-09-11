@@ -24,7 +24,9 @@ int64_t lifecycle_boottime_ms(void) {
 
     struct timespec now;
 
-    if (clock_gettime(CLOCK_BOOTTIME, &now) != 0) return 0;
+    if (clock_gettime(CLOCK_BOOTTIME, &now) != 0) {
+        return 0;
+    }
 
     return ((int64_t)now.tv_sec * 1000) +
            ((int64_t)now.tv_nsec / 1000000);
@@ -39,11 +41,21 @@ bool lifecycle_read_boot_id(char *buffer, size_t size) {
 
     FILE *file;
     size_t length;
+    const char *path;
 
-    if (!buffer || size == 0) return false;
+    if (!buffer || size == 0) {
+        return false;
+    }
 
-    file = fopen(BOOT_ID_FILE, "r");
-    if (!file) return false;
+    path = getenv("LIFECYCLED_BOOT_ID_FILE");
+
+    if (path == NULL || *path == '\0') {
+        path = BOOT_ID_FILE;
+    }
+    file = fopen(path, "r");
+    if (!file) {
+        return false;
+    }
 
     if (!fgets(buffer, (int)size, file)) {
         fclose(file);
@@ -66,8 +78,11 @@ static void copy_error(char *error,
                        size_t errorSize,
                        const char *message) {
 
-    if (!error || errorSize == 0) return;
-    snprintf(error, errorSize, "%s", message ? message : "unknown error");
+    if (!error || errorSize == 0) {
+        return;
+    }
+    snprintf(error, errorSize, "%s",
+             message ? message : "unknown error");
 }
 
 static void enqueue_event_locked(LifecycleContext *ctx) {
@@ -75,11 +90,8 @@ static void enqueue_event_locked(LifecycleContext *ctx) {
     LifecycleEvent *event;
     size_t index;
 
-    if (ctx->eventCount == LIFECYCLED_EVENT_QUEUE) {
-        ctx->eventHead =
-            (ctx->eventHead + 1) % LIFECYCLED_EVENT_QUEUE;
-        ctx->eventCount--;
-        usys_log_warn("event: queue full; oldest transition dropped");
+    if (ctx->fsm.state == LIFECYCLE_STATE_CHECKING_IN) {
+        return;
     }
 
     index = (ctx->eventHead + ctx->eventCount) %
@@ -94,23 +106,33 @@ static void enqueue_event_locked(LifecycleContext *ctx) {
              sizeof(event->reason),
              "%s",
              ctx->fsm.reason);
+    snprintf(event->bootId,
+             sizeof(event->bootId),
+             "%s", ctx->bootId);
+    snprintf(event->requestId,
+             sizeof(event->requestId),
+             "%s", ctx->fsm.requestId);
+    snprintf(event->configMode,
+             sizeof(event->configMode),
+             "%s", ctx->fsm.configMode);
+    event->configGeneration = ctx->fsm.configGeneration;
     ctx->eventCount++;
 }
 
 static void persist_locked(LifecycleContext *ctx) {
 
-    if (!state_store_save(ctx->config->stateFile,
-                          ctx->bootId,
-                          &ctx->fsm)) {
-        usys_log_warn("state: unable to save %s",
-                      ctx->config->stateFile);
+    ctx->persistencePending = !state_store_save(ctx);
+    if (ctx->persistencePending) {
+        usys_log_warn("state: checkpoint write failed; pausing transitions and delivery");
     }
 }
 
 static void capture_transition_locked(LifecycleContext *ctx,
                                       uint64_t previousSequence) {
 
-    if (ctx->fsm.sequence == previousSequence) return;
+    if (ctx->fsm.sequence == previousSequence) {
+        return;
+    }
 
     usys_log_info("state: %s sequence=%llu reason=%s",
                   lifecycle_state_str(ctx->fsm.state),
@@ -124,7 +146,7 @@ static bool event_peek(LifecycleContext *ctx, LifecycleEvent *event) {
     bool present;
 
     pthread_mutex_lock(&ctx->mutex);
-    present = ctx->eventCount > 0;
+    present = ctx->eventCount > 0 && !ctx->persistencePending;
     if (present && event) {
         *event = ctx->events[ctx->eventHead];
     }
@@ -147,6 +169,7 @@ static void event_complete(LifecycleContext *ctx,
             ctx->eventHead =
                 (ctx->eventHead + 1) % LIFECYCLED_EVENT_QUEUE;
             ctx->eventCount--;
+            persist_locked(ctx);
         }
     }
 
@@ -181,33 +204,61 @@ static bool wait_for_poll(LifecycleContext *ctx) {
     return running;
 }
 
-static void poll_and_reduce(LifecycleContext *ctx) {
+static bool can_reannounce(const LifecycleContext *ctx) {
 
-    StarterSnapshot snapshot;
-    LifecycleFsm before;
-    uint64_t previousSequence;
-
-    memset(&snapshot, 0, sizeof(snapshot));
-    snapshot.aggregate = STARTER_AGGREGATE_UNKNOWN;
-    snapshot.configPhase = CONFIG_PHASE_UNKNOWN;
-
-    if (!starter_client_get_status(ctx->config, &snapshot)) {
-        snapshot.available = false;
+    if (!ctx->starter.available ||
+        ctx->starter.aggregate != STARTER_AGGREGATE_READY ||
+        !ctx->configuration.available) {
+        return false;
     }
 
+    if (ctx->fsm.state == LIFECYCLE_STATE_READY) {
+        return ctx->configuration.phase == CONFIG_PHASE_AWAITING;
+    }
+
+    return ctx->fsm.state == LIFECYCLE_STATE_OPERATIONAL &&
+        ctx->configuration.phase == CONFIG_PHASE_APPLIED &&
+        ctx->configuration.generation == ctx->fsm.configGeneration &&
+        strcmp(ctx->configuration.requestId, ctx->fsm.requestId) == 0 &&
+        strcmp(ctx->configuration.mode, ctx->fsm.configMode) == 0;
+}
+
+static void poll_and_reduce(LifecycleContext *ctx) {
+
+    StarterSnapshot starter = {0};
+    ConfigSnapshot configuration = {0};
+    LifecycleFsm before;
+
+    starter_client_get_status(ctx->config, &starter);
+    config_client_get_status(ctx->config, &configuration);
+
     pthread_mutex_lock(&ctx->mutex);
-    ctx->starter = snapshot;
+    ctx->starter = starter;
+    ctx->configuration = configuration;
+
+    if (ctx->persistencePending) {
+        persist_locked(ctx);
+    }
+    if (ctx->persistencePending || ctx->eventCount == LIFECYCLED_EVENT_QUEUE) {
+        pthread_mutex_unlock(&ctx->mutex);
+        return;
+    }
+
     before = ctx->fsm;
-    previousSequence = ctx->fsm.sequence;
-
-    lifecycle_fsm_tick(&ctx->fsm,
-                       &ctx->starter,
+    lifecycle_fsm_tick(&ctx->fsm, &starter, &configuration,
                        ctx->config->starterUnavailableTimeoutSec,
-                       ctx->config->configTimeoutSec,
-                       lifecycle_boottime_ms(),
-                       lifecycle_epoch_sec());
+                       ctx->config->configUnavailableTimeoutSec,
+                       lifecycle_boottime_ms(), lifecycle_epoch_sec());
 
-    capture_transition_locked(ctx, previousSequence);
+    if (ctx->fsm.sequence != before.sequence) {
+        ctx->reannouncePending = false;
+    } else if (ctx->reannouncePending && can_reannounce(ctx)) {
+        ctx->fsm.sequence++;
+        ctx->fsm.stateSince = lifecycle_epoch_sec();
+        ctx->reannouncePending = false;
+    }
+
+    capture_transition_locked(ctx, before.sequence);
     if (memcmp(&before, &ctx->fsm, sizeof(before)) != 0) {
         persist_locked(ctx);
     }
@@ -224,12 +275,13 @@ static void *worker_main(void *arg) {
     running = true;
 
     while (running) {
+        poll_and_reduce(ctx);
+
         if (event_peek(ctx, &event) &&
             notify_client_send_event(ctx->config, &event)) {
             event_complete(ctx, &event);
         }
 
-        poll_and_reduce(ctx);
         running = wait_for_poll(ctx);
     }
 
@@ -240,46 +292,62 @@ bool lifecycle_context_init(LifecycleContext *ctx, Config *config) {
 
     bool restored;
 
-    if (!ctx || !config) return false;
+    if (!ctx || !config) {
+        return false;
+    }
 
     memset(ctx, 0, sizeof(*ctx));
     ctx->config = config;
 
-    if (pthread_mutex_init(&ctx->mutex, NULL) != 0) return false;
+    if (pthread_mutex_init(&ctx->mutex, NULL) != 0) {
+        return false;
+    }
     if (pthread_cond_init(&ctx->condition, NULL) != 0) {
         pthread_mutex_destroy(&ctx->mutex);
         return false;
     }
 
     if (!lifecycle_read_boot_id(ctx->bootId, sizeof(ctx->bootId))) {
-        snprintf(ctx->bootId,
-                 sizeof(ctx->bootId),
-                 "fallback-%lld",
-                 (long long)lifecycle_epoch_sec());
+        usys_log_error("startup: cannot determine node boot identity");
+        pthread_cond_destroy(&ctx->condition);
+        pthread_mutex_destroy(&ctx->mutex);
+        return false;
+    }
+
+    if (!state_store_open(ctx)) {
+        usys_log_error("startup: cannot lock lifecycle checkpoint");
+        pthread_cond_destroy(&ctx->condition);
+        pthread_mutex_destroy(&ctx->mutex);
+        return false;
     }
 
     lifecycle_fsm_init(&ctx->fsm, lifecycle_epoch_sec());
-    restored = state_store_load(config->stateFile,
-                                ctx->bootId,
-                                &ctx->fsm);
-
+    restored = state_store_load(ctx);
     if (restored) {
-        usys_log_info("state: restored %s sequence=%llu",
-                      lifecycle_state_str(ctx->fsm.state),
-                      (unsigned long long)ctx->fsm.sequence);
+        ctx->reannouncePending = ctx->eventCount == 0;
     } else {
+        if (errno != ENOENT && errno != ESTALE) {
+            usys_log_error("startup: invalid lifecycle checkpoint");
+            state_store_close(ctx);
+            pthread_cond_destroy(&ctx->condition);
+            pthread_mutex_destroy(&ctx->mutex);
+            return false;
+        }
+        enqueue_event_locked(ctx);
         persist_locked(ctx);
     }
 
-    enqueue_event_locked(ctx);
     return true;
 }
 
 void lifecycle_context_free(LifecycleContext *ctx) {
 
-    if (!ctx) return;
+    if (!ctx) {
+        return;
+    }
 
     lifecycle_context_stop(ctx);
+    state_store_close(ctx);
     pthread_cond_destroy(&ctx->condition);
     pthread_mutex_destroy(&ctx->mutex);
     memset(ctx, 0, sizeof(*ctx));
@@ -287,7 +355,9 @@ void lifecycle_context_free(LifecycleContext *ctx) {
 
 bool lifecycle_context_start(LifecycleContext *ctx) {
 
-    if (!ctx) return false;
+    if (!ctx) {
+        return false;
+    }
 
     pthread_mutex_lock(&ctx->mutex);
     if (ctx->running) {
@@ -312,7 +382,9 @@ void lifecycle_context_stop(LifecycleContext *ctx) {
 
     bool join;
 
-    if (!ctx) return;
+    if (!ctx) {
+        return;
+    }
 
     pthread_mutex_lock(&ctx->mutex);
     join = ctx->workerStarted;
@@ -336,12 +408,20 @@ bool lifecycle_context_check_in(LifecycleContext *ctx,
     uint64_t previousSequence;
     bool accepted;
 
-    if (!ctx) return false;
+    if (!ctx) {
+        return false;
+    }
 
     pthread_mutex_lock(&ctx->mutex);
 
     if (bootId && *bootId && strcmp(bootId, ctx->bootId) != 0) {
         copy_error(error, errorSize, "bootId does not match current boot");
+        pthread_mutex_unlock(&ctx->mutex);
+        return false;
+    }
+
+    if (ctx->persistencePending || ctx->eventCount == LIFECYCLED_EVENT_QUEUE) {
+        copy_error(error, errorSize, "checkpoint or notification queue is pending");
         pthread_mutex_unlock(&ctx->mutex);
         return false;
     }
@@ -353,7 +433,7 @@ bool lifecycle_context_check_in(LifecycleContext *ctx,
         state == LIFECYCLE_STATE_CONFIGURING ||
         state == LIFECYCLE_STATE_OPERATIONAL ||
         (state == LIFECYCLE_STATE_FAULTY &&
-         ctx->fsm.fault == LIFECYCLE_FAULT_BOOT);
+         (ctx->fsm.fault == LIFECYCLE_FAULT_BOOT || !ctx->fsm.gateOpen));
 
     if (!accepted) {
         copy_error(error,
@@ -376,71 +456,20 @@ bool lifecycle_context_check_in(LifecycleContext *ctx,
     return true;
 }
 
-LifecycleConfigureResult lifecycle_context_configure(
-    LifecycleContext *ctx,
-    const char *requestId,
-    const char *assignmentId,
-    char *error,
-    size_t errorSize) {
-
-    LifecycleConfigureResult result;
-    uint64_t previousSequence;
-
-    if (!ctx) return LIFECYCLE_CONFIGURE_INVALID_REQUEST;
-
-    pthread_mutex_lock(&ctx->mutex);
-
-    if (requestId && *requestId && ctx->fsm.requestId[0] != '\0' &&
-        strcmp(requestId, ctx->fsm.requestId) == 0) {
-        pthread_mutex_unlock(&ctx->mutex);
-        return LIFECYCLE_CONFIGURE_DUPLICATE;
-    }
-
-    if ((ctx->fsm.state == LIFECYCLE_STATE_READY ||
-         ctx->fsm.state == LIFECYCLE_STATE_OPERATIONAL) &&
-        (!ctx->starter.available ||
-         ctx->starter.aggregate != STARTER_AGGREGATE_READY)) {
-        copy_error(error,
-                   errorSize,
-                   "required applications are not currently ready");
-        pthread_mutex_unlock(&ctx->mutex);
-        return LIFECYCLE_CONFIGURE_INVALID_STATE;
-    }
-
-    previousSequence = ctx->fsm.sequence;
-    result = lifecycle_fsm_configure(&ctx->fsm,
-                                     requestId,
-                                     assignmentId,
-                                     ctx->config->configTimeoutSec,
-                                     lifecycle_boottime_ms(),
-                                     lifecycle_epoch_sec());
-
-    if (result == LIFECYCLE_CONFIGURE_ACCEPTED) {
-        capture_transition_locked(ctx, previousSequence);
-        persist_locked(ctx);
-        pthread_cond_broadcast(&ctx->condition);
-    } else if (result == LIFECYCLE_CONFIGURE_BUSY) {
-        copy_error(error, errorSize, "another configuration is active");
-    } else if (result == LIFECYCLE_CONFIGURE_INVALID_STATE) {
-        copy_error(error,
-                   errorSize,
-                   "configure command is not valid in current state");
-    } else if (result == LIFECYCLE_CONFIGURE_INVALID_REQUEST) {
-        copy_error(error, errorSize, "requestId is required");
-    }
-
-    pthread_mutex_unlock(&ctx->mutex);
-    return result;
-}
-
 void lifecycle_context_snapshot(LifecycleContext *ctx,
                                 LifecycleFsm *fsm,
                                 StarterSnapshot *starter) {
 
-    if (!ctx) return;
+    if (!ctx) {
+        return;
+    }
 
     pthread_mutex_lock(&ctx->mutex);
-    if (fsm) *fsm = ctx->fsm;
-    if (starter) *starter = ctx->starter;
+    if (fsm) {
+        *fsm = ctx->fsm;
+    }
+    if (starter) {
+        *starter = ctx->starter;
+    }
     pthread_mutex_unlock(&ctx->mutex);
 }

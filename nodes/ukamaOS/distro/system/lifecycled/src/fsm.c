@@ -13,23 +13,18 @@
 
 static void copy_text(char *dst, size_t size, const char *src) {
 
-    if (!dst || size == 0) return;
+    if (!dst || size == 0) {
+        return;
+    }
     snprintf(dst, size, "%s", (src && *src) ? src : "none");
 }
 
 static void copy_optional(char *dst, size_t size, const char *src) {
 
-    if (!dst || size == 0) return;
+    if (!dst || size == 0) {
+        return;
+    }
     snprintf(dst, size, "%s", src ? src : "");
-}
-
-static bool request_matches(const LifecycleFsm *fsm,
-                            const StarterSnapshot *starter) {
-
-    if (!fsm || !starter) return false;
-    if (starter->configRequestId[0] == '\0') return true;
-
-    return strcmp(fsm->requestId, starter->configRequestId) == 0;
 }
 
 static bool transition(LifecycleFsm *fsm,
@@ -37,7 +32,9 @@ static bool transition(LifecycleFsm *fsm,
                        const char *reason,
                        int64_t epochSec) {
 
-    if (!fsm) return false;
+    if (!fsm) {
+        return false;
+    }
 
     if (fsm->state == state) {
         copy_text(fsm->reason, sizeof(fsm->reason), reason);
@@ -105,7 +102,9 @@ bool lifecycle_state_parse(const char *value, LifecycleState *state) {
 
     int i;
 
-    if (!value || !state) return false;
+    if (!value || !state) {
+        return false;
+    }
 
     for (i = LIFECYCLE_STATE_STARTING;
          i <= LIFECYCLE_STATE_FAULTY;
@@ -122,7 +121,9 @@ bool lifecycle_state_parse(const char *value, LifecycleState *state) {
 bool starter_aggregate_parse(const char *value,
                              StarterAggregateState *state) {
 
-    if (!value || !state) return false;
+    if (!value || !state) {
+        return false;
+    }
 
     if (strcmp(value, "pending") == 0) {
         *state = STARTER_AGGREGATE_PENDING;
@@ -137,40 +138,11 @@ bool starter_aggregate_parse(const char *value,
     return true;
 }
 
-ConfigPhase config_phase_from_reason(const char *reason) {
-
-    if (!reason || !*reason) return CONFIG_PHASE_UNKNOWN;
-
-    if (strncmp(reason,
-                "awaiting_configuration",
-                strlen("awaiting_configuration")) == 0) {
-        return CONFIG_PHASE_AWAITING;
-    }
-
-    if (strncmp(reason,
-                "configuration_in_progress",
-                strlen("configuration_in_progress")) == 0) {
-        return CONFIG_PHASE_IN_PROGRESS;
-    }
-
-    if (strncmp(reason,
-                "configuration_applied",
-                strlen("configuration_applied")) == 0) {
-        return CONFIG_PHASE_APPLIED;
-    }
-
-    if (strncmp(reason,
-                "configuration_failed",
-                strlen("configuration_failed")) == 0) {
-        return CONFIG_PHASE_FAILED;
-    }
-
-    return CONFIG_PHASE_UNKNOWN;
-}
-
 void lifecycle_fsm_init(LifecycleFsm *fsm, int64_t epochSec) {
 
-    if (!fsm) return;
+    if (!fsm) {
+        return;
+    }
 
     memset(fsm, 0, sizeof(*fsm));
     fsm->state = LIFECYCLE_STATE_STARTING;
@@ -189,7 +161,9 @@ bool lifecycle_fsm_begin_check_in(LifecycleFsm *fsm,
                                   int64_t nowMs,
                                   int64_t epochSec) {
 
-    if (!fsm || checkInTimeoutSec <= 0) return false;
+    if (!fsm || checkInTimeoutSec <= 0) {
+        return false;
+    }
 
     if (fsm->state == LIFECYCLE_STATE_READY ||
         fsm->state == LIFECYCLE_STATE_CONFIGURING ||
@@ -205,10 +179,12 @@ bool lifecycle_fsm_begin_check_in(LifecycleFsm *fsm,
                            epochSec);
     }
 
-    if (fsm->state == LIFECYCLE_STATE_CHECKING_IN) return false;
+    if (fsm->state == LIFECYCLE_STATE_CHECKING_IN) {
+        return false;
+    }
 
     if (fsm->state == LIFECYCLE_STATE_FAULTY &&
-        fsm->fault != LIFECYCLE_FAULT_BOOT) {
+        fsm->fault != LIFECYCLE_FAULT_BOOT && fsm->gateOpen) {
         return false;
     }
 
@@ -223,233 +199,123 @@ bool lifecycle_fsm_begin_check_in(LifecycleFsm *fsm,
                       epochSec);
 }
 
-LifecycleConfigureResult lifecycle_fsm_configure(
-    LifecycleFsm *fsm,
-    const char *requestId,
-    const char *assignmentId,
-    int configTimeoutSec,
-    int64_t nowMs,
-    int64_t epochSec) {
+static bool applications_ready(const StarterSnapshot *starter) {
 
-    if (!fsm || !requestId || !*requestId || configTimeoutSec <= 0) {
-        return LIFECYCLE_CONFIGURE_INVALID_REQUEST;
-    }
-
-    if (fsm->requestId[0] != '\0' &&
-        strcmp(fsm->requestId, requestId) == 0) {
-        return LIFECYCLE_CONFIGURE_DUPLICATE;
-    }
-
-    if (fsm->state == LIFECYCLE_STATE_CONFIGURING) {
-        return LIFECYCLE_CONFIGURE_BUSY;
-    }
-
-    if (fsm->state != LIFECYCLE_STATE_READY &&
-        fsm->state != LIFECYCLE_STATE_OPERATIONAL &&
-        fsm->state != LIFECYCLE_STATE_FAULTY) {
-        return LIFECYCLE_CONFIGURE_INVALID_STATE;
-    }
-
-    fsm->fault                = LIFECYCLE_FAULT_NONE;
-    fsm->configurationSeen    = false;
-    fsm->configurationApplied = false;
-    fsm->configDeadlineMs     = nowMs +
-        ((int64_t)configTimeoutSec * 1000);
-
-    copy_optional(fsm->requestId, sizeof(fsm->requestId), requestId);
-    copy_optional(fsm->assignmentId,
-                  sizeof(fsm->assignmentId),
-                  assignmentId);
-
-    transition(fsm,
-               LIFECYCLE_STATE_CONFIGURING,
-               "backend configuration command accepted",
-               epochSec);
-
-    return LIFECYCLE_CONFIGURE_ACCEPTED;
+    return starter->available && starter->aggregate == STARTER_AGGREGATE_READY;
 }
 
-static bool handle_starter_fault(LifecycleFsm *fsm,
-                                 const StarterSnapshot *starter,
+static bool configuration_matches(const LifecycleFsm *fsm,
+                                   const ConfigSnapshot *configuration) {
+
+    return fsm->configGeneration == configuration->generation &&
+        strcmp(fsm->requestId, configuration->requestId) == 0 &&
+        strcmp(fsm->configMode, configuration->mode) == 0;
+}
+
+static bool start_configuration(LifecycleFsm *fsm,
+                                 const ConfigSnapshot *configuration,
                                  int64_t epochSec) {
 
-    char reason[LIFECYCLE_REASON_LEN];
+    fsm->fault = LIFECYCLE_FAULT_NONE;
+    fsm->configurationSeen = true;
+    fsm->configurationApplied = false;
+    fsm->configGeneration = configuration->generation;
+    copy_optional(fsm->requestId, sizeof(fsm->requestId),
+                   configuration->requestId);
+    copy_optional(fsm->configMode, sizeof(fsm->configMode),
+                   configuration->mode);
 
-    if (starter->aggregate != STARTER_AGGREGATE_FAULTY) {
-        return false;
-    }
-
-    snprintf(reason,
-             sizeof(reason),
-             "starter readiness faulty: %.150s",
-             starter->aggregateReason[0] ?
-             starter->aggregateReason : "unknown reason");
-
-    return enter_fault(fsm,
-                       LIFECYCLE_FAULT_STARTER,
-                       fsm->state,
-                       reason,
-                       epochSec);
+    return transition(fsm, LIFECYCLE_STATE_CONFIGURING,
+                       "configuration decision observed", epochSec);
 }
 
-static bool handle_unavailable_starter(
-    LifecycleFsm *fsm,
-    const StarterSnapshot *starter,
-    int starterUnavailableTimeoutSec,
-    int64_t nowMs,
-    int64_t epochSec) {
+static bool configuration_fault(LifecycleFsm *fsm, const char *reason,
+                                 int64_t epochSec) {
 
-    if (starter->available) {
-        fsm->starterUnavailableSinceMs = 0;
-        return false;
-    }
-
-    if (fsm->starterUnavailableSinceMs == 0) {
-        fsm->starterUnavailableSinceMs = nowMs;
-        return false;
-    }
-
-    if (nowMs - fsm->starterUnavailableSinceMs <
-        ((int64_t)starterUnavailableTimeoutSec * 1000)) {
-        return false;
-    }
-
-    if (fsm->state == LIFECYCLE_STATE_FAULTY) {
-        return false;
-    }
-
-    return enter_fault(fsm,
-                       LIFECYCLE_FAULT_STARTER,
-                       fsm->state,
-                       "starter status unavailable",
-                       epochSec);
+    return enter_fault(fsm, LIFECYCLE_FAULT_CONFIGURATION,
+                        LIFECYCLE_STATE_CONFIGURING, reason, epochSec);
 }
 
-static bool tick_checking_in(LifecycleFsm *fsm,
-                             const StarterSnapshot *starter,
-                             int configTimeoutSec,
-                             int64_t nowMs,
-                             int64_t epochSec) {
+static bool tick_configuration(LifecycleFsm *fsm,
+                                const StarterSnapshot *starter,
+                                const ConfigSnapshot *configuration,
+                                int64_t epochSec) {
 
-    if (!fsm->gateOpen && nowMs >= fsm->checkInDeadlineMs) {
-        fsm->gateOpen = true;
-    }
+    bool matches;
+    bool repeatConfirmation;
 
-    if (!fsm->gateOpen) return false;
-
-    if (handle_starter_fault(fsm, starter, epochSec)) {
-        return true;
-    }
-
-    if (starter->aggregate == STARTER_AGGREGATE_READY) {
-        fsm->configDeadlineMs = nowMs +
-            ((int64_t)configTimeoutSec * 1000);
-        return transition(fsm,
-                          LIFECYCLE_STATE_READY,
-                          "check-in complete; required applications ready",
-                          epochSec);
-    }
-
-    return false;
-}
-
-static bool tick_ready(LifecycleFsm *fsm,
-                       const StarterSnapshot *starter,
-                       int configTimeoutSec,
-                       int64_t nowMs,
-                       int64_t epochSec) {
-
-    if (handle_starter_fault(fsm, starter, epochSec)) {
-        return true;
-    }
-
-    if (fsm->configDeadlineMs == 0) {
-        fsm->configDeadlineMs = nowMs +
-            ((int64_t)configTimeoutSec * 1000);
+    if (!configuration->available) {
         return false;
     }
 
-    if (nowMs >= fsm->configDeadlineMs &&
-        starter->aggregate == STARTER_AGGREGATE_READY) {
-        fsm->configDeadlineMs = 0;
-        return transition(fsm,
-                          LIFECYCLE_STATE_OPERATIONAL,
-                          "configuration window completed; no command received",
-                          epochSec);
+    if (configuration->phase == CONFIG_PHASE_FAILED) {
+        if (configuration->generation >= fsm->configGeneration &&
+            configuration->requestId[0] != '\0') {
+            fsm->configurationSeen = true;
+            fsm->configGeneration = configuration->generation;
+            copy_optional(fsm->requestId,
+                          sizeof(fsm->requestId),
+                          configuration->requestId);
+            copy_optional(fsm->configMode,
+                          sizeof(fsm->configMode),
+                          configuration->mode);
+        }
+        return configuration_fault(fsm, "configd reports configuration failure",
+                                    epochSec);
     }
 
-    return false;
-}
-
-static bool tick_configuring(LifecycleFsm *fsm,
-                             const StarterSnapshot *starter,
-                             int64_t nowMs,
-                             int64_t epochSec) {
-
-    bool matchingRequest;
-
-    matchingRequest = request_matches(fsm, starter);
-
-    if (starter->configPhase == CONFIG_PHASE_IN_PROGRESS &&
-        matchingRequest) {
-        fsm->configurationSeen = true;
-        fsm->configurationApplied = false;
+    if (configuration->phase == CONFIG_PHASE_AWAITING) {
+        if (fsm->configurationSeen) {
+            return configuration_fault(fsm, "configd lost its configuration record",
+                                        epochSec);
+        }
+        return false;
     }
 
-    if (starter->configPhase == CONFIG_PHASE_APPLIED &&
-        matchingRequest &&
-        (fsm->configurationSeen ||
-         starter->configRequestId[0] != '\0')) {
-        fsm->configurationSeen = true;
-        fsm->configurationApplied = true;
+    if (configuration->generation < fsm->configGeneration) {
+        return configuration_fault(fsm, "configd generation moved backwards",
+                                    epochSec);
     }
 
-    if (starter->configPhase == CONFIG_PHASE_FAILED &&
-        matchingRequest &&
-        (fsm->configurationSeen ||
-         starter->configRequestId[0] != '\0')) {
-        return enter_fault(fsm,
-                           LIFECYCLE_FAULT_CONFIGURATION,
-                           LIFECYCLE_STATE_CONFIGURING,
-                           starter->configReason[0] ?
-                           starter->configReason :
-                           "configuration failed",
+    matches = configuration_matches(fsm, configuration);
+    if (!matches && fsm->configGeneration != 0 &&
+        configuration->generation == fsm->configGeneration) {
+        return configuration_fault(fsm, "configd changed identity without a new generation",
+                                    epochSec);
+    }
+
+    repeatConfirmation = fsm->state == LIFECYCLE_STATE_OPERATIONAL &&
+        strcmp(configuration->mode, "NOCONFIG") == 0 &&
+        strcmp(fsm->requestId, configuration->requestId) == 0;
+
+    if (fsm->state == LIFECYCLE_STATE_READY ||
+        (!matches && !repeatConfirmation)) {
+        return start_configuration(fsm, configuration, epochSec);
+    }
+
+    if (configuration->phase != CONFIG_PHASE_APPLIED ||
+        !applications_ready(starter)) {
+        return false;
+    }
+
+    fsm->configurationApplied = true;
+    fsm->configGeneration = configuration->generation;
+
+    if (fsm->state == LIFECYCLE_STATE_CONFIGURING) {
+        fsm->confirmedGeneration = configuration->generation;
+        return transition(fsm, LIFECYCLE_STATE_OPERATIONAL,
+                           "configuration complete; required applications ready",
                            epochSec);
     }
 
-    if (handle_starter_fault(fsm, starter, epochSec)) {
+    if (fsm->state == LIFECYCLE_STATE_OPERATIONAL &&
+        fsm->confirmedGeneration < configuration->generation) {
+        fsm->confirmedGeneration = configuration->generation;
+        fsm->sequence++;
+        fsm->stateSince = epochSec;
+        copy_text(fsm->reason, sizeof(fsm->reason),
+                   "configuration confirmation repeated");
         return true;
-    }
-
-    if (fsm->configurationSeen &&
-        fsm->configurationApplied &&
-        starter->aggregate == STARTER_AGGREGATE_READY) {
-        fsm->configDeadlineMs = 0;
-        return transition(fsm,
-                          LIFECYCLE_STATE_OPERATIONAL,
-                          "configuration applied; applications ready",
-                          epochSec);
-    }
-
-    if (!fsm->configurationSeen &&
-        nowMs >= fsm->configDeadlineMs &&
-        starter->aggregate == STARTER_AGGREGATE_READY) {
-        fsm->configDeadlineMs = 0;
-        return transition(fsm,
-                          LIFECYCLE_STATE_OPERATIONAL,
-                          "configuration window completed; no config received",
-                          epochSec);
-    }
-
-    if (fsm->configurationSeen &&
-        !fsm->configurationApplied &&
-        nowMs >= fsm->configDeadlineMs) {
-        fsm->configDeadlineMs = 0;
-        return enter_fault(fsm,
-                           LIFECYCLE_FAULT_CONFIGURATION,
-                           LIFECYCLE_STATE_CONFIGURING,
-                           "configuration timed out before completion",
-                           epochSec);
     }
 
     return false;
@@ -457,82 +323,122 @@ static bool tick_configuring(LifecycleFsm *fsm,
 
 static bool tick_faulty(LifecycleFsm *fsm,
                         const StarterSnapshot *starter,
+                        const ConfigSnapshot *configuration,
                         int64_t epochSec) {
 
-    LifecycleState target;
-
-    if (fsm->fault != LIFECYCLE_FAULT_STARTER ||
-        !starter->available ||
-        starter->aggregate != STARTER_AGGREGATE_READY) {
+    if (fsm->fault == LIFECYCLE_FAULT_BOOT) {
+        /* Starter must repeat its existing boot check-in after repair. */
         return false;
     }
 
-    target = fsm->faultReturnState;
-    fsm->fault = LIFECYCLE_FAULT_NONE;
-
-    if (target == LIFECYCLE_STATE_CONFIGURING) {
-        return transition(fsm,
-                          target,
-                          "starter readiness recovered during configuration",
-                          epochSec);
+    if (!fsm->gateOpen) {
+        /* Services cannot be ready until starter can pass this gate. */
+        fsm->fault = LIFECYCLE_FAULT_NONE;
+        return transition(fsm, fsm->faultReturnState,
+                           "starter reachable; resuming startup", epochSec);
     }
 
-    return transition(fsm,
-                      target,
-                      "starter readiness recovered",
-                      epochSec);
+    if (!applications_ready(starter) || !configuration->available ||
+        configuration->phase == CONFIG_PHASE_FAILED) {
+        return false;
+    }
+
+    if (configuration->phase == CONFIG_PHASE_AWAITING) {
+        if (fsm->configurationSeen) {
+            return false;
+        }
+        fsm->fault = LIFECYCLE_FAULT_NONE;
+        return transition(fsm, LIFECYCLE_STATE_READY,
+                           "applications recovered; awaiting assignment", epochSec);
+    }
+
+    if (configuration->generation < fsm->configGeneration) {
+        return false;
+    }
+
+    if (configuration->generation == fsm->configGeneration &&
+        !configuration_matches(fsm, configuration)) {
+        return false;
+    }
+
+    return start_configuration(fsm, configuration, epochSec);
+}
+
+static bool service_unavailable(int64_t *sinceMs, int timeoutSec,
+                                 int64_t nowMs) {
+
+    if (*sinceMs == 0) {
+        *sinceMs = nowMs;
+        return false;
+    }
+
+    return nowMs - *sinceMs >= (int64_t)timeoutSec * 1000;
 }
 
 bool lifecycle_fsm_tick(LifecycleFsm *fsm,
                         const StarterSnapshot *starter,
+                        const ConfigSnapshot *configuration,
                         int starterUnavailableTimeoutSec,
-                        int configTimeoutSec,
+                        int configUnavailableTimeoutSec,
                         int64_t nowMs,
                         int64_t epochSec) {
 
-    if (!fsm || !starter || starterUnavailableTimeoutSec <= 0 ||
-        configTimeoutSec <= 0) {
+    if (fsm == NULL || starter == NULL || configuration == NULL) {
         return false;
     }
 
-    if (handle_unavailable_starter(fsm,
-                                   starter,
-                                   starterUnavailableTimeoutSec,
-                                   nowMs,
-                                   epochSec)) {
-        return true;
-    }
-
-    if (!starter->available) return false;
-
-    switch (fsm->state) {
-    case LIFECYCLE_STATE_CHECKING_IN:
-        return tick_checking_in(fsm,
-                                starter,
-                                configTimeoutSec,
-                                nowMs,
-                                epochSec);
-
-    case LIFECYCLE_STATE_READY:
-        return tick_ready(fsm,
-                          starter,
-                          configTimeoutSec,
-                          nowMs,
-                          epochSec);
-
-    case LIFECYCLE_STATE_OPERATIONAL:
-        return handle_starter_fault(fsm, starter, epochSec);
-
-    case LIFECYCLE_STATE_CONFIGURING:
-        return tick_configuring(fsm, starter, nowMs, epochSec);
-
-    case LIFECYCLE_STATE_FAULTY:
-        return tick_faulty(fsm, starter, epochSec);
-
-    case LIFECYCLE_STATE_STARTING:
-    default:
+    if (!starter->available) {
+        if (service_unavailable(&fsm->starterUnavailableSinceMs,
+                                 starterUnavailableTimeoutSec, nowMs) &&
+            fsm->state != LIFECYCLE_STATE_FAULTY) {
+            return enter_fault(fsm, LIFECYCLE_FAULT_STARTER, fsm->state,
+                                "starter status unavailable", epochSec);
+        }
         return false;
     }
+    fsm->starterUnavailableSinceMs = 0;
+
+    if (fsm->state == LIFECYCLE_STATE_FAULTY) {
+        return tick_faulty(fsm, starter, configuration, epochSec);
+    }
+
+    if (fsm->state == LIFECYCLE_STATE_STARTING) {
+        return false;
+    }
+
+    if (fsm->state == LIFECYCLE_STATE_CHECKING_IN) {
+        if (nowMs >= fsm->checkInDeadlineMs) {
+            fsm->gateOpen = true;
+        }
+        if (!fsm->gateOpen) {
+            return false;
+        }
+    }
+
+    if (starter->aggregate == STARTER_AGGREGATE_FAULTY) {
+        return enter_fault(fsm, LIFECYCLE_FAULT_STARTER, fsm->state,
+                            "required application readiness failed", epochSec);
+    }
+
+    if (fsm->state == LIFECYCLE_STATE_CHECKING_IN) {
+        if (applications_ready(starter)) {
+            return transition(fsm, LIFECYCLE_STATE_READY,
+                               "required applications ready; awaiting assignment",
+                               epochSec);
+        }
+        return false;
+    }
+
+    if (!configuration->available) {
+        if (service_unavailable(&fsm->configUnavailableSinceMs,
+                                 configUnavailableTimeoutSec, nowMs)) {
+            return configuration_fault(fsm, "configd status unavailable", epochSec);
+        }
+        return false;
+    }
+    fsm->configUnavailableSinceMs = 0;
+
+    return tick_configuration(fsm, starter, configuration, epochSec);
 }
 
 HttpStatus lifecycle_fsm_gate_status(const LifecycleFsm *fsm,
@@ -541,8 +447,12 @@ HttpStatus lifecycle_fsm_gate_status(const LifecycleFsm *fsm,
 
     int64_t remainingMs;
 
-    if (remainingSec) *remainingSec = 0;
-    if (!fsm) return HttpStatus_ServiceUnavailable;
+    if (remainingSec) {
+        *remainingSec = 0;
+    }
+    if (!fsm) {
+        return HttpStatus_ServiceUnavailable;
+    }
 
     if (fsm->state == LIFECYCLE_STATE_FAULTY) {
         return HttpStatus_ServiceUnavailable;
@@ -560,7 +470,9 @@ HttpStatus lifecycle_fsm_gate_status(const LifecycleFsm *fsm,
     }
 
     remainingMs = fsm->checkInDeadlineMs - nowMs;
-    if (remainingMs < 0) remainingMs = 0;
+    if (remainingMs < 0) {
+        remainingMs = 0;
+    }
 
     if (remainingSec) {
         *remainingSec = (int)((remainingMs + 999) / 1000);
