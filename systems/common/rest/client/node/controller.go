@@ -55,12 +55,19 @@ type ConfigNodeResponse struct {
 	Status      string `json:"status"`
 }
 
+type DeleteNodeConfigResponse struct {
+	OperationId string `json:"operation_id"`
+	ResourceKey string `json:"resource_key"`
+	Status      string `json:"status"`
+}
+
 type NodeControllerClient interface {
 	RestartNode(nodeId string) (*RestartNodeResponse, error)
 	ToggleSwitchPort(nodeId string, req ToggleSwitchPortRequest) (*ToggleSwitchPortResponse, error)
 	ToggleRadio(nodeId, state string) (*ToggleRadioResponse, error)
 	ToggleService(nodeId, state string) (*ToggleServiceResponse, error)
 	ConfigNode(nodeId string) (*ConfigNodeResponse, error)
+	DeleteNodeConfig(nodeId string) (*DeleteNodeConfigResponse, error)
 }
 
 type nodeControllerClient struct {
@@ -202,6 +209,30 @@ func (c *nodeControllerClient) ConfigNode(nodeId string) (*ConfigNodeResponse, e
 	}
 
 	log.Infof("ConfigNode: %+v", out)
+
+	return out, nil
+}
+
+func (c *nodeControllerClient) DeleteNodeConfig(nodeId string) (*DeleteNodeConfigResponse, error) {
+	log.Debugf("Deleting config from node: %v", nodeId)
+
+	resp, err := c.R.Delete(c.u.String() + ControllerEndpoint + "/nodes/" + nodeId + "/config")
+	if err != nil {
+		log.Errorf("DeleteNodeConfig failure. error: %s", err.Error())
+
+		return nil, fmt.Errorf("DeleteNodeConfig failure: %w", err)
+	}
+
+	out := &DeleteNodeConfigResponse{}
+
+	err = json.Unmarshal(resp.Body(), out)
+	if err != nil {
+		log.Tracef("Failed to deserialize delete node config response. Error message is: %s", err.Error())
+
+		return nil, fmt.Errorf("delete node config response deserialization failure: %w", err)
+	}
+
+	log.Infof("DeleteNodeConfig: %+v", out)
 
 	return out, nil
 }
