@@ -29,6 +29,7 @@ type ControllerServiceClient interface {
 	PingNode(ctx context.Context, in *PingNodeRequest, opts ...grpc.CallOption) (*PingNodeResponse, error)
 	SendNodeCommand(ctx context.Context, in *SendNodeCommandRequest, opts ...grpc.CallOption) (*SendNodeCommandResponse, error)
 	ConfigNode(ctx context.Context, in *ConfigNodeRequest, opts ...grpc.CallOption) (*ConfigNodeResponse, error)
+	DeleteNodeConfig(ctx context.Context, in *DeleteNodeConfigRequest, opts ...grpc.CallOption) (*DeleteNodeConfigResponse, error)
 }
 
 type controllerServiceClient struct {
@@ -102,6 +103,15 @@ func (c *controllerServiceClient) ConfigNode(ctx context.Context, in *ConfigNode
 	return out, nil
 }
 
+func (c *controllerServiceClient) DeleteNodeConfig(ctx context.Context, in *DeleteNodeConfigRequest, opts ...grpc.CallOption) (*DeleteNodeConfigResponse, error) {
+	out := new(DeleteNodeConfigResponse)
+	err := c.cc.Invoke(ctx, "/ukama.node.controller.v1.ControllerService/DeleteNodeConfig", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ControllerServiceServer is the server API for ControllerService service.
 // All implementations must embed UnimplementedControllerServiceServer
 // for forward compatibility
@@ -113,6 +123,7 @@ type ControllerServiceServer interface {
 	PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error)
 	SendNodeCommand(context.Context, *SendNodeCommandRequest) (*SendNodeCommandResponse, error)
 	ConfigNode(context.Context, *ConfigNodeRequest) (*ConfigNodeResponse, error)
+	DeleteNodeConfig(context.Context, *DeleteNodeConfigRequest) (*DeleteNodeConfigResponse, error)
 	mustEmbedUnimplementedControllerServiceServer()
 }
 
@@ -140,6 +151,9 @@ func (UnimplementedControllerServiceServer) SendNodeCommand(context.Context, *Se
 }
 func (UnimplementedControllerServiceServer) ConfigNode(context.Context, *ConfigNodeRequest) (*ConfigNodeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ConfigNode not implemented")
+}
+func (UnimplementedControllerServiceServer) DeleteNodeConfig(context.Context, *DeleteNodeConfigRequest) (*DeleteNodeConfigResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteNodeConfig not implemented")
 }
 func (UnimplementedControllerServiceServer) mustEmbedUnimplementedControllerServiceServer() {}
 
@@ -280,6 +294,24 @@ func _ControllerService_ConfigNode_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ControllerService_DeleteNodeConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteNodeConfigRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ControllerServiceServer).DeleteNodeConfig(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/ukama.node.controller.v1.ControllerService/DeleteNodeConfig",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ControllerServiceServer).DeleteNodeConfig(ctx, req.(*DeleteNodeConfigRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ControllerService_ServiceDesc is the grpc.ServiceDesc for ControllerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -314,6 +346,10 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ConfigNode",
 			Handler:    _ControllerService_ConfigNode_Handler,
+		},
+		{
+			MethodName: "DeleteNodeConfig",
+			Handler:    _ControllerService_DeleteNodeConfig_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
