@@ -44,6 +44,36 @@ func (_m *ControllerServiceServer) ConfigNode(_a0 context.Context, _a1 *gen.Conf
 	return r0, r1
 }
 
+// DeleteNodeConfig provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) DeleteNodeConfig(_a0 context.Context, _a1 *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNodeConfig")
+	}
+
+	var r0 *gen.DeleteNodeConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) *gen.DeleteNodeConfigResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteNodeConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeConfigRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PingNode provides a mock function with given fields: _a0, _a1
 func (_m *ControllerServiceServer) PingNode(_a0 context.Context, _a1 *gen.PingNodeRequest) (*gen.PingNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
