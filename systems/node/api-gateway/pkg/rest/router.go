@@ -71,6 +71,7 @@ type health interface {
 
 type state interface {
 	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+	GetLatestState(nodeId string) (*nspb.GetLatestStateResponse, error)
 	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
 	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
@@ -231,6 +232,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		stateS := auth.Group(state, "State", "Operations on state")
 		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
 		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
+		stateS.GET("/:node_id/latest", formatDoc("Get latest state", "Get the latest state record of a node"), tonic.Handler(r.getLatestStateHandler, http.StatusOK))
 		stateS.POST("/:node_id/enforce/:event", formatDoc("Enforce state transition", "Enforce state transition"), tonic.Handler(r.enforceStateTransitionHandler, http.StatusOK))
 
 		const hlth = "/health"
@@ -291,6 +293,10 @@ func (r *Router) getReleaseCatalogHandler(c *gin.Context, req *GetReleaseCatalog
 
 func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
 	return r.clients.State.GetStates(req.NodeId)
+}
+
+func (r *Router) getLatestStateHandler(c *gin.Context, req *GetLatestStateRequest) (*nspb.GetLatestStateResponse, error) {
+	return r.clients.State.GetLatestState(req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

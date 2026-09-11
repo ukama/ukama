@@ -65,6 +65,13 @@ func (s *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
 	return s.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
 }
 
+func (s *State) GetLatestState(nodeId string) (*pb.GetLatestStateResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	defer cancel()
+
+	return s.client.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
+}
+
 func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime,
 	endTime string) (*pb.GetStatesHistoryResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)

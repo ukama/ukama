@@ -42,6 +42,36 @@ func (_m *state) EnforeTransition(nodeId string, event string) (*gen.EnforceStat
 	return r0, r1
 }
 
+// GetLatestState provides a mock function with given fields: nodeId
+func (_m *state) GetLatestState(nodeId string) (*gen.GetLatestStateResponse, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestState")
+	}
+
+	var r0 *gen.GetLatestStateResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.GetLatestStateResponse, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.GetLatestStateResponse); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetLatestStateResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetStates provides a mock function with given fields: nodeId
 func (_m *state) GetStates(nodeId string) (*gen.GetStatesResponse, error) {
 	ret := _m.Called(nodeId)
