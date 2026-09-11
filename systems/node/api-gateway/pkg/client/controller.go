@@ -86,6 +86,13 @@ func (c *Controller) ToggleService(nodeId string, state string) (*pb.ToggleServi
 	return c.client.ToggleService(ctx, &pb.ToggleServiceRequest{NodeId: nodeId, State: state})
 }
 
+func (c *Controller) ConfigNode(nodeId string) (*pb.ConfigNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.ConfigNode(ctx, &pb.ConfigNodeRequest{NodeId: nodeId})
+}
+
 func (c *Controller) PingNode(nodeId string) (*pb.PingNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
