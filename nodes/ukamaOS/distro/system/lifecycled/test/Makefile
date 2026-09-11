@@ -1,43 +1,36 @@
-# lifecycle.d tests.
-#
-# Unit tests are self-contained and require only libc and pthreads. The
-# component test requires a production lifecycle.d binary.
-
-CC ?= gcc
-
-UNIT_TARGET = test_lifecycle_fsm
-UNIT_SRC = test_fsm.c ../src/fsm.c ../src/state_store.c
-
+CC ?= cc
 CFLAGS += -std=c11
+CFLAGS += -D_GNU_SOURCE
 CFLAGS += -g
-CFLAGS += -O0
 CFLAGS += -Wall
 CFLAGS += -Wextra
 CFLAGS += -Werror
-CFLAGS += -D_GNU_SOURCE
+CFLAGS += -pthread
 CFLAGS += -I../inc
+CFLAGS += $(TEST_CPPFLAGS)
+LDFLAGS += $(TEST_LDFLAGS)
 
-.PHONY: all unit syntax component run clean
-
+.PHONY: all unit syntax component component-build run clean
 all: unit
 
-$(UNIT_TARGET): $(UNIT_SRC)
-	$(CC) $(CFLAGS) -o $@ $(UNIT_SRC)
+unit: test_lifecycle_fsm
+	./test_lifecycle_fsm
 
-unit: $(UNIT_TARGET)
-	./$(UNIT_TARGET)
+test_lifecycle_fsm: test_fsm.c ../src/fsm.c ../src/state_store.c ../inc/fsm.h ../inc/state_store.h
+	$(CC) $(CFLAGS) test_fsm.c ../src/fsm.c ../src/state_store.c $(LDFLAGS) -ljansson -o $@
 
 syntax:
-	$(CC) $(CFLAGS) -I./stubs -fsyntax-only ../src/*.c
+	$(CC) $(CFLAGS) -Iplatform -fsyntax-only ../src/*.c
+
+component-build:
+	$(CC) $(CFLAGS) -Iplatform ../src/*.c platform/platform.c $(LDFLAGS) \
+		-lulfius -lorcania -ljansson -lcurl -o lifecycle_component
 
 component:
-	@if [ -z "$(LIFECYCLED_BIN)" ]; then \
-		echo "LIFECYCLED_BIN is required"; \
-		exit 1; \
-	fi
+	@test -n "$(LIFECYCLED_BIN)" || (echo "LIFECYCLED_BIN is required"; exit 1)
 	LIFECYCLED_BIN=$(LIFECYCLED_BIN) python3 component_test.py
 
-run: unit syntax component
-
 clean:
-	rm -f $(UNIT_TARGET)
+	rm -f test_lifecycle_fsm lifecycle_component
+
+run: unit syntax component

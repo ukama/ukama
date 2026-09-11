@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-
-"""Component test for lifecycle.d using fake starter and notify services."""
-
+"""Run lifecycle.d with HTTP peers for starter, configd and notifyd."""
 import http.client
 import json
 import os
+from pathlib import Path
 import socket
 import subprocess
 import tempfile
@@ -13,329 +12,214 @@ import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 
-class HarnessState:
+class Peers:
     def __init__(self):
         self.lock = threading.Lock()
-        self.aggregate = "pending"
-        self.aggregate_reason = "applications are starting"
-        self.config_phase = "awaiting_configuration"
-        self.config_request_id = ""
+        self.ready = "ready"
+        self.config_available = True
+        self.notify_available = False
         self.events = []
+        self.config = dict(schemaVersion=1, mode="NONE", phase="awaiting",
+                           requestId="", generation=0, revision=0, error="")
 
-    def starter_status(self):
+    def decision(self, generation):
         with self.lock:
-            entry = {
-                "space": "services",
-                "name": "configd",
-                "service": "config",
-                "state": (
-                    "pending"
-                    if self.config_phase == "configuration_in_progress"
-                    else "faulty"
-                    if self.config_phase == "configuration_failed"
-                    else "ready"
-                ),
-                "httpStatus": (
-                    202
-                    if self.config_phase == "configuration_in_progress"
-                    else 503
-                    if self.config_phase == "configuration_failed"
-                    else 200
-                ),
-                "reason": self.config_phase,
-                "checkedAt": int(time.time()),
-            }
-            if self.config_request_id:
-                entry["requestId"] = self.config_request_id
-
-            return {
-                "spaces": [],
-                "starterd": {
-                    "readiness": {
-                        "enabled": True,
-                        "state": self.aggregate,
-                        "reason": self.aggregate_reason,
-                        "apps": [entry],
-                    }
-                },
-            }
-
-    def set_starter(self, aggregate, config_phase, request_id=""):
-        with self.lock:
-            self.aggregate = aggregate
-            self.aggregate_reason = aggregate
-            self.config_phase = config_phase
-            self.config_request_id = request_id
-
-    def add_event(self, event):
-        with self.lock:
-            self.events.append(event)
-
-    def event_values(self):
-        with self.lock:
-            return [event.get("value") for event in self.events]
+            self.config.update(mode="NOCONFIG", phase="completed",
+                               requestId="assignment-1", generation=generation)
 
 
-class HarnessHandler(BaseHTTPRequestHandler):
-    state = None
-    role = None
+class Handler(BaseHTTPRequestHandler):
+    def log_message(self, *_args):
+        pass
 
-    def log_message(self, _format, *_args):
-        return
-
-    def send_json(self, status, body):
-        encoded = json.dumps(body).encode("utf-8")
-        self.send_response(status)
+    def reply(self, code, body):
+        data = json.dumps(body).encode()
+        self.send_response(code)
         self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(encoded)))
+        self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(encoded)
+        self.wfile.write(data)
 
     def do_GET(self):
-        if self.role == "starter" and self.path == "/v1/status":
-            self.send_json(200, self.state.starter_status())
-            return
-
-        self.send_json(404, {"error": "not found"})
+        with self.peers.lock:
+            if self.role == "starter" and self.path == "/v1/status":
+                self.reply(200, {"starterd": {"readiness": {
+                    "state": self.peers.ready, "reason": self.peers.ready}}})
+            elif self.role == "config" and self.path == "/v1/config/status":
+                self.reply(200 if self.peers.config_available else 503, self.peers.config)
+            else:
+                self.reply(404, {})
 
     def do_POST(self):
-        length = int(self.headers.get("Content-Length", "0"))
-        body = self.rfile.read(length)
+        body = self.rfile.read(int(self.headers.get("Content-Length", 0)))
+        with self.peers.lock:
+            if self.role == "notify" and self.path == "/v1/event/lifecycle":
+                if self.peers.notify_available:
+                    event = json.loads(body)
+                    event["metadata"] = json.loads(event["details"])
+                    self.peers.events.append(event)
+                    self.reply(202, {})
+                else:
+                    self.reply(503, {})
+            else:
+                self.reply(404, {})
 
-        if self.role == "notify" and self.path == "/v1/event/lifecycle":
-            self.state.add_event(json.loads(body.decode("utf-8")))
-            self.send_json(202, {"status": "accepted"})
-            return
 
-        self.send_json(404, {"error": "not found"})
-
-
-def start_server(role, state):
-    handler = type(
-        f"{role.title()}Handler",
-        (HarnessHandler,),
-        {"state": state, "role": role},
-    )
-    server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
-    thread = threading.Thread(target=server.serve_forever, daemon=True)
-    thread.start()
-    return server
+def server(role, peers):
+    handler = type(role, (Handler,), dict(role=role, peers=peers))
+    result = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+    threading.Thread(target=result.serve_forever, daemon=True).start()
+    return result
 
 
 def unused_port():
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(("127.0.0.1", 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    return port
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
 
 
-def request(port, method, path, body=None):
-    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=2)
-    encoded = json.dumps(body) if body is not None else None
-    headers = {"Content-Type": "application/json"} if body is not None else {}
-    connection.request(method, path, body=encoded, headers=headers)
+def request(port, method="GET", path="/v1/status", body=None):
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+    data = None if body is None else json.dumps(body)
+    connection.request(method, path, data, {"Content-Type": "application/json"})
     response = connection.getresponse()
-    payload = response.read().decode("utf-8")
+    result = response.status, json.loads(response.read())
     connection.close()
-    return response.status, json.loads(payload) if payload else {}
+    return result
 
 
-def wait_http(port, process, timeout=5):
+def wait(check, message, timeout=8):
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
-        if process.poll() is not None:
-            output = process.stdout.read() if process.stdout else ""
-            raise AssertionError(f"lifecycle.d exited early:\n{output}")
         try:
-            status, _ = request(port, "GET", "/v1/ping")
-            if status == 200:
+            if check():
                 return
-        except (ConnectionError, OSError, TimeoutError):
+        except (OSError, ValueError):
             pass
         time.sleep(0.05)
-    raise AssertionError("lifecycle.d did not start its HTTP service")
-
-
-def wait_state(port, expected, timeout=5):
-    deadline = time.monotonic() + timeout
-    last = None
-    while time.monotonic() < deadline:
-        status, body = request(port, "GET", "/v1/status")
-        if status == 200:
-            last = body.get("state")
-            if last == expected:
-                return body
-        time.sleep(0.05)
-    raise AssertionError(f"expected state {expected}, last state was {last}")
-
-
-def wait_config_received(port, timeout=5):
-    deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
-        _, body = request(port, "GET", "/v1/status")
-        if body.get("configuration", {}).get("received"):
-            return
-        time.sleep(0.05)
-    raise AssertionError("lifecycle did not observe configuration in progress")
-
-
-def assert_subsequence(values, expected):
-    cursor = 0
-    for value in values:
-        if cursor < len(expected) and value == expected[cursor]:
-            cursor += 1
-    if cursor != len(expected):
-        raise AssertionError(
-            f"event sequence missing; expected {expected}, received {values}"
-        )
+    raise AssertionError(message)
 
 
 def run():
-    binary = os.environ.get("LIFECYCLED_BIN")
-    if not binary:
-        raise SystemExit("LIFECYCLED_BIN is required")
+    peers = Peers()
+    servers = {role: server(role, peers) for role in ("starter", "config", "notify")}
+    port = unused_port()
+    binary = str(Path(os.environ["LIFECYCLED_BIN"]).resolve())
+    process = None
 
-    binary = os.path.abspath(binary)
-    state = HarnessState()
-    starter = start_server("starter", state)
-    notify = start_server("notify", state)
-    lifecycle_port = unused_port()
+    with tempfile.TemporaryDirectory(prefix="lifecycle-http-") as directory:
+        checkpoint = Path(directory) / "checkpoint.json"
+        boot_file = Path(directory) / "boot-id"
+        boot_file.write_text("boot-1\n")
+        environment = dict(os.environ)
+        environment.update(LIFECYCLED_HTTP_PORT=str(port),
+                           LIFECYCLED_STATE_FILE=str(checkpoint),
+                           LIFECYCLED_BOOT_ID_FILE=str(boot_file),
+                           LIFECYCLED_CHECKIN_TIMEOUT_SEC="1",
+                           LIFECYCLED_STARTER_UNAVAILABLE_TIMEOUT_SEC="1",
+                           LIFECYCLED_CONFIG_UNAVAILABLE_TIMEOUT_SEC="1",
+                           LIFECYCLED_POLL_INTERVAL_MS="50",
+                           LIFECYCLED_REQUEST_TIMEOUT_SEC="1")
+        for role, peer in servers.items():
+            environment[f"LIFECYCLED_{role.upper()}_PORT"] = str(peer.server_port)
 
-    with tempfile.TemporaryDirectory(prefix="lifecycled-test-") as temp_dir:
-        environment = os.environ.copy()
-        environment.update(
-            {
-                "LIFECYCLED_HTTP_ADDR": "127.0.0.1",
-                "LIFECYCLED_HTTP_PORT": str(lifecycle_port),
-                "LIFECYCLED_STARTER_HOST": "127.0.0.1",
-                "LIFECYCLED_STARTER_PORT": str(starter.server_port),
-                "LIFECYCLED_NOTIFY_HOST": "127.0.0.1",
-                "LIFECYCLED_NOTIFY_PORT": str(notify.server_port),
-                "LIFECYCLED_STATE_FILE": os.path.join(temp_dir, "state"),
-                "LIFECYCLED_CHECKIN_TIMEOUT_SEC": "1",
-                "LIFECYCLED_CONFIG_TIMEOUT_SEC": "1",
-                "LIFECYCLED_STARTER_UNAVAILABLE_TIMEOUT_SEC": "2",
-                "LIFECYCLED_POLL_INTERVAL_MS": "100",
-                "LIFECYCLED_REQUEST_TIMEOUT_SEC": "1",
-                "LIFECYCLED_LOG_LEVEL": "error",
-            }
-        )
+        def start():
+            nonlocal process
+            process = subprocess.Popen([binary], env=environment,
+                                       stdout=subprocess.DEVNULL)
+            wait(lambda: request(port)[0] == 200, "HTTP startup")
 
-        process = subprocess.Popen(
-            [binary],
-            env=environment,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
+        def stop():
+            nonlocal process
+            if process:
+                process.kill()
+                process.wait(timeout=5)
+                process = None
+
+        def state(value):
+            wait(lambda: request(port)[1]["state"] == value, f"state {value}")
+
+        def event_count(value, boot="boot-1"):
+            with peers.lock:
+                return sum(event["value"] == value and event["metadata"]["bootId"] == boot
+                           for event in peers.events)
 
         try:
-            wait_http(lifecycle_port, process)
-            wait_state(lifecycle_port, "STARTING")
-
-            status, _ = request(
-                lifecycle_port,
-                "POST",
-                "/v1/check-in",
-                {"bootResult": "ready"},
-            )
-            assert status == 202
-            wait_state(lifecycle_port, "CHECKING_IN")
-
-            deadline = time.monotonic() + 3
-            while time.monotonic() < deadline:
-                status, gate = request(lifecycle_port, "GET", "/v1/gate")
-                if status == 200 and gate.get("proceed"):
-                    break
-                time.sleep(0.05)
-            else:
-                raise AssertionError("check-in gate did not open")
-
-            state.set_starter("ready", "awaiting_configuration")
-            wait_state(lifecycle_port, "READY")
-
+            start()
+            assert request(port, "POST", "/v1/check-in", {"bootResult": "ready"})[0] == 202
+            state("READY")
             time.sleep(1.2)
-            wait_state(lifecycle_port, "OPERATIONAL")
+            assert request(port)[1]["state"] == "READY"
+            assert request(port, "POST", "/v1/configure", {"requestId": "wrong"})[0] == 409
+            peers.decision(1)
+            state("OPERATIONAL")
+            saved = json.loads(checkpoint.read_text())
+            assert [item["state"] for item in saved["events"]] == [0, 2, 3, 4]
+            stop()
+            start()
+            with peers.lock:
+                peers.notify_available = True
+            wait(lambda: event_count("OPERATIONAL") >= 1, "queued completion after crash")
+            with peers.lock:
+                assert [event["value"] for event in peers.events[:4]] == [
+                    "INIT", "READY", "CONFIGURING", "OPERATIONAL"]
+                sequence = [event["metadata"]["sequence"] for event in peers.events[:4]]
+                assert sequence == sorted(set(sequence))
+            print("PASS: READY waits; legacy configure blocked; queue survives crash and notify outage")
 
-            status, _ = request(
-                lifecycle_port,
-                "POST",
-                "/v1/configure",
-                {"requestId": "no-config", "assignmentId": "site-1"},
-            )
-            assert status == 202
-            wait_state(lifecycle_port, "CONFIGURING")
+            wait(lambda: not request(port)[1]["notificationPending"], "drain queue")
+            before = event_count("OPERATIONAL")
+            peers.decision(2)
+            wait(lambda: event_count("OPERATIONAL") == before + 1, "fresh repeated confirmation")
+            assert request(port)[1]["state"] == "OPERATIONAL"
+            time.sleep(0.2)
+            assert event_count("OPERATIONAL") == before + 1
+            with peers.lock:
+                peers.ready = "pending"
+            peers.decision(3)
+            time.sleep(0.3)
+            assert event_count("OPERATIONAL") == before + 1
+            with peers.lock:
+                peers.ready = "ready"
+            wait(lambda: event_count("OPERATIONAL") == before + 2, "readiness-gated retry")
+            print("PASS: repeated confirmation is fresh, idempotent across polls, and readiness gated")
 
-            status, _ = request(
-                lifecycle_port,
-                "POST",
-                "/v1/configure",
-                {"requestId": "no-config", "assignmentId": "site-1"},
-            )
-            assert status == 200
-            wait_state(lifecycle_port, "OPERATIONAL")
+            stop()
+            with peers.lock:
+                peers.ready = "pending"
+            start()
+            before = event_count("OPERATIONAL")
+            time.sleep(0.3)
+            assert event_count("OPERATIONAL") == before
+            with peers.lock:
+                peers.ready = "ready"
+            wait(lambda: event_count("OPERATIONAL") > before, "same-boot crash revalidation")
+            print("PASS: daemon restart revalidates before a fresh Operational observation")
 
-            status, _ = request(
-                lifecycle_port,
-                "POST",
-                "/v1/configure",
-                {"requestId": "with-config", "assignmentId": "site-1"},
-            )
-            assert status == 202
-            wait_state(lifecycle_port, "CONFIGURING")
+            with peers.lock:
+                peers.config_available = False
+            state("FAULTY")
+            with peers.lock:
+                peers.config_available = True
+            state("OPERATIONAL")
+            print("PASS: configd outage and recovery")
 
-            state.set_starter(
-                "pending", "configuration_in_progress", "with-config"
-            )
-            wait_config_received(lifecycle_port)
-            state.set_starter("ready", "configuration_applied", "with-config")
-            wait_state(lifecycle_port, "OPERATIONAL")
-
-            status, _ = request(
-                lifecycle_port,
-                "POST",
-                "/v1/configure",
-                {"requestId": "bad-config", "assignmentId": "site-1"},
-            )
-            assert status == 202
-            state.set_starter("faulty", "configuration_failed", "bad-config")
-            wait_state(lifecycle_port, "FAULTY")
-
-            expected = [
-                "STARTING",
-                "CHECKING_IN",
-                "READY",
-                "OPERATIONAL",
-                "CONFIGURING",
-                "OPERATIONAL",
-                "CONFIGURING",
-                "OPERATIONAL",
-                "CONFIGURING",
-                "FAULTY",
-            ]
-            deadline = time.monotonic() + 3
-            while time.monotonic() < deadline:
-                try:
-                    assert_subsequence(state.event_values(), expected)
-                    break
-                except AssertionError:
-                    time.sleep(0.05)
-            else:
-                assert_subsequence(state.event_values(), expected)
-
-            print("PASS: lifecycle component flow")
+            stop()
+            boot_file.write_text("boot-2\n")
+            start()
+            assert request(port, "POST", "/v1/check-in", {"bootResult": "ready"})[0] == 202
+            state("OPERATIONAL")
+            wait(lambda: event_count("OPERATIONAL", "boot-2") == 1, "new boot completion")
+            with peers.lock:
+                values = [event["value"] for event in peers.events
+                          if event["metadata"]["bootId"] == "boot-2"]
+            assert values == ["INIT", "READY", "CONFIGURING", "OPERATIONAL"], values
+            print("PASS: new boot consumes the retained decision through the complete flow")
         finally:
-            process.terminate()
-            try:
-                process.wait(timeout=3)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=3)
-            starter.shutdown()
-            notify.shutdown()
-            starter.server_close()
-            notify.server_close()
+            stop()
+            for peer in servers.values():
+                peer.shutdown()
+                peer.server_close()
 
 
 if __name__ == "__main__":
