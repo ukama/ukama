@@ -16,6 +16,10 @@ type RestartNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
+type ConfigNodeRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
 type ToggleSwitchPortRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 	Status bool   `json:"status"`
