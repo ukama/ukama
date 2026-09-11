@@ -93,6 +93,13 @@ func (c *Controller) ConfigNode(nodeId string) (*pb.ConfigNodeResponse, error) {
 	return c.client.ConfigNode(ctx, &pb.ConfigNodeRequest{NodeId: nodeId})
 }
 
+func (c *Controller) DeleteNodeConfig(nodeId string) (*pb.DeleteNodeConfigResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+	defer cancel()
+
+	return c.client.DeleteNodeConfig(ctx, &pb.DeleteNodeConfigRequest{NodeId: nodeId})
+}
+
 func (c *Controller) PingNode(nodeId string) (*pb.PingNodeResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
