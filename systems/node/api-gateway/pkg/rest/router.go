@@ -81,6 +81,7 @@ type controller interface {
 	ToggleRadio(nodeId string, state string) (*contPb.ToggleRadioResponse, error)
 	ToggleService(nodeId string, state string) (*contPb.ToggleServiceResponse, error)
 	ConfigNode(nodeId string) (*contPb.ConfigNodeResponse, error)
+	DeleteNodeConfig(nodeId string) (*contPb.DeleteNodeConfigResponse, error)
 }
 
 type siteController interface {
@@ -196,6 +197,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/nodes/:node_id/radio/:state", formatDoc("Toggle radio", "Toggle radio"), tonic.Handler(r.postToggleNodeRadioHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/service/:state", formatDoc("Toggle service", "Toggle service"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/config", formatDoc("Config a node", "Send config to a node"), tonic.Handler(r.postConfigNodeHandler, http.StatusOK))
+		controller.DELETE("/nodes/:node_id/config", formatDoc("Delete node config", "Delete config from a node"), tonic.Handler(r.deleteNodeConfigHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
 
 		const sites = "/sites"
@@ -261,6 +263,10 @@ func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleStateRe
 
 func (r *Router) postConfigNodeHandler(c *gin.Context, req *ConfigNodeRequest) (*contPb.ConfigNodeResponse, error) {
 	return r.clients.Controller.ConfigNode(req.NodeId)
+}
+
+func (r *Router) deleteNodeConfigHandler(c *gin.Context, req *DeleteNodeConfigRequest) (*contPb.DeleteNodeConfigResponse, error) {
+	return r.clients.Controller.DeleteNodeConfig(req.NodeId)
 }
 
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {

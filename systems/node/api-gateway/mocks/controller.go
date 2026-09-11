@@ -42,6 +42,36 @@ func (_m *controller) ConfigNode(nodeId string) (*gen.ConfigNodeResponse, error)
 	return r0, r1
 }
 
+// DeleteNodeConfig provides a mock function with given fields: nodeId
+func (_m *controller) DeleteNodeConfig(nodeId string) (*gen.DeleteNodeConfigResponse, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNodeConfig")
+	}
+
+	var r0 *gen.DeleteNodeConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteNodeConfigResponse, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.DeleteNodeConfigResponse); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteNodeConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PingNode provides a mock function with given fields: nodeId
 func (_m *controller) PingNode(nodeId string) (*gen.PingNodeResponse, error) {
 	ret := _m.Called(nodeId)
