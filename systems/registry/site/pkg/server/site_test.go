@@ -155,7 +155,7 @@ func TestSiteService_Get(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil)
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil, nil)
 
 	t.Run("SiteFound", func(t *testing.T) {
 		mockSite := createMockSite()
@@ -220,7 +220,7 @@ func TestSiteService_List(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil)
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil, nil)
 
 	t.Run("ValidRequestWithMultipleSites", func(t *testing.T) {
 		siteRepo.ExpectedCalls = nil
@@ -394,7 +394,7 @@ func TestSiteService_Update(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil)
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil, nil)
 
 	t.Run("Success", func(t *testing.T) {
 		// Mock the site repository update
@@ -513,7 +513,7 @@ func TestSiteService_Update(t *testing.T) {
 
 	t.Run("NilMessageBus", func(t *testing.T) {
 		// Create server without message bus
-		sNoMsgBus := NewSiteServer(OrgName, siteRepo, nil, netRepo, "", nil, nil)
+		sNoMsgBus := NewSiteServer(OrgName, siteRepo, nil, netRepo, "", nil, nil, nil)
 
 		// Mock the site repository update
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
@@ -564,7 +564,7 @@ func TestSiteService_Add(t *testing.T) {
 	inventoryClient := &cmocks.ComponentClient{}
 	nodeControllerClient := &cmocks.NodeControllerClient{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient)
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 	validRequest := createValidAddRequest()
 
@@ -617,7 +617,7 @@ func TestSiteService_Add(t *testing.T) {
 		siteRepo := &mocks.SiteRepo{}
 		nodeControllerClient := &cmocks.NodeControllerClient{}
 
-		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient)
+		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 		nodeControllerClient.On("ConfigNode", testAccessId.String()).Return(nil, errors.New("config failed")).Once()
 
@@ -763,7 +763,7 @@ func TestSiteService_Add(t *testing.T) {
 		netRepo := &mocks.NetworkClientProvider{}
 		inventoryClient := &cmocks.ComponentClient{}
 		nodeControllerClient := &cmocks.NodeControllerClient{}
-		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient)
+		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
@@ -799,7 +799,7 @@ func TestSiteService_Add(t *testing.T) {
 		netRepo := &mocks.NetworkClientProvider{}
 		inventoryClient := &cmocks.ComponentClient{}
 		nodeControllerClient := &cmocks.NodeControllerClient{}
-		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient)
+		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
@@ -831,7 +831,7 @@ func TestSiteService_Add(t *testing.T) {
 		netRepo := &mocks.NetworkClientProvider{}
 		inventoryClient := &cmocks.ComponentClient{}
 		nodeControllerClient := &cmocks.NodeControllerClient{}
-		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient)
+		s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 		// Mock inventory client calls for all components
 		for _, componentId := range []string{
@@ -956,7 +956,7 @@ func TestSiteService_Add(t *testing.T) {
 
 	t.Run("NilMessageBus", func(t *testing.T) {
 		// Create server without message bus
-		sNoMsgBus := NewSiteServer(OrgName, siteRepo, nil, netRepo, "", inventoryClient, nodeControllerClient)
+		sNoMsgBus := NewSiteServer(OrgName, siteRepo, nil, netRepo, "", inventoryClient, nodeControllerClient, nil)
 
 		// Mock network client
 		mockNetworkClient := &netmocks.NetworkServiceClient{}
@@ -1180,7 +1180,7 @@ func TestSiteService_Delete(t *testing.T) {
 	msgclientRepo := &cmocks.MsgBusServiceClient{}
 	netRepo := &mocks.NetworkClientProvider{}
 
-	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil)
+	s := NewSiteServer(OrgName, siteRepo, msgclientRepo, netRepo, "", nil, nil, nil)
 
 	t.Run("SiteExist", func(t *testing.T) {
 		mockSite := createMockSite()

@@ -45,10 +45,11 @@ type SiteServer struct {
 	networkService       providers.NetworkClientProvider
 	inventoryClient      cinvent.ComponentClient
 	nodeControllerClient cnode.NodeControllerClient
+	nodeStateClient      cnode.NodeStateClient
 	pushGateway          string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient, nodeControllerClient cnode.NodeControllerClient) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient, nodeControllerClient cnode.NodeControllerClient, nodeStateClient cnode.NodeStateClient) *SiteServer {
 	return &SiteServer{
 		orgName:              orgName,
 		siteRepo:             siteRepo,
@@ -58,6 +59,7 @@ func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusService
 		pushGateway:          pushGateway,
 		inventoryClient:      inventoryClientProvider,
 		nodeControllerClient: nodeControllerClient,
+		nodeStateClient:      nodeStateClient,
 	}
 }
 
@@ -154,6 +156,21 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, status.Errorf(codes.Internal, "failed to config nodes: %s", err.Error())
 	}
 
+	// Validate the node latest state in state machine
+
+	for _, nodeId := range []string{tNodeId.String(), aNodeId.String(), cNodeId.String()} {
+		state, err := s.nodeStateClient.GetLatestState(nodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get latest state of node %s: %s", nodeId, err.Error())
+		}
+		if state.CurrentState != "operational" {
+			return nil, status.Errorf(codes.InvalidArgument, "node %s is not in active state", nodeId)
+		}
+
+		// Retry the config call if the node is not in operational state
+	}
+
+	// Add the site to the database
 	site := &db.Site{
 		NetworkId:     networkId,
 		Name:          req.Name,
