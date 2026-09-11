@@ -12,18 +12,21 @@
 
 typedef struct {
     char *httpAddr;
-    int httpPort;
+    int  httpPort;
 
     char *starterHost;
-    int starterPort;
+    int  starterPort;
+
+    char *configHost;
+    int  configPort;
 
     char *notifyHost;
-    int notifyPort;
+    int  notifyPort;
 
     char *stateFile;
 
     int checkInTimeoutSec;
-    int configTimeoutSec;
+    int configUnavailableTimeoutSec;
     int starterUnavailableTimeoutSec;
     int pollIntervalMs;
     int requestTimeoutSec;

@@ -24,20 +24,28 @@
 typedef struct {
     LifecycleState state;
     uint64_t sequence;
-    int64_t occurredAt;
+    int64_t  occurredAt;
     char reason[LIFECYCLED_REASON_LEN];
+    char bootId[LIFECYCLED_ID_LEN];
+    char requestId[LIFECYCLED_ID_LEN];
+    char configMode[16];
+    uint64_t configGeneration;
 } LifecycleEvent;
 
 typedef struct {
-    Config *config;
-    LifecycleFsm fsm;
+    Config          *config;
+    LifecycleFsm    fsm;
     StarterSnapshot starter;
+    ConfigSnapshot  configuration;
+    int  stateLockFd;
+    bool persistencePending;
+    bool reannouncePending;
 
     pthread_mutex_t mutex;
-    pthread_cond_t condition;
-    pthread_t worker;
-    bool workerStarted;
-    bool running;
+    pthread_cond_t  condition;
+    pthread_t       worker;
+    bool            workerStarted;
+    bool            running;
 
     LifecycleEvent events[LIFECYCLED_EVENT_QUEUE];
     size_t eventHead;
@@ -49,7 +57,7 @@ typedef struct {
 
 int64_t lifecycle_boottime_ms(void);
 int64_t lifecycle_epoch_sec(void);
-bool lifecycle_read_boot_id(char *buffer, size_t size);
+bool    lifecycle_read_boot_id(char *buffer, size_t size);
 
 bool lifecycle_context_init(LifecycleContext *ctx, Config *config);
 void lifecycle_context_free(LifecycleContext *ctx);
@@ -61,13 +69,6 @@ bool lifecycle_context_check_in(LifecycleContext *ctx,
                                 bool bootHealthy,
                                 char *error,
                                 size_t errorSize);
-
-LifecycleConfigureResult lifecycle_context_configure(
-    LifecycleContext *ctx,
-    const char *requestId,
-    const char *assignmentId,
-    char *error,
-    size_t errorSize);
 
 void lifecycle_context_snapshot(LifecycleContext *ctx,
                                 LifecycleFsm *fsm,

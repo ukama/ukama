@@ -14,6 +14,8 @@
 #include "fsm.h"
 #include "lifecycled.h"
 
+bool config_client_get_status(const Config *config, ConfigSnapshot *snapshot);
+
 bool starter_client_get_status(const Config *config,
                                StarterSnapshot *snapshot);
 

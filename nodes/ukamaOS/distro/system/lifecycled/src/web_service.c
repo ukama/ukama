@@ -54,7 +54,9 @@ static const char *json_string_or_null(json_t *json, const char *key) {
 
     json_t *value;
 
-    if (!json_is_object(json) || !key) return NULL;
+    if (!json_is_object(json) || !key) {
+        return NULL;
+    }
     value = json_object_get(json, key);
 
     return json_is_string(value) ? json_string_value(value) : NULL;
@@ -102,6 +104,7 @@ static int ready_cb(const struct _u_request *request,
 
 static json_t *fsm_status_json(const LifecycleFsm *fsm,
                                const StarterSnapshot *starter,
+                               const ConfigSnapshot *config,
                                const char *bootId,
                                size_t pendingEvents) {
 
@@ -140,7 +143,9 @@ static json_t *fsm_status_json(const LifecycleFsm *fsm,
                         json_integer((json_int_t)fsm->sequence));
 
     remainingMs = fsm->checkInDeadlineMs - nowMs;
-    if (remainingMs < 0) remainingMs = 0;
+    if (remainingMs < 0) {
+        remainingMs = 0;
+    }
     json_object_set_new(checkIn,
                         "gateOpen",
                         json_boolean(fsm->gateOpen));
@@ -149,25 +154,15 @@ static json_t *fsm_status_json(const LifecycleFsm *fsm,
                         json_integer((remainingMs + 999) / 1000));
     json_object_set_new(root, "checkIn", checkIn);
 
-    remainingMs = fsm->configDeadlineMs - nowMs;
-    if (remainingMs < 0) remainingMs = 0;
-    json_object_set_new(configuration,
-                        "requestId",
-                        fsm->requestId[0] ?
-                        json_string(fsm->requestId) : json_null());
-    json_object_set_new(configuration,
-                        "assignmentId",
-                        fsm->assignmentId[0] ?
-                        json_string(fsm->assignmentId) : json_null());
-    json_object_set_new(configuration,
-                        "received",
-                        json_boolean(fsm->configurationSeen));
-    json_object_set_new(configuration,
-                        "applied",
-                        json_boolean(fsm->configurationApplied));
-    json_object_set_new(configuration,
-                        "remainingSec",
-                        json_integer((remainingMs + 999) / 1000));
+    json_object_set_new(configuration, "available", json_boolean(config->available));
+    json_object_set_new(configuration, "phase", json_string(config_phase_str(config->phase)));
+    json_object_set_new(configuration, "mode", json_string(config->mode));
+    json_object_set_new(configuration, "requestId", json_string(fsm->requestId));
+    json_object_set_new(configuration, "generation", json_integer(fsm->configGeneration));
+    json_object_set_new(configuration, "confirmedGeneration", json_integer(fsm->confirmedGeneration));
+    json_object_set_new(configuration, "received", json_boolean(fsm->configurationSeen));
+    json_object_set_new(configuration, "applied", json_boolean(fsm->configurationApplied));
+    json_object_set_new(configuration, "error", json_string(config->error));
     json_object_set_new(root, "configuration", configuration);
 
     json_object_set_new(starterJson,
@@ -180,13 +175,6 @@ static json_t *fsm_status_json(const LifecycleFsm *fsm,
     json_object_set_new(starterJson,
                         "reason",
                         json_string(starter->aggregateReason));
-    json_object_set_new(starterJson,
-                        "configPhase",
-                        json_string(config_phase_str(
-                            starter->configPhase)));
-    json_object_set_new(starterJson,
-                        "configReason",
-                        json_string(starter->configReason));
     json_object_set_new(root, "starter", starterJson);
 
     json_object_set_new(root,
@@ -202,6 +190,8 @@ static int status_cb(const struct _u_request *request,
     LifecycleContext *ctx;
     LifecycleFsm fsm;
     StarterSnapshot starter;
+    ConfigSnapshot configuration;
+    bool persistencePending;
     json_t *json;
     size_t pendingEvents;
 
@@ -218,13 +208,19 @@ static int status_cb(const struct _u_request *request,
     pthread_mutex_lock(&ctx->mutex);
     fsm = ctx->fsm;
     starter = ctx->starter;
+    configuration = ctx->configuration;
+    persistencePending = ctx->persistencePending;
     pendingEvents = ctx->eventCount;
     pthread_mutex_unlock(&ctx->mutex);
 
     json = fsm_status_json(&fsm,
                            &starter,
+                           &configuration,
                            ctx->bootId,
                            pendingEvents);
+    if (json != NULL) {
+        json_object_set_new(json, "persistencePending", json_boolean(persistencePending));
+    }
     return reply_json(response, HttpStatus_OK, json);
 }
 
@@ -330,65 +326,24 @@ static int configure_cb(const struct _u_request *request,
                         struct _u_response *response,
                         void *userData) {
 
-    LifecycleContext *ctx;
-    LifecycleConfigureResult result;
-    json_t *body;
-    json_t *json;
-    const char *requestId;
-    const char *assignmentId;
-    char error[LIFECYCLED_REASON_LEN];
-    HttpStatus status;
+    (void)request;
+    (void)userData;
 
-    ctx = (LifecycleContext *)userData;
-    body = load_body(request);
-
-    if (!ctx || !body) {
-        json_decref(body);
-        return reply_json(response,
-                          HttpStatus_BadRequest,
-                          json_pack("{s:s}",
-                                    "error",
-                                    "valid JSON body required"));
-    }
-
-    requestId = json_string_or_null(body, "requestId");
-    assignmentId = json_string_or_null(body, "assignmentId");
-    memset(error, 0, sizeof(error));
-
-    result = lifecycle_context_configure(ctx,
-                                         requestId,
-                                         assignmentId,
-                                         error,
-                                         sizeof(error));
-    json_decref(body);
-
-    if (result == LIFECYCLE_CONFIGURE_ACCEPTED) {
-        status = HttpStatus_Accepted;
-        json = json_pack("{s:s,s:s}",
-                         "state",
-                         "CONFIGURING",
-                         "status",
-                         "accepted");
-    } else if (result == LIFECYCLE_CONFIGURE_DUPLICATE) {
-        status = HttpStatus_OK;
-        json = json_pack("{s:s}", "status", "already accepted");
-    } else if (result == LIFECYCLE_CONFIGURE_INVALID_REQUEST) {
-        status = HttpStatus_BadRequest;
-        json = json_pack("{s:s}", "error", error);
-    } else {
-        status = HttpStatus_Conflict;
-        json = json_pack("{s:s}", "error", error);
-    }
-
-    return reply_json(response, status, json);
+    return reply_json(response, HttpStatus_Conflict,
+                       json_pack("{s:s}", "error",
+                                 "send configuration decisions to configd/v1/config"));
 }
 
 bool web_service_start(LifecycleContext *ctx) {
 
-    if (!ctx || !ctx->config) return false;
+    if (!ctx || !ctx->config) {
+        return false;
+    }
 
     ctx->uInstance = calloc(1, sizeof(struct _u_instance));
-    if (!ctx->uInstance) return false;
+    if (!ctx->uInstance) {
+        return false;
+    }
 
     if (ulfius_init_instance(ctx->uInstance,
                              ctx->config->httpPort,
@@ -438,7 +393,9 @@ bool web_service_start(LifecycleContext *ctx) {
 
 void web_service_stop(LifecycleContext *ctx) {
 
-    if (!ctx || !ctx->uInstance) return;
+    if (!ctx || !ctx->uInstance) {
+        return;
+    }
 
     ulfius_stop_framework(ctx->uInstance);
     ulfius_clean_instance(ctx->uInstance);

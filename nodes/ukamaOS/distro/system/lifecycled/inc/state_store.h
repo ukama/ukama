@@ -5,18 +5,13 @@
  *
  * Copyright (c) 2026-present, Ukama Inc.
  */
-
 #pragma once
 
-#include <stdbool.h>
+#include "lifecycled.h"
 
-#include "fsm.h"
+/* The FSM and its pending observations are committed in one atomic file. */
+bool state_store_open(LifecycleContext *ctx);
+void state_store_close(LifecycleContext *ctx);
 
-bool state_store_load(const char *path,
-                      const char *bootId,
-                      LifecycleFsm *fsm);
-
-bool state_store_save(const char *path,
-                      const char *bootId,
-                      const LifecycleFsm *fsm);
-
+bool state_store_load(LifecycleContext *ctx);
+bool state_store_save(const LifecycleContext *ctx);
