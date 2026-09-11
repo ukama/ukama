@@ -12,6 +12,36 @@ type controller struct {
 	mock.Mock
 }
 
+// ConfigNode provides a mock function with given fields: nodeId
+func (_m *controller) ConfigNode(nodeId string) (*gen.ConfigNodeResponse, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConfigNode")
+	}
+
+	var r0 *gen.ConfigNodeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*gen.ConfigNodeResponse, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *gen.ConfigNodeResponse); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ConfigNodeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // PingNode provides a mock function with given fields: nodeId
 func (_m *controller) PingNode(nodeId string) (*gen.PingNodeResponse, error) {
 	ret := _m.Called(nodeId)
