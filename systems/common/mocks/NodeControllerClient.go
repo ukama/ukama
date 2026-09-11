@@ -42,6 +42,36 @@ func (_m *NodeControllerClient) ConfigNode(nodeId string) (*node.ConfigNodeRespo
 	return r0, r1
 }
 
+// DeleteNodeConfig provides a mock function with given fields: nodeId
+func (_m *NodeControllerClient) DeleteNodeConfig(nodeId string) (*node.DeleteNodeConfigResponse, error) {
+	ret := _m.Called(nodeId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNodeConfig")
+	}
+
+	var r0 *node.DeleteNodeConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string) (*node.DeleteNodeConfigResponse, error)); ok {
+		return rf(nodeId)
+	}
+	if rf, ok := ret.Get(0).(func(string) *node.DeleteNodeConfigResponse); ok {
+		r0 = rf(nodeId)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*node.DeleteNodeConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(nodeId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // RestartNode provides a mock function with given fields: nodeId
 func (_m *NodeControllerClient) RestartNode(nodeId string) (*node.RestartNodeResponse, error) {
 	ret := _m.Called(nodeId)

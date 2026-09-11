@@ -416,3 +416,80 @@ func TestControllerClient_ConfigNode(t *testing.T) {
 		assert.Error(tt, err)
 	})
 }
+
+func TestControllerClient_DeleteNodeConfig(t *testing.T) {
+	baseURL := "http://test-controller-service.com"
+
+	t.Run("Success", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, http.MethodDelete, req.Method)
+			assert.Equal(tt, node.ControllerEndpoint+"/nodes/"+testNodeId+"/config", req.URL.Path)
+
+			return &http.Response{
+				StatusCode: 200,
+				Status:     "200 OK",
+				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString(testOperationBody)),
+			}
+		}
+
+		testControllerClient := node.NewNodeControllerClient(baseURL)
+		testControllerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		resp, err := testControllerClient.DeleteNodeConfig(testNodeId)
+
+		assert.NoError(tt, err)
+		assert.Equal(tt, testOperationId, resp.OperationId)
+		assert.Equal(tt, testResourceKey, resp.ResourceKey)
+		assert.Equal(tt, "SUCCESS", resp.Status)
+	})
+
+	t.Run("InvalidResponse", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			resp := `{"error":"internal server error"}`
+
+			return &http.Response{
+				StatusCode: 500,
+				Body:       io.NopCloser(bytes.NewBufferString(resp)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testControllerClient := node.NewNodeControllerClient(baseURL)
+		testControllerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		_, err := testControllerClient.DeleteNodeConfig(testNodeId)
+
+		assert.Error(tt, err)
+	})
+
+	t.Run("DeserializationFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			return &http.Response{
+				StatusCode: 200,
+				Header:     make(http.Header),
+				Body:       io.NopCloser(bytes.NewBufferString("not-json")),
+			}
+		}
+
+		testControllerClient := node.NewNodeControllerClient(baseURL)
+		testControllerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		_, err := testControllerClient.DeleteNodeConfig(testNodeId)
+
+		assert.Error(tt, err)
+	})
+
+	t.Run("RequestFailure", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			return nil
+		}
+
+		testControllerClient := node.NewNodeControllerClient(baseURL)
+		testControllerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		_, err := testControllerClient.DeleteNodeConfig(testNodeId)
+
+		assert.Error(tt, err)
+	})
+}
