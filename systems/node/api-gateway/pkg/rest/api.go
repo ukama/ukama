@@ -38,6 +38,10 @@ type GetStatesRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
+type GetLatestStateRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
 type GetStatesHistoryRequest struct {
 	NodeId     string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 	PageNumber int32  `json:"page_number" query:"page_number"`
