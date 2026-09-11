@@ -36,6 +36,7 @@ type Config struct {
 
 type HttpServices struct {
 	InventoryClient string `default:"http://api-gateway-inventory:8080"`
+	InitClient      string `default:"http://api-gateway-init:8080"`
 }
 
 var SiteMetric = []metric.MetricConfig{

@@ -27,7 +27,10 @@ import (
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	cnode "github.com/ukama/ukama/systems/common/rest/client/node"
 	generated "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
@@ -71,7 +74,14 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
+	nodeSystemUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, "node"), &serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve node system address from initClient: %v", err)
+	}
+
 	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
+	nodeControllerClient := cnode.NewNodeControllerClient(nodeSystemUrl.String())
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
@@ -80,7 +90,7 @@ func runGrpcServer(gormdb sql.Db) {
 		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	siteServer := server.NewSiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
-		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network), serviceConfig.PushGateway, invClient)
+		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network), serviceConfig.PushGateway, invClient, nodeControllerClient)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
