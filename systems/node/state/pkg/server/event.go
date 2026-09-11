@@ -10,7 +10,6 @@ package server
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"sync"
@@ -24,6 +23,8 @@ import (
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg"
+	"github.com/ukama/ukama/systems/node/state/pkg/db"
+	"github.com/ukama/ukama/systems/node/state/pkg/lifecycle"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,609 +32,583 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 )
 
- const (
-	 NodeNotifyEventReady  = "ready"
-	 NodeNotifyEventReboot = "reboot"
-	 NodeNotifyEventOnline = "Node Online"
-	 NodeNotifyEventAdded  = "Node added"
+const (
+	NodeNotifyEventReady  = "ready"
+	NodeNotifyEventReboot = "reboot"
+	NodeNotifyEventOnline = "Node Online"
+	NodeNotifyEventAdded  = "Node added"
 
-	 NodeStateEventPlatformReady = "platformready"
-	 NodeStateEventFault         = "fault"
+	NodeStateEventPlatformReady = "platformready"
+	NodeStateEventFault         = "fault"
 
-	 DefaultSubstate = "on"
-     ForceTransitionRoutingKeyTemplate = "event.cloud.local.{{ .Org}}.node.state.node.force"
-	 NotifyEventRoutingKeyTemplate     = "event.cloud.local.{{ .Org}}.node.notify.notification.store"
- )
+	DefaultSubstate                   = "on"
+	ForceTransitionRoutingKeyTemplate = "event.cloud.local.{{ .Org}}.node.state.node.force"
+	NotifyEventRoutingKeyTemplate     = "event.cloud.local.{{ .Org}}.node.notify.notification.store"
+)
 
- var notifyEventToStateEvent = map[string]string{
-	 "READY":  NodeStateEventPlatformReady,
-	 "FAULTY": NodeStateEventFault,
- }
+var notifyEventToStateEvent = map[string]string{
+	"READY":  NodeStateEventPlatformReady,
+	"FAULTY": NodeStateEventFault,
+}
 
- func stateEventForNotifyValue(value string) string {
-	 if mapped, ok := notifyEventToStateEvent[strings.ToUpper(value)]; ok {
-		 return mapped
-	 }
+func stateEventForNotifyValue(value string) string {
+	if mapped, ok := notifyEventToStateEvent[strings.ToUpper(value)]; ok {
+		return mapped
+	}
 
-	 return value
- }
- 
+	return value
+}
 
- type StateEventServer struct {
-	 orgName        string
-	 orgId          string
-	 stateMachine   *stm.StateMachine
-	 instances      map[string]*stm.StateMachineInstance
-	 instancesMu    sync.RWMutex
-	 s              *StateServer
-	 configPath     string
-	 epb.UnimplementedEventNotificationServiceServer
-	 msgbus         mb.MsgBusServiceClient
-	 baseRoutingKey msgbus.RoutingKeyBuilder
-	 eventBuffer    map[string][]string
-	 bufferMu       sync.RWMutex
-	 latchedHealth  map[string]string
-	 latchedMu      sync.Mutex
-	 processingMutex sync.Map
- }
- 
+type StateEventServer struct {
+	orgName      string
+	orgId        string
+	stateMachine *stm.StateMachine
+	instances    map[string]*stm.StateMachineInstance
+	instancesMu  sync.RWMutex
+	s            *StateServer
+	configPath   string
+	epb.UnimplementedEventNotificationServiceServer
+	msgbus          mb.MsgBusServiceClient
+	baseRoutingKey  msgbus.RoutingKeyBuilder
+	eventBuffer     map[string][]string
+	bufferMu        sync.RWMutex
+	latchedHealth   map[string]string
+	latchedMu       sync.Mutex
+	processingMutex sync.Map
+	lifecycleRepo   *db.LifecycleRepo
+}
 
- func NewStateEventServer(orgName, orgId string, s *StateServer, configPath string, msgBus mb.MsgBusServiceClient) *StateEventServer {
-	 server := &StateEventServer{
-		 orgName:        orgName,
-		 orgId:          orgId,
-		 instances:      make(map[string]*stm.StateMachineInstance),
-		 s:              s,
-		 configPath:     configPath,
-		 msgbus:         msgBus,
-		 baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		 eventBuffer:    make(map[string][]string),
-		 latchedHealth:  make(map[string]string),
-		 processingMutex: sync.Map{},
-	 }
- 
-	 if configPath == "" {
-		 log.Warn("State machine config path is empty, using default configuration")
-	 }
- 
-	 server.stateMachine = stm.NewStateMachine(server.handleTransition)
- 
-	 return server
- }
- 
+func NewStateEventServer(orgName, orgId string, s *StateServer, configPath string, msgBus mb.MsgBusServiceClient) *StateEventServer {
+	server := &StateEventServer{
+		orgName:         orgName,
+		orgId:           orgId,
+		instances:       make(map[string]*stm.StateMachineInstance),
+		s:               s,
+		configPath:      configPath,
+		msgbus:          msgBus,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		eventBuffer:     make(map[string][]string),
+		latchedHealth:   make(map[string]string),
+		processingMutex: sync.Map{},
+	}
 
- func (n *StateEventServer) handleTransition(event stm.Event) {
-	 if event.OldState == event.NewState && event.OldSubstate == event.NewSubstate {
-		 log.Infof("Event %s for node %s did not change state %s, skipping transition event",
-			 event.Name, event.InstanceID, event.NewState)
+	if configPath == "" {
+		log.Warn("State machine config path is empty, using default configuration")
+	}
 
-		 return
-	 }
+	server.stateMachine = stm.NewStateMachine(server.handleTransition)
 
-	 n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
- }
- 
+	return server
+}
 
- func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID string) {
+func (n *StateEventServer) handleTransition(event stm.Event) {
+	if event.OldState == event.NewState && event.OldSubstate == event.NewSubstate {
+		log.Infof("Event %s for node %s did not change state %s, skipping transition event",
+			event.Name, event.InstanceID, event.NewState)
+
+		return
+	}
+
+	n.publishStateChangeEvent(event.NewState, event.NewSubstate, event.InstanceID)
+}
+
+func (n *StateEventServer) publishStateChangeEvent(state, substate, nodeID string) {
 	if n.msgbus == nil {
 		log.Warn("Message bus client is nil, skipping state change event publication")
 		return
 	}
- 
+
 	route := n.baseRoutingKey.SetAction("transition").SetObject("node").MustBuild()
-	
+
 	eventsForNode := n.getEventsForNode(nodeID)
- 
+
 	evt := &epb.NodeStateChangeEvent{
 		NodeId:   nodeID,
 		State:    state,
 		Substate: substate,
 		Events:   eventsForNode,
 	}
- 
+
 	err := n.msgbus.PublishRequest(route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Error: %s", evt, route, err.Error())
 	}
-	
+
 	n.clearEventsForNode(nodeID)
- }
- 
- func (n *StateEventServer) getEventsForNode(nodeID string) []string {
-	 n.bufferMu.RLock()
-	 defer n.bufferMu.RUnlock()
-	 
-	 events, ok := n.eventBuffer[nodeID]
-	 if !ok {
-		 return []string{}
-	 }
-	 return events
- }
- 
- func (n *StateEventServer) clearEventsForNode(nodeID string) {
-	 n.bufferMu.Lock()
-	 defer n.bufferMu.Unlock()
-	 delete(n.eventBuffer, nodeID)
- }
- 
+}
 
- func (n *StateEventServer) getOrCreateInstance(nodeID, storedState, storedSubstate string) (*stm.StateMachineInstance, error) {
-	 if nodeID == "" {
-		 return nil, fmt.Errorf("node ID cannot be empty")
-	 }
- 
-	 n.instancesMu.Lock()
-	 defer n.instancesMu.Unlock()
- 
-	 instance, exists := n.instances[nodeID]
- 
-	 if exists && storedState != "" && instance.CurrentState != storedState {
-		 log.Warnf("Cached state %s for node %s does not match stored state %s, rebuilding instance",
-			 instance.CurrentState, nodeID, storedState)
+func (n *StateEventServer) getEventsForNode(nodeID string) []string {
+	n.bufferMu.RLock()
+	defer n.bufferMu.RUnlock()
 
-		 delete(n.instances, nodeID)
-		 exists = false
-	 }
- 
-	 if !exists {
-		 newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, storedState)
-		 if err != nil {
-			 return nil, fmt.Errorf("failed to create new instance: %w", err)
-		 }
+	events, ok := n.eventBuffer[nodeID]
+	if !ok {
+		return []string{}
+	}
+	return events
+}
 
-		 if storedSubstate != "" {
-			 newInstance.CurrentSubstate = storedSubstate
-		 }
+func (n *StateEventServer) clearEventsForNode(nodeID string) {
+	n.bufferMu.Lock()
+	defer n.bufferMu.Unlock()
+	delete(n.eventBuffer, nodeID)
+}
 
-		 n.instances[nodeID] = newInstance
-		 instance = newInstance
-	 }
-	 return instance, nil
- }
- 
- func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 if e == nil {
-		 return nil, status.Error(codes.InvalidArgument, "event cannot be nil")
-	 }
- 
-	 log.Infof("Received event with routing key: %s", e.RoutingKey)
- 
-	 switch e.RoutingKey {
-	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
-		 return n.handleNodeOnlineEvent(ctx, e)
- 
-	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline]):
-		 return n.handleNodeOfflineEvent(ctx, e)
- 
-	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign]):
-		 return n.handleNodeAssignEvent(ctx, e)
- 
-	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
-		 return n.handleNodeReleaseEvent(ctx, e)
+func (n *StateEventServer) getOrCreateInstance(nodeID, storedState, storedSubstate string) (*stm.StateMachineInstance, error) {
+	if nodeID == "" {
+		return nil, fmt.Errorf("node ID cannot be empty")
+	}
 
-	 case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
-		 return n.handleNodeDeleteEvent(ctx, e)
+	n.instancesMu.Lock()
+	defer n.instancesMu.Unlock()
 
-	 case msgbus.PrepareRoute(n.orgName, ForceTransitionRoutingKeyTemplate):
-		 return n.handleForceTransitionEvent(ctx, e)
-		 
-	 case msgbus.PrepareRoute(n.orgName, NotifyEventRoutingKeyTemplate):
-		 return n.handleNodeNotifyEvent(ctx, e)
- 
-	 default:
-		 log.Warnf("No handler for routing key %s", e.RoutingKey)
-		 return &epb.EventResponse{}, nil
-	 }
- }
- 
- func (n *StateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
-	 }
-	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOnline].Name
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process node online event: %w", err)
-	 }
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) handleNodeOfflineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, e.RoutingKey)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal node offline event: %w", err)
-	 }
-	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOffline].Name
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process node offline event: %w", err)
-	 }
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) handleNodeAssignEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, e.RoutingKey)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal node assign event: %w", err)
-	 }
-	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventAssign].Name
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process node assign event: %w", err)
-	 }
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) handleNodeReleaseEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, e.RoutingKey)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal node release event: %w", err)
-	 }
-	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventRelease].Name
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process node release event: %w", err)
-	 }
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
-	 }
-	 eventName := evt.NodeEventToEventConfig[evt.NodeStateEventDelete].Name
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process node delete event: %w", err)
-	 }
-	 return &epb.EventResponse{}, nil
- }
+	instance, exists := n.instances[nodeID]
 
- func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := n.UnmarshalTransitionEvent(e.Msg)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal force transition event: %w", err)
-	 }
-	 
-	 if err := n.ProcessEvent(ctx, msg.Event, msg.NodeId, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process force transition event: %w", err)
-	 }
-	 
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) handleNodeNotifyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	 msg, err := n.unmarshalNotifyEvent(e.Msg)
-	 if err != nil {
-		 return nil, fmt.Errorf("failed to unmarshal notify event: %w", err)
-	 }
-	 
-	 if err := n.handleNotifyEvent(ctx, e.RoutingKey, msg); err != nil {
-		 return nil, fmt.Errorf("failed to process notify event: %w", err)
-	 }
-	 
-	 return &epb.EventResponse{}, nil
- }
- 
- func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notification, error) {
-	 if msg == nil {
-		 return nil, fmt.Errorf("notification message cannot be nil")
-	 }
-	 
-	 p := &epb.Notification{}
-	 err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	 if err != nil {
-		 log.Errorf("Failed to unmarshal node notify message with: %+v. Error: %s", msg, err.Error())
-		 return nil, fmt.Errorf("failed to unmarshal notification: %w", err)
-	 }
-	 return p, nil
- }
- 
- func (n *StateEventServer) UnmarshalTransitionEvent(msg *anypb.Any) (*epb.EnforceNodeStateEvent, error) {
-	 if msg == nil {
-		 return nil, fmt.Errorf("transition event message cannot be nil")
-	 }
-	 
-	 p := &epb.EnforceNodeStateEvent{}
-	 err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	 if err != nil {
-		 log.Errorf("Failed to unmarshal node transition message with: %+v. Error: %s", msg, err.Error())
-		 return nil, fmt.Errorf("failed to unmarshal transition event: %w", err)
-	 }
-	 return p, nil
- }
- 
- func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {
-	 if msg == nil {
-		 return fmt.Errorf("notification message cannot be nil")
-	 }
-	 
-	 if msg.NodeId == "" {
-		 return fmt.Errorf("node ID cannot be empty in notification")
-	 }
-	 
-	 var details map[string]interface{}
-	 if err := json.Unmarshal(msg.Details, &details); err != nil {
-		 return fmt.Errorf("failed to unmarshal notification details: %w", err)
-	 }
- 
-	 value, exists := details["value"]
-	 if !exists {
-		 return fmt.Errorf("value key not found in notification details")
-	 }
- 
-	 valueStr, ok := value.(string)
-	 if !ok {
-		 return fmt.Errorf("value is not a string type in notification details")
-	 }
-	 
-	 if valueStr == NodeNotifyEventOnline || valueStr == NodeNotifyEventAdded {
-		 log.Infof("Skipping notification event processing for %s event", valueStr)
-		 return nil
-	 }
-	 
-	 eventName := stateEventForNotifyValue(valueStr)
+	if exists && storedState != "" && instance.CurrentState != storedState {
+		log.Warnf("Cached state %s for node %s does not match stored state %s, rebuilding instance",
+			instance.CurrentState, nodeID, storedState)
 
-	 log.Infof("Processing notification event %s as %s for node %s", valueStr, eventName, msg.NodeId)
+		delete(n.instances, nodeID)
+		exists = false
+	}
 
-	 if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
-		 return fmt.Errorf("failed to process %s notification event: %w", valueStr, err)
-	 }
-	 
-	 return nil
- }
- 
+	if !exists {
+		newInstance, err := n.stateMachine.NewInstance(n.configPath, nodeID, storedState)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create new instance: %w", err)
+		}
 
- func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
-	 if eventName == "" {
-		 return fmt.Errorf("event name cannot be empty")
-	 }
-	 
-	 if nodeId == "" {
-		 return fmt.Errorf("node ID cannot be empty")
-	 }
- 
-	 mutexValue, _ := n.processingMutex.LoadOrStore(nodeId, &sync.Mutex{})
-	 mutex := mutexValue.(*sync.Mutex)
- 
-	 mutex.Lock()
-	 defer mutex.Unlock()
- 
-	 log.Infof("Processing event %s for node %s", eventName, nodeId)
- 
-	 latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
-	 if err != nil {
-		 if st, ok := status.FromError(err); ok {
-			 switch st.Code() {
-			 case codes.InvalidArgument:
-				 return fmt.Errorf("invalid node ID format: %w", err)
-			 case codes.Internal:
-				 return fmt.Errorf("internal error while checking node state: %w", err)
-			 }
-		 }
-		 
-		 log.Infof("No state found for node %s, creating initial state", nodeId)
-		 return n.createInitialNodeState(ctx, nodeId, eventName, msg)
-	 }
- 
-	 var currentState npb.NodeState
-	 var currentSubstate string
+		if storedSubstate != "" {
+			newInstance.CurrentSubstate = storedSubstate
+		}
 
-	 if latestState != nil && latestState.State != nil {
-		 currentState = latestState.State.CurrentState
+		n.instances[nodeID] = newInstance
+		instance = newInstance
+	}
+	return instance, nil
+}
 
-		 if len(latestState.State.SubState) > 0 {
-			 currentSubstate = latestState.State.SubState[len(latestState.State.SubState)-1]
-		 }
-	 } else {
-		 log.Infof("State information incomplete for node %s, creating initial state", nodeId)
-		 return n.createInitialNodeState(ctx, nodeId, eventName, msg)
-	 }
- 
-	 instance, err := n.getOrCreateInstance(nodeId, currentState.String(), currentSubstate)
-	 if err != nil {
-		 return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
-	 }
- 
-	 changed, err := n.applyEvent(ctx, instance, nodeId, eventName)
-	 if err != nil {
-		 return err
-	 }
+func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	if e == nil {
+		return nil, status.Error(codes.InvalidArgument, "event cannot be nil")
+	}
 
-	 if !changed {
-		 if shouldLatch(instance.CurrentState, eventName) {
-			 n.latchHealthEvent(nodeId, eventName)
-			 log.Infof("Node %s received %s before it came up, latching it until the node transitions",
-				 nodeId, eventName)
-		 }
+	log.Infof("Received event with routing key: %s", e.RoutingKey)
 
-		 return nil
-	 }
+	switch e.RoutingKey {
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
+		return n.handleNodeOnlineEvent(ctx, e)
 
-	 latched, ok := n.takeLatchedHealthEvent(nodeId)
-	 if !ok {
-		 return nil
-	 }
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline]):
+		return n.handleNodeOfflineEvent(ctx, e)
 
-	 if latched == NodeStateEventPlatformReady && instance.CurrentSubstate != DefaultSubstate {
-		 log.Infof("Discarding latched %s for node %s: node is %s, not online",
-			 latched, nodeId, instance.CurrentSubstate)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventAssign]):
+		return n.handleNodeAssignEvent(ctx, e)
 
-		 return nil
-	 }
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventRelease]):
+		return n.handleNodeReleaseEvent(ctx, e)
 
-	 log.Infof("Replaying latched %s event for node %s now in state %s", latched, nodeId, instance.CurrentState)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
+		return n.handleNodeDeleteEvent(ctx, e)
 
-	 if _, err := n.applyEvent(ctx, instance, nodeId, latched); err != nil {
-		 return fmt.Errorf("failed to replay latched %s event for node %s: %w", latched, nodeId, err)
-	 }
+	case msgbus.PrepareRoute(n.orgName, ForceTransitionRoutingKeyTemplate):
+		return n.handleForceTransitionEvent(ctx, e)
 
-	 return nil
- }
+	case msgbus.PrepareRoute(n.orgName, NotifyEventRoutingKeyTemplate):
+		return n.handleNodeNotifyEvent(ctx, e)
 
- func (n *StateEventServer) applyEvent(ctx context.Context, instance *stm.StateMachineInstance,
-	 nodeId, eventName string) (bool, error) {
-	 prevState := instance.CurrentState
-	 prevSubstate := instance.CurrentSubstate
+	default:
+		log.Warnf("No handler for routing key %s", e.RoutingKey)
+		return &epb.EventResponse{}, nil
+	}
+}
 
-	 if err := instance.Transition(eventName); err != nil {
-		 return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
-	 }
+func (n *StateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
+	}
+	eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOnline].Name
+	if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process node online event: %w", err)
+	}
+	return &epb.EventResponse{}, nil
+}
 
-	 if instance.CurrentState == prevState && instance.CurrentSubstate == prevSubstate {
-		 log.Infof("Event %s did not change state for node %s, skipping persistence", eventName, nodeId)
+func (n *StateEventServer) handleNodeOfflineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node offline event: %w", err)
+	}
+	eventName := evt.NodeEventToEventConfig[evt.NodeStateEventOffline].Name
+	if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process node offline event: %w", err)
+	}
+	return &epb.EventResponse{}, nil
+}
 
-		 return false, nil
-	 }
+func (n *StateEventServer) handleNodeAssignEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node assign event: %w", err)
+	}
+	eventName := evt.NodeEventToEventConfig[evt.NodeStateEventAssign].Name
+	if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process node assign event: %w", err)
+	}
+	return &epb.EventResponse{}, nil
+}
 
-	 return n.persistTransition(ctx, instance, nodeId, prevState, eventName)
- }
+func (n *StateEventServer) handleNodeReleaseEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node release event: %w", err)
+	}
+	eventName := evt.NodeEventToEventConfig[evt.NodeStateEventRelease].Name
+	if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process node release event: %w", err)
+	}
+	return &epb.EventResponse{}, nil
+}
 
- func (n *StateEventServer) persistTransition(ctx context.Context, instance *stm.StateMachineInstance,
-	 nodeId, prevState, eventName string) (bool, error) {
-	 _, err := n.s.UpdateState(ctx, &pb.UpdateStateRequest{
-		 NodeId:   nodeId,
-		 SubState: []string{instance.CurrentSubstate},
-		 Events:   []string{eventName},
-	 })
-	 if err != nil {
-		 return false, fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
-	 }
+func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
+	}
+	eventName := evt.NodeEventToEventConfig[evt.NodeStateEventDelete].Name
+	if err := n.ProcessEvent(ctx, eventName, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process node delete event: %w", err)
+	}
+	return &epb.EventResponse{}, nil
+}
 
-	 if instance.CurrentState == prevState {
-		 return false, nil
-	 }
+func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := n.UnmarshalTransitionEvent(e.Msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal force transition event: %w", err)
+	}
 
-	 log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
+	if err := n.ProcessEvent(ctx, msg.Event, msg.NodeId, msg); err != nil {
+		return nil, fmt.Errorf("failed to process force transition event: %w", err)
+	}
 
-	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
-	 if !ok {
-		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
-		 stateValue = int32(npb.NodeState_Unknown)
-	 }
+	return &epb.EventResponse{}, nil
+}
 
-	 _, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
-		 NodeId:       nodeId,
-		 CurrentState: npb.NodeState(stateValue),
-		 SubState:     []string{instance.CurrentSubstate},
-		 Events:       []string{},
-	 })
-	 if err != nil {
-		 return false, fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
-	 }
+func (n *StateEventServer) handleNodeNotifyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := n.unmarshalNotifyEvent(e.Msg)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal notify event: %w", err)
+	}
 
-	 return true, nil
- }
+	if err := n.handleNotifyEvent(ctx, e.RoutingKey, msg); err != nil {
+		return nil, fmt.Errorf("failed to process notify event: %w", err)
+	}
 
- func isHealthEvent(eventName string) bool {
-	 return eventName == NodeStateEventPlatformReady || eventName == NodeStateEventFault
- }
+	return &epb.EventResponse{}, nil
+}
 
- func shouldLatch(currentState, eventName string) bool {
-	 return currentState == npb.NodeState_Unknown.String() && isHealthEvent(eventName)
- }
+func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notification, error) {
+	if msg == nil {
+		return nil, fmt.Errorf("notification message cannot be nil")
+	}
 
- func (n *StateEventServer) latchHealthEvent(nodeID, eventName string) {
-	 n.latchedMu.Lock()
-	 defer n.latchedMu.Unlock()
+	p := &epb.Notification{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal node notify message with: %+v. Error: %s", msg, err.Error())
+		return nil, fmt.Errorf("failed to unmarshal notification: %w", err)
+	}
+	return p, nil
+}
 
-	 n.latchedHealth[nodeID] = eventName
+func (n *StateEventServer) UnmarshalTransitionEvent(msg *anypb.Any) (*epb.EnforceNodeStateEvent, error) {
+	if msg == nil {
+		return nil, fmt.Errorf("transition event message cannot be nil")
+	}
 
-	 if err := n.s.SetLatchedEvent(nodeID, eventName); err != nil {
-		 log.Warnf("Failed to persist latched %s event for node %s, it will be lost on restart: %v",
-			 eventName, nodeID, err)
-	 }
- }
+	p := &epb.EnforceNodeStateEvent{}
+	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to unmarshal node transition message with: %+v. Error: %s", msg, err.Error())
+		return nil, fmt.Errorf("failed to unmarshal transition event: %w", err)
+	}
+	return p, nil
+}
 
- func (n *StateEventServer) takeLatchedHealthEvent(nodeID string) (string, bool) {
-	 n.latchedMu.Lock()
-	 defer n.latchedMu.Unlock()
+func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {
+	if msg == nil {
+		return fmt.Errorf("notification message cannot be nil")
+	}
+	if msg.ServiceName != "lifecycle" || msg.Type != "event" {
+		return nil
+	}
+	event, err := lifecycle.Parse(msg.Details, msg.Time)
+	if err != nil {
+		return err
+	}
+	if n.lifecycleRepo == nil {
+		return fmt.Errorf("lifecycle persistence is not initialized")
+	}
+	return n.processStoredEvent(ctx, event.State, msg.NodeId, event)
+}
 
-	 eventName, ok := n.latchedHealth[nodeID]
-	 if ok {
-		 delete(n.latchedHealth, nodeID)
-	 }
+func (n *StateEventServer) ProcessEvent(ctx context.Context, eventName, nodeId string, msg interface{}) error {
+	if n.lifecycleRepo != nil {
+		return n.processStoredEvent(ctx, eventName, nodeId, msg)
+	}
+	if eventName == "" {
+		return fmt.Errorf("event name cannot be empty")
+	}
 
-	 stored, err := n.s.TakeLatchedEvent(nodeID)
-	 if err != nil {
-		 log.Warnf("Failed to read persisted latched event for node %s: %v", nodeID, err)
+	if nodeId == "" {
+		return fmt.Errorf("node ID cannot be empty")
+	}
 
-		 return eventName, ok
-	 }
+	mutexValue, _ := n.processingMutex.LoadOrStore(nodeId, &sync.Mutex{})
+	mutex := mutexValue.(*sync.Mutex)
 
-	 if !ok && stored != "" {
-		 return stored, true
-	 }
+	mutex.Lock()
+	defer mutex.Unlock()
 
-	 return eventName, ok
- }
- 
+	log.Infof("Processing event %s for node %s", eventName, nodeId)
 
- func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
-	 if nodeId == "" {
-		 return fmt.Errorf("node ID cannot be empty")
-	 }
-	 
-	 log.Infof("Creating initial state for node %s with event %s", nodeId, eventName)
-	 
-	 instance, err := n.getOrCreateInstance(nodeId, npb.NodeState_Unknown.String(), "")
-	 if err != nil {
-		 return fmt.Errorf("failed to create state machine instance: %w", err)
-	 }
-	 
-	 prevState := instance.CurrentState
+	latestState, err := n.s.GetLatestState(ctx, &pb.GetLatestStateRequest{NodeId: nodeId})
+	if err != nil {
+		if st, ok := status.FromError(err); ok {
+			switch st.Code() {
+			case codes.InvalidArgument:
+				return fmt.Errorf("invalid node ID format: %w", err)
+			case codes.Internal:
+				return fmt.Errorf("internal error while checking node state: %w", err)
+			}
+		}
 
-	 if err := instance.Transition(eventName); err != nil {
-		 log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
-	 }
+		log.Infof("No state found for node %s, creating initial state", nodeId)
+		return n.createInitialNodeState(ctx, nodeId, eventName, msg)
+	}
 
-	 if instance.CurrentState == prevState && shouldLatch(instance.CurrentState, eventName) {
-		 n.latchHealthEvent(nodeId, eventName)
-		 log.Infof("Node %s received %s before it came up, latching it until the node transitions",
-			 nodeId, eventName)
-	 }
+	var currentState npb.NodeState
+	var currentSubstate string
 
-	 if instance.CurrentSubstate == "" {
-		 instance.CurrentSubstate = DefaultSubstate
-		 log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
-	 }
-	 
-	 initialSubstate := instance.CurrentSubstate
-	 
-	 stateValue, ok := npb.NodeState_value[instance.CurrentState]
-	 if !ok {
-		 log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
-		 stateValue = int32(npb.NodeState_Unknown)
-	 }
-	 
-	 initialState := npb.NodeState(stateValue)
-	 
-	 var addStateRequest *pb.AddStateRequest
- 
-	 switch m := msg.(type) {
-	 case *epb.NodeOnlineEvent:
-		 addStateRequest = &pb.AddStateRequest{
-			 NodeId:       nodeId,
-			 CurrentState: initialState,
-			 SubState:     []string{initialSubstate},
-			 Events:       []string{eventName},
-			 NodeIp:       m.NodeIp,
-			 NodePort:     int32(m.NodePort),
-			 MeshIp:       m.MeshIp,
-			 MeshPort:     int32(m.MeshPort),
-			 MeshHostName: m.MeshHostName,
-		 }
-	 default:
-		 addStateRequest = &pb.AddStateRequest{
-			 NodeId:       nodeId,
-			 CurrentState: initialState,
-			 SubState:     []string{initialSubstate},
-			 Events:       []string{eventName},
-		 }
-	 }
-	 
-	 _, err = n.s.AddNodeState(ctx, addStateRequest)
-	 if err != nil {
-		 return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
-	 }
-	 
-	 log.Infof("Initial state created for node %s with state %s, substate %s", nodeId, initialState, initialSubstate)
-	 return nil
- }
+	if latestState != nil && latestState.State != nil {
+		currentState = latestState.State.CurrentState
+
+		if len(latestState.State.SubState) > 0 {
+			currentSubstate = latestState.State.SubState[len(latestState.State.SubState)-1]
+		}
+	} else {
+		log.Infof("State information incomplete for node %s, creating initial state", nodeId)
+		return n.createInitialNodeState(ctx, nodeId, eventName, msg)
+	}
+
+	instance, err := n.getOrCreateInstance(nodeId, currentState.String(), currentSubstate)
+	if err != nil {
+		return fmt.Errorf("failed to create state machine instance for node %s: %w", nodeId, err)
+	}
+
+	changed, err := n.applyEvent(ctx, instance, nodeId, eventName)
+	if err != nil {
+		return err
+	}
+
+	if !changed {
+		if shouldLatch(instance.CurrentState, eventName) {
+			n.latchHealthEvent(nodeId, eventName)
+			log.Infof("Node %s received %s before it came up, latching it until the node transitions",
+				nodeId, eventName)
+		}
+
+		return nil
+	}
+
+	latched, ok := n.takeLatchedHealthEvent(nodeId)
+	if !ok {
+		return nil
+	}
+
+	if latched == NodeStateEventPlatformReady && instance.CurrentSubstate != DefaultSubstate {
+		log.Infof("Discarding latched %s for node %s: node is %s, not online",
+			latched, nodeId, instance.CurrentSubstate)
+
+		return nil
+	}
+
+	log.Infof("Replaying latched %s event for node %s now in state %s", latched, nodeId, instance.CurrentState)
+
+	if _, err := n.applyEvent(ctx, instance, nodeId, latched); err != nil {
+		return fmt.Errorf("failed to replay latched %s event for node %s: %w", latched, nodeId, err)
+	}
+
+	return nil
+}
+
+func (n *StateEventServer) applyEvent(ctx context.Context, instance *stm.StateMachineInstance,
+	nodeId, eventName string) (bool, error) {
+	prevState := instance.CurrentState
+	prevSubstate := instance.CurrentSubstate
+
+	if err := instance.Transition(eventName); err != nil {
+		return false, fmt.Errorf("failed to transition state for node %s with event %s: %w", nodeId, eventName, err)
+	}
+
+	if instance.CurrentState == prevState && instance.CurrentSubstate == prevSubstate {
+		log.Infof("Event %s did not change state for node %s, skipping persistence", eventName, nodeId)
+
+		return false, nil
+	}
+
+	return n.persistTransition(ctx, instance, nodeId, prevState, eventName)
+}
+
+func (n *StateEventServer) persistTransition(ctx context.Context, instance *stm.StateMachineInstance,
+	nodeId, prevState, eventName string) (bool, error) {
+	_, err := n.s.UpdateState(ctx, &pb.UpdateStateRequest{
+		NodeId:   nodeId,
+		SubState: []string{instance.CurrentSubstate},
+		Events:   []string{eventName},
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to update state for node %s: %w", nodeId, err)
+	}
+
+	if instance.CurrentState == prevState {
+		return false, nil
+	}
+
+	log.Infof("Node %s transitioning from state %s to %s", nodeId, prevState, instance.CurrentState)
+
+	stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	if !ok {
+		log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		stateValue = int32(npb.NodeState_Unknown)
+	}
+
+	_, err = n.s.AddNodeState(ctx, &pb.AddStateRequest{
+		NodeId:       nodeId,
+		CurrentState: npb.NodeState(stateValue),
+		SubState:     []string{instance.CurrentSubstate},
+		Events:       []string{},
+	})
+	if err != nil {
+		return false, fmt.Errorf("failed to add new state for node %s: %w", nodeId, err)
+	}
+
+	return true, nil
+}
+
+func isHealthEvent(eventName string) bool {
+	return eventName == NodeStateEventPlatformReady || eventName == NodeStateEventFault
+}
+
+func shouldLatch(currentState, eventName string) bool {
+	return currentState == npb.NodeState_Unknown.String() && isHealthEvent(eventName)
+}
+
+func (n *StateEventServer) latchHealthEvent(nodeID, eventName string) {
+	n.latchedMu.Lock()
+	defer n.latchedMu.Unlock()
+
+	n.latchedHealth[nodeID] = eventName
+
+	if err := n.s.SetLatchedEvent(nodeID, eventName); err != nil {
+		log.Warnf("Failed to persist latched %s event for node %s, it will be lost on restart: %v",
+			eventName, nodeID, err)
+	}
+}
+
+func (n *StateEventServer) takeLatchedHealthEvent(nodeID string) (string, bool) {
+	n.latchedMu.Lock()
+	defer n.latchedMu.Unlock()
+
+	eventName, ok := n.latchedHealth[nodeID]
+	if ok {
+		delete(n.latchedHealth, nodeID)
+	}
+
+	stored, err := n.s.TakeLatchedEvent(nodeID)
+	if err != nil {
+		log.Warnf("Failed to read persisted latched event for node %s: %v", nodeID, err)
+
+		return eventName, ok
+	}
+
+	if !ok && stored != "" {
+		return stored, true
+	}
+
+	return eventName, ok
+}
+
+func (n *StateEventServer) createInitialNodeState(ctx context.Context, nodeId, eventName string, msg interface{}) error {
+	if nodeId == "" {
+		return fmt.Errorf("node ID cannot be empty")
+	}
+
+	log.Infof("Creating initial state for node %s with event %s", nodeId, eventName)
+
+	instance, err := n.getOrCreateInstance(nodeId, npb.NodeState_Unknown.String(), "")
+	if err != nil {
+		return fmt.Errorf("failed to create state machine instance: %w", err)
+	}
+
+	prevState := instance.CurrentState
+
+	if err := instance.Transition(eventName); err != nil {
+		log.Warnf("Initial transition failed for node %s with event %s: %v", nodeId, eventName, err)
+	}
+
+	if instance.CurrentState == prevState && shouldLatch(instance.CurrentState, eventName) {
+		n.latchHealthEvent(nodeId, eventName)
+		log.Infof("Node %s received %s before it came up, latching it until the node transitions",
+			nodeId, eventName)
+	}
+
+	if instance.CurrentSubstate == "" {
+		instance.CurrentSubstate = DefaultSubstate
+		log.Infof("Setting default substate '%s' for node %s", DefaultSubstate, nodeId)
+	}
+
+	initialSubstate := instance.CurrentSubstate
+
+	stateValue, ok := npb.NodeState_value[instance.CurrentState]
+	if !ok {
+		log.Warnf("Unknown state %s for node %s, defaulting to Unknown state", instance.CurrentState, nodeId)
+		stateValue = int32(npb.NodeState_Unknown)
+	}
+
+	initialState := npb.NodeState(stateValue)
+
+	var addStateRequest *pb.AddStateRequest
+
+	switch m := msg.(type) {
+	case *epb.NodeOnlineEvent:
+		addStateRequest = &pb.AddStateRequest{
+			NodeId:       nodeId,
+			CurrentState: initialState,
+			SubState:     []string{initialSubstate},
+			Events:       []string{eventName},
+			NodeIp:       m.NodeIp,
+			NodePort:     int32(m.NodePort),
+			MeshIp:       m.MeshIp,
+			MeshPort:     int32(m.MeshPort),
+			MeshHostName: m.MeshHostName,
+		}
+	default:
+		addStateRequest = &pb.AddStateRequest{
+			NodeId:       nodeId,
+			CurrentState: initialState,
+			SubState:     []string{initialSubstate},
+			Events:       []string{eventName},
+		}
+	}
+
+	_, err = n.s.AddNodeState(ctx, addStateRequest)
+	if err != nil {
+		return fmt.Errorf("failed to create initial state entry for node %s: %w", nodeId, err)
+	}
+
+	log.Infof("Initial state created for node %s with state %s, substate %s", nodeId, initialState, initialSubstate)
+	return nil
+}

@@ -235,6 +235,9 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 			evt, route, err.Error())
 	}
 
+	if serviceName == "lifecycle" && nType == "event" {
+		return err
+	}
 	return nil
 }
 

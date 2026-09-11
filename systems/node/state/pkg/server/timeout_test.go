@@ -49,13 +49,13 @@ func timeoutStateRow(nodeId string, state npb.NodeState, enteredAt time.Time) db
 func TestRunTimeouts(t *testing.T) {
 	nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).String()
 
-	t.Run("advances a node that has been in Configuring too long", func(t *testing.T) {
+	t.Run("advances an Updating node after its existing timeout", func(t *testing.T) {
 		now := time.Now().UTC()
 		enteredAt := now.Add(-90 * time.Second)
 
 		repo := &mocks.StateRepo{}
 		repo.On("ListLatestStates").
-			Return([]db.State{timeoutStateRow(nodeId, npb.NodeState_Configuring, enteredAt)}, nil).Once()
+			Return([]db.State{timeoutStateRow(nodeId, npb.NodeState_Updating, enteredAt)}, nil).Once()
 		repo.On("UpdateState", nodeId, mock.Anything, mock.Anything).
 			Return(&db.State{NodeId: nodeId}, nil).Once()
 		repo.On("GetLatestState", nodeId).
@@ -77,7 +77,7 @@ func TestRunTimeouts(t *testing.T) {
 
 		repo := &mocks.StateRepo{}
 		repo.On("ListLatestStates").
-			Return([]db.State{timeoutStateRow(nodeId, npb.NodeState_Configuring, enteredAt)}, nil).Once()
+			Return([]db.State{timeoutStateRow(nodeId, npb.NodeState_Updating, enteredAt)}, nil).Once()
 
 		srv := newTimeoutServer(t, repo)
 
@@ -112,8 +112,8 @@ func TestRunTimeouts(t *testing.T) {
 
 		repo := &mocks.StateRepo{}
 		repo.On("ListLatestStates").Return([]db.State{
-			timeoutStateRow("not-a-node-id", npb.NodeState_Configuring, enteredAt),
-			timeoutStateRow(healthyNode, npb.NodeState_Configuring, enteredAt),
+			timeoutStateRow("not-a-node-id", npb.NodeState_Updating, enteredAt),
+			timeoutStateRow(healthyNode, npb.NodeState_Updating, enteredAt),
 		}, nil).Once()
 		repo.On("UpdateState", healthyNode, mock.Anything, mock.Anything).
 			Return(&db.State{NodeId: healthyNode}, nil).Once()
