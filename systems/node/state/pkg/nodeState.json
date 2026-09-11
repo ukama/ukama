@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "entity": "node",
   "file": "nodeState.json",
   "states": [
@@ -12,19 +12,16 @@
         "assign",
         "platformready",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "configuring",
+        "operational"
       ],
       "transition": [
         {
           "to_state": "Configuring",
           "trigger": [
             "assign"
-          ]
-        },
-        {
-          "to_state": "Ready",
-          "trigger": [
-            "platformready"
           ]
         },
         {
@@ -37,6 +34,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -71,15 +92,12 @@
         "update",
         "assign",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "configuring",
+        "operational"
       ],
       "transition": [
-        {
-          "to_state": "Ready",
-          "trigger": [
-            "platformready"
-          ]
-        },
         {
           "to_state": "Configuring",
           "trigger": [
@@ -102,6 +120,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -133,21 +175,18 @@
         "online",
         "offline",
         "assign",
-        "assignnoconfig",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "platformready",
+        "configuring",
+        "operational"
       ],
       "transition": [
         {
           "to_state": "Configuring",
           "trigger": [
             "assign"
-          ]
-        },
-        {
-          "to_state": "Operational",
-          "trigger": [
-            "assignnoconfig"
           ]
         },
         {
@@ -160,6 +199,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -190,22 +253,15 @@
       "events": [
         "online",
         "offline",
-        "configapplied",
         "release",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "platformready",
+        "configuring",
+        "operational"
       ],
-      "timeout": {
-        "seconds": 60,
-        "to_state": "Operational"
-      },
       "transition": [
-        {
-          "to_state": "Operational",
-          "trigger": [
-            "configapplied"
-          ]
-        },
         {
           "to_state": "Ready",
           "trigger": [
@@ -222,6 +278,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -255,7 +335,11 @@
         "configchange",
         "release",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "platformready",
+        "configuring",
+        "operational"
       ],
       "transition": [
         {
@@ -280,6 +364,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -312,7 +420,11 @@
         "offline",
         "rebooted",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "platformready",
+        "configuring",
+        "operational"
       ],
       "timeout": {
         "seconds": 60,
@@ -335,6 +447,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],
@@ -368,7 +504,11 @@
         "recover",
         "assign",
         "fault",
-        "offboard"
+        "offboard",
+        "init",
+        "platformready",
+        "configuring",
+        "operational"
       ],
       "transition": [
         {
@@ -393,6 +533,30 @@
           "to_state": "Offboarded",
           "trigger": [
             "offboard"
+          ]
+        },
+        {
+          "to_state": "Initializing",
+          "trigger": [
+            "init"
+          ]
+        },
+        {
+          "to_state": "Ready",
+          "trigger": [
+            "platformready"
+          ]
+        },
+        {
+          "to_state": "Configuring",
+          "trigger": [
+            "configuring"
+          ]
+        },
+        {
+          "to_state": "Operational",
+          "trigger": [
+            "operational"
           ]
         }
       ],

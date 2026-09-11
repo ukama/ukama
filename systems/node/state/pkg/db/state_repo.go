@@ -161,7 +161,7 @@ func (r *stateRepo) GetNodeConfig(nodeId string) (*NodeConfig, error) {
 	var config NodeConfig
 	err := r.Db.GetGormDb().
 		Where("node_id = ?", nodeId).
-		Order("id DESC").
+		Order("created_at DESC").
 		First(&config).Error
 
 	if err != nil {

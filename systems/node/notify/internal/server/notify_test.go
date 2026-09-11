@@ -556,3 +556,18 @@ func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
 		Time:        uint32(time.Now().Unix()),
 	}
 }
+
+func TestLifecyclePublicationFailureIsRetried(t *testing.T) {
+	bus := &mbmocks.MsgBusServiceClient{}
+	bus.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	repo := &mocks.NotificationRepo{}
+	repo.On("Add", mock.Anything).Return(nil).Once()
+	s := server.NewNotifyServer(OrgName, repo, bus)
+	response, err := s.Add(context.Background(), &pb.AddRequest{
+		NodeId: ukama.NewVirtualHomeNodeId().String(), ServiceName: "lifecycle", Type: "event", Severity: "low",
+	})
+	assert.ErrorIs(t, err, assert.AnError)
+	assert.Nil(t, response, "do not acknowledge an unpublished lifecycle event")
+	repo.AssertExpectations(t)
+	bus.AssertExpectations(t)
+}

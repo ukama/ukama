@@ -23,6 +23,9 @@ const TimeoutEventName = "timeout"
 func (n *StateEventServer) applyTimeout(ctx context.Context, instance *stm.StateMachineInstance,
 	nodeId string, enteredAt, now time.Time) (bool, error) {
 	prevState := instance.CurrentState
+	if prevState == "Ready" || prevState == "Configuring" {
+		return false, nil
+	}
 
 	moved, err := instance.TimeoutTransition(enteredAt, now)
 	if err != nil {
@@ -78,6 +81,9 @@ func (n *StateEventServer) RunTimeouts(ctx context.Context, now time.Time) (int,
 
 func (n *StateEventServer) runNodeTimeout(ctx context.Context, nodeId, storedState, storedSubstate string,
 	enteredAt, now time.Time) (bool, error) {
+	if n.lifecycleRepo != nil {
+		return n.runStoredTimeout(ctx, nodeId, now)
+	}
 	mutexValue, _ := n.processingMutex.LoadOrStore(nodeId, &sync.Mutex{})
 	mutex := mutexValue.(*sync.Mutex)
 

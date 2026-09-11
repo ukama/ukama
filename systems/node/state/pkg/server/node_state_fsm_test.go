@@ -47,7 +47,7 @@ func TestNodeStateFsm_HappyPath(t *testing.T) {
 	require.NoError(t, instance.Transition("assign"))
 	assert.Equal(t, "Configuring", instance.CurrentState)
 
-	require.NoError(t, instance.Transition("configapplied"))
+	require.NoError(t, instance.Transition("operational"))
 	assert.Equal(t, "Operational", instance.CurrentState)
 }
 
@@ -55,6 +55,10 @@ func TestNodeStateFsm_AssignWithoutConfig(t *testing.T) {
 	instance := newNodeInstance(t, "assign-no-config", "Ready")
 
 	require.NoError(t, instance.Transition("assignnoconfig"))
+	assert.Equal(t, "Ready", instance.CurrentState, "assignment alone cannot declare success")
+	require.NoError(t, instance.Transition("assign"))
+	assert.Equal(t, "Configuring", instance.CurrentState)
+	require.NoError(t, instance.Transition("operational"))
 	assert.Equal(t, "Operational", instance.CurrentState)
 }
 
@@ -156,7 +160,6 @@ func TestNodeStateFsm_Timeouts(t *testing.T) {
 		from string
 		to   string
 	}{
-		{"Configuring", "Operational"},
 		{"Updating", "Initializing"},
 	}
 
@@ -173,7 +176,7 @@ func TestNodeStateFsm_Timeouts(t *testing.T) {
 		})
 	}
 
-	for _, state := range []string{"Ready", "Operational", "Unknown", "Faulty", "Offboarded"} {
+	for _, state := range []string{"Ready", "Configuring", "Operational", "Unknown", "Faulty", "Offboarded"} {
 		t.Run(state+" never times out", func(t *testing.T) {
 			instance := newNodeInstance(t, "timeout-"+state, state)
 
@@ -218,7 +221,7 @@ func TestStateEventServer_getOrCreateInstance_ResyncsWithStoredState(t *testing.
 
 	first, err := srv.getOrCreateInstance(nodeId, "Configuring", "on")
 	require.NoError(t, err)
-	require.NoError(t, first.Transition("configapplied"))
+	require.NoError(t, first.Transition("operational"))
 	require.Equal(t, "Operational", first.CurrentState)
 
 	t.Run("returns the cached instance when it matches stored state", func(t *testing.T) {
