@@ -30,3 +30,7 @@ gen:
 	mockery --all --recursive --dir ./internal
 	mockery --all --recursive --dir ./pkg
 	mockery --dir ./pb  --all --recursive --output ./pb/gen/mocks
+
+clean:
+	rm -rf bin/
+
