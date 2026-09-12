@@ -83,9 +83,13 @@ def request(port, method="GET", path="/v1/status", body=None):
     data = None if body is None else json.dumps(body)
     connection.request(method, path, data, {"Content-Type": "application/json"})
     response = connection.getresponse()
-    result = response.status, json.loads(response.read())
+    payload = response.read().decode()
     connection.close()
-    return result
+    try:
+        payload = json.loads(payload)
+    except json.JSONDecodeError:
+        pass
+    return response.status, payload
 
 
 def wait(check, message, timeout=8):

@@ -286,6 +286,19 @@ static int read_record_header(FILE *file, ConfigRecord *record) {
         return -1;
     }
 
+    /* An explicit deletion is an awaiting record with a new generation.
+     * Keep the removed request ID to reject its delayed POST retries. */
+    if (mode == CONFIG_MODE_NONE) {
+        if (phase != CONFIG_PHASE_AWAITING || record->generation == 0 ||
+            record->generation > INT64_MAX || record->revision != 0 ||
+            record->appCount != 0) {
+            return -1;
+        }
+        record->mode = mode;
+        record->phase = phase;
+        return 0;
+    }
+
     if (mode != CONFIG_MODE_NOCONFIG && mode != CONFIG_MODE_CONFIG) {
         return -1;
     }
@@ -626,6 +639,42 @@ static int recover_write(ConfigStateStore *store) {
     return 0;
 }
 
+int config_store_delete(ConfigStateStore *store) {
+
+    ConfigRecord record = {0};
+    int result = STORE_UNAVAILABLE;
+
+    pthread_mutex_lock(&store->mutex);
+    if (recover_write(store) != 0) {
+        goto done;
+    }
+    if (strcmp(store->record.error, "state_invalid_or_unreadable") == 0 ||
+        store->record.generation >= INT64_MAX) {
+        goto done;
+    }
+    if (store->record.mode == CONFIG_MODE_NONE &&
+        store->record.phase == CONFIG_PHASE_AWAITING) {
+        result = STORE_OK;
+        goto done;
+    }
+
+    record.generation = store->record.generation + 1;
+    snprintf(record.requestId, sizeof(record.requestId), "%s",
+             store->record.requestId);
+    result = commit_record(store, &record);
+
+done:
+    pthread_mutex_unlock(&store->mutex);
+    return result;
+}
+
+static int request_was_deleted(const ConfigRecord *record,
+                                const char *requestId) {
+
+    return record->mode == CONFIG_MODE_NONE && record->generation != 0 &&
+        strcmp(record->requestId, requestId) == 0;
+}
+
 int config_store_noconfig(ConfigStateStore *store, const char *requestId) {
 
     ConfigRecord record;
@@ -647,7 +696,8 @@ int config_store_noconfig(ConfigStateStore *store, const char *requestId) {
         goto done;
     }
 
-    if (record.mode == CONFIG_MODE_CONFIG ||
+    if (request_was_deleted(&record, requestId) ||
+        record.mode == CONFIG_MODE_CONFIG ||
         (record.mode == CONFIG_MODE_NOCONFIG &&
          strcmp(record.requestId, requestId) != 0)) {
         goto done;
@@ -701,6 +751,11 @@ int config_store_begin(ConfigStateStore *store, const char *requestId,
     }
 
     if (store->record.generation >= INT64_MAX) {
+        goto done;
+    }
+
+    if (request_was_deleted(&store->record, requestId)) {
+        result = STORE_CONFLICT;
         goto done;
     }
 

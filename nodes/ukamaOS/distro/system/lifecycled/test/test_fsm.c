@@ -127,6 +127,67 @@ static void test_flow(void) {
     puts("PASS: starter outage before gate does not deadlock startup");
 }
 
+static void test_delete(void) {
+
+    LifecycleFsm fsm;
+    uint64_t sequence;
+    int index;
+
+    starter.available = true;
+    starter.aggregate = STARTER_AGGREGATE_READY;
+    configuration.available = true;
+    decision("NOCONFIG", "assignment-delete", 1);
+    boot(&fsm);
+    tick(&fsm, 1200);
+    tick(&fsm, 1300);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+
+    configuration.phase = CONFIG_PHASE_AWAITING;
+    snprintf(configuration.mode, sizeof(configuration.mode), "NONE");
+    configuration.generation = 2;
+    tick(&fsm, 1400);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+    assert(!fsm.configurationSeen && !fsm.configurationApplied);
+    assert(fsm.configGeneration == 2 && fsm.confirmedGeneration == 0);
+    assert(fsm.requestId[0] == '\0');
+    sequence = fsm.sequence;
+    for (index = 1; index <= 100; index++) {
+        tick(&fsm, index * 60000);
+        assert(fsm.state == LIFECYCLE_STATE_READY && fsm.sequence == sequence);
+    }
+
+    boot(&fsm);
+    tick(&fsm, 1500);
+    assert(fsm.state == LIFECYCLE_STATE_READY && fsm.configGeneration == 2);
+    configuration.generation = 0;
+    configuration.requestId[0] = '\0';
+    tick(&fsm, 1600);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    configuration.generation = 2;
+    snprintf(configuration.requestId, sizeof(configuration.requestId), "assignment-delete");
+    starter.aggregate = STARTER_AGGREGATE_FAULTY;
+    tick(&fsm, 1700);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    starter.aggregate = STARTER_AGGREGATE_READY;
+    tick(&fsm, 1800);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+
+    decision("CONFIG", "config-delete", 3);
+    configuration.phase = CONFIG_PHASE_IN_PROGRESS;
+    tick(&fsm, 1900);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    configuration.phase = CONFIG_PHASE_AWAITING;
+    snprintf(configuration.mode, sizeof(configuration.mode), "NONE");
+    configuration.generation = 4;
+    tick(&fsm, 2000);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+    decision("NOCONFIG", "new-assignment", 5);
+    tick(&fsm, 2100);
+    tick(&fsm, 2200);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    puts("PASS: DELETE returns to READY, survives reboot, preserves faults and permits a new decision");
+}
+
 static void test_checkpoint(void) {
 
     LifecycleContext source = {0};
@@ -168,5 +229,6 @@ int main(void) {
 
     test_flow();
     test_checkpoint();
+    test_delete();
     return 0;
 }

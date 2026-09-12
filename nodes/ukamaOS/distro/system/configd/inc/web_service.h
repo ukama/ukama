@@ -76,6 +76,8 @@ int web_service_cb_default(const URequest *request,
 						   UResponse *response,
                            void *epConfig);
 
+int web_service_cb_delete_config(const URequest *request,
+                                  UResponse *response, void *epConfig);
 int web_service_cb_post_config(const URequest *request,
                               UResponse *response,
 							  void *epConfig);

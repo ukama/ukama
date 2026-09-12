@@ -209,3 +209,24 @@ int web_service_cb_post_config(const URequest *request,
     json_decref(json);
 	return U_CALLBACK_CONTINUE;
 }
+
+int web_service_cb_delete_config(const URequest *request,
+                                 UResponse *response,
+                                 void *epConfig) {
+
+    int result;
+
+    if (request->binary_body_length != 0) {
+        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                        "DELETE_does_not_accept_a_body");
+        return U_CALLBACK_CONTINUE;
+    }
+
+    result = process_delete_config(epConfig);
+    if (result == HttpStatus_OK) {
+        return web_service_cb_config_status(request, response, epConfig);
+    }
+
+    ulfius_set_string_body_response(response, result, "state_unavailable");
+    return U_CALLBACK_CONTINUE;
+}
