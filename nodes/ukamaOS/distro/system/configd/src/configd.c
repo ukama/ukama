@@ -627,6 +627,26 @@ int process_noconfig(const char *requestId, Config *config) {
     return result;
 }
 
+int process_delete_config(Config *config) {
+
+    int result;
+
+    if (!config || !config->stateStore) {
+        return 503;
+    }
+
+    /* Serialize removal with uploads, activation and NOCONFIG retries. */
+    pthread_mutex_lock(&transactionMutex);
+    result = config_store_delete(config->stateStore);
+    if (result == 200) {
+        config_session_clear(config);
+        config_status_set(config, CONFIG_APPLY_AWAITING, NULL, true);
+    }
+    pthread_mutex_unlock(&transactionMutex);
+
+    return result;
+}
+
 void free_session_data(SessionData *s) {
 
     if (s == NULL) return;

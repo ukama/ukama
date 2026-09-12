@@ -219,8 +219,9 @@ static bool parse_config_status(const char *body, ConfigSnapshot *snapshot) {
     }
     if (strcmp(snapshot->mode, "NONE") == 0) {
         snapshot->phase = CONFIG_PHASE_AWAITING;
-        valid = strcmp(phase, "awaiting") == 0 && snapshot->generation == 0 &&
-            snapshot->requestId[0] == '\0' && snapshot->revision == 0;
+        valid = strcmp(phase, "awaiting") == 0 && snapshot->revision == 0 &&
+            ((snapshot->generation == 0 && snapshot->requestId[0] == '\0') ||
+             (snapshot->generation > 0 && snapshot->requestId[0] != '\0'));
         goto done;
     }
     if (snapshot->generation == 0 || snapshot->requestId[0] == '\0') {

@@ -236,6 +236,35 @@ static bool configuration_fault(LifecycleFsm *fsm, const char *reason,
                         LIFECYCLE_STATE_CONFIGURING, reason, epochSec);
 }
 
+static bool assignment_removed(const LifecycleFsm *fsm,
+                                 const ConfigSnapshot *configuration) {
+
+    return configuration->available &&
+        configuration->phase == CONFIG_PHASE_AWAITING &&
+        strcmp(configuration->mode, "NONE") == 0 &&
+        configuration->generation > 0 &&
+        configuration->generation >= fsm->configGeneration &&
+        (!fsm->configurationSeen ||
+         configuration->generation > fsm->configGeneration);
+}
+
+static bool clear_configuration(LifecycleFsm *fsm,
+                                 const ConfigSnapshot *configuration,
+                                 int64_t epochSec) {
+
+    fsm->configurationSeen = false;
+    fsm->configurationApplied = false;
+    fsm->configGeneration = configuration->generation;
+    fsm->confirmedGeneration = 0;
+    fsm->requestId[0] = '\0';
+    copy_optional(fsm->configMode, sizeof(fsm->configMode), "NONE");
+    fsm->fault = LIFECYCLE_FAULT_NONE;
+    fsm->faultReturnState = LIFECYCLE_STATE_READY;
+
+    return transition(fsm, LIFECYCLE_STATE_READY,
+                       "assignment removed; awaiting configuration", epochSec);
+}
+
 static bool tick_configuration(LifecycleFsm *fsm,
                                 const StarterSnapshot *starter,
                                 const ConfigSnapshot *configuration,
@@ -265,7 +294,14 @@ static bool tick_configuration(LifecycleFsm *fsm,
     }
 
     if (configuration->phase == CONFIG_PHASE_AWAITING) {
-        if (fsm->configurationSeen) {
+        if (assignment_removed(fsm, configuration)) {
+            if (!applications_ready(starter)) {
+                return false;
+            }
+            return clear_configuration(fsm, configuration, epochSec);
+        }
+        if (fsm->configurationSeen ||
+            configuration->generation < fsm->configGeneration) {
             return configuration_fault(fsm, "configd lost its configuration record",
                                         epochSec);
         }
@@ -344,7 +380,11 @@ static bool tick_faulty(LifecycleFsm *fsm,
     }
 
     if (configuration->phase == CONFIG_PHASE_AWAITING) {
-        if (fsm->configurationSeen) {
+        if (assignment_removed(fsm, configuration)) {
+            return clear_configuration(fsm, configuration, epochSec);
+        }
+        if (fsm->configurationSeen ||
+            configuration->generation < fsm->configGeneration) {
             return false;
         }
         fsm->fault = LIFECYCLE_FAULT_NONE;

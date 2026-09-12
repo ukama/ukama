@@ -58,6 +58,7 @@ int config_store_open(ConfigStateStore *store, const char *path,
                       const char *configRoot, const char *nodeId);
 void config_store_close(ConfigStateStore *store);
 void config_store_snapshot(ConfigStateStore *store, ConfigRecord *record);
+int config_store_delete(ConfigStateStore *store);
 int config_store_noconfig(ConfigStateStore *store, const char *requestId);
 int config_store_begin(ConfigStateStore *store, const char *requestId,
                        int revision);
