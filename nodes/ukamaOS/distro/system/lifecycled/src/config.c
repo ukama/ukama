@@ -19,21 +19,24 @@
 #include "usys_log.h"
 #include "usys_services.h"
 
-#define DEFAULT_HTTP_PORT                    8097
-#define DEFAULT_CHECK_IN_TIMEOUT_SEC           60
-#define DEFAULT_CONFIG_TIMEOUT_SEC             30
-#define DEFAULT_STARTER_UNAVAILABLE_SEC        15
-#define DEFAULT_POLL_INTERVAL_MS             1000
-#define DEFAULT_REQUEST_TIMEOUT_SEC             3
-#define DEFAULT_STATE_FILE \
-    "/ukama/state/lifecycled/state"
+#define DEFAULT_HTTP_PORT                0
+#define DEFAULT_CHECK_IN_TIMEOUT_SEC    60
+#define DEFAULT_CONFIG_UNAVAILABLE_SEC  30
+#define DEFAULT_STARTER_UNAVAILABLE_SEC 15
+#define DEFAULT_POLL_INTERVAL_MS        1000
+#define DEFAULT_REQUEST_TIMEOUT_SEC     3
+#define DEFAULT_STATE_FILE                      \
+    "/ukama/state/lifecycled/checkpoint.json"
 
 static char *cfg_string(const char *name, const char *fallback) {
 
     const char *value;
 
     value = getenv(name);
-    if (value && *value) return strdup(value);
+    if (value && *value) {
+        return strdup(value);
+    }
+
     return fallback ? strdup(fallback) : NULL;
 }
 
@@ -44,7 +47,9 @@ static int cfg_integer(const char *name, int fallback) {
     long parsed;
 
     value = getenv(name);
-    if (!value || !*value) return fallback;
+    if (!value || !*value) {
+        return fallback;
+    }
 
     errno = 0;
     end = NULL;
@@ -65,7 +70,9 @@ static int cfg_service_port(const char *envName,
     int port;
 
     port = cfg_integer(envName, 0);
-    if (port > 0) return port;
+    if (port > 0) {
+        return port;
+    }
 
     port = usys_find_service_port((char *)service);
     return port > 0 ? port : fallback;
@@ -73,23 +80,29 @@ static int cfg_service_port(const char *envName,
 
 static bool cfg_valid(const Config *config) {
 
-    if (!config) return false;
+    if (!config) {
+        return false;
+    }
 
-    if (config->httpPort <= 0 || config->httpPort > 65535 ||
+    if (config->httpPort <= 0    || config->httpPort > 65535 ||
         config->starterPort <= 0 || config->starterPort > 65535 ||
-        config->notifyPort <= 0 || config->notifyPort > 65535) {
+        config->configPort <= 0  || config->configPort > 65535 ||
+        config->notifyPort <= 0  || config->notifyPort > 65535) {
         usys_log_error("config: invalid service port");
         return false;
     }
 
-    if (!config->httpAddr || !config->starterHost ||
-        !config->notifyHost || !config->stateFile) {
+    if (!config->httpAddr    ||
+        !config->starterHost ||
+        !config->configHost  ||
+        !config->notifyHost  ||
+        !config->stateFile) {
         usys_log_error("config: missing required string");
         return false;
     }
 
     if (config->checkInTimeoutSec <= 0 ||
-        config->configTimeoutSec <= 0 ||
+        config->configUnavailableTimeoutSec <= 0 ||
         config->starterUnavailableTimeoutSec <= 0 ||
         config->pollIntervalMs <= 0 ||
         config->requestTimeoutSec <= 0) {
@@ -102,7 +115,9 @@ static bool cfg_valid(const Config *config) {
 
 bool config_load(Config *config) {
 
-    if (!config) return false;
+    if (!config) {
+        return false;
+    }
 
     memset(config, 0, sizeof(*config));
 
@@ -117,6 +132,10 @@ bool config_load(Config *config) {
                                            SERVICE_STARTER,
                                            0);
 
+    config->configHost = cfg_string("LIFECYCLED_CONFIG_HOST", "127.0.0.1");
+    config->configPort = cfg_service_port("LIFECYCLED_CONFIG_PORT",
+                                         SERVICE_CONFIG, 0);
+
     config->notifyHost =
         cfg_string("LIFECYCLED_NOTIFY_HOST", "127.0.0.1");
     config->notifyPort = cfg_service_port("LIFECYCLED_NOTIFY_PORT",
@@ -129,9 +148,9 @@ bool config_load(Config *config) {
     config->checkInTimeoutSec =
         cfg_integer("LIFECYCLED_CHECKIN_TIMEOUT_SEC",
                     DEFAULT_CHECK_IN_TIMEOUT_SEC);
-    config->configTimeoutSec =
-        cfg_integer("LIFECYCLED_CONFIG_TIMEOUT_SEC",
-                    DEFAULT_CONFIG_TIMEOUT_SEC);
+    config->configUnavailableTimeoutSec =
+        cfg_integer("LIFECYCLED_CONFIG_UNAVAILABLE_TIMEOUT_SEC",
+                    DEFAULT_CONFIG_UNAVAILABLE_SEC);
     config->starterUnavailableTimeoutSec =
         cfg_integer("LIFECYCLED_STARTER_UNAVAILABLE_TIMEOUT_SEC",
                     DEFAULT_STARTER_UNAVAILABLE_SEC);
@@ -152,10 +171,13 @@ bool config_load(Config *config) {
 
 void config_free(Config *config) {
 
-    if (!config) return;
+    if (!config) {
+        return;
+    }
 
     free(config->httpAddr);
     free(config->starterHost);
+    free(config->configHost);
     free(config->notifyHost);
     free(config->stateFile);
     memset(config, 0, sizeof(*config));

@@ -51,6 +51,8 @@
 #define DEF_CONFIG_DIR   "/ukama/configs"
 #define CONFIG_TMP_PATH  "/tmp"
 
+int  process_delete_config(Config *config);
+int  process_noconfig(const char *requestId, Config *config);
 bool process_received_config(JsonObj *json, Config *config);
 void free_session_data(SessionData *d);
 void config_session_clear(Config *config);

@@ -40,11 +40,13 @@ var actions = map[string]struct {
 	path   string
 	method string
 }{
-	"RESTART": {path: "/device/v1/reboot", method: "POST"},
-	"PING":    {path: "/device/v1/ping", method: "GET"},
-	"SWITCH":  {path: "/device/v1/switch", method: "POST"},
-	"RADIO":   {path: "/device/v1/radio", method: "POST"},
-	"SERVICE": {path: "/device/v1/service", method: "POST"},
+	"RESTART":       {path: "/device/v1/reboot", method: "POST"},
+	"PING":          {path: "/device/v1/ping", method: "GET"},
+	"SWITCH":        {path: "/device/v1/switch", method: "POST"},
+	"RADIO":         {path: "/device/v1/radio", method: "POST"},
+	"SERVICE":       {path: "/device/v1/service", method: "POST"},
+	"CONFIG":        {path: "/config/v1/config", method: "POST"},
+	"DELETE_CONFIG": {path: "/config/v1/config", method: "DELETE"},
 }
 
 type ControllerServer struct {
@@ -281,6 +283,67 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 	}
 	opStatus := c.completeOperation(op, "ToggleService")
 	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+}
+
+func (c *ControllerServer) ConfigNode(ctx context.Context, req *pb.ConfigNodeRequest) (*pb.ConfigNodeResponse, error) {
+	log.Infof("Sending CONFIG to node %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+
+	data, err := json.Marshal(map[string]string{"mode": "NOCONFIG", "requestId": "assignment-123"})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
+	}
+
+	op, err := c.acquireAndRegister("ConfigNode", nodeKey(nId.String()))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.markRunning(op, "ConfigNode"); err != nil {
+		c.failOperation(op, "ConfigNode", fmt.Sprintf("mark running failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	}
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, nId.String()), actions["CONFIG"].method, actions["CONFIG"].path, nId.String(), data); err != nil {
+		c.failOperation(op, "ConfigNode", fmt.Sprintf("publish failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "Failed to publish Node CONFIG message: %s", err.Error())
+	}
+	opStatus := c.completeOperation(op, "ConfigNode")
+	return &pb.ConfigNodeResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+}
+
+func (c *ControllerServer) DeleteNodeConfig(ctx context.Context, req *pb.DeleteNodeConfigRequest) (*pb.DeleteNodeConfigResponse, error) {
+	log.Infof("Deleting CONFIG on node %v", req.NodeId)
+
+	nId, err := ukama.ValidateNodeId(req.NodeId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+	}
+
+	if err := c.ensureNodeOnline(nId.String()); err != nil {
+		return nil, err
+	}
+
+	op, err := c.acquireAndRegister("DeleteNodeConfig", nodeKey(nId.String()))
+	if err != nil {
+		return nil, err
+	}
+	if err := c.markRunning(op, "DeleteNodeConfig"); err != nil {
+		c.failOperation(op, "DeleteNodeConfig", fmt.Sprintf("mark running failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	}
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, nId.String()), actions["DELETE_CONFIG"].method, actions["DELETE_CONFIG"].path, nId.String(), []byte("")); err != nil {
+		c.failOperation(op, "DeleteNodeConfig", fmt.Sprintf("publish failed: %v", err))
+		return nil, status.Errorf(codes.Internal, "Failed to publish Node DELETE CONFIG message: %s", err.Error())
+	}
+	opStatus := c.completeOperation(op, "DeleteNodeConfig")
+	return &pb.DeleteNodeConfigResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
 func nodeKey(nodeID string) string {

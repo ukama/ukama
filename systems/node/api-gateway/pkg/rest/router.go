@@ -71,6 +71,7 @@ type health interface {
 
 type state interface {
 	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+	GetLatestState(nodeId string) (*nspb.GetLatestStateResponse, error)
 	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
 	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
@@ -80,6 +81,8 @@ type controller interface {
 	PingNode(nodeId string) (*contPb.PingNodeResponse, error)
 	ToggleRadio(nodeId string, state string) (*contPb.ToggleRadioResponse, error)
 	ToggleService(nodeId string, state string) (*contPb.ToggleServiceResponse, error)
+	ConfigNode(nodeId string) (*contPb.ConfigNodeResponse, error)
+	DeleteNodeConfig(nodeId string) (*contPb.DeleteNodeConfigResponse, error)
 }
 
 type siteController interface {
@@ -194,6 +197,8 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		controller.POST("/nodes/:node_id/switch-port", formatDoc("Toggle switch port", "Toggle switch port"), tonic.Handler(r.postToggleSwitchPortHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/radio/:state", formatDoc("Toggle radio", "Toggle radio"), tonic.Handler(r.postToggleNodeRadioHandler, http.StatusOK))
 		controller.POST("/nodes/:node_id/service/:state", formatDoc("Toggle service", "Toggle service"), tonic.Handler(r.postToggleNodeServiceHandler, http.StatusOK))
+		controller.POST("/nodes/:node_id/config", formatDoc("Config a node", "Send config to a node"), tonic.Handler(r.postConfigNodeHandler, http.StatusOK))
+		controller.DELETE("/nodes/:node_id/config", formatDoc("Delete node config", "Delete config from a node"), tonic.Handler(r.deleteNodeConfigHandler, http.StatusOK))
 		controller.GET("/nodes/:node_id/ping", formatDoc("Ping a node", "Ping a node"), tonic.Handler(r.getPingNodeHandler, http.StatusAccepted))
 
 		const sites = "/sites"
@@ -227,6 +232,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		stateS := auth.Group(state, "State", "Operations on state")
 		stateS.POST("/:node_id", formatDoc("Get states", "Get states"), tonic.Handler(r.getStatesHandler, http.StatusOK))
 		stateS.GET("/:node_id/history", formatDoc("Get state history", "Get state history"), tonic.Handler(r.getStatesHistoryHandler, http.StatusOK))
+		stateS.GET("/:node_id/latest", formatDoc("Get latest state", "Get the latest state record of a node"), tonic.Handler(r.getLatestStateHandler, http.StatusOK))
 		stateS.POST("/:node_id/enforce/:event", formatDoc("Enforce state transition", "Enforce state transition"), tonic.Handler(r.enforceStateTransitionHandler, http.StatusOK))
 
 		const hlth = "/health"
@@ -257,6 +263,14 @@ func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleStateRe
 	return r.clients.Controller.ToggleService(req.NodeId, req.State)
 }
 
+func (r *Router) postConfigNodeHandler(c *gin.Context, req *ConfigNodeRequest) (*contPb.ConfigNodeResponse, error) {
+	return r.clients.Controller.ConfigNode(req.NodeId)
+}
+
+func (r *Router) deleteNodeConfigHandler(c *gin.Context, req *DeleteNodeConfigRequest) (*contPb.DeleteNodeConfigResponse, error) {
+	return r.clients.Controller.DeleteNodeConfig(req.NodeId)
+}
+
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
 	return r.clients.SoftwareManager.ListApps()
 }
@@ -279,6 +293,10 @@ func (r *Router) getReleaseCatalogHandler(c *gin.Context, req *GetReleaseCatalog
 
 func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
 	return r.clients.State.GetStates(req.NodeId)
+}
+
+func (r *Router) getLatestStateHandler(c *gin.Context, req *GetLatestStateRequest) (*nspb.GetLatestStateResponse, error) {
+	return r.clients.State.GetLatestState(req.NodeId)
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

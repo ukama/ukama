@@ -11,6 +11,8 @@ package main
 import (
 	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
 
@@ -63,7 +65,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	err := d.Init(&db.State{}, &db.LatchedEvent{})
+	err := d.Init(&db.State{}, &db.LatchedEvent{}, &db.LifecycleRecord{}, &db.LifecyclePublication{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -83,6 +85,7 @@ func runGrpcServer(gormdb sql.Db) {
 	Server := server.NewStateServer(svcConf.OrgName, svcConf.OrgId, db.NewStateRepo(gormdb),
 		mbClient)
 	stateEventServer := server.NewStateEventServer(svcConf.OrgName, svcConf.OrgId, Server, svcConf.ConfigPath, mbClient)
+	stateEventServer.SetLifecycleRepo(db.NewLifecycleRepo(gormdb.GetGormDb()))
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterStateServiceServer(s, Server)
@@ -100,6 +103,7 @@ func runGrpcServer(gormdb sql.Db) {
 	defer stopTimeouts()
 
 	stateEventServer.StartTimeoutWorker(timeoutCtx, svcConf.StateTimeoutSweepInterval)
+	stateEventServer.StartLifecycleWorker(timeoutCtx)
 
 	waitForExit()
 }
@@ -117,6 +121,8 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigs)
 	done := make(chan bool, 1)
 	go func() {
 

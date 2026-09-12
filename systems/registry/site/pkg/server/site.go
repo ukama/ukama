@@ -26,6 +26,8 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
+	cnode "github.com/ukama/ukama/systems/common/rest/client/node"
+	vukama "github.com/ukama/ukama/systems/common/ukama"
 	ukama "github.com/ukama/ukama/systems/common/validation"
 	npb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -36,24 +38,28 @@ const uuidParsingError = "Error parsing UUID"
 
 type SiteServer struct {
 	pb.UnimplementedSiteServiceServer
-	orgName         string
-	siteRepo        db.SiteRepo
-	msgbus          mb.MsgBusServiceClient
-	baseRoutingKey  msgbus.RoutingKeyBuilder
-	networkService  providers.NetworkClientProvider
-	inventoryClient cinvent.ComponentClient
-	pushGateway     string
+	orgName              string
+	siteRepo             db.SiteRepo
+	msgbus               mb.MsgBusServiceClient
+	baseRoutingKey       msgbus.RoutingKeyBuilder
+	networkService       providers.NetworkClientProvider
+	inventoryClient      cinvent.ComponentClient
+	nodeControllerClient cnode.NodeControllerClient
+	nodeStateClient      cnode.NodeStateClient
+	pushGateway          string
 }
 
-func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient) *SiteServer {
+func NewSiteServer(orgName string, siteRepo db.SiteRepo, msgBus mb.MsgBusServiceClient, networkService providers.NetworkClientProvider, pushGateway string, inventoryClientProvider cinvent.ComponentClient, nodeControllerClient cnode.NodeControllerClient, nodeStateClient cnode.NodeStateClient) *SiteServer {
 	return &SiteServer{
-		orgName:         orgName,
-		siteRepo:        siteRepo,
-		msgbus:          msgBus,
-		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
-		networkService:  networkService,
-		pushGateway:     pushGateway,
-		inventoryClient: inventoryClientProvider,
+		orgName:              orgName,
+		siteRepo:             siteRepo,
+		msgbus:               msgBus,
+		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		networkService:       networkService,
+		pushGateway:          pushGateway,
+		inventoryClient:      inventoryClientProvider,
+		nodeControllerClient: nodeControllerClient,
+		nodeStateClient:      nodeStateClient,
 	}
 }
 
@@ -118,6 +124,53 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
+	tNodeId, err := vukama.ValidateNodeId(accessId.String())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to validate tower node ID: %s", err.Error())
+	}
+
+	aId, err := vukama.GetANodeIdFromTNodeId(tNodeId.String())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to get amplifer node ID: %s", err.Error())
+	}
+
+	aNodeId, err := vukama.ValidateNodeId(aId.StringLowercase())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to validate amplifer node ID: %s", err.Error())
+	}
+
+	cId, err := vukama.GetCNodeIdFromTNodeId(tNodeId.String())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to get C Node ID: %s", err.Error())
+	}
+
+	cNodeId, err := vukama.ValidateNodeId(cId.StringLowercase())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "failed to validate C Node ID: %s", err.Error())
+	}
+
+	/* TODO: Send config call all nodes (tNodeId, aNodeId, cNodeId), Supposed to be inside a thread with retry behaviour */
+
+	err = s.configNodes([]string{tNodeId.String(), aNodeId.String(), cNodeId.String()})
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to config nodes: %s", err.Error())
+	}
+
+	// Validate the node latest state in state machine
+
+	for _, nodeId := range []string{tNodeId.String(), aNodeId.String(), cNodeId.String()} {
+		state, err := s.nodeStateClient.GetLatestState(nodeId)
+		if err != nil {
+			return nil, status.Errorf(codes.Internal, "failed to get latest state of node %s: %s", nodeId, err.Error())
+		}
+		if state.CurrentState != "operational" {
+			return nil, status.Errorf(codes.InvalidArgument, "node %s is not in active state", nodeId)
+		}
+
+		// Retry the config call if the node is not in operational state
+	}
+
+	// Add the site to the database
 	site := &db.Site{
 		NetworkId:     networkId,
 		Name:          req.Name,
@@ -168,6 +221,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	return &pb.AddResponse{
 		Site: dbSiteToPbSite(site),
 	}, nil
+	/* TODO: End here*/
 }
 
 func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -341,4 +395,15 @@ func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
 	if err != nil {
 		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
 	}
+}
+
+func (s *SiteServer) configNodes(nodeIds []string) error {
+	for _, nodeId := range nodeIds {
+		log.Infof("sending config to node %s", nodeId)
+		_, err := s.nodeControllerClient.ConfigNode(nodeId)
+		if err != nil {
+			return status.Errorf(codes.Internal, "failed to config node %s: %s", nodeId, err.Error())
+		}
+	}
+	return nil
 }

@@ -9,6 +9,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
+#include "state_store.h"
+
 #define CONFIG_REQUEST_ID_LEN 96
 
 typedef enum {
@@ -30,6 +32,7 @@ typedef struct {
     char *starterEP;
     char *nodeId;
     void *updateSession;
+    ConfigStateStore *stateStore;
 
     ConfigApplyState applyState;
     char requestId[CONFIG_REQUEST_ID_LEN];

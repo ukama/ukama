@@ -42,6 +42,7 @@ static UsysOption longOptions[] = {
     { "noded-ep",     required_argument, 0, 'e' },
     { "starter-host", required_argument, 0, 's' },
     { "starter-port", required_argument, 0, 't' },
+    { "state-file",   required_argument, 0, 'f' },
     { "help",         no_argument,       0, 'h' },
     { "version",      no_argument,       0, 'v' },
     { 0,              0,                 0,  0 }
@@ -70,6 +71,7 @@ void usage() {
 	usys_puts("-l, --logs <TRACE> <DEBUG> <INFO>   Log level for the process\n");
 	usys_puts("-n, --noded-host <host>             Host at which node.d listen\n");
 	usys_puts("-s, --starter-host <host>           Host at which starter.d listen\n");
+    usys_puts("-f, --state-file <absolute path>    Persistent configuration status\n");
 	usys_puts("-v, --version                       Version.\n");
 }
 
@@ -82,13 +84,19 @@ void free_config(Config *config) {
 	usys_free(config->starterEP);
 	usys_free(config->starterHost);
     config_session_clear(config);
+    if (config->stateStore) {
+        config_store_close(config->stateStore);
+        config->stateStore = NULL;
+    }
 }
 
 int main(int argc, char **argv) {
 
-	char *debug        = DEF_LOG_LEVEL;
-	char *nodedHost    = DEF_NODED_HOST;
-	char *starterHost  = DEF_STARTER_HOST;
+	char *debug           = DEF_LOG_LEVEL;
+	char *nodedHost       = DEF_NODED_HOST;
+	char *starterHost     = DEF_STARTER_HOST;
+    const char *stateFile = DEF_CONFIG_STATE_FILE;
+    ConfigStateStore stateStore;
 
 	UInst serviceInst;
 
@@ -102,12 +110,16 @@ int main(int argc, char **argv) {
 		int opt = 0;
 		int opdIdx = 0;
 
-		opt = getopt_long(argc, argv, "s:l:n:hv", longOptions, &opdIdx);
+		opt = getopt_long(argc, argv, "s:l:n:f:hv", longOptions, &opdIdx);
 		if (opt == -1) {
 			break;
 		}
 
 		switch (opt) {
+        case 'f':
+            stateFile = optarg;
+            break;
+
 		case 'h':
             usage();
             usys_exit(0);
@@ -181,6 +193,14 @@ int main(int argc, char **argv) {
             usys_exit(1);
 		}
 	}
+
+    if (config_store_open(&stateStore, stateFile, DEF_CONFIG_DIR,
+                          serviceConfig.nodeId) != 0) {
+        usys_log_error("Unable to open configuration state: %s", stateFile);
+        free_config(&serviceConfig);
+        usys_exit(1);
+    }
+    serviceConfig.stateStore = &stateStore;
 
 	if (start_web_services(&serviceConfig, &serviceInst) != USYS_TRUE) {
 		usys_log_error("Webservice failed to setup for clients. Exiting.");

@@ -16,6 +16,14 @@ type RestartNodeRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 
+type ConfigNodeRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
+type DeleteNodeConfigRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
 type ToggleSwitchPortRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 	Status bool   `json:"status"`
@@ -27,6 +35,10 @@ type ToggleStateRequest struct {
 	State  string `json:"state" path:"state" validate:"required,oneof=on off"`
 }
 type GetStatesRequest struct {
+	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+}
+
+type GetLatestStateRequest struct {
 	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
 }
 

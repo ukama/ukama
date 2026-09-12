@@ -7,190 +7,371 @@
  */
 
 #include <errno.h>
+#include <fcntl.h>
+#include <jansson.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <sys/types.h>
+#include <sys/file.h>
 #include <unistd.h>
 
 #include "state_store.h"
 
-#define STORE_LINE_LEN 320
-#define STORE_PATH_LEN 1024
+static bool sync_directory(const char *path) {
 
-static void trim_newline(char *value) {
+    int fd;
+    int result;
 
-    size_t length;
-
-    if (!value) return;
-    length = strlen(value);
-
-    while (length > 0 &&
-           (value[length - 1] == '\n' || value[length - 1] == '\r')) {
-        value[--length] = '\0';
+    fd = open(path, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (fd < 0) {
+        return false;
     }
+
+    result = fsync(fd);
+    if (close(fd) != 0) {
+        result = -1;
+    }
+    return result == 0;
 }
 
-static bool mkdir_parent(const char *path) {
+static bool prepare_directory(const char *path, char *directory, size_t size) {
 
-    char copy[STORE_PATH_LEN];
     char *cursor;
+    char *last;
+    char parent[PATH_MAX];
+    char *slash;
+    bool finished;
 
-    if (!path || strlen(path) >= sizeof(copy)) return false;
+    if (path[0] != '/' || snprintf(directory, size, "%s", path) >= (int)size) {
+        return false;
+    }
 
-    snprintf(copy, sizeof(copy), "%s", path);
-    cursor = strrchr(copy, '/');
-    if (!cursor) return true;
-    if (cursor == copy) return true;
-    *cursor = '\0';
+    last = strrchr(directory, '/');
+    if (last == directory) {
+        last[1] = '\0';
+        return true;
+    }
+    *last = '\0';
 
-    for (cursor = copy + 1; *cursor; cursor++) {
-        if (*cursor != '/') continue;
+    for (cursor = directory + 1; ; cursor++) {
+        finished = *cursor == '\0';
+
+        if (*cursor != '/' && !finished) {
+            continue;
+        }
         *cursor = '\0';
-        if (mkdir(copy, 0755) != 0 && errno != EEXIST) return false;
+        if (mkdir(directory, 0700) == 0) {
+            snprintf(parent, sizeof(parent), "%s", directory);
+            slash = strrchr(parent, '/');
+            if (slash == parent) {
+                slash[1] = '\0';
+            } else {
+                *slash = '\0';
+            }
+            if (!sync_directory(parent)) {
+                return false;
+            }
+        } else if (errno != EEXIST) {
+            return false;
+        }
+        if (finished) {
+            break;
+        }
         *cursor = '/';
     }
-
-    return mkdir(copy, 0755) == 0 || errno == EEXIST;
+    return true;
 }
 
-static void copy_value(char *dst, size_t size, const char *src) {
+bool state_store_open(LifecycleContext *ctx) {
 
-    if (!dst || size == 0) return;
-    snprintf(dst, size, "%s", src ? src : "");
+    char directory[PATH_MAX];
+    char path[PATH_MAX];
+
+    ctx->stateLockFd = -1;
+    if (!prepare_directory(ctx->config->stateFile, directory, sizeof(directory)) ||
+        snprintf(path, sizeof(path), "%s.lock", ctx->config->stateFile)
+        >= (int)sizeof(path)) {
+        return false;
+    }
+
+    ctx->stateLockFd = open(path, O_RDWR | O_CREAT | O_CLOEXEC, 0600);
+    if (ctx->stateLockFd < 0) {
+        return false;
+    }
+    if (flock(ctx->stateLockFd, LOCK_EX | LOCK_NB) != 0) {
+        state_store_close(ctx);
+        return false;
+    }
+    return true;
 }
 
-bool state_store_load(const char *path,
-                      const char *bootId,
-                      LifecycleFsm *fsm) {
+void state_store_close(LifecycleContext *ctx) {
 
-    FILE *file;
-    LifecycleFsm loaded;
-    char storedBootId[LIFECYCLE_ID_LEN];
-    char line[STORE_LINE_LEN];
-    char *separator;
-    char *key;
-    char *value;
-    LifecycleState state;
+    if (ctx->stateLockFd >= 0) {
+        close(ctx->stateLockFd);
+        ctx->stateLockFd = -1;
+    }
+}
 
-    if (!path || !bootId || !fsm) return false;
+static json_t *event_json(const LifecycleEvent *event) {
 
-    file = fopen(path, "r");
-    if (!file) return false;
+    return json_pack("{s:i,s:I,s:I,s:s,s:s,s:s,s:s,s:I}",
+                     "state", event->state,
+                     "sequence", (json_int_t)event->sequence,
+                     "occurredAt", (json_int_t)event->occurredAt,
+                     "reason", event->reason,
+                     "bootId", event->bootId,
+                     "requestId", event->requestId,
+                     "configMode", event->configMode,
+                     "configGeneration", (json_int_t)event->configGeneration);
+}
 
-    memset(&loaded, 0, sizeof(loaded));
-    memset(storedBootId, 0, sizeof(storedBootId));
+static json_t *checkpoint_json(const LifecycleContext *ctx) {
 
-    while (fgets(line, sizeof(line), file)) {
-        trim_newline(line);
-        separator = strchr(line, '=');
-        if (!separator) continue;
+    const LifecycleFsm *fsm = &ctx->fsm;
+    json_t *root;
+    json_t *events;
+    json_t *event;
+    size_t index;
+    size_t slot;
 
-        *separator = '\0';
-        key = line;
-        value = separator + 1;
+    root = json_pack("{s:i,s:s,s:i,s:i,s:i,s:I,s:I,s:I,s:b,s:b,s:b,"
+                     "s:s,s:s,s:s,s:I,s:I}",
+                     "version", 2,
+                     "bootId", ctx->bootId,
+                     "state", fsm->state,
+                     "faultReturnState", fsm->faultReturnState,
+                     "fault", fsm->fault,
+                     "sequence", (json_int_t)fsm->sequence,
+                     "stateSince", (json_int_t)fsm->stateSince,
+                     "checkInDeadlineMs", (json_int_t)fsm->checkInDeadlineMs,
+                     "gateOpen", fsm->gateOpen,
+                     "configurationSeen", fsm->configurationSeen,
+                     "configurationApplied", fsm->configurationApplied,
+                     "requestId", fsm->requestId,
+                     "configMode", fsm->configMode,
+                     "reason", fsm->reason,
+                     "configGeneration", (json_int_t)fsm->configGeneration,
+                     "confirmedGeneration", (json_int_t)fsm->confirmedGeneration);
+    if (root == NULL) {
+        return NULL;
+    }
 
-        if (strcmp(key, "boot_id") == 0) {
-            copy_value(storedBootId, sizeof(storedBootId), value);
-        } else if (strcmp(key, "state") == 0) {
-            if (lifecycle_state_parse(value, &state)) loaded.state = state;
-        } else if (strcmp(key, "fault_return_state") == 0) {
-            if (lifecycle_state_parse(value, &state)) {
-                loaded.faultReturnState = state;
-            }
-        } else if (strcmp(key, "fault") == 0) {
-            loaded.fault = (LifecycleFault)strtol(value, NULL, 10);
-        } else if (strcmp(key, "sequence") == 0) {
-            loaded.sequence = strtoull(value, NULL, 10);
-        } else if (strcmp(key, "state_since") == 0) {
-            loaded.stateSince = strtoll(value, NULL, 10);
-        } else if (strcmp(key, "check_in_deadline_ms") == 0) {
-            loaded.checkInDeadlineMs = strtoll(value, NULL, 10);
-        } else if (strcmp(key, "config_deadline_ms") == 0) {
-            loaded.configDeadlineMs = strtoll(value, NULL, 10);
-        } else if (strcmp(key, "gate_open") == 0) {
-            loaded.gateOpen = strtol(value, NULL, 10) != 0;
-        } else if (strcmp(key, "configuration_seen") == 0) {
-            loaded.configurationSeen = strtol(value, NULL, 10) != 0;
-        } else if (strcmp(key, "configuration_applied") == 0) {
-            loaded.configurationApplied = strtol(value, NULL, 10) != 0;
-        } else if (strcmp(key, "request_id") == 0) {
-            copy_value(loaded.requestId, sizeof(loaded.requestId), value);
-        } else if (strcmp(key, "assignment_id") == 0) {
-            copy_value(loaded.assignmentId,
-                       sizeof(loaded.assignmentId),
-                       value);
-        } else if (strcmp(key, "reason") == 0) {
-            copy_value(loaded.reason, sizeof(loaded.reason), value);
+    events = json_array();
+    if (events == NULL) {
+        json_decref(root);
+        return NULL;
+    }
+
+    for (index = 0; index < ctx->eventCount; index++) {
+        slot = (ctx->eventHead + index) % LIFECYCLED_EVENT_QUEUE;
+        event = event_json(&ctx->events[slot]);
+        if (event == NULL || json_array_append_new(events, event) != 0) {
+            json_decref(events);
+            json_decref(root);
+            return NULL;
         }
     }
 
-    fclose(file);
+    if (json_object_set_new(root, "events", events) != 0) {
+        json_decref(root);
+        return NULL;
+    }
+    return root;
+}
 
-    if (strcmp(storedBootId, bootId) != 0 || loaded.sequence == 0) {
+static bool read_text(json_t *root, const char *key, char *value, size_t size) {
+
+    json_t *entry = json_object_get(root, key);
+    const char *text;
+
+    if (!json_is_string(entry)) {
         return false;
     }
-
-    *fsm = loaded;
+    text = json_string_value(entry);
+    if (json_string_length(entry) >= size ||
+        json_string_length(entry) != strlen(text)) {
+        return false;
+    }
+    snprintf(value, size, "%s", text);
     return true;
 }
 
-bool state_store_save(const char *path,
-                      const char *bootId,
-                      const LifecycleFsm *fsm) {
+static bool read_integer(json_t *root, const char *key, int64_t *value) {
 
-    FILE *file;
-    char temporary[STORE_PATH_LEN];
-    bool ok;
+    json_t *entry = json_object_get(root, key);
 
-    if (!path || !bootId || !fsm || strlen(path) + 5 >= sizeof(temporary)) {
+    if (!json_is_integer(entry) || json_integer_value(entry) < 0) {
         return false;
     }
-
-    if (!mkdir_parent(path)) return false;
-
-    snprintf(temporary, sizeof(temporary), "%s.tmp", path);
-    file = fopen(temporary, "w");
-    if (!file) return false;
-
-    ok = fprintf(file,
-                 "boot_id=%s\n"
-                 "state=%s\n"
-                 "fault_return_state=%s\n"
-                 "fault=%d\n"
-                 "sequence=%llu\n"
-                 "state_since=%lld\n"
-                 "check_in_deadline_ms=%lld\n"
-                 "config_deadline_ms=%lld\n"
-                 "gate_open=%d\n"
-                 "configuration_seen=%d\n"
-                 "configuration_applied=%d\n"
-                 "request_id=%s\n"
-                 "assignment_id=%s\n"
-                 "reason=%s\n",
-                 bootId,
-                 lifecycle_state_str(fsm->state),
-                 lifecycle_state_str(fsm->faultReturnState),
-                 (int)fsm->fault,
-                 (unsigned long long)fsm->sequence,
-                 (long long)fsm->stateSince,
-                 (long long)fsm->checkInDeadlineMs,
-                 (long long)fsm->configDeadlineMs,
-                 fsm->gateOpen ? 1 : 0,
-                 fsm->configurationSeen ? 1 : 0,
-                 fsm->configurationApplied ? 1 : 0,
-                 fsm->requestId,
-                 fsm->assignmentId,
-                 fsm->reason) > 0;
-
-    if (fflush(file) != 0 || fsync(fileno(file)) != 0) ok = false;
-    if (fclose(file) != 0) ok = false;
-
-    if (!ok || rename(temporary, path) != 0) {
-        unlink(temporary);
-        return false;
-    }
-
+    *value = json_integer_value(entry);
     return true;
+}
+
+static bool read_event(json_t *root, LifecycleEvent *event) {
+
+    int64_t state;
+    int64_t sequence;
+    int64_t generation;
+
+    if (!read_integer(root, "state", &state) || state > LIFECYCLE_STATE_FAULTY ||
+        !read_integer(root, "sequence", &sequence) || sequence == 0 ||
+        !read_integer(root, "occurredAt", &event->occurredAt) ||
+        !read_integer(root, "configGeneration", &generation)) {
+        return false;
+    }
+
+    event->state = state;
+    event->sequence = sequence;
+    event->configGeneration = generation;
+    return read_text(root, "reason", event->reason, sizeof(event->reason)) &&
+        read_text(root, "bootId", event->bootId, sizeof(event->bootId)) &&
+        read_text(root, "requestId", event->requestId, sizeof(event->requestId)) &&
+        read_text(root, "configMode", event->configMode, sizeof(event->configMode));
+}
+
+static bool read_fsm(json_t *root, LifecycleFsm *fsm) {
+
+    int64_t state;
+    int64_t returnState;
+    int64_t fault;
+    int64_t sequence;
+    int64_t generation;
+    int64_t confirmed;
+    json_t *gate = json_object_get(root, "gateOpen");
+    json_t *seen = json_object_get(root, "configurationSeen");
+    json_t *applied = json_object_get(root, "configurationApplied");
+
+    if (!read_integer(root, "state", &state) || state > LIFECYCLE_STATE_FAULTY ||
+        !read_integer(root, "faultReturnState", &returnState) ||
+        returnState > LIFECYCLE_STATE_FAULTY ||
+        !read_integer(root, "fault", &fault) || fault > LIFECYCLE_FAULT_CONFIGURATION ||
+        !read_integer(root, "sequence", &sequence) || sequence == 0 ||
+        !read_integer(root, "configGeneration", &generation) ||
+        !read_integer(root, "confirmedGeneration", &confirmed) || confirmed > generation ||
+        !read_integer(root, "stateSince", &fsm->stateSince) ||
+        !read_integer(root, "checkInDeadlineMs", &fsm->checkInDeadlineMs)) {
+        return false;
+    }
+    if (!json_is_boolean(gate) || !json_is_boolean(seen) || !json_is_boolean(applied)) {
+        return false;
+    }
+
+    fsm->state = state;
+    fsm->faultReturnState = returnState;
+    fsm->fault = fault;
+    fsm->sequence = sequence;
+    fsm->configGeneration = generation;
+    fsm->confirmedGeneration = confirmed;
+    fsm->gateOpen = json_is_true(gate);
+    fsm->configurationSeen = json_is_true(seen);
+    fsm->configurationApplied = json_is_true(applied);
+
+    return read_text(root, "requestId", fsm->requestId, sizeof(fsm->requestId)) &&
+        read_text(root, "configMode", fsm->configMode, sizeof(fsm->configMode)) &&
+        read_text(root, "reason", fsm->reason, sizeof(fsm->reason));
+}
+
+bool state_store_load(LifecycleContext *ctx) {
+
+    json_t *root;
+    json_t *events;
+    json_error_t error;
+    LifecycleFsm fsm = {0};
+    LifecycleEvent pending[LIFECYCLED_EVENT_QUEUE];
+    char bootId[LIFECYCLED_ID_LEN];
+    int64_t version;
+    size_t index;
+    size_t count;
+    bool valid = false;
+
+    errno = 0;
+    root = json_load_file(ctx->config->stateFile, JSON_REJECT_DUPLICATES, &error);
+    if (root == NULL) {
+        if (errno != ENOENT) {
+            errno = EINVAL;
+        }
+        return false;
+    }
+    errno = EINVAL;
+    if (!read_integer(root, "version", &version) || version != 2 ||
+        !read_text(root, "bootId", bootId, sizeof(bootId)) ||
+        !read_fsm(root, &fsm)) {
+        goto done;
+    }
+
+    if (strcmp(bootId, ctx->bootId) != 0) {
+        errno = ESTALE;
+        goto done;
+    }
+
+    events = json_object_get(root, "events");
+    count = json_array_size(events);
+    if (!json_is_array(events) || count > LIFECYCLED_EVENT_QUEUE) {
+        goto done;
+    }
+
+    for (index = 0; index < count; index++) {
+        if (!read_event(json_array_get(events, index), &pending[index]) ||
+            strcmp(pending[index].bootId, bootId) != 0 ||
+            pending[index].sequence > fsm.sequence ||
+            (index > 0 && pending[index].sequence <= pending[index - 1].sequence)) {
+            goto done;
+        }
+    }
+
+    ctx->fsm = fsm;
+    memcpy(ctx->events, pending, count * sizeof(*pending));
+    ctx->eventHead = 0;
+    ctx->eventCount = count;
+    valid = true;
+done:
+    json_decref(root);
+    return valid;
+}
+
+bool state_store_save(const LifecycleContext *ctx) {
+
+    char directory[PATH_MAX];
+    char temporary[PATH_MAX];
+    json_t *root;
+    int fd;
+    bool saved = false;
+    const char *path = ctx->config->stateFile;
+
+    if (!prepare_directory(path, directory, sizeof(directory)) ||
+        snprintf(temporary, sizeof(temporary), "%s.tmp.XXXXXX", path)
+        >= (int)sizeof(temporary)) {
+        return false;
+    }
+
+    root = checkpoint_json(ctx);
+    if (root == NULL) {
+        return false;
+    }
+    fd = mkstemp(temporary);
+    if (fd < 0) {
+        json_decref(root);
+        return false;
+    }
+
+    if (json_dumpfd(root, fd, JSON_COMPACT) == 0 && fsync(fd) == 0) {
+        saved = true;
+    }
+    json_decref(root);
+    if (close(fd) != 0) {
+        saved = false;
+    }
+    if (saved && rename(temporary, path) != 0) {
+        saved = false;
+    }
+    if (saved && !sync_directory(directory)) {
+        saved = false;
+    }
+    if (!saved) {
+        unlink(temporary);
+    }
+    return saved;
 }

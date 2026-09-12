@@ -1,12 +1,6 @@
-/*
- * This Source Code Form is subject to the terms of the Mozilla Public
- * License, v. 2.0. If a copy of the MPL was not distributed with this
- * file, You can obtain one at https://mozilla.org/MPL/2.0/.
- *
- * Copyright (c) 2026-present, Ukama Inc.
- */
-
-#include <stdbool.h>
+/* SPDX-License-Identifier: MPL-2.0 */
+#include <assert.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,431 +9,226 @@
 #include "fsm.h"
 #include "state_store.h"
 
-static int gTests;
-static int gFailures;
+static StarterSnapshot starter = {
+    .available = true,
+    .aggregate = STARTER_AGGREGATE_READY
+};
 
-#define EXPECT_TRUE(expression)                                          \
-    do {                                                                 \
-        gTests++;                                                        \
-        if (!(expression)) {                                             \
-            fprintf(stderr,                                              \
-                    "%s:%d expected true: %s\n",                       \
-                    __FILE__,                                            \
-                    __LINE__,                                            \
-                    #expression);                                        \
-            gFailures++;                                                 \
-        }                                                                \
-    } while (0)
+static ConfigSnapshot configuration = {
+    .available = true,
+    .phase = CONFIG_PHASE_AWAITING,
+    .mode = "NONE"
+};
 
-#define EXPECT_EQ(expected, actual)                                      \
-    do {                                                                 \
-        long long expectedValue = (long long)(expected);                 \
-        long long actualValue = (long long)(actual);                     \
-        gTests++;                                                        \
-        if (expectedValue != actualValue) {                              \
-            fprintf(stderr,                                              \
-                    "%s:%d expected %lld, got %lld\n",                 \
-                    __FILE__,                                            \
-                    __LINE__,                                            \
-                    expectedValue,                                       \
-                    actualValue);                                        \
-            gFailures++;                                                 \
-        }                                                                \
-    } while (0)
+static void tick(LifecycleFsm *fsm, int64_t milliseconds) {
 
-static StarterSnapshot starter_snapshot(StarterAggregateState aggregate,
-                                        ConfigPhase configPhase) {
+    lifecycle_fsm_tick(fsm, &starter, &configuration, 2, 2,
+                       milliseconds, 1000 + milliseconds / 1000);
+}
 
-    StarterSnapshot starter;
+static void boot(LifecycleFsm *fsm) {
 
-    memset(&starter, 0, sizeof(starter));
+    lifecycle_fsm_init(fsm, 1000);
+    assert(lifecycle_fsm_begin_check_in(fsm, true, 1, 100, 1000));
+    tick(fsm, 1100);
+    assert(fsm->state == LIFECYCLE_STATE_READY);
+}
+
+static void decision(const char *mode, const char *request, uint64_t generation) {
+
+    configuration.phase = CONFIG_PHASE_APPLIED;
+    configuration.generation = generation;
+    configuration.revision = 0;
+    snprintf(configuration.mode, sizeof(configuration.mode), "%s", mode);
+    snprintf(configuration.requestId, sizeof(configuration.requestId), "%s", request);
+}
+
+static void test_flow(void) {
+
+    LifecycleFsm fsm;
+    uint64_t sequence;
+    int index;
+
+    boot(&fsm);
+    for (index = 1; index <= 100; index++) {
+        tick(&fsm, index * 60000);
+        assert(fsm.state == LIFECYCLE_STATE_READY);
+    }
+
+    decision("NOCONFIG", "assignment-1", 1);
+    tick(&fsm, 6000100);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    tick(&fsm, 6000200);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    assert(fsm.confirmedGeneration == 1);
+    sequence = fsm.sequence;
+    tick(&fsm, 6000300);
+    assert(fsm.sequence == sequence);
+
+    configuration.generation = 2;
+    starter.aggregate = STARTER_AGGREGATE_PENDING;
+    tick(&fsm, 6000400);
+    assert(fsm.sequence == sequence);
+    starter.aggregate = STARTER_AGGREGATE_READY;
+    tick(&fsm, 6000500);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    assert(fsm.sequence == sequence + 1 && fsm.confirmedGeneration == 2);
+
+    boot(&fsm);
+    tick(&fsm, 1200);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    tick(&fsm, 1300);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    puts("PASS: indefinite READY, completed-between-polls, repeat confirmation, reboot");
+
+    decision("CONFIG", "config-1", 3);
+    configuration.phase = CONFIG_PHASE_IN_PROGRESS;
+    tick(&fsm, 1400);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    tick(&fsm, 9999999);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    configuration.phase = CONFIG_PHASE_FAILED;
+    tick(&fsm, 10000000);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    configuration.phase = CONFIG_PHASE_APPLIED;
+    tick(&fsm, 10000100);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    tick(&fsm, 10000200);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    puts("PASS: CONFIG pending never succeeds on timeout; failure and recovery");
+
+    configuration.available = false;
+    tick(&fsm, 10000300);
+    tick(&fsm, 10003000);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    configuration.available = true;
+    tick(&fsm, 10003100);
+    tick(&fsm, 10003200);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    configuration.generation = 1;
+    tick(&fsm, 10003300);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    tick(&fsm, 10003400);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    puts("PASS: configd outage and stale generation cannot establish Operational");
+
+    lifecycle_fsm_init(&fsm, 1000);
+    lifecycle_fsm_begin_check_in(&fsm, true, 1, 100, 1000);
+    starter.available = false;
+    tick(&fsm, 200);
+    tick(&fsm, 2500);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
     starter.available = true;
-    starter.aggregate = aggregate;
-    starter.configPhase = configPhase;
-    snprintf(starter.aggregateReason,
-             sizeof(starter.aggregateReason),
-             "%s",
-             starter_aggregate_str(aggregate));
-    return starter;
+    starter.aggregate = STARTER_AGGREGATE_PENDING;
+    tick(&fsm, 2600);
+    assert(fsm.state == LIFECYCLE_STATE_CHECKING_IN);
+    tick(&fsm, 2700);
+    assert(fsm.gateOpen);
+    puts("PASS: starter outage before gate does not deadlock startup");
 }
 
-static void reach_ready(LifecycleFsm *fsm) {
-
-    StarterSnapshot starter;
-
-    lifecycle_fsm_init(fsm, 10);
-    EXPECT_TRUE(lifecycle_fsm_begin_check_in(fsm, true, 2, 1000, 11));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_AWAITING);
-    EXPECT_TRUE(!lifecycle_fsm_tick(fsm, &starter, 10, 2, 2999, 12));
-    EXPECT_EQ(LIFECYCLE_STATE_CHECKING_IN, fsm->state);
-
-    EXPECT_TRUE(lifecycle_fsm_tick(fsm, &starter, 10, 2, 3000, 13));
-    EXPECT_EQ(LIFECYCLE_STATE_READY, fsm->state);
-    EXPECT_TRUE(fsm->gateOpen);
-}
-
-static void test_initial_state(void) {
+static void test_delete(void) {
 
     LifecycleFsm fsm;
+    uint64_t sequence;
+    int index;
 
-    lifecycle_fsm_init(&fsm, 100);
-    EXPECT_EQ(LIFECYCLE_STATE_STARTING, fsm.state);
-    EXPECT_EQ(1, fsm.sequence);
-    EXPECT_EQ(100, fsm.stateSince);
-}
-
-static void test_ready_timeout_reaches_operational(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_AWAITING);
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm,
-                                    &starter,
-                                    10,
-                                    2,
-                                    4999,
-                                    14));
-    EXPECT_EQ(LIFECYCLE_STATE_READY, fsm.state);
-
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm,
-                                   &starter,
-                                   10,
-                                   2,
-                                   5000,
-                                   15));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-}
-
-static void test_no_config_reaches_operational(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-    LifecycleConfigureResult result;
-
-    reach_ready(&fsm);
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_AWAITING);
-
-    result = lifecycle_fsm_configure(&fsm,
-                                     "request-1",
-                                     "assignment-1",
-                                     2,
-                                     4000,
-                                     20);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED, result);
-    EXPECT_EQ(LIFECYCLE_STATE_CONFIGURING, fsm.state);
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 10, 2, 5999, 21));
-    EXPECT_EQ(LIFECYCLE_STATE_CONFIGURING, fsm.state);
-
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 6000, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-}
-
-static void test_config_apply_reaches_operational(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-2",
-                                      "assignment-2",
-                                      60,
-                                      4000,
-                                      20));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_PENDING,
-                               CONFIG_PHASE_IN_PROGRESS);
-    snprintf(starter.configRequestId,
-             sizeof(starter.configRequestId),
-             "request-2");
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4100, 21));
-    EXPECT_TRUE(fsm.configurationSeen);
-
+    starter.available = true;
     starter.aggregate = STARTER_AGGREGATE_READY;
-    starter.configPhase = CONFIG_PHASE_APPLIED;
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4200, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-    EXPECT_TRUE(fsm.configurationApplied);
-}
+    configuration.available = true;
+    decision("NOCONFIG", "assignment-delete", 1);
+    boot(&fsm);
+    tick(&fsm, 1200);
+    tick(&fsm, 1300);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
 
-static void test_config_in_progress_timeout_faults(void) {
+    configuration.phase = CONFIG_PHASE_AWAITING;
+    snprintf(configuration.mode, sizeof(configuration.mode), "NONE");
+    configuration.generation = 2;
+    tick(&fsm, 1400);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+    assert(!fsm.configurationSeen && !fsm.configurationApplied);
+    assert(fsm.configGeneration == 2 && fsm.confirmedGeneration == 0);
+    assert(fsm.requestId[0] == '\0');
+    sequence = fsm.sequence;
+    for (index = 1; index <= 100; index++) {
+        tick(&fsm, index * 60000);
+        assert(fsm.state == LIFECYCLE_STATE_READY && fsm.sequence == sequence);
+    }
 
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-timeout",
-                                      "assignment-timeout",
-                                      2,
-                                      4000,
-                                      20));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_PENDING,
-                               CONFIG_PHASE_IN_PROGRESS);
-    snprintf(starter.configRequestId,
-             sizeof(starter.configRequestId),
-             "request-timeout");
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm,
-                                    &starter,
-                                    10,
-                                    2,
-                                    4100,
-                                    21));
-    EXPECT_TRUE(fsm.configurationSeen);
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm,
-                                    &starter,
-                                    10,
-                                    2,
-                                    5999,
-                                    22));
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm,
-                                   &starter,
-                                   10,
-                                   2,
-                                   6000,
-                                   23));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-    EXPECT_EQ(LIFECYCLE_FAULT_CONFIGURATION, fsm.fault);
-}
-
-static void test_fast_matching_apply_is_not_missed(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-fast",
-                                      "assignment-fast",
-                                      60,
-                                      4000,
-                                      20));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_APPLIED);
-    snprintf(starter.configRequestId,
-             sizeof(starter.configRequestId),
-             "request-fast");
-
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4100, 21));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-}
-
-static void test_config_failure_latches_fault(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-3",
-                                      "assignment-3",
-                                      60,
-                                      4000,
-                                      20));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_FAULTY,
-                               CONFIG_PHASE_FAILED);
-    snprintf(starter.configReason,
-             sizeof(starter.configReason),
-             "configuration_failed");
-    snprintf(starter.configRequestId,
-             sizeof(starter.configRequestId),
-             "request-3");
-
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4100, 21));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-    EXPECT_EQ(LIFECYCLE_FAULT_CONFIGURATION, fsm.fault);
-
-    starter.aggregate = STARTER_AGGREGATE_READY;
-    starter.configPhase = CONFIG_PHASE_APPLIED;
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4200, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-}
-
-static void test_stale_config_failure_is_ignored(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-new",
-                                      "assignment-new",
-                                      2,
-                                      4000,
-                                      20));
-
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_FAILED);
-    snprintf(starter.configReason,
-             sizeof(starter.configReason),
-             "configuration_failed");
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 10, 2, 4100, 21));
-    EXPECT_EQ(LIFECYCLE_STATE_CONFIGURING, fsm.state);
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 6000, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-}
-
-static void test_configure_idempotency(void) {
-
-    LifecycleFsm fsm;
-    int64_t deadline;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-4",
-                                      "assignment-4",
-                                      2,
-                                      4000,
-                                      20));
-    deadline = fsm.configDeadlineMs;
-
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_DUPLICATE,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-4",
-                                      "assignment-4",
-                                      2,
-                                      5000,
-                                      21));
-    EXPECT_EQ(deadline, fsm.configDeadlineMs);
-
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_BUSY,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-other",
-                                      "assignment-4",
-                                      2,
-                                      5000,
-                                      21));
-}
-
-static void test_starter_fault_recovers(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    reach_ready(&fsm);
-    EXPECT_EQ(LIFECYCLE_CONFIGURE_ACCEPTED,
-              lifecycle_fsm_configure(&fsm,
-                                      "request-5",
-                                      "assignment-5",
-                                      1,
-                                      4000,
-                                      20));
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_AWAITING);
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 5000, 21));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
-
+    boot(&fsm);
+    tick(&fsm, 1500);
+    assert(fsm.state == LIFECYCLE_STATE_READY && fsm.configGeneration == 2);
+    configuration.generation = 0;
+    configuration.requestId[0] = '\0';
+    tick(&fsm, 1600);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
+    configuration.generation = 2;
+    snprintf(configuration.requestId, sizeof(configuration.requestId), "assignment-delete");
     starter.aggregate = STARTER_AGGREGATE_FAULTY;
-    snprintf(starter.aggregateReason,
-             sizeof(starter.aggregateReason),
-             "required app timeout");
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 5100, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-
+    tick(&fsm, 1700);
+    assert(fsm.state == LIFECYCLE_STATE_FAULTY);
     starter.aggregate = STARTER_AGGREGATE_READY;
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 10, 2, 5200, 23));
-    EXPECT_EQ(LIFECYCLE_STATE_OPERATIONAL, fsm.state);
+    tick(&fsm, 1800);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+
+    decision("CONFIG", "config-delete", 3);
+    configuration.phase = CONFIG_PHASE_IN_PROGRESS;
+    tick(&fsm, 1900);
+    assert(fsm.state == LIFECYCLE_STATE_CONFIGURING);
+    configuration.phase = CONFIG_PHASE_AWAITING;
+    snprintf(configuration.mode, sizeof(configuration.mode), "NONE");
+    configuration.generation = 4;
+    tick(&fsm, 2000);
+    assert(fsm.state == LIFECYCLE_STATE_READY);
+    decision("NOCONFIG", "new-assignment", 5);
+    tick(&fsm, 2100);
+    tick(&fsm, 2200);
+    assert(fsm.state == LIFECYCLE_STATE_OPERATIONAL);
+    puts("PASS: DELETE returns to READY, survives reboot, preserves faults and permits a new decision");
 }
 
-static void test_starter_unavailable_timeout(void) {
+static void test_checkpoint(void) {
 
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
+    LifecycleContext source = {0};
+    LifecycleContext restored = {0};
+    Config config = {0};
+    char directory[] = "/tmp/lifecycle-checkpoint-XXXXXX";
+    char path[512];
+    FILE *file;
 
-    reach_ready(&fsm);
-    memset(&starter, 0, sizeof(starter));
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 2, 2, 4000, 20));
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 2, 2, 5999, 21));
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 2, 2, 6000, 22));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-}
-
-static void test_starting_recovers_to_starting(void) {
-
-    LifecycleFsm fsm;
-    StarterSnapshot starter;
-
-    lifecycle_fsm_init(&fsm, 10);
-    memset(&starter, 0, sizeof(starter));
-
-    EXPECT_TRUE(!lifecycle_fsm_tick(&fsm, &starter, 1, 2, 1000, 11));
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 1, 2, 2000, 12));
-    EXPECT_EQ(LIFECYCLE_STATE_FAULTY, fsm.state);
-
-    starter = starter_snapshot(STARTER_AGGREGATE_READY,
-                               CONFIG_PHASE_AWAITING);
-    EXPECT_TRUE(lifecycle_fsm_tick(&fsm, &starter, 1, 2, 2100, 13));
-    EXPECT_EQ(LIFECYCLE_STATE_STARTING, fsm.state);
-}
-
-static void test_state_store_is_boot_scoped(void) {
-
-    LifecycleFsm fsm;
-    LifecycleFsm loaded;
-    char path[] = "/tmp/lifecycled-state-XXXXXX";
-    int fd;
-
-    fd = mkstemp(path);
-    EXPECT_TRUE(fd >= 0);
-    if (fd < 0) return;
-    close(fd);
-
-    reach_ready(&fsm);
-    EXPECT_TRUE(state_store_save(path, "boot-one", &fsm));
-    memset(&loaded, 0, sizeof(loaded));
-    EXPECT_TRUE(state_store_load(path, "boot-one", &loaded));
-    EXPECT_EQ(fsm.state, loaded.state);
-    EXPECT_EQ(fsm.sequence, loaded.sequence);
-
-    memset(&loaded, 0, sizeof(loaded));
-    EXPECT_TRUE(!state_store_load(path, "boot-two", &loaded));
+    assert(mkdtemp(directory));
+    snprintf(path, sizeof(path), "%s/checkpoint", directory);
+    config.stateFile = path;
+    source.config = &config;
+    restored.config = &config;
+    snprintf(source.bootId, sizeof(source.bootId), "boot-1");
+    snprintf(restored.bootId, sizeof(restored.bootId), "boot-1");
+    lifecycle_fsm_init(&source.fsm, 1000);
+    source.eventCount = 1;
+    source.events[0].state = LIFECYCLE_STATE_STARTING;
+    source.events[0].sequence = 1;
+    source.events[0].occurredAt = 1000;
+    snprintf(source.events[0].bootId, sizeof(source.events[0].bootId), "boot-1");
+    assert(state_store_save(&source));
+    assert(state_store_load(&restored));
+    assert(restored.eventCount == 1 && restored.events[0].sequence == 1);
+    snprintf(restored.bootId, sizeof(restored.bootId), "boot-2");
+    assert(!state_store_load(&restored) && errno == ESTALE);
+    file = fopen(path, "w");
+    assert(file);
+    fputs("{broken", file);
+    fclose(file);
+    assert(!state_store_load(&restored) && errno == EINVAL);
     unlink(path);
+    rmdir(directory);
+    puts("PASS: checkpoint retains events; new boot resets; corrupt state is rejected");
 }
 
 int main(void) {
 
-    test_initial_state();
-    test_ready_timeout_reaches_operational();
-    test_no_config_reaches_operational();
-    test_config_apply_reaches_operational();
-    test_config_in_progress_timeout_faults();
-    test_fast_matching_apply_is_not_missed();
-    test_config_failure_latches_fault();
-    test_stale_config_failure_is_ignored();
-    test_configure_idempotency();
-    test_starter_fault_recovers();
-    test_starter_unavailable_timeout();
-    test_starting_recovers_to_starting();
-    test_state_store_is_boot_scoped();
-
-    if (gFailures) {
-        fprintf(stderr,
-                "FAILED: %d of %d assertions failed\n",
-                gFailures,
-                gTests);
-        return 1;
-    }
-
-    printf("PASS: %d lifecycle FSM assertions\n", gTests);
+    test_flow();
+    test_checkpoint();
+    test_delete();
     return 0;
 }
