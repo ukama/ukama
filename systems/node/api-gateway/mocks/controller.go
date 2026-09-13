@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
@@ -13,63 +14,29 @@ type controller struct {
 }
 
 // ConfigNode provides a mock function with given fields: nodeId
-func (_m *controller) ConfigNode(nodeId string) (*gen.ConfigNodeResponse, error) {
-	ret := _m.Called(nodeId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ConfigNode")
+func (_m *controller) ConfigNode(ctx context.Context, req *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error) {
+	ret := _m.Called(ctx, req)
+	if f, ok := ret.Get(0).(func(context.Context, *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error)); ok {
+		return f(ctx, req)
 	}
-
-	var r0 *gen.ConfigNodeResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ConfigNodeResponse, error)); ok {
-		return rf(nodeId)
+	var out *gen.ConfigNodeResponse
+	if ret.Get(0) != nil {
+		out = ret.Get(0).(*gen.ConfigNodeResponse)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ConfigNodeResponse); ok {
-		r0 = rf(nodeId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ConfigNodeResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return out, ret.Error(1)
 }
 
 // DeleteNodeConfig provides a mock function with given fields: nodeId
-func (_m *controller) DeleteNodeConfig(nodeId string) (*gen.DeleteNodeConfigResponse, error) {
-	ret := _m.Called(nodeId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteNodeConfig")
+func (_m *controller) DeleteNodeConfig(ctx context.Context, req *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error) {
+	ret := _m.Called(ctx, req)
+	if f, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error)); ok {
+		return f(ctx, req)
 	}
-
-	var r0 *gen.DeleteNodeConfigResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteNodeConfigResponse, error)); ok {
-		return rf(nodeId)
+	var out *gen.DeleteNodeConfigResponse
+	if ret.Get(0) != nil {
+		out = ret.Get(0).(*gen.DeleteNodeConfigResponse)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteNodeConfigResponse); ok {
-		r0 = rf(nodeId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.DeleteNodeConfigResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return out, ret.Error(1)
 }
 
 // PingNode provides a mock function with given fields: nodeId

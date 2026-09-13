@@ -98,6 +98,9 @@ func NewStateEventServer(orgName, orgId string, s *StateServer, configPath strin
 
 	server.stateMachine = stm.NewStateMachine(server.handleTransition)
 
+	if s != nil {
+		s.configurationEvents = server
+	}
 	return server
 }
 

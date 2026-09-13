@@ -9,6 +9,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -329,4 +330,18 @@ func TestSiteRegistry_RemoveSite(t *testing.T) {
 		assert.Equal(t, expectedError, err)
 		mockClient.AssertExpectations(t)
 	})
+}
+
+func TestAddSiteUsesCallerContext(t *testing.T) {
+	peer := &sitemocks.SiteServiceClient{}
+	registry := NewSiteRegistryFromClient(peer)
+	registry.timeout = time.Nanosecond
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	req := &pb.AddRequest{Name: "site"}
+	peer.On("Add", mock.MatchedBy(func(got context.Context) bool { return got == ctx }), req).
+		Return(&pb.AddResponse{}, nil).Once()
+	_, err := registry.AddSiteContext(ctx, req)
+	assert.NoError(t, err)
+	peer.AssertExpectations(t)
 }

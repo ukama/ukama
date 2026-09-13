@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
@@ -174,4 +175,16 @@ func newSite(t interface {
 	t.Cleanup(func() { mock.AssertExpectations(t) })
 
 	return mock
+}
+
+func (_m *site) AddSiteContext(ctx context.Context, req *gen.AddRequest) (*gen.AddResponse, error) {
+	ret := _m.Called(ctx, req)
+	if fn, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) (*gen.AddResponse, error)); ok {
+		return fn(ctx, req)
+	}
+	var out *gen.AddResponse
+	if ret.Get(0) != nil {
+		out = ret.Get(0).(*gen.AddResponse)
+	}
+	return out, ret.Error(1)
 }

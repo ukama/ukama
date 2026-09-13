@@ -9,6 +9,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/num30/config"
@@ -59,7 +60,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(serviceConfig.DB, serviceConfig.DebugMode)
-	err := d.Init(&db.Site{})
+	err := d.Init(&db.Site{}, &db.SiteProvision{}, &db.ProvisionReservation{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -83,7 +84,7 @@ func runGrpcServer(gormdb sql.Db) {
 	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
 	nodeControllerClient := cnode.NewNodeControllerClient(nodeSystemUrl.String())
 	nodeStateClient := cnode.NewNodeStateClient(nodeSystemUrl.String())
-	
+
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout,
 		serviceConfig.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
 		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
@@ -92,6 +93,10 @@ func runGrpcServer(gormdb sql.Db) {
 
 	siteServer := server.NewSiteServer(serviceConfig.OrgName, db.NewSiteRepo(gormdb),
 		mbClient, providers.NewNetworkClientProvider(serviceConfig.Network), serviceConfig.PushGateway, invClient, nodeControllerClient, nodeStateClient)
+
+	provisionCtx, stopProvisioning := context.WithCancel(context.Background())
+	defer stopProvisioning()
+	siteServer.StartProvisioning(provisionCtx, gormdb.GetGormDb(), nodeSystemUrl.String())
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 

@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -71,7 +72,7 @@ type health interface {
 
 type state interface {
 	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
-	GetLatestState(nodeId string) (*nspb.GetLatestStateResponse, error)
+	GetLatestState(context.Context, *nspb.GetLatestStateRequest) (*nspb.GetLatestStateResponse, error)
 	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
 	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
@@ -81,8 +82,8 @@ type controller interface {
 	PingNode(nodeId string) (*contPb.PingNodeResponse, error)
 	ToggleRadio(nodeId string, state string) (*contPb.ToggleRadioResponse, error)
 	ToggleService(nodeId string, state string) (*contPb.ToggleServiceResponse, error)
-	ConfigNode(nodeId string) (*contPb.ConfigNodeResponse, error)
-	DeleteNodeConfig(nodeId string) (*contPb.DeleteNodeConfigResponse, error)
+	ConfigNode(context.Context, *contPb.ConfigNodeRequest) (*contPb.ConfigNodeResponse, error)
+	DeleteNodeConfig(context.Context, *contPb.DeleteNodeConfigRequest) (*contPb.DeleteNodeConfigResponse, error)
 }
 
 type siteController interface {
@@ -264,11 +265,11 @@ func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleStateRe
 }
 
 func (r *Router) postConfigNodeHandler(c *gin.Context, req *ConfigNodeRequest) (*contPb.ConfigNodeResponse, error) {
-	return r.clients.Controller.ConfigNode(req.NodeId)
+	return r.clients.Controller.ConfigNode(c.Request.Context(), &contPb.ConfigNodeRequest{NodeId: req.NodeId, RequestId: req.RequestId, SiteId: req.SiteId, NetworkId: req.NetworkId})
 }
 
 func (r *Router) deleteNodeConfigHandler(c *gin.Context, req *DeleteNodeConfigRequest) (*contPb.DeleteNodeConfigResponse, error) {
-	return r.clients.Controller.DeleteNodeConfig(req.NodeId)
+	return r.clients.Controller.DeleteNodeConfig(c.Request.Context(), &contPb.DeleteNodeConfigRequest{NodeId: req.NodeId, RequestId: req.RequestId, SiteId: req.SiteId, NetworkId: req.NetworkId})
 }
 
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
@@ -296,7 +297,7 @@ func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.
 }
 
 func (r *Router) getLatestStateHandler(c *gin.Context, req *GetLatestStateRequest) (*nspb.GetLatestStateResponse, error) {
-	return r.clients.State.GetLatestState(req.NodeId)
+	return r.clients.State.GetLatestState(c.Request.Context(), &nspb.GetLatestStateRequest{NodeId: req.NodeId, RequestId: req.RequestId})
 }
 
 func (r *Router) postConfigEventHandler(c *gin.Context) error {

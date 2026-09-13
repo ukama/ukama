@@ -86,18 +86,16 @@ func (c *Controller) ToggleService(nodeId string, state string) (*pb.ToggleServi
 	return c.client.ToggleService(ctx, &pb.ToggleServiceRequest{NodeId: nodeId, State: state})
 }
 
-func (c *Controller) ConfigNode(nodeId string) (*pb.ConfigNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) ConfigNode(ctx context.Context, req *pb.ConfigNodeRequest) (*pb.ConfigNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
-
-	return c.client.ConfigNode(ctx, &pb.ConfigNodeRequest{NodeId: nodeId})
+	return c.client.ConfigNode(ctx, req)
 }
 
-func (c *Controller) DeleteNodeConfig(nodeId string) (*pb.DeleteNodeConfigResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) DeleteNodeConfig(ctx context.Context, req *pb.DeleteNodeConfigRequest) (*pb.DeleteNodeConfigResponse, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
-
-	return c.client.DeleteNodeConfig(ctx, &pb.DeleteNodeConfigRequest{NodeId: nodeId})
+	return c.client.DeleteNodeConfig(ctx, req)
 }
 
 func (c *Controller) PingNode(nodeId string) (*pb.PingNodeResponse, error) {
