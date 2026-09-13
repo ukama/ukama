@@ -14,6 +14,9 @@ import "google/protobuf/wrappers.proto";
 import "ukama/node.proto";
 
 service StateService {
+    // Internal bookkeeping: record the command identity before controller dispatch.
+    rpc RecordConfiguration(RecordConfigurationRequest) returns (ConfigurationStatus);
+
     rpc AddState (AddStateRequest) returns (AddStateResponse);
     rpc GetStateById (GetStateByIdRequest) returns (GetStateByIdResponse);
     rpc GetStates(GetStatesRequest) returns(GetStatesResponse);
@@ -127,12 +130,28 @@ message GetStatesResponse {
 
 message GetLatestStateRequest {
     string nodeId = 1;
+    string request_id = 2;
 }
 
 message GetLatestStateResponse {
     State State = 1;
+    ConfigurationStatus configuration = 2;
 }
 
 message subState {
     
+}
+message RecordConfigurationRequest {
+    string node_id = 1;
+    string request_id = 2;
+    string site_id = 3;
+    string network_id = 4;
+    bool cancelled = 5;
+}
+
+message ConfigurationStatus {
+    string request_id = 1;
+    bool completed = 2;
+    bool cancelled = 3;
+    bool cleared = 4;
 }

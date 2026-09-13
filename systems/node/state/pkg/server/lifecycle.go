@@ -74,6 +74,8 @@ func (n *StateEventServer) assignNode(record *db.LifecycleRecord, state *db.Stat
 		if record.Network != msg.Network || record.Site != msg.Site {
 			return fmt.Errorf("node already has a different lifetime assignment")
 		}
+		// The registry assignment commits the already-confirmed decision.
+		record.ProvisionManaged = false
 		return nil
 	}
 	record.Network = msg.Network
@@ -93,9 +95,29 @@ func (n *StateEventServer) observeLifecycle(record *db.LifecycleRecord, state *d
 	if err != nil || !accepted {
 		return err
 	}
+	if attempt, found := record.Attempts[event.RequestID]; found {
+		if attempt.Cancelled {
+			if event.State == "READY" && event.ConfigMode == "NONE" && event.Generation > 0 {
+				attempt.Cleared = true
+				record.Attempts[event.RequestID] = attempt
+				if record.RequestID == event.RequestID {
+					record.RequestID, record.Network, record.Site = "", "", ""
+					record.ProvisionManaged = false
+					record.Completed = false
+					record.AwaitingOperational = false
+					return n.transitionStoredState(state, "platformready")
+				}
+			}
+			// A late result cannot revive a cancelled attempt.
+			return nil
+		}
+		if record.RequestID != event.RequestID {
+			return nil
+		}
+	}
 	switch event.State {
 	case "INIT":
-		if record.RequestID != "" {
+		if record.RequestID != "" && !record.ProvisionManaged {
 			record.AwaitingOperational = true
 			record.RetryAt = time.Now().UTC().Add(60 * time.Second)
 		}
@@ -125,6 +147,10 @@ func (n *StateEventServer) observeLifecycle(record *db.LifecycleRecord, state *d
 	}
 	if state.CurrentState != npb.NodeState_Operational {
 		return fmt.Errorf("OPERATIONAL cannot complete configuration from %s", state.CurrentState)
+	}
+	if attempt, found := record.Attempts[event.RequestID]; found {
+		attempt.Completed = true
+		record.Attempts[event.RequestID] = attempt
 	}
 	record.Completed = true
 	record.AwaitingOperational = false

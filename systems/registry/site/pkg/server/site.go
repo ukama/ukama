@@ -13,7 +13,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -37,6 +36,8 @@ import (
 const uuidParsingError = "Error parsing UUID"
 
 type SiteServer struct {
+	provisions      provisionStore
+	provisionClient provisionClient
 	pb.UnimplementedSiteServiceServer
 	orgName              string
 	siteRepo             db.SiteRepo
@@ -98,6 +99,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, status.Errorf(codes.InvalidArgument, "%s", err.Error())
 	}
 
+	var accessNodeID string
 	for _, componentIdStr := range []string{
 		backhaulId.String(),
 		powerId.String(),
@@ -106,9 +108,12 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		spectrumId.String(),
 	} {
 		// Validate the parsed UUID using s.inventoryClient
-		_, err := s.inventoryClient.Get(componentIdStr)
+		component, err := s.inventoryClient.Get(componentIdStr)
 		if err != nil {
 			return nil, err
+		}
+		if componentIdStr == accessId.String() && component != nil {
+			accessNodeID = component.PartNumber
 		}
 	}
 	svc, err := s.networkService.GetClient()
@@ -124,7 +129,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, grpc.SqlErrorToGrpc(err, "network")
 	}
 
-	tNodeId, err := vukama.ValidateNodeId(accessId.String())
+	tNodeId, err := vukama.ValidateNodeId(accessNodeID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate tower node ID: %s", err.Error())
 	}
@@ -149,27 +154,6 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		return nil, status.Errorf(codes.InvalidArgument, "failed to validate C Node ID: %s", err.Error())
 	}
 
-	/* TODO: Send config call all nodes (tNodeId, aNodeId, cNodeId), Supposed to be inside a thread with retry behaviour */
-
-	err = s.configNodes([]string{tNodeId.String(), aNodeId.String(), cNodeId.String()})
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to config nodes: %s", err.Error())
-	}
-
-	// Validate the node latest state in state machine
-
-	for _, nodeId := range []string{tNodeId.String(), aNodeId.String(), cNodeId.String()} {
-		state, err := s.nodeStateClient.GetLatestState(nodeId)
-		if err != nil {
-			return nil, status.Errorf(codes.Internal, "failed to get latest state of node %s: %s", nodeId, err.Error())
-		}
-		if state.CurrentState != "operational" {
-			return nil, status.Errorf(codes.InvalidArgument, "node %s is not in active state", nodeId)
-		}
-
-		// Retry the config call if the node is not in operational state
-	}
-
 	// Add the site to the database
 	site := &db.Site{
 		NetworkId:     networkId,
@@ -186,14 +170,19 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		InstallDate:   instDate,
 	}
 
-	err = s.siteRepo.Add(site, func(*db.Site, *gorm.DB) error {
-		site.Id = uuid.NewV4()
-		return nil
+	site, err = s.addProvisionedSite(ctx, site, []string{
+		tNodeId.String(), aNodeId.String(), cNodeId.String(),
 	})
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
+		return nil, status.Errorf(codes.Unavailable, "%s", err)
 	}
+	return &pb.AddResponse{Site: dbSiteToPbSite(site)}, nil
+}
 
+func (s *SiteServer) publishCreatedSite(site *db.Site) error {
+	if s.msgbus == nil {
+		return status.Error(codes.Unavailable, "message bus unavailable")
+	}
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetActionCreate().SetObject("site").MustBuild()
 		evt := &epb.EventAddSite{
@@ -210,18 +199,13 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 			InstallDate:   site.InstallDate,
 		}
 
-		err = s.msgbus.PublishRequest(route, evt)
+		err := s.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			return err
 		}
 	}
 
-	s.pushSiteCount(networkId)
-
-	return &pb.AddResponse{
-		Site: dbSiteToPbSite(site),
-	}, nil
-	/* TODO: End here*/
+	return nil
 }
 
 func (s *SiteServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
@@ -395,15 +379,4 @@ func (s *SiteServer) pushSiteCount(networkId uuid.UUID) {
 	if err != nil {
 		log.Errorf("Error while pushing site count metric to pushgateway %s", err.Error())
 	}
-}
-
-func (s *SiteServer) configNodes(nodeIds []string) error {
-	for _, nodeId := range nodeIds {
-		log.Infof("sending config to node %s", nodeId)
-		_, err := s.nodeControllerClient.ConfigNode(nodeId)
-		if err != nil {
-			return status.Errorf(codes.Internal, "failed to config node %s: %s", nodeId, err.Error())
-		}
-	}
-	return nil
 }

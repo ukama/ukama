@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	"context"
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
@@ -43,33 +44,16 @@ func (_m *state) EnforeTransition(nodeId string, event string) (*gen.EnforceStat
 }
 
 // GetLatestState provides a mock function with given fields: nodeId
-func (_m *state) GetLatestState(nodeId string) (*gen.GetLatestStateResponse, error) {
-	ret := _m.Called(nodeId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetLatestState")
+func (_m *state) GetLatestState(ctx context.Context, req *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error) {
+	ret := _m.Called(ctx, req)
+	if f, ok := ret.Get(0).(func(context.Context, *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error)); ok {
+		return f(ctx, req)
 	}
-
-	var r0 *gen.GetLatestStateResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetLatestStateResponse, error)); ok {
-		return rf(nodeId)
+	var out *gen.GetLatestStateResponse
+	if ret.Get(0) != nil {
+		out = ret.Get(0).(*gen.GetLatestStateResponse)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetLatestStateResponse); ok {
-		r0 = rf(nodeId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.GetLatestStateResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return out, ret.Error(1)
 }
 
 // GetStates provides a mock function with given fields: nodeId

@@ -19,6 +19,9 @@ service ControllerService {
 
 message DeleteNodeConfigRequest {
   string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  string request_id = 2;
+  string site_id = 3;
+  string network_id = 4;
 }
 
 message DeleteNodeConfigResponse {
@@ -29,6 +32,9 @@ message DeleteNodeConfigResponse {
 
 message ConfigNodeRequest {
   string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
+  string request_id = 2;
+  string site_id = 3;
+  string network_id = 4;
 }
 
 message ConfigNodeResponse {

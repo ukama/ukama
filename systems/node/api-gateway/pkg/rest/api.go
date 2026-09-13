@@ -17,11 +17,17 @@ type RestartNodeRequest struct {
 }
 
 type ConfigNodeRequest struct {
-	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	RequestId string `json:"request_id" validate:"required"`
+	SiteId    string `json:"site_id" validate:"required"`
+	NetworkId string `json:"network_id" validate:"required"`
 }
 
 type DeleteNodeConfigRequest struct {
-	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	RequestId string `json:"request_id" validate:"required"`
+	SiteId    string `json:"site_id" validate:"required"`
+	NetworkId string `json:"network_id" validate:"required"`
 }
 
 type ToggleSwitchPortRequest struct {
@@ -39,7 +45,8 @@ type GetStatesRequest struct {
 }
 
 type GetLatestStateRequest struct {
-	NodeId string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	NodeId    string `json:"node_id" validate:"required" example:"{{NodeId}}" path:"node_id"`
+	RequestId string `json:"request_id" query:"request_id"`
 }
 
 type GetStatesHistoryRequest struct {

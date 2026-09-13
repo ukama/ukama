@@ -22,7 +22,18 @@ import (
 
 // One assignment decision per node. Completion and the observed event cursor
 // are committed with node state, so a crash cannot acknowledge half a change.
+type ProvisionAttempt struct {
+	Site      string
+	Network   string
+	Cancelled bool
+	Cleared   bool
+	Completed bool
+}
+
 type LifecycleRecord struct {
+	ProvisionManaged bool
+	Attempts         map[string]ProvisionAttempt `gorm:"serializer:json;type:jsonb"`
+
 	NodeID              string `gorm:"primaryKey"`
 	Network             string
 	Site                string
@@ -138,7 +149,7 @@ func (r *LifecycleRepo) RetryAssignments(ctx context.Context, now time.Time,
 				record.AwaitingOperational = false
 				return nil
 			}
-			if !record.AwaitingOperational || record.RetryAt.After(now) {
+			if record.ProvisionManaged || !record.AwaitingOperational || record.RetryAt.After(now) {
 				return nil
 			}
 			// Keep the same request ID even when publishing fails. A crash
@@ -180,4 +191,18 @@ func (r *LifecycleRepo) PublishPending(ctx context.Context,
 		}
 	}
 	return nil
+}
+
+// ReadConfiguration takes a consistent snapshot without changing node state,
+// retry intent, observation cursors or publication records.
+func (r *LifecycleRepo) ReadConfiguration(ctx context.Context, nodeID string) (*LifecycleRecord, *State, error) {
+	record := &LifecycleRecord{}
+	state := &State{}
+	err := r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Clauses(clause.Locking{Strength: "SHARE"}).First(record, "node_id = ?", nodeID).Error; err != nil {
+			return err
+		}
+		return tx.Where("node_id = ?", nodeID).Order("created_at DESC").First(state).Error
+	})
+	return record, state, err
 }

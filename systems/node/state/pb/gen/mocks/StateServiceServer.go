@@ -44,6 +44,36 @@ func (_m *StateServiceServer) AddState(_a0 context.Context, _a1 *gen.AddStateReq
 	return r0, r1
 }
 
+// RecordConfiguration provides a mock function with given fields: _a0, _a1
+func (_m *StateServiceServer) RecordConfiguration(_a0 context.Context, _a1 *gen.RecordConfigurationRequest) (*gen.ConfigurationStatus, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RecordConfiguration")
+	}
+
+	var r0 *gen.ConfigurationStatus
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RecordConfigurationRequest) (*gen.ConfigurationStatus, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RecordConfigurationRequest) *gen.ConfigurationStatus); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ConfigurationStatus)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RecordConfigurationRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // EnforceStateTransition provides a mock function with given fields: _a0, _a1
 func (_m *StateServiceServer) EnforceStateTransition(_a0 context.Context, _a1 *gen.EnforceStateTransitionRequest) (*gen.EnforceStateTransitionResponse, error) {
 	ret := _m.Called(_a0, _a1)

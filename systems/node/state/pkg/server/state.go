@@ -31,6 +31,7 @@ import (
 )
 
 type StateServer struct {
+	configurationEvents *StateEventServer
 	pb.UnimplementedStateServiceServer
 	orgName         string
 	orgId           string
@@ -206,9 +207,14 @@ func (s *StateServer) GetLatestState(ctx context.Context, req *pb.GetLatestState
 		stateRes.PreviousStateId = latestState.PreviousStateId.String()
 	}
 
-	return &pb.GetLatestStateResponse{
-		State: stateRes,
-	}, nil
+	response := &pb.GetLatestStateResponse{State: stateRes}
+	if req.RequestId != "" {
+		response.Configuration, err = s.configurationStatus(ctx, nId.String(), req.RequestId)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return response, nil
 }
 
 func (s *StateServer) UpdateState(ctx context.Context, req *pb.UpdateStateRequest) (*pb.UpdateStateResponse, error) {

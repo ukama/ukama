@@ -111,6 +111,12 @@ func runGrpcServer(gormdb sql.Db) {
 		mbClient, cnet, csite, cnode,
 		opMgr, opMon, svcConf.Operation.LeaseSecs, svcConf.Operation.DeadlineSecs,
 		svcConf.DebugMode)
+	configurationState, err := cclient.NewConfigurationState(svcConf.StateHost, svcConf.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to connect to node-state: %v", err)
+	}
+	defer configurationState.Close()
+	contServer.SetConfigurationState(configurationState)
 	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {

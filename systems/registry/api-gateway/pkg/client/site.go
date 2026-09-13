@@ -93,6 +93,12 @@ func (i *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, s
 	})
 }
 
+// Site creation waits for the group result, or for the HTTP caller to leave.
+// Its durable coordinator continues even when this context is cancelled.
+func (i *SiteRegistry) AddSiteContext(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	return i.client.Add(ctx, req)
+}
+
 func (i *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
 	defer cancel()

@@ -10,6 +10,8 @@ replace github.com/ukama/ukama/systems/operation/manager => ../../operation/mana
 
 replace github.com/ukama/ukama/systems/node/operation-monitor => ../operation-monitor
 
+replace github.com/ukama/ukama/systems/node/state => ../state
+
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/golang/protobuf v1.5.4
@@ -19,6 +21,7 @@ require (
 	github.com/stretchr/testify v1.12.0
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/node/operation-monitor v0.0.0-00010101000000-000000000000
+	github.com/ukama/ukama/systems/node/state v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/operation/manager v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12

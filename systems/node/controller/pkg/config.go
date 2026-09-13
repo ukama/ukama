@@ -15,6 +15,7 @@ import (
 )
 
 type Config struct {
+	StateHost        string `default:"state:9090"`
 	uconf.BaseConfig `mapstructure:",squash"`
 	DB               *uconf.Database  `default:"{}"`
 	Grpc             *uconf.Grpc      `default:"{}"`
@@ -41,6 +42,7 @@ type OperationServices struct {
 
 func NewConfig(name string) *Config {
 	return &Config{
+		StateHost: "state:9090",
 		DB: &uconf.Database{
 			DbName: name,
 		},

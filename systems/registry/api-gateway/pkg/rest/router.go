@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strings"
@@ -72,6 +73,7 @@ type network interface {
 }
 
 type site interface {
+	AddSiteContext(context.Context, *sitepb.AddRequest) (*sitepb.AddResponse, error)
 	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude string, installDate string) (*sitepb.AddResponse, error)
 	GetSite(siteId string) (*sitepb.GetResponse, error)
 	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
@@ -403,20 +405,12 @@ func (r *Router) removeSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {
 
-	return r.clients.Site.AddSite(
-		req.NetworkId,
-		req.Name,
-		req.BackhaulId,
-		req.PowerId,
-		req.AccessId,
-		req.SwitchId,
-		req.Location,
-		req.SpectrumId,
-		req.IsDeactivated,
-		req.Latitude,
-		req.Longitude,
-		req.InstallDate,
-	)
+	return r.clients.Site.AddSiteContext(c.Request.Context(), &sitepb.AddRequest{
+		NetworkId: req.NetworkId, Name: req.Name, BackhaulId: req.BackhaulId,
+		PowerId: req.PowerId, AccessId: req.AccessId, SwitchId: req.SwitchId,
+		Location: req.Location, SpectrumId: req.SpectrumId, IsDeactivated: req.IsDeactivated,
+		Latitude: req.Latitude, Longitude: req.Longitude, InstallDate: req.InstallDate,
+	})
 }
 
 func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddResponse, error) {
