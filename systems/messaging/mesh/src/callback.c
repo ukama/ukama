@@ -288,10 +288,16 @@ int callback_forward(const URequest *request,
     responseStr = (char *)forward->data;
 
 done:
-    ulfius_set_binary_body_response(response,
-                                statusCode,
-                                forward->data,
-                                forward->size);
+    if (forward && forward->data) {
+        ulfius_set_binary_body_response(response,
+                                        statusCode,
+                                        forward->data,
+                                        forward->size);
+    } else {
+        ulfius_set_string_body_response(response,
+                                        statusCode,
+                                        responseStr ? responseStr : "");
+    }
     remove_item_from_list(map->forwardList, uuidStr);
     free(host);
     free(port);

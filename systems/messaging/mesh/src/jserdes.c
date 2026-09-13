@@ -141,6 +141,7 @@ static void serialize_message_data(URequest *request, char **data) {
 
     json_t *json, *jRaw;
 
+    *data = NULL;
     json = json_object();
     if (json == NULL) return;
     
@@ -166,17 +167,30 @@ static void serialize_message_data(URequest *request, char **data) {
 		add_map_to_request(&json, request->map_post_body, MESH_MAP_TYPE_POST);
 	}
 
-	/* And finally add raw binary data. Currently we assume raw is char* */
-	if (request->binary_body_length > 0 && request->binary_body != NULL ){
-		json_object_set_new(json, JSON_RAW_DATA, json_object());
-		jRaw = json_object_get(json, JSON_RAW_DATA);
-		json_object_set_new(jRaw, JSON_LENGTH,
-							json_integer((int)request->binary_body_length));
-		json_object_set_new(jRaw, JSON_DATA,
-							json_string((char *)request->binary_body));
-	}
+    /* HTTP bodies have an explicit length; they need not end in NUL. */
+    if (request->binary_body_length > 0) {
+        if (request->binary_body == NULL) goto error;
+
+        if (json_object_set_new(json, JSON_RAW_DATA, json_object()) != 0) {
+            goto error;
+        }
+        jRaw = json_object_get(json, JSON_RAW_DATA);
+
+        if (json_object_set_new(jRaw, JSON_LENGTH,
+                                json_integer(request->binary_body_length)) != 0 ||
+            json_object_set_new(jRaw, JSON_DATA,
+                                json_stringn(request->binary_body,
+                                             request->binary_body_length)) != 0) {
+            goto error;
+        }
+    }
 
     *data = json_dumps(json, JSON_ENCODE_ANY);
+    json_decref(json);
+    return;
+
+error:
+    log_error("Unable to serialize request body");
     json_decref(json);
 }
 
@@ -184,32 +198,37 @@ int serialize_websocket_message(char **str,
                                 URequest *request,
                                 char *uuid) {
 
-    json_t *json=NULL;
-	json_t *jRequest=NULL;
-    char *data=NULL;
+    json_t *json = NULL;
+    json_t *jRequest = NULL;
+    char *data = NULL;
 
-	json = json_object();
-	if (json == NULL) {
-        *str = NULL;
-		return FALSE;
-	}
-
-	json_object_set_new(json, JSON_TYPE, json_string(UKAMA_SERVICE_REQUEST));
-	json_object_set_new(json, JSON_UUID, json_string(uuid));
-
+    *str = NULL;
     serialize_message_data(request, &data);
-	json_object_set_new(json, JSON_MESSAGE, json_object());
+    if (data == NULL) return FALSE;
 
-	jRequest = json_object_get(json, JSON_MESSAGE);
-	json_object_set_new(jRequest, JSON_LENGTH, json_integer(strlen(data)));
-	json_object_set_new(jRequest, JSON_DATA,   json_string(data));
+    json = json_object();
+    if (json == NULL) goto done;
+
+    if (json_object_set_new(json, JSON_TYPE,
+                            json_string(UKAMA_SERVICE_REQUEST)) != 0 ||
+        json_object_set_new(json, JSON_UUID, json_string(uuid)) != 0 ||
+        json_object_set_new(json, JSON_MESSAGE, json_object()) != 0) {
+        goto done;
+    }
+
+    jRequest = json_object_get(json, JSON_MESSAGE);
+    if (json_object_set_new(jRequest, JSON_LENGTH,
+                            json_integer(strlen(data))) != 0 ||
+        json_object_set_new(jRequest, JSON_DATA, json_string(data)) != 0) {
+        goto done;
+    }
 
     *str = json_dumps(json, JSON_ENCODE_ANY);
 
+done:
     json_decref(json);
     free(data);
-
-	return TRUE;
+    return *str != NULL;
 }
 
 int deserialize_system_info(SystemInfo **systemInfo, json_t *json) {
