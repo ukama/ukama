@@ -70,7 +70,13 @@ if [ "${ULAB_PUBLISH_NODE_PORTS:-0}" = "1" ]; then
                 -p 18028:18028 \
                 -p 18029:18029/udp \
                 -p 18030:18030 \
-                -p 18033:18033"
+                -p 127.0.0.1:${ULAB_LIFECYCLE_TOWER_HOST_PORT:-18033}:${ULAB_LIFECYCLE_PORT:-18033}"
+            ;;
+        *-cnode-*)
+            PUBLISH_ARGS="-p 127.0.0.1:${ULAB_LIFECYCLE_CONTROLLER_HOST_PORT:-18034}:${ULAB_LIFECYCLE_PORT:-18033}"
+            ;;
+        *-anode-*)
+            PUBLISH_ARGS="-p 127.0.0.1:${ULAB_LIFECYCLE_AMPLIFIER_HOST_PORT:-18035}:${ULAB_LIFECYCLE_PORT:-18033}"
             ;;
     esac
 fi
