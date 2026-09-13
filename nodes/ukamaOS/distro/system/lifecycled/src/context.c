@@ -116,6 +116,13 @@ static void enqueue_event_locked(LifecycleContext *ctx) {
              sizeof(event->configMode),
              "%s", ctx->fsm.configMode);
     event->configGeneration = ctx->fsm.configGeneration;
+    if (ctx->fsm.state == LIFECYCLE_STATE_READY &&
+        ctx->configuration.available &&
+        strcmp(ctx->configuration.mode, "NONE") == 0 &&
+        ctx->configuration.generation == ctx->fsm.configGeneration) {
+        snprintf(event->requestId, sizeof(event->requestId), "%s",
+                 ctx->configuration.requestId);
+    }
     ctx->eventCount++;
 }
 
@@ -249,6 +256,13 @@ static void poll_and_reduce(LifecycleContext *ctx) {
                        ctx->config->starterUnavailableTimeoutSec,
                        ctx->config->configUnavailableTimeoutSec,
                        lifecycle_boottime_ms(), lifecycle_epoch_sec());
+
+    /* A cancellation received while already READY still needs an event. */
+    if (ctx->fsm.sequence == before.sequence &&
+        ctx->fsm.state == LIFECYCLE_STATE_READY &&
+        ctx->fsm.configGeneration != before.configGeneration) {
+        ctx->fsm.sequence++;
+    }
 
     if (ctx->fsm.sequence != before.sequence) {
         ctx->reannouncePending = false;

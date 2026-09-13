@@ -219,6 +219,26 @@ def run():
                           if event["metadata"]["bootId"] == "boot-2"]
             assert values == ["INIT", "READY", "CONFIGURING", "OPERATIONAL"], values
             print("PASS: new boot consumes the retained decision through the complete flow")
+
+            def cleared(request_id):
+                with peers.lock:
+                    return any(event["value"] == "READY" and
+                               event["metadata"]["requestId"] == request_id and
+                               event["metadata"]["configMode"] == "NONE"
+                               for event in peers.events)
+
+            with peers.lock:
+                peers.config.update(mode="NONE", phase="awaiting",
+                                    requestId="assignment-1", generation=4)
+            wait(lambda: cleared("assignment-1"), "correlated cancellation confirmation")
+            state("READY")
+            with peers.lock:
+                peers.config.update(requestId="cancel-before-post", generation=5)
+            wait(lambda: cleared("cancel-before-post"), "cancellation while already READY")
+            stop()
+            start()
+            state("READY")
+            print("PASS: cancellation reports its identity, including DELETE before POST and restart")
         finally:
             stop()
             for peer in servers.values():
