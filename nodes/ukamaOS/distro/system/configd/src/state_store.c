@@ -668,11 +668,82 @@ done:
     return result;
 }
 
-static int request_was_deleted(const ConfigRecord *record,
-                                const char *requestId) {
+/* Cancellation markers outlive later assignments and daemon restarts. */
+static int cancellation_path(ConfigStateStore *store, const char *requestId,
+                              char *path, size_t size) {
 
-    return record->mode == CONFIG_MODE_NONE && record->generation != 0 &&
-        strcmp(record->requestId, requestId) == 0;
+    return snprintf(path, size, "%s/cancelled-%s", store->directory,
+                    requestId) < (int)size ? 0 : -1;
+}
+
+static int request_was_deleted(ConfigStateStore *store, const char *requestId) {
+
+    char path[PATH_MAX];
+    struct stat info;
+
+    if (store->record.mode == CONFIG_MODE_NONE &&
+        store->record.generation != 0 &&
+        strcmp(store->record.requestId, requestId) == 0) {
+        return 1;
+    }
+    if (cancellation_path(store, requestId, path, sizeof(path)) != 0) {
+        return -1;
+    }
+    if (lstat(path, &info) == 0) {
+        return S_ISREG(info.st_mode) ? 1 : -1;
+    }
+    return errno == ENOENT ? 0 : -1;
+}
+
+int config_store_cancel(ConfigStateStore *store, const char *requestId) {
+
+    ConfigRecord record = {0};
+    char path[PATH_MAX];
+    int fd;
+    int result = STORE_UNAVAILABLE;
+
+    if (!config_store_valid_id(requestId)) {
+        return STORE_BAD_REQUEST;
+    }
+    pthread_mutex_lock(&store->mutex);
+    if (recover_write(store) != 0 ||
+        strcmp(store->record.error, "state_invalid_or_unreadable") == 0 ||
+        cancellation_path(store, requestId, path, sizeof(path)) != 0) {
+        goto done;
+    }
+
+    /* Write the fence first, even if POST has not arrived yet. */
+    fd = open(path, O_WRONLY | O_CREAT | O_CLOEXEC | O_NOFOLLOW, 0600);
+    if (fd < 0) {
+        goto done;
+    }
+    result = fsync(fd);
+    if (close(fd) != 0 || result != 0 ||
+        sync_directory(store->directory) != 0) {
+        result = STORE_UNAVAILABLE;
+        goto done;
+    }
+    result = STORE_CONFLICT;
+    if (store->record.mode != CONFIG_MODE_NONE &&
+        strcmp(store->record.requestId, requestId) != 0) {
+        goto done;
+    }
+    if (store->record.mode == CONFIG_MODE_NONE &&
+        strcmp(store->record.requestId, requestId) == 0) {
+        result = STORE_OK;
+        goto done;
+    }
+    result = STORE_UNAVAILABLE;
+    if (store->record.generation >= INT64_MAX) {
+        goto done;
+    }
+    record.generation = store->record.generation + 1;
+    snprintf(record.requestId, sizeof(record.requestId), "%s", requestId);
+    result = commit_record(store, &record);
+
+done:
+    pthread_mutex_unlock(&store->mutex);
+    return result;
 }
 
 int config_store_noconfig(ConfigStateStore *store, const char *requestId) {
@@ -696,7 +767,11 @@ int config_store_noconfig(ConfigStateStore *store, const char *requestId) {
         goto done;
     }
 
-    if (request_was_deleted(&record, requestId) ||
+    if (request_was_deleted(store, requestId) < 0) {
+        result = STORE_UNAVAILABLE;
+        goto done;
+    }
+    if (request_was_deleted(store, requestId) ||
         record.mode == CONFIG_MODE_CONFIG ||
         (record.mode == CONFIG_MODE_NOCONFIG &&
          strcmp(record.requestId, requestId) != 0)) {
@@ -754,7 +829,10 @@ int config_store_begin(ConfigStateStore *store, const char *requestId,
         goto done;
     }
 
-    if (request_was_deleted(&store->record, requestId)) {
+    if (request_was_deleted(store, requestId) < 0) {
+        goto done;
+    }
+    if (request_was_deleted(store, requestId)) {
         result = STORE_CONFLICT;
         goto done;
     }
