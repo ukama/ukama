@@ -15,6 +15,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type provisionNode struct {
@@ -30,6 +32,26 @@ type provisionResult struct {
 	Completed bool   `json:"completed"`
 	Cancelled bool   `json:"cancelled"`
 	Cleared   bool   `json:"cleared"`
+}
+
+// The gateway uses protobuf JSON (requestId); older responses used request_id.
+func (r *provisionResult) UnmarshalJSON(data []byte) error {
+	type result provisionResult
+	var wire struct {
+		result
+		RequestID string `json:"requestId"`
+	}
+	if err := json.Unmarshal(data, &wire); err != nil {
+		return err
+	}
+	if wire.RequestID != "" {
+		if wire.result.RequestID != "" && wire.result.RequestID != wire.RequestID {
+			return fmt.Errorf("conflicting configuration request IDs")
+		}
+		wire.result.RequestID = wire.RequestID
+	}
+	*r = provisionResult(wire.result)
+	return nil
 }
 
 type provisionClient interface {
@@ -96,7 +118,11 @@ func (c *nodeProvisionClient) request(ctx context.Context, method, path string, 
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Warnf("Failed to close node response: %v", err)
+		}
+	}()
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("node %s %s: HTTP %d", method, path, resp.StatusCode)
 	}

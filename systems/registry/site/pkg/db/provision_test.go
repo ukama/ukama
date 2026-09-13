@@ -35,9 +35,9 @@ func TestProvisionRecoveryDatabase(t *testing.T) {
 	ctx := context.Background()
 	site := &Site{NetworkId: uuid.NewV4(), Name: "test-" + uuid.NewV4().String(), AccessId: uuid.NewV4()}
 	nodes := []string{uuid.NewV4().String(), uuid.NewV4().String(), uuid.NewV4().String()}
-	op, err := repo.Begin(ctx, site, nodes)
+	op, err := repo.Create(ctx, site, nodes)
 	require.NoError(t, err)
-	duplicate, err := repo.Begin(ctx, site, nodes)
+	duplicate, err := repo.Create(ctx, site, nodes)
 	require.NoError(t, err)
 	require.Equal(t, op.ID, duplicate.ID)
 	op.Phase = "cancelling"
@@ -57,7 +57,7 @@ func TestProvisionRecoveryDatabase(t *testing.T) {
 	var count int64
 	require.NoError(t, database.Model(&ProvisionReservation{}).Where("operation_id = ?", op.ID).Count(&count).Error)
 	require.Zero(t, count)
-	retry, err := repo.Begin(ctx, site, nodes)
+	retry, err := repo.Create(ctx, site, nodes)
 	require.NoError(t, err)
 	require.NotEqual(t, op.ID, retry.ID)
 	retry.LeaseID = "crashed-worker"
@@ -83,7 +83,7 @@ func TestProvisionRecoveryDatabase(t *testing.T) {
 	saved, err := repo.Get(ctx, retry.ID)
 	require.NoError(t, err)
 	require.Equal(t, "publishing", saved.Phase)
-	_, err = repo.Begin(ctx, &Site{NetworkId: site.NetworkId, Name: "conflict"}, nodes)
+	_, err = repo.Create(ctx, &Site{NetworkId: site.NetworkId, Name: "conflict"}, nodes)
 	require.Error(t, err)
 
 }

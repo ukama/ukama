@@ -44,8 +44,8 @@ func lifecycleDatabase(t *testing.T) *gorm.DB {
 	require.NoError(t, connection.Exec("CREATE SCHEMA "+schema).Error)
 	require.NoError(t, connection.Exec("SET search_path TO "+schema).Error)
 	t.Cleanup(func() {
-		connection.Exec("DROP SCHEMA " + schema + " CASCADE")
-		sqlDB.Close()
+		require.NoError(t, connection.Exec("DROP SCHEMA "+schema+" CASCADE").Error)
+		require.NoError(t, sqlDB.Close())
 	})
 	require.NoError(t, connection.AutoMigrate(&db.NodeConfig{}, &db.State{}, &db.LifecycleRecord{}, &db.LifecyclePublication{}))
 	return connection
@@ -106,7 +106,7 @@ func TestLifecyclePersistenceAndRecovery(t *testing.T) {
 	// changes must roll back, permitting the same notification to retry.
 	require.NoError(t, connection.Callback().Create().Before("gorm:create").Register("test:reject_operational", func(tx *gorm.DB) {
 		if item, ok := tx.Statement.Dest.(*db.LifecyclePublication); ok && item.State == "Operational" {
-			tx.AddError(errors.New("injected publication write failure"))
+			_ = tx.AddError(errors.New("injected publication write failure"))
 		}
 	}))
 	require.Error(t, observe("a", "OPERATIONAL", 4, requestID))

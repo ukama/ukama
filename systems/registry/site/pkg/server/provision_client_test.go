@@ -58,3 +58,24 @@ func TestProvisionClientRejectsUncorrelatedStatus(t *testing.T) {
 		})
 	}
 }
+
+func TestProvisionStatusJSONSpellings(t *testing.T) {
+	for _, body := range []string{
+		`{"configuration":{"requestId":"attempt-1","completed":true}}`,
+		`{"configuration":{"request_id":"attempt-1","completed":true}}`,
+	} {
+		t.Run(body, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
+			defer server.Close()
+			client := &nodeProvisionClient{url: server.URL, http: server.Client()}
+			result, err := client.Reconcile(context.Background(), provisionNode{NodeID: "node", RequestID: "attempt-1", Action: "status"})
+			require.NoError(t, err)
+			require.True(t, result.Completed)
+			require.Equal(t, "attempt-1", result.RequestID)
+		})
+	}
+	for _, body := range []string{`{"request_id":"old","requestId":"new"}`, `{"completed":"invalid"}`} {
+		var result provisionResult
+		require.Error(t, json.Unmarshal([]byte(body), &result))
+	}
+}
