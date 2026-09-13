@@ -647,6 +647,23 @@ int process_delete_config(Config *config) {
     return result;
 }
 
+int process_cancel_config(Config *config, const char *requestId) {
+
+    int result;
+
+    if (!config || !config->stateStore) {
+        return 503;
+    }
+    pthread_mutex_lock(&transactionMutex);
+    result = config_store_cancel(config->stateStore, requestId);
+    if (result == 200) {
+        config_session_clear(config);
+        config_status_set(config, CONFIG_APPLY_AWAITING, NULL, true);
+    }
+    pthread_mutex_unlock(&transactionMutex);
+    return result;
+}
+
 void free_session_data(SessionData *s) {
 
     if (s == NULL) return;

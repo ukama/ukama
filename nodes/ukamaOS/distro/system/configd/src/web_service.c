@@ -214,15 +214,26 @@ int web_service_cb_delete_config(const URequest *request,
                                  UResponse *response,
                                  void *epConfig) {
 
+    json_t *body;
+    const char *requestId;
     int result;
 
-    if (request->binary_body_length != 0) {
-        ulfius_set_string_body_response(response, HttpStatus_BadRequest,
-                                        "DELETE_does_not_accept_a_body");
-        return U_CALLBACK_CONTINUE;
+    if (request->binary_body_length == 0) {
+        result = process_delete_config(epConfig);
+    } else {
+        body = ulfius_get_json_body_request(request, NULL);
+        requestId = json_string_value(json_object_get(body, "requestId"));
+        if (!json_is_object(body) || json_object_size(body) != 1 ||
+            !config_store_valid_id(requestId) ||
+            json_string_length(json_object_get(body, "requestId")) != strlen(requestId)) {
+            json_decref(body);
+            ulfius_set_string_body_response(response, HttpStatus_BadRequest,
+                                            "invalid_cancellation_request");
+            return U_CALLBACK_CONTINUE;
+        }
+        result = process_cancel_config(epConfig, requestId);
+        json_decref(body);
     }
-
-    result = process_delete_config(epConfig);
     if (result == HttpStatus_OK) {
         return web_service_cb_config_status(request, response, epConfig);
     }
