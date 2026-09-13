@@ -23,7 +23,7 @@ const configTimeout = 60 * time.Second
 const configPoll = time.Second
 
 type provisionStore interface {
-	Begin(context.Context, *db.Site, []string) (*db.SiteProvision, error)
+	Create(context.Context, *db.Site, []string) (*db.SiteProvision, error)
 	Get(context.Context, string) (*db.SiteProvision, error)
 	Pending(context.Context) ([]db.SiteProvision, error)
 	Save(context.Context, *db.SiteProvision) error
@@ -187,7 +187,7 @@ func (s *SiteServer) addProvisionedSite(ctx context.Context, site *db.Site, node
 	if s.provisions == nil {
 		return nil, fmt.Errorf("site provisioning is not initialized")
 	}
-	op, err := s.provisions.Begin(ctx, site, nodes)
+	op, err := s.provisions.Create(ctx, site, nodes)
 	if err != nil {
 		return nil, err
 	}

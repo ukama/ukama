@@ -115,7 +115,11 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Fatalf("Failed to connect to node-state: %v", err)
 	}
-	defer configurationState.Close()
+	defer func() {
+		if err := configurationState.Close(); err != nil {
+			log.Warnf("Failed to close node-state connection: %v", err)
+		}
+	}()
 	contServer.SetConfigurationState(configurationState)
 	controllerEventServer := server.NewControllerEventServer(svcConf.OrgName, contServer)
 

@@ -75,3 +75,73 @@ func TestConfigurationRecordFailurePreventsDispatch(t *testing.T) {
 	require.Error(t, err)
 	bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 }
+
+func TestConfigurationDispatchFailuresAndReplay(t *testing.T) {
+	for _, test := range []struct {
+		name             string
+		cancel           bool
+		receipt          *spb.ConfigurationStatus
+		recordErr        error
+		cancelledContext bool
+		noState          bool
+		noBus            bool
+		publishErr       error
+		wantPublish      bool
+		wantErr          bool
+	}{
+		{name: "missing state", noState: true, wantErr: true},
+		{name: "missing receipt", wantErr: true},
+		{name: "record failure", recordErr: errors.New("write failed"), wantErr: true},
+		{name: "completed replay", receipt: &spb.ConfigurationStatus{Completed: true}},
+		{name: "cleared replay", cancel: true, receipt: &spb.ConfigurationStatus{Cleared: true}},
+		{name: "cancelled context", receipt: &spb.ConfigurationStatus{}, cancelledContext: true, wantErr: true},
+		{name: "missing bus", receipt: &spb.ConfigurationStatus{}, noBus: true, wantErr: true},
+		{name: "dispatch failure", receipt: &spb.ConfigurationStatus{}, publishErr: errors.New("broker down"), wantPublish: true, wantErr: true},
+		{name: "cancel dispatch failure", cancel: true, receipt: &spb.ConfigurationStatus{}, publishErr: errors.New("broker down"), wantPublish: true, wantErr: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			bus := &mbmocks.MsgBusServiceClient{}
+			server := &ControllerServer{orgName: "org", msgbus: bus}
+			if test.noBus {
+				server.msgbus = nil
+			}
+			if !test.noState {
+				server.SetConfigurationState(configurationRecorder(func(context.Context, *spb.RecordConfigurationRequest) (*spb.ConfigurationStatus, error) {
+					return test.receipt, test.recordErr
+				}))
+			}
+			if test.wantPublish {
+				bus.On("PublishRequest", mock.Anything, mock.Anything).Return(test.publishErr).Once()
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if test.cancelledContext {
+				cancel()
+			}
+			node := "uk-983794-hnode-78-7830"
+			var err error
+			if test.cancel {
+				_, err = server.DeleteNodeConfig(ctx, &pb.DeleteNodeConfigRequest{NodeId: node, RequestId: "attempt", SiteId: "site", NetworkId: "network"})
+			} else {
+				_, err = server.ConfigNode(ctx, &pb.ConfigNodeRequest{NodeId: node, RequestId: "attempt", SiteId: "site", NetworkId: "network"})
+			}
+			if test.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			bus.AssertExpectations(t)
+			if !test.wantPublish {
+				bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+			}
+		})
+	}
+}
+
+func TestConfigurationRejectsInvalidNode(t *testing.T) {
+	server := &ControllerServer{}
+	_, err := server.ConfigNode(context.Background(), &pb.ConfigNodeRequest{NodeId: "bad"})
+	require.Error(t, err)
+	_, err = server.DeleteNodeConfig(context.Background(), &pb.DeleteNodeConfigRequest{NodeId: "bad"})
+	require.Error(t, err)
+}

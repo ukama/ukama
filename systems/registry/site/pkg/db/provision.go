@@ -40,7 +40,7 @@ type ProvisionRepo struct{ db *gorm.DB }
 
 func NewProvisionRepo(db *gorm.DB) *ProvisionRepo { return &ProvisionRepo{db: db} }
 
-func (r *ProvisionRepo) Begin(ctx context.Context, site *Site, nodes []string) (*SiteProvision, error) {
+func (r *ProvisionRepo) Create(ctx context.Context, site *Site, nodes []string) (*SiteProvision, error) {
 	op := &SiteProvision{}
 	if len(nodes) != 3 || nodes[0] == nodes[1] || nodes[0] == nodes[2] || nodes[1] == nodes[2] {
 		return nil, fmt.Errorf("site requires exactly three distinct nodes")

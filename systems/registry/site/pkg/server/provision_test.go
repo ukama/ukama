@@ -34,7 +34,7 @@ type memoryProvisions struct {
 	begin func(*db.Site, []string) (*db.SiteProvision, error)
 }
 
-func (m *memoryProvisions) Begin(_ context.Context, site *db.Site, nodes []string) (*db.SiteProvision, error) {
+func (m *memoryProvisions) Create(_ context.Context, site *db.Site, nodes []string) (*db.SiteProvision, error) {
 	return m.begin(site, nodes)
 }
 func (m *memoryProvisions) Get(_ context.Context, _ string) (*db.SiteProvision, error) {
