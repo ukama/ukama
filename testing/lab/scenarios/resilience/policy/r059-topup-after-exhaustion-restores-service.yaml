@@ -1,0 +1,146 @@
+version: 1
+name: r059-topup-after-exhaustion-restores-service
+description: Exhaust the only plan and reject a fresh attach; buying a new plan must restore attachment without reactivating the exhausted plan.
+seed: 6159
+suite: resilience
+priority: p1
+tags: [virtual, policy, runtime, exhaustion, recovery]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  ues_per_site: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 2
+    duration_minutes: 30
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 10
+    duration_minutes: 30
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: exhaust
+    events:
+      - type: toggle_service
+        sites: all
+        state: 'on'
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+      - type: traffic
+        ues: all
+        amount_mb: 2
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+    checks:
+      - type: package_state
+        ues: all
+        package: base
+        expected: inactive
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: no_credit
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 20
+        expect:
+          result: failure
+          error_contains: script failed
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: buy_after_exhaustion
+    events:
+      - type: purchase_package
+        ues: all
+        package: next
+    checks:
+      - type: package_state
+        ues: all
+        package: next
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: base
+        expected: inactive
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: resume
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+      - type: traffic
+        ues: all
+        amount_mb: 2
+    checks:
+      - type: package_state
+        ues: all
+        package: next
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+final_checks:
+  - type: usage_per_sim
+    ues: all
+    expected: from_model
+    tolerance_percent: 2
+    timeout_seconds: 300
+    poll_seconds: 5
+  - type: payment_count
+    ues: all
+    package: next
+    expected_count: 1
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: next

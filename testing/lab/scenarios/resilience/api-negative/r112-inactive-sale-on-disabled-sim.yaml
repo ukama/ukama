@@ -1,0 +1,165 @@
+version: 1
+name: r112-inactive-sale-on-disabled-sim
+description: Reject inactive sale on a disabled SIM without delayed ledger effects; corrected retry must create one paid entitlement and preserve SIM status.
+seed: 6212
+suite: resilience
+priority: p1
+tags: [virtual, api-negative, backend-only, negative, contract, atomicity]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_bff: [networks, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 100
+    duration_days: 1
+    amount: 5.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+    active: false
+phases:
+  - name: prepare
+    events:
+      - type: toggle_sim_status
+        ues: all
+        status: service_off
+      - type: wait_sim_status
+        ues: all
+        status: service_off
+        seconds: 120
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: reject
+    events:
+      - type: purchase_package
+        ues: all
+        package: next
+        expect:
+          result: failure
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 0
+        immediate: true
+      - type: package_state
+        ues: all
+        package: next
+        expected: absent
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+  - name: settle
+    events:
+      - type: wait
+        seconds: 30
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 0
+        immediate: true
+      - type: package_state
+        ues: all
+        package: next
+        expected: absent
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 1
+        immediate: true
+  - name: correct_and_retry
+    events:
+      - type: set_package_active
+        package: next
+        active: true
+      - type: purchase_package
+        ues: all
+        package: next
+      - type: wait_sim_status
+        ues: all
+        status: service_off
+        seconds: 120
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: all
+        package: next
+        expected: queued
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: next
+        expected_count: 1
+        immediate: true
+      - type: payment_equals
+        ues: all
+        package: next
+        status: settled
+        payment_method: cash
+        currency: USD
+        expected_value: 5.0
+        tolerance: 0.001
+        required: true
+        immediate: true
+final_checks:
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: next
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 6.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5

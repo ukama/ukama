@@ -1,0 +1,103 @@
+version: 1
+name: r032-tower-outage-network-isolation
+description: A tower outage in network one must leave network two online with unchanged node and site lists.
+seed: 6132
+suite: resilience
+priority: p1
+tags: [virtual, outage, nodes, network-isolation]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 2
+  sites_per_network: 1
+  ues_per_site: 0
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: disconnect_first
+    events:
+      - type: disconnect_nodes
+        nodes: tower-site-001-001
+      - type: wait_node_connectivity
+        nodes: tower-site-001-001
+        connectivity: Offline
+        seconds: 180
+    checks:
+      - type: node_status_equals
+        nodes: tower-site-001-001
+        connectivity: Offline
+        state: Operational
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true
+      - type: site_node_counts_equals
+        sites: site-001
+        total: 3
+        online: 2
+        offline: 1
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true
+      - type: site_node_counts_equals
+        sites: site-002
+        total: 3
+        online: 3
+        offline: 0
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true
+      - type: list_count_equals
+        target: nodes
+        networks: net-001
+        expected_count: 3
+        immediate: true
+      - type: list_count_equals
+        target: nodes
+        networks: net-002
+        expected_count: 3
+        immediate: true
+      - type: list_count_equals
+        target: sites
+        networks: net-002
+        expected_count: 1
+        immediate: true
+  - name: recover_first
+    events:
+      - type: reconnect_nodes
+        nodes: tower-site-001-001
+      - type: wait_node_connectivity
+        nodes: tower-site-001-001
+        connectivity: Online
+        seconds: 300
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true
+      - type: site_node_counts_equals
+        sites: site-001
+        total: 3
+        online: 3
+        offline: 0
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true
+      - type: site_node_counts_equals
+        sites: site-002
+        total: 3
+        online: 3
+        offline: 0
+        timeout_seconds: 180
+        poll_seconds: 2
+        immediate: true

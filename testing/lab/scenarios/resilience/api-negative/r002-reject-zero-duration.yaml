@@ -1,0 +1,47 @@
+version: 1
+name: r002-reject-zero-duration
+description: Reject a plan with zero duration; preserve the valid catalog and leave the rejected name available.
+seed: 6102
+suite: resilience
+priority: p1
+tags: [virtual, api-negative, backend-only, negative]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, packages]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+phases:
+  - name: reject_invalid_input
+    events:
+      - type: create_invalid_package
+        package: base
+        variant: duration
+        expect:
+          result: failure
+    checks:
+      - type: package_name_available
+        package: base
+        variant: duration
+        immediate: true
+      - type: package_fields_equal
+        package: base
+        networks: all
+        immediate: true
+      - type: list_count_equals
+        target: packages
+        networks: net-001
+        expected_count: 1
+        immediate: true

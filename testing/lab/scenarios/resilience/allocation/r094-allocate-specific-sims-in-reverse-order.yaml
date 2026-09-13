@@ -1,0 +1,97 @@
+version: 1
+name: r094-allocate-specific-sims-in-reverse-order
+description: Allocate the second fixture ICCID first, then the first; neither allocation may consume or substitute the other SIM.
+seed: 6194
+suite: resilience
+priority: p1
+tags: [virtual, allocation, backend-only, allocation-order]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 0
+  ues_per_site: 0
+  sims_per_network: 2
+setup:
+  create_via_bff: [networks, packages, subscribers]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+phases:
+  - name: second_first
+    events:
+      - type: allocate_sim
+        ues: ue-000002
+        package: base
+        variant: specific
+    checks:
+      - type: sim_unallocated
+        ues: ue-000001
+        immediate: true
+      - type: sim_unallocated
+        ues: ue-000002
+        expected: 'false'
+        immediate: true
+      - type: package_assignment_count
+        ues: ue-000002
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: ue-000002
+        package: base
+        expected_count: 1
+        immediate: true
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 1
+        immediate: true
+  - name: first_second
+    events:
+      - type: allocate_sim
+        ues: ue-000001
+        package: base
+        variant: specific
+    checks:
+      - type: sim_unallocated
+        ues: all
+        expected: 'false'
+        immediate: true
+      - type: package_assignment_count
+        ues: all
+        expected_count: 1
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: payment_count
+        ues: all
+        package: base
+        expected_count: 2
+        immediate: true
+      - type: list_count_equals
+        target: sims
+        networks: net-001
+        expected_count: 2
+        immediate: true
+final_checks:
+  - type: payment_entitlement_reconciles
+    ues: all
+    package: base
+  - type: kpi_value
+    key: REVENUE
+    span: daily
+    op: SUM
+    networks: net-001
+    expected_value: 2.0
+    tolerance: 0.001
+    timeout_seconds: 600
+    poll_seconds: 5

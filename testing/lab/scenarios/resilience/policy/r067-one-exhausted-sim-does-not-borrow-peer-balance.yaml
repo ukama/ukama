@@ -1,0 +1,148 @@
+version: 1
+name: r067-one-exhausted-sim-does-not-borrow-peer-balance
+description: Exhaust only the first SIM; the second SIM must retain its own active entitlement, and a top-up must restore only the first SIM.
+seed: 6167
+suite: resilience
+priority: p1
+tags: [virtual, policy, runtime, isolation, exhaustion]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  ues_per_site: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links, packages, subscribers, sims]
+packages:
+  - ref: base
+    name: Resilience Base
+    data_mb: 2
+    duration_minutes: 60
+    amount: 1.0
+    currency: USD
+    country: USA
+    assign_percent: 100
+  - ref: next
+    name: Resilience Next
+    data_mb: 10
+    duration_minutes: 60
+    amount: 2.0
+    currency: USD
+    country: USA
+    assign_percent: 0
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: start
+    events:
+      - type: toggle_service
+        sites: all
+        state: 'on'
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: all
+        seconds: 90
+    checks: []
+  - name: exhaust_first
+    events:
+      - type: traffic
+        ues: ue-000001
+        amount_mb: 2
+      - type: finalize_ue_sessions
+        ues: ue-000001
+        seconds: 60
+    checks:
+      - type: package_state
+        ues: ue-000001
+        package: base
+        expected: inactive
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: ue-000002
+        package: base
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: reject_first_and_use_peer
+    events:
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
+        seconds: 20
+        expect:
+          result: failure
+          error_contains: script failed
+      - type: traffic
+        ues: ue-000002
+        amount_mb: 1
+    checks:
+      - type: package_state
+        ues: ue-000002
+        package: base
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: topup_first
+    events:
+      - type: purchase_package
+        ues: ue-000001
+        package: next
+    checks:
+      - type: package_state
+        ues: ue-000001
+        package: next
+        expected: active
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+      - type: package_state
+        ues: ue-000002
+        package: next
+        expected: absent
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: resume_first
+    events:
+      - type: start_ues
+        ues: ue-000001
+      - type: wait_ues_attached
+        ues: ue-000001
+        seconds: 180
+      - type: wait_ue_sessions
+        ues: ue-000001
+        seconds: 90
+      - type: traffic
+        ues: ue-000001
+        amount_mb: 2
+    checks: []
+final_checks:
+  - type: usage_per_sim
+    ues: all
+    expected: from_model
+    tolerance_percent: 2
+    timeout_seconds: 300
+    poll_seconds: 5
+  - type: payment_count
+    ues: all
+    package: base
+    expected_count: 2
+  - type: payment_count
+    ues: all
+    package: next
+    expected_count: 1
