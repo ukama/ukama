@@ -1210,6 +1210,8 @@ int bff_wait_site_anchor_online(bff_client_t *c,
     if (sleep_sec == 0) sleep_sec = 5u;
 
     elapsed = 0;
+    state[0] = '\0';
+    connectivity[0] = '\0';
 
     while (elapsed <= timeout_sec) {
         snprintf(vars, sizeof(vars),
@@ -1250,11 +1252,11 @@ int bff_wait_site_anchor_online(bff_client_t *c,
                                     sizeof(site->longitude));
 
                 if (ulab_streq(connectivity, "Online") &&
-                    ulab_streq(state, "Unknown") &&
+                    ulab_streq(state, "Ready") &&
                     site->latitude[0] != '\0' &&
                     site->longitude[0] != '\0') {
                     json_decref(root);
-                    ulab_status("BACKEND", "site %s anchor online %s lat=%s lng=%s",
+                    ulab_status("BACKEND", "site %s anchor online/ready %s lat=%s lng=%s",
                                 site->ref, site->tnode_id, site->latitude,
                                 site->longitude);
                     return ULAB_OK;
@@ -1265,8 +1267,10 @@ int bff_wait_site_anchor_online(bff_client_t *c,
         json_decref(root);
 
         if (found) {
-            ulab_status("BACKEND", "waiting site %s anchor online/location",
-                        site->ref);
+            ulab_status("BACKEND", "waiting site %s anchor online/ready/location "
+                        "state=%s connectivity=%s lat=%s lng=%s",
+                        site->ref, state, connectivity,
+                        site->latitude, site->longitude);
         } else {
             ulab_status("BACKEND", "waiting site %s anchor in registry",
                         site->ref);
@@ -1277,8 +1281,9 @@ int bff_wait_site_anchor_online(bff_client_t *c,
     }
 
     snprintf(err->msg, sizeof(err->msg),
-             "site %s tnode %s did not become Online/Unknown with lat/lng",
-             site->ref, site->tnode_id);
+             "site %s tnode %s did not become Online/Ready with lat/lng "
+             "(last state=%s connectivity=%s)",
+             site->ref, site->tnode_id, state, connectivity);
     return ULAB_ERR;
 }
 
