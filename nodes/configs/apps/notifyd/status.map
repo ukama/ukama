@@ -2,3 +2,4 @@
 noded TRX temp1Sens alarm high 8401
 noded COM temp2 event low 8700
 deviced none node event high 8100
+lifecycle node state event low 8101
