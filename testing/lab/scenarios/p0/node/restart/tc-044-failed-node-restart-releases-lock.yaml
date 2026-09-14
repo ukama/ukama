@@ -27,6 +27,21 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: start_failed_restart
     events:
       - type: failure_control
@@ -41,26 +56,47 @@ phases:
         count_per_network: 1
         busy: true
         timeout_seconds: 60
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        timeout_seconds: 60
+        immediate: true
 
   - name: wait_for_restart_timeout
     checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300
+        immediate: true
       - type: node_operation_status_equals
         type_selector: controller
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+        immediate: true
 
   - name: restore_controller
     events:
       - type: failure_control
         target: node_restart
         state: off
-      - type: wait_nodes_ready
-        nodes: all
-    checks:
-      - type: node_status_equals
+      - type: wait_node_connectivity
         type_selector: controller
         count_per_network: 1
         connectivity: Online
+        seconds: 300
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
         state: Operational
-        timeout_seconds: 180
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true

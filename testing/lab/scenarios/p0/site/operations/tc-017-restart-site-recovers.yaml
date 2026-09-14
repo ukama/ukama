@@ -29,6 +29,21 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: establish_service
     events:
       - type: toggle_service
@@ -48,6 +63,9 @@ phases:
       - type: site_operation_status_equals
         sites: all
         busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
 
   - name: restart_site
     events:
@@ -58,6 +76,7 @@ phases:
         sites: all
         busy: true
         timeout_seconds: 60
+        immediate: true
 
   - name: wait_for_site_recovery
     events:
@@ -69,23 +88,32 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 300
-      - type: wait_nodes_ready
-        nodes: all
-      - type: wait_ues_attached
-        ues: all
-      - type: traffic
-        ues: all
-        amount_mb: 5
     checks:
       - type: node_status_equals
         nodes: all
         connectivity: Online
         state: Operational
-        timeout_seconds: 180
-      - type: traffic_allowed
-        ues: all
-        amount_mb: 1
+        timeout_seconds: 300
+        immediate: true
       - type: site_operation_status_equals
         sites: all
         busy: false
+        service_available: true
         timeout_seconds: 300
+        immediate: true
+
+  - name: enable_service_and_verify_traffic
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: wait_ues_attached
+        ues: all
+        seconds: 300
+      - type: traffic
+        ues: all
+        amount_mb: 5
+    checks:
+      - type: traffic_allowed
+        ues: all
+        amount_mb: 1

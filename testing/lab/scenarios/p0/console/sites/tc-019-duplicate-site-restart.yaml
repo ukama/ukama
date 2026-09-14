@@ -23,6 +23,21 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: start_restart
     events:
       - type: restart_site
@@ -31,7 +46,10 @@ phases:
       - type: site_operation_status_equals
         sites: all
         busy: true
+        restart_available: false
         timeout_seconds: 60
+        immediate: true
+
   - name: reject_duplicate
     events:
       - type: restart_site
@@ -42,9 +60,12 @@ phases:
       - type: site_operation_status_equals
         sites: all
         busy: false
+        restart_available: true
         timeout_seconds: 300
+        immediate: true
       - type: node_status_equals
         nodes: all
         connectivity: Online
         state: Operational
-        timeout_seconds: 180
+        timeout_seconds: 300
+        immediate: true

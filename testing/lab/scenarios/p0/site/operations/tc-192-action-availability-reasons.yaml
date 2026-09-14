@@ -25,12 +25,20 @@ runtime:
 phases:
   - name: healthy_actions_available
     checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
       - type: site_operation_status_equals
         sites: all
         busy: false
         restart_available: true
         rf_available: true
         service_available: true
+        immediate: true
+        timeout_seconds: 300
 
   - name: degraded_site_reported
     events:
@@ -49,6 +57,7 @@ phases:
         online: 2
         offline: 1
         timeout_seconds: 120
+        immediate: true
 
   - name: offline_actions_unavailable_with_reasons
     events:
@@ -72,8 +81,9 @@ phases:
         rf_reason: present
         service_reason: present
         timeout_seconds: 120
+        immediate: true
 
-  - name: recover_and_verify_busy_reasons
+  - name: restore_site_before_restart
     events:
       - type: reconnect_nodes
         nodes: all
@@ -81,14 +91,25 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 180
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
+
+  - name: restart_controller_and_verify_busy_reasons
+    events:
       - type: restart_nodes
         type_selector: controller
         count_per_network: 1
-      - type: wait_node_connectivity
-        type_selector: controller
-        count_per_network: 1
-        connectivity: Offline
-        seconds: 120
     checks:
       - type: site_operation_status_equals
         sites: all
@@ -100,7 +121,29 @@ phases:
         rf_reason: present
         service_reason: present
         timeout_seconds: 60
+        immediate: true
+
+  - name: wait_for_restart_completion
+    events:
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: controller
+        count_per_network: 1
+        connectivity: Online
+        seconds: 300
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
       - type: site_operation_status_equals
         sites: all
         busy: false
         timeout_seconds: 300
+        immediate: true

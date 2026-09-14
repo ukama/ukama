@@ -23,6 +23,21 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: make_tower_busy
     events:
       - type: restart_nodes
@@ -34,6 +49,14 @@ phases:
         count_per_network: 1
         busy: true
         timeout_seconds: 60
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: true
+        service_available: false
+        timeout_seconds: 60
+        immediate: true
+
   - name: reject_service_change
     events:
       - type: toggle_service
@@ -47,3 +70,16 @@ phases:
         count_per_network: 1
         busy: false
         timeout_seconds: 300
+        immediate: true
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
