@@ -18,8 +18,8 @@ export const connColor = (c?: string): string => {
 };
 
 /**
- * Node state chip styling. Ready (booted, free to configure) = green,
- * Operational (serving) = blue, Faulty = matt red, Offboarded = muted.
+ * Node state chip styling. Operational (serving) = green, Ready (booted, free
+ * to configure) = blue, Faulty = matt red, Offboarded = muted.
  * Unknown means the node has not reported yet, so it stays plain, as do the
  * in-flight states (Initializing, Configuring, Updating) via the fallback.
  */
@@ -34,14 +34,14 @@ const STATE_STYLE: Record<
     label: 'Unknown',
   },
   ready: {
-    bg: 'rgba(29, 205, 159, 0.14)',
-    color: 'var(--uk-success-bright)',
+    bg: 'var(--uk-ac-soft)',
+    color: 'var(--uk-ac-dark)',
     border: 'transparent',
     label: 'Ready',
   },
   operational: {
-    bg: 'var(--uk-ac-soft)',
-    color: 'var(--uk-ac-dark)',
+    bg: 'rgba(29, 205, 159, 0.14)',
+    color: 'var(--uk-success-bright)',
     border: 'transparent',
     label: 'Operational',
   },
@@ -105,4 +105,37 @@ export function StateChip({ state }: { state?: string }) {
       {s.label}
     </span>
   );
+}
+
+/** Connectivity label from the raw value. */
+export const connLabel = (c?: string): string => {
+  const v = (c ?? '').toLowerCase();
+  if (v === 'online') return 'Online';
+  if (v === 'offline') return 'Offline';
+  return 'Unknown';
+};
+
+/**
+ * One-line reading of a node's status for list rows, so a table says the
+ * same thing the cards and detail page do. `assigned` is site membership.
+ */
+export function describeNode(
+  connectivity: string | undefined,
+  state: string | undefined,
+  assigned: boolean,
+): string {
+  const c = (connectivity ?? '').toLowerCase();
+  const s = (state ?? '').toLowerCase();
+  if (c === 'offline') {
+    return assigned ? 'Not reachable' : 'Power on to configure';
+  }
+  if (c !== 'online') return 'Waiting for the node to report';
+  if (s === 'ready') {
+    return assigned ? 'Assigned, going operational' : 'Ready to install at a site';
+  }
+  if (s === 'operational') return 'Serving at its site';
+  if (s === 'faulty') return 'Needs attention';
+  if (s === 'offboarded') return 'Removed from service';
+  if (s === 'unknown' || s === '') return 'Booting, not reported yet';
+  return 'In progress';
 }
