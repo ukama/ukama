@@ -88,20 +88,28 @@ export default function NetworkHomeScreen() {
   // The home map only needs each site's name, status and coordinates.
   const mapSites = useMemo(() => toMapSites(siteRows ?? []), [siteRows]);
 
-  const mapMarkers = mapSites
-    .filter((s) => s.lat !== 0 || s.lng !== 0)
-    .map((s) => ({
-      id: s.id,
-      lat: s.lat,
-      lng: s.lng,
-      color: pinColor(s.status),
-      popup: (
-        <div style={{ minWidth: 120 }}>
-          <div style={{ fontWeight: 600, marginBottom: 2 }}>{s.name}</div>
-          <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>{s.area}</div>
-        </div>
-      ),
-    }));
+  // Memoised so a KPI poll re-rendering this screen doesn't hand the map a
+  // fresh marker array (and fresh popup elements) every 30 seconds.
+  const mapMarkers = useMemo(
+    () =>
+      mapSites
+        .filter((s) => s.lat !== 0 || s.lng !== 0)
+        .map((s) => ({
+          id: s.id,
+          lat: s.lat,
+          lng: s.lng,
+          color: pinColor(s.status),
+          popup: (
+            <div style={{ minWidth: 120 }}>
+              <div style={{ fontWeight: 600, marginBottom: 2 }}>{s.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--uk-ink-3)' }}>
+                {s.area}
+              </div>
+            </div>
+          ),
+        })),
+    [mapSites],
+  );
 
   const site = mapSites.find((s) => s.id === sel);
   // Sites online comes from the analytics SITES_ONLINE KPI only (no registry
@@ -154,9 +162,7 @@ export default function NetworkHomeScreen() {
               icon: 'donut_small',
               color: 'var(--uk-beige)',
               label: 'Data volume',
-              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) =>
-                formatBytes(v),
-              ),
+              value: kpiText(kpis, KPI_KEYS.dataUsage, (v) => formatBytes(v)),
             },
             {
               icon: 'cell_tower',

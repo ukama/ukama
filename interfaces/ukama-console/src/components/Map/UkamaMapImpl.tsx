@@ -19,7 +19,7 @@
  */
 import 'leaflet/dist/leaflet.css';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import { useColorScheme } from '@mui/material/styles';
 import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet';
@@ -52,9 +52,16 @@ export interface UkamaMapProps {
   onSelect?: (id: string) => void;
 }
 
+/** Icons are cached per colour: a new icon object on every render makes
+ *  react-leaflet rebuild the pin's DOM, which drops any open popup. */
+const iconCache = new Map<string, L.DivIcon>();
+
 /** Site marker — Material CellTower icon tinted by status. */
-const siteIcon = (color: string) =>
-  L.divIcon({
+const siteIcon = (color: string) => {
+  const cached = iconCache.get(color);
+  if (cached) return cached;
+
+  const icon = L.divIcon({
     className: 'uk-map-pin',
     html: `<svg viewBox="0 0 24 24" width="30" height="30" fill="${color}"
       style="filter:drop-shadow(0 1px 2px rgba(0,0,0,.45));">
@@ -65,6 +72,11 @@ const siteIcon = (color: string) =>
     iconAnchor: [15, 15],
     popupAnchor: [0, -15],
   });
+
+  iconCache.set(color, icon);
+
+  return icon;
+};
 
 /** A whole-world view used when there's nothing to show yet (no sites). */
 const WORLD_CENTER: [number, number] = [25, 0];
@@ -84,21 +96,36 @@ function ViewSync({
   fitToMarkers: boolean;
 }) {
   const map = useMap();
+  // Callers rebuild `markers` (and `center`) on every render, so a 30s KPI
+  // poll would re-run this sync and snap the map back, discarding the pan and
+  // zoom the user set. Sync on the positions themselves instead; the ref
+  // carries the current values in without widening the dependencies.
+  const markersKey = markers.map((m) => `${m.id}:${m.lat}:${m.lng}`).join('|');
+  const centerKey = center ? `${center[0]},${center[1]}` : '';
+  const latest = useRef({ markers, center });
+
+  // Declared first so the sync effect below always reads this render's values.
   useEffect(() => {
-    if (fitToMarkers && markers.length > 1) {
+    latest.current = { markers, center };
+  });
+
+  useEffect(() => {
+    const { markers: ms, center: c } = latest.current;
+
+    if (fitToMarkers && ms.length > 1) {
       map.fitBounds(
-        markers.map((m) => [m.lat, m.lng] as [number, number]),
+        ms.map((m) => [m.lat, m.lng] as [number, number]),
         { padding: [40, 40] },
       );
-    } else if (markers.length === 1) {
-      map.setView([markers[0]!.lat, markers[0]!.lng], zoom);
-    } else if (center) {
-      map.setView(center, zoom);
+    } else if (ms.length === 1) {
+      map.setView([ms[0]!.lat, ms[0]!.lng], zoom);
+    } else if (c) {
+      map.setView(c, zoom);
     } else {
       // No sites and no explicit center → show the zoomed-out world.
       map.setView(WORLD_CENTER, WORLD_ZOOM);
     }
-  }, [map, markers, center, zoom, fitToMarkers]);
+  }, [map, markersKey, centerKey, zoom, fitToMarkers]);
 
   useEffect(() => {
     const invalidate = () => map.invalidateSize();
