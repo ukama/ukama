@@ -115,27 +115,3 @@ export const connLabel = (c?: string): string => {
   return 'Unknown';
 };
 
-/**
- * One-line reading of a node's status for list rows, so a table says the
- * same thing the cards and detail page do. `assigned` is site membership.
- */
-export function describeNode(
-  connectivity: string | undefined,
-  state: string | undefined,
-  assigned: boolean,
-): string {
-  const c = (connectivity ?? '').toLowerCase();
-  const s = (state ?? '').toLowerCase();
-  if (c === 'offline') {
-    return assigned ? 'Not reachable' : 'Power on to configure';
-  }
-  if (c !== 'online') return 'Waiting for the node to report';
-  if (s === 'ready') {
-    return assigned ? 'Assigned, going operational' : 'Ready to install at a site';
-  }
-  if (s === 'operational') return 'Serving at its site';
-  if (s === 'faulty') return 'Needs attention';
-  if (s === 'offboarded') return 'Removed from service';
-  if (s === 'unknown' || s === '') return 'Booting, not reported yet';
-  return 'In progress';
-}

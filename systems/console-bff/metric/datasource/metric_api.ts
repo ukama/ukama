@@ -52,6 +52,39 @@ class MetricAPI extends BaseRESTDataSource {
     });
   };
 
+  /** Lookback for the `/v1/last` read. The pushgateway keeps serving a dead
+   *  node's last sample, so a caller must gate on connectivity, not on this. */
+  private static readonly LAST_LOOKBACK = "1h";
+
+  /**
+   * Latest sample for a per-node metric via the gateway's instant endpoint
+   * (`/v1/last/metrics/:metric?node=`), which resolves the node type from the
+   * id and falls back to the `system` bucket for keys such as com_uptime and
+   * ctl_uptime. One value per series; the first series is taken.
+   */
+  getNodeLast = async (
+    baseURL: string,
+    type: string,
+    nodeId: string
+  ): Promise<{ type: string; value: [number, number]; success: boolean }> => {
+    const path = `/${VERSION}/last/${METRICS}/${type}?node=${nodeId}&fn=last&lookback=${MetricAPI.LAST_LOOKBACK}`;
+    this.logger.info(`GetNodeLast [GET]: ${baseURL}${path}`);
+    this.baseURL = baseURL;
+    return this.get(path).then(res => {
+      const value = res?.data?.result?.[0]?.value as
+        | [number, string]
+        | undefined;
+      if (Array.isArray(value) && value.length === 2) {
+        return {
+          type,
+          value: [Number(value[0]), Number(value[1])] as [number, number],
+          success: Number.isFinite(Number(value[1])),
+        };
+      }
+      return { type, value: [0, 0] as [number, number], success: false };
+    });
+  };
+
   /** Lookback window (seconds) for deriving a node's latest KPI value. */
   private static readonly LATEST_LOOKBACK = 3600;
   private static readonly LATEST_STEP = 60;

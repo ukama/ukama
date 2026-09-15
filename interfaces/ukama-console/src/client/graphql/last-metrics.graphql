@@ -1,0 +1,25 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# Copyright (c) 2026-present, Ukama Inc.
+
+# Latest value per key for one node, from the metrics gateway's instant
+# endpoint. For rail values that have no chart, such as uptime.
+
+query MetricsLast($data: MetricsLastInput!) {
+  metricsLast(data: $data) {
+    error {
+      ...SectionErrorFields
+    }
+    metrics {
+      key
+      value
+      timestamp
+      success
+      label
+      unit
+      format
+    }
+  }
+}
