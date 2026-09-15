@@ -488,3 +488,36 @@ func TestController_CreateSession_StillInvalidAfterReverseLookup_Returns403(t *t
 	assert.True(t, ok, "expected rest.HttpError, got %T: %v", err, err)
 	assert.Equal(t, http.StatusForbidden, httpErr.HttpCode)
 }
+
+func TestSafeRun_RecoversPanicWithoutPropagating(t *testing.T) {
+	assert.NotPanics(t, func() {
+		safeRun("boom", func() {
+			panic("simulated panic")
+		})
+	})
+}
+
+func TestSafeRun_RunsFnWhenNoPanic(t *testing.T) {
+	ran := false
+
+	safeRun("ok", func() {
+		ran = true
+	})
+
+	assert.True(t, ran)
+}
+
+func TestSafeRun_SecondCallStillRunsAfterEarlierPanic(t *testing.T) {
+	assert.NotPanics(t, func() {
+		safeRun("first", func() {
+			panic("first panic")
+		})
+	})
+
+	ran := false
+	safeRun("second", func() {
+		ran = true
+	})
+
+	assert.True(t, ran, "a panic in one safeRun call must not prevent a later call from running")
+}
