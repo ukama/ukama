@@ -15,14 +15,20 @@
  *   controller uk-<base>-cnode-<rev>
  *
  * A site is "ready to configure" only when ALL of the following hold:
- *   1. a tower (tnode) node exists, is online, and is not yet configured
- *      (connectivity Online + state Unknown);
+ *   1. a tower (tnode) node exists, is online, and has booted to READY
+ *      (connectivity Online + state Ready);
  *   2. the tower has latitude/longitude data;
- *   3. its matching amplifier (anode) and controller (cnode) exist and are
- *      also online + not yet configured.
+ *   3. its matching amplifier (anode) and controller (cnode) exist and have
+ *      also reached online + READY.
  *
- * Until all three are ready we do not advance — the physical install may
+ * Until all three are ready we do not advance, since the physical install may
  * still be in progress.
+ *
+ * READY is what a booted, unclaimed node reports under the lifecycle states
+ * introduced by "Node state lifecycle model" (#1604). It replaced Unknown as
+ * the ready-to-configure signal: Unknown now means the node has not reported
+ * yet, and a node passes through Unknown and Initializing on its way to
+ * Ready. Creating the site drives the trio from Ready to Operational.
  */
 import {
   NodeConnectivityEnum,
@@ -34,11 +40,6 @@ import { parseCoords } from './coords';
 
 export type DetectedNode = GetNodesQuery['getNodes']['nodes'][number];
 
-/** Online and not yet configured (status the BFF reports for fresh nodes). */
-const isPoweredAndUnconfigured = (n: DetectedNode): boolean =>
-  n.status.connectivity === NodeConnectivityEnum.Online &&
-  n.status.state === NodeStateEnum.Unknown;
-
 // Valid, locatable coordinates — rejects empty, zeroed, or out-of-range
 // values so the "located" step only completes when the map/address will work.
 const hasCoordinates = (n: DetectedNode): boolean =>
@@ -49,10 +50,8 @@ const baseKey = (id: string): string =>
   id.replace(/-(tnode|anode|cnode|hnode)-/, '-*-');
 
 /**
- * Online and READY — the state a unit reports once it has booted and before
- * a site claims it. Site creation checks this: the registry drives the trio
- * from READY to OPERATIONAL while it provisions, and only writes the site
- * when all three get there.
+ * Online and READY, the state a unit reports once it has booted and before a
+ * site claims it. Both the install checklist and site creation use this.
  */
 export const isOnlineAndReady = (n: DetectedNode): boolean =>
   n.status.connectivity === NodeConnectivityEnum.Online &&
@@ -93,7 +92,7 @@ export function siteUnits(nodes: DetectedNode[], towerId: string): SiteUnits {
 
 /** Per-unit readiness for the guided checklist (one site's three units). */
 export interface SiteReadiness {
-  /** Tower powered on + online (not yet configured). */
+  /** Tower powered on, online and booted to READY. */
   tower: boolean;
   /** Amplifier powered on + online. */
   amplifier: boolean;
@@ -156,9 +155,9 @@ export function computeSiteReadiness(
     const controller = members.find((n) => n.type === NodeTypeEnum.Cnode);
 
     const r: SiteReadiness = {
-      tower: isPoweredAndUnconfigured(tower),
-      amplifier: Boolean(amplifier && isPoweredAndUnconfigured(amplifier)),
-      controller: Boolean(controller && isPoweredAndUnconfigured(controller)),
+      tower: isOnlineAndReady(tower),
+      amplifier: Boolean(amplifier && isOnlineAndReady(amplifier)),
+      controller: Boolean(controller && isOnlineAndReady(controller)),
       located: hasCoordinates(tower),
       ready: false,
       towerNode: tower,

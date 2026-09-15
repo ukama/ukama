@@ -18,8 +18,10 @@ export const connColor = (c?: string): string => {
 };
 
 /**
- * Node state chip styling: Unknown = plain (neutral), Configured = green,
- * Operational = blue, Faulty = matt red.
+ * Node state chip styling. Ready (booted, free to configure) = green,
+ * Operational (serving) = blue, Faulty = matt red, Offboarded = muted.
+ * Unknown means the node has not reported yet, so it stays plain, as do the
+ * in-flight states (Initializing, Configuring, Updating) via the fallback.
  */
 const STATE_STYLE: Record<
   string,
@@ -31,11 +33,11 @@ const STATE_STYLE: Record<
     border: 'var(--uk-line)',
     label: 'Unknown',
   },
-  configured: {
+  ready: {
     bg: 'rgba(29, 205, 159, 0.14)',
     color: 'var(--uk-success-bright)',
     border: 'transparent',
-    label: 'Configured',
+    label: 'Ready',
   },
   operational: {
     bg: 'var(--uk-ac-soft)',
@@ -48,6 +50,12 @@ const STATE_STYLE: Record<
     color: '#e2575f',
     border: 'transparent',
     label: 'Faulty',
+  },
+  offboarded: {
+    bg: 'transparent',
+    color: 'var(--uk-ink-3)',
+    border: 'var(--uk-line)',
+    label: 'Offboarded',
   },
 };
 
