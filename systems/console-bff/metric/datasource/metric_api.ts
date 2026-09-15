@@ -70,7 +70,8 @@ class MetricAPI extends BaseRESTDataSource {
     const path = `/${VERSION}/last/${METRICS}/${type}?node=${nodeId}&fn=last&lookback=${MetricAPI.LAST_LOOKBACK}`;
     this.logger.info(`GetNodeLast [GET]: ${baseURL}${path}`);
     this.baseURL = baseURL;
-    return this.get(path).then(res => {
+    return this.get(path).then(raw => {
+      const res = typeof raw === "string" ? JSON.parse(raw) : raw;
       const value = res?.data?.result?.[0]?.value as
         | [number, string]
         | undefined;
