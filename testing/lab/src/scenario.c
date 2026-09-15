@@ -138,6 +138,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_TOGGLE_INTERNET_SWITCH: return "toggle_internet_switch";
     case EVT_RESTART_SITE: return "restart_site";
     case EVT_CONFIGURE_SITES: return "configure_sites";
+    case EVT_WAIT_SITE_ANCHOR_LOCATED: return "wait_site_anchor_located";
     case EVT_PROMOTE_RELEASE: return "promote_release";
     case EVT_SOFTWARE_UPDATE: return "software_update";
     case EVT_DISCONNECT_NODES: return "disconnect_nodes";
@@ -286,6 +287,8 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_RESTART_SITE;
     } else if (ulab_streq(name, "configure_sites")) {
         *out = EVT_CONFIGURE_SITES;
+    } else if (ulab_streq(name, "wait_site_anchor_located")) {
+        *out = EVT_WAIT_SITE_ANCHOR_LOCATED;
     } else if (ulab_streq(name, "promote_release")) {
         *out = EVT_PROMOTE_RELEASE;
     } else if (ulab_streq(name, "software_update")) {

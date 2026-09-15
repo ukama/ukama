@@ -83,6 +83,7 @@ Supported events:
 - `toggle_internet_switch`
 - `restart_site`
 - `configure_sites`
+- `wait_site_anchor_located`
 - `promote_release`
 - `software_update`
 - `disconnect_nodes`
@@ -344,6 +345,18 @@ creates the network and starts its nodes without creating the site, then calls
 `configure_sites` to run the normal `addSite` path. `state: hold` disconnects
 the site's nodes before the site is added so the intermediate `Configured`
 state can be observed; `state: ready` leaves them connected.
+
+`wait_site_anchor_located` runs the same tower gate that precedes `addSite`,
+without adding the site. It polls BFF `getNodes` until the site's tower is
+Online, Ready, and reports a non-empty latitude and longitude, then returns.
+It lets a scenario assert node state and location on a world whose sites are
+never created. It honours `ULAB_BFF_NODE_ONLINE_TIMEOUT_SEC` and
+`ULAB_BFF_NODE_ONLINE_SLEEP_SEC`.
+
+```yaml
+- type: wait_site_anchor_located
+  sites: all
+```
 
 Subsequent cash package sale:
 

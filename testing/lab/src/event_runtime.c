@@ -694,6 +694,30 @@ static int site_node_selection(const world_t *world,
     return ULAB_OK;
 }
 
+static int event_wait_site_anchor_located(event_ctx_t *ctx,
+                                          const event_spec_t *event,
+                                          ulab_error_t *err) {
+    selector_result_t sites;
+    size_t i;
+
+    memset(&sites, 0, sizeof(sites));
+    if (selector_resolve_sites(ctx->world, &event->sites, &sites, err)) {
+        return ULAB_ERR;
+    }
+    for (i = 0; i < sites.count; i++) {
+        site_t *site = &ctx->world->sites[sites.idx[i]];
+
+        ulab_status("SITE", "wait anchor online/ready/location %s",
+                    site->ref);
+        if (bff_wait_site_anchor_online(ctx->bff, site, err)) {
+            selector_result_free(&sites);
+            return ULAB_ERR;
+        }
+    }
+    selector_result_free(&sites);
+    return ULAB_OK;
+}
+
 static int event_configure_sites(event_ctx_t *ctx,
                                  const event_spec_t *event,
                                  ulab_error_t *err) {
@@ -912,6 +936,9 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_CONFIGURE_SITES:
         return event_configure_sites(ctx, event, err);
+
+    case EVT_WAIT_SITE_ANCHOR_LOCATED:
+        return event_wait_site_anchor_located(ctx, event, err);
 
     case EVT_FAILURE_CONTROL:
         return event_failure_control(ctx, event, err);

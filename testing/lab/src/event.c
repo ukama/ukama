@@ -58,6 +58,7 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_TOGGLE_INTERNET_SWITCH:
     case EVT_RESTART_SITE:
     case EVT_CONFIGURE_SITES:
+    case EVT_WAIT_SITE_ANCHOR_LOCATED:
     case EVT_SOFTWARE_UPDATE:
     case EVT_DISCONNECT_NODES:
     case EVT_RECONNECT_NODES:

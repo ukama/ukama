@@ -24,12 +24,18 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     size_t i;
     size_t j;
     int has_configure_sites;
+    int has_anchor_wait;
 
     has_configure_sites = 0;
+    has_anchor_wait = 0;
     for (i = 0; i < s->phase_count; i++) {
         for (j = 0; j < s->phases[i].event_count; j++) {
             if (s->phases[i].events[j].type == EVT_CONFIGURE_SITES) {
                 has_configure_sites = 1;
+            }
+            if (s->phases[i].events[j].type ==
+                EVT_WAIT_SITE_ANCHOR_LOCATED) {
+                has_anchor_wait = 1;
             }
         }
     }
@@ -144,9 +150,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                     "setup.create_via_bff must include networks");
     }
     if (s->world.sites_per_network > 0 && !s->setup.create_sites &&
-        !has_configure_sites) {
+        !has_configure_sites && !has_anchor_wait) {
         return fail(err,
-                    "world sites require setup sites or configure_sites");
+                    "world sites require setup sites, configure_sites, "
+                    "or wait_site_anchor_located");
     }
     if (s->world.tower_per_site + s->world.amplifier_per_site +
         s->world.controller_per_site > 0 &&
@@ -355,6 +362,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                     event->nodes.kind == SEL_NONE) {
                     return fail(err,
                                 "restart_site requires site selector");
+                }
+                continue;
+            }
+
+            if (event->type == EVT_WAIT_SITE_ANCHOR_LOCATED) {
+                if (event->sites.kind == SEL_NONE) {
+                    return fail(err,
+                                "wait_site_anchor_located requires site "
+                                "selector");
                 }
                 continue;
             }
