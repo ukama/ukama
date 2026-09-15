@@ -35,12 +35,7 @@ import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
 import { heldQuery } from '@/lib/heldQuery';
 import { toUkamaNode } from '@/lib/mappers/nodes';
-import {
-  ConnectivityDot,
-  StateChip,
-  connLabel,
-  describeNode,
-} from './nodeStatus';
+import { ConnectivityDot, StateChip, connLabel } from './nodeStatus';
 
 interface PoolRow {
   id: string;
@@ -174,8 +169,7 @@ export default function NodePoolScreen() {
   const readyToInstall = pool.filter(
     (n) => !n.assigned && isOnline(n) && isState(n, 'ready'),
   ).length;
-  const operational = pool.filter((n) => isState(n, 'operational')).length;
-  const offline = pool.filter((n) => !isOnline(n)).length;
+  const installed = pool.filter((n) => n.assigned).length;
 
   const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
     null,
@@ -202,7 +196,7 @@ export default function NodePoolScreen() {
         crumb={['Manage', 'Node pool']}
         title="Node pool"
         count={pool.length}
-        sub="Every registered node, installed or not. A node that is online and Ready can be installed at a site."
+        sub="Every registered node. Online and Ready means it can be installed."
       />
       <KpiRow
         items={[
@@ -214,15 +208,9 @@ export default function NodePoolScreen() {
           },
           {
             icon: 'cell_tower',
-            label: 'Operational',
-            value: operational,
+            label: 'Installed',
+            value: installed,
             color: 'var(--uk-success-bright)',
-          },
-          {
-            icon: 'warning',
-            label: 'Offline',
-            value: offline,
-            color: 'var(--uk-error)',
           },
           { icon: 'account_tree', label: 'In inventory', value: pool.length },
         ]}
@@ -289,11 +277,7 @@ export default function NodePoolScreen() {
                         }}
                       >
                         <ConnectivityDot connectivity={n.connectivity} />
-                        <span>{connLabel(n.connectivity)}</span>
                         <StateChip state={n.state} />
-                      </div>
-                      <div className="muted" style={{ fontSize: 12, marginTop: 2 }}>
-                        {describeNode(n.connectivity, n.state, n.assigned)}
                       </div>
                     </TableCell>
                     <TableCell className="muted">{n.site}</TableCell>
