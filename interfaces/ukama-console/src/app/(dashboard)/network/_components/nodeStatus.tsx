@@ -18,8 +18,10 @@ export const connColor = (c?: string): string => {
 };
 
 /**
- * Node state chip styling: Unknown = plain (neutral), Configured = green,
- * Operational = blue, Faulty = matt red.
+ * Node state chip styling. Operational (serving) = green, Ready (booted, free
+ * to configure) = blue, Faulty = matt red, Offboarded = muted.
+ * Unknown means the node has not reported yet, so it stays plain, as do the
+ * in-flight states (Initializing, Configuring, Updating) via the fallback.
  */
 const STATE_STYLE: Record<
   string,
@@ -31,15 +33,15 @@ const STATE_STYLE: Record<
     border: 'var(--uk-line)',
     label: 'Unknown',
   },
-  configured: {
-    bg: 'rgba(29, 205, 159, 0.14)',
-    color: 'var(--uk-success-bright)',
-    border: 'transparent',
-    label: 'Configured',
-  },
-  operational: {
+  ready: {
     bg: 'var(--uk-ac-soft)',
     color: 'var(--uk-ac-dark)',
+    border: 'transparent',
+    label: 'Ready',
+  },
+  operational: {
+    bg: 'rgba(29, 205, 159, 0.14)',
+    color: 'var(--uk-success-bright)',
     border: 'transparent',
     label: 'Operational',
   },
@@ -48,6 +50,12 @@ const STATE_STYLE: Record<
     color: '#e2575f',
     border: 'transparent',
     label: 'Faulty',
+  },
+  offboarded: {
+    bg: 'transparent',
+    color: 'var(--uk-ink-3)',
+    border: 'var(--uk-line)',
+    label: 'Offboarded',
   },
 };
 
@@ -98,3 +106,12 @@ export function StateChip({ state }: { state?: string }) {
     </span>
   );
 }
+
+/** Connectivity label from the raw value. */
+export const connLabel = (c?: string): string => {
+  const v = (c ?? '').toLowerCase();
+  if (v === 'online') return 'Online';
+  if (v === 'offline') return 'Offline';
+  return 'Unknown';
+};
+

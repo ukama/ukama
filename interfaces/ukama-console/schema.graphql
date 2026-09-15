@@ -10,6 +10,7 @@ type Query {
   inventoryView: InventoryView!
   membersView: MembersView!
   metricsRange(data: MetricsRangeInput!): MetricsRes!
+  metricsLast(data: MetricsLastInput!): KpisSection!
   networkOverview(networkId: String!): NetworkOverview!
   nodesView(networkId: String): NodesView!
   nodeView(nodeId: String!): NodeView!
@@ -842,6 +843,11 @@ input MetricsRangeInput {
   nodeId: String
   operation: String
   step: Int
+}
+
+input MetricsLastInput {
+  keys: [String!]!
+  nodeId: String!
 }
 
 type NetworkOverview {

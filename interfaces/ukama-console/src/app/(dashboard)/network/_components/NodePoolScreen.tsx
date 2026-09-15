@@ -7,93 +7,80 @@
  */
 'use client';
 
-/** Node pool — hardware inventory, wired to the `nodesView` composite
- *  (NodePool operation: nodes without a site are available to install). */
-import { useMemo, useState } from 'react';
+/** Node pool — every registered node, wired to the `nodesView` composite
+ *  (NodePool operation). Status uses the same connectivity dot and state chip
+ *  as the Nodes page, so a node reads the same in both places. */
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useApolloClient } from '@apollo/client';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell from '@mui/material/TableCell';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import TableSortLabel from '@mui/material/TableSortLabel';
+import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import ChevronRightRounded from '@mui/icons-material/ChevronRightRounded';
 import { useNodePoolQuery } from '@/client/graphql/nodes-list.generated';
-import { useSitesListQuery } from '@/client/graphql/sites-list.generated';
+import {
+  SitesListDocument,
+  type SitesListQuery,
+  type SitesListQueryVariables,
+} from '@/client/graphql/sites-list.generated';
 import { EmptyState } from '@/components/EmptyState';
 import SkeletonTable from '@/components/data-table/SkeletonTable';
 import TableFooter from '@/components/data-table/TableFooter';
 import { KpiRow } from '@/components/Kpi';
 import PageHeader from '@/components/PageHeader';
-import StatusBadge from '@/components/StatusBadge';
 import { heldQuery } from '@/lib/heldQuery';
-import { useNetworkId } from '@/lib/useNetworkId';
 import { toUkamaNode } from '@/lib/mappers/nodes';
-
-type PoolStatus = 'available' | 'assigned';
+import { ConnectivityDot, StateChip, connLabel } from './nodeStatus';
 
 interface PoolRow {
   id: string;
   serial: string;
   type: string;
-  status: PoolStatus;
+  assigned: boolean;
   site: string;
   connectivity: string;
   state: string;
 }
 
-/** The Available column answers "is this node free to install?". */
-const NP_LABEL: Record<PoolStatus, string> = {
-  available: 'Yes',
-  assigned: 'No',
-};
+const isOnline = (n: PoolRow) => n.connectivity.toLowerCase() === 'online';
+const isState = (n: PoolRow, s: string) => n.state.toLowerCase() === s;
 
 /** Sortable columns and the value each row sorts by. */
-type SortKey = 'type' | 'connectivity' | 'status';
+type SortKey = 'type' | 'status' | 'site';
 const sortValue = (n: PoolRow, by: SortKey): string => {
   if (by === 'type') return n.type;
-  if (by === 'connectivity') return connectivity(n.connectivity).label;
-  return NP_LABEL[n.status];
+  if (by === 'site') return n.site;
+  return `${connLabel(n.connectivity)} ${n.state}`;
 };
 
-/** Maps a node's raw connectivity to a status badge + label. */
-function connectivity(raw: string): { kind: string; label: string } {
-  const c = raw.toLowerCase();
-  if (c === 'online') return { kind: 'online', label: 'Online' };
-  if (c === 'offline') return { kind: 'offline', label: 'Offline' };
-  return { kind: 'configuring', label: 'Unknown' };
-}
-
 /**
- * Row action, driven by whether the node belongs to a site — the label — and
- * its connectivity — whether the action is live:
- *  - No site → not yet installed → "Configure" (routes to the flow).
- *  - Assigned to a site → "View detail" (routes to the node page).
- * Site membership is the question the pool answers, so it drives the action.
- * Lifecycle state does not: a node released back into the pool reports Ready,
- * not Unknown, and would otherwise never offer Configure again.
- * Configuring needs the node reachable, so it is disabled while offline;
- * viewing an installed node's detail always works.
+ * Row action, driven by site membership: a node without a site is installed
+ * through the configure flow, a node with one opens its detail page.
+ * Lifecycle state does not decide the label: a node released back into the
+ * pool reports Ready, not Unknown, and must offer Configure again.
+ * Configuring needs the node reachable, so it is disabled while offline.
  */
 function RowAction({ item }: { item: PoolRow }) {
   const router = useRouter();
-  const isOnline = item.connectivity.toLowerCase() === 'online';
-  const needsConfigure = item.status === 'available';
+  const needsConfigure = !item.assigned;
+  const blocked = needsConfigure && !isOnline(item);
 
-  const label = needsConfigure ? 'Configure' : 'View detail';
-  const onClick = () =>
-    needsConfigure
-      ? router.push('/configure/select-network')
-      : router.push(`/network/nodes/${item.id}`);
-
-  return (
+  const button = (
     <Button
       variant="text"
       size="small"
-      disabled={needsConfigure && !isOnline}
+      disabled={blocked}
       endIcon={<ChevronRightRounded />}
-      onClick={onClick}
+      onClick={() =>
+        needsConfigure
+          ? router.push('/configure/select-network')
+          : router.push(`/network/nodes/${item.id}`)
+      }
       sx={{
         fontSize: 13.5,
         fontWeight: 600,
@@ -103,8 +90,15 @@ function RowAction({ item }: { item: PoolRow }) {
         '& .MuiButton-endIcon': { ml: 0.25 },
       }}
     >
-      {label}
+      {needsConfigure ? 'Configure' : 'View detail'}
     </Button>
+  );
+
+  if (!blocked) return button;
+  return (
+    <Tooltip title="Power the node on to configure it">
+      <span>{button}</span>
+    </Tooltip>
   );
 }
 
@@ -114,21 +108,46 @@ export default function NodePoolScreen() {
   const { data, loading } = heldQuery(poolResult);
   const nodesSection = data?.nodesView.nodes;
 
-  // Resolve siteId → site name for the Site column. NodePool isn't scoped to
-  // a network, so use the currently-selected network for the site lookup.
-  const networkId = useNetworkId();
-  const { data: sitesData } = useSitesListQuery({
-    variables: { networkId },
-    skip: !networkId,
-  });
-  const siteNameById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const s of sitesData?.sitesView.sites.sites ?? [])
-      map.set(s.id, s.name);
-    return map;
-  }, [sitesData]);
+  // NodePool spans every network, so resolve site names per network the
+  // nodes actually belong to rather than only the selected one.
+  const client = useApolloClient();
+  const [siteNameById, setSiteNameById] = useState<Map<string, string>>(
+    () => new Map(),
+  );
+  const networkIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const n of nodesSection?.nodes ?? []) {
+      if (n.site?.networkId) ids.add(n.site.networkId);
+    }
+    return [...ids].sort();
+  }, [nodesSection?.nodes]);
+  const networkKey = networkIds.join(',');
+  useEffect(() => {
+    if (networkIds.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      networkIds.map((networkId) =>
+        client
+          .query<SitesListQuery, SitesListQueryVariables>({
+            query: SitesListDocument,
+            variables: { networkId },
+          })
+          .then((r) => r.data?.sitesView.sites.sites ?? [])
+          .catch(() => []),
+      ),
+    ).then((lists) => {
+      if (cancelled) return;
+      const map = new Map<string, string>();
+      for (const s of lists.flat()) map.set(s.id, s.name);
+      setSiteNameById(map);
+    });
+    return () => {
+      cancelled = true;
+    };
+    // networkKey stands in for networkIds so the effect runs once per set.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, networkKey]);
 
-  // Pool view-model: a node without a site is available to install.
   const pool: PoolRow[] = useMemo(
     () =>
       (nodesSection?.nodes ?? []).map((n) => {
@@ -138,7 +157,7 @@ export default function NodePoolScreen() {
           id: n.id,
           serial: mapped.serial,
           type: mapped.type,
-          status: siteId ? ('assigned' as const) : ('available' as const),
+          assigned: Boolean(siteId),
           site: siteId ? (siteNameById.get(siteId) ?? siteId) : '—',
           connectivity: n.status.connectivity,
           state: n.status.state,
@@ -147,10 +166,11 @@ export default function NodePoolScreen() {
     [nodesSection?.nodes, siteNameById],
   );
 
-  const avail = pool.filter((n) => n.status === 'available').length;
-  const deployed = pool.length - avail;
+  const readyToInstall = pool.filter(
+    (n) => !n.assigned && isOnline(n) && isState(n, 'ready'),
+  ).length;
+  const installed = pool.filter((n) => n.assigned).length;
 
-  // Click-to-sort on Type / Connectivity / Available (toggles asc → desc → off).
   const [sort, setSort] = useState<{ by: SortKey; dir: 'asc' | 'desc' } | null>(
     null,
   );
@@ -176,21 +196,21 @@ export default function NodePoolScreen() {
         crumb={['Manage', 'Node pool']}
         title="Node pool"
         count={pool.length}
-        sub="Hardware in inventory, ready to install at a site."
+        sub="Every registered node. Online and Ready means it can be installed."
       />
       <KpiRow
         items={[
           {
             icon: 'info',
-            label: 'Available to install',
-            value: avail,
-            color: 'var(--uk-success-bright)',
+            label: 'Ready to install',
+            value: readyToInstall,
+            color: 'var(--uk-ac)',
           },
           {
             icon: 'cell_tower',
-            label: 'Deployed (live)',
-            value: deployed,
-            color: 'var(--uk-ac)',
+            label: 'Installed',
+            value: installed,
+            color: 'var(--uk-success-bright)',
           },
           { icon: 'account_tree', label: 'In inventory', value: pool.length },
         ]}
@@ -198,7 +218,7 @@ export default function NodePoolScreen() {
       <div className="card card-pad">
         <div className="tbl-wrap">
           {loading ? (
-            <SkeletonTable cols={6} rows={5} />
+            <SkeletonTable cols={5} rows={5} />
           ) : nodesSection?.error ? (
             <EmptyState
               art="error"
@@ -221,8 +241,8 @@ export default function NodePoolScreen() {
                   {(
                     [
                       ['type', 'Type'],
-                      ['connectivity', 'Connectivity'],
-                      ['status', 'Available'],
+                      ['status', 'Status'],
+                      ['site', 'Site'],
                     ] as [SortKey, string][]
                   ).map(([key, label]) => (
                     <TableCell
@@ -238,36 +258,34 @@ export default function NodePoolScreen() {
                       </TableSortLabel>
                     </TableCell>
                   ))}
-                  <TableCell>Site</TableCell>
                   <TableCell align="right" sx={{ width: 130 }} />
                 </TableRow>
               </TableHead>
               <TableBody>
-                {sortedPool.map((n) => {
-                  const conn = connectivity(n.connectivity);
-                  return (
-                    <TableRow key={n.id}>
-                      <TableCell className="tnum" style={{ fontWeight: 600 }}>
-                        {n.serial}
-                      </TableCell>
-                      <TableCell>{n.type}</TableCell>
-                      <TableCell>
-                        <StatusBadge status={conn.kind}>
-                          {conn.label}
-                        </StatusBadge>
-                      </TableCell>
-                      <TableCell>
-                        <StatusBadge status={n.status}>
-                          {NP_LABEL[n.status]}
-                        </StatusBadge>
-                      </TableCell>
-                      <TableCell className="muted">{n.site}</TableCell>
-                      <TableCell align="right">
-                        <RowAction item={n} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {sortedPool.map((n) => (
+                  <TableRow key={n.id}>
+                    <TableCell className="tnum" style={{ fontWeight: 600 }}>
+                      {n.serial}
+                    </TableCell>
+                    <TableCell>{n.type}</TableCell>
+                    <TableCell>
+                      <div
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 8,
+                        }}
+                      >
+                        <ConnectivityDot connectivity={n.connectivity} />
+                        <StateChip state={n.state} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="muted">{n.site}</TableCell>
+                    <TableCell align="right">
+                      <RowAction item={n} />
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
           )}
