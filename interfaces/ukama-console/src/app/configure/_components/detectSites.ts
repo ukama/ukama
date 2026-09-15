@@ -48,6 +48,49 @@ const hasCoordinates = (n: DetectedNode): boolean =>
 const baseKey = (id: string): string =>
   id.replace(/-(tnode|anode|cnode|hnode)-/, '-*-');
 
+/**
+ * Online and READY — the state a unit reports once it has booted and before
+ * a site claims it. Site creation checks this: the registry drives the trio
+ * from READY to OPERATIONAL while it provisions, and only writes the site
+ * when all three get there.
+ */
+export const isOnlineAndReady = (n: DetectedNode): boolean =>
+  n.status.connectivity === NodeConnectivityEnum.Online &&
+  n.status.state === NodeStateEnum.Ready;
+
+/** Human-readable state for progress copy, e.g. "offline", "configuring". */
+export const stateLabel = (n: DetectedNode): string =>
+  n.status.connectivity === NodeConnectivityEnum.Online
+    ? n.status.state.toLowerCase()
+    : 'offline';
+
+/** The three units of one site, found by the tower's shared base id. */
+export interface SiteUnits {
+  found: DetectedNode[];
+  /** Unit types with no node record, e.g. ["amplifier"]. */
+  missing: string[];
+}
+
+export function siteUnits(nodes: DetectedNode[], towerId: string): SiteUnits {
+  const key = baseKey(towerId);
+  const members = nodes.filter((n) => baseKey(n.id) === key);
+  const wanted: [NodeTypeEnum, string][] = [
+    [NodeTypeEnum.Tnode, 'tower'],
+    [NodeTypeEnum.Anode, 'amplifier'],
+    [NodeTypeEnum.Cnode, 'controller'],
+  ];
+
+  const found: DetectedNode[] = [];
+  const missing: string[] = [];
+  for (const [type, label] of wanted) {
+    const node = members.find((n) => n.type === type);
+    if (node) found.push(node);
+    else missing.push(label);
+  }
+
+  return { found, missing };
+}
+
 /** Per-unit readiness for the guided checklist (one site's three units). */
 export interface SiteReadiness {
   /** Tower powered on + online (not yet configured). */
@@ -73,7 +116,10 @@ const EMPTY_READINESS: SiteReadiness = {
 };
 
 const stepsDone = (r: SiteReadiness): number =>
-  Number(r.tower) + Number(r.amplifier) + Number(r.controller) + Number(r.located);
+  Number(r.tower) +
+  Number(r.amplifier) +
+  Number(r.controller) +
+  Number(r.located);
 
 /**
  * Computes the guided checklist state for the single most-progressed site.
