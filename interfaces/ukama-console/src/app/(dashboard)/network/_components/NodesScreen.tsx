@@ -181,7 +181,7 @@ export default function NodesScreen() {
       <PageHeader
         title="Nodes"
         count={nodes.length}
-        sub="Radio hardware deployed across your sites."
+        sub="Nodes installed at sites in this network."
       />
       <div
         style={{ flex: 1, minHeight: 0, overflowY: 'auto', paddingBottom: 4 }}
