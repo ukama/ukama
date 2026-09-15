@@ -6039,7 +6039,14 @@ int bff_cleanup_world(bff_client_t *c,
     }
 
     for (i = 0; i < w->node_count; i++) {
+        const site_t *site;
+
         if (w->nodes[i].bff_id[0] == '\0') {
+            continue;
+        }
+        /* Only addSite attaches nodes, so release only what it attached. */
+        site = world_site_by_ref((world_t *)w, w->nodes[i].site_ref);
+        if (site == NULL || site->bff_id[0] == '\0') {
             continue;
         }
 
