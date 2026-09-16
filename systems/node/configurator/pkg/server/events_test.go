@@ -45,7 +45,7 @@ func TestConfiguratorServer_EventNotification(t *testing.T) {
 
 	t.Run("AddNode", func(t *testing.T) {
 		/* Node Cretaed event */
-		evt := epb.NodeCreatedEvent{
+		evt := epb.EventRegistryNodeCreate{
 			NodeId: testNode.String(),
 			Name:   "testnode",
 			Type:   "hnode",
