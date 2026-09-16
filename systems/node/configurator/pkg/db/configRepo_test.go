@@ -183,7 +183,7 @@ func TestConfigRepo_Add(t *testing.T) {
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), hash, id).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`ON CONFLICT ("node_id") WHERE deleted_at IS NULL DO NOTHING`)).
 			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), nid.String(), int_db.Default, 1, 1, 0).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 

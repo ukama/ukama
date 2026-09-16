@@ -53,9 +53,11 @@ func (n *configRepo) Add(node string) error {
 		Commit:     def,
 	}
 
+	// The unique index on node_id is partial, so the arbiter must repeat its predicate.
 	r := n.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "node_id"}},
-		DoNothing: true,
+		Columns:     []clause.Column{{Name: "node_id"}},
+		TargetWhere: clause.Where{Exprs: []clause.Expression{clause.Expr{SQL: "deleted_at IS NULL"}}},
+		DoNothing:   true,
 	}).Create(&config)
 
 	return r.Error
