@@ -114,4 +114,3 @@ export const connLabel = (c?: string): string => {
   if (v === 'offline') return 'Offline';
   return 'Unknown';
 };
-
