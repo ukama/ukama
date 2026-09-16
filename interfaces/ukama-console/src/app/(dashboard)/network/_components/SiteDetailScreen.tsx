@@ -503,11 +503,15 @@ const statusColor = (st: string) =>
       : 'var(--uk-success)';
 
 function ActiveCustomersBadge({ tnodeId }: { tnodeId: string | null }) {
-  const { data } = useMetricsLastQuery({
+  const result = useMetricsLastQuery({
     variables: { data: { keys: ['subscribers_active'], nodeId: tnodeId ?? '' } },
     skip: !tnodeId,
     ...visiblePoll(POLL_LIVE_MS),
   });
+  // Hold the last delivered value across cache eviction and refetches, the
+  // same way the page holds its detail query, so the pill never blinks to a
+  // dash while a fresh answer is in flight.
+  const { data } = heldQuery(result);
   const m = data?.metricsLast.metrics?.[0];
   const count = m?.success ? Math.round(m.value) : null;
   return (
@@ -517,6 +521,9 @@ function ActiveCustomersBadge({ tnodeId }: { tnodeId: string | null }) {
           position: 'absolute',
           left: 12,
           bottom: 12,
+          // Leaflet panes sit at z-index 400+, so an unlayered sibling ends
+          // up beneath the tiles once they paint.
+          zIndex: 1000,
           background: 'var(--uk-panel)',
           borderRadius: 8,
           padding: '5px 10px',
