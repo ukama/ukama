@@ -372,6 +372,7 @@ func (r *Router) metricLastHandler(c *gin.Context, in *GetMetricsLastInput) erro
 
 	log.Infof("Last metric request with filters: %+v nodeType: %s lookback: %s fn: %s time: %s",
 		filter, nodeType, in.Lookback, in.Fn, in.Time)
+	c.Header("Content-Type", "application/json")
 	httpCode, err := r.m.GetMetricLast(strings.ToLower(in.Metric), nodeType, filter,
 		in.Lookback, in.Fn, in.Time, c.Writer)
 
