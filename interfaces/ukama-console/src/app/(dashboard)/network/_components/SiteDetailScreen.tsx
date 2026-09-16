@@ -32,6 +32,7 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import { useGetKpiTimeSeriesQuery } from '@/client/graphql/analytics.generated';
+import { useMetricsLastQuery } from '@/client/graphql/last-metrics.generated';
 import {
   useRestartSiteMutation,
   useToggleRfStatusMutation,
@@ -500,6 +501,46 @@ const statusColor = (st: string) =>
     : st === 'degraded'
       ? 'var(--uk-orange)'
       : 'var(--uk-success)';
+
+function ActiveCustomersBadge({ tnodeId }: { tnodeId: string | null }) {
+  const result = useMetricsLastQuery({
+    variables: { data: { keys: ['subscribers_active'], nodeId: tnodeId ?? '' } },
+    skip: !tnodeId,
+    ...visiblePoll(POLL_LIVE_MS),
+  });
+  // Hold the last delivered value across cache eviction and refetches, the
+  // same way the page holds its detail query, so the pill never blinks to a
+  // dash while a fresh answer is in flight.
+  const { data } = heldQuery(result);
+  const m = data?.metricsLast.metrics?.[0];
+  const count = m?.success ? Math.round(m.value) : null;
+  return (
+    <Tooltip title="Active customers">
+      <div
+        style={{
+          position: 'absolute',
+          left: 12,
+          bottom: 12,
+          // Leaflet panes sit at z-index 400+, so an unlayered sibling ends
+          // up beneath the tiles once they paint.
+          zIndex: 1000,
+          background: 'var(--uk-panel)',
+          borderRadius: 8,
+          padding: '5px 10px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 7,
+          boxShadow: 'var(--uk-shadow)',
+          fontSize: 12.5,
+          fontWeight: 600,
+        }}
+      >
+        <GroupRounded sx={{ fontSize: 16, color: 'var(--uk-ac)' }} />
+        {count ?? '—'}
+      </div>
+    </Tooltip>
+  );
+}
 
 /** Node component selected → list the site's nodes as cards. */
 function SiteNodesPanel({
@@ -1234,25 +1275,7 @@ export default function SiteDetailScreen({ siteId }: { siteId: string }) {
               height="100%"
             />
           </div>
-          <div
-            style={{
-              position: 'absolute',
-              left: 12,
-              bottom: 12,
-              background: 'var(--uk-panel)',
-              borderRadius: 8,
-              padding: '5px 10px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 7,
-              boxShadow: 'var(--uk-shadow)',
-              fontSize: 12.5,
-              fontWeight: 600,
-            }}
-          >
-            <GroupRounded sx={{ fontSize: 16, color: 'var(--uk-ac)' }} />
-            {s.subs || '—'}
-          </div>
+          <ActiveCustomersBadge tnodeId={tnodeId} />
         </div>
       </div>
 
