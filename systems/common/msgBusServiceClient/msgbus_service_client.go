@@ -19,9 +19,11 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
+	"github.com/ukama/ukama/systems/common/tracing"
 	"google.golang.org/grpc"
 )
 
@@ -55,7 +57,10 @@ func NewMsgBusClient(timeout time.Duration, org string, system string,
 	service string, instanceId string, msgBusURI string,
 	serviceURI string, msgClientURI string, exchange string, lq string, pq string, retry int8, routes []string) *msgBusServiceClient {
 
-	conn, err := grpc.NewClient(msgClientURI, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	tracing.Init()
+
+	conn, err := grpc.NewClient(msgClientURI, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}

@@ -9,16 +9,22 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"net"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	"github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus/ctxlogrus"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
+	"github.com/ukama/ukama/systems/common/tracing"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/filters"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -46,6 +52,8 @@ type UkamaGrpcServer struct {
 }
 
 func NewGrpcServer(config config.Grpc, serviceRegistrar func(s *grpc.Server)) *UkamaGrpcServer {
+	tracing.Init()
+
 	return &UkamaGrpcServer{config: config,
 		serviceRegistrar: serviceRegistrar, GrpcHealth: health.NewServer()}
 }
@@ -66,6 +74,7 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	}
 	sInterc := []grpc.StreamServerInterceptor{
 		grpc_logrus.StreamServerInterceptor(logrusEntry),
+		traceFieldsStreamInterceptor,
 		grpc_prometheus.StreamServerInterceptor,
 		grpc_validator.StreamServerInterceptor(),
 	}
@@ -73,6 +82,7 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 
 	uInterc := []grpc.UnaryServerInterceptor{
 		grpc_logrus.UnaryServerInterceptor(logrusEntry),
+		traceFieldsUnaryInterceptor,
 		grpc_prometheus.UnaryServerInterceptor,
 		grpc_validator.UnaryServerInterceptor(),
 	}
@@ -81,6 +91,10 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	server := grpc.NewServer(
 		grpc.MaxRecvMsgSize(g.config.MaxMsgSize),
 		grpc.MaxSendMsgSize(g.config.MaxMsgSize),
+		// Server spans for every RPC except health probes; a no-op when
+		// tracing is off.
+		grpc.StatsHandler(otelgrpc.NewServerHandler(
+			otelgrpc.WithFilter(filters.Not(filters.HealthCheck())))),
 		grpc.StreamInterceptor(grpc_middleware.ChainStreamServer(sInterc...)),
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(uInterc...)),
 	)
@@ -130,4 +144,32 @@ func (g *UkamaGrpcServer) StopServer() {
 	}
 
 	g.server.Stop()
+}
+
+// traceFieldsUnaryInterceptor adds trace_id and span_id to the per-call log
+// line written by grpc_logrus, so a log entry can be found from its trace.
+func traceFieldsUnaryInterceptor(ctx context.Context, req interface{},
+	_ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	addTraceFields(ctx)
+
+	return handler(ctx, req)
+}
+
+func traceFieldsStreamInterceptor(srv interface{}, ss grpc.ServerStream,
+	_ *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+	addTraceFields(ss.Context())
+
+	return handler(srv, ss)
+}
+
+func addTraceFields(ctx context.Context) {
+	sc := trace.SpanContextFromContext(ctx)
+	if !sc.IsValid() {
+		return
+	}
+
+	ctxlogrus.AddFields(ctx, log.Fields{
+		"trace_id": sc.TraceID().String(),
+		"span_id":  sc.SpanID().String(),
+	})
 }

@@ -22,8 +22,10 @@ import (
 	"github.com/penglongli/gin-metrics/ginmetrics"
 	"github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/rest/swagger"
+	"github.com/ukama/ukama/systems/common/tracing"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 var SESSION_KEY = "ukama_session"
@@ -49,7 +51,16 @@ func NewFizzRouter(httpConfig *HttpConfig, srvName string, srvVersion string, is
 		gin.SetMode(gin.DebugMode)
 	}
 
+	tracing.Init()
+
 	g := gin.Default()
+	// Server span per request, skipping the probe and scrape endpoints; a
+	// no-op when tracing is off.
+	g.Use(otelgin.Middleware(srvName, otelgin.WithGinFilter(func(c *gin.Context) bool {
+		p := c.Request.URL.Path
+
+		return p != "/ping" && p != "/metrics"
+	})))
 	g.Use(gin.Logger())
 	g.Use(cors.New(httpConfig.Cors))
 

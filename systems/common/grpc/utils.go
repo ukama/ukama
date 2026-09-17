@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 
 	"github.com/sirupsen/logrus"
@@ -45,6 +46,7 @@ func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {
 	logrus.Infoln("Connecting to service ", conf.Host)
 
 	conn, err := grpc.NewClient(conf.Host, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		TracingDialOption(),
 		grpc.WithConnectParams(
 			grpc.ConnectParams{
 				MinConnectTimeout: conf.Timeout,
@@ -53,4 +55,10 @@ func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {
 		log.Fatalf("Failed to connect to service %s. Error: %v", conf.Host, err)
 	}
 	return conn
+}
+
+// TracingDialOption propagates the caller's trace context on outgoing RPCs
+// and records a client span for each. A no-op when tracing is off.
+func TracingDialOption() grpc.DialOption {
+	return grpc.WithStatsHandler(otelgrpc.NewClientHandler())
 }

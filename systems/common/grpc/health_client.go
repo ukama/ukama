@@ -25,7 +25,8 @@ import (
 // The caller controls the overall deadline through ctx.
 func CheckServiceHealth(ctx context.Context, addr string) error {
 	conn, err := grpc.NewClient(addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		TracingDialOption())
 	if err != nil {
 		return fmt.Errorf("failed to create connection to %s: %w", addr, err)
 	}
@@ -72,7 +73,8 @@ func CheckServiceHealthDetailed(ctx context.Context, addr string) *HealthReport 
 	report := &HealthReport{}
 
 	conn, err := grpc.NewClient(addr,
-		grpc.WithTransportCredentials(insecure.NewCredentials()))
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		TracingDialOption())
 	if err != nil {
 		report.Err = fmt.Errorf("failed to create connection to %s: %w", addr, err)
 

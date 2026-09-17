@@ -14,6 +14,7 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty/v2"
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	log "github.com/sirupsen/logrus"
 	crest "github.com/ukama/ukama/systems/common/rest"
@@ -26,7 +27,7 @@ type Resty struct {
 type Option func(*Resty)
 
 func NewResty(options ...Option) *Resty {
-	c := resty.New().SetDebug(false)
+	c := withTracing(resty.New().SetDebug(false))
 
 	r := &Resty{
 		C: c,
@@ -71,7 +72,7 @@ func WithContentTypeJSON() Option {
 
 // Deprecated: Use NewResty() + WithBearer() option instead.
 func NewRestyWithBearer(key string) *Resty {
-	c := resty.New()
+	c := withTracing(resty.New())
 
 	c.SetDebug(false).SetHeader("Authorization", "Bearer "+key)
 
@@ -313,4 +314,18 @@ func HandleRestErrorStatus(err error) error {
 	log.Infof("Returning generic error: %v", err)
 
 	return err
+}
+
+// withTracing wraps the client's transport so requests made with
+// R().SetContext(ctx) carry the trace context and get a client span. A no-op
+// when tracing is off.
+func withTracing(c *resty.Client) *resty.Client {
+	transport, err := c.Transport()
+	if err != nil {
+		log.Warnf("Tracing not attached to REST client: %v", err)
+
+		return c
+	}
+
+	return c.SetTransport(otelhttp.NewTransport(transport))
 }
