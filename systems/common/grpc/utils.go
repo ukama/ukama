@@ -14,6 +14,7 @@ import (
 	"github.com/ukama/ukama/systems/common/config"
 
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc/filters"
 	"google.golang.org/grpc"
 
 	"github.com/sirupsen/logrus"
@@ -58,7 +59,9 @@ func CreateGrpcConn(conf config.GrpcService) *grpc.ClientConn {
 }
 
 // TracingDialOption propagates the caller's trace context on outgoing RPCs
-// and records a client span for each. A no-op when tracing is off.
+// and records a client span for each, except health checks, which would
+// otherwise produce a one-span trace per probe. A no-op when tracing is off.
 func TracingDialOption() grpc.DialOption {
-	return grpc.WithStatsHandler(otelgrpc.NewClientHandler())
+	return grpc.WithStatsHandler(otelgrpc.NewClientHandler(
+		otelgrpc.WithFilter(filters.Not(filters.HealthCheck()))))
 }
