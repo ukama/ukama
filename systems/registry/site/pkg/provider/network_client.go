@@ -10,6 +10,7 @@ package providers
 
 import (
 	log "github.com/sirupsen/logrus"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
 	"google.golang.org/grpc"
@@ -35,7 +36,8 @@ func (u *networkClientProvider) GetClient() (pb.NetworkServiceClient, error) {
 
 		log.Infoln("Connecting to Network service ", u.networkHost)
 
-		conn, err := grpc.NewClient(u.networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(u.networkHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption())
 		if err != nil {
 			log.Fatalf("Failed to connect to Network service %s. Error: %v", u.networkHost, err)
 		}

@@ -31,7 +31,7 @@ const OrgName = "testorg"
 
 func TestNotifyServer_Add(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	node := ukama.NewVirtualHomeNodeId().String()
 
@@ -385,7 +385,7 @@ func TestNotifyServer_Delete(t *testing.T) {
 	t.Run("NotificationFound", func(tt *testing.T) {
 		notificationId := uuid.NewV4()
 
-		msgbusClient.On("PublishRequest",
+		msgbusClient.On("PublishRequestWithContext", mock.Anything,
 			mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo.On("Delete", notificationId).Return(nil)
@@ -403,7 +403,7 @@ func TestNotifyServer_Delete(t *testing.T) {
 
 func TestNotifyServer_Purge(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	node := ukama.NewVirtualHomeNodeId().String()
 	repo := mocks.NotificationRepo{}
@@ -559,7 +559,7 @@ func NewTestPbNotification(nodeId string, ntype string) *pb.Notification {
 
 func TestLifecyclePublicationFailureIsRetried(t *testing.T) {
 	bus := &mbmocks.MsgBusServiceClient{}
-	bus.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	bus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 	repo := &mocks.NotificationRepo{}
 	repo.On("Add", mock.Anything).Return(nil).Once()
 	s := server.NewNotifyServer(OrgName, repo, bus)

@@ -349,7 +349,7 @@ func TestUpdateSoftware(t *testing.T) {
 		})).Return(nil)
 
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest",
+		msgBus.On("PublishRequestWithContext", mock.Anything,
 			matchSoftwareRoute(),
 			matchStarterUpdateMessage(t),
 		).Return(nil)
@@ -455,7 +455,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
 
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest",
+		msgBus.On("PublishRequestWithContext", mock.Anything,
 			matchSoftwareRoute(),
 			matchStarterUpdateMessage(t),
 		).Return(errors.New("publish failed"))
@@ -482,7 +482,7 @@ func TestUpdateSoftware(t *testing.T) {
 		sRepo.On("Update", mock.Anything).Return(errors.New("db update failed"))
 
 		msgBus := mbmocks.NewMsgBusServiceClient(t)
-		msgBus.On("PublishRequest",
+		msgBus.On("PublishRequestWithContext", mock.Anything,
 			matchSoftwareRoute(),
 			matchStarterUpdateMessage(t),
 		).Return(nil)

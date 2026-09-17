@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -32,7 +33,8 @@ type operationManager struct {
 }
 
 func NewOperationManager(host string, timeout time.Duration) OperationManager {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to operation manager at %s: %v", host, err)
 	}

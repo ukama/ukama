@@ -1040,9 +1040,9 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 			}, nil).Once()
 
 		var publishedEvt *epb.EventSimAllocation
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once().
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once().
 			Run(func(args mock.Arguments) {
-				publishedEvt, _ = args.Get(1).(*epb.EventSimAllocation)
+				publishedEvt, _ = args.Get(2).(*epb.EventSimAllocation)
 			})
 
 		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything,
@@ -1611,7 +1611,7 @@ func TestSimManagerServer_SetPackageInUseForSim(t *testing.T) {
 			}),
 			mock.Anything).Return(nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		agentAdapter := agentFactory.On("GetAgentAdapter", simd.Type).
 			Return(&mocks.AgentAdapter{}, true).
@@ -2274,7 +2274,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
@@ -2323,7 +2323,7 @@ func TestSimManagerServer_ToggleSimServiceStatus(t *testing.T) {
 			Once().
 			ReturnArguments.Get(0).(*mocks.AgentAdapter)
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		agentAdapter.On("Update", mock.Anything,
 			mock.Anything).Return(nil).Once()
@@ -2371,7 +2371,7 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 
 		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
 			nil, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		resp, err := s.RemovePackageForSim(context.TODO(), &pb.PackageRequest{
 			PackageId: packageId.String(),
@@ -2583,7 +2583,7 @@ func TestSimManagerServer_TerminateSim(t *testing.T) {
 			}, nil).
 			Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := server.NewSimManagerServer(OrgName, simRepo, nil, agentFactory,
 			nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)

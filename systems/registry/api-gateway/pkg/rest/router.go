@@ -64,56 +64,56 @@ type Clients struct {
 }
 
 type network interface {
-	AddNetwork(netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
-	GetNetwork(netID string) (*netpb.GetResponse, error)
-	GetNetworks() (*netpb.GetNetworksResponse, error)
-	SetNetworkDefault(netID string) (*netpb.SetDefaultResponse, error)
-	GetDefault() (*netpb.GetDefaultResponse, error)
-	RemoveNetwork(netID string) (*netpb.DeleteResponse, error)
+	AddNetwork(ctx context.Context, netName string, allowedCountries, allowedNetworks []string, budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error)
+	GetNetwork(ctx context.Context, netID string) (*netpb.GetResponse, error)
+	GetNetworks(ctx context.Context) (*netpb.GetNetworksResponse, error)
+	SetNetworkDefault(ctx context.Context, netID string) (*netpb.SetDefaultResponse, error)
+	GetDefault(ctx context.Context) (*netpb.GetDefaultResponse, error)
+	RemoveNetwork(ctx context.Context, netID string) (*netpb.DeleteResponse, error)
 }
 
 type site interface {
 	AddSiteContext(context.Context, *sitepb.AddRequest) (*sitepb.AddResponse, error)
-	AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude string, installDate string) (*sitepb.AddResponse, error)
-	GetSite(siteId string) (*sitepb.GetResponse, error)
-	List(networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
-	UpdateSite(siteId, name string) (*sitepb.UpdateResponse, error)
-	RemoveSite(siteId string) (*sitepb.DeleteResponse, error)
+	AddSite(ctx context.Context, networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string, isDeactivated bool, latitude, longitude string, installDate string) (*sitepb.AddResponse, error)
+	GetSite(ctx context.Context, siteId string) (*sitepb.GetResponse, error)
+	List(ctx context.Context, networkId string, isDeactivate bool) (*sitepb.ListResponse, error)
+	UpdateSite(ctx context.Context, siteId, name string) (*sitepb.UpdateResponse, error)
+	RemoveSite(ctx context.Context, siteId string) (*sitepb.DeleteResponse, error)
 }
 
 type invitation interface {
-	AddInvitation(name, email, role string) (*invpb.AddResponse, error)
-	GetInvitationById(invitationId string) (*invpb.GetResponse, error)
-	UpdateInvitation(invitationId string, status string, email string) (*invpb.UpdateStatusResponse, error)
-	RemoveInvitation(invitationId string) (*invpb.DeleteResponse, error)
-	GetAllInvitations() (*invpb.GetAllResponse, error)
-	GetInvitationsByEmail(email string) (*invpb.GetByEmailResponse, error)
+	AddInvitation(ctx context.Context, name, email, role string) (*invpb.AddResponse, error)
+	GetInvitationById(ctx context.Context, invitationId string) (*invpb.GetResponse, error)
+	UpdateInvitation(ctx context.Context, invitationId string, status string, email string) (*invpb.UpdateStatusResponse, error)
+	RemoveInvitation(ctx context.Context, invitationId string) (*invpb.DeleteResponse, error)
+	GetAllInvitations(ctx context.Context) (*invpb.GetAllResponse, error)
+	GetInvitationsByEmail(ctx context.Context, email string) (*invpb.GetByEmailResponse, error)
 }
 
 type member interface {
-	GetMember(userUUID string) (*mpb.MemberResponse, error)
-	GetMemberByUserId(userUUID string) (*mpb.GetMemberByUserIdResponse, error)
-	GetMembers() (*mpb.GetMembersResponse, error)
-	AddMember(userUUID string, role string) (*mpb.MemberResponse, error)
-	UpdateMember(userUUID string, isDeactivated bool, role string) error
-	RemoveMember(userUUID string) error
+	GetMember(ctx context.Context, userUUID string) (*mpb.MemberResponse, error)
+	GetMemberByUserId(ctx context.Context, userUUID string) (*mpb.GetMemberByUserIdResponse, error)
+	GetMembers(ctx context.Context) (*mpb.GetMembersResponse, error)
+	AddMember(ctx context.Context, userUUID string, role string) (*mpb.MemberResponse, error)
+	UpdateMember(ctx context.Context, userUUID string, isDeactivated bool, role string) error
+	RemoveMember(ctx context.Context, userUUID string) error
 }
 
 type node interface {
-	AddNode(nodeId, name, state string) (*nodepb.AddNodeResponse, error)
-	GetNode(nodeId string) (*nodepb.GetNodeResponse, error)
-	GetNodes() (*nodepb.GetNodesResponse, error)
-	List(req *nodepb.ListRequest) (*nodepb.ListResponse, error)
-	GetNetworkNodes(networkId string) (*nodepb.GetByNetworkResponse, error)
-	GetSiteNodes(siteId string) (*nodepb.GetBySiteResponse, error)
-	GetNodesByState(connectivity, state string) (*nodepb.GetNodesResponse, error)
-	UpdateNodeState(nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
-	UpdateNode(nodeId string, name string, latitude string, longitude string) (*nodepb.UpdateNodeResponse, error)
-	DeleteNode(nodeId string) (*nodepb.DeleteNodeResponse, error)
-	AttachNodes(node, l, r string) (*nodepb.AttachNodesResponse, error)
-	DetachNode(nodeId string) (*nodepb.DetachNodeResponse, error)
-	AddNodeToSite(nodeId, networkId, siteId string) (*nodepb.AddNodeToSiteResponse, error)
-	ReleaseNodeFromSite(nodeId string) (*nodepb.ReleaseNodeFromSiteResponse, error)
+	AddNode(ctx context.Context, nodeId, name, state string) (*nodepb.AddNodeResponse, error)
+	GetNode(ctx context.Context, nodeId string) (*nodepb.GetNodeResponse, error)
+	GetNodes(ctx context.Context) (*nodepb.GetNodesResponse, error)
+	List(ctx context.Context, req *nodepb.ListRequest) (*nodepb.ListResponse, error)
+	GetNetworkNodes(ctx context.Context, networkId string) (*nodepb.GetByNetworkResponse, error)
+	GetSiteNodes(ctx context.Context, siteId string) (*nodepb.GetBySiteResponse, error)
+	GetNodesByState(ctx context.Context, connectivity, state string) (*nodepb.GetNodesResponse, error)
+	UpdateNodeState(ctx context.Context, nodeId string, state string) (*nodepb.UpdateNodeResponse, error)
+	UpdateNode(ctx context.Context, nodeId string, name string, latitude string, longitude string) (*nodepb.UpdateNodeResponse, error)
+	DeleteNode(ctx context.Context, nodeId string) (*nodepb.DeleteNodeResponse, error)
+	AttachNodes(ctx context.Context, node, l, r string) (*nodepb.AttachNodesResponse, error)
+	DetachNode(ctx context.Context, nodeId string) (*nodepb.DetachNodeResponse, error)
+	AddNodeToSite(ctx context.Context, nodeId, networkId, siteId string) (*nodepb.AddNodeToSiteResponse, error)
+	ReleaseNodeFromSite(ctx context.Context, nodeId string) (*nodepb.ReleaseNodeFromSiteResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -258,15 +258,15 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) getNetworkNodesHandler(c *gin.Context, req *GetNetworkNodesRequest) (*nodepb.GetByNetworkResponse, error) {
-	return r.clients.Node.GetNetworkNodes(req.NetworkId)
+	return r.clients.Node.GetNetworkNodes(c.Request.Context(), req.NetworkId)
 }
 
 func (r *Router) getSiteNodesHandler(c *gin.Context, req *GetSiteNodesRequest) (*nodepb.GetBySiteResponse, error) {
-	return r.clients.Node.GetSiteNodes(req.SiteId)
+	return r.clients.Node.GetSiteNodes(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) getNodes(c *gin.Context) (*nodepb.GetNodesResponse, error) {
-	return r.clients.Node.GetNodes()
+	return r.clients.Node.GetNodes(c.Request.Context())
 }
 func (r *Router) list(c *gin.Context, req *ListNodesRequest) (*nodepb.ListResponse, error) {
 	listReq := &nodepb.ListRequest{
@@ -286,121 +286,121 @@ func (r *Router) list(c *gin.Context, req *ListNodesRequest) (*nodepb.ListRespon
 	if req.Connectivity != "" {
 		listReq.Connectivity = cpb.NodeConnectivity(ukama.ParseNodeConnectivity(req.Connectivity))
 	}
-	return r.clients.Node.List(listReq)
+	return r.clients.Node.List(c.Request.Context(), listReq)
 }
 
 func (r *Router) getNodesByState(c *gin.Context, req *GetNodesByStateRequest) (*nodepb.GetNodesResponse, error) {
-	return r.clients.Node.GetNodesByState(req.Connectivity, req.State)
+	return r.clients.Node.GetNodesByState(c.Request.Context(), req.Connectivity, req.State)
 }
 
 func (r *Router) getNodeHandler(c *gin.Context, req *GetNodeRequest) (*nodepb.GetNodeResponse, error) {
-	return r.clients.Node.GetNode(req.NodeId)
+	return r.clients.Node.GetNode(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) postAddNodeHandler(c *gin.Context, req *AddNodeRequest) (*nodepb.AddNodeResponse, error) {
-	return r.clients.Node.AddNode(req.NodeId, req.Name, req.State)
+	return r.clients.Node.AddNode(c.Request.Context(), req.NodeId, req.Name, req.State)
 }
 
 func (r *Router) postAttachedNodesHandler(c *gin.Context, req *AttachNodesRequest) (*nodepb.AttachNodesResponse, error) {
-	return r.clients.Node.AttachNodes(req.ParentNode, req.AmpNodeL, req.AmpNodeR)
+	return r.clients.Node.AttachNodes(c.Request.Context(), req.ParentNode, req.AmpNodeL, req.AmpNodeR)
 }
 
 func (r *Router) deleteAttachedNodeHandler(c *gin.Context, req *DetachNodeRequest) (*nodepb.DetachNodeResponse, error) {
-	return r.clients.Node.DetachNode(req.NodeId)
+	return r.clients.Node.DetachNode(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) putUpdateNodeHandler(c *gin.Context, req *UpdateNodeRequest) (*nodepb.UpdateNodeResponse, error) {
-	return r.clients.Node.UpdateNode(req.NodeId, req.Name, req.Latitude, req.Longitude)
+	return r.clients.Node.UpdateNode(c.Request.Context(), req.NodeId, req.Name, req.Latitude, req.Longitude)
 }
 
 func (r *Router) patchUpdateNodeStateHandler(c *gin.Context, req *UpdateNodeStateRequest) (*nodepb.UpdateNodeResponse, error) {
-	return r.clients.Node.UpdateNodeState(req.NodeId, req.State)
+	return r.clients.Node.UpdateNodeState(c.Request.Context(), req.NodeId, req.State)
 }
 
 func (r *Router) postNodeToSiteHandler(c *gin.Context, req *AddNodeToSiteRequest) (*nodepb.AddNodeToSiteResponse, error) {
-	return r.clients.Node.AddNodeToSite(req.NodeId, req.NetworkId, req.SiteId)
+	return r.clients.Node.AddNodeToSite(c.Request.Context(), req.NodeId, req.NetworkId, req.SiteId)
 }
 
 func (r *Router) deleteNodeFromSiteHandler(c *gin.Context, req *ReleaseNodeFromSiteRequest) (*nodepb.ReleaseNodeFromSiteResponse, error) {
-	return r.clients.Node.ReleaseNodeFromSite(req.NodeId)
+	return r.clients.Node.ReleaseNodeFromSite(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) deleteNodeHandler(c *gin.Context, req *DeleteNodeRequest) (*nodepb.DeleteNodeResponse, error) {
-	return r.clients.Node.DeleteNode(req.NodeId)
+	return r.clients.Node.DeleteNode(c.Request.Context(), req.NodeId)
 }
 
 /* Member */
 func (r *Router) getMembersHandler(c *gin.Context, req *GetMembersRequest) (*mpb.GetMembersResponse, error) {
-	return r.clients.Member.GetMembers()
+	return r.clients.Member.GetMembers(c.Request.Context())
 }
 
 func (r *Router) getMemberByUserIdHandler(c *gin.Context, req *GetMemberByUserRequest) (*mpb.GetMemberByUserIdResponse, error) {
-	return r.clients.Member.GetMemberByUserId(req.UserId)
+	return r.clients.Member.GetMemberByUserId(c.Request.Context(), req.UserId)
 }
 
 func (r *Router) getMemberHandler(c *gin.Context, req *GetMemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.GetMember(req.MemberId)
+	return r.clients.Member.GetMember(c.Request.Context(), req.MemberId)
 }
 
 func (r *Router) postMemberHandler(c *gin.Context, req *MemberRequest) (*mpb.MemberResponse, error) {
-	return r.clients.Member.AddMember(req.UserUuid, req.Role)
+	return r.clients.Member.AddMember(c.Request.Context(), req.UserUuid, req.Role)
 }
 
 func (r *Router) patchMemberHandler(c *gin.Context, req *UpdateMemberRequest) error {
-	return r.clients.Member.UpdateMember(req.MemberId, req.IsDeactivated, req.Role)
+	return r.clients.Member.UpdateMember(c.Request.Context(), req.MemberId, req.IsDeactivated, req.Role)
 }
 
 func (r *Router) removeMemberHandler(c *gin.Context, req *RemoveMemberRequest) error {
-	return r.clients.Member.RemoveMember(req.MemberId)
+	return r.clients.Member.RemoveMember(c.Request.Context(), req.MemberId)
 }
 
 // Network handlers
 
 func (r *Router) setNetworkDefaultHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.SetDefaultResponse, error) {
-	return r.clients.Network.SetNetworkDefault(req.NetworkId)
+	return r.clients.Network.SetNetworkDefault(c.Request.Context(), req.NetworkId)
 }
 
 func (r *Router) getNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.GetResponse, error) {
-	return r.clients.Network.GetNetwork(req.NetworkId)
+	return r.clients.Network.GetNetwork(c.Request.Context(), req.NetworkId)
 }
 
 func (r *Router) getNetworksHandler(c *gin.Context) (*netpb.GetNetworksResponse, error) {
 
-	return r.clients.Network.GetNetworks()
+	return r.clients.Network.GetNetworks(c.Request.Context())
 }
 
 func (r *Router) getDefaultNetworkHandler(c *gin.Context) (*netpb.GetDefaultResponse, error) {
 
-	return r.clients.Network.GetDefault()
+	return r.clients.Network.GetDefault(c.Request.Context())
 }
 
 func (r *Router) postNetworkHandler(c *gin.Context, req *AddNetworkRequest) (*netpb.AddResponse, error) {
-	return r.clients.Network.AddNetwork(req.NetName, req.AllowedCountries, req.AllowedNetworks,
+	return r.clients.Network.AddNetwork(c.Request.Context(), req.NetName, req.AllowedCountries, req.AllowedNetworks,
 		req.Budget, req.Overdraft, req.TrafficPolicy, req.PaymentLinks)
 }
 
 func (r *Router) removeNetworkHandler(c *gin.Context, req *GetNetworkRequest) (*netpb.DeleteResponse, error) {
-	return r.clients.Network.RemoveNetwork(req.NetworkId)
+	return r.clients.Network.RemoveNetwork(c.Request.Context(), req.NetworkId)
 }
 
 func (r *Router) getSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.GetResponse, error) {
-	return r.clients.Site.GetSite(req.SiteId)
+	return r.clients.Site.GetSite(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) getSitesHandler(c *gin.Context, req *GetSitesListRequest) (*sitepb.ListResponse, error) {
-	return r.clients.Site.List(req.NetworkId, req.IsDeactivated)
+	return r.clients.Site.List(c.Request.Context(), req.NetworkId, req.IsDeactivated)
 
 }
 
 func (r *Router) updateSiteHandler(c *gin.Context, req *UpdateSiteRequest) (*sitepb.UpdateResponse, error) {
-	return r.clients.Site.UpdateSite(
+	return r.clients.Site.UpdateSite(c.Request.Context(),
 		req.SiteId,
 		req.Name,
 	)
 }
 
 func (r *Router) removeSiteHandler(c *gin.Context, req *GetSiteRequest) (*sitepb.DeleteResponse, error) {
-	return r.clients.Site.RemoveSite(req.SiteId)
+	return r.clients.Site.RemoveSite(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.AddResponse, error) {
@@ -414,27 +414,27 @@ func (r *Router) postSiteHandler(c *gin.Context, req *AddSiteRequest) (*sitepb.A
 }
 
 func (r *Router) postInvitationHandler(c *gin.Context, req *AddInvitationRequest) (*invpb.AddResponse, error) {
-	return r.clients.Invitation.AddInvitation(req.Name, strings.ToLower(req.Email), req.Role)
+	return r.clients.Invitation.AddInvitation(c.Request.Context(), req.Name, strings.ToLower(req.Email), req.Role)
 }
 
 func (r *Router) getInvitationHandler(c *gin.Context, req *GetInvitationRequest) (*invpb.GetResponse, error) {
-	return r.clients.Invitation.GetInvitationById(req.InvitationId)
+	return r.clients.Invitation.GetInvitationById(c.Request.Context(), req.InvitationId)
 }
 
 func (r *Router) patchInvitationHandler(c *gin.Context, req *UpdateInvitationRequest) (*invpb.UpdateStatusResponse, error) {
-	return r.clients.Invitation.UpdateInvitation(req.InvitationId, req.Status, strings.ToLower(req.Email))
+	return r.clients.Invitation.UpdateInvitation(c.Request.Context(), req.InvitationId, req.Status, strings.ToLower(req.Email))
 }
 
 func (r *Router) removeInvitationHandler(c *gin.Context, req *RemoveInvitationRequest) (*invpb.DeleteResponse, error) {
-	return r.clients.Invitation.RemoveInvitation(req.InvitationId)
+	return r.clients.Invitation.RemoveInvitation(c.Request.Context(), req.InvitationId)
 }
 
 func (r *Router) getAllInvitationsHandler(c *gin.Context) (*invpb.GetAllResponse, error) {
-	return r.clients.Invitation.GetAllInvitations()
+	return r.clients.Invitation.GetAllInvitations(c.Request.Context())
 }
 
 func (r *Router) getInvitationsByEmailHandler(c *gin.Context, req *GetInvitationsByEmailReq) (*invpb.GetByEmailResponse, error) {
-	return r.clients.Invitation.GetInvitationsByEmail(strings.ToLower(req.Email))
+	return r.clients.Invitation.GetInvitationsByEmail(c.Request.Context(), strings.ToLower(req.Email))
 }
 
 func formatDoc(summary string, description string) []fizz.OperationOption {

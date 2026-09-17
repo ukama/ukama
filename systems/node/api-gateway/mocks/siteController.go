@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/site-controller/pb/gen"
 )
@@ -12,9 +14,9 @@ type siteController struct {
 	mock.Mock
 }
 
-// ApplySwitchPolicy provides a mock function with given fields: siteID
-func (_m *siteController) ApplySwitchPolicy(siteID string) (*gen.ApplySwitchPolicyResponse, error) {
-	ret := _m.Called(siteID)
+// ApplySwitchPolicy provides a mock function with given fields: ctx, siteID
+func (_m *siteController) ApplySwitchPolicy(ctx context.Context, siteID string) (*gen.ApplySwitchPolicyResponse, error) {
+	ret := _m.Called(ctx, siteID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplySwitchPolicy")
@@ -22,19 +24,19 @@ func (_m *siteController) ApplySwitchPolicy(siteID string) (*gen.ApplySwitchPoli
 
 	var r0 *gen.ApplySwitchPolicyResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ApplySwitchPolicyResponse, error)); ok {
-		return rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.ApplySwitchPolicyResponse, error)); ok {
+		return rf(ctx, siteID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ApplySwitchPolicyResponse); ok {
-		r0 = rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.ApplySwitchPolicyResponse); ok {
+		r0 = rf(ctx, siteID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ApplySwitchPolicyResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(siteID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, siteID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *siteController) ApplySwitchPolicy(siteID string) (*gen.ApplySwitchPoli
 	return r0, r1
 }
 
-// GetPortMap provides a mock function with given fields: siteID
-func (_m *siteController) GetPortMap(siteID string) (*gen.GetPortMapResponse, error) {
-	ret := _m.Called(siteID)
+// GetPortMap provides a mock function with given fields: ctx, siteID
+func (_m *siteController) GetPortMap(ctx context.Context, siteID string) (*gen.GetPortMapResponse, error) {
+	ret := _m.Called(ctx, siteID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPortMap")
@@ -52,19 +54,19 @@ func (_m *siteController) GetPortMap(siteID string) (*gen.GetPortMapResponse, er
 
 	var r0 *gen.GetPortMapResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetPortMapResponse, error)); ok {
-		return rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetPortMapResponse, error)); ok {
+		return rf(ctx, siteID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetPortMapResponse); ok {
-		r0 = rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetPortMapResponse); ok {
+		r0 = rf(ctx, siteID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetPortMapResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(siteID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, siteID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *siteController) GetPortMap(siteID string) (*gen.GetPortMapResponse, er
 	return r0, r1
 }
 
-// GetSiteState provides a mock function with given fields: siteID
-func (_m *siteController) GetSiteState(siteID string) (*gen.GetSiteStateResponse, error) {
-	ret := _m.Called(siteID)
+// GetSiteState provides a mock function with given fields: ctx, siteID
+func (_m *siteController) GetSiteState(ctx context.Context, siteID string) (*gen.GetSiteStateResponse, error) {
+	ret := _m.Called(ctx, siteID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSiteState")
@@ -82,19 +84,19 @@ func (_m *siteController) GetSiteState(siteID string) (*gen.GetSiteStateResponse
 
 	var r0 *gen.GetSiteStateResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSiteStateResponse, error)); ok {
-		return rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSiteStateResponse, error)); ok {
+		return rf(ctx, siteID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSiteStateResponse); ok {
-		r0 = rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSiteStateResponse); ok {
+		r0 = rf(ctx, siteID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSiteStateResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(siteID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, siteID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *siteController) GetSiteState(siteID string) (*gen.GetSiteStateResponse
 	return r0, r1
 }
 
-// PowerCycleNode provides a mock function with given fields: siteID, role, reason, requestedBy
-func (_m *siteController) PowerCycleNode(siteID string, role string, reason string, requestedBy string) (*gen.PowerCycleNodeResponse, error) {
-	ret := _m.Called(siteID, role, reason, requestedBy)
+// PowerCycleNode provides a mock function with given fields: ctx, siteID, role, reason, requestedBy
+func (_m *siteController) PowerCycleNode(ctx context.Context, siteID string, role string, reason string, requestedBy string) (*gen.PowerCycleNodeResponse, error) {
+	ret := _m.Called(ctx, siteID, role, reason, requestedBy)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PowerCycleNode")
@@ -112,19 +114,19 @@ func (_m *siteController) PowerCycleNode(siteID string, role string, reason stri
 
 	var r0 *gen.PowerCycleNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.PowerCycleNodeResponse, error)); ok {
-		return rf(siteID, role, reason, requestedBy)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (*gen.PowerCycleNodeResponse, error)); ok {
+		return rf(ctx, siteID, role, reason, requestedBy)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.PowerCycleNodeResponse); ok {
-		r0 = rf(siteID, role, reason, requestedBy)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) *gen.PowerCycleNodeResponse); ok {
+		r0 = rf(ctx, siteID, role, reason, requestedBy)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PowerCycleNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(siteID, role, reason, requestedBy)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, siteID, role, reason, requestedBy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *siteController) PowerCycleNode(siteID string, role string, reason stri
 	return r0, r1
 }
 
-// RestartSite provides a mock function with given fields: siteID
-func (_m *siteController) RestartSite(siteID string) (*gen.RestartSiteResponse, error) {
-	ret := _m.Called(siteID)
+// RestartSite provides a mock function with given fields: ctx, siteID
+func (_m *siteController) RestartSite(ctx context.Context, siteID string) (*gen.RestartSiteResponse, error) {
+	ret := _m.Called(ctx, siteID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RestartSite")
@@ -142,19 +144,19 @@ func (_m *siteController) RestartSite(siteID string) (*gen.RestartSiteResponse, 
 
 	var r0 *gen.RestartSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.RestartSiteResponse, error)); ok {
-		return rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.RestartSiteResponse, error)); ok {
+		return rf(ctx, siteID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.RestartSiteResponse); ok {
-		r0 = rf(siteID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.RestartSiteResponse); ok {
+		r0 = rf(ctx, siteID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.RestartSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(siteID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, siteID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *siteController) RestartSite(siteID string) (*gen.RestartSiteResponse, 
 	return r0, r1
 }
 
-// SetRadio provides a mock function with given fields: siteID, state
-func (_m *siteController) SetRadio(siteID string, state string) (*gen.SetRadioResponse, error) {
-	ret := _m.Called(siteID, state)
+// SetRadio provides a mock function with given fields: ctx, siteID, state
+func (_m *siteController) SetRadio(ctx context.Context, siteID string, state string) (*gen.SetRadioResponse, error) {
+	ret := _m.Called(ctx, siteID, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetRadio")
@@ -172,19 +174,19 @@ func (_m *siteController) SetRadio(siteID string, state string) (*gen.SetRadioRe
 
 	var r0 *gen.SetRadioResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.SetRadioResponse, error)); ok {
-		return rf(siteID, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.SetRadioResponse, error)); ok {
+		return rf(ctx, siteID, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.SetRadioResponse); ok {
-		r0 = rf(siteID, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.SetRadioResponse); ok {
+		r0 = rf(ctx, siteID, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SetRadioResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(siteID, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, siteID, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -192,9 +194,9 @@ func (_m *siteController) SetRadio(siteID string, state string) (*gen.SetRadioRe
 	return r0, r1
 }
 
-// SetService provides a mock function with given fields: siteID, state
-func (_m *siteController) SetService(siteID string, state string) (*gen.SetServiceResponse, error) {
-	ret := _m.Called(siteID, state)
+// SetService provides a mock function with given fields: ctx, siteID, state
+func (_m *siteController) SetService(ctx context.Context, siteID string, state string) (*gen.SetServiceResponse, error) {
+	ret := _m.Called(ctx, siteID, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetService")
@@ -202,19 +204,19 @@ func (_m *siteController) SetService(siteID string, state string) (*gen.SetServi
 
 	var r0 *gen.SetServiceResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.SetServiceResponse, error)); ok {
-		return rf(siteID, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.SetServiceResponse, error)); ok {
+		return rf(ctx, siteID, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.SetServiceResponse); ok {
-		r0 = rf(siteID, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.SetServiceResponse); ok {
+		r0 = rf(ctx, siteID, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SetServiceResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(siteID, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, siteID, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -222,9 +224,9 @@ func (_m *siteController) SetService(siteID string, state string) (*gen.SetServi
 	return r0, r1
 }
 
-// SetSite provides a mock function with given fields: siteID, state, reason, requestedBy
-func (_m *siteController) SetSite(siteID string, state string, reason string, requestedBy string) (*gen.SetSiteResponse, error) {
-	ret := _m.Called(siteID, state, reason, requestedBy)
+// SetSite provides a mock function with given fields: ctx, siteID, state, reason, requestedBy
+func (_m *siteController) SetSite(ctx context.Context, siteID string, state string, reason string, requestedBy string) (*gen.SetSiteResponse, error) {
+	ret := _m.Called(ctx, siteID, state, reason, requestedBy)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetSite")
@@ -232,19 +234,19 @@ func (_m *siteController) SetSite(siteID string, state string, reason string, re
 
 	var r0 *gen.SetSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.SetSiteResponse, error)); ok {
-		return rf(siteID, state, reason, requestedBy)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (*gen.SetSiteResponse, error)); ok {
+		return rf(ctx, siteID, state, reason, requestedBy)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.SetSiteResponse); ok {
-		r0 = rf(siteID, state, reason, requestedBy)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) *gen.SetSiteResponse); ok {
+		r0 = rf(ctx, siteID, state, reason, requestedBy)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SetSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(siteID, state, reason, requestedBy)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, siteID, state, reason, requestedBy)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -252,9 +254,9 @@ func (_m *siteController) SetSite(siteID string, state string, reason string, re
 	return r0, r1
 }
 
-// ToggleInternetSwitch provides a mock function with given fields: siteID, status, port
-func (_m *siteController) ToggleInternetSwitch(siteID string, status bool, port int32) (*gen.ToggleInternetSwitchResponse, error) {
-	ret := _m.Called(siteID, status, port)
+// ToggleInternetSwitch provides a mock function with given fields: ctx, siteID, status, port
+func (_m *siteController) ToggleInternetSwitch(ctx context.Context, siteID string, status bool, port int32) (*gen.ToggleInternetSwitchResponse, error) {
+	ret := _m.Called(ctx, siteID, status, port)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleInternetSwitch")
@@ -262,19 +264,19 @@ func (_m *siteController) ToggleInternetSwitch(siteID string, status bool, port 
 
 	var r0 *gen.ToggleInternetSwitchResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, bool, int32) (*gen.ToggleInternetSwitchResponse, error)); ok {
-		return rf(siteID, status, port)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool, int32) (*gen.ToggleInternetSwitchResponse, error)); ok {
+		return rf(ctx, siteID, status, port)
 	}
-	if rf, ok := ret.Get(0).(func(string, bool, int32) *gen.ToggleInternetSwitchResponse); ok {
-		r0 = rf(siteID, status, port)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool, int32) *gen.ToggleInternetSwitchResponse); ok {
+		r0 = rf(ctx, siteID, status, port)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleInternetSwitchResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, bool, int32) error); ok {
-		r1 = rf(siteID, status, port)
+	if rf, ok := ret.Get(1).(func(context.Context, string, bool, int32) error); ok {
+		r1 = rf(ctx, siteID, status, port)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -282,9 +284,9 @@ func (_m *siteController) ToggleInternetSwitch(siteID string, status bool, port 
 	return r0, r1
 }
 
-// UpsertPortMap provides a mock function with given fields: siteID, cnodeID, ports
-func (_m *siteController) UpsertPortMap(siteID string, cnodeID string, ports []*gen.PortMapEntry) (*gen.UpsertPortMapResponse, error) {
-	ret := _m.Called(siteID, cnodeID, ports)
+// UpsertPortMap provides a mock function with given fields: ctx, siteID, cnodeID, ports
+func (_m *siteController) UpsertPortMap(ctx context.Context, siteID string, cnodeID string, ports []*gen.PortMapEntry) (*gen.UpsertPortMapResponse, error) {
+	ret := _m.Called(ctx, siteID, cnodeID, ports)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpsertPortMap")
@@ -292,19 +294,19 @@ func (_m *siteController) UpsertPortMap(siteID string, cnodeID string, ports []*
 
 	var r0 *gen.UpsertPortMapResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, []*gen.PortMapEntry) (*gen.UpsertPortMapResponse, error)); ok {
-		return rf(siteID, cnodeID, ports)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []*gen.PortMapEntry) (*gen.UpsertPortMapResponse, error)); ok {
+		return rf(ctx, siteID, cnodeID, ports)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, []*gen.PortMapEntry) *gen.UpsertPortMapResponse); ok {
-		r0 = rf(siteID, cnodeID, ports)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, []*gen.PortMapEntry) *gen.UpsertPortMapResponse); ok {
+		r0 = rf(ctx, siteID, cnodeID, ports)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpsertPortMapResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, []*gen.PortMapEntry) error); ok {
-		r1 = rf(siteID, cnodeID, ports)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, []*gen.PortMapEntry) error); ok {
+		r1 = rf(ctx, siteID, cnodeID, ports)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -179,7 +179,7 @@ func (s *SiteServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 	return &pb.AddResponse{Site: dbSiteToPbSite(site)}, nil
 }
 
-func (s *SiteServer) publishCreatedSite(site *db.Site) error {
+func (s *SiteServer) publishCreatedSite(ctx context.Context, site *db.Site) error {
 	if s.msgbus == nil {
 		return status.Error(codes.Unavailable, "message bus unavailable")
 	}
@@ -199,7 +199,7 @@ func (s *SiteServer) publishCreatedSite(site *db.Site) error {
 			InstallDate:   site.InstallDate,
 		}
 
-		err := s.msgbus.PublishRequest(route, evt)
+		err := s.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			return err
 		}
@@ -277,7 +277,7 @@ func (s *SiteServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Upd
 			NetworkId: site.NetworkId.String(),
 		}
 
-		err = s.msgbus.PublishRequest(route, evt)
+		err = s.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -307,7 +307,7 @@ func (s *SiteServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.Del
 			NetworkId: site.NetworkId.String(),
 		}
 
-		err = s.msgbus.PublishRequest(route, evt)
+		err = s.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

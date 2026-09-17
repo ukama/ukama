@@ -9,6 +9,7 @@
 package client_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -33,7 +34,7 @@ func TestHealthClientStoreHealthReport(t *testing.T) {
 	mc.On("StoreHealthReport", mock.Anything, req).Return(&pb.StoreHealthReportResponse{ReportId: "rid-1"}, nil).Once()
 
 	c := client.NewHealthFromClient(mc)
-	resp, err := c.StoreHealthReport(req)
+	resp, err := c.StoreHealthReport(context.Background(), req)
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) {
@@ -55,7 +56,7 @@ func TestHealthClientListReports(t *testing.T) {
 	mc.On("ListReports", mock.Anything, expectedReq).Return(expectedResp, nil).Once()
 
 	c := client.NewHealthFromClient(mc)
-	resp, err := c.ListReports(expectedReq)
+	resp, err := c.ListReports(context.Background(), expectedReq)
 
 	assert.NoError(t, err)
 	if assert.NotNil(t, resp) && assert.Len(t, resp.Reports, 1) {

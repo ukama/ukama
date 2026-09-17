@@ -78,7 +78,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.payments.processor.payment.success")
 
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("AddPackageSuccess", func(t *testing.T) {
 		simRepo := mocks.SimRepo{}
@@ -168,7 +168,7 @@ func TestSimManagerEventServer_HandleProcessorPaymentSuccessEvent(t *testing.T) 
 
 	t.Run("AddFirstPackageIsQueuedNotSetInUseDirectly", func(t *testing.T) {
 		localMsgbusClient := &cmocks.MsgBusServiceClient{}
-		localMsgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		localMsgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -651,7 +651,7 @@ func TestSimManagerEventServer_HandleOperatorCdrCreateEvent(t *testing.T) {
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.operator.cdr.cdr.create")
 
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("MultipleSimIccidFound", func(t *testing.T) {
 		repo := mocks.SimRepo{}
@@ -810,7 +810,7 @@ func TestSimManagerEventServer_HandleUkamaAgentCdrCreateEvent(t *testing.T) {
 	routingKey := msgbus.PrepareRoute(OrgName,
 		"event.cloud.local.{{ .Org}}.ukamaagent.cdr.cdr.create")
 
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("SimFound", func(t *testing.T) {
 		repo := mocks.SimRepo{}
@@ -936,7 +936,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("NextPackagesFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1009,7 +1009,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("NextPackagesListError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1129,7 +1129,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("SimGetError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1176,7 +1176,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("SimAndPackageIdsMismatch", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1218,7 +1218,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("PackageNotFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1254,7 +1254,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("PackageIdNotValid", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
 
@@ -1285,7 +1285,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("MultipleSimsFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
 
@@ -1314,7 +1314,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("SimNotFound", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
 
@@ -1340,7 +1340,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("SimListError", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
 
@@ -1366,7 +1366,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrProfileDeleteEvent(t *testing.
 
 	t.Run("InvalidEventTypeSent", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		repo := mocks.SimRepo{}
 		evt := &epb.AsrProfileCreated{Subscriber: &epb.Subscriber{}}
@@ -1392,7 +1392,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("DataCapExceededDrainsPackageNoNextQueued", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1469,7 +1469,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("DataCapExceededRecordsRealOverCapUsageNotClipped", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1552,7 +1552,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 		packageRepo := sims.NewPackageRepo(ukamaDb)
 
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simId := uuid.NewV4()
 		packageId := uuid.NewV4()
@@ -1620,7 +1620,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("PackageExpiredRollsOverToNextPackage", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1724,7 +1724,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("PackageExpiredNoNextPackageQueued", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1792,7 +1792,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("PackageExpiredWithNoQueuedPackageTurnsSimOff", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -1921,7 +1921,7 @@ func TestSimManagerEventServer_HandleUkamaAgentAsrPolicyViolationEvent(t *testin
 
 	t.Run("DuplicateViolationAfterRolloverHasNoFurtherEffect", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -2054,7 +2054,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAddPackageEvent(t *testing.T) 
 
 	t.Run("IdleSimSetsQueuedPackageInUse", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}
@@ -2131,7 +2131,7 @@ func TestSimManagerEventServer_HandleSimManagerSimAddPackageEvent(t *testing.T) 
 
 	t.Run("IdleSimResumesServiceWhenPackageActivated", func(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Twice()
 
 		simRepo := mocks.SimRepo{}
 		packageRepo := mocks.PackageRepo{}

@@ -119,7 +119,7 @@ func TestDelete(t *testing.T) {
 			Id: []uint64{TestId},
 		}
 		mockRepo.On("Delete", mock.Anything).Return(nil)
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimRemoved")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimRemoved")).Return(nil).Once()
 		res, err := simService.Delete(context.Background(), reqMock)
 		assert.NoError(t, err)
 		assert.Equal(t, reqMock.Id[0], res.Id[0])
@@ -162,7 +162,7 @@ func TestAdd(t *testing.T) {
 				},
 			},
 		}
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 		mockRepo.On("Add", mock.Anything).Return(nil)
 		res, err := simService.Add(context.Background(), reqMock)
 		assert.NoError(t, err)
@@ -384,7 +384,7 @@ func TestUpload(t *testing.T) {
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
@@ -454,7 +454,7 @@ func TestUpload(t *testing.T) {
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
@@ -489,7 +489,7 @@ func TestUpload(t *testing.T) {
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(nil).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)
@@ -529,7 +529,7 @@ func TestUpload(t *testing.T) {
 
 		mockRepo.On("Add", mock.AnythingOfType("[]db.Sim")).Return(nil)
 
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(errors.New(ErrorMessageBus)).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.SimUploaded")).Return(errors.New(ErrorMessageBus)).Once()
 
 		res, err := simService.Upload(context.Background(), reqMock)
 		assert.NoError(t, err)

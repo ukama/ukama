@@ -145,7 +145,7 @@ func TestAdd(t *testing.T) {
 				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, regClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -189,7 +189,7 @@ func TestAdd(t *testing.T) {
 
 		subscriberRepo.On("Add", sub, mock.Anything).Return(nil).Once()
 
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 
@@ -241,7 +241,7 @@ func TestAdd(t *testing.T) {
 				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		_, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -285,7 +285,7 @@ func TestAdd(t *testing.T) {
 				Name:       TestNetworkName,
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -503,7 +503,7 @@ func TestAdd(t *testing.T) {
 				SyncStatus: ukama.StatusTypeCompleted.String(),
 			}, nil).Once()
 
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New(ErrPublishFailed)).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New(ErrPublishFailed)).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Add(context.TODO(), &pb.AddSubscriberRequest{
@@ -1985,7 +1985,7 @@ func TestSubscriberServer_Update(t *testing.T) {
 		}
 
 		subscriberRepo.On("Update", subscriberId, *expectedSubscriber).Return(nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Update(context.TODO(), updateRequest)
@@ -2021,7 +2021,7 @@ func TestSubscriberServer_Update(t *testing.T) {
 		}
 
 		subscriberRepo.On("Update", subscriberId, *expectedSubscriber).Return(nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Update(context.TODO(), updateRequest)
@@ -2178,7 +2178,7 @@ func TestSubscriberServer_Update(t *testing.T) {
 		}
 
 		subscriberRepo.On("Update", subscriberId, *expectedSubscriber).Return(nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Update(context.TODO(), updateRequest)
@@ -2207,7 +2207,7 @@ func TestSubscriberServer_Delete(t *testing.T) {
 
 		subscriberRepo.On("Get", subscriberId).Return(dbSubscriber, nil).Once()
 		subscriberRepo.On("Delete", subscriberId).Return(nil).Once()
-		msgBus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewSubscriberServer(OrgName, subscriberRepo, msgBus, simManagerService, OrgId, orgClient, networkClient)
 		resp, err := s.Delete(context.TODO(), &pb.DeleteSubscriberRequest{SubscriberId: subscriberId.String()})

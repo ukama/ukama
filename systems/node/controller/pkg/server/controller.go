@@ -118,7 +118,7 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
+	if err := c.publishMessage(ctx, c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
@@ -154,7 +154,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		c.failOperation(op, "RestartNode", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
+	if err := c.publishMessage(ctx, c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
 		c.failOperation(op, "RestartNode", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
@@ -173,7 +173,7 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"].method, actions["PING"].path, nId.String(), []byte(""))
+	err = c.publishMessage(ctx, c.orgName+"."+"."+"."+nId.String(), actions["PING"].method, actions["PING"].path, nId.String(), []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -212,7 +212,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
+	if err := c.publishMessage(ctx, c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
@@ -245,7 +245,7 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		c.failOperation(op, "ToggleRadio", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data); err != nil {
+	if err := c.publishMessage(ctx, fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleRadio", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
 	}
@@ -278,7 +278,7 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		c.failOperation(op, "ToggleService", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
+	if err := c.publishMessage(ctx, fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleService", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
@@ -361,7 +361,7 @@ func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType 
 	return opmgrpb.OperationStatus_SUCCESS.String()
 }
 
-func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
+func (c *ControllerServer) publishMessage(ctx context.Context, target string, method string, path string, nodeId string, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &epb.NodeFeederMessage{
 		Target:     target,
@@ -371,6 +371,6 @@ func (c *ControllerServer) publishMessage(target string, method string, path str
 		NodeId:     nodeId,
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
-	err := c.msgbus.PublishRequest(route, msg)
+	err := c.msgbus.PublishRequestWithContext(ctx, route, msg)
 	return err
 }

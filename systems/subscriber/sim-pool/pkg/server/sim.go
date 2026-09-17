@@ -116,7 +116,7 @@ func (p *SimPoolServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 	}
 
 	route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
-	_ = p.PublishEventMessage(route, &epb.SimUploaded{
+	_ = p.PublishEventMessage(ctx, route, &epb.SimUploaded{
 		Iccid: iccids,
 	})
 
@@ -164,7 +164,7 @@ func (p *SimPoolServer) Upload(ctx context.Context, req *pb.UploadRequest) (*pb.
 
 	if p.msgbus != nil {
 		route := p.baseRoutingKey.SetAction("upload").SetObject("sim").MustBuild()
-		_ = p.PublishEventMessage(route, &epb.SimUploaded{
+		_ = p.PublishEventMessage(ctx, route, &epb.SimUploaded{
 			Iccid:       acceptedIccids,
 			FailedIccid: rejectedIccids,
 		})
@@ -185,7 +185,7 @@ func (p *SimPoolServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 	}
 
 	route := p.baseRoutingKey.SetActionDelete().SetObject("sim").MustBuild()
-	_ = p.PublishEventMessage(route, &epb.SimRemoved{
+	_ = p.PublishEventMessage(ctx, route, &epb.SimRemoved{
 		Id: req.GetId(),
 	})
 
@@ -223,8 +223,8 @@ func dbSimToPbSim(p *db.Sim) *pb.Sim {
 	return res
 }
 
-func (p *SimPoolServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
-	err := p.msgbus.PublishRequest(route, msg)
+func (p *SimPoolServer) PublishEventMessage(ctx context.Context, route string, msg protoreflect.ProtoMessage) error {
+	err := p.msgbus.PublishRequestWithContext(ctx, route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}

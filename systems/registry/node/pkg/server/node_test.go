@@ -58,7 +58,7 @@ func TestNodeServer_Add(t *testing.T) {
 
 	nodeRepo.On("Add", node, mock.Anything).Return(nil).Once()
 	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	t.Run("NodeStateValid", func(t *testing.T) {
 		// Act

@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type Controller struct {
 }
 
 func NewController(controllerHost string, timeout time.Duration) *Controller {
-	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(controllerHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Controller service: %v", err)
 	}
@@ -58,29 +60,29 @@ func (c *Controller) Close() {
 	}
 }
 
-func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) RestartNode(ctx context.Context, nodeId string) (*pb.RestartNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
 }
 
-func (c *Controller) ToggleSwitchPort(status bool, port int32, nodeId string) (*pb.ToggleSwitchPortResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) ToggleSwitchPort(ctx context.Context, status bool, port int32, nodeId string) (*pb.ToggleSwitchPortResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.ToggleSwitchPort(ctx, &pb.ToggleSwitchPortRequest{Status: status, Port: port, NodeId: nodeId})
 }
 
-func (c *Controller) ToggleRadio(nodeId string, state string) (*pb.ToggleRadioResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) ToggleRadio(ctx context.Context, nodeId string, state string) (*pb.ToggleRadioResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.ToggleRadio(ctx, &pb.ToggleRadioRequest{NodeId: nodeId, State: state})
 }
 
-func (c *Controller) ToggleService(nodeId string, state string) (*pb.ToggleServiceResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) ToggleService(ctx context.Context, nodeId string, state string) (*pb.ToggleServiceResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.ToggleService(ctx, &pb.ToggleServiceRequest{NodeId: nodeId, State: state})
@@ -98,8 +100,8 @@ func (c *Controller) DeleteNodeConfig(ctx context.Context, req *pb.DeleteNodeCon
 	return c.client.DeleteNodeConfig(ctx, req)
 }
 
-func (c *Controller) PingNode(nodeId string) (*pb.PingNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Controller) PingNode(ctx context.Context, nodeId string) (*pb.PingNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.PingNode(ctx, &pb.PingNodeRequest{NodeId: nodeId})

@@ -117,7 +117,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 			Type:   node.Type.String(),
 		}
 		log.Infof("Publishing event %+v with key %+v", evt, route)
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -309,7 +309,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 	if n.msgbus != nil {
 		route := n.baseRoutingKey.SetActionUpdate().SetObject("status").MustBuild()
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -368,7 +368,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 			Name:   nodeUpdates.Name,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -396,7 +396,7 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 			NodeId: nodeId.StringLowercase(),
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -432,7 +432,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 			Nodegroup: nds,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -475,7 +475,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 			Nodegroup: attachednodes,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -541,7 +541,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 			Network: netID.String(),
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -572,7 +572,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 			Network: nd.NetworkId.String(),
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -580,7 +580,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 
 	return &pb.ReleaseNodeFromSiteResponse{}, nil
 }
-func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error {
+func (n *NodeServer) addNodeToSiteServer(ctx context.Context, nodeId, siteId, networkId string) error {
 	log.Infof("Add node to site %s", nodeId)
 
 	nType := ukama.GetNodeType(nodeId)
@@ -616,7 +616,7 @@ func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error
 			Network: networkId,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

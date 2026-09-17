@@ -50,7 +50,7 @@ func TestMemberEventServer_EventNotification(t *testing.T) {
 		// Mock AddMember to succeed
 		memberRepo.On("AddMember", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		memberRepo.On("GetMemberCount").Return(int64(1), int64(0), nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		memberServer := server.NewMemberServer(testOrgName, memberRepo, orgClient, userClient, msgbusClient, "", uuid.NewV4())
 		eventServer := server.NewPackageEventServer(testOrgName, memberServer, testMasterOrgName)

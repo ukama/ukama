@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/registry/member/pb/gen"
 )
@@ -12,9 +14,9 @@ type member struct {
 	mock.Mock
 }
 
-// AddMember provides a mock function with given fields: userUUID, role
-func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, error) {
-	ret := _m.Called(userUUID, role)
+// AddMember provides a mock function with given fields: ctx, userUUID, role
+func (_m *member) AddMember(ctx context.Context, userUUID string, role string) (*gen.MemberResponse, error) {
+	ret := _m.Called(ctx, userUUID, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddMember")
@@ -22,19 +24,19 @@ func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, 
 
 	var r0 *gen.MemberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.MemberResponse, error)); ok {
-		return rf(userUUID, role)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.MemberResponse, error)); ok {
+		return rf(ctx, userUUID, role)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.MemberResponse); ok {
-		r0 = rf(userUUID, role)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.MemberResponse); ok {
+		r0 = rf(ctx, userUUID, role)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(userUUID, role)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, userUUID, role)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *member) AddMember(userUUID string, role string) (*gen.MemberResponse, 
 	return r0, r1
 }
 
-// GetMember provides a mock function with given fields: userUUID
-func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
-	ret := _m.Called(userUUID)
+// GetMember provides a mock function with given fields: ctx, userUUID
+func (_m *member) GetMember(ctx context.Context, userUUID string) (*gen.MemberResponse, error) {
+	ret := _m.Called(ctx, userUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMember")
@@ -52,19 +54,19 @@ func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
 
 	var r0 *gen.MemberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.MemberResponse, error)); ok {
-		return rf(userUUID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.MemberResponse, error)); ok {
+		return rf(ctx, userUUID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.MemberResponse); ok {
-		r0 = rf(userUUID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.MemberResponse); ok {
+		r0 = rf(ctx, userUUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.MemberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(userUUID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userUUID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *member) GetMember(userUUID string) (*gen.MemberResponse, error) {
 	return r0, r1
 }
 
-// GetMemberByUserId provides a mock function with given fields: userUUID
-func (_m *member) GetMemberByUserId(userUUID string) (*gen.GetMemberByUserIdResponse, error) {
-	ret := _m.Called(userUUID)
+// GetMemberByUserId provides a mock function with given fields: ctx, userUUID
+func (_m *member) GetMemberByUserId(ctx context.Context, userUUID string) (*gen.GetMemberByUserIdResponse, error) {
+	ret := _m.Called(ctx, userUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMemberByUserId")
@@ -82,19 +84,19 @@ func (_m *member) GetMemberByUserId(userUUID string) (*gen.GetMemberByUserIdResp
 
 	var r0 *gen.GetMemberByUserIdResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetMemberByUserIdResponse, error)); ok {
-		return rf(userUUID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetMemberByUserIdResponse, error)); ok {
+		return rf(ctx, userUUID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetMemberByUserIdResponse); ok {
-		r0 = rf(userUUID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetMemberByUserIdResponse); ok {
+		r0 = rf(ctx, userUUID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetMemberByUserIdResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(userUUID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, userUUID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *member) GetMemberByUserId(userUUID string) (*gen.GetMemberByUserIdResp
 	return r0, r1
 }
 
-// GetMembers provides a mock function with no fields
-func (_m *member) GetMembers() (*gen.GetMembersResponse, error) {
-	ret := _m.Called()
+// GetMembers provides a mock function with given fields: ctx
+func (_m *member) GetMembers(ctx context.Context) (*gen.GetMembersResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMembers")
@@ -112,19 +114,19 @@ func (_m *member) GetMembers() (*gen.GetMembersResponse, error) {
 
 	var r0 *gen.GetMembersResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetMembersResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetMembersResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetMembersResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetMembersResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetMembersResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,17 +134,17 @@ func (_m *member) GetMembers() (*gen.GetMembersResponse, error) {
 	return r0, r1
 }
 
-// RemoveMember provides a mock function with given fields: userUUID
-func (_m *member) RemoveMember(userUUID string) error {
-	ret := _m.Called(userUUID)
+// RemoveMember provides a mock function with given fields: ctx, userUUID
+func (_m *member) RemoveMember(ctx context.Context, userUUID string) error {
+	ret := _m.Called(ctx, userUUID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveMember")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string) error); ok {
-		r0 = rf(userUUID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, userUUID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -150,17 +152,17 @@ func (_m *member) RemoveMember(userUUID string) error {
 	return r0
 }
 
-// UpdateMember provides a mock function with given fields: userUUID, isDeactivated, role
-func (_m *member) UpdateMember(userUUID string, isDeactivated bool, role string) error {
-	ret := _m.Called(userUUID, isDeactivated, role)
+// UpdateMember provides a mock function with given fields: ctx, userUUID, isDeactivated, role
+func (_m *member) UpdateMember(ctx context.Context, userUUID string, isDeactivated bool, role string) error {
+	ret := _m.Called(ctx, userUUID, isDeactivated, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateMember")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, bool, string) error); ok {
-		r0 = rf(userUUID, isDeactivated, role)
+	if rf, ok := ret.Get(0).(func(context.Context, string, bool, string) error); ok {
+		r0 = rf(ctx, userUUID, isDeactivated, role)
 	} else {
 		r0 = ret.Error(0)
 	}

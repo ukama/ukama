@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/registry/network/pb/gen"
 )
@@ -12,9 +14,9 @@ type network struct {
 	mock.Mock
 }
 
-// AddNetwork provides a mock function with given fields: netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks
-func (_m *network) AddNetwork(netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
-	ret := _m.Called(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+// AddNetwork provides a mock function with given fields: ctx, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks
+func (_m *network) AddNetwork(ctx context.Context, netName string, allowedCountries []string, allowedNetworks []string, budget float64, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*gen.AddResponse, error) {
+	ret := _m.Called(ctx, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddNetwork")
@@ -22,19 +24,19 @@ func (_m *network) AddNetwork(netName string, allowedCountries []string, allowed
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
-		return rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string, float64, float64, uint32, bool) (*gen.AddResponse, error)); ok {
+		return rf(ctx, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	}
-	if rf, ok := ret.Get(0).(func(string, []string, []string, float64, float64, uint32, bool) *gen.AddResponse); ok {
-		r0 = rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(0).(func(context.Context, string, []string, []string, float64, float64, uint32, bool) *gen.AddResponse); ok {
+		r0 = rf(ctx, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, []string, []string, float64, float64, uint32, bool) error); ok {
-		r1 = rf(netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
+	if rf, ok := ret.Get(1).(func(context.Context, string, []string, []string, float64, float64, uint32, bool) error); ok {
+		r1 = rf(ctx, netName, allowedCountries, allowedNetworks, budget, overdraft, trafficPolicy, paymentLinks)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *network) AddNetwork(netName string, allowedCountries []string, allowed
 	return r0, r1
 }
 
-// GetDefault provides a mock function with no fields
-func (_m *network) GetDefault() (*gen.GetDefaultResponse, error) {
-	ret := _m.Called()
+// GetDefault provides a mock function with given fields: ctx
+func (_m *network) GetDefault(ctx context.Context) (*gen.GetDefaultResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetDefault")
@@ -52,19 +54,19 @@ func (_m *network) GetDefault() (*gen.GetDefaultResponse, error) {
 
 	var r0 *gen.GetDefaultResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetDefaultResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetDefaultResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetDefaultResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetDefaultResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetDefaultResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *network) GetDefault() (*gen.GetDefaultResponse, error) {
 	return r0, r1
 }
 
-// GetNetwork provides a mock function with given fields: netID
-func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
-	ret := _m.Called(netID)
+// GetNetwork provides a mock function with given fields: ctx, netID
+func (_m *network) GetNetwork(ctx context.Context, netID string) (*gen.GetResponse, error) {
+	ret := _m.Called(ctx, netID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNetwork")
@@ -82,19 +84,19 @@ func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 
 	var r0 *gen.GetResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetResponse, error)); ok {
-		return rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetResponse, error)); ok {
+		return rf(ctx, netID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetResponse); ok {
-		r0 = rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetResponse); ok {
+		r0 = rf(ctx, netID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(netID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, netID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *network) GetNetwork(netID string) (*gen.GetResponse, error) {
 	return r0, r1
 }
 
-// GetNetworks provides a mock function with no fields
-func (_m *network) GetNetworks() (*gen.GetNetworksResponse, error) {
-	ret := _m.Called()
+// GetNetworks provides a mock function with given fields: ctx
+func (_m *network) GetNetworks(ctx context.Context) (*gen.GetNetworksResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNetworks")
@@ -112,19 +114,19 @@ func (_m *network) GetNetworks() (*gen.GetNetworksResponse, error) {
 
 	var r0 *gen.GetNetworksResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetNetworksResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetNetworksResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetNetworksResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetNetworksResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetNetworksResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *network) GetNetworks() (*gen.GetNetworksResponse, error) {
 	return r0, r1
 }
 
-// RemoveNetwork provides a mock function with given fields: netID
-func (_m *network) RemoveNetwork(netID string) (*gen.DeleteResponse, error) {
-	ret := _m.Called(netID)
+// RemoveNetwork provides a mock function with given fields: ctx, netID
+func (_m *network) RemoveNetwork(ctx context.Context, netID string) (*gen.DeleteResponse, error) {
+	ret := _m.Called(ctx, netID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveNetwork")
@@ -142,19 +144,19 @@ func (_m *network) RemoveNetwork(netID string) (*gen.DeleteResponse, error) {
 
 	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteResponse, error)); ok {
-		return rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DeleteResponse, error)); ok {
+		return rf(ctx, netID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteResponse); ok {
-		r0 = rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DeleteResponse); ok {
+		r0 = rf(ctx, netID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(netID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, netID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *network) RemoveNetwork(netID string) (*gen.DeleteResponse, error) {
 	return r0, r1
 }
 
-// SetNetworkDefault provides a mock function with given fields: netID
-func (_m *network) SetNetworkDefault(netID string) (*gen.SetDefaultResponse, error) {
-	ret := _m.Called(netID)
+// SetNetworkDefault provides a mock function with given fields: ctx, netID
+func (_m *network) SetNetworkDefault(ctx context.Context, netID string) (*gen.SetDefaultResponse, error) {
+	ret := _m.Called(ctx, netID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetNetworkDefault")
@@ -172,19 +174,19 @@ func (_m *network) SetNetworkDefault(netID string) (*gen.SetDefaultResponse, err
 
 	var r0 *gen.SetDefaultResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.SetDefaultResponse, error)); ok {
-		return rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.SetDefaultResponse, error)); ok {
+		return rf(ctx, netID)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.SetDefaultResponse); ok {
-		r0 = rf(netID)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.SetDefaultResponse); ok {
+		r0 = rf(ctx, netID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SetDefaultResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(netID)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, netID)
 	} else {
 		r1 = ret.Error(1)
 	}

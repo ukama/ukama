@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	context "context"
 	json "encoding/json"
 
 	gen "github.com/ukama/ukama/systems/node/notify/pb/gen"
@@ -15,9 +16,9 @@ type notify struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: nodeId, severity, ntype, serviceName, details, status, epochTime
-func (_m *notify) Add(nodeId string, severity string, ntype string, serviceName string, details json.RawMessage, status uint32, epochTime uint32) (*gen.AddResponse, error) {
-	ret := _m.Called(nodeId, severity, ntype, serviceName, details, status, epochTime)
+// Add provides a mock function with given fields: ctx, nodeId, severity, ntype, serviceName, details, status, epochTime
+func (_m *notify) Add(ctx context.Context, nodeId string, severity string, ntype string, serviceName string, details json.RawMessage, status uint32, epochTime uint32) (*gen.AddResponse, error) {
+	ret := _m.Called(ctx, nodeId, severity, ntype, serviceName, details, status, epochTime)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
@@ -25,19 +26,19 @@ func (_m *notify) Add(nodeId string, severity string, ntype string, serviceName 
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, json.RawMessage, uint32, uint32) (*gen.AddResponse, error)); ok {
-		return rf(nodeId, severity, ntype, serviceName, details, status, epochTime)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, json.RawMessage, uint32, uint32) (*gen.AddResponse, error)); ok {
+		return rf(ctx, nodeId, severity, ntype, serviceName, details, status, epochTime)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, json.RawMessage, uint32, uint32) *gen.AddResponse); ok {
-		r0 = rf(nodeId, severity, ntype, serviceName, details, status, epochTime)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, json.RawMessage, uint32, uint32) *gen.AddResponse); ok {
+		r0 = rf(ctx, nodeId, severity, ntype, serviceName, details, status, epochTime)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, json.RawMessage, uint32, uint32) error); ok {
-		r1 = rf(nodeId, severity, ntype, serviceName, details, status, epochTime)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, json.RawMessage, uint32, uint32) error); ok {
+		r1 = rf(ctx, nodeId, severity, ntype, serviceName, details, status, epochTime)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -45,9 +46,9 @@ func (_m *notify) Add(nodeId string, severity string, ntype string, serviceName 
 	return r0, r1
 }
 
-// Delete provides a mock function with given fields: id
-func (_m *notify) Delete(id string) (*gen.DeleteResponse, error) {
-	ret := _m.Called(id)
+// Delete provides a mock function with given fields: ctx, id
+func (_m *notify) Delete(ctx context.Context, id string) (*gen.DeleteResponse, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
@@ -55,19 +56,19 @@ func (_m *notify) Delete(id string) (*gen.DeleteResponse, error) {
 
 	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteResponse, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DeleteResponse, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteResponse); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DeleteResponse); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -75,9 +76,9 @@ func (_m *notify) Delete(id string) (*gen.DeleteResponse, error) {
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: id
-func (_m *notify) Get(id string) (*gen.GetResponse, error) {
-	ret := _m.Called(id)
+// Get provides a mock function with given fields: ctx, id
+func (_m *notify) Get(ctx context.Context, id string) (*gen.GetResponse, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -85,19 +86,19 @@ func (_m *notify) Get(id string) (*gen.GetResponse, error) {
 
 	var r0 *gen.GetResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetResponse, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetResponse, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetResponse); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetResponse); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -105,9 +106,9 @@ func (_m *notify) Get(id string) (*gen.GetResponse, error) {
 	return r0, r1
 }
 
-// List provides a mock function with given fields: nodeId, serviceName, nType, count, sort
-func (_m *notify) List(nodeId string, serviceName string, nType string, count uint32, sort bool) (*gen.ListResponse, error) {
-	ret := _m.Called(nodeId, serviceName, nType, count, sort)
+// List provides a mock function with given fields: ctx, nodeId, serviceName, nType, count, sort
+func (_m *notify) List(ctx context.Context, nodeId string, serviceName string, nType string, count uint32, sort bool) (*gen.ListResponse, error) {
+	ret := _m.Called(ctx, nodeId, serviceName, nType, count, sort)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -115,19 +116,19 @@ func (_m *notify) List(nodeId string, serviceName string, nType string, count ui
 
 	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, uint32, bool) (*gen.ListResponse, error)); ok {
-		return rf(nodeId, serviceName, nType, count, sort)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, uint32, bool) (*gen.ListResponse, error)); ok {
+		return rf(ctx, nodeId, serviceName, nType, count, sort)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, uint32, bool) *gen.ListResponse); ok {
-		r0 = rf(nodeId, serviceName, nType, count, sort)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, uint32, bool) *gen.ListResponse); ok {
+		r0 = rf(ctx, nodeId, serviceName, nType, count, sort)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, uint32, bool) error); ok {
-		r1 = rf(nodeId, serviceName, nType, count, sort)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, uint32, bool) error); ok {
+		r1 = rf(ctx, nodeId, serviceName, nType, count, sort)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -135,9 +136,9 @@ func (_m *notify) List(nodeId string, serviceName string, nType string, count ui
 	return r0, r1
 }
 
-// Purge provides a mock function with given fields: nodeId, serviceName, nType
-func (_m *notify) Purge(nodeId string, serviceName string, nType string) (*gen.ListResponse, error) {
-	ret := _m.Called(nodeId, serviceName, nType)
+// Purge provides a mock function with given fields: ctx, nodeId, serviceName, nType
+func (_m *notify) Purge(ctx context.Context, nodeId string, serviceName string, nType string) (*gen.ListResponse, error) {
+	ret := _m.Called(ctx, nodeId, serviceName, nType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Purge")
@@ -145,19 +146,19 @@ func (_m *notify) Purge(nodeId string, serviceName string, nType string) (*gen.L
 
 	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.ListResponse, error)); ok {
-		return rf(nodeId, serviceName, nType)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.ListResponse, error)); ok {
+		return rf(ctx, nodeId, serviceName, nType)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.ListResponse); ok {
-		r0 = rf(nodeId, serviceName, nType)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.ListResponse); ok {
+		r0 = rf(ctx, nodeId, serviceName, nType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, serviceName, nType)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, serviceName, nType)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -130,7 +130,7 @@ func (s *SubcriberServer) Add(ctx context.Context, req *pb.AddSubscriberRequest)
 
 	route := s.subscriberRoutingKey.SetAction("create").SetObject("subscriber").MustBuild()
 	log.Infof("Pushing add subscriber event to %v", route)
-	_ = s.PublishEventMessage(route, &epb.EventSubscriberAdded{
+	_ = s.PublishEventMessage(ctx, route, &epb.EventSubscriberAdded{
 		Dob:          req.GetDob(),
 		Email:        req.GetEmail(),
 		Gender:       req.GetGender(),
@@ -357,7 +357,7 @@ func (s *SubcriberServer) Update(ctx context.Context, req *pb.UpdateSubscriberRe
 
 	route := s.subscriberRoutingKey.SetAction("update").SetObject("subscriber").MustBuild()
 	log.Infof("Pushing update subscriber event to %v", route)
-	_ = s.PublishEventMessage(route, &epb.EventSubscriberUpdate{
+	_ = s.PublishEventMessage(ctx, route, &epb.EventSubscriberUpdate{
 		Email:                 subscriber.Email,
 		Address:               subscriber.Address,
 		IdSerial:              subscriber.IdSerial,
@@ -394,16 +394,16 @@ func (s *SubcriberServer) Delete(ctx context.Context, req *pb.DeleteSubscriberRe
 
 	route := s.subscriberRoutingKey.SetAction("delete").SetObject("subscriber").MustBuild()
 	log.Infof("Pushing delete subscriber event to %v", route)
-	_ = s.PublishEventMessage(route, &epb.EventSubscriberDeleted{
+	_ = s.PublishEventMessage(ctx, route, &epb.EventSubscriberDeleted{
 		SubscriberId: subscriber.SubscriberId.String(),
 	})
 
 	return &pb.DeleteSubscriberResponse{}, nil
 }
 
-func (s *SubcriberServer) PublishEventMessage(route string, msg protoreflect.ProtoMessage) error {
+func (s *SubcriberServer) PublishEventMessage(ctx context.Context, route string, msg protoreflect.ProtoMessage) error {
 
-	err := s.msgbus.PublishRequest(route, msg)
+	err := s.msgbus.PublishRequestWithContext(ctx, route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}

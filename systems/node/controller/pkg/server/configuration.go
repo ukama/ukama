@@ -85,7 +85,7 @@ func (c *ControllerServer) dispatchConfiguration(ctx context.Context, nodeID, re
 	if c.msgbus == nil {
 		return status.Error(codes.Unavailable, "message bus unavailable")
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, nodeID), actions[action].method, actions[action].path, nodeID, data); err != nil {
+	if err := c.publishMessage(ctx, fmt.Sprintf("%s...%s", c.orgName, nodeID), actions[action].method, actions[action].path, nodeID, data); err != nil {
 		return status.Errorf(codes.Unavailable, "configuration dispatch: %v", err)
 	}
 	return nil

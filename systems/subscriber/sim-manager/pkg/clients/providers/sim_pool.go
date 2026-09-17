@@ -11,6 +11,7 @@ package providers
 import (
 	"context"
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"sync"
 	"time"
 
@@ -48,6 +49,7 @@ func (sp *simPoolClientProvider) GetClient() (pb.SimServiceClient, error) {
 		log.Infoln("Connecting to Sim Pool service ", sp.simPoolHost)
 
 		conn, err := grpc.NewClient(sp.simPoolHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption(),
 			grpc.WithUnaryInterceptor(timeoutUnaryClientInterceptor(sp.timeout)))
 		if err != nil {
 			log.Errorf("Failed to connect to Sim Pool service %s. Error: %v", sp.simPoolHost, err)

@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type Registry struct {
 }
 
 func NewRegistry(host string, timeout time.Duration) *Registry {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Subscriber Registry Service: %v", err)
 	}
@@ -59,32 +61,32 @@ func (sub *Registry) Close() {
 	}
 }
 
-func (sub *Registry) GetSubscriber(sid string) (*pb.GetSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) GetSubscriber(ctx context.Context, sid string) (*pb.GetSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.Get(ctx, &pb.GetSubscriberRequest{SubscriberId: sid})
 }
 
-func (sub *Registry) GetSubscriberByEmail(sEmail string) (*pb.GetSubscriberByEmailResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) GetSubscriberByEmail(ctx context.Context, sEmail string) (*pb.GetSubscriberByEmailResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.GetByEmail(ctx, &pb.GetSubscriberByEmailRequest{Email: sEmail})
 }
 
-func (sub *Registry) AddSubscriber(req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) AddSubscriber(ctx context.Context, req *pb.AddSubscriberRequest) (*pb.AddSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.Add(ctx, req)
 }
 
-func (sub *Registry) DeleteSubscriber(sid string) (*pb.DeleteSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) DeleteSubscriber(ctx context.Context, sid string) (*pb.DeleteSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.Delete(ctx, &pb.DeleteSubscriberRequest{SubscriberId: sid})
 }
 
-func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) UpdateSubscriber(ctx context.Context, subscriber *pb.UpdateSubscriberRequest) (*pb.UpdateSubscriberResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.Update(ctx, &pb.UpdateSubscriberRequest{
 		SubscriberId:          subscriber.SubscriberId,
@@ -96,8 +98,8 @@ func (sub *Registry) UpdateSubscriber(subscriber *pb.UpdateSubscriberRequest) (*
 	})
 }
 
-func (sub *Registry) GetByNetwork(networkId string) (*pb.GetByNetworkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sub.timeout)
+func (sub *Registry) GetByNetwork(ctx context.Context, networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sub.timeout)
 	defer cancel()
 	return sub.client.GetByNetwork(ctx, &pb.GetByNetworkRequest{NetworkId: networkId})
 }

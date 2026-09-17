@@ -97,7 +97,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = es.handleOperatorCdrCreateEvent(e.RoutingKey, msg)
+		err = es.handleOperatorCdrCreateEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -108,7 +108,7 @@ func (es *SimManagerEventServer) EventNotification(ctx context.Context, e *epb.E
 			return nil, err
 		}
 
-		err = es.handleUkamaAgentCdrCreateEvent(e.RoutingKey, msg)
+		err = es.handleUkamaAgentCdrCreateEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -207,7 +207,7 @@ func (es *SimManagerEventServer) handleProcessorPaymentSuccessEvent(key string, 
 		es.subscriberRegistryService, es.networkClient, es.msgbus, es.baseRoutingKey)
 }
 
-func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *epb.EventOperatorCdrReport) error {
+func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(ctx context.Context, key string, cdr *epb.EventOperatorCdrReport) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	if cdr.Type != ukama.CdrTypeData.String() {
@@ -250,7 +250,7 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 
 	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = es.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequestWithContext(ctx, route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())
@@ -259,7 +259,7 @@ func (es *SimManagerEventServer) handleOperatorCdrCreateEvent(key string, cdr *e
 	return nil
 }
 
-func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr *epb.CDRReported) error {
+func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(ctx context.Context, key string, cdr *epb.CDRReported) error {
 	log.Infof("Keys %s and Proto is: %+v", key, cdr)
 
 	sim, err := es.getSimFromIccidOrImsi("", cdr.Imsi)
@@ -294,7 +294,7 @@ func (es *SimManagerEventServer) handleUkamaAgentCdrCreateEvent(key string, cdr 
 
 	route := es.baseRoutingKey.SetAction("usage").SetObject("sim").MustBuild()
 
-	err = es.msgbus.PublishRequest(route, usageMsg)
+	err = es.msgbus.PublishRequestWithContext(ctx, route, usageMsg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			usageMsg, route, err.Error())

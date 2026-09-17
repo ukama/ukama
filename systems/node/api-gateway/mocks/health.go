@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/health/pb/gen"
 
@@ -14,9 +16,9 @@ type health struct {
 	mock.Mock
 }
 
-// ListApps provides a mock function with given fields: nodeId, reportId, appName
-func (_m *health) ListApps(nodeId string, reportId string, appName string) (*gen.ListAppsResponse, error) {
-	ret := _m.Called(nodeId, reportId, appName)
+// ListApps provides a mock function with given fields: ctx, nodeId, reportId, appName
+func (_m *health) ListApps(ctx context.Context, nodeId string, reportId string, appName string) (*gen.ListAppsResponse, error) {
+	ret := _m.Called(ctx, nodeId, reportId, appName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApps")
@@ -24,19 +26,19 @@ func (_m *health) ListApps(nodeId string, reportId string, appName string) (*gen
 
 	var r0 *gen.ListAppsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.ListAppsResponse, error)); ok {
-		return rf(nodeId, reportId, appName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.ListAppsResponse, error)); ok {
+		return rf(ctx, nodeId, reportId, appName)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.ListAppsResponse); ok {
-		r0 = rf(nodeId, reportId, appName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.ListAppsResponse); ok {
+		r0 = rf(ctx, nodeId, reportId, appName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListAppsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, reportId, appName)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, reportId, appName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -44,9 +46,9 @@ func (_m *health) ListApps(nodeId string, reportId string, appName string) (*gen
 	return r0, r1
 }
 
-// ListInterfaces provides a mock function with given fields: nodeId, reportId
-func (_m *health) ListInterfaces(nodeId string, reportId string) (*gen.ListInterfacesResponse, error) {
-	ret := _m.Called(nodeId, reportId)
+// ListInterfaces provides a mock function with given fields: ctx, nodeId, reportId
+func (_m *health) ListInterfaces(ctx context.Context, nodeId string, reportId string) (*gen.ListInterfacesResponse, error) {
+	ret := _m.Called(ctx, nodeId, reportId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInterfaces")
@@ -54,19 +56,19 @@ func (_m *health) ListInterfaces(nodeId string, reportId string) (*gen.ListInter
 
 	var r0 *gen.ListInterfacesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.ListInterfacesResponse, error)); ok {
-		return rf(nodeId, reportId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.ListInterfacesResponse, error)); ok {
+		return rf(ctx, nodeId, reportId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.ListInterfacesResponse); ok {
-		r0 = rf(nodeId, reportId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.ListInterfacesResponse); ok {
+		r0 = rf(ctx, nodeId, reportId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListInterfacesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, reportId)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, nodeId, reportId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,9 +76,9 @@ func (_m *health) ListInterfaces(nodeId string, reportId string) (*gen.ListInter
 	return r0, r1
 }
 
-// ListReports provides a mock function with given fields: nodeId, reportId, reportedAt, timeframe
-func (_m *health) ListReports(nodeId string, reportId string, reportedAt int64, timeframe ukama.FilterTimeframesType) (*gen.ListReportsResponse, error) {
-	ret := _m.Called(nodeId, reportId, reportedAt, timeframe)
+// ListReports provides a mock function with given fields: ctx, nodeId, reportId, reportedAt, timeframe
+func (_m *health) ListReports(ctx context.Context, nodeId string, reportId string, reportedAt int64, timeframe ukama.FilterTimeframesType) (*gen.ListReportsResponse, error) {
+	ret := _m.Called(ctx, nodeId, reportId, reportedAt, timeframe)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReports")
@@ -84,19 +86,19 @@ func (_m *health) ListReports(nodeId string, reportId string, reportedAt int64, 
 
 	var r0 *gen.ListReportsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, int64, ukama.FilterTimeframesType) (*gen.ListReportsResponse, error)); ok {
-		return rf(nodeId, reportId, reportedAt, timeframe)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64, ukama.FilterTimeframesType) (*gen.ListReportsResponse, error)); ok {
+		return rf(ctx, nodeId, reportId, reportedAt, timeframe)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, int64, ukama.FilterTimeframesType) *gen.ListReportsResponse); ok {
-		r0 = rf(nodeId, reportId, reportedAt, timeframe)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int64, ukama.FilterTimeframesType) *gen.ListReportsResponse); ok {
+		r0 = rf(ctx, nodeId, reportId, reportedAt, timeframe)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListReportsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, int64, ukama.FilterTimeframesType) error); ok {
-		r1 = rf(nodeId, reportId, reportedAt, timeframe)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int64, ukama.FilterTimeframesType) error); ok {
+		r1 = rf(ctx, nodeId, reportId, reportedAt, timeframe)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -10,6 +10,7 @@ package adapters
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -30,7 +31,8 @@ type TestAgentAdapter struct {
 }
 
 func NewTestAgentAdapter(testAgentHost string, timeout time.Duration) (*TestAgentAdapter, error) {
-	testAgentConn, err := grpc.NewClient(testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	testAgentConn, err := grpc.NewClient(testAgentHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 
 	if err != nil {
 		return nil, err

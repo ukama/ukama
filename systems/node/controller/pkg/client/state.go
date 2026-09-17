@@ -8,6 +8,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
@@ -22,7 +23,8 @@ type ConfigurationState struct {
 }
 
 func NewConfigurationState(host string, timeout time.Duration) (*ConfigurationState, error) {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		return nil, err
 	}

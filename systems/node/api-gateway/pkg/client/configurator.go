@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type Configurator struct {
 }
 
 func NewConfigurator(configuratorHost string, timeout time.Duration) *Configurator {
-	conn, err := grpc.NewClient(configuratorHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(configuratorHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Configurator Service: %v", err)
 	}
@@ -59,8 +61,8 @@ func (c *Configurator) Close() {
 	}
 }
 
-func (c *Configurator) ConfigEvent(b []byte) (*pb.ConfigStoreEventResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Configurator) ConfigEvent(ctx context.Context, b []byte) (*pb.ConfigStoreEventResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.ConfigEvent(ctx, &pb.ConfigStoreEvent{
@@ -68,15 +70,15 @@ func (c *Configurator) ConfigEvent(b []byte) (*pb.ConfigStoreEventResponse, erro
 	})
 }
 
-func (c *Configurator) ApplyConfig(commit string) (*pb.ApplyConfigResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Configurator) ApplyConfig(ctx context.Context, commit string) (*pb.ApplyConfigResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.ApplyConfig(ctx, &pb.ApplyConfigRequest{Hash: commit})
 }
 
-func (c *Configurator) GetConfigVersion(nodeId string) (*pb.ConfigVersionResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
+func (c *Configurator) GetConfigVersion(ctx context.Context, nodeId string) (*pb.ConfigVersionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), c.timeout)
 	defer cancel()
 
 	return c.client.GetConfigVersion(ctx, &pb.ConfigVersionRequest{NodeId: nodeId})

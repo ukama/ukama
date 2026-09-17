@@ -11,6 +11,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -28,7 +29,8 @@ type Notify struct {
 }
 
 func NewNotify(notifyHost string, timeout time.Duration) *Notify {
-	conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(notifyHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Notify Service: %v", err)
 	}
@@ -59,9 +61,9 @@ func (n *Notify) Close() {
 	}
 }
 
-func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.RawMessage,
+func (n *Notify) Add(ctx context.Context, nodeId, severity, ntype, serviceName string, details json.RawMessage,
 	status, time uint32) (*pb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	detailBytes, err := details.MarshalJSON()
@@ -81,8 +83,8 @@ func (n *Notify) Add(nodeId, severity, ntype, serviceName string, details json.R
 		})
 }
 
-func (n *Notify) Get(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Notify) Get(ctx context.Context, id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.Get(ctx, &pb.GetRequest{
@@ -90,8 +92,8 @@ func (n *Notify) Get(id string) (*pb.GetResponse, error) {
 	})
 }
 
-func (n *Notify) List(nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Notify) List(ctx context.Context, nodeId, serviceName, nType string, count uint32, sort bool) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.List(ctx, &pb.ListRequest{
@@ -103,8 +105,8 @@ func (n *Notify) List(nodeId, serviceName, nType string, count uint32, sort bool
 	})
 }
 
-func (n *Notify) Delete(id string) (*pb.DeleteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Notify) Delete(ctx context.Context, id string) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.Delete(ctx, &pb.GetRequest{
@@ -112,8 +114,8 @@ func (n *Notify) Delete(id string) (*pb.DeleteResponse, error) {
 	})
 }
 
-func (n *Notify) Purge(nodeId, serviceName, nType string) (*pb.ListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Notify) Purge(ctx context.Context, nodeId, serviceName, nType string) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.Purge(ctx, &pb.PurgeRequest{

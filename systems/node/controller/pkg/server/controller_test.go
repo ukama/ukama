@@ -57,7 +57,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-restart", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/reboot",
@@ -98,7 +98,7 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	opMgr.On("Complete", "op-rf", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/radio",
@@ -137,7 +137,7 @@ func TestControllerServer_ToggleService(t *testing.T) {
 	opMgr.On("MarkRunning", "op-svc", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	opMgr.On("Complete", "op-svc", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/service",
@@ -195,7 +195,7 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	opMgr.On("Complete", "op-i", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
@@ -223,7 +223,7 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError).Once()
 	opMgr.On("ForceUnlock", "op-i", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, siteClient, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -275,7 +275,7 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 	opMgr.On("MarkRunning", "op-radio", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	opMgr.On("Complete", "op-radio", mock.Anything, mock.Anything).Return(&copr.OperationInfo{}, nil).Once()
 
-	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
 		HttpMethod: "POST",
 		Path:       "/device/v1/radio",

@@ -48,7 +48,7 @@ func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (
 	}
 }
 
-func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) handleStateTransition(ctx context.Context, event *epb.Event) (*epb.EventResponse, error) {
 	msg, err := epb.UnmarshalNodeStateChangeEvent(event.Msg, "NodeStateChangeEvent")
 	if err != nil {
 		return nil, err
@@ -96,7 +96,7 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 			log.Errorf("operation-monitor: mark %s completed: %v", intent.OperationId, err)
 			continue
 		}
-		if err := e.publishCompleted(intent); err != nil {
+		if err := e.publishCompleted(ctx, intent); err != nil {
 			log.Errorf("operation-monitor: publish completed for %s: %v", intent.OperationId, err)
 			continue
 		}
@@ -106,9 +106,9 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 	return &epb.EventResponse{}, nil
 }
 
-func (e *EventServer) publishCompleted(intent *db.MonitoredIntent) error {
+func (e *EventServer) publishCompleted(ctx context.Context, intent *db.MonitoredIntent) error {
 	route := e.monitor.publishBuilder.SetAction("completed").SetObject("operation").MustBuild()
-	return e.monitor.msgbus.PublishRequest(route, &epb.OperationCompletedEvent{
+	return e.monitor.msgbus.PublishRequestWithContext(ctx, route, &epb.OperationCompletedEvent{
 		OperationId:  intent.OperationId.String(),
 		FencingToken: intent.FencingToken,
 		ResourceKey:  intent.ResourceKey,

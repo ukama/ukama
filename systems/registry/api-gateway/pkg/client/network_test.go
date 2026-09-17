@@ -9,6 +9,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -90,6 +91,7 @@ func TestNetworkRegistry_AddNetwork(t *testing.T) {
 		})).Return(expectedResponse, nil)
 
 		response, err := registry.AddNetwork(
+			context.Background(),
 			"test-network",
 			[]string{"US", "CA"},
 			[]string{"network1", "network2"},
@@ -112,6 +114,7 @@ func TestNetworkRegistry_AddNetwork(t *testing.T) {
 		mockClient.On("Add", mock.Anything, mock.Anything).Return(nil, expectedError)
 
 		response, err := registry.AddNetwork(
+			context.Background(),
 			"test-network",
 			[]string{"US"},
 			[]string{"network1"},
@@ -143,7 +146,7 @@ func TestNetworkRegistry_GetNetwork(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &netpb.GetRequest{NetworkId: "test-network-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetNetwork("test-network-id")
+		response, err := registry.GetNetwork(context.Background(), "test-network-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -158,7 +161,7 @@ func TestNetworkRegistry_GetNetwork(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &netpb.GetRequest{NetworkId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetNetwork("non-existent-id")
+		response, err := registry.GetNetwork(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -177,7 +180,7 @@ func TestNetworkRegistry_SetNetworkDefault(t *testing.T) {
 		mockClient.On("SetDefault", mock.Anything, &netpb.SetDefaultRequest{NetworkId: "test-network-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.SetNetworkDefault("test-network-id")
+		response, err := registry.SetNetworkDefault(context.Background(), "test-network-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -192,7 +195,7 @@ func TestNetworkRegistry_SetNetworkDefault(t *testing.T) {
 		mockClient.On("SetDefault", mock.Anything, &netpb.SetDefaultRequest{NetworkId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.SetNetworkDefault("non-existent-id")
+		response, err := registry.SetNetworkDefault(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -216,7 +219,7 @@ func TestNetworkRegistry_GetDefault(t *testing.T) {
 		mockClient.On("GetDefault", mock.Anything, &netpb.GetDefaultRequest{}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetDefault()
+		response, err := registry.GetDefault(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -231,7 +234,7 @@ func TestNetworkRegistry_GetDefault(t *testing.T) {
 		mockClient.On("GetDefault", mock.Anything, &netpb.GetDefaultRequest{}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetDefault()
+		response, err := registry.GetDefault(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -261,7 +264,7 @@ func TestNetworkRegistry_GetNetworks(t *testing.T) {
 		mockClient.On("GetAll", mock.Anything, &netpb.GetNetworksRequest{}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetNetworks()
+		response, err := registry.GetNetworks(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -280,7 +283,7 @@ func TestNetworkRegistry_GetNetworks(t *testing.T) {
 		mockClient.On("GetAll", mock.Anything, &netpb.GetNetworksRequest{}).
 			Return(responseWithNilNetworks, nil)
 
-		response, err := registry.GetNetworks()
+		response, err := registry.GetNetworks(context.Background())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, response)
@@ -297,7 +300,7 @@ func TestNetworkRegistry_GetNetworks(t *testing.T) {
 		mockClient.On("GetAll", mock.Anything, &netpb.GetNetworksRequest{}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetNetworks()
+		response, err := registry.GetNetworks(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -316,7 +319,7 @@ func TestNetworkRegistry_RemoveNetwork(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &netpb.DeleteRequest{NetworkId: "test-network-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.RemoveNetwork("test-network-id")
+		response, err := registry.RemoveNetwork(context.Background(), "test-network-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -331,7 +334,7 @@ func TestNetworkRegistry_RemoveNetwork(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &netpb.DeleteRequest{NetworkId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.RemoveNetwork("non-existent-id")
+		response, err := registry.RemoveNetwork(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)

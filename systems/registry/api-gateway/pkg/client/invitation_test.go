@@ -9,6 +9,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -82,7 +83,7 @@ func TestInvitationRegistry_RemoveInvitation(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{Id: "test-invitation-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.RemoveInvitation("test-invitation-id")
+		response, err := registry.RemoveInvitation(context.Background(), "test-invitation-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -97,7 +98,7 @@ func TestInvitationRegistry_RemoveInvitation(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{Id: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.RemoveInvitation("non-existent-id")
+		response, err := registry.RemoveInvitation(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -123,7 +124,7 @@ func TestInvitationRegistry_GetInvitationById(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &pb.GetRequest{Id: "test-invitation-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetInvitationById("test-invitation-id")
+		response, err := registry.GetInvitationById(context.Background(), "test-invitation-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -138,7 +139,7 @@ func TestInvitationRegistry_GetInvitationById(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &pb.GetRequest{Id: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetInvitationById("non-existent-id")
+		response, err := registry.GetInvitationById(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -167,7 +168,7 @@ func TestInvitationRegistry_AddInvitation(t *testing.T) {
 				req.Role == uType.RoleType_ROLE_USER
 		})).Return(expectedResponse, nil)
 
-		response, err := registry.AddInvitation("Jane Doe", "jane@example.com", "ROLE_USER")
+		response, err := registry.AddInvitation(context.Background(), "Jane Doe", "jane@example.com", "ROLE_USER")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -181,7 +182,7 @@ func TestInvitationRegistry_AddInvitation(t *testing.T) {
 		expectedError := status.Error(codes.InvalidArgument, "invalid role")
 		mockClient.On("Add", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := registry.AddInvitation("Jane Doe", "jane@example.com", "INVALID_ROLE")
+		response, err := registry.AddInvitation(context.Background(), "Jane Doe", "jane@example.com", "INVALID_ROLE")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -215,7 +216,7 @@ func TestInvitationRegistry_GetAllInvitations(t *testing.T) {
 		mockClient.On("GetAll", mock.Anything, &pb.GetAllRequest{}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetAllInvitations()
+		response, err := registry.GetAllInvitations(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -230,7 +231,7 @@ func TestInvitationRegistry_GetAllInvitations(t *testing.T) {
 		mockClient.On("GetAll", mock.Anything, &pb.GetAllRequest{}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetAllInvitations()
+		response, err := registry.GetAllInvitations(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -255,7 +256,7 @@ func TestInvitationRegistry_UpdateInvitation(t *testing.T) {
 				req.Status == uType.InvitationStatus_INVITE_ACCEPTED
 		})).Return(expectedResponse, nil)
 
-		response, err := registry.UpdateInvitation("test-invitation-id", "INVITE_ACCEPTED", "john@example.com")
+		response, err := registry.UpdateInvitation(context.Background(), "test-invitation-id", "INVITE_ACCEPTED", "john@example.com")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -269,7 +270,7 @@ func TestInvitationRegistry_UpdateInvitation(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "invitation not found")
 		mockClient.On("UpdateStatus", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := registry.UpdateInvitation("non-existent-id", "INVITE_ACCEPTED", "john@example.com")
+		response, err := registry.UpdateInvitation(context.Background(), "non-existent-id", "INVITE_ACCEPTED", "john@example.com")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -295,7 +296,7 @@ func TestInvitationRegistry_GetInvitationsByEmail(t *testing.T) {
 		mockClient.On("GetByEmail", mock.Anything, &pb.GetByEmailRequest{Email: "john@example.com"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetInvitationsByEmail("john@example.com")
+		response, err := registry.GetInvitationsByEmail(context.Background(), "john@example.com")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -310,7 +311,7 @@ func TestInvitationRegistry_GetInvitationsByEmail(t *testing.T) {
 		mockClient.On("GetByEmail", mock.Anything, &pb.GetByEmailRequest{Email: "nonexistent@example.com"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetInvitationsByEmail("nonexistent@example.com")
+		response, err := registry.GetInvitationsByEmail(context.Background(), "nonexistent@example.com")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)

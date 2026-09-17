@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/subscriber/sim-pool/pb/gen"
 )
@@ -12,9 +14,9 @@ type simPool struct {
 	mock.Mock
 }
 
-// AddSimsToSimPool provides a mock function with given fields: req
-func (_m *simPool) AddSimsToSimPool(req *gen.AddRequest) (*gen.AddResponse, error) {
-	ret := _m.Called(req)
+// AddSimsToSimPool provides a mock function with given fields: ctx, req
+func (_m *simPool) AddSimsToSimPool(ctx context.Context, req *gen.AddRequest) (*gen.AddResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddSimsToSimPool")
@@ -22,19 +24,19 @@ func (_m *simPool) AddSimsToSimPool(req *gen.AddRequest) (*gen.AddResponse, erro
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AddRequest) (*gen.AddResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) (*gen.AddResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AddRequest) *gen.AddResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddRequest) *gen.AddResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.AddRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *simPool) AddSimsToSimPool(req *gen.AddRequest) (*gen.AddResponse, erro
 	return r0, r1
 }
 
-// DeleteSimFromSimPool provides a mock function with given fields: id
-func (_m *simPool) DeleteSimFromSimPool(id []uint64) (*gen.DeleteResponse, error) {
-	ret := _m.Called(id)
+// DeleteSimFromSimPool provides a mock function with given fields: ctx, id
+func (_m *simPool) DeleteSimFromSimPool(ctx context.Context, id []uint64) (*gen.DeleteResponse, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteSimFromSimPool")
@@ -52,19 +54,19 @@ func (_m *simPool) DeleteSimFromSimPool(id []uint64) (*gen.DeleteResponse, error
 
 	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]uint64) (*gen.DeleteResponse, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, []uint64) (*gen.DeleteResponse, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func([]uint64) *gen.DeleteResponse); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, []uint64) *gen.DeleteResponse); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]uint64) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, []uint64) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *simPool) DeleteSimFromSimPool(id []uint64) (*gen.DeleteResponse, error
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: iccid
-func (_m *simPool) Get(iccid string) (*gen.GetByIccidResponse, error) {
-	ret := _m.Called(iccid)
+// Get provides a mock function with given fields: ctx, iccid
+func (_m *simPool) Get(ctx context.Context, iccid string) (*gen.GetByIccidResponse, error) {
+	ret := _m.Called(ctx, iccid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -82,19 +84,19 @@ func (_m *simPool) Get(iccid string) (*gen.GetByIccidResponse, error) {
 
 	var r0 *gen.GetByIccidResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetByIccidResponse, error)); ok {
-		return rf(iccid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetByIccidResponse, error)); ok {
+		return rf(ctx, iccid)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetByIccidResponse); ok {
-		r0 = rf(iccid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetByIccidResponse); ok {
+		r0 = rf(ctx, iccid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetByIccidResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(iccid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, iccid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *simPool) Get(iccid string) (*gen.GetByIccidResponse, error) {
 	return r0, r1
 }
 
-// GetSims provides a mock function with given fields: simType
-func (_m *simPool) GetSims(simType string) (*gen.GetSimsResponse, error) {
-	ret := _m.Called(simType)
+// GetSims provides a mock function with given fields: ctx, simType
+func (_m *simPool) GetSims(ctx context.Context, simType string) (*gen.GetSimsResponse, error) {
+	ret := _m.Called(ctx, simType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSims")
@@ -112,19 +114,19 @@ func (_m *simPool) GetSims(simType string) (*gen.GetSimsResponse, error) {
 
 	var r0 *gen.GetSimsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSimsResponse, error)); ok {
-		return rf(simType)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSimsResponse, error)); ok {
+		return rf(ctx, simType)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSimsResponse); ok {
-		r0 = rf(simType)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSimsResponse); ok {
+		r0 = rf(ctx, simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSimsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simType)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, simType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *simPool) GetSims(simType string) (*gen.GetSimsResponse, error) {
 	return r0, r1
 }
 
-// GetStats provides a mock function with given fields: simType
-func (_m *simPool) GetStats(simType string) (*gen.GetStatsResponse, error) {
-	ret := _m.Called(simType)
+// GetStats provides a mock function with given fields: ctx, simType
+func (_m *simPool) GetStats(ctx context.Context, simType string) (*gen.GetStatsResponse, error) {
+	ret := _m.Called(ctx, simType)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetStats")
@@ -142,19 +144,19 @@ func (_m *simPool) GetStats(simType string) (*gen.GetStatsResponse, error) {
 
 	var r0 *gen.GetStatsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetStatsResponse, error)); ok {
-		return rf(simType)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetStatsResponse, error)); ok {
+		return rf(ctx, simType)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetStatsResponse); ok {
-		r0 = rf(simType)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetStatsResponse); ok {
+		r0 = rf(ctx, simType)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetStatsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simType)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, simType)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *simPool) GetStats(simType string) (*gen.GetStatsResponse, error) {
 	return r0, r1
 }
 
-// UploadSimsToSimPool provides a mock function with given fields: req
-func (_m *simPool) UploadSimsToSimPool(req *gen.UploadRequest) (*gen.UploadResponse, error) {
-	ret := _m.Called(req)
+// UploadSimsToSimPool provides a mock function with given fields: ctx, req
+func (_m *simPool) UploadSimsToSimPool(ctx context.Context, req *gen.UploadRequest) (*gen.UploadResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UploadSimsToSimPool")
@@ -172,19 +174,19 @@ func (_m *simPool) UploadSimsToSimPool(req *gen.UploadRequest) (*gen.UploadRespo
 
 	var r0 *gen.UploadResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.UploadRequest) (*gen.UploadResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UploadRequest) (*gen.UploadResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.UploadRequest) *gen.UploadResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UploadRequest) *gen.UploadResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UploadResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.UploadRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UploadRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}

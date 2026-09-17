@@ -128,9 +128,9 @@ func TestInvitationServer_Add(t *testing.T) {
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
 
 		var publishedEvt *epb.EventInvitationCreated
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once().
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once().
 			Run(func(args mock.Arguments) {
-				publishedEvt = args.Get(1).(*epb.EventInvitationCreated)
+				publishedEvt = args.Get(2).(*epb.EventInvitationCreated)
 			})
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
@@ -192,7 +192,7 @@ func TestInvitationServer_Add(t *testing.T) {
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
 		userClient.On("GetByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
@@ -337,7 +337,6 @@ func TestInvitationServer_Add(t *testing.T) {
 		userClient.AssertExpectations(t)
 	})
 
-
 	t.Run("databaseErrorDuringAdd", func(t *testing.T) {
 		// Arrange
 		invitationRepo := &mocks.InvitationRepo{}
@@ -432,7 +431,7 @@ func TestInvitationServer_Add(t *testing.T) {
 		userClient.On("GetById", ownerId).Return(ownerInfo, nil).Once()
 		userClient.On("GetByEmail", email).Return(invitedUserInfo, nil).Once()
 		invitationRepo.On("Add", mock.AnythingOfType("*db.Invitation"), mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
@@ -540,7 +539,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(existingInvitation, nil).Once()
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
@@ -693,7 +692,7 @@ func TestInvitationServer_Delete(t *testing.T) {
 
 		invitationRepo.On("Get", invitationId).Return(existingInvitation, nil).Once()
 		invitationRepo.On("Delete", invitationId, mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
@@ -788,7 +787,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("UpdateUserId", invitationId, mock.AnythingOfType("uuid.UUID")).Return(nil).Once()
 		invitationRepo.On("UpdateStatus", invitationId, uint8(newStatus.Number())).Return(nil).Once()
 		invitationRepo.On("Get", invitationId).Return(updatedInvitation, nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 
@@ -1061,7 +1060,7 @@ func TestInvitationServer_UpdateStatus(t *testing.T) {
 		invitationRepo.On("UpdateUserId", invitationId, mock.AnythingOfType("uuid.UUID")).Return(nil).Once()
 		invitationRepo.On("UpdateStatus", invitationId, uint8(newStatus.Number())).Return(nil).Once()
 		invitationRepo.On("Get", invitationId).Return(updatedInvitation, nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		s := NewInvitationServer(invitationRepo, TestExpiryTime, TestAuthLoginBaseURL, orgClient, userClient, msgbusClient, orgName)
 

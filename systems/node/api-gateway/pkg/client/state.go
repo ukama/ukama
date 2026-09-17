@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type State struct {
 }
 
 func NewState(stateHost string, timeout time.Duration) *State {
-	conn, err := grpc.NewClient(stateHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(stateHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to State Service host: %v", err)
 	}
@@ -58,8 +60,8 @@ func (s *State) Close() {
 	}
 }
 
-func (s *State) GetStates(nodeId string) (*pb.GetStatesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *State) GetStates(ctx context.Context, nodeId string) (*pb.GetStatesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 
 	return s.client.GetStates(ctx, &pb.GetStatesRequest{NodeId: nodeId})
@@ -71,9 +73,9 @@ func (s *State) GetLatestState(ctx context.Context, req *pb.GetLatestStateReques
 	return s.client.GetLatestState(ctx, req)
 }
 
-func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime,
+func (s *State) GetStatesHistory(ctx context.Context, nodeId string, pageSize int32, pageNumber int32, startTime,
 	endTime string) (*pb.GetStatesHistoryResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 
 	return s.client.GetStatesHistory(ctx, &pb.GetStatesHistoryRequest{
@@ -85,8 +87,8 @@ func (s *State) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32
 	})
 }
 
-func (s *State) EnforeTransition(nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *State) EnforeTransition(ctx context.Context, nodeId string, event string) (*pb.EnforceStateTransitionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 
 	return s.client.EnforceStateTransition(ctx, &pb.EnforceStateTransitionRequest{

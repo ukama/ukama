@@ -356,7 +356,7 @@ func (s *StateServer) EnforceStateTransition(ctx context.Context, req *pb.Enforc
 			Event:  req.Event,
 		}
 
-		err = s.msgbus.PublishRequest(route, evt)
+		err = s.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

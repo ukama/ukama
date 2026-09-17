@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type SimPool struct {
 }
 
 func NewSimPool(host string, timeout time.Duration) *SimPool {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Sim Pool Service: %v", err)
 	}
@@ -58,43 +60,43 @@ func (sp *SimPool) Close() {
 	}
 }
 
-func (sp *SimPool) Get(iccid string) (*pb.GetByIccidResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) Get(ctx context.Context, iccid string) (*pb.GetByIccidResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.GetByIccid(ctx, &pb.GetByIccidRequest{Iccid: iccid})
 }
 
-func (sp *SimPool) GetSims(simType string) (*pb.GetSimsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) GetSims(ctx context.Context, simType string) (*pb.GetSimsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.GetSims(ctx, &pb.GetSimsRequest{SimType: simType})
 }
 
-func (sp *SimPool) GetStats(simType string) (*pb.GetStatsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) GetStats(ctx context.Context, simType string) (*pb.GetStatsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.GetStats(ctx, &pb.GetStatsRequest{SimType: simType})
 }
 
-func (sp *SimPool) AddSimsToSimPool(req *pb.AddRequest) (*pb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) AddSimsToSimPool(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.Add(ctx, req)
 }
 
-func (sp *SimPool) UploadSimsToSimPool(req *pb.UploadRequest) (*pb.UploadResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) UploadSimsToSimPool(ctx context.Context, req *pb.UploadRequest) (*pb.UploadResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.Upload(ctx, req)
 }
 
-func (sp *SimPool) DeleteSimFromSimPool(id []uint64) (*pb.DeleteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), sp.timeout)
+func (sp *SimPool) DeleteSimFromSimPool(ctx context.Context, id []uint64) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sp.timeout)
 	defer cancel()
 
 	return sp.client.Delete(ctx, &pb.DeleteRequest{Id: id})

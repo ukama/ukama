@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/software/pb/gen"
 )
@@ -12,9 +14,9 @@ type softwareManager struct {
 	mock.Mock
 }
 
-// GetReleaseCatalog provides a mock function with given fields: name, atype
-func (_m *softwareManager) GetReleaseCatalog(name string, atype string) (*gen.GetReleaseCatalogResponse, error) {
-	ret := _m.Called(name, atype)
+// GetReleaseCatalog provides a mock function with given fields: ctx, name, atype
+func (_m *softwareManager) GetReleaseCatalog(ctx context.Context, name string, atype string) (*gen.GetReleaseCatalogResponse, error) {
+	ret := _m.Called(ctx, name, atype)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetReleaseCatalog")
@@ -22,19 +24,19 @@ func (_m *softwareManager) GetReleaseCatalog(name string, atype string) (*gen.Ge
 
 	var r0 *gen.GetReleaseCatalogResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.GetReleaseCatalogResponse, error)); ok {
-		return rf(name, atype)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.GetReleaseCatalogResponse, error)); ok {
+		return rf(ctx, name, atype)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.GetReleaseCatalogResponse); ok {
-		r0 = rf(name, atype)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.GetReleaseCatalogResponse); ok {
+		r0 = rf(ctx, name, atype)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetReleaseCatalogResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(name, atype)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, name, atype)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *softwareManager) GetReleaseCatalog(name string, atype string) (*gen.Ge
 	return r0, r1
 }
 
-// ListApps provides a mock function with no fields
-func (_m *softwareManager) ListApps() (*gen.GetAppListResponse, error) {
-	ret := _m.Called()
+// ListApps provides a mock function with given fields: ctx
+func (_m *softwareManager) ListApps(ctx context.Context) (*gen.GetAppListResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApps")
@@ -52,19 +54,19 @@ func (_m *softwareManager) ListApps() (*gen.GetAppListResponse, error) {
 
 	var r0 *gen.GetAppListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetAppListResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetAppListResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetAppListResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetAppListResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetAppListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *softwareManager) ListApps() (*gen.GetAppListResponse, error) {
 	return r0, r1
 }
 
-// ListSoftware provides a mock function with given fields: nodeId, status, appName
-func (_m *softwareManager) ListSoftware(nodeId string, status string, appName string) (*gen.GetSoftwareListResponse, error) {
-	ret := _m.Called(nodeId, status, appName)
+// ListSoftware provides a mock function with given fields: ctx, nodeId, status, appName
+func (_m *softwareManager) ListSoftware(ctx context.Context, nodeId string, status string, appName string) (*gen.GetSoftwareListResponse, error) {
+	ret := _m.Called(ctx, nodeId, status, appName)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListSoftware")
@@ -82,19 +84,19 @@ func (_m *softwareManager) ListSoftware(nodeId string, status string, appName st
 
 	var r0 *gen.GetSoftwareListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.GetSoftwareListResponse, error)); ok {
-		return rf(nodeId, status, appName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.GetSoftwareListResponse, error)); ok {
+		return rf(ctx, nodeId, status, appName)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.GetSoftwareListResponse); ok {
-		r0 = rf(nodeId, status, appName)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.GetSoftwareListResponse); ok {
+		r0 = rf(ctx, nodeId, status, appName)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSoftwareListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, status, appName)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, status, appName)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *softwareManager) ListSoftware(nodeId string, status string, appName st
 	return r0, r1
 }
 
-// PromoteRelease provides a mock function with given fields: name, version, atype
-func (_m *softwareManager) PromoteRelease(name string, version string, atype string) (*gen.PromoteReleaseResponse, error) {
-	ret := _m.Called(name, version, atype)
+// PromoteRelease provides a mock function with given fields: ctx, name, version, atype
+func (_m *softwareManager) PromoteRelease(ctx context.Context, name string, version string, atype string) (*gen.PromoteReleaseResponse, error) {
+	ret := _m.Called(ctx, name, version, atype)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PromoteRelease")
@@ -112,19 +114,19 @@ func (_m *softwareManager) PromoteRelease(name string, version string, atype str
 
 	var r0 *gen.PromoteReleaseResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.PromoteReleaseResponse, error)); ok {
-		return rf(name, version, atype)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.PromoteReleaseResponse, error)); ok {
+		return rf(ctx, name, version, atype)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.PromoteReleaseResponse); ok {
-		r0 = rf(name, version, atype)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.PromoteReleaseResponse); ok {
+		r0 = rf(ctx, name, version, atype)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PromoteReleaseResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(name, version, atype)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, name, version, atype)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *softwareManager) PromoteRelease(name string, version string, atype str
 	return r0, r1
 }
 
-// UpdateSoftware provides a mock function with given fields: nodeId, name, tag
-func (_m *softwareManager) UpdateSoftware(nodeId string, name string, tag string) (*gen.UpdateSoftwareResponse, error) {
-	ret := _m.Called(nodeId, name, tag)
+// UpdateSoftware provides a mock function with given fields: ctx, nodeId, name, tag
+func (_m *softwareManager) UpdateSoftware(ctx context.Context, nodeId string, name string, tag string) (*gen.UpdateSoftwareResponse, error) {
+	ret := _m.Called(ctx, nodeId, name, tag)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSoftware")
@@ -142,19 +144,19 @@ func (_m *softwareManager) UpdateSoftware(nodeId string, name string, tag string
 
 	var r0 *gen.UpdateSoftwareResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
-		return rf(nodeId, name, tag)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.UpdateSoftwareResponse, error)); ok {
+		return rf(ctx, nodeId, name, tag)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.UpdateSoftwareResponse); ok {
-		r0 = rf(nodeId, name, tag)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.UpdateSoftwareResponse); ok {
+		r0 = rf(ctx, nodeId, name, tag)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateSoftwareResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, name, tag)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, name, tag)
 	} else {
 		r1 = ret.Error(1)
 	}

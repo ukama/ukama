@@ -60,8 +60,8 @@ func (s *SoftwareManager) Close() {
 	}
 }
 
-func (s *SoftwareManager) UpdateSoftware(nodeId string, name string, tag string) (*pb.UpdateSoftwareResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *SoftwareManager) UpdateSoftware(ctx context.Context, nodeId string, name string, tag string) (*pb.UpdateSoftwareResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 
 	return s.client.UpdateSoftware(ctx, &pb.UpdateSoftwareRequest{
@@ -71,29 +71,29 @@ func (s *SoftwareManager) UpdateSoftware(nodeId string, name string, tag string)
 	})
 }
 
-func (s *SoftwareManager) ListApps() (*pb.GetAppListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *SoftwareManager) ListApps(ctx context.Context) (*pb.GetAppListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 
 	return s.client.GetAppList(ctx, &pb.GetAppListRequest{})
 }
 
-func (s *SoftwareManager) ListSoftware(nodeId string, status string, appName string) (*pb.GetSoftwareListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *SoftwareManager) ListSoftware(ctx context.Context, nodeId string, status string, appName string) (*pb.GetSoftwareListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 	return s.client.GetSoftwareList(ctx, &pb.GetSoftwareListRequest{
 		NodeId: nodeId, Status: ukamapb.SoftwareStatus(ukamapb.SoftwareStatus_value[status]), AppName: appName})
 }
 
-func (s *SoftwareManager) PromoteRelease(name string, version string, atype string) (*pb.PromoteReleaseResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *SoftwareManager) PromoteRelease(ctx context.Context, name string, version string, atype string) (*pb.PromoteReleaseResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 	return s.client.PromoteRelease(ctx, &pb.PromoteReleaseRequest{
 		Name: name, Version: version, Type: atype})
 }
 
-func (s *SoftwareManager) GetReleaseCatalog(name string, atype string) (*pb.GetReleaseCatalogResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), s.timeout)
+func (s *SoftwareManager) GetReleaseCatalog(ctx context.Context, name string, atype string) (*pb.GetReleaseCatalogResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), s.timeout)
 	defer cancel()
 	return s.client.GetReleaseCatalog(ctx, &pb.GetReleaseCatalogRequest{
 		Name: name, Type: atype})

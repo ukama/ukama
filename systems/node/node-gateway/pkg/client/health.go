@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type Health struct {
 }
 
 func NewHealth(healthHost string, timeout time.Duration) *Health {
-	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(healthHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Health Service host: %v", err)
 	}
@@ -58,29 +60,29 @@ func (h *Health) Close() {
 	}
 }
 
-func (h *Health) StoreHealthReport(request *pb.StoreHealthReportRequest) (*pb.StoreHealthReportResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+func (h *Health) StoreHealthReport(ctx context.Context, request *pb.StoreHealthReportRequest) (*pb.StoreHealthReportResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), h.timeout)
 	defer cancel()
 
 	return h.client.StoreHealthReport(ctx, request)
 }
 
-func (h *Health) ListReports(request *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+func (h *Health) ListReports(ctx context.Context, request *pb.ListReportsRequest) (*pb.ListReportsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), h.timeout)
 	defer cancel()
 
 	return h.client.ListReports(ctx, request)
 }
 
-func (h *Health) ListApps(request *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+func (h *Health) ListApps(ctx context.Context, request *pb.ListAppsRequest) (*pb.ListAppsResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), h.timeout)
 	defer cancel()
 
 	return h.client.ListApps(ctx, request)
 }
 
-func (h *Health) ListInterfaces(request *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), h.timeout)
+func (h *Health) ListInterfaces(ctx context.Context, request *pb.ListInterfacesRequest) (*pb.ListInterfacesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), h.timeout)
 	defer cancel()
 	return h.client.ListInterfaces(ctx, request)
 }

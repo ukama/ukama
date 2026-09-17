@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/subscriber/registry/pb/gen"
 )
@@ -12,9 +14,9 @@ type subscriber struct {
 	mock.Mock
 }
 
-// AddSubscriber provides a mock function with given fields: req
-func (_m *subscriber) AddSubscriber(req *gen.AddSubscriberRequest) (*gen.AddSubscriberResponse, error) {
-	ret := _m.Called(req)
+// AddSubscriber provides a mock function with given fields: ctx, req
+func (_m *subscriber) AddSubscriber(ctx context.Context, req *gen.AddSubscriberRequest) (*gen.AddSubscriberResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddSubscriber")
@@ -22,19 +24,19 @@ func (_m *subscriber) AddSubscriber(req *gen.AddSubscriberRequest) (*gen.AddSubs
 
 	var r0 *gen.AddSubscriberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AddSubscriberRequest) (*gen.AddSubscriberResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSubscriberRequest) (*gen.AddSubscriberResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AddSubscriberRequest) *gen.AddSubscriberResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddSubscriberRequest) *gen.AddSubscriberResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddSubscriberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.AddSubscriberRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddSubscriberRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *subscriber) AddSubscriber(req *gen.AddSubscriberRequest) (*gen.AddSubs
 	return r0, r1
 }
 
-// DeleteSubscriber provides a mock function with given fields: sid
-func (_m *subscriber) DeleteSubscriber(sid string) (*gen.DeleteSubscriberResponse, error) {
-	ret := _m.Called(sid)
+// DeleteSubscriber provides a mock function with given fields: ctx, sid
+func (_m *subscriber) DeleteSubscriber(ctx context.Context, sid string) (*gen.DeleteSubscriberResponse, error) {
+	ret := _m.Called(ctx, sid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteSubscriber")
@@ -52,19 +54,19 @@ func (_m *subscriber) DeleteSubscriber(sid string) (*gen.DeleteSubscriberRespons
 
 	var r0 *gen.DeleteSubscriberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteSubscriberResponse, error)); ok {
-		return rf(sid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DeleteSubscriberResponse, error)); ok {
+		return rf(ctx, sid)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteSubscriberResponse); ok {
-		r0 = rf(sid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DeleteSubscriberResponse); ok {
+		r0 = rf(ctx, sid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteSubscriberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(sid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, sid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *subscriber) DeleteSubscriber(sid string) (*gen.DeleteSubscriberRespons
 	return r0, r1
 }
 
-// GetByNetwork provides a mock function with given fields: networkId
-func (_m *subscriber) GetByNetwork(networkId string) (*gen.GetByNetworkResponse, error) {
-	ret := _m.Called(networkId)
+// GetByNetwork provides a mock function with given fields: ctx, networkId
+func (_m *subscriber) GetByNetwork(ctx context.Context, networkId string) (*gen.GetByNetworkResponse, error) {
+	ret := _m.Called(ctx, networkId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByNetwork")
@@ -82,19 +84,19 @@ func (_m *subscriber) GetByNetwork(networkId string) (*gen.GetByNetworkResponse,
 
 	var r0 *gen.GetByNetworkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetByNetworkResponse, error)); ok {
-		return rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetByNetworkResponse, error)); ok {
+		return rf(ctx, networkId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetByNetworkResponse); ok {
-		r0 = rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetByNetworkResponse); ok {
+		r0 = rf(ctx, networkId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetByNetworkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(networkId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, networkId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *subscriber) GetByNetwork(networkId string) (*gen.GetByNetworkResponse,
 	return r0, r1
 }
 
-// GetSubscriber provides a mock function with given fields: sid
-func (_m *subscriber) GetSubscriber(sid string) (*gen.GetSubscriberResponse, error) {
-	ret := _m.Called(sid)
+// GetSubscriber provides a mock function with given fields: ctx, sid
+func (_m *subscriber) GetSubscriber(ctx context.Context, sid string) (*gen.GetSubscriberResponse, error) {
+	ret := _m.Called(ctx, sid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSubscriber")
@@ -112,19 +114,19 @@ func (_m *subscriber) GetSubscriber(sid string) (*gen.GetSubscriberResponse, err
 
 	var r0 *gen.GetSubscriberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSubscriberResponse, error)); ok {
-		return rf(sid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSubscriberResponse, error)); ok {
+		return rf(ctx, sid)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSubscriberResponse); ok {
-		r0 = rf(sid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSubscriberResponse); ok {
+		r0 = rf(ctx, sid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSubscriberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(sid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, sid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *subscriber) GetSubscriber(sid string) (*gen.GetSubscriberResponse, err
 	return r0, r1
 }
 
-// GetSubscriberByEmail provides a mock function with given fields: sEmail
-func (_m *subscriber) GetSubscriberByEmail(sEmail string) (*gen.GetSubscriberByEmailResponse, error) {
-	ret := _m.Called(sEmail)
+// GetSubscriberByEmail provides a mock function with given fields: ctx, sEmail
+func (_m *subscriber) GetSubscriberByEmail(ctx context.Context, sEmail string) (*gen.GetSubscriberByEmailResponse, error) {
+	ret := _m.Called(ctx, sEmail)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSubscriberByEmail")
@@ -142,19 +144,19 @@ func (_m *subscriber) GetSubscriberByEmail(sEmail string) (*gen.GetSubscriberByE
 
 	var r0 *gen.GetSubscriberByEmailResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSubscriberByEmailResponse, error)); ok {
-		return rf(sEmail)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSubscriberByEmailResponse, error)); ok {
+		return rf(ctx, sEmail)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSubscriberByEmailResponse); ok {
-		r0 = rf(sEmail)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSubscriberByEmailResponse); ok {
+		r0 = rf(ctx, sEmail)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSubscriberByEmailResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(sEmail)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, sEmail)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *subscriber) GetSubscriberByEmail(sEmail string) (*gen.GetSubscriberByE
 	return r0, r1
 }
 
-// UpdateSubscriber provides a mock function with given fields: subscriber
-func (_m *subscriber) UpdateSubscriber(subscriber *gen.UpdateSubscriberRequest) (*gen.UpdateSubscriberResponse, error) {
-	ret := _m.Called(subscriber)
+// UpdateSubscriber provides a mock function with given fields: ctx, subscriber
+func (_m *subscriber) UpdateSubscriber(ctx context.Context, subscriber *gen.UpdateSubscriberRequest) (*gen.UpdateSubscriberResponse, error) {
+	ret := _m.Called(ctx, subscriber)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateSubscriber")
@@ -172,19 +174,19 @@ func (_m *subscriber) UpdateSubscriber(subscriber *gen.UpdateSubscriberRequest) 
 
 	var r0 *gen.UpdateSubscriberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.UpdateSubscriberRequest) (*gen.UpdateSubscriberResponse, error)); ok {
-		return rf(subscriber)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateSubscriberRequest) (*gen.UpdateSubscriberResponse, error)); ok {
+		return rf(ctx, subscriber)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.UpdateSubscriberRequest) *gen.UpdateSubscriberResponse); ok {
-		r0 = rf(subscriber)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.UpdateSubscriberRequest) *gen.UpdateSubscriberResponse); ok {
+		r0 = rf(ctx, subscriber)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateSubscriberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.UpdateSubscriberRequest) error); ok {
-		r1 = rf(subscriber)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.UpdateSubscriberRequest) error); ok {
+		r1 = rf(ctx, subscriber)
 	} else {
 		r1 = ret.Error(1)
 	}

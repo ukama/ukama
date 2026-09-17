@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
@@ -17,7 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
-
 
 type HealthClientProvider interface {
 	GetClient() (pb.HealthServiceClient, error)
@@ -39,7 +39,8 @@ func (o *healthClientProvider) GetClient() (pb.HealthServiceClient, error) {
 		log.Infoln("Connecting to Health service ", o.healthHost)
 
 		conn, err := grpc.NewClient(o.healthHost,
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption())
 		if err != nil {
 			log.Errorf("Failed to connect to Health service %s. Error: %v", o.healthHost, err)
 

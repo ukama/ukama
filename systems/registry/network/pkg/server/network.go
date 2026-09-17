@@ -123,7 +123,7 @@ func (n *NetworkServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRes
 			IsDeactivated:    network.Deactivated,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 				evt, route, err.Error())
@@ -228,7 +228,7 @@ func (n *NetworkServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.
 			OrgId: n.orgId,
 		}
 
-		err = n.msgbus.PublishRequest(route, evt)
+		err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 				evt, route, err.Error())

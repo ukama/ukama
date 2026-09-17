@@ -9,6 +9,7 @@
 package client_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -52,7 +53,7 @@ func TestNotifyClient_Add(t *testing.T) {
 
 	c := client.NewNotifyFromClient(nc)
 
-	_, err := c.Add(req.NodeId, req.Severity,
+	_, err := c.Add(context.Background(), req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 
 	assert.NoError(t, err)
@@ -76,7 +77,7 @@ func TestNotifyClient_Get(t *testing.T) {
 
 	n := client.NewNotifyFromClient(nc)
 
-	resp, err := n.Get(notificationId)
+	resp, err := n.Get(context.Background(), notificationId)
 
 	assert.NoError(t, err)
 	assert.Equal(t, resp.Notification.Id, notificationId)
@@ -106,7 +107,7 @@ func TestNotifyClient_List(t *testing.T) {
 
 	n := client.NewNotifyFromClient(nc)
 
-	resp, err := n.List(req.NodeId, req.ServiceName, req.Type, uint32(1), true)
+	resp, err := n.List(context.Background(), req.NodeId, req.ServiceName, req.Type, uint32(1), true)
 
 	assert.NoError(t, err)
 	assert.Equal(t, resp.Notifications[0].Id, notificationId)
@@ -120,7 +121,7 @@ func TestNotifyClient_Delete(t *testing.T) {
 
 	n := client.NewNotifyFromClient(nc)
 
-	_, err := n.Delete(notificationId)
+	_, err := n.Delete(context.Background(), notificationId)
 
 	assert.NoError(t, err)
 	nc.AssertExpectations(t)
@@ -147,7 +148,7 @@ func TestNotifyClient_Purge(t *testing.T) {
 
 	n := client.NewNotifyFromClient(nc)
 
-	deletedItems, err := n.Purge(req.NodeId, req.ServiceName, req.Type)
+	deletedItems, err := n.Purge(context.Background(), req.NodeId, req.ServiceName, req.Type)
 
 	assert.NoError(t, err)
 	assert.Equal(t, deletedItems.Notifications[0].Id, notificationId)

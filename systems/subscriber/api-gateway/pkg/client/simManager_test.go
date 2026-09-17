@@ -9,6 +9,7 @@
 package client_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -40,7 +41,7 @@ func TestSimManagerClient_GetSimToken(t *testing.T) {
 
 	n := client.NewSimManagerFromClient(pc)
 
-	resp, err := n.GetSimToken(testIccid)
+	resp, err := n.GetSimToken(context.Background(), testIccid)
 
 	assert.NoError(t, err)
 	assert.Equal(t, resp.Token, token)

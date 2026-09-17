@@ -109,14 +109,14 @@ func (h *HealthServer) StoreHealthReport(ctx context.Context, req *pb.StoreHealt
 			ReportedAt:    strconv.FormatInt(parsed.ReportedAt, 10),
 		}
 		log.Infof("Publishing event %+v with key %+v", evt, route)
-		err = h.msgbus.PublishRequest(route, evt)
+		err = h.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
 	// Additive, best-effort: notify subscribers only when the app inventory changed.
-	h.publishAppsChangedIfNeeded(nID.StringLowercase(), nodeType.String(), parsed.Apps, prevAppsFingerprint)
+	h.publishAppsChangedIfNeeded(ctx, nID.StringLowercase(), nodeType.String(), parsed.Apps, prevAppsFingerprint)
 
 	return &pb.StoreHealthReportResponse{ReportId: report.ID.String()}, nil
 }
@@ -153,7 +153,7 @@ func (h *HealthServer) latestAppsFingerprint(nodeID string) string {
 // node's app inventory (by name@version) differs from the previous report, or
 // on the first report. Best-effort: failures are logged and never affect the
 // StoreHealthReport result. The existing HealthReportEvent emission is unchanged.
-func (h *HealthServer) publishAppsChangedIfNeeded(nodeID, nodeType string, apps []parser.HealthApp, prevFingerprint string) {
+func (h *HealthServer) publishAppsChangedIfNeeded(ctx context.Context, nodeID, nodeType string, apps []parser.HealthApp, prevFingerprint string) {
 	if h.msgbus == nil {
 		return
 	}
@@ -163,7 +163,7 @@ func (h *HealthServer) publishAppsChangedIfNeeded(nodeID, nodeType string, apps 
 	route := h.healthRoutingKey.SetAction("changed").SetObject("apps").MustBuild()
 	evt := &epb.HealthAppsChangedEvent{NodeId: nodeID, NodeType: nodeType}
 	log.Infof("Publishing apps-changed event %+v with key %+v", evt, route)
-	if err := h.msgbus.PublishRequest(route, evt); err != nil {
+	if err := h.msgbus.PublishRequestWithContext(ctx, route, evt); err != nil {
 		log.Errorf("Failed to publish apps-changed event %+v with key %+v. Errors %s", evt, route, err.Error())
 	}
 }

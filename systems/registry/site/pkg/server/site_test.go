@@ -401,7 +401,7 @@ func TestSiteService_Update(t *testing.T) {
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
 		// Mock message bus publish
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
 			SiteId: testSiteId.String(),
@@ -451,7 +451,7 @@ func TestSiteService_Update(t *testing.T) {
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
 		// Mock message bus publish
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
 			SiteId: testSiteId.String(),
@@ -492,7 +492,7 @@ func TestSiteService_Update(t *testing.T) {
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
 		// Mock message bus publish to return an error
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		req := &pb.UpdateRequest{
 			SiteId: testSiteId.String(),
@@ -538,7 +538,7 @@ func TestSiteService_Update(t *testing.T) {
 		siteRepo.On("Update", mock.AnythingOfType("*db.Site")).Return(nil).Once()
 
 		// Mock message bus publish
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		req := &pb.UpdateRequest{
 			SiteId: testSiteId.String(),
@@ -622,7 +622,7 @@ func TestSiteService_Delete(t *testing.T) {
 		mockSite := createMockSite()
 
 		siteRepo.On("Delete", testSiteId).Return(mockSite, nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		siteRepo.On("GetSiteCount", testNetworkId).Return(int64(1), nil).Once()
 
 		resp, err := s.Delete(context.TODO(), &pb.DeleteRequest{SiteId: testSiteId.String()})

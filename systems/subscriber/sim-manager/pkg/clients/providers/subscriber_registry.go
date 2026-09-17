@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"sync"
 	"time"
 
@@ -48,6 +49,7 @@ func (p *subscriberRegistryClientProvider) GetClient() (pb.RegistryServiceClient
 
 		conn, err := grpc.NewClient(p.subscriberRegistryHost,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption(),
 			grpc.WithUnaryInterceptor(timeoutUnaryClientInterceptor(p.timeout)))
 		if err != nil {
 			log.Errorf("Failed to connect to Subscriber Registry service %s. Error: %v", p.subscriberRegistryHost, err)

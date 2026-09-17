@@ -65,18 +65,18 @@ type UpdateSiteRequest struct {
 }
 
 type AddSiteRequest struct {
-	NetworkId     string  `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
-	Name          string  `example:"s1-site" json:"site" validate:"required"`
-	Location      string  `example:"location" json:"location" validate:"required"`
-	BackhaulId    string  `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
-	PowerId       string  `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
-	AccessId      string  `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
-	SwitchId      string  `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
-	SpectrumId    string  `example:"{{SpectrumUUID}}" json:"spectrum_id" validate:"required"`
-	IsDeactivated bool    `json:"is_deactivated"`
-	Latitude      string  `json:"latitude" validate:"required"`
-	Longitude     string  `json:"longitude" validate:"required"`
-	InstallDate   string  `json:"install_date"`
+	NetworkId     string `example:"{{NetworkUUID}}" json:"network_id" validate:"required"`
+	Name          string `example:"s1-site" json:"site" validate:"required"`
+	Location      string `example:"location" json:"location" validate:"required"`
+	BackhaulId    string `example:"{{BackhaulUUID}}" json:"backhaul_id" validate:"required"`
+	PowerId       string `example:"{{PowerUUID}}" json:"power_id" validate:"required"`
+	AccessId      string `example:"{{AccessUUID}}" json:"access_id" validate:"required"`
+	SwitchId      string `example:"{{SwitchUUID}}" json:"switch_id" validate:"required"`
+	SpectrumId    string `example:"{{SpectrumUUID}}" json:"spectrum_id" validate:"required"`
+	IsDeactivated bool   `json:"is_deactivated"`
+	Latitude      string `json:"latitude" validate:"required"`
+	Longitude     string `json:"longitude" validate:"required"`
+	InstallDate   string `json:"install_date"`
 }
 
 type AttachNodesRequest struct {
@@ -103,10 +103,10 @@ type UpdateNodeStateRequest struct {
 }
 
 type UpdateNodeRequest struct {
-	NodeId    string  `json:"node_id" path:"node_id" validate:"required"`
-	Name      string  `json:"name" validate:"required"`
-	Latitude  string  `json:"latitude"`
-	Longitude string  `json:"longitude"`
+	NodeId    string `json:"node_id" path:"node_id" validate:"required"`
+	Name      string `json:"name" validate:"required"`
+	Latitude  string `json:"latitude"`
+	Longitude string `json:"longitude"`
 }
 
 type GetNodeRequest struct {
@@ -131,9 +131,9 @@ type GetNetworkNodesRequest struct {
 }
 
 type AddNodeRequest struct {
-	NodeId    string  `json:"node_id" validate:"required"`
-	Name      string  `json:"name"`
-	State     string  `json:"state" validate:"required"`
+	NodeId string `json:"node_id" validate:"required"`
+	Name   string `json:"name"`
+	State  string `json:"state" validate:"required"`
 }
 
 type DeleteNodeRequest struct {

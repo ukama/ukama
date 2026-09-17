@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/registry/invitation/pb/gen"
 )
@@ -12,9 +14,9 @@ type invitation struct {
 	mock.Mock
 }
 
-// AddInvitation provides a mock function with given fields: name, email, role
-func (_m *invitation) AddInvitation(name string, email string, role string) (*gen.AddResponse, error) {
-	ret := _m.Called(name, email, role)
+// AddInvitation provides a mock function with given fields: ctx, name, email, role
+func (_m *invitation) AddInvitation(ctx context.Context, name string, email string, role string) (*gen.AddResponse, error) {
+	ret := _m.Called(ctx, name, email, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddInvitation")
@@ -22,19 +24,19 @@ func (_m *invitation) AddInvitation(name string, email string, role string) (*ge
 
 	var r0 *gen.AddResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AddResponse, error)); ok {
-		return rf(name, email, role)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.AddResponse, error)); ok {
+		return rf(ctx, name, email, role)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddResponse); ok {
-		r0 = rf(name, email, role)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.AddResponse); ok {
+		r0 = rf(ctx, name, email, role)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(name, email, role)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, name, email, role)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *invitation) AddInvitation(name string, email string, role string) (*ge
 	return r0, r1
 }
 
-// GetAllInvitations provides a mock function with no fields
-func (_m *invitation) GetAllInvitations() (*gen.GetAllResponse, error) {
-	ret := _m.Called()
+// GetAllInvitations provides a mock function with given fields: ctx
+func (_m *invitation) GetAllInvitations(ctx context.Context) (*gen.GetAllResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllInvitations")
@@ -52,19 +54,19 @@ func (_m *invitation) GetAllInvitations() (*gen.GetAllResponse, error) {
 
 	var r0 *gen.GetAllResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetAllResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetAllResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetAllResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetAllResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetAllResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *invitation) GetAllInvitations() (*gen.GetAllResponse, error) {
 	return r0, r1
 }
 
-// GetInvitationById provides a mock function with given fields: invitationId
-func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetResponse, error) {
-	ret := _m.Called(invitationId)
+// GetInvitationById provides a mock function with given fields: ctx, invitationId
+func (_m *invitation) GetInvitationById(ctx context.Context, invitationId string) (*gen.GetResponse, error) {
+	ret := _m.Called(ctx, invitationId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInvitationById")
@@ -82,19 +84,19 @@ func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetResponse, 
 
 	var r0 *gen.GetResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetResponse, error)); ok {
-		return rf(invitationId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetResponse, error)); ok {
+		return rf(ctx, invitationId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetResponse); ok {
-		r0 = rf(invitationId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetResponse); ok {
+		r0 = rf(ctx, invitationId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(invitationId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, invitationId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *invitation) GetInvitationById(invitationId string) (*gen.GetResponse, 
 	return r0, r1
 }
 
-// GetInvitationsByEmail provides a mock function with given fields: email
-func (_m *invitation) GetInvitationsByEmail(email string) (*gen.GetByEmailResponse, error) {
-	ret := _m.Called(email)
+// GetInvitationsByEmail provides a mock function with given fields: ctx, email
+func (_m *invitation) GetInvitationsByEmail(ctx context.Context, email string) (*gen.GetByEmailResponse, error) {
+	ret := _m.Called(ctx, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetInvitationsByEmail")
@@ -112,19 +114,19 @@ func (_m *invitation) GetInvitationsByEmail(email string) (*gen.GetByEmailRespon
 
 	var r0 *gen.GetByEmailResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetByEmailResponse, error)); ok {
-		return rf(email)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetByEmailResponse, error)); ok {
+		return rf(ctx, email)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetByEmailResponse); ok {
-		r0 = rf(email)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetByEmailResponse); ok {
+		r0 = rf(ctx, email)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetByEmailResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(email)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, email)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *invitation) GetInvitationsByEmail(email string) (*gen.GetByEmailRespon
 	return r0, r1
 }
 
-// RemoveInvitation provides a mock function with given fields: invitationId
-func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteResponse, error) {
-	ret := _m.Called(invitationId)
+// RemoveInvitation provides a mock function with given fields: ctx, invitationId
+func (_m *invitation) RemoveInvitation(ctx context.Context, invitationId string) (*gen.DeleteResponse, error) {
+	ret := _m.Called(ctx, invitationId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveInvitation")
@@ -142,19 +144,19 @@ func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteResponse
 
 	var r0 *gen.DeleteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteResponse, error)); ok {
-		return rf(invitationId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DeleteResponse, error)); ok {
+		return rf(ctx, invitationId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteResponse); ok {
-		r0 = rf(invitationId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DeleteResponse); ok {
+		r0 = rf(ctx, invitationId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(invitationId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, invitationId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *invitation) RemoveInvitation(invitationId string) (*gen.DeleteResponse
 	return r0, r1
 }
 
-// UpdateInvitation provides a mock function with given fields: invitationId, status, email
-func (_m *invitation) UpdateInvitation(invitationId string, status string, email string) (*gen.UpdateStatusResponse, error) {
-	ret := _m.Called(invitationId, status, email)
+// UpdateInvitation provides a mock function with given fields: ctx, invitationId, status, email
+func (_m *invitation) UpdateInvitation(ctx context.Context, invitationId string, status string, email string) (*gen.UpdateStatusResponse, error) {
+	ret := _m.Called(ctx, invitationId, status, email)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateInvitation")
@@ -172,19 +174,19 @@ func (_m *invitation) UpdateInvitation(invitationId string, status string, email
 
 	var r0 *gen.UpdateStatusResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.UpdateStatusResponse, error)); ok {
-		return rf(invitationId, status, email)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.UpdateStatusResponse, error)); ok {
+		return rf(ctx, invitationId, status, email)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.UpdateStatusResponse); ok {
-		r0 = rf(invitationId, status, email)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.UpdateStatusResponse); ok {
+		r0 = rf(ctx, invitationId, status, email)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateStatusResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(invitationId, status, email)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, invitationId, status, email)
 	} else {
 		r1 = ret.Error(1)
 	}

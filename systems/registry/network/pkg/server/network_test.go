@@ -72,7 +72,7 @@ func TestNetworkServer_Add(t *testing.T) {
 		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
 
 		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "", orgId.String())
 
@@ -219,7 +219,7 @@ func TestNetworkServer_Add(t *testing.T) {
 			}, nil).Once()
 		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
 		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(gorm.ErrInvalidDB).Once()
 
 		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "", orgId.String())
 
@@ -291,7 +291,7 @@ func TestNetworkServer_Add(t *testing.T) {
 			}, nil).Once()
 		netRepo.On("Add", network, mock.Anything).Return(nil).Once()
 		netRepo.On("GetNetworkCount").Return(int64(0), gorm.ErrInvalidDB).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "", orgId.String())
 
@@ -335,7 +335,7 @@ func TestNetworkServer_Add(t *testing.T) {
 				IsDeactivated: false,
 			}, nil).Once()
 		netRepo.On("GetNetworkCount").Return(netCount, nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := NewNetworkServer(orgName, netRepo, orgClient, msgbusClient, "", "", "", "", orgId.String())
 
@@ -687,7 +687,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 
 		netRepo := &mocks.NetRepo{}
 		netRepo.On("Delete", netId).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &epb.EventNetworkDelete{
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, &epb.EventNetworkDelete{
 			Id:    netId.String(),
 			OrgId: orgId.String(),
 		}).Return(nil).Once()
@@ -759,7 +759,7 @@ func TestNetworkServer_Delete(t *testing.T) {
 		netRepo := &mocks.NetRepo{}
 
 		netRepo.On("Delete", netId).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, &epb.EventNetworkDelete{
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, &epb.EventNetworkDelete{
 			Id:    netId.String(),
 			OrgId: orgId.String(),
 		}).Return(gorm.ErrInvalidDB).Once()

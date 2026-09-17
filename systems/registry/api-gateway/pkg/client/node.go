@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"strings"
 	"time"
 
@@ -31,7 +32,8 @@ type Node struct {
 }
 
 func NewNode(nodeHost string, timeout time.Duration) *Node {
-	conn, err := grpc.NewClient(nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(nodeHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Node service: %v", err)
 	}
@@ -62,18 +64,18 @@ func (n *Node) Close() {
 	}
 }
 
-func (n *Node) AddNode(nodeId, name, state string) (*pb.AddNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) AddNode(ctx context.Context, nodeId, name, state string) (*pb.AddNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.AddNode(ctx, &pb.AddNodeRequest{
-		NodeId:    nodeId,
-		Name:      name,
+		NodeId: nodeId,
+		Name:   name,
 	})
 }
 
-func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) GetNode(ctx context.Context, nodeId string) (*pb.GetNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.GetNode(ctx, &pb.GetNodeRequest{
@@ -81,8 +83,8 @@ func (n *Node) GetNode(nodeId string) (*pb.GetNodeResponse, error) {
 	})
 }
 
-func (n *Node) GetNetworkNodes(networkId string) (*pb.GetByNetworkResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) GetNetworkNodes(ctx context.Context, networkId string) (*pb.GetByNetworkResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.GetNodesForNetwork(ctx, &pb.GetByNetworkRequest{
@@ -90,8 +92,8 @@ func (n *Node) GetNetworkNodes(networkId string) (*pb.GetByNetworkResponse, erro
 	})
 }
 
-func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) GetSiteNodes(ctx context.Context, siteId string) (*pb.GetBySiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.GetNodesForSite(ctx, &pb.GetBySiteRequest{
@@ -99,24 +101,24 @@ func (n *Node) GetSiteNodes(siteId string) (*pb.GetBySiteResponse, error) {
 	})
 }
 
-func (n *Node) GetNodes() (*pb.GetNodesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) GetNodes(ctx context.Context) (*pb.GetNodesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.GetNodes(ctx, &pb.GetNodesRequest{})
 }
 
-func (n *Node) List(req *pb.ListRequest) (*pb.ListResponse, error) {
+func (n *Node) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
 	log.Infof("State: %v, Connectivity: %v", req.State, req.Connectivity)
 
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.List(ctx, req)
 }
 
-func (n *Node) GetNodesByState(connectivity, state string) (*pb.GetNodesResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) GetNodesByState(ctx context.Context, connectivity, state string) (*pb.GetNodesResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.GetNodesByState(ctx, &pb.GetNodesByStateRequest{
@@ -125,8 +127,8 @@ func (n *Node) GetNodesByState(connectivity, state string) (*pb.GetNodesResponse
 	})
 }
 
-func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) UpdateNodeState(ctx context.Context, nodeId string, state string) (*pb.UpdateNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
@@ -135,8 +137,8 @@ func (n *Node) UpdateNodeState(nodeId string, state string) (*pb.UpdateNodeRespo
 	})
 }
 
-func (n *Node) UpdateNode(nodeId string, name string, latitude string, longitude string) (*pb.UpdateNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) UpdateNode(ctx context.Context, nodeId string, name string, latitude string, longitude string) (*pb.UpdateNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.UpdateNode(ctx, &pb.UpdateNodeRequest{
@@ -147,8 +149,8 @@ func (n *Node) UpdateNode(nodeId string, name string, latitude string, longitude
 	})
 }
 
-func (n *Node) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) DeleteNode(ctx context.Context, nodeId string) (*pb.DeleteNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.DeleteNode(ctx, &pb.DeleteNodeRequest{
@@ -156,10 +158,10 @@ func (n *Node) DeleteNode(nodeId string) (*pb.DeleteNodeResponse, error) {
 	})
 }
 
-func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
+func (n *Node) AttachNodes(ctx context.Context, node, l, r string) (*pb.AttachNodesResponse, error) {
 	var attachedNodes []string
 
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	if l != "" {
@@ -176,8 +178,8 @@ func (n *Node) AttachNodes(node, l, r string) (*pb.AttachNodesResponse, error) {
 	})
 }
 
-func (n *Node) DetachNode(nodeId string) (*pb.DetachNodeResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) DetachNode(ctx context.Context, nodeId string) (*pb.DetachNodeResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.DetachNode(ctx, &pb.DetachNodeRequest{
@@ -185,8 +187,8 @@ func (n *Node) DetachNode(nodeId string) (*pb.DetachNodeResponse, error) {
 	})
 }
 
-func (n *Node) AddNodeToSite(nodeId, networkId, siteId string) (*pb.AddNodeToSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) AddNodeToSite(ctx context.Context, nodeId, networkId, siteId string) (*pb.AddNodeToSiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.AddNodeToSite(ctx, &pb.AddNodeToSiteRequest{
@@ -196,8 +198,8 @@ func (n *Node) AddNodeToSite(nodeId, networkId, siteId string) (*pb.AddNodeToSit
 	})
 }
 
-func (n *Node) ReleaseNodeFromSite(nodeId string) (*pb.ReleaseNodeFromSiteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+func (n *Node) ReleaseNodeFromSite(ctx context.Context, nodeId string) (*pb.ReleaseNodeFromSiteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.ReleaseNodeFromSite(ctx, &pb.ReleaseNodeFromSiteRequest{

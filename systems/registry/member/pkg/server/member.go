@@ -98,7 +98,7 @@ func (m *MemberServer) AddMember(ctx context.Context, req *pb.AddMemberRequest) 
 			IsDeactivated: member.Deactivated,
 			CreatedAt:     member.CreatedAt.String(),
 		}
-		err = m.msgbus.PublishRequest(route, evt)
+		err = m.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
@@ -177,7 +177,7 @@ func (m *MemberServer) UpdateMember(ctx context.Context, req *pb.UpdateMemberReq
 			MemberId:      uuid.String(),
 			IsDeactivated: member.Deactivated,
 		}
-		err = m.msgbus.PublishRequest(route, evt)
+		err = m.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
@@ -226,7 +226,7 @@ func (m *MemberServer) RemoveMember(ctx context.Context, req *pb.MemberRequest) 
 			OrgId:    m.OrgId.String(),
 			MemberId: uuid.String(),
 		}
-		err = m.msgbus.PublishRequest(route, evt)
+		err = m.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}

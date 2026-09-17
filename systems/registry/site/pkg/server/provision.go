@@ -171,7 +171,7 @@ func (s *SiteServer) runProvision(ctx context.Context, op *db.SiteProvision) err
 		}
 		op.Site = *site
 
-		if err := s.publishCreatedSite(&op.Site); err != nil {
+		if err := s.publishCreatedSite(ctx, &op.Site); err != nil {
 			return err
 		}
 		op.Phase = "active"

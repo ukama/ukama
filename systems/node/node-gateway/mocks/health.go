@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/health/pb/gen"
 )
@@ -12,9 +14,9 @@ type health struct {
 	mock.Mock
 }
 
-// ListApps provides a mock function with given fields: request
-func (_m *health) ListApps(request *gen.ListAppsRequest) (*gen.ListAppsResponse, error) {
-	ret := _m.Called(request)
+// ListApps provides a mock function with given fields: ctx, request
+func (_m *health) ListApps(ctx context.Context, request *gen.ListAppsRequest) (*gen.ListAppsResponse, error) {
+	ret := _m.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListApps")
@@ -22,19 +24,19 @@ func (_m *health) ListApps(request *gen.ListAppsRequest) (*gen.ListAppsResponse,
 
 	var r0 *gen.ListAppsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.ListAppsRequest) (*gen.ListAppsResponse, error)); ok {
-		return rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) (*gen.ListAppsResponse, error)); ok {
+		return rf(ctx, request)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.ListAppsRequest) *gen.ListAppsResponse); ok {
-		r0 = rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListAppsRequest) *gen.ListAppsResponse); ok {
+		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListAppsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.ListAppsRequest) error); ok {
-		r1 = rf(request)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListAppsRequest) error); ok {
+		r1 = rf(ctx, request)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *health) ListApps(request *gen.ListAppsRequest) (*gen.ListAppsResponse,
 	return r0, r1
 }
 
-// ListInterfaces provides a mock function with given fields: request
-func (_m *health) ListInterfaces(request *gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error) {
-	ret := _m.Called(request)
+// ListInterfaces provides a mock function with given fields: ctx, request
+func (_m *health) ListInterfaces(ctx context.Context, request *gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error) {
+	ret := _m.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListInterfaces")
@@ -52,19 +54,19 @@ func (_m *health) ListInterfaces(request *gen.ListInterfacesRequest) (*gen.ListI
 
 	var r0 *gen.ListInterfacesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error)); ok {
-		return rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest) (*gen.ListInterfacesResponse, error)); ok {
+		return rf(ctx, request)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.ListInterfacesRequest) *gen.ListInterfacesResponse); ok {
-		r0 = rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListInterfacesRequest) *gen.ListInterfacesResponse); ok {
+		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListInterfacesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.ListInterfacesRequest) error); ok {
-		r1 = rf(request)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListInterfacesRequest) error); ok {
+		r1 = rf(ctx, request)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *health) ListInterfaces(request *gen.ListInterfacesRequest) (*gen.ListI
 	return r0, r1
 }
 
-// ListReports provides a mock function with given fields: request
-func (_m *health) ListReports(request *gen.ListReportsRequest) (*gen.ListReportsResponse, error) {
-	ret := _m.Called(request)
+// ListReports provides a mock function with given fields: ctx, request
+func (_m *health) ListReports(ctx context.Context, request *gen.ListReportsRequest) (*gen.ListReportsResponse, error) {
+	ret := _m.Called(ctx, request)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReports")
@@ -82,19 +84,19 @@ func (_m *health) ListReports(request *gen.ListReportsRequest) (*gen.ListReports
 
 	var r0 *gen.ListReportsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.ListReportsRequest) (*gen.ListReportsResponse, error)); ok {
-		return rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) (*gen.ListReportsResponse, error)); ok {
+		return rf(ctx, request)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.ListReportsRequest) *gen.ListReportsResponse); ok {
-		r0 = rf(request)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListReportsRequest) *gen.ListReportsResponse); ok {
+		r0 = rf(ctx, request)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListReportsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.ListReportsRequest) error); ok {
-		r1 = rf(request)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListReportsRequest) error); ok {
+		r1 = rf(ctx, request)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *health) ListReports(request *gen.ListReportsRequest) (*gen.ListReports
 	return r0, r1
 }
 
-// StoreHealthReport provides a mock function with given fields: req
-func (_m *health) StoreHealthReport(req *gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error) {
-	ret := _m.Called(req)
+// StoreHealthReport provides a mock function with given fields: ctx, req
+func (_m *health) StoreHealthReport(ctx context.Context, req *gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StoreHealthReport")
@@ -112,19 +114,19 @@ func (_m *health) StoreHealthReport(req *gen.StoreHealthReportRequest) (*gen.Sto
 
 	var r0 *gen.StoreHealthReportResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StoreHealthReportRequest) (*gen.StoreHealthReportResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.StoreHealthReportRequest) *gen.StoreHealthReportResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.StoreHealthReportRequest) *gen.StoreHealthReportResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.StoreHealthReportResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.StoreHealthReportRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.StoreHealthReportRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}

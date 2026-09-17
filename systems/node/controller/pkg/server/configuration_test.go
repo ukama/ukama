@@ -31,9 +31,9 @@ func TestConfigurationDispatchAfterRecording(t *testing.T) {
 		t.Run(map[bool]string{false: "configure", true: "cancel"}[cancelled], func(t *testing.T) {
 			recorded := false
 			bus := &mbmocks.MsgBusServiceClient{}
-			bus.On("PublishRequest", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			bus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				require.True(t, recorded)
-				message := args.Get(1).(*epb.NodeFeederMessage)
+				message := args.Get(2).(*epb.NodeFeederMessage)
 				require.Equal(t, "configd/v1/config", message.Path)
 				require.Equal(t, map[bool]string{false: "POST", true: "DELETE"}[cancelled], message.HttpMethod)
 				var body map[string]string
@@ -111,7 +111,7 @@ func TestConfigurationDispatchFailuresAndReplay(t *testing.T) {
 				}))
 			}
 			if test.wantPublish {
-				bus.On("PublishRequest", mock.Anything, mock.Anything).Return(test.publishErr).Once()
+				bus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(test.publishErr).Once()
 			}
 			ctx, cancel := context.WithCancel(context.Background())
 			defer cancel()

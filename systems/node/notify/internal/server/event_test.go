@@ -29,9 +29,9 @@ func TestEventNotification(t *testing.T) {
 	onlineMsg, _ := anypb.New(onlineEvent)
 
 	repo.On("Add", mock.Anything).Return(nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.AnythingOfType("*events.Notification")).
 		Run(func(args mock.Arguments) {
-			notification := args.Get(1).(*epb.Notification)
+			notification := args.Get(2).(*epb.Notification)
 			assert.NotEmpty(t, notification.Id)
 			assert.Equal(t, nodeId, notification.NodeId)
 			assert.Equal(t, "hnode", notification.NodeType)
@@ -55,9 +55,9 @@ func TestEventNotification(t *testing.T) {
 
 	repo.On("Add", mock.Anything).Return(nil).Once()
 
-	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.AnythingOfType("*events.Notification")).
 		Run(func(args mock.Arguments) {
-			notification := args.Get(1).(*epb.Notification)
+			notification := args.Get(2).(*epb.Notification)
 			assert.NotEmpty(t, notification.Id)
 			assert.Equal(t, nodeId, notification.NodeId)
 			assert.Equal(t, "hnode", notification.NodeType)
@@ -81,9 +81,9 @@ func TestEventNotification(t *testing.T) {
 
 	repo.On("Add", mock.Anything).Return(nil).Once()
 
-	msgbusClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.Notification")).
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.AnythingOfType("*events.Notification")).
 		Run(func(args mock.Arguments) {
-			notification := args.Get(1).(*epb.Notification)
+			notification := args.Get(2).(*epb.Notification)
 			assert.NotEmpty(t, notification.Id)
 			assert.Equal(t, nodeId, notification.NodeId)
 			assert.Equal(t, "hnode", notification.NodeType)

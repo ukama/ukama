@@ -129,7 +129,7 @@ func (i *InvitationServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.Add
 			OrgName:   orgInfo.Name,
 			OwnerName: orgOwnerInfo.Name,
 		}
-		err = i.msgbus.PublishRequest(route, evt)
+		err = i.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -168,7 +168,7 @@ func (i *InvitationServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*
 			Role:   upb.RoleType(invite.Role),
 			UserId: invite.UserId,
 		}
-		err = i.msgbus.PublishRequest(route, evt)
+		err = i.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -227,7 +227,7 @@ func (i *InvitationServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatu
 			UserId:    userInfo.Id,
 			ExpiresAt: invite.ExpiresAt.String(),
 		}
-		err = i.msgbus.PublishRequest(route, evt)
+		err = i.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

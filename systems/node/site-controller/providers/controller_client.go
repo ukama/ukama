@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -17,7 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
-
 
 type ControllerClientProvider interface {
 	GetClient() (pb.ControllerServiceClient, error)
@@ -39,7 +39,8 @@ func (o *controllerClientProvider) GetClient() (pb.ControllerServiceClient, erro
 		log.Infoln("Connecting to Controller service ", o.controllerHost)
 
 		conn, err := grpc.NewClient(o.controllerHost,
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption())
 		if err != nil {
 			log.Errorf("Failed to connect to Controller service %s. Error: %v", o.controllerHost, err)
 

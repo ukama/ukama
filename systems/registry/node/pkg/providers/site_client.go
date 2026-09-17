@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -40,7 +41,8 @@ func (o *siteClientProvider) GetClient() (pb.SiteServiceClient, error) {
 		log.Infoln("Connecting to Site service ", o.siteHost)
 
 		conn, err := grpc.NewClient(o.siteHost,
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption())
 		if err != nil {
 			log.Errorf("Failed to connect to Site service %s. Error: %v", o.siteHost, err)
 

@@ -426,7 +426,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		s.failOperation(op, "UpdateSoftware", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
 	}
-	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
+	if err := s.publishMessage(ctx, target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)
 		s.failOperation(op, "UpdateSoftware", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "failed to publish update message: %v", err)
@@ -555,7 +555,7 @@ func (s *SoftwareServer) persistSoftwareStatus(recordID uuid.UUID, nodeID, appNa
 	}
 }
 
-func (c *SoftwareServer) publishMessage(target string, method string, path string, nodeId string, data []byte) error {
+func (c *SoftwareServer) publishMessage(ctx context.Context, target string, method string, path string, nodeId string, data []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &epb.NodeFeederMessage{
 		Target:     target,
@@ -565,6 +565,6 @@ func (c *SoftwareServer) publishMessage(target string, method string, path strin
 		NodeId:     nodeId,
 	}
 	log.Infof("Published software update node %s on path %s on target %s ", nodeId, path, target)
-	err := c.msgbus.PublishRequest(route, msg)
+	err := c.msgbus.PublishRequestWithContext(ctx, route, msg)
 	return err
 }

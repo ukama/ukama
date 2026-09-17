@@ -113,7 +113,7 @@ func TestHandleStateTransition_ArmedIntentCompletes(t *testing.T) {
 		Return([]db.MonitoredIntent{intent}, nil).Once()
 	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
 		Return(&intent, nil).Once()
-	mb.On("PublishRequest", mock.MatchedBy(func(route string) bool {
+	mb.On("PublishRequestWithContext", mock.Anything, mock.MatchedBy(func(route string) bool {
 		return strings.HasPrefix(route, "event.cloud.global.") &&
 			strings.HasSuffix(route, ".operation.manager.operation.completed")
 	}), mock.Anything).Return(nil).Once()

@@ -415,7 +415,7 @@ func (n *NodeEventServer) addNodeToSite(ctx context.Context, nodeID string, site
 	if node == nil || node.Node == nil {
 		return fmt.Errorf("node not found")
 	}
-	err = n.s.addNodeToSiteServer(nodeID, siteID, networkID)
+	err = n.s.addNodeToSiteServer(ctx, nodeID, siteID, networkID)
 	if err != nil {
 		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
 	}

@@ -55,7 +55,7 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 
-		err = n.handleNodeOnlineEvent(msg, c.Title)
+		err = n.handleNodeOnlineEvent(ctx, msg, c.Title)
 		if err != nil {
 			return nil, err
 		}
@@ -66,18 +66,18 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 
-		err = n.handleNodeOfflineEvent(msg, c.Title)
+		err = n.handleNodeOfflineEvent(ctx, msg, c.Title)
 		if err != nil {
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
+	case msgbus.PrepareRoute(n.orgName, "request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
 		nodeMsg := &epb.NodeFeederMessage{}
 		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
 			log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
 			return nil, err
 		}
-		err := n.handleNodeRestartEvent(nodeMsg)
+		err := n.handleNodeRestartEvent(ctx, nodeMsg)
 		if err != nil {
 			log.Errorf("Failed to handle node restart event: %v", err)
 			return nil, err
@@ -89,7 +89,7 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 			return nil, err
 		}
 
-		err = n.handleNodeCreateEvent(msg, c.Title)
+		err = n.handleNodeCreateEvent(ctx, msg, c.Title)
 		if err != nil {
 			return nil, err
 		}
@@ -100,7 +100,7 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, name string) error {
+func (n *NotifiyEventServer) handleNodeOnlineEvent(ctx context.Context, msg *epb.NodeOnlineEvent, name string) error {
 	eventData := map[string]interface{}{
 		"value": name,
 	}
@@ -109,7 +109,7 @@ func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, nam
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
 
-	return add(
+	return add(ctx,
 		msg.NodeId,
 		string(db.Low),
 		db.NotificationType("event").String(),
@@ -123,28 +123,28 @@ func (n *NotifiyEventServer) handleNodeOnlineEvent(msg *epb.NodeOnlineEvent, nam
 	)
 
 }
-func (n *NotifiyEventServer) handleNodeRestartEvent(msg *epb.NodeFeederMessage) error {
+func (n *NotifiyEventServer) handleNodeRestartEvent(ctx context.Context, msg *epb.NodeFeederMessage) error {
 	log.Infof("Handling node restart event: target=%s, path=%s", msg.Target, msg.Path)
-	
+
 	targetParts := strings.Split(msg.Target, ".")
 	nodeId := targetParts[len(targetParts)-1]
-	
+
 	if !strings.Contains(msg.Path, "/v1/reboot") {
 		return fmt.Errorf("not a reboot path: %s", msg.Path)
 	}
-	
+
 	eventData := map[string]interface{}{
 		"value": "reboot",
 	}
-	
+
 	data, err := json.Marshal(eventData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
-	
-	return add(
+
+	return add(ctx,
 		nodeId,
-		string(db.Medium), 
+		string(db.Medium),
 		db.NotificationType("event").String(),
 		"controller",
 		data,
@@ -156,7 +156,7 @@ func (n *NotifiyEventServer) handleNodeRestartEvent(msg *epb.NodeFeederMessage) 
 	)
 }
 
-func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCreate, name string) error {
+func (n *NotifiyEventServer) handleNodeCreateEvent(ctx context.Context, msg *epb.EventRegistryNodeCreate, name string) error {
 	eventData := map[string]interface{}{
 		"value": name,
 	}
@@ -166,7 +166,7 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCre
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
 
-	return add(
+	return add(ctx,
 		msg.NodeId,
 		string(db.Low),
 		db.NotificationType("event").String(),
@@ -180,7 +180,7 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCre
 	)
 }
 
-func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, name string) error {
+func (n *NotifiyEventServer) handleNodeOfflineEvent(ctx context.Context, msg *epb.NodeOfflineEvent, name string) error {
 	eventData := map[string]interface{}{
 		"value": name,
 	}
@@ -190,7 +190,7 @@ func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, n
 		return fmt.Errorf("failed to marshal event data: %v", err)
 	}
 
-	return add(
+	return add(ctx,
 		msg.NodeId,
 		string(db.Low),
 		db.NotificationType("event").String(),

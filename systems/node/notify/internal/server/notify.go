@@ -45,7 +45,7 @@ func NewNotifyServer(orgName string, nRepo db.NotificationRepo, msgBus mb.MsgBus
 }
 
 func (n *NotifyServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddResponse, error) {
-	err := add(req.NodeId, req.Severity, req.Type, req.ServiceName,
+	err := add(ctx, req.NodeId, req.Severity, req.Type, req.ServiceName,
 		req.Details, req.Status, req.Time, n.notifyRepo, n.msgbus, n.baseRoutingKey)
 
 	if err != nil {
@@ -125,7 +125,7 @@ func (n *NotifyServer) Delete(ctx context.Context, req *pb.GetRequest) (*pb.Dele
 		Id: notificationId.String(),
 	}
 
-	err = n.msgbus.PublishRequest(route, evt)
+	err = n.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			evt, route, err.Error())
@@ -165,7 +165,7 @@ func (n *NotifyServer) Purge(ctx context.Context, req *pb.PurgeRequest) (*pb.Lis
 	return &pb.ListResponse{Notifications: dbNotificationsToPbNotifications(nts)}, nil
 }
 
-func add(nodeId, severity, nType, serviceName string, details []byte, nStatus uint32, time uint32,
+func add(ctx context.Context, nodeId, severity, nType, serviceName string, details []byte, nStatus uint32, time uint32,
 	notifyRepo db.NotificationRepo, msgBus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	var nNodeId ukama.NodeID = ""
 	var nodeType = ""
@@ -229,7 +229,7 @@ func add(nodeId, severity, nType, serviceName string, details []byte, nStatus ui
 		Details:     details,
 	}
 
-	err = msgBus.PublishRequest(route, evt)
+	err = msgBus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			evt, route, err.Error())

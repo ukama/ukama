@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
@@ -12,9 +14,9 @@ type node struct {
 	mock.Mock
 }
 
-// AddNode provides a mock function with given fields: nodeId, name, state
-func (_m *node) AddNode(nodeId string, name string, state string) (*gen.AddNodeResponse, error) {
-	ret := _m.Called(nodeId, name, state)
+// AddNode provides a mock function with given fields: ctx, nodeId, name, state
+func (_m *node) AddNode(ctx context.Context, nodeId string, name string, state string) (*gen.AddNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId, name, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddNode")
@@ -22,19 +24,19 @@ func (_m *node) AddNode(nodeId string, name string, state string) (*gen.AddNodeR
 
 	var r0 *gen.AddNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AddNodeResponse, error)); ok {
-		return rf(nodeId, name, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.AddNodeResponse, error)); ok {
+		return rf(ctx, nodeId, name, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddNodeResponse); ok {
-		r0 = rf(nodeId, name, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.AddNodeResponse); ok {
+		r0 = rf(ctx, nodeId, name, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, name, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, name, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *node) AddNode(nodeId string, name string, state string) (*gen.AddNodeR
 	return r0, r1
 }
 
-// AddNodeToSite provides a mock function with given fields: nodeId, networkId, siteId
-func (_m *node) AddNodeToSite(nodeId string, networkId string, siteId string) (*gen.AddNodeToSiteResponse, error) {
-	ret := _m.Called(nodeId, networkId, siteId)
+// AddNodeToSite provides a mock function with given fields: ctx, nodeId, networkId, siteId
+func (_m *node) AddNodeToSite(ctx context.Context, nodeId string, networkId string, siteId string) (*gen.AddNodeToSiteResponse, error) {
+	ret := _m.Called(ctx, nodeId, networkId, siteId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddNodeToSite")
@@ -52,19 +54,19 @@ func (_m *node) AddNodeToSite(nodeId string, networkId string, siteId string) (*
 
 	var r0 *gen.AddNodeToSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AddNodeToSiteResponse, error)); ok {
-		return rf(nodeId, networkId, siteId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.AddNodeToSiteResponse, error)); ok {
+		return rf(ctx, nodeId, networkId, siteId)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AddNodeToSiteResponse); ok {
-		r0 = rf(nodeId, networkId, siteId)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.AddNodeToSiteResponse); ok {
+		r0 = rf(ctx, nodeId, networkId, siteId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AddNodeToSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(nodeId, networkId, siteId)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, networkId, siteId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *node) AddNodeToSite(nodeId string, networkId string, siteId string) (*
 	return r0, r1
 }
 
-// AttachNodes provides a mock function with given fields: node, l, r
-func (_m *node) AttachNodes(node string, l string, r string) (*gen.AttachNodesResponse, error) {
-	ret := _m.Called(node, l, r)
+// AttachNodes provides a mock function with given fields: ctx, node, l, r
+func (_m *node) AttachNodes(ctx context.Context, node string, l string, r string) (*gen.AttachNodesResponse, error) {
+	ret := _m.Called(ctx, node, l, r)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AttachNodes")
@@ -82,19 +84,19 @@ func (_m *node) AttachNodes(node string, l string, r string) (*gen.AttachNodesRe
 
 	var r0 *gen.AttachNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string) (*gen.AttachNodesResponse, error)); ok {
-		return rf(node, l, r)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (*gen.AttachNodesResponse, error)); ok {
+		return rf(ctx, node, l, r)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string) *gen.AttachNodesResponse); ok {
-		r0 = rf(node, l, r)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) *gen.AttachNodesResponse); ok {
+		r0 = rf(ctx, node, l, r)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.AttachNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string) error); ok {
-		r1 = rf(node, l, r)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, node, l, r)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *node) AttachNodes(node string, l string, r string) (*gen.AttachNodesRe
 	return r0, r1
 }
 
-// DeleteNode provides a mock function with given fields: nodeId
-func (_m *node) DeleteNode(nodeId string) (*gen.DeleteNodeResponse, error) {
-	ret := _m.Called(nodeId)
+// DeleteNode provides a mock function with given fields: ctx, nodeId
+func (_m *node) DeleteNode(ctx context.Context, nodeId string) (*gen.DeleteNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteNode")
@@ -112,19 +114,19 @@ func (_m *node) DeleteNode(nodeId string) (*gen.DeleteNodeResponse, error) {
 
 	var r0 *gen.DeleteNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DeleteNodeResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DeleteNodeResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DeleteNodeResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DeleteNodeResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DeleteNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *node) DeleteNode(nodeId string) (*gen.DeleteNodeResponse, error) {
 	return r0, r1
 }
 
-// DetachNode provides a mock function with given fields: nodeId
-func (_m *node) DetachNode(nodeId string) (*gen.DetachNodeResponse, error) {
-	ret := _m.Called(nodeId)
+// DetachNode provides a mock function with given fields: ctx, nodeId
+func (_m *node) DetachNode(ctx context.Context, nodeId string) (*gen.DetachNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DetachNode")
@@ -142,19 +144,19 @@ func (_m *node) DetachNode(nodeId string) (*gen.DetachNodeResponse, error) {
 
 	var r0 *gen.DetachNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.DetachNodeResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.DetachNodeResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.DetachNodeResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.DetachNodeResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.DetachNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *node) DetachNode(nodeId string) (*gen.DetachNodeResponse, error) {
 	return r0, r1
 }
 
-// GetNetworkNodes provides a mock function with given fields: networkId
-func (_m *node) GetNetworkNodes(networkId string) (*gen.GetByNetworkResponse, error) {
-	ret := _m.Called(networkId)
+// GetNetworkNodes provides a mock function with given fields: ctx, networkId
+func (_m *node) GetNetworkNodes(ctx context.Context, networkId string) (*gen.GetByNetworkResponse, error) {
+	ret := _m.Called(ctx, networkId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNetworkNodes")
@@ -172,19 +174,19 @@ func (_m *node) GetNetworkNodes(networkId string) (*gen.GetByNetworkResponse, er
 
 	var r0 *gen.GetByNetworkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetByNetworkResponse, error)); ok {
-		return rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetByNetworkResponse, error)); ok {
+		return rf(ctx, networkId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetByNetworkResponse); ok {
-		r0 = rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetByNetworkResponse); ok {
+		r0 = rf(ctx, networkId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetByNetworkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(networkId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, networkId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -192,9 +194,9 @@ func (_m *node) GetNetworkNodes(networkId string) (*gen.GetByNetworkResponse, er
 	return r0, r1
 }
 
-// GetNode provides a mock function with given fields: nodeId
-func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
-	ret := _m.Called(nodeId)
+// GetNode provides a mock function with given fields: ctx, nodeId
+func (_m *node) GetNode(ctx context.Context, nodeId string) (*gen.GetNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNode")
@@ -202,19 +204,19 @@ func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
 
 	var r0 *gen.GetNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetNodeResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetNodeResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetNodeResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetNodeResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -222,9 +224,9 @@ func (_m *node) GetNode(nodeId string) (*gen.GetNodeResponse, error) {
 	return r0, r1
 }
 
-// GetNodes provides a mock function with no fields
-func (_m *node) GetNodes() (*gen.GetNodesResponse, error) {
-	ret := _m.Called()
+// GetNodes provides a mock function with given fields: ctx
+func (_m *node) GetNodes(ctx context.Context) (*gen.GetNodesResponse, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNodes")
@@ -232,19 +234,19 @@ func (_m *node) GetNodes() (*gen.GetNodesResponse, error) {
 
 	var r0 *gen.GetNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func() (*gen.GetNodesResponse, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) (*gen.GetNodesResponse, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() *gen.GetNodesResponse); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) *gen.GetNodesResponse); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -252,9 +254,9 @@ func (_m *node) GetNodes() (*gen.GetNodesResponse, error) {
 	return r0, r1
 }
 
-// GetNodesByState provides a mock function with given fields: connectivity, state
-func (_m *node) GetNodesByState(connectivity string, state string) (*gen.GetNodesResponse, error) {
-	ret := _m.Called(connectivity, state)
+// GetNodesByState provides a mock function with given fields: ctx, connectivity, state
+func (_m *node) GetNodesByState(ctx context.Context, connectivity string, state string) (*gen.GetNodesResponse, error) {
+	ret := _m.Called(ctx, connectivity, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetNodesByState")
@@ -262,19 +264,19 @@ func (_m *node) GetNodesByState(connectivity string, state string) (*gen.GetNode
 
 	var r0 *gen.GetNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.GetNodesResponse, error)); ok {
-		return rf(connectivity, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.GetNodesResponse, error)); ok {
+		return rf(ctx, connectivity, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.GetNodesResponse); ok {
-		r0 = rf(connectivity, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.GetNodesResponse); ok {
+		r0 = rf(ctx, connectivity, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(connectivity, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, connectivity, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -282,9 +284,9 @@ func (_m *node) GetNodesByState(connectivity string, state string) (*gen.GetNode
 	return r0, r1
 }
 
-// GetSiteNodes provides a mock function with given fields: siteId
-func (_m *node) GetSiteNodes(siteId string) (*gen.GetBySiteResponse, error) {
-	ret := _m.Called(siteId)
+// GetSiteNodes provides a mock function with given fields: ctx, siteId
+func (_m *node) GetSiteNodes(ctx context.Context, siteId string) (*gen.GetBySiteResponse, error) {
+	ret := _m.Called(ctx, siteId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSiteNodes")
@@ -292,19 +294,19 @@ func (_m *node) GetSiteNodes(siteId string) (*gen.GetBySiteResponse, error) {
 
 	var r0 *gen.GetBySiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetBySiteResponse, error)); ok {
-		return rf(siteId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetBySiteResponse, error)); ok {
+		return rf(ctx, siteId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetBySiteResponse); ok {
-		r0 = rf(siteId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetBySiteResponse); ok {
+		r0 = rf(ctx, siteId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetBySiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(siteId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, siteId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -312,9 +314,9 @@ func (_m *node) GetSiteNodes(siteId string) (*gen.GetBySiteResponse, error) {
 	return r0, r1
 }
 
-// List provides a mock function with given fields: req
-func (_m *node) List(req *gen.ListRequest) (*gen.ListResponse, error) {
-	ret := _m.Called(req)
+// List provides a mock function with given fields: ctx, req
+func (_m *node) List(ctx context.Context, req *gen.ListRequest) (*gen.ListResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
@@ -322,19 +324,19 @@ func (_m *node) List(req *gen.ListRequest) (*gen.ListResponse, error) {
 
 	var r0 *gen.ListResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.ListRequest) (*gen.ListResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) (*gen.ListResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.ListRequest) *gen.ListResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ListRequest) *gen.ListResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.ListRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ListRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -342,9 +344,9 @@ func (_m *node) List(req *gen.ListRequest) (*gen.ListResponse, error) {
 	return r0, r1
 }
 
-// ReleaseNodeFromSite provides a mock function with given fields: nodeId
-func (_m *node) ReleaseNodeFromSite(nodeId string) (*gen.ReleaseNodeFromSiteResponse, error) {
-	ret := _m.Called(nodeId)
+// ReleaseNodeFromSite provides a mock function with given fields: ctx, nodeId
+func (_m *node) ReleaseNodeFromSite(ctx context.Context, nodeId string) (*gen.ReleaseNodeFromSiteResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReleaseNodeFromSite")
@@ -352,19 +354,19 @@ func (_m *node) ReleaseNodeFromSite(nodeId string) (*gen.ReleaseNodeFromSiteResp
 
 	var r0 *gen.ReleaseNodeFromSiteResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ReleaseNodeFromSiteResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.ReleaseNodeFromSiteResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ReleaseNodeFromSiteResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.ReleaseNodeFromSiteResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ReleaseNodeFromSiteResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -372,9 +374,9 @@ func (_m *node) ReleaseNodeFromSite(nodeId string) (*gen.ReleaseNodeFromSiteResp
 	return r0, r1
 }
 
-// UpdateNode provides a mock function with given fields: nodeId, name, latitude, longitude
-func (_m *node) UpdateNode(nodeId string, name string, latitude string, longitude string) (*gen.UpdateNodeResponse, error) {
-	ret := _m.Called(nodeId, name, latitude, longitude)
+// UpdateNode provides a mock function with given fields: ctx, nodeId, name, latitude, longitude
+func (_m *node) UpdateNode(ctx context.Context, nodeId string, name string, latitude string, longitude string) (*gen.UpdateNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId, name, latitude, longitude)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateNode")
@@ -382,19 +384,19 @@ func (_m *node) UpdateNode(nodeId string, name string, latitude string, longitud
 
 	var r0 *gen.UpdateNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string) (*gen.UpdateNodeResponse, error)); ok {
-		return rf(nodeId, name, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) (*gen.UpdateNodeResponse, error)); ok {
+		return rf(ctx, nodeId, name, latitude, longitude)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string) *gen.UpdateNodeResponse); ok {
-		r0 = rf(nodeId, name, latitude, longitude)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string) *gen.UpdateNodeResponse); ok {
+		r0 = rf(ctx, nodeId, name, latitude, longitude)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string) error); ok {
-		r1 = rf(nodeId, name, latitude, longitude)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string) error); ok {
+		r1 = rf(ctx, nodeId, name, latitude, longitude)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -402,9 +404,9 @@ func (_m *node) UpdateNode(nodeId string, name string, latitude string, longitud
 	return r0, r1
 }
 
-// UpdateNodeState provides a mock function with given fields: nodeId, state
-func (_m *node) UpdateNodeState(nodeId string, state string) (*gen.UpdateNodeResponse, error) {
-	ret := _m.Called(nodeId, state)
+// UpdateNodeState provides a mock function with given fields: ctx, nodeId, state
+func (_m *node) UpdateNodeState(ctx context.Context, nodeId string, state string) (*gen.UpdateNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateNodeState")
@@ -412,19 +414,19 @@ func (_m *node) UpdateNodeState(nodeId string, state string) (*gen.UpdateNodeRes
 
 	var r0 *gen.UpdateNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.UpdateNodeResponse, error)); ok {
-		return rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.UpdateNodeResponse, error)); ok {
+		return rf(ctx, nodeId, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.UpdateNodeResponse); ok {
-		r0 = rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.UpdateNodeResponse); ok {
+		r0 = rf(ctx, nodeId, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UpdateNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, nodeId, state)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -9,6 +9,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -77,17 +78,17 @@ func TestNode_AddNode(t *testing.T) {
 
 		expectedResponse := &pb.AddNodeResponse{
 			Node: &pb.Node{
-				Id:        "test-node-id",
-				Name:      "Test Node",
+				Id:   "test-node-id",
+				Name: "Test Node",
 			},
 		}
 
 		mockClient.On("AddNode", mock.Anything, &pb.AddNodeRequest{
-			NodeId:    "test-node-id",
-			Name:      "Test Node",
+			NodeId: "test-node-id",
+			Name:   "Test Node",
 		}).Return(expectedResponse, nil)
 
-		response, err := node.AddNode("test-node-id", "Test Node", "active")
+		response, err := node.AddNode(context.Background(), "test-node-id", "Test Node", "active")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -101,7 +102,7 @@ func TestNode_AddNode(t *testing.T) {
 		expectedError := status.Error(codes.AlreadyExists, "node already exists")
 		mockClient.On("AddNode", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.AddNode("existing-node-id", "Existing Node", "active")
+		response, err := node.AddNode(context.Background(), "existing-node-id", "Existing Node", "active")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -117,15 +118,15 @@ func TestNode_GetNode(t *testing.T) {
 
 		expectedResponse := &pb.GetNodeResponse{
 			Node: &pb.Node{
-				Id:        "test-node-id",
-				Name:      "Test Node",
+				Id:   "test-node-id",
+				Name: "Test Node",
 			},
 		}
 
 		mockClient.On("GetNode", mock.Anything, &pb.GetNodeRequest{NodeId: "test-node-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.GetNode("test-node-id")
+		response, err := node.GetNode(context.Background(), "test-node-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -140,7 +141,7 @@ func TestNode_GetNode(t *testing.T) {
 		mockClient.On("GetNode", mock.Anything, &pb.GetNodeRequest{NodeId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := node.GetNode("non-existent-id")
+		response, err := node.GetNode(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -170,7 +171,7 @@ func TestNode_GetNetworkNodes(t *testing.T) {
 		mockClient.On("GetNodesForNetwork", mock.Anything, &pb.GetByNetworkRequest{NetworkId: "network-1"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.GetNetworkNodes("network-1")
+		response, err := node.GetNetworkNodes(context.Background(), "network-1")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -185,7 +186,7 @@ func TestNode_GetNetworkNodes(t *testing.T) {
 		mockClient.On("GetNodesForNetwork", mock.Anything, &pb.GetByNetworkRequest{NetworkId: "non-existent-network"}).
 			Return(nil, expectedError)
 
-		response, err := node.GetNetworkNodes("non-existent-network")
+		response, err := node.GetNetworkNodes(context.Background(), "non-existent-network")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -215,7 +216,7 @@ func TestNode_GetSiteNodes(t *testing.T) {
 		mockClient.On("GetNodesForSite", mock.Anything, &pb.GetBySiteRequest{SiteId: "site-1"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.GetSiteNodes("site-1")
+		response, err := node.GetSiteNodes(context.Background(), "site-1")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -230,7 +231,7 @@ func TestNode_GetSiteNodes(t *testing.T) {
 		mockClient.On("GetNodesForSite", mock.Anything, &pb.GetBySiteRequest{SiteId: "non-existent-site"}).
 			Return(nil, expectedError)
 
-		response, err := node.GetSiteNodes("non-existent-site")
+		response, err := node.GetSiteNodes(context.Background(), "non-existent-site")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -260,7 +261,7 @@ func TestNode_GetNodes(t *testing.T) {
 		mockClient.On("GetNodes", mock.Anything, &pb.GetNodesRequest{}).
 			Return(expectedResponse, nil)
 
-		response, err := node.GetNodes()
+		response, err := node.GetNodes(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -275,7 +276,7 @@ func TestNode_GetNodes(t *testing.T) {
 		mockClient.On("GetNodes", mock.Anything, &pb.GetNodesRequest{}).
 			Return(nil, expectedError)
 
-		response, err := node.GetNodes()
+		response, err := node.GetNodes(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -305,7 +306,7 @@ func TestNode_List(t *testing.T) {
 
 		mockClient.On("List", mock.Anything, request).Return(expectedResponse, nil)
 
-		response, err := node.List(request)
+		response, err := node.List(context.Background(), request)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -323,7 +324,7 @@ func TestNode_List(t *testing.T) {
 		expectedError := status.Error(codes.InvalidArgument, "invalid state")
 		mockClient.On("List", mock.Anything, request).Return(nil, expectedError)
 
-		response, err := node.List(request)
+		response, err := node.List(context.Background(), request)
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -348,7 +349,7 @@ func TestNode_GetNodesByState(t *testing.T) {
 
 		mockClient.On("GetNodesByState", mock.Anything, mock.Anything).Return(expectedResponse, nil)
 
-		response, err := node.GetNodesByState("online", "active")
+		response, err := node.GetNodesByState(context.Background(), "online", "active")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -362,7 +363,7 @@ func TestNode_GetNodesByState(t *testing.T) {
 		expectedError := status.Error(codes.InvalidArgument, "invalid connectivity or state")
 		mockClient.On("GetNodesByState", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.GetNodesByState("invalid-connectivity", "invalid-state")
+		response, err := node.GetNodesByState(context.Background(), "invalid-connectivity", "invalid-state")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -387,7 +388,7 @@ func TestNode_UpdateNodeState(t *testing.T) {
 			State:  "inactive",
 		}).Return(expectedResponse, nil)
 
-		response, err := node.UpdateNodeState("test-node-id", "inactive")
+		response, err := node.UpdateNodeState(context.Background(), "test-node-id", "inactive")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -401,7 +402,7 @@ func TestNode_UpdateNodeState(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "node not found")
 		mockClient.On("UpdateNodeState", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.UpdateNodeState("non-existent-id", "inactive")
+		response, err := node.UpdateNodeState(context.Background(), "non-existent-id", "inactive")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -431,7 +432,7 @@ func TestNode_UpdateNode(t *testing.T) {
 			Longitude: "-75.0060",
 		}).Return(expectedResponse, nil)
 
-		response, err := node.UpdateNode("test-node-id", "Updated Node", "41.7128", "-75.0060")
+		response, err := node.UpdateNode(context.Background(), "test-node-id", "Updated Node", "41.7128", "-75.0060")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -445,7 +446,7 @@ func TestNode_UpdateNode(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "node not found")
 		mockClient.On("UpdateNode", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.UpdateNode("non-existent-id", "Updated Node", "41.7128", "-75.0060")
+		response, err := node.UpdateNode(context.Background(), "non-existent-id", "Updated Node", "41.7128", "-75.0060")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -464,7 +465,7 @@ func TestNode_DeleteNode(t *testing.T) {
 		mockClient.On("DeleteNode", mock.Anything, &pb.DeleteNodeRequest{NodeId: "test-node-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.DeleteNode("test-node-id")
+		response, err := node.DeleteNode(context.Background(), "test-node-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -479,7 +480,7 @@ func TestNode_DeleteNode(t *testing.T) {
 		mockClient.On("DeleteNode", mock.Anything, &pb.DeleteNodeRequest{NodeId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := node.DeleteNode("non-existent-id")
+		response, err := node.DeleteNode(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -497,7 +498,7 @@ func TestNode_AttachNodes(t *testing.T) {
 
 		mockClient.On("AttachNodes", mock.Anything, mock.Anything).Return(expectedResponse, nil)
 
-		response, err := node.AttachNodes("test-node", "left-node", "right-node")
+		response, err := node.AttachNodes(context.Background(), "test-node", "left-node", "right-node")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -512,7 +513,7 @@ func TestNode_AttachNodes(t *testing.T) {
 
 		mockClient.On("AttachNodes", mock.Anything, mock.Anything).Return(expectedResponse, nil)
 
-		response, err := node.AttachNodes("test-node", "", "")
+		response, err := node.AttachNodes(context.Background(), "test-node", "", "")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -526,7 +527,7 @@ func TestNode_AttachNodes(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "node not found")
 		mockClient.On("AttachNodes", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.AttachNodes("non-existent-node", "left-node", "right-node")
+		response, err := node.AttachNodes(context.Background(), "non-existent-node", "left-node", "right-node")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -545,7 +546,7 @@ func TestNode_DetachNode(t *testing.T) {
 		mockClient.On("DetachNode", mock.Anything, &pb.DetachNodeRequest{NodeId: "test-node-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.DetachNode("test-node-id")
+		response, err := node.DetachNode(context.Background(), "test-node-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -560,7 +561,7 @@ func TestNode_DetachNode(t *testing.T) {
 		mockClient.On("DetachNode", mock.Anything, &pb.DetachNodeRequest{NodeId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := node.DetachNode("non-existent-id")
+		response, err := node.DetachNode(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -582,7 +583,7 @@ func TestNode_AddNodeToSite(t *testing.T) {
 			SiteId:    "test-site-id",
 		}).Return(expectedResponse, nil)
 
-		response, err := node.AddNodeToSite("test-node-id", "test-network-id", "test-site-id")
+		response, err := node.AddNodeToSite(context.Background(), "test-node-id", "test-network-id", "test-site-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -596,7 +597,7 @@ func TestNode_AddNodeToSite(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "node or site not found")
 		mockClient.On("AddNodeToSite", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := node.AddNodeToSite("non-existent-node", "non-existent-network", "non-existent-site")
+		response, err := node.AddNodeToSite(context.Background(), "non-existent-node", "non-existent-network", "non-existent-site")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -615,7 +616,7 @@ func TestNode_ReleaseNodeFromSite(t *testing.T) {
 		mockClient.On("ReleaseNodeFromSite", mock.Anything, &pb.ReleaseNodeFromSiteRequest{NodeId: "test-node-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := node.ReleaseNodeFromSite("test-node-id")
+		response, err := node.ReleaseNodeFromSite(context.Background(), "test-node-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -630,7 +631,7 @@ func TestNode_ReleaseNodeFromSite(t *testing.T) {
 		mockClient.On("ReleaseNodeFromSite", mock.Anything, &pb.ReleaseNodeFromSiteRequest{NodeId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := node.ReleaseNodeFromSite("non-existent-id")
+		response, err := node.ReleaseNodeFromSite(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)

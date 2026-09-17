@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -28,7 +29,8 @@ type InvitationRegistry struct {
 }
 
 func NewInvitationRegistry(invitationHost string, timeout time.Duration) *InvitationRegistry {
-	conn, err := grpc.NewClient(invitationHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(invitationHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Invitation Service: %v", err)
 	}
@@ -59,22 +61,22 @@ func (i *InvitationRegistry) Close() {
 	}
 }
 
-func (i *InvitationRegistry) RemoveInvitation(invitationId string) (*pb.DeleteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) RemoveInvitation(ctx context.Context, invitationId string) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Delete(ctx, &pb.DeleteRequest{Id: invitationId})
 }
 
-func (i *InvitationRegistry) GetInvitationById(id string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) GetInvitationById(ctx context.Context, id string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Get(ctx, &pb.GetRequest{Id: id})
 }
 
-func (i *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) AddInvitation(ctx context.Context, name, email, role string) (*pb.AddResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Add(ctx, &pb.AddRequest{
@@ -84,15 +86,15 @@ func (i *InvitationRegistry) AddInvitation(name, email, role string) (*pb.AddRes
 	})
 }
 
-func (i *InvitationRegistry) GetAllInvitations() (*pb.GetAllResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) GetAllInvitations(ctx context.Context) (*pb.GetAllResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.GetAll(ctx, &pb.GetAllRequest{})
 }
 
-func (i *InvitationRegistry) UpdateInvitation(id, status, email string) (*pb.UpdateStatusResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) UpdateInvitation(ctx context.Context, id, status, email string) (*pb.UpdateStatusResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.UpdateStatus(ctx, &pb.UpdateStatusRequest{
@@ -102,8 +104,8 @@ func (i *InvitationRegistry) UpdateInvitation(id, status, email string) (*pb.Upd
 	})
 }
 
-func (i *InvitationRegistry) GetInvitationsByEmail(email string) (*pb.GetByEmailResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *InvitationRegistry) GetInvitationsByEmail(ctx context.Context, email string) (*pb.GetByEmailResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.GetByEmail(ctx, &pb.GetByEmailRequest{

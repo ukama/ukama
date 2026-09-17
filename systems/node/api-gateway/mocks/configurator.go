@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/configurator/pb/gen"
 )
@@ -12,9 +14,9 @@ type configurator struct {
 	mock.Mock
 }
 
-// ApplyConfig provides a mock function with given fields: commit
-func (_m *configurator) ApplyConfig(commit string) (*gen.ApplyConfigResponse, error) {
-	ret := _m.Called(commit)
+// ApplyConfig provides a mock function with given fields: ctx, commit
+func (_m *configurator) ApplyConfig(ctx context.Context, commit string) (*gen.ApplyConfigResponse, error) {
+	ret := _m.Called(ctx, commit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ApplyConfig")
@@ -22,19 +24,19 @@ func (_m *configurator) ApplyConfig(commit string) (*gen.ApplyConfigResponse, er
 
 	var r0 *gen.ApplyConfigResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ApplyConfigResponse, error)); ok {
-		return rf(commit)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.ApplyConfigResponse, error)); ok {
+		return rf(ctx, commit)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ApplyConfigResponse); ok {
-		r0 = rf(commit)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.ApplyConfigResponse); ok {
+		r0 = rf(ctx, commit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ApplyConfigResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(commit)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, commit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *configurator) ApplyConfig(commit string) (*gen.ApplyConfigResponse, er
 	return r0, r1
 }
 
-// ConfigEvent provides a mock function with given fields: b
-func (_m *configurator) ConfigEvent(b []byte) (*gen.ConfigStoreEventResponse, error) {
-	ret := _m.Called(b)
+// ConfigEvent provides a mock function with given fields: ctx, b
+func (_m *configurator) ConfigEvent(ctx context.Context, b []byte) (*gen.ConfigStoreEventResponse, error) {
+	ret := _m.Called(ctx, b)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConfigEvent")
@@ -52,19 +54,19 @@ func (_m *configurator) ConfigEvent(b []byte) (*gen.ConfigStoreEventResponse, er
 
 	var r0 *gen.ConfigStoreEventResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func([]byte) (*gen.ConfigStoreEventResponse, error)); ok {
-		return rf(b)
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) (*gen.ConfigStoreEventResponse, error)); ok {
+		return rf(ctx, b)
 	}
-	if rf, ok := ret.Get(0).(func([]byte) *gen.ConfigStoreEventResponse); ok {
-		r0 = rf(b)
+	if rf, ok := ret.Get(0).(func(context.Context, []byte) *gen.ConfigStoreEventResponse); ok {
+		r0 = rf(ctx, b)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ConfigStoreEventResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func([]byte) error); ok {
-		r1 = rf(b)
+	if rf, ok := ret.Get(1).(func(context.Context, []byte) error); ok {
+		r1 = rf(ctx, b)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *configurator) ConfigEvent(b []byte) (*gen.ConfigStoreEventResponse, er
 	return r0, r1
 }
 
-// GetConfigVersion provides a mock function with given fields: nodeId
-func (_m *configurator) GetConfigVersion(nodeId string) (*gen.ConfigVersionResponse, error) {
-	ret := _m.Called(nodeId)
+// GetConfigVersion provides a mock function with given fields: ctx, nodeId
+func (_m *configurator) GetConfigVersion(ctx context.Context, nodeId string) (*gen.ConfigVersionResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfigVersion")
@@ -82,19 +84,19 @@ func (_m *configurator) GetConfigVersion(nodeId string) (*gen.ConfigVersionRespo
 
 	var r0 *gen.ConfigVersionResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.ConfigVersionResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.ConfigVersionResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.ConfigVersionResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.ConfigVersionResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ConfigVersionResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}

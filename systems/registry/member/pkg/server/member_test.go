@@ -76,7 +76,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 		}
 
 		mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.create", mock.MatchedBy(func(r *epb.AddMemberEventRequest) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.create", mock.MatchedBy(func(r *epb.AddMemberEventRequest) bool {
 			return r.Role == req.GetRole()
 		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
@@ -158,7 +158,7 @@ func TestMemberServer_AddMember(t *testing.T) {
 		}
 
 		mRepo.On("AddMember", mock.Anything, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.create", mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.create", mock.Anything).Return(errors.New("message bus error")).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, testPushGateway, orgId)
 
@@ -497,7 +497,7 @@ func TestMemberServer_UpdateMember(t *testing.T) {
 		mRepo.On("UpdateMember", mock.MatchedBy(func(m *db.Member) bool {
 			return m.MemberId == testMemberId1 && m.Deactivated == true
 		})).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.update", mock.MatchedBy(func(r *epb.UpdateMemberEventRequest) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.update", mock.MatchedBy(func(r *epb.UpdateMemberEventRequest) bool {
 			return r.MemberId == testMemberId1.String() && r.IsDeactivated == true
 		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
@@ -609,7 +609,7 @@ func TestMemberServer_UpdateMember(t *testing.T) {
 		mRepo.On("UpdateMember", mock.MatchedBy(func(m *db.Member) bool {
 			return m.MemberId == testMemberId4 && m.Deactivated == false
 		})).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.update", mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.update", mock.Anything).Return(errors.New("message bus error")).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, testPushGateway, orgId)
 
@@ -669,7 +669,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
 		mRepo.On("RemoveMember", member.MemberId, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.delete", mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.delete", mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
 			return a.MemberId == member.MemberId.String()
 		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
@@ -874,7 +874,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 			err := fn(orgId.String(), member.UserId.String())
 			return err == nil
 		})).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.delete", mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.delete", mock.MatchedBy(func(a *epb.DeleteMemberEventRequest) bool {
 			return a.MemberId == member.MemberId.String()
 		})).Return(nil).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
@@ -950,7 +950,7 @@ func TestMemberServer_RemoveMember(t *testing.T) {
 
 		mRepo.On("GetMember", member.MemberId).Return(&member, nil).Once()
 		mRepo.On("RemoveMember", member.MemberId, orgId.String(), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", "event.cloud.local.testorg.registry.member.member.delete", mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.testorg.registry.member.member.delete", mock.Anything).Return(errors.New("message bus error")).Once()
 		mRepo.On("GetMemberCount").Return(testActiveCount, testInactiveCount, nil).Once()
 		s := NewMemberServer(testOrgName, mRepo, orgClient, userClient, msgclientRepo, testPushGateway, orgId)
 

@@ -39,7 +39,7 @@ func TestSimAllocationEvent(t *testing.T) {
 	routingKey := msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate")
 
 	t.Run("Success", func(t *testing.T) {
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
 		simAllocation := &epb.EventSimAllocation{
@@ -82,7 +82,7 @@ func TestSimAllocationEvent(t *testing.T) {
 	})
 
 	t.Run("UnmarshalError", func(t *testing.T) {
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
 		invalidMsg := &epb.EventSimUsage{

@@ -10,6 +10,7 @@ package client
 
 import (
 	"fmt"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -39,7 +40,8 @@ func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceC
 
 		log.Infoln("Connecting to SimManager service ", u.simManagerHost)
 
-		conn, err := grpc.NewClient(u.simManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		conn, err := grpc.NewClient(u.simManagerHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+			ugrpc.TracingDialOption())
 		if err != nil {
 			log.Errorf("Failed to connect to SimManager service %s. Error: %v", u.simManagerHost, err)
 

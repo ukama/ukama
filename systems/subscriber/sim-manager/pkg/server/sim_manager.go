@@ -387,7 +387,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageStartDate:  timestamppb.New(sim.Package.StartDate),
 	}
 
-	err = publishEventMessage(route, evt, s.msgbus)
+	err = publishEventMessage(ctx, route, evt, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evt, route, err)
 	}
@@ -639,7 +639,7 @@ func (s *SimManagerServer) TerminateSim(ctx context.Context, req *pb.SimRequest)
 
 	route := s.baseRoutingKey.SetAction("terminate").SetObject("sim").MustBuild()
 
-	err = publishEventMessage(route, evtMsg, s.msgbus)
+	err = publishEventMessage(ctx, route, evtMsg, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -808,7 +808,7 @@ func (s *SimManagerServer) RemovePackageForSim(ctx context.Context, req *pb.Pack
 		PackageId:    packageId.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, s.msgbus)
+	err = publishEventMessage(ctx, route, evtMsg, s.msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -996,7 +996,7 @@ func setSimServiceOn(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metricsP
 		PackageId:    sim.Package.Id.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(context.Background(), route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1052,7 +1052,7 @@ func setSimServiceOff(sim *sims.Sim, simRepo sims.SimRepo, orgId string, metrics
 		PackageId:    sim.Package.Id.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(context.Background(), route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1201,7 +1201,7 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		PackageEndDate:  pkg.EndDate.Format(emailDateFormat),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(ctx, route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1361,7 +1361,7 @@ func setPackageInUseForSim(ctx context.Context, reqSimId, reqPackageId string, s
 		PackageEndDate:   timestamppb.New(packageToSetInUse.EndDate),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(ctx, route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1535,7 +1535,7 @@ func markPackageExpiredForSim(reqSimId, reqPackageId string, simRepo sims.SimRep
 		DataPlanId:      pckg.PackageId.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(context.Background(), route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1606,7 +1606,7 @@ func markPackageDrainedForSim(reqSimId, reqPackageId string, totalDataUsed uint6
 		DataPlanId:      pckg.PackageId.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(context.Background(), route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1671,7 +1671,7 @@ func expireAllPackagesForSim(simId string, packageRepo sims.PackageRepo, msgbus 
 		DataPlanId:      activePckg.PackageId.String(),
 	}
 
-	err = publishEventMessage(route, evtMsg, msgbus)
+	err = publishEventMessage(context.Background(), route, evtMsg, msgbus)
 	if err != nil {
 		log.Errorf(eventPublishErrorMsg, evtMsg, route, err)
 	}
@@ -1795,8 +1795,8 @@ func pushTerminatedSimsCountMetric(networkId string, simRepo sims.SimRepo, orgId
 	return nil
 }
 
-func publishEventMessage(route string, msg protoreflect.ProtoMessage, msgbus mb.MsgBusServiceClient) error {
-	err := msgbus.PublishRequest(route, msg)
+func publishEventMessage(ctx context.Context, route string, msg protoreflect.ProtoMessage, msgbus mb.MsgBusServiceClient) error {
+	err := msgbus.PublishRequestWithContext(ctx, route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", msg, route, err.Error())
 	}

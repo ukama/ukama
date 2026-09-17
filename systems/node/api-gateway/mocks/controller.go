@@ -3,7 +3,8 @@
 package mocks
 
 import (
-	"context"
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/controller/pb/gen"
 )
@@ -13,35 +14,69 @@ type controller struct {
 	mock.Mock
 }
 
-// ConfigNode provides a mock function with given fields: nodeId
-func (_m *controller) ConfigNode(ctx context.Context, req *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error) {
-	ret := _m.Called(ctx, req)
-	if f, ok := ret.Get(0).(func(context.Context, *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error)); ok {
-		return f(ctx, req)
+// ConfigNode provides a mock function with given fields: _a0, _a1
+func (_m *controller) ConfigNode(_a0 context.Context, _a1 *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ConfigNode")
 	}
-	var out *gen.ConfigNodeResponse
-	if ret.Get(0) != nil {
-		out = ret.Get(0).(*gen.ConfigNodeResponse)
+
+	var r0 *gen.ConfigNodeResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigNodeRequest) (*gen.ConfigNodeResponse, error)); ok {
+		return rf(_a0, _a1)
 	}
-	return out, ret.Error(1)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ConfigNodeRequest) *gen.ConfigNodeResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ConfigNodeResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ConfigNodeRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// DeleteNodeConfig provides a mock function with given fields: nodeId
-func (_m *controller) DeleteNodeConfig(ctx context.Context, req *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error) {
-	ret := _m.Called(ctx, req)
-	if f, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error)); ok {
-		return f(ctx, req)
+// DeleteNodeConfig provides a mock function with given fields: _a0, _a1
+func (_m *controller) DeleteNodeConfig(_a0 context.Context, _a1 *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNodeConfig")
 	}
-	var out *gen.DeleteNodeConfigResponse
-	if ret.Get(0) != nil {
-		out = ret.Get(0).(*gen.DeleteNodeConfigResponse)
+
+	var r0 *gen.DeleteNodeConfigResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) (*gen.DeleteNodeConfigResponse, error)); ok {
+		return rf(_a0, _a1)
 	}
-	return out, ret.Error(1)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteNodeConfigRequest) *gen.DeleteNodeConfigResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteNodeConfigResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteNodeConfigRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// PingNode provides a mock function with given fields: nodeId
-func (_m *controller) PingNode(nodeId string) (*gen.PingNodeResponse, error) {
-	ret := _m.Called(nodeId)
+// PingNode provides a mock function with given fields: ctx, nodeId
+func (_m *controller) PingNode(ctx context.Context, nodeId string) (*gen.PingNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PingNode")
@@ -49,19 +84,19 @@ func (_m *controller) PingNode(nodeId string) (*gen.PingNodeResponse, error) {
 
 	var r0 *gen.PingNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.PingNodeResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.PingNodeResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.PingNodeResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.PingNodeResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PingNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -69,9 +104,9 @@ func (_m *controller) PingNode(nodeId string) (*gen.PingNodeResponse, error) {
 	return r0, r1
 }
 
-// RestartNode provides a mock function with given fields: nodeId
-func (_m *controller) RestartNode(nodeId string) (*gen.RestartNodeResponse, error) {
-	ret := _m.Called(nodeId)
+// RestartNode provides a mock function with given fields: ctx, nodeId
+func (_m *controller) RestartNode(ctx context.Context, nodeId string) (*gen.RestartNodeResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RestartNode")
@@ -79,19 +114,19 @@ func (_m *controller) RestartNode(nodeId string) (*gen.RestartNodeResponse, erro
 
 	var r0 *gen.RestartNodeResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.RestartNodeResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.RestartNodeResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.RestartNodeResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.RestartNodeResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.RestartNodeResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -99,9 +134,9 @@ func (_m *controller) RestartNode(nodeId string) (*gen.RestartNodeResponse, erro
 	return r0, r1
 }
 
-// ToggleRadio provides a mock function with given fields: nodeId, state
-func (_m *controller) ToggleRadio(nodeId string, state string) (*gen.ToggleRadioResponse, error) {
-	ret := _m.Called(nodeId, state)
+// ToggleRadio provides a mock function with given fields: ctx, nodeId, state
+func (_m *controller) ToggleRadio(ctx context.Context, nodeId string, state string) (*gen.ToggleRadioResponse, error) {
+	ret := _m.Called(ctx, nodeId, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleRadio")
@@ -109,19 +144,19 @@ func (_m *controller) ToggleRadio(nodeId string, state string) (*gen.ToggleRadio
 
 	var r0 *gen.ToggleRadioResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleRadioResponse, error)); ok {
-		return rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.ToggleRadioResponse, error)); ok {
+		return rf(ctx, nodeId, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleRadioResponse); ok {
-		r0 = rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.ToggleRadioResponse); ok {
+		r0 = rf(ctx, nodeId, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleRadioResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, nodeId, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -129,9 +164,9 @@ func (_m *controller) ToggleRadio(nodeId string, state string) (*gen.ToggleRadio
 	return r0, r1
 }
 
-// ToggleService provides a mock function with given fields: nodeId, state
-func (_m *controller) ToggleService(nodeId string, state string) (*gen.ToggleServiceResponse, error) {
-	ret := _m.Called(nodeId, state)
+// ToggleService provides a mock function with given fields: ctx, nodeId, state
+func (_m *controller) ToggleService(ctx context.Context, nodeId string, state string) (*gen.ToggleServiceResponse, error) {
+	ret := _m.Called(ctx, nodeId, state)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleService")
@@ -139,19 +174,19 @@ func (_m *controller) ToggleService(nodeId string, state string) (*gen.ToggleSer
 
 	var r0 *gen.ToggleServiceResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleServiceResponse, error)); ok {
-		return rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.ToggleServiceResponse, error)); ok {
+		return rf(ctx, nodeId, state)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleServiceResponse); ok {
-		r0 = rf(nodeId, state)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.ToggleServiceResponse); ok {
+		r0 = rf(ctx, nodeId, state)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleServiceResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, state)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, nodeId, state)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -159,9 +194,9 @@ func (_m *controller) ToggleService(nodeId string, state string) (*gen.ToggleSer
 	return r0, r1
 }
 
-// ToggleSwitchPort provides a mock function with given fields: status, port, nodeId
-func (_m *controller) ToggleSwitchPort(status bool, port int32, nodeId string) (*gen.ToggleSwitchPortResponse, error) {
-	ret := _m.Called(status, port, nodeId)
+// ToggleSwitchPort provides a mock function with given fields: ctx, status, port, nodeId
+func (_m *controller) ToggleSwitchPort(ctx context.Context, status bool, port int32, nodeId string) (*gen.ToggleSwitchPortResponse, error) {
+	ret := _m.Called(ctx, status, port, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleSwitchPort")
@@ -169,19 +204,19 @@ func (_m *controller) ToggleSwitchPort(status bool, port int32, nodeId string) (
 
 	var r0 *gen.ToggleSwitchPortResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bool, int32, string) (*gen.ToggleSwitchPortResponse, error)); ok {
-		return rf(status, port, nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, int32, string) (*gen.ToggleSwitchPortResponse, error)); ok {
+		return rf(ctx, status, port, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(bool, int32, string) *gen.ToggleSwitchPortResponse); ok {
-		r0 = rf(status, port, nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, bool, int32, string) *gen.ToggleSwitchPortResponse); ok {
+		r0 = rf(ctx, status, port, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleSwitchPortResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(bool, int32, string) error); ok {
-		r1 = rf(status, port, nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, bool, int32, string) error); ok {
+		r1 = rf(ctx, status, port, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}

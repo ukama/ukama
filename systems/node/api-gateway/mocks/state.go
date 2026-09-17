@@ -3,7 +3,8 @@
 package mocks
 
 import (
-	"context"
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
@@ -13,9 +14,9 @@ type state struct {
 	mock.Mock
 }
 
-// EnforeTransition provides a mock function with given fields: nodeId, event
-func (_m *state) EnforeTransition(nodeId string, event string) (*gen.EnforceStateTransitionResponse, error) {
-	ret := _m.Called(nodeId, event)
+// EnforeTransition provides a mock function with given fields: ctx, nodeId, event
+func (_m *state) EnforeTransition(ctx context.Context, nodeId string, event string) (*gen.EnforceStateTransitionResponse, error) {
+	ret := _m.Called(ctx, nodeId, event)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnforeTransition")
@@ -23,19 +24,19 @@ func (_m *state) EnforeTransition(nodeId string, event string) (*gen.EnforceStat
 
 	var r0 *gen.EnforceStateTransitionResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.EnforceStateTransitionResponse, error)); ok {
-		return rf(nodeId, event)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.EnforceStateTransitionResponse, error)); ok {
+		return rf(ctx, nodeId, event)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.EnforceStateTransitionResponse); ok {
-		r0 = rf(nodeId, event)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.EnforceStateTransitionResponse); ok {
+		r0 = rf(ctx, nodeId, event)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.EnforceStateTransitionResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(nodeId, event)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, nodeId, event)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -43,22 +44,39 @@ func (_m *state) EnforeTransition(nodeId string, event string) (*gen.EnforceStat
 	return r0, r1
 }
 
-// GetLatestState provides a mock function with given fields: nodeId
-func (_m *state) GetLatestState(ctx context.Context, req *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error) {
-	ret := _m.Called(ctx, req)
-	if f, ok := ret.Get(0).(func(context.Context, *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error)); ok {
-		return f(ctx, req)
+// GetLatestState provides a mock function with given fields: _a0, _a1
+func (_m *state) GetLatestState(_a0 context.Context, _a1 *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetLatestState")
 	}
-	var out *gen.GetLatestStateResponse
-	if ret.Get(0) != nil {
-		out = ret.Get(0).(*gen.GetLatestStateResponse)
+
+	var r0 *gen.GetLatestStateResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestStateRequest) (*gen.GetLatestStateResponse, error)); ok {
+		return rf(_a0, _a1)
 	}
-	return out, ret.Error(1)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.GetLatestStateRequest) *gen.GetLatestStateResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.GetLatestStateResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.GetLatestStateRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// GetStates provides a mock function with given fields: nodeId
-func (_m *state) GetStates(nodeId string) (*gen.GetStatesResponse, error) {
-	ret := _m.Called(nodeId)
+// GetStates provides a mock function with given fields: ctx, nodeId
+func (_m *state) GetStates(ctx context.Context, nodeId string) (*gen.GetStatesResponse, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetStates")
@@ -66,19 +84,19 @@ func (_m *state) GetStates(nodeId string) (*gen.GetStatesResponse, error) {
 
 	var r0 *gen.GetStatesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetStatesResponse, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetStatesResponse, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetStatesResponse); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetStatesResponse); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetStatesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -86,9 +104,9 @@ func (_m *state) GetStates(nodeId string) (*gen.GetStatesResponse, error) {
 	return r0, r1
 }
 
-// GetStatesHistory provides a mock function with given fields: nodeId, pageSize, pageNumber, startTime, endTime
-func (_m *state) GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime string, endTime string) (*gen.GetStatesHistoryResponse, error) {
-	ret := _m.Called(nodeId, pageSize, pageNumber, startTime, endTime)
+// GetStatesHistory provides a mock function with given fields: ctx, nodeId, pageSize, pageNumber, startTime, endTime
+func (_m *state) GetStatesHistory(ctx context.Context, nodeId string, pageSize int32, pageNumber int32, startTime string, endTime string) (*gen.GetStatesHistoryResponse, error) {
+	ret := _m.Called(ctx, nodeId, pageSize, pageNumber, startTime, endTime)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetStatesHistory")
@@ -96,19 +114,19 @@ func (_m *state) GetStatesHistory(nodeId string, pageSize int32, pageNumber int3
 
 	var r0 *gen.GetStatesHistoryResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, int32, int32, string, string) (*gen.GetStatesHistoryResponse, error)); ok {
-		return rf(nodeId, pageSize, pageNumber, startTime, endTime)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int32, int32, string, string) (*gen.GetStatesHistoryResponse, error)); ok {
+		return rf(ctx, nodeId, pageSize, pageNumber, startTime, endTime)
 	}
-	if rf, ok := ret.Get(0).(func(string, int32, int32, string, string) *gen.GetStatesHistoryResponse); ok {
-		r0 = rf(nodeId, pageSize, pageNumber, startTime, endTime)
+	if rf, ok := ret.Get(0).(func(context.Context, string, int32, int32, string, string) *gen.GetStatesHistoryResponse); ok {
+		r0 = rf(ctx, nodeId, pageSize, pageNumber, startTime, endTime)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetStatesHistoryResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, int32, int32, string, string) error); ok {
-		r1 = rf(nodeId, pageSize, pageNumber, startTime, endTime)
+	if rf, ok := ret.Get(1).(func(context.Context, string, int32, int32, string, string) error); ok {
+		r1 = rf(ctx, nodeId, pageSize, pageNumber, startTime, endTime)
 	} else {
 		r1 = ret.Error(1)
 	}

@@ -65,52 +65,52 @@ type Clients struct {
 }
 
 type health interface {
-	ListReports(nodeId, reportId string, reportedAt int64, timeframe ukamaPb.FilterTimeframesType) (*healthPb.ListReportsResponse, error)
-	ListApps(nodeId, reportId, appName string) (*healthPb.ListAppsResponse, error)
-	ListInterfaces(nodeId, reportId string) (*healthPb.ListInterfacesResponse, error)
+	ListReports(ctx context.Context, nodeId, reportId string, reportedAt int64, timeframe ukamaPb.FilterTimeframesType) (*healthPb.ListReportsResponse, error)
+	ListApps(ctx context.Context, nodeId, reportId, appName string) (*healthPb.ListAppsResponse, error)
+	ListInterfaces(ctx context.Context, nodeId, reportId string) (*healthPb.ListInterfacesResponse, error)
 }
 
 type state interface {
-	GetStates(nodeId string) (*nspb.GetStatesResponse, error)
+	GetStates(ctx context.Context, nodeId string) (*nspb.GetStatesResponse, error)
 	GetLatestState(context.Context, *nspb.GetLatestStateRequest) (*nspb.GetLatestStateResponse, error)
-	GetStatesHistory(nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
-	EnforeTransition(nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
+	GetStatesHistory(ctx context.Context, nodeId string, pageSize int32, pageNumber int32, startTime, endTime string) (*nspb.GetStatesHistoryResponse, error)
+	EnforeTransition(ctx context.Context, nodeId string, event string) (*nspb.EnforceStateTransitionResponse, error)
 }
 type controller interface {
-	RestartNode(nodeId string) (*contPb.RestartNodeResponse, error)
-	ToggleSwitchPort(status bool, port int32, nodeId string) (*contPb.ToggleSwitchPortResponse, error)
-	PingNode(nodeId string) (*contPb.PingNodeResponse, error)
-	ToggleRadio(nodeId string, state string) (*contPb.ToggleRadioResponse, error)
-	ToggleService(nodeId string, state string) (*contPb.ToggleServiceResponse, error)
+	RestartNode(ctx context.Context, nodeId string) (*contPb.RestartNodeResponse, error)
+	ToggleSwitchPort(ctx context.Context, status bool, port int32, nodeId string) (*contPb.ToggleSwitchPortResponse, error)
+	PingNode(ctx context.Context, nodeId string) (*contPb.PingNodeResponse, error)
+	ToggleRadio(ctx context.Context, nodeId string, state string) (*contPb.ToggleRadioResponse, error)
+	ToggleService(ctx context.Context, nodeId string, state string) (*contPb.ToggleServiceResponse, error)
 	ConfigNode(context.Context, *contPb.ConfigNodeRequest) (*contPb.ConfigNodeResponse, error)
 	DeleteNodeConfig(context.Context, *contPb.DeleteNodeConfigRequest) (*contPb.DeleteNodeConfigResponse, error)
 }
 
 type siteController interface {
-	SetSite(siteID, state, reason, requestedBy string) (*sitepb.SetSiteResponse, error)
-	SetService(siteID, state string) (*sitepb.SetServiceResponse, error)
-	SetRadio(siteID, state string) (*sitepb.SetRadioResponse, error)
-	GetSiteState(siteID string) (*sitepb.GetSiteStateResponse, error)
-	UpsertPortMap(siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
-	GetPortMap(siteID string) (*sitepb.GetPortMapResponse, error)
-	ApplySwitchPolicy(siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
-	PowerCycleNode(siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
-	RestartSite(siteID string) (*sitepb.RestartSiteResponse, error)
-	ToggleInternetSwitch(siteID string, status bool, port int32) (*sitepb.ToggleInternetSwitchResponse, error)
+	SetSite(ctx context.Context, siteID, state, reason, requestedBy string) (*sitepb.SetSiteResponse, error)
+	SetService(ctx context.Context, siteID, state string) (*sitepb.SetServiceResponse, error)
+	SetRadio(ctx context.Context, siteID, state string) (*sitepb.SetRadioResponse, error)
+	GetSiteState(ctx context.Context, siteID string) (*sitepb.GetSiteStateResponse, error)
+	UpsertPortMap(ctx context.Context, siteID, cnodeID string, ports []*sitepb.PortMapEntry) (*sitepb.UpsertPortMapResponse, error)
+	GetPortMap(ctx context.Context, siteID string) (*sitepb.GetPortMapResponse, error)
+	ApplySwitchPolicy(ctx context.Context, siteID string) (*sitepb.ApplySwitchPolicyResponse, error)
+	PowerCycleNode(ctx context.Context, siteID, role, reason, requestedBy string) (*sitepb.PowerCycleNodeResponse, error)
+	RestartSite(ctx context.Context, siteID string) (*sitepb.RestartSiteResponse, error)
+	ToggleInternetSwitch(ctx context.Context, siteID string, status bool, port int32) (*sitepb.ToggleInternetSwitchResponse, error)
 }
 
 type configurator interface {
-	ConfigEvent(b []byte) (*cfgPb.ConfigStoreEventResponse, error)
-	ApplyConfig(commit string) (*cfgPb.ApplyConfigResponse, error)
-	GetConfigVersion(nodeId string) (*cfgPb.ConfigVersionResponse, error)
+	ConfigEvent(ctx context.Context, b []byte) (*cfgPb.ConfigStoreEventResponse, error)
+	ApplyConfig(ctx context.Context, commit string) (*cfgPb.ApplyConfigResponse, error)
+	GetConfigVersion(ctx context.Context, nodeId string) (*cfgPb.ConfigVersionResponse, error)
 }
 
 type softwareManager interface {
-	ListApps() (*spb.GetAppListResponse, error)
-	ListSoftware(nodeId string, status string, appName string) (*spb.GetSoftwareListResponse, error)
-	UpdateSoftware(nodeId string, name string, tag string) (*spb.UpdateSoftwareResponse, error)
-	PromoteRelease(name string, version string, atype string) (*spb.PromoteReleaseResponse, error)
-	GetReleaseCatalog(name string, atype string) (*spb.GetReleaseCatalogResponse, error)
+	ListApps(ctx context.Context) (*spb.GetAppListResponse, error)
+	ListSoftware(ctx context.Context, nodeId string, status string, appName string) (*spb.GetSoftwareListResponse, error)
+	UpdateSoftware(ctx context.Context, nodeId string, name string, tag string) (*spb.UpdateSoftwareResponse, error)
+	PromoteRelease(ctx context.Context, name string, version string, atype string) (*spb.PromoteReleaseResponse, error)
+	GetReleaseCatalog(ctx context.Context, name string, atype string) (*spb.GetReleaseCatalogResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -245,23 +245,23 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 }
 
 func (r *Router) getPingNodeHandler(c *gin.Context, req *PingNodeRequest) (*contPb.PingNodeResponse, error) {
-	return r.clients.Controller.PingNode(req.NodeId)
+	return r.clients.Controller.PingNode(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) postRestartNodeHandler(c *gin.Context, req *RestartNodeRequest) (*contPb.RestartNodeResponse, error) {
-	return r.clients.Controller.RestartNode(req.NodeId)
+	return r.clients.Controller.RestartNode(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) postToggleSwitchPortHandler(c *gin.Context, req *ToggleSwitchPortRequest) (*contPb.ToggleSwitchPortResponse, error) {
-	return r.clients.Controller.ToggleSwitchPort(req.Status, req.Port, req.NodeId)
+	return r.clients.Controller.ToggleSwitchPort(c.Request.Context(), req.Status, req.Port, req.NodeId)
 }
 
 func (r *Router) postToggleNodeRadioHandler(c *gin.Context, req *ToggleStateRequest) (*contPb.ToggleRadioResponse, error) {
-	return r.clients.Controller.ToggleRadio(req.NodeId, req.State)
+	return r.clients.Controller.ToggleRadio(c.Request.Context(), req.NodeId, req.State)
 }
 
 func (r *Router) postToggleNodeServiceHandler(c *gin.Context, req *ToggleStateRequest) (*contPb.ToggleServiceResponse, error) {
-	return r.clients.Controller.ToggleService(req.NodeId, req.State)
+	return r.clients.Controller.ToggleService(c.Request.Context(), req.NodeId, req.State)
 }
 
 func (r *Router) postConfigNodeHandler(c *gin.Context, req *ConfigNodeRequest) (*contPb.ConfigNodeResponse, error) {
@@ -273,27 +273,27 @@ func (r *Router) deleteNodeConfigHandler(c *gin.Context, req *DeleteNodeConfigRe
 }
 
 func (r *Router) getListAppsHandler(c *gin.Context, req *ListAppsRequest) (*spb.GetAppListResponse, error) {
-	return r.clients.SoftwareManager.ListApps()
+	return r.clients.SoftwareManager.ListApps(c.Request.Context())
 }
 
 func (r *Router) getListSoftwareHandler(c *gin.Context, req *ListSoftwareRequest) (*spb.GetSoftwareListResponse, error) {
-	return r.clients.SoftwareManager.ListSoftware(req.NodeId, req.Status, req.AppName)
+	return r.clients.SoftwareManager.ListSoftware(c.Request.Context(), req.NodeId, req.Status, req.AppName)
 }
 
 func (r *Router) postUpdateSoftwareHandler(c *gin.Context, req *UpdateSoftwareRequest) (*spb.UpdateSoftwareResponse, error) {
-	return r.clients.SoftwareManager.UpdateSoftware(req.NodeId, req.Name, req.Tag)
+	return r.clients.SoftwareManager.UpdateSoftware(c.Request.Context(), req.NodeId, req.Name, req.Tag)
 }
 
 func (r *Router) postPromoteReleaseHandler(c *gin.Context, req *PromoteReleaseRequest) (*spb.PromoteReleaseResponse, error) {
-	return r.clients.SoftwareManager.PromoteRelease(req.Name, req.Version, req.Type)
+	return r.clients.SoftwareManager.PromoteRelease(c.Request.Context(), req.Name, req.Version, req.Type)
 }
 
 func (r *Router) getReleaseCatalogHandler(c *gin.Context, req *GetReleaseCatalogRequest) (*spb.GetReleaseCatalogResponse, error) {
-	return r.clients.SoftwareManager.GetReleaseCatalog(req.Name, req.Type)
+	return r.clients.SoftwareManager.GetReleaseCatalog(c.Request.Context(), req.Name, req.Type)
 }
 
 func (r *Router) getStatesHandler(c *gin.Context, req *GetStatesRequest) (*nspb.GetStatesResponse, error) {
-	return r.clients.State.GetStates(req.NodeId)
+	return r.clients.State.GetStates(c.Request.Context(), req.NodeId)
 }
 
 func (r *Router) getLatestStateHandler(c *gin.Context, req *GetLatestStateRequest) (*nspb.GetLatestStateResponse, error) {
@@ -308,7 +308,7 @@ func (r *Router) postConfigEventHandler(c *gin.Context) error {
 	}
 	log.Infof("received config event with %+v", string(body))
 
-	_, err = r.clients.Configurator.ConfigEvent(body)
+	_, err = r.clients.Configurator.ConfigEvent(c.Request.Context(), body)
 	if err != nil {
 		log.Errorf("Failed to configure nodes.Error %s", err.Error())
 		return err
@@ -321,7 +321,7 @@ func (r *Router) postConfigApplyVersionHandler(c *gin.Context, req *ApplyConfigR
 
 	log.Infof("received apply config with %+v", req)
 
-	_, err := r.clients.Configurator.ApplyConfig(req.Commit)
+	_, err := r.clients.Configurator.ApplyConfig(c.Request.Context(), req.Commit)
 	if err != nil {
 		log.Errorf("Failed to apply config version %s to nodes.Error %s", req.Commit, err.Error())
 		return err
@@ -334,7 +334,7 @@ func (r *Router) getRunningConfigVersionHandler(c *gin.Context, req *GetConfigVe
 
 	log.Infof("Received get running config version.")
 
-	cfg, err := r.clients.Configurator.GetConfigVersion(req.NodeId)
+	cfg, err := r.clients.Configurator.GetConfigVersion(c.Request.Context(), req.NodeId)
 	if err != nil {
 		log.Errorf("Failed to get config version for node %s.Error %s", req.NodeId, err.Error())
 		return nil, err
@@ -363,31 +363,31 @@ func (r *Router) getStatesHistoryHandler(c *gin.Context, req *GetStatesHistoryRe
 		return nil, err
 	}
 
-	return r.clients.State.GetStatesHistory(nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
+	return r.clients.State.GetStatesHistory(c.Request.Context(), nodeId, int32(pageSize), int32(pageNumber), startTime, endTime)
 }
 
 func (r *Router) postRestartSiteHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.RestartSiteResponse, error) {
-	return r.clients.SiteController.RestartSite(req.SiteId)
+	return r.clients.SiteController.RestartSite(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) toggleSiteStateHandler(c *gin.Context, req *SiteActionRequest) (*sitepb.SetSiteResponse, error) {
-	return r.clients.SiteController.SetSite(req.SiteId, req.State, req.Reason, req.RequestedBy)
+	return r.clients.SiteController.SetSite(c.Request.Context(), req.SiteId, req.State, req.Reason, req.RequestedBy)
 }
 
 func (r *Router) postToggleServiceHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetServiceResponse, error) {
-	return r.clients.SiteController.SetService(req.SiteId, req.State)
+	return r.clients.SiteController.SetService(c.Request.Context(), req.SiteId, req.State)
 }
 
 func (r *Router) postToggleRadioHandler(c *gin.Context, req *SiteToggleActionRequest) (*sitepb.SetRadioResponse, error) {
-	return r.clients.SiteController.SetRadio(req.SiteId, req.State)
+	return r.clients.SiteController.SetRadio(c.Request.Context(), req.SiteId, req.State)
 }
 
 func (r *Router) getSiteStateHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.GetSiteStateResponse, error) {
-	return r.clients.SiteController.GetSiteState(req.SiteId)
+	return r.clients.SiteController.GetSiteState(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) getSitePortMapHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.GetPortMapResponse, error) {
-	return r.clients.SiteController.GetPortMap(req.SiteId)
+	return r.clients.SiteController.GetPortMap(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) putSitePortMapHandler(c *gin.Context, req *SitePortMapRequest) (*sitepb.UpsertPortMapResponse, error) {
@@ -395,19 +395,19 @@ func (r *Router) putSitePortMapHandler(c *gin.Context, req *SitePortMapRequest) 
 	for _, p := range req.Ports {
 		ports = append(ports, &sitepb.PortMapEntry{Port: p.Port, Role: p.Role, NodeId: p.NodeId, Class: p.Class, Policy: p.Policy, CnodeId: p.CnodeId})
 	}
-	return r.clients.SiteController.UpsertPortMap(req.SiteId, req.CNodeId, ports)
+	return r.clients.SiteController.UpsertPortMap(c.Request.Context(), req.SiteId, req.CNodeId, ports)
 }
 
 func (r *Router) postApplySwitchPolicyHandler(c *gin.Context, req *SiteStateRequest) (*sitepb.ApplySwitchPolicyResponse, error) {
-	return r.clients.SiteController.ApplySwitchPolicy(req.SiteId)
+	return r.clients.SiteController.ApplySwitchPolicy(c.Request.Context(), req.SiteId)
 }
 
 func (r *Router) postPowerCycleNodeHandler(c *gin.Context, req *PowerCycleNodeRequest) (*sitepb.PowerCycleNodeResponse, error) {
-	return r.clients.SiteController.PowerCycleNode(req.SiteId, req.Role, req.Reason, req.RequestedBy)
+	return r.clients.SiteController.PowerCycleNode(c.Request.Context(), req.SiteId, req.Role, req.Reason, req.RequestedBy)
 }
 
 func (r *Router) postToggleInternetSwitchHandler(c *gin.Context, req *ToggleInternetSwitchRequest) (*sitepb.ToggleInternetSwitchResponse, error) {
-	return r.clients.SiteController.ToggleInternetSwitch(req.SiteId, req.Status, req.Port)
+	return r.clients.SiteController.ToggleInternetSwitch(c.Request.Context(), req.SiteId, req.Status, req.Port)
 }
 
 func (r *Router) getNodeHealthReportsHandler(c *gin.Context, req *GetNodeHealthReportsRequest) (*healthPb.ListReportsResponse, error) {
@@ -418,7 +418,7 @@ func (r *Router) getNodeHealthReportsHandler(c *gin.Context, req *GetNodeHealthR
 
 	timeframe := ukamaPb.FilterTimeframesType(ukama.ReturnFilterTimeframesType(ukama.ParseFilterTimeframesType(req.Timeframe)))
 
-	return r.clients.Health.ListReports(nodeId, req.ReportId, req.ReportedAt, timeframe)
+	return r.clients.Health.ListReports(c.Request.Context(), nodeId, req.ReportId, req.ReportedAt, timeframe)
 }
 
 func (r *Router) getNodeAppsHandler(c *gin.Context, req *GetNodeAppsRequest) (*healthPb.ListAppsResponse, error) {
@@ -427,7 +427,7 @@ func (r *Router) getNodeAppsHandler(c *gin.Context, req *GetNodeAppsRequest) (*h
 		return nil, err
 	}
 
-	return r.clients.Health.ListApps(nodeId, req.ReportId, req.AppName)
+	return r.clients.Health.ListApps(c.Request.Context(), nodeId, req.ReportId, req.AppName)
 }
 
 func (r *Router) getNodeInterfacesHandler(c *gin.Context, req *GetNodeInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
@@ -436,7 +436,7 @@ func (r *Router) getNodeInterfacesHandler(c *gin.Context, req *GetNodeInterfaces
 		return nil, err
 	}
 
-	return r.clients.Health.ListInterfaces(nodeId, req.ReportId)
+	return r.clients.Health.ListInterfaces(c.Request.Context(), nodeId, req.ReportId)
 }
 
 // Health reports are stored under the lowercase node id, so lookups must use the same form.
@@ -451,7 +451,7 @@ func validateHealthNodeId(id string) (string, error) {
 
 func (r *Router) enforceStateTransitionHandler(c *gin.Context, req *EnforceStateTransitionRequest) (*nspb.EnforceStateTransitionResponse, error) {
 
-	return r.clients.State.EnforeTransition(req.NodeId, req.Event)
+	return r.clients.State.EnforeTransition(c.Request.Context(), req.NodeId, req.Event)
 }
 func formatDoc(summary string, description string) []fizz.OperationOption {
 	return []fizz.OperationOption{func(info *openapi.OperationInfo) {

@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	gen "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
 )
@@ -12,9 +14,9 @@ type simManager struct {
 	mock.Mock
 }
 
-// AddPackageToSim provides a mock function with given fields: req
-func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.PackageResponse, error) {
-	ret := _m.Called(req)
+// AddPackageToSim provides a mock function with given fields: ctx, req
+func (_m *simManager) AddPackageToSim(ctx context.Context, req *gen.AddPackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddPackageToSim")
@@ -22,19 +24,19 @@ func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.PackageR
 
 	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) (*gen.PackageResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AddPackageRequest) *gen.PackageResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AddPackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.AddPackageRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AddPackageRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -42,9 +44,9 @@ func (_m *simManager) AddPackageToSim(req *gen.AddPackageRequest) (*gen.PackageR
 	return r0, r1
 }
 
-// AllocateSim provides a mock function with given fields: req
-func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.SimResponse, error) {
-	ret := _m.Called(req)
+// AllocateSim provides a mock function with given fields: ctx, req
+func (_m *simManager) AllocateSim(ctx context.Context, req *gen.AllocateSimRequest) (*gen.SimResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AllocateSim")
@@ -52,19 +54,19 @@ func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.SimResponse
 
 	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) (*gen.SimResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) (*gen.SimResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.AllocateSimRequest) *gen.SimResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.AllocateSimRequest) *gen.SimResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.AllocateSimRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.AllocateSimRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,9 +74,9 @@ func (_m *simManager) AllocateSim(req *gen.AllocateSimRequest) (*gen.SimResponse
 	return r0, r1
 }
 
-// GetPackagesForSim provides a mock function with given fields: simId
-func (_m *simManager) GetPackagesForSim(simId string) (*gen.GetPackagesForSimResponse, error) {
-	ret := _m.Called(simId)
+// GetPackagesForSim provides a mock function with given fields: ctx, simId
+func (_m *simManager) GetPackagesForSim(ctx context.Context, simId string) (*gen.GetPackagesForSimResponse, error) {
+	ret := _m.Called(ctx, simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPackagesForSim")
@@ -82,19 +84,19 @@ func (_m *simManager) GetPackagesForSim(simId string) (*gen.GetPackagesForSimRes
 
 	var r0 *gen.GetPackagesForSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetPackagesForSimResponse, error)); ok {
-		return rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetPackagesForSimResponse, error)); ok {
+		return rf(ctx, simId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetPackagesForSimResponse); ok {
-		r0 = rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetPackagesForSimResponse); ok {
+		r0 = rf(ctx, simId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetPackagesForSimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, simId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -102,9 +104,9 @@ func (_m *simManager) GetPackagesForSim(simId string) (*gen.GetPackagesForSimRes
 	return r0, r1
 }
 
-// GetSim provides a mock function with given fields: simId
-func (_m *simManager) GetSim(simId string) (*gen.SimResponse, error) {
-	ret := _m.Called(simId)
+// GetSim provides a mock function with given fields: ctx, simId
+func (_m *simManager) GetSim(ctx context.Context, simId string) (*gen.SimResponse, error) {
+	ret := _m.Called(ctx, simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSim")
@@ -112,19 +114,19 @@ func (_m *simManager) GetSim(simId string) (*gen.SimResponse, error) {
 
 	var r0 *gen.SimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.SimResponse, error)); ok {
-		return rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.SimResponse, error)); ok {
+		return rf(ctx, simId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.SimResponse); ok {
-		r0 = rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.SimResponse); ok {
+		r0 = rf(ctx, simId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, simId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -132,9 +134,9 @@ func (_m *simManager) GetSim(simId string) (*gen.SimResponse, error) {
 	return r0, r1
 }
 
-// GetSimToken provides a mock function with given fields: iccid
-func (_m *simManager) GetSimToken(iccid string) (*gen.SimTokenResponse, error) {
-	ret := _m.Called(iccid)
+// GetSimToken provides a mock function with given fields: ctx, iccid
+func (_m *simManager) GetSimToken(ctx context.Context, iccid string) (*gen.SimTokenResponse, error) {
+	ret := _m.Called(ctx, iccid)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSimToken")
@@ -142,19 +144,19 @@ func (_m *simManager) GetSimToken(iccid string) (*gen.SimTokenResponse, error) {
 
 	var r0 *gen.SimTokenResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.SimTokenResponse, error)); ok {
-		return rf(iccid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.SimTokenResponse, error)); ok {
+		return rf(ctx, iccid)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.SimTokenResponse); ok {
-		r0 = rf(iccid)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.SimTokenResponse); ok {
+		r0 = rf(ctx, iccid)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.SimTokenResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(iccid)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, iccid)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -162,9 +164,9 @@ func (_m *simManager) GetSimToken(iccid string) (*gen.SimTokenResponse, error) {
 	return r0, r1
 }
 
-// GetSimsByNetwork provides a mock function with given fields: networkId
-func (_m *simManager) GetSimsByNetwork(networkId string) (*gen.GetSimsByNetworkResponse, error) {
-	ret := _m.Called(networkId)
+// GetSimsByNetwork provides a mock function with given fields: ctx, networkId
+func (_m *simManager) GetSimsByNetwork(ctx context.Context, networkId string) (*gen.GetSimsByNetworkResponse, error) {
+	ret := _m.Called(ctx, networkId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSimsByNetwork")
@@ -172,19 +174,19 @@ func (_m *simManager) GetSimsByNetwork(networkId string) (*gen.GetSimsByNetworkR
 
 	var r0 *gen.GetSimsByNetworkResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSimsByNetworkResponse, error)); ok {
-		return rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSimsByNetworkResponse, error)); ok {
+		return rf(ctx, networkId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSimsByNetworkResponse); ok {
-		r0 = rf(networkId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSimsByNetworkResponse); ok {
+		r0 = rf(ctx, networkId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSimsByNetworkResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(networkId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, networkId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -192,9 +194,9 @@ func (_m *simManager) GetSimsByNetwork(networkId string) (*gen.GetSimsByNetworkR
 	return r0, r1
 }
 
-// GetSimsBySub provides a mock function with given fields: subscriberId
-func (_m *simManager) GetSimsBySub(subscriberId string) (*gen.GetSimsBySubscriberResponse, error) {
-	ret := _m.Called(subscriberId)
+// GetSimsBySub provides a mock function with given fields: ctx, subscriberId
+func (_m *simManager) GetSimsBySub(ctx context.Context, subscriberId string) (*gen.GetSimsBySubscriberResponse, error) {
+	ret := _m.Called(ctx, subscriberId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetSimsBySub")
@@ -202,19 +204,19 @@ func (_m *simManager) GetSimsBySub(subscriberId string) (*gen.GetSimsBySubscribe
 
 	var r0 *gen.GetSimsBySubscriberResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.GetSimsBySubscriberResponse, error)); ok {
-		return rf(subscriberId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.GetSimsBySubscriberResponse, error)); ok {
+		return rf(ctx, subscriberId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.GetSimsBySubscriberResponse); ok {
-		r0 = rf(subscriberId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.GetSimsBySubscriberResponse); ok {
+		r0 = rf(ctx, subscriberId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.GetSimsBySubscriberResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(subscriberId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, subscriberId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -222,9 +224,9 @@ func (_m *simManager) GetSimsBySub(subscriberId string) (*gen.GetSimsBySubscribe
 	return r0, r1
 }
 
-// GetUsages provides a mock function with given fields: iccid, simType, cdrType, from, to, region
-func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, from string, to string, region string) (*gen.UsageResponse, error) {
-	ret := _m.Called(iccid, simType, cdrType, from, to, region)
+// GetUsages provides a mock function with given fields: ctx, iccid, simType, cdrType, from, to, region
+func (_m *simManager) GetUsages(ctx context.Context, iccid string, simType string, cdrType string, from string, to string, region string) (*gen.UsageResponse, error) {
+	ret := _m.Called(ctx, iccid, simType, cdrType, from, to, region)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUsages")
@@ -232,19 +234,19 @@ func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, fr
 
 	var r0 *gen.UsageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) (*gen.UsageResponse, error)); ok {
-		return rf(iccid, simType, cdrType, from, to, region)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) (*gen.UsageResponse, error)); ok {
+		return rf(ctx, iccid, simType, cdrType, from, to, region)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string) *gen.UsageResponse); ok {
-		r0 = rf(iccid, simType, cdrType, from, to, region)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) *gen.UsageResponse); ok {
+		r0 = rf(ctx, iccid, simType, cdrType, from, to, region)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.UsageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string) error); ok {
-		r1 = rf(iccid, simType, cdrType, from, to, region)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string) error); ok {
+		r1 = rf(ctx, iccid, simType, cdrType, from, to, region)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -252,9 +254,9 @@ func (_m *simManager) GetUsages(iccid string, simType string, cdrType string, fr
 	return r0, r1
 }
 
-// ListPackagesForSim provides a mock function with given fields: simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count
-func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromStartDate string, toStartDate string, fromEndDate string, toEndDate string, isCurrentlyInUse bool, isExpired bool, sort bool, count uint32) (*gen.ListPackagesForSimResponse, error) {
-	ret := _m.Called(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
+// ListPackagesForSim provides a mock function with given fields: ctx, simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count
+func (_m *simManager) ListPackagesForSim(ctx context.Context, simId string, dataPlanId string, fromStartDate string, toStartDate string, fromEndDate string, toEndDate string, isCurrentlyInUse bool, isExpired bool, sort bool, count uint32) (*gen.ListPackagesForSimResponse, error) {
+	ret := _m.Called(ctx, simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListPackagesForSim")
@@ -262,19 +264,19 @@ func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromSt
 
 	var r0 *gen.ListPackagesForSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, bool, uint32) (*gen.ListPackagesForSimResponse, error)); ok {
-		return rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string, bool, bool, bool, uint32) (*gen.ListPackagesForSimResponse, error)); ok {
+		return rf(ctx, simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, bool, bool, bool, uint32) *gen.ListPackagesForSimResponse); ok {
-		r0 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string, bool, bool, bool, uint32) *gen.ListPackagesForSimResponse); ok {
+		r0 = rf(ctx, simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListPackagesForSimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, bool, bool, bool, uint32) error); ok {
-		r1 = rf(simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string, bool, bool, bool, uint32) error); ok {
+		r1 = rf(ctx, simId, dataPlanId, fromStartDate, toStartDate, fromEndDate, toEndDate, isCurrentlyInUse, isExpired, sort, count)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -282,9 +284,9 @@ func (_m *simManager) ListPackagesForSim(simId string, dataPlanId string, fromSt
 	return r0, r1
 }
 
-// ListSims provides a mock function with given fields: iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count
-func (_m *simManager) ListSims(iccid string, imsi string, subscriberId string, networkId string, simType string, simStatus string, trafficPolicy uint32, isPhysical bool, sort bool, count uint32) (*gen.ListSimsResponse, error) {
-	ret := _m.Called(iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
+// ListSims provides a mock function with given fields: ctx, iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count
+func (_m *simManager) ListSims(ctx context.Context, iccid string, imsi string, subscriberId string, networkId string, simType string, simStatus string, trafficPolicy uint32, isPhysical bool, sort bool, count uint32) (*gen.ListSimsResponse, error) {
+	ret := _m.Called(ctx, iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListSims")
@@ -292,19 +294,19 @@ func (_m *simManager) ListSims(iccid string, imsi string, subscriberId string, n
 
 	var r0 *gen.ListSimsResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32, bool, bool, uint32) (*gen.ListSimsResponse, error)); ok {
-		return rf(iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string, uint32, bool, bool, uint32) (*gen.ListSimsResponse, error)); ok {
+		return rf(ctx, iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
 	}
-	if rf, ok := ret.Get(0).(func(string, string, string, string, string, string, uint32, bool, bool, uint32) *gen.ListSimsResponse); ok {
-		r0 = rf(iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string, uint32, bool, bool, uint32) *gen.ListSimsResponse); ok {
+		r0 = rf(ctx, iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ListSimsResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string, string, string, string, string, uint32, bool, bool, uint32) error); ok {
-		r1 = rf(iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string, uint32, bool, bool, uint32) error); ok {
+		r1 = rf(ctx, iccid, imsi, subscriberId, networkId, simType, simStatus, trafficPolicy, isPhysical, sort, count)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -312,9 +314,9 @@ func (_m *simManager) ListSims(iccid string, imsi string, subscriberId string, n
 	return r0, r1
 }
 
-// RemovePackageForSim provides a mock function with given fields: req
-func (_m *simManager) RemovePackageForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
-	ret := _m.Called(req)
+// RemovePackageForSim provides a mock function with given fields: ctx, req
+func (_m *simManager) RemovePackageForSim(ctx context.Context, req *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemovePackageForSim")
@@ -322,19 +324,19 @@ func (_m *simManager) RemovePackageForSim(req *gen.PackageRequest) (*gen.Package
 
 	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -342,9 +344,9 @@ func (_m *simManager) RemovePackageForSim(req *gen.PackageRequest) (*gen.Package
 	return r0, r1
 }
 
-// SetPackageInUseForSim provides a mock function with given fields: req
-func (_m *simManager) SetPackageInUseForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
-	ret := _m.Called(req)
+// SetPackageInUseForSim provides a mock function with given fields: ctx, req
+func (_m *simManager) SetPackageInUseForSim(ctx context.Context, req *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetPackageInUseForSim")
@@ -352,19 +354,19 @@ func (_m *simManager) SetPackageInUseForSim(req *gen.PackageRequest) (*gen.Packa
 
 	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -372,9 +374,9 @@ func (_m *simManager) SetPackageInUseForSim(req *gen.PackageRequest) (*gen.Packa
 	return r0, r1
 }
 
-// TerminateSim provides a mock function with given fields: simId
-func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, error) {
-	ret := _m.Called(simId)
+// TerminateSim provides a mock function with given fields: ctx, simId
+func (_m *simManager) TerminateSim(ctx context.Context, simId string) (*gen.TerminateSimResponse, error) {
+	ret := _m.Called(ctx, simId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TerminateSim")
@@ -382,19 +384,19 @@ func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, err
 
 	var r0 *gen.TerminateSimResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*gen.TerminateSimResponse, error)); ok {
-		return rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*gen.TerminateSimResponse, error)); ok {
+		return rf(ctx, simId)
 	}
-	if rf, ok := ret.Get(0).(func(string) *gen.TerminateSimResponse); ok {
-		r0 = rf(simId)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *gen.TerminateSimResponse); ok {
+		r0 = rf(ctx, simId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.TerminateSimResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(simId)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, simId)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -402,9 +404,9 @@ func (_m *simManager) TerminateSim(simId string) (*gen.TerminateSimResponse, err
 	return r0, r1
 }
 
-// ToggleSimServiceStatus provides a mock function with given fields: simId, status
-func (_m *simManager) ToggleSimServiceStatus(simId string, status string) (*gen.ToggleSimServiceStatusResponse, error) {
-	ret := _m.Called(simId, status)
+// ToggleSimServiceStatus provides a mock function with given fields: ctx, simId, status
+func (_m *simManager) ToggleSimServiceStatus(ctx context.Context, simId string, status string) (*gen.ToggleSimServiceStatusResponse, error) {
+	ret := _m.Called(ctx, simId, status)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ToggleSimServiceStatus")
@@ -412,19 +414,19 @@ func (_m *simManager) ToggleSimServiceStatus(simId string, status string) (*gen.
 
 	var r0 *gen.ToggleSimServiceStatusResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, string) (*gen.ToggleSimServiceStatusResponse, error)); ok {
-		return rf(simId, status)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (*gen.ToggleSimServiceStatusResponse, error)); ok {
+		return rf(ctx, simId, status)
 	}
-	if rf, ok := ret.Get(0).(func(string, string) *gen.ToggleSimServiceStatusResponse); ok {
-		r0 = rf(simId, status)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) *gen.ToggleSimServiceStatusResponse); ok {
+		r0 = rf(ctx, simId, status)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.ToggleSimServiceStatusResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, string) error); ok {
-		r1 = rf(simId, status)
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, simId, status)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -432,9 +434,9 @@ func (_m *simManager) ToggleSimServiceStatus(simId string, status string) (*gen.
 	return r0, r1
 }
 
-// UnsetPackageInUseForSim provides a mock function with given fields: req
-func (_m *simManager) UnsetPackageInUseForSim(req *gen.PackageRequest) (*gen.PackageResponse, error) {
-	ret := _m.Called(req)
+// UnsetPackageInUseForSim provides a mock function with given fields: ctx, req
+func (_m *simManager) UnsetPackageInUseForSim(ctx context.Context, req *gen.PackageRequest) (*gen.PackageResponse, error) {
+	ret := _m.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UnsetPackageInUseForSim")
@@ -442,19 +444,19 @@ func (_m *simManager) UnsetPackageInUseForSim(req *gen.PackageRequest) (*gen.Pac
 
 	var r0 *gen.PackageResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) (*gen.PackageResponse, error)); ok {
-		return rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) (*gen.PackageResponse, error)); ok {
+		return rf(ctx, req)
 	}
-	if rf, ok := ret.Get(0).(func(*gen.PackageRequest) *gen.PackageResponse); ok {
-		r0 = rf(req)
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.PackageRequest) *gen.PackageResponse); ok {
+		r0 = rf(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*gen.PackageResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*gen.PackageRequest) error); ok {
-		r1 = rf(req)
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.PackageRequest) error); ok {
+		r1 = rf(ctx, req)
 	} else {
 		r1 = ret.Error(1)
 	}

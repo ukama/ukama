@@ -9,6 +9,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -86,7 +87,7 @@ func TestMemberRegistry_GetMember(t *testing.T) {
 		mockClient.On("GetMember", mock.Anything, &pb.MemberRequest{MemberId: "test-member-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetMember("test-member-id")
+		response, err := registry.GetMember(context.Background(), "test-member-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -101,7 +102,7 @@ func TestMemberRegistry_GetMember(t *testing.T) {
 		mockClient.On("GetMember", mock.Anything, &pb.MemberRequest{MemberId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetMember("non-existent-id")
+		response, err := registry.GetMember(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -126,7 +127,7 @@ func TestMemberRegistry_GetMemberByUserId(t *testing.T) {
 		mockClient.On("GetMemberByUserId", mock.Anything, &pb.GetMemberByUserIdRequest{MemberId: "test-user-uuid"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetMemberByUserId("test-user-uuid")
+		response, err := registry.GetMemberByUserId(context.Background(), "test-user-uuid")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -141,7 +142,7 @@ func TestMemberRegistry_GetMemberByUserId(t *testing.T) {
 		mockClient.On("GetMemberByUserId", mock.Anything, &pb.GetMemberByUserIdRequest{MemberId: "non-existent-user"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetMemberByUserId("non-existent-user")
+		response, err := registry.GetMemberByUserId(context.Background(), "non-existent-user")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -173,7 +174,7 @@ func TestMemberRegistry_GetMembers(t *testing.T) {
 		mockClient.On("GetMembers", mock.Anything, &pb.GetMembersRequest{}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetMembers()
+		response, err := registry.GetMembers(context.Background())
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -188,7 +189,7 @@ func TestMemberRegistry_GetMembers(t *testing.T) {
 		mockClient.On("GetMembers", mock.Anything, &pb.GetMembersRequest{}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetMembers()
+		response, err := registry.GetMembers(context.Background())
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -215,7 +216,7 @@ func TestMemberRegistry_AddMember(t *testing.T) {
 				req.Role == upb.RoleType_ROLE_USER
 		})).Return(expectedResponse, nil)
 
-		response, err := registry.AddMember("test-user-uuid", "ROLE_USER")
+		response, err := registry.AddMember(context.Background(), "test-user-uuid", "ROLE_USER")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -229,7 +230,7 @@ func TestMemberRegistry_AddMember(t *testing.T) {
 		expectedError := status.Error(codes.AlreadyExists, "member already exists")
 		mockClient.On("AddMember", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := registry.AddMember("existing-user-uuid", "ROLE_USER")
+		response, err := registry.AddMember(context.Background(), "existing-user-uuid", "ROLE_USER")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -250,7 +251,7 @@ func TestMemberRegistry_UpdateMember(t *testing.T) {
 				req.IsDeactivated == true
 		})).Return(nil, nil)
 
-		err := registry.UpdateMember("test-member-id", true, "ROLE_ADMIN")
+		err := registry.UpdateMember(context.Background(), "test-member-id", true, "ROLE_ADMIN")
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -263,7 +264,7 @@ func TestMemberRegistry_UpdateMember(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "member not found")
 		mockClient.On("UpdateMember", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		err := registry.UpdateMember("non-existent-id", false, "ROLE_USER")
+		err := registry.UpdateMember(context.Background(), "non-existent-id", false, "ROLE_USER")
 
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)
@@ -287,7 +288,7 @@ func TestMemberRegistry_RemoveMember(t *testing.T) {
 		mockClient.On("RemoveMember", mock.Anything, &pb.MemberRequest{MemberId: "test-member-id"}).
 			Return(expectedResponse, nil)
 
-		err := registry.RemoveMember("test-member-id")
+		err := registry.RemoveMember(context.Background(), "test-member-id")
 
 		assert.NoError(t, err)
 		mockClient.AssertExpectations(t)
@@ -301,7 +302,7 @@ func TestMemberRegistry_RemoveMember(t *testing.T) {
 		mockClient.On("RemoveMember", mock.Anything, &pb.MemberRequest{MemberId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		err := registry.RemoveMember("non-existent-id")
+		err := registry.RemoveMember(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Equal(t, expectedError, err)

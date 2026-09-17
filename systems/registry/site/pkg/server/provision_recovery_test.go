@@ -135,7 +135,7 @@ func TestProvisionPublicationRecovery(t *testing.T) {
 			}
 			sites.On("Get", op.Site.Id).Return(&op.Site, lookupErr).Once()
 			if lookupErr == nil {
-				bus.On("PublishRequest", mock.Anything, mock.Anything).Return(publishErr).Once()
+				bus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(publishErr).Once()
 			}
 			metrics := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }))
 			defer metrics.Close()

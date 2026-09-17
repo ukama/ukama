@@ -96,7 +96,7 @@ func TestSiteRegistry_GetSite(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &pb.GetRequest{SiteId: "test-site-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.GetSite("test-site-id")
+		response, err := registry.GetSite(context.Background(), "test-site-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -111,7 +111,7 @@ func TestSiteRegistry_GetSite(t *testing.T) {
 		mockClient.On("Get", mock.Anything, &pb.GetRequest{SiteId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.GetSite("non-existent-id")
+		response, err := registry.GetSite(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -147,7 +147,7 @@ func TestSiteRegistry_List(t *testing.T) {
 		mockClient.On("List", mock.Anything, &pb.ListRequest{NetworkId: "network-1", IsDeactivated: false}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.List("network-1", false)
+		response, err := registry.List(context.Background(), "network-1", false)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -162,7 +162,7 @@ func TestSiteRegistry_List(t *testing.T) {
 		mockClient.On("List", mock.Anything, &pb.ListRequest{NetworkId: "network-1", IsDeactivated: false}).
 			Return(nil, expectedError)
 
-		response, err := registry.List("network-1", false)
+		response, err := registry.List(context.Background(), "network-1", false)
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -210,6 +210,7 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 		})).Return(expectedResponse, nil)
 
 		response, err := registry.AddSite(
+			context.Background(),
 			"network-1",
 			"New Site",
 			"backhaul-1",
@@ -237,6 +238,7 @@ func TestSiteRegistry_AddSite(t *testing.T) {
 		mockClient.On("Add", mock.Anything, mock.Anything).Return(nil, expectedError)
 
 		response, err := registry.AddSite(
+			context.Background(),
 			"network-1",
 			"Invalid Site",
 			"backhaul-1",
@@ -275,7 +277,7 @@ func TestSiteRegistry_UpdateSite(t *testing.T) {
 				req.Name == "Updated Site Name"
 		})).Return(expectedResponse, nil)
 
-		response, err := registry.UpdateSite("test-site-id", "Updated Site Name")
+		response, err := registry.UpdateSite(context.Background(), "test-site-id", "Updated Site Name")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -289,7 +291,7 @@ func TestSiteRegistry_UpdateSite(t *testing.T) {
 		expectedError := status.Error(codes.NotFound, "site not found")
 		mockClient.On("Update", mock.Anything, mock.Anything).Return(nil, expectedError)
 
-		response, err := registry.UpdateSite("non-existent-id", "Updated Name")
+		response, err := registry.UpdateSite(context.Background(), "non-existent-id", "Updated Name")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)
@@ -308,7 +310,7 @@ func TestSiteRegistry_RemoveSite(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{SiteId: "test-site-id"}).
 			Return(expectedResponse, nil)
 
-		response, err := registry.RemoveSite("test-site-id")
+		response, err := registry.RemoveSite(context.Background(), "test-site-id")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedResponse, response)
@@ -323,7 +325,7 @@ func TestSiteRegistry_RemoveSite(t *testing.T) {
 		mockClient.On("Delete", mock.Anything, &pb.DeleteRequest{SiteId: "non-existent-id"}).
 			Return(nil, expectedError)
 
-		response, err := registry.RemoveSite("non-existent-id")
+		response, err := registry.RemoveSite(context.Background(), "non-existent-id")
 
 		assert.Error(t, err)
 		assert.Nil(t, response)

@@ -9,6 +9,7 @@
 package rest
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -60,18 +61,18 @@ type Clients struct {
 }
 
 type notify interface {
-	Add(nodeId, severity, ntype, serviceName string, details json.RawMessage, status, epochTime uint32) (*npb.AddResponse, error)
-	Get(id string) (*npb.GetResponse, error)
-	List(nodeId, serviceName, nType string, count uint32, sort bool) (*npb.ListResponse, error)
-	Delete(id string) (*npb.DeleteResponse, error)
-	Purge(nodeId, serviceName, nType string) (*npb.ListResponse, error)
+	Add(ctx context.Context, nodeId, severity, ntype, serviceName string, details json.RawMessage, status, epochTime uint32) (*npb.AddResponse, error)
+	Get(ctx context.Context, id string) (*npb.GetResponse, error)
+	List(ctx context.Context, nodeId, serviceName, nType string, count uint32, sort bool) (*npb.ListResponse, error)
+	Delete(ctx context.Context, id string) (*npb.DeleteResponse, error)
+	Purge(ctx context.Context, nodeId, serviceName, nType string) (*npb.ListResponse, error)
 }
 
 type health interface {
-	StoreHealthReport(req *healthPb.StoreHealthReportRequest) (*healthPb.StoreHealthReportResponse, error)
-	ListReports(request *healthPb.ListReportsRequest) (*healthPb.ListReportsResponse, error)
-	ListApps(request *healthPb.ListAppsRequest) (*healthPb.ListAppsResponse, error)
-	ListInterfaces(request *healthPb.ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error)
+	StoreHealthReport(ctx context.Context, req *healthPb.StoreHealthReportRequest) (*healthPb.StoreHealthReportResponse, error)
+	ListReports(ctx context.Context, request *healthPb.ListReportsRequest) (*healthPb.ListReportsResponse, error)
+	ListApps(ctx context.Context, request *healthPb.ListAppsRequest) (*healthPb.ListAppsResponse, error)
+	ListInterfaces(ctx context.Context, request *healthPb.ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -219,7 +220,7 @@ func (r *Router) postHealthReportHandler(c *gin.Context, req *StoreHealthReportR
 
 	payload := req.HealthPayloadBytes()
 
-	return r.clients.Health.StoreHealthReport(&healthPb.StoreHealthReportRequest{
+	return r.clients.Health.StoreHealthReport(c.Request.Context(), &healthPb.StoreHealthReportRequest{
 		NodeId:  nID.StringLowercase(),
 		Payload: payload,
 	})
@@ -235,7 +236,7 @@ func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReports
 		reportedAt = v
 	}
 
-	return r.clients.Health.ListReports(&healthPb.ListReportsRequest{
+	return r.clients.Health.ListReports(c.Request.Context(), &healthPb.ListReportsRequest{
 		ReportId:   req.ReportId,
 		NodeId:     req.NodeId,
 		ReportedAt: reportedAt,
@@ -244,7 +245,7 @@ func (r *Router) listHealthReportsHandler(c *gin.Context, req *ListHealthReports
 }
 
 func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthPb.ListAppsResponse, error) {
-	return r.clients.Health.ListApps(&healthPb.ListAppsRequest{
+	return r.clients.Health.ListApps(c.Request.Context(), &healthPb.ListAppsRequest{
 		ReportId: req.ReportId,
 		NodeId:   req.NodeId,
 		AppName:  req.AppName,
@@ -252,7 +253,7 @@ func (r *Router) listAppsHandler(c *gin.Context, req *ListAppsRequest) (*healthP
 }
 
 func (r *Router) listInterfacesHandler(c *gin.Context, req *ListInterfacesRequest) (*healthPb.ListInterfacesResponse, error) {
-	return r.clients.Health.ListInterfaces(&healthPb.ListInterfacesRequest{
+	return r.clients.Health.ListInterfaces(c.Request.Context(), &healthPb.ListInterfacesRequest{
 		ReportId:      req.ReportId,
 		NodeId:        req.NodeId,
 		InterfaceName: req.InterfaceName,
@@ -278,22 +279,22 @@ func (r *Router) pingHandler(c *gin.Context) error {
 }
 
 func (r *Router) postNotification(c *gin.Context, req *AddNotificationReq) (*npb.AddResponse, error) {
-	return r.clients.Notify.Add(req.NodeId, req.Severity,
+	return r.clients.Notify.Add(c.Request.Context(), req.NodeId, req.Severity,
 		req.Type, req.ServiceName, req.Details, req.Status, req.Time)
 }
 
 func (r *Router) getNotification(c *gin.Context, req *GetNotificationReq) (*npb.GetResponse, error) {
-	return r.clients.Notify.Get(req.NotificationId)
+	return r.clients.Notify.Get(c.Request.Context(), req.NotificationId)
 }
 
 func (r *Router) getNotifications(c *gin.Context, req *GetNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.Notify.List(req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
+	return r.clients.Notify.List(c.Request.Context(), req.NodeId, req.ServiceName, req.Type, req.Count, req.Sort)
 }
 
 func (r *Router) deleteNotification(c *gin.Context, req *GetNotificationReq) (*npb.DeleteResponse, error) {
-	return r.clients.Notify.Delete(req.NotificationId)
+	return r.clients.Notify.Delete(c.Request.Context(), req.NotificationId)
 }
 
 func (r *Router) deleteNotifications(c *gin.Context, req *DelNotificationsReq) (*npb.ListResponse, error) {
-	return r.clients.Notify.Purge(req.NodeId, req.ServiceName, req.Type)
+	return r.clients.Notify.Purge(c.Request.Context(), req.NodeId, req.ServiceName, req.Type)
 }

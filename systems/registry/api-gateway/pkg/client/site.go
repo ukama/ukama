@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	"time"
 
 	"google.golang.org/grpc"
@@ -27,7 +28,8 @@ type SiteRegistry struct {
 }
 
 func NewSiteRegistry(siteHost string, timeout time.Duration) *SiteRegistry {
-	conn, err := grpc.NewClient(siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(siteHost, grpc.WithTransportCredentials(insecure.NewCredentials()),
+		ugrpc.TracingDialOption())
 	if err != nil {
 		log.Fatalf("Failed to connect to Site Service: %v", err)
 	}
@@ -58,23 +60,23 @@ func (s *SiteRegistry) Close() {
 	}
 }
 
-func (i *SiteRegistry) GetSite(siteId string) (*pb.GetResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *SiteRegistry) GetSite(ctx context.Context, siteId string) (*pb.GetResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Get(ctx, &pb.GetRequest{SiteId: siteId})
 }
 
-func (i *SiteRegistry) List(networkId string, isDeactivate bool) (*pb.ListResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *SiteRegistry) List(ctx context.Context, networkId string, isDeactivate bool) (*pb.ListResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.List(ctx, &pb.ListRequest{NetworkId: networkId, IsDeactivated: isDeactivate})
 }
 
-func (i *SiteRegistry) AddSite(networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string,
+func (i *SiteRegistry) AddSite(ctx context.Context, networkId, name, backhaulId, powerId, accessId, switchId, location, spectrumId string,
 	isDeactivated bool, latitude, longitude string, installDate string) (*pb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Add(ctx, &pb.AddRequest{
@@ -99,8 +101,8 @@ func (i *SiteRegistry) AddSiteContext(ctx context.Context, req *pb.AddRequest) (
 	return i.client.Add(ctx, req)
 }
 
-func (i *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *SiteRegistry) UpdateSite(ctx context.Context, siteId, name string) (*pb.UpdateResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Update(ctx, &pb.UpdateRequest{
@@ -109,8 +111,8 @@ func (i *SiteRegistry) UpdateSite(siteId, name string) (*pb.UpdateResponse, erro
 	})
 }
 
-func (i *SiteRegistry) RemoveSite(siteId string) (*pb.DeleteResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), i.timeout)
+func (i *SiteRegistry) RemoveSite(ctx context.Context, siteId string) (*pb.DeleteResponse, error) {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), i.timeout)
 	defer cancel()
 
 	return i.client.Delete(ctx, &pb.DeleteRequest{SiteId: siteId})
