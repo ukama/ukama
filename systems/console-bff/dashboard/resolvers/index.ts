@@ -8,6 +8,7 @@
 import { CommerceViewResolver } from "./commerceView";
 import { InventoryViewResolver } from "./inventoryView";
 import { MembersViewResolver } from "./membersView";
+import { MetricsLastResolver } from "./metricsLast";
 import { MetricsRangeResolver } from "./metricsRange";
 import { NetworkOverviewResolver } from "./networkOverview";
 import { NodeViewResolver, NodesViewResolver } from "./nodeViews";
@@ -21,6 +22,7 @@ import { SubscribersViewResolver } from "./subscribersView";
  *  Phase 3 (business/customer lens). */
 const dashboardResolvers = [
   MetricsRangeResolver,
+  MetricsLastResolver,
   CommerceViewResolver,
   MembersViewResolver,
   InventoryViewResolver,

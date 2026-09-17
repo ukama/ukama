@@ -18,18 +18,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Skeleton from '@mui/material/Skeleton';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { useApolloClient } from '@apollo/client';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { useGetComponentsByUserIdQuery } from '@/client/graphql/components.generated';
 import { useGetNodesQuery } from '@/client/graphql/nodes.generated';
 import { OnboardingStatusDocument } from '@/client/graphql/onboarding-status.generated';
-import { useAddSiteMutation } from '@/client/graphql/sites.generated';
 import { Component_Type } from '@/client/graphql/types';
 import { Field, SelectInput } from '@/components/form/FormField';
 import ConfigureActions from '../../_components/ConfigureActions';
 import { parseCoords } from '../../_components/coords';
+import CreateSiteProgress from '../../_components/CreateSiteProgress';
 import { stepUrl, useConfigureParams } from '../../_components/state';
+import { useCreateSite } from '../../_components/useCreateSite';
 
 const schema = z.object({
   powerId: z.string().min(1, 'Select a power component'),
@@ -107,14 +109,15 @@ export default function ConfigureSiteSettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [components.length]);
 
-  const [addSite, { loading: saving }] = useAddSiteMutation({
-    refetchQueries: [{ query: OnboardingStatusDocument }],
-    onCompleted: () => router.push(stepUrl('/configure/sims', { flow: params.flow })),
-    onError: (err) => setSubmitError(err.message),
-  });
+  // Creation runs as three visible steps: check the nodes, send the site,
+  // then wait for it to land (the registry configures the nodes first).
+  const create = useCreateSite(params.networkid);
+  const client = useApolloClient();
+  const saving = create.running;
 
   const onSubmit = (values: FormValues) => {
     setSubmitError(null);
+    create.reset();
     // access = inventory component whose partNumber is the tower id (legacy).
     const access = components.find(
       (c) =>
@@ -136,9 +139,9 @@ export default function ConfigureSiteSettingsPage() {
     // Normalize possibly-swapped coordinates before persisting (same rule the
     // name step uses for the map/address).
     const coords = parseCoords(tower?.latitude, tower?.longitude);
-    void addSite({
-      variables: {
-        data: {
+    void (async () => {
+      const ok = await create.run(
+        {
           name: params.sitename,
           network_id: params.networkid,
           access_id: access.id,
@@ -151,8 +154,14 @@ export default function ConfigureSiteSettingsPage() {
           longitude: String(coords?.lng ?? tower?.longitude ?? '0'),
           install_date: new Date().toISOString(),
         },
-      },
-    });
+        params.nid,
+      );
+
+      if (!ok) return;
+
+      await client.refetchQueries({ include: [OnboardingStatusDocument] });
+      router.push(stepUrl('/configure/sims', { flow: params.flow }));
+    })();
   };
 
   if (incomplete || nodesLoading || compLoading) return <StepSkeleton />;
@@ -165,9 +174,9 @@ export default function ConfigureSiteSettingsPage() {
       <h1 className="cfg-title">Configure site settings</h1>
       <p className="cfg-copy">
         If you used the default Ukama hardware, these are already selected —
-        just continue. If you used your own switch, power, or backhaul, pick
-        the matching option. Note: we can&apos;t track real-time KPIs for
-        custom components.
+        just continue. If you used your own switch, power, or backhaul, pick the
+        matching option. Note: we can&apos;t track real-time KPIs for custom
+        components.
       </p>
       <form
         onSubmit={(e) => void handleSubmit(onSubmit)(e)}
@@ -201,9 +210,14 @@ export default function ConfigureSiteSettingsPage() {
             {...register('powerId')}
           />
         </Field>
-        {submitError && <p className="cfg-error">{submitError}</p>}
+        {(saving || create.error) && (
+          <CreateSiteProgress steps={create.steps} />
+        )}
+        {(submitError || create.error) && (
+          <p className="cfg-error">{submitError ?? create.error}</p>
+        )}
         <ConfigureActions
-          nextLabel="Create site"
+          nextLabel={create.error ? 'Try again' : 'Create site'}
           onNext={() => void handleSubmit(onSubmit)()}
           busy={saving}
         />

@@ -48,6 +48,10 @@ const DBM: Pick<MetricMeta, "unit" | "format" | "threshold"> = {
 export const METRIC_CATALOG: Record<string, MetricMeta> = {
   // --- node health ---
   uptime: { label: "Uptime", unit: "s", format: "number" },
+  // System uptime counters as the sanitizer republishes them: com_uptime for
+  // the tower and controller, ctl_uptime for the amplifier.
+  com_uptime: { label: "Uptime", unit: "s", format: "number" },
+  ctl_uptime: { label: "Uptime", unit: "s", format: "number" },
   cpu_temperature: { label: "Temp. (CPU)", ...TEMP },
   fem1_temperature: { label: "FEM 1 temp.", ...TEMP },
   fem2_temperature: { label: "FEM 2 temp.", ...TEMP },
