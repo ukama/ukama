@@ -64,7 +64,7 @@ func (n *NetworkRegistry) Close() {
 
 func (n *NetworkRegistry) AddNetwork(ctx context.Context, netName string, allowedCountries, allowedNetworks []string,
 	budget, overdraft float64, trafficPolicy uint32, paymentLinks bool) (*netpb.AddResponse, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), n.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), n.timeout)
 	defer cancel()
 
 	return n.client.Add(ctx, &netpb.AddRequest{
