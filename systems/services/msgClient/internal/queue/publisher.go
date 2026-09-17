@@ -9,6 +9,7 @@
 package queue
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -45,11 +46,11 @@ func NewQueuePublisher(s db.Service) (*QueuePublisher, error) {
 	return qp, nil
 }
 
-func (p *QueuePublisher) Publish(key string, payload proto.Message) error {
+func (p *QueuePublisher) Publish(ctx context.Context, key string, payload proto.Message) error {
 
 	err := make(chan error, 1)
 	go func(err chan error) {
-		e := p.pub.PublishProto(payload, key)
+		e := p.pub.PublishProto(ctx, payload, key)
 		if e != nil {
 			log.Errorf("Failed to publish message. Error %s", e.Error())
 			err <- e

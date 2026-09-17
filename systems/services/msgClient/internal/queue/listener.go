@@ -15,12 +15,16 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	hpb "google.golang.org/grpc/health/grpc_health_v1"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	hpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -57,7 +61,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 	t := time.Duration(s.GrpcTimeout) * time.Second
 
 	log.Info("Connecting to... ", s.ServiceUri)
-	conn, err := grpc.NewClient(s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(s.ServiceUri, grpc.WithTransportCredentials(insecure.NewCredentials()), ugrpc.TracingDialOption())
 	if err != nil {
 		log.Errorf("Could not connect to %s. Error %s Will try again at message reception.", s.ServiceUri, err.Error())
 	} else {
@@ -139,7 +143,20 @@ func (q *QueueListener) stopQueueListening() {
 }
 
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
+	// Continue the publisher's trace (traceparent in the AMQP headers) so the
+	// consumer's EventNotification lands in the same trace.
+	parent := otel.GetTextMapPropagator().Extract(context.Background(), mb.HeaderCarrier(delivery.Headers))
+	ctx, span := otel.Tracer("ukama/msgclient").Start(parent, "process "+delivery.Exchange,
+		trace.WithSpanKind(trace.SpanKindConsumer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "rabbitmq"),
+			attribute.String("messaging.destination.name", delivery.Exchange),
+			attribute.String("messaging.rabbitmq.destination.routing_key", delivery.RoutingKey),
+			attribute.String("messaging.consumer.service", q.serviceHost),
+		))
+	defer span.End()
+
+	ctx, cancel := context.WithTimeout(ctx, q.grpcTimeout)
 	defer cancel()
 
 	q.processEventMsg(ctx, delivery)
@@ -208,7 +225,7 @@ func (q *QueueListener) healthCheck() {
 
 func (q *QueueListener) reConnect() error {
 
-	conn, err := grpc.NewClient(q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(q.serviceHost, grpc.WithTransportCredentials(insecure.NewCredentials()), ugrpc.TracingDialOption())
 	if err != nil {
 		log.Errorf("Could not connect to %s. Error %s", q.serviceHost, err.Error())
 		return err

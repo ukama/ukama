@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -50,16 +52,16 @@ func (_m *QPub) Publish(payload interface{}, routingKey string) error {
 }
 
 // PublishProto provides a mock function with given fields: payload, routingKey
-func (_m *QPub) PublishProto(payload protoreflect.ProtoMessage, routingKey string) error {
-	ret := _m.Called(payload, routingKey)
+func (_m *QPub) PublishProto(ctx context.Context, payload protoreflect.ProtoMessage, routingKey string) error {
+	ret := _m.Called(ctx, payload, routingKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for PublishProto")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(protoreflect.ProtoMessage, string) error); ok {
-		r0 = rf(payload, routingKey)
+	if rf, ok := ret.Get(0).(func(context.Context, protoreflect.ProtoMessage, string) error); ok {
+		r0 = rf(ctx, payload, routingKey)
 	} else {
 		r0 = ret.Error(0)
 	}

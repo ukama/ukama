@@ -9,6 +9,7 @@
 package queue
 
 import (
+	"context"
 	"testing"
 
 	mocks "github.com/ukama/ukama/systems/common/mocks"
@@ -16,6 +17,7 @@ import (
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 var route1 = db.Route{
@@ -46,9 +48,9 @@ func TestQueuePublisher_Publish(t *testing.T) {
 		ServiceUuid: ServiceUuid,
 	}
 
-	pub.On("PublishProto", &msg, route1.Key).Return(nil).Once()
+	pub.On("PublishProto", mock.Anything, &msg, route1.Key).Return(nil).Once()
 
-	err := qp.Publish(route1.Key, &msg)
+	err := qp.Publish(context.Background(), route1.Key, &msg)
 
 	assert.NoError(t, err)
 	pub.AssertExpectations(t)

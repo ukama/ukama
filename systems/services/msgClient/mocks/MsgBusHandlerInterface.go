@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	anypb "google.golang.org/protobuf/types/known/anypb"
@@ -32,16 +34,16 @@ func (_m *MsgBusHandlerInterface) CreateServiceMsgBusHandler() error {
 }
 
 // Publish provides a mock function with given fields: service, key, msg
-func (_m *MsgBusHandlerInterface) Publish(service string, key string, msg *anypb.Any) error {
-	ret := _m.Called(service, key, msg)
+func (_m *MsgBusHandlerInterface) Publish(ctx context.Context, service string, key string, msg *anypb.Any) error {
+	ret := _m.Called(ctx, service, key, msg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Publish")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, string, *anypb.Any) error); ok {
-		r0 = rf(service, key, msg)
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, *anypb.Any) error); ok {
+		r0 = rf(ctx, service, key, msg)
 	} else {
 		r0 = ret.Error(0)
 	}

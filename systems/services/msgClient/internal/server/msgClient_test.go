@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 )
 
@@ -132,7 +133,7 @@ func TestMsgClientServer_Publish(t *testing.T) {
 		Msg:         &anypb.Any{},
 	}
 
-	msgIf.On("Publish", reqMsg.ServiceUuid, reqMsg.RoutingKey, reqMsg.Msg).Return(nil).Once()
+	msgIf.On("Publish", mock.Anything, reqMsg.ServiceUuid, reqMsg.RoutingKey, reqMsg.Msg).Return(nil).Once()
 
 	s := NewMsgClientServer(serviceRepo, routeRepo, shovelP, msgIf, sys)
 	_, err := s.PublishMsg(context.TODO(), &reqMsg)

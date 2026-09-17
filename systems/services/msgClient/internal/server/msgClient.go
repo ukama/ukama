@@ -160,7 +160,7 @@ func (m *MsgClientServer) UnregisterService(ctx context.Context, req *pb.Unregis
 func (m *MsgClientServer) PublishMsg(ctx context.Context, req *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {
 	log.Debugf("Publish request for %s service", req.ServiceUuid)
 
-	err := m.h.Publish(req.ServiceUuid, req.RoutingKey, req.Msg)
+	err := m.h.Publish(ctx, req.ServiceUuid, req.RoutingKey, req.Msg)
 	if err != nil {
 		return nil, err
 	}

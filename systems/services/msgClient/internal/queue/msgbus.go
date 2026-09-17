@@ -9,6 +9,7 @@
 package queue
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -21,7 +22,7 @@ type MsgBusHandlerInterface interface {
 	CreateServiceMsgBusHandler() error
 	StopServiceQueueHandler(service string) (err error)
 	UpdateServiceQueueHandler(s *db.Service) (err error)
-	Publish(service string, key string, msg *anypb.Any) error
+	Publish(ctx context.Context, service string, key string, msg *anypb.Any) error
 	RemoveServiceQueuePublisher(service string) error
 	RemoveServiceQueueListening(service string) error
 }
@@ -254,11 +255,11 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 	return nil
 }
 
-func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) error {
+func (m *MsgBusHandler) Publish(ctx context.Context, service string, key string, msg *anypb.Any) error {
 	p, ok := m.qp[service]
 	if ok {
 
-		err := p.Publish(key, msg)
+		err := p.Publish(ctx, key, msg)
 		if err != nil {
 			return err
 		}

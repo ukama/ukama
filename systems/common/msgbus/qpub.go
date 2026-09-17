@@ -9,16 +9,21 @@
 package msgbus
 
 import (
+	"context"
 	"encoding/json"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/wagslane/go-rabbitmq"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
+	"go.opentelemetry.io/otel/trace"
 	"google.golang.org/protobuf/proto"
 )
 
 type QPub interface {
 	Publish(payload any, routingKey string) error
-	PublishProto(payload proto.Message, routingKey string) error
+	PublishProto(ctx context.Context, payload proto.Message, routingKey string) error
 	PublishToQueue(queueName string, payload any) error
 	Close() error
 }
@@ -80,21 +85,39 @@ func (q *qPub) Publish(payload any, routingKey string) error {
 	return nil
 }
 
-func (q *qPub) PublishProto(payload proto.Message, routingKey string) error {
+// PublishProto publishes a proto message on the default exchange. The
+// caller's trace context is carried in the message headers (traceparent), so
+// consumers continue the same trace.
+func (q *qPub) PublishProto(ctx context.Context, payload proto.Message, routingKey string) error {
+	ctx, span := otel.Tracer("ukama/msgbus").Start(ctx, "publish "+DefaultExchange,
+		trace.WithSpanKind(trace.SpanKindProducer),
+		trace.WithAttributes(
+			attribute.String("messaging.system", "rabbitmq"),
+			attribute.String("messaging.destination.name", DefaultExchange),
+			attribute.String("messaging.rabbitmq.destination.routing_key", routingKey),
+		))
+	defer span.End()
 
 	b, err := proto.Marshal(payload)
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
+	headers := HeaderCarrier{
+		"source-service": q.serviceName,
+		"instance-id":    q.instanceId,
+	}
+	otel.GetTextMapPropagator().Inject(ctx, headers)
+
 	err = q.publisher.Publish(b, []string{routingKey},
-		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}{
-			"source-service": q.serviceName,
-			"instance-id":    q.instanceId,
-		}),
+		rabbitmq.WithPublishOptionsHeaders(map[string]interface{}(headers)),
 		rabbitmq.WithPublishOptionsExchange(DefaultExchange))
 
 	if err != nil {
+		span.SetStatus(codes.Error, err.Error())
+
 		return err
 	}
 
@@ -124,4 +147,3 @@ func (q *qPub) PublishToQueue(queueName string, payload any) error {
 
 	return nil
 }
-

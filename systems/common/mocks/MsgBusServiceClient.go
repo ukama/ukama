@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -78,6 +80,24 @@ func (_m *MsgBusServiceClient) Stop() error {
 	var r0 error
 	if rf, ok := ret.Get(0).(func() error); ok {
 		r0 = rf()
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// PublishRequestWithContext provides a mock function with given fields: ctx, route, msg
+func (_m *MsgBusServiceClient) PublishRequestWithContext(ctx context.Context, route string, msg protoreflect.ProtoMessage) error {
+	ret := _m.Called(ctx, route, msg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PublishRequestWithContext")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, protoreflect.ProtoMessage) error); ok {
+		r0 = rf(ctx, route, msg)
 	} else {
 		r0 = ret.Error(0)
 	}

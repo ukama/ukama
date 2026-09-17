@@ -32,6 +32,7 @@ type MsgBusServiceClient interface {
 	Start() error
 	Stop() error
 	PublishRequest(route string, msg protoreflect.ProtoMessage) error
+	PublishRequestWithContext(ctx context.Context, route string, msg protoreflect.ProtoMessage) error
 }
 
 type msgBusServiceClient struct {
@@ -160,8 +161,16 @@ func (m *msgBusServiceClient) Stop() error {
 }
 
 func (m *msgBusServiceClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
+	return m.PublishRequestWithContext(context.Background(), route, msg)
+}
+
+// PublishRequestWithContext publishes like PublishRequest but keeps the
+// caller's trace context, so the event is recorded in the same trace as the
+// request that raised it. Cancellation of ctx is deliberately not propagated:
+// a publish already decided on must complete even if the caller goes away.
+func (m *msgBusServiceClient) PublishRequestWithContext(ctx context.Context, route string, msg protoreflect.ProtoMessage) error {
 	log.Debugf("Publishing message on route %s to MessageClientRoutine for %s service instance %s  msgclient ID %s", route, m.service, m.instanceId, m.uuid)
-	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), m.timeout)
 	defer cancel()
 
 	anyMsg, err := anypb.New(msg)
