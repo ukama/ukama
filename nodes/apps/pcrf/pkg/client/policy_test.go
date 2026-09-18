@@ -17,6 +17,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
 	"github.com/ukama/ukama/systems/common/rest"
 )
 
@@ -71,4 +72,30 @@ func TestGetSubscriberProfile_Success_ReturnsProfile(t *testing.T) {
 	spr, err := c.GetSubscriberProfile("999991000000099")
 	assert.NoError(t, err)
 	assert.Equal(t, "999991000000099", spr.Imsi)
+}
+
+func TestPushCdr_Success_ReturnsNoError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c := newTestRemoteControllerClient(t, srv)
+
+	err := c.PushCdr(&api.CDR{Imsi: "999991000000099"})
+	assert.NoError(t, err)
+}
+
+func TestPushCdr_RemoteReturnsErrorStatus_ReturnsError(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusConflict)
+		_, _ = w.Write([]byte(`{"error":"duplicate cdr"}`))
+	}))
+	defer srv.Close()
+
+	c := newTestRemoteControllerClient(t, srv)
+
+	err := c.PushCdr(&api.CDR{Imsi: "999991000000099"})
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "409")
 }
