@@ -68,7 +68,7 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 			req.Imsi, err)
 	}
 
-	_, err = r.R.C.R().
+	resp, err := r.R.C.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
 		}).
@@ -78,6 +78,13 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 		log.Errorf("Post CDR failure. error: %v", err)
 
 		return fmt.Errorf("post CDR failure: %w", err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		log.Errorf("Post CDR failure for imsi %s. remote cdr returned http %d: %s",
+			req.Imsi, resp.StatusCode(), resp.Body())
+
+		return fmt.Errorf("remote cdr returned http %d for imsi %s", resp.StatusCode(), req.Imsi)
 	}
 
 	return nil
