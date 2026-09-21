@@ -42,65 +42,79 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: before_restart
     events:
       - type: toggle_service
         sites: all
         state: on
-
       - type: start_ues
         ues: ue-000001
-
       - type: wait_ues_attached
         ues: ue-000001
-
     checks:
-      - type: node_status_equals
-        type_selector: tower
-        count_per_network: 1
-        connectivity: Online
-        state: Operational
-        immediate: true
-        timeout_seconds: 180
-
       - type: traffic_allowed
         ues: ue-000001
         amount_mb: 1
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
 
   - name: restart_tower
     events:
       - type: restart_nodes
         type_selector: tower
         count_per_network: 1
-
       - type: wait_node_connectivity
         type_selector: tower
         count_per_network: 1
         connectivity: Offline
         seconds: 120
-
       - type: wait_node_connectivity
         type_selector: tower
         count_per_network: 1
         connectivity: Online
         seconds: 300
-
-      - type: wait_nodes_ready
-        type_selector: tower
-        count_per_network: 1
-
-      - type: wait_ues_attached
-        ues: ue-000001
-
     checks:
       - type: node_status_equals
-        type_selector: tower
-        count_per_network: 1
+        nodes: all
         connectivity: Online
         state: Operational
+        timeout_seconds: 300
         immediate: true
-        timeout_seconds: 180
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
 
+  - name: enable_service_and_verify_traffic
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: wait_ues_attached
+        ues: ue-000001
+        seconds: 300
+    checks:
       - type: traffic_allowed
         ues: ue-000001
         amount_mb: 1
