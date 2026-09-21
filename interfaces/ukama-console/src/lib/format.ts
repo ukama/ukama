@@ -47,3 +47,22 @@ export const reportWindowLabel = (span?: string | null): string => {
   const unit = m[2] === 'w' ? 'week' : 'day';
   return `Last ${n} ${unit}${n === 1 ? '' : 's'}`;
 };
+
+/**
+ * Seconds of uptime as the two largest non-zero units, e.g. "3d 4h",
+ * "4h 12m", "12m 5s", "45s". Sub-minute uptime shows seconds rather than a
+ * misleading "0m". Non-finite or negative input reads as zero.
+ */
+export const formatUptime = (seconds: number): string => {
+  let s = Number.isFinite(seconds) ? Math.max(0, Math.round(seconds)) : 0;
+  const d = Math.floor(s / 86_400);
+  s -= d * 86_400;
+  const h = Math.floor(s / 3_600);
+  s -= h * 3_600;
+  const m = Math.floor(s / 60);
+  s -= m * 60;
+  if (d) return `${d}d ${h}h`;
+  if (h) return `${h}h ${m}m`;
+  if (m) return `${m}m ${s}s`;
+  return `${s}s`;
+};

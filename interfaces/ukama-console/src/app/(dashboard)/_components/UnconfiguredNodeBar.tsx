@@ -34,12 +34,14 @@ export default function UnconfiguredNodeBar() {
       sessionStorage.getItem(DISMISS_KEY) === '1',
   );
 
-  // Online + "unknown" state = reachable but not configured yet. Offline
-  // nodes can't be configured, so they don't prompt.
+  // Online + READY = booted and reachable but not configured yet. Offline
+  // nodes can't be configured, so they don't prompt. (READY replaced Unknown
+  // as the ready-to-configure state with the node lifecycle model; Unknown now
+  // means the node has not reported yet.)
   const pending = (data?.nodesView.nodes.nodes ?? []).filter(
     (n) =>
       n.status.connectivity?.toLowerCase() === 'online' &&
-      n.status.state?.toLowerCase() === 'unknown',
+      n.status.state?.toLowerCase() === 'ready',
   );
   if (dismissed || pending.length === 0) return null;
 

@@ -113,9 +113,7 @@ function SiteCard({ s, onOpen }: { s: Site; onOpen: (s: Site) => void }) {
           color: 'var(--uk-ink-2)',
         }}
       >
-        <span>
-          {s.subs} customers · {s.nodes} nodes
-        </span>
+        <span>{s.nodes} nodes</span>
       </div>
     </div>
   );
@@ -142,15 +140,10 @@ export default function SitesScreen() {
         { total: c.total, online: c.online },
       ]),
     );
-    const customerCount = data?.sitesView.customers.count ?? 0;
     return (sitesSection?.sites ?? []).map((s) =>
-      toSite(s, countsBySite.get(s.id), customerCount),
+      toSite(s, countsBySite.get(s.id)),
     );
-  }, [
-    sitesSection?.sites,
-    data?.sitesView.nodeCounts.counts,
-    data?.sitesView.customers.count,
-  ]);
+  }, [sitesSection?.sites, data?.sitesView.nodeCounts.counts]);
 
   const list = sites.filter((s) =>
     s.name.toLowerCase().includes(q.toLowerCase()),

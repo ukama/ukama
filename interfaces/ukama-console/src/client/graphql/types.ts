@@ -689,6 +689,11 @@ export type MetricThreshold = {
   normal: Scalars['Float']['output'];
 };
 
+export type MetricsLastInput = {
+  keys: Array<Scalars['String']['input']>;
+  nodeId: Scalars['String']['input'];
+};
+
 export type MetricsRangeInput = {
   from: Scalars['Int']['input'];
   keys: Array<Scalars['String']['input']>;
@@ -1578,6 +1583,7 @@ export type Query = {
   inventoryView: InventoryView;
   isPackageNameAvailable: PackageNameAvailabilityResDto;
   membersView: MembersView;
+  metricsLast: KpisSection;
   metricsRange: MetricsRes;
   networkOverview: NetworkOverview;
   nodeView: NodeView;
@@ -1869,6 +1875,11 @@ export type QueryGetUserArgs = {
 
 export type QueryIsPackageNameAvailableArgs = {
   name: Scalars['String']['input'];
+};
+
+
+export type QueryMetricsLastArgs = {
+  data: MetricsLastInput;
 };
 
 

@@ -24,6 +24,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Skeleton from '@mui/material/Skeleton';
 
 import { useNodeDetailQuery } from '@/client/graphql/node-detail.generated';
+import { useMetricsLastQuery } from '@/client/graphql/last-metrics.generated';
 import { useMetricsRangeQuery } from '@/client/graphql/range-metrics.generated';
 import { useRestartNodeMutation } from '@/client/graphql/controller.generated';
 import {
@@ -46,7 +47,9 @@ import { useNodeOperationStatus } from '@/features/operations/useOperationStatus
 import { metricLabel } from '@/lib/labels';
 import { toUkamaNode } from '@/lib/mappers/nodes';
 import { type LatestEntry, seriesLatest } from '@/lib/metrics';
+import { formatUptime } from '@/lib/format';
 import { formatDate } from '@/lib/parsers';
+import { POLL_LIVE_MS } from '@/lib/polling';
 import { RANGE_SECONDS } from '@/lib/ranges';
 import { ConnectivityDot, StateChip } from './nodeStatus';
 
@@ -174,6 +177,46 @@ function RailLatest({
     for (const m of data?.metricsRange.metrics ?? []) {
       onLatest(m.type, seriesLatest(m));
     }
+  }, [data, onLatest]);
+  return null;
+}
+
+/** Uptime has no chart: read the node's system uptime counter through the
+ *  instant endpoint. The sanitizer republishes it as com_uptime for the tower
+ *  and controller and ctl_uptime for the amplifier. Reported under the
+ *  'uptime' rail key so the Node information card reads it like any KPI. */
+const UPTIME_KEY: Record<NodeKind, string | null> = {
+  tnode: 'com_uptime',
+  cnode: 'com_uptime',
+  anode: 'ctl_uptime',
+  hnode: null,
+};
+
+function UptimeLatest({
+  nodeId,
+  kind,
+  onLatest,
+}: {
+  nodeId: string;
+  kind: NodeKind;
+  onLatest: (key: string, entry: LatestEntry) => void;
+}) {
+  const key = UPTIME_KEY[kind];
+  const { data } = useMetricsLastQuery({
+    variables: { data: { keys: key ? [key] : [], nodeId } },
+    skip: !key,
+    pollInterval: POLL_LIVE_MS,
+  });
+  useEffect(() => {
+    const m = data?.metricsLast.metrics?.[0];
+    if (!m) return;
+    onLatest('uptime', {
+      value: m.value,
+      success: m.success,
+      label: m.label,
+      unit: m.unit,
+      format: m.format,
+    });
   }, [data, onLatest]);
   return null;
 }
@@ -413,22 +456,10 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
     if (!unit) return `${v}`;
     return unit === '%' ? `${v}%` : `${v} ${unit}`;
   };
-  // Uptime is reported in seconds — show a human-readable "Nd Nh" / "Nh Nm" /
-  // "Nm" / "Ns". Sub-minute uptime renders as seconds (not a misleading "0m").
   const fmtUptime = (): string => {
     const e = latestByKey['uptime'];
     if (!e || !e.success) return '—';
-    let s = Math.max(0, Math.round(e.value));
-    const d = Math.floor(s / 86400);
-    s -= d * 86400;
-    const h = Math.floor(s / 3600);
-    s -= h * 3600;
-    const m = Math.floor(s / 60);
-    s -= m * 60;
-    if (d) return `${d}d ${h}h`;
-    if (h) return `${h}h ${m}m`;
-    if (m) return `${m}m`;
-    return `${s}s`;
+    return formatUptime(e.value);
   };
   // KV rows for a metric group (one per node-type key, value or "—").
   const groupRows = (group: MetricGroup) => {
@@ -465,10 +496,9 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
   const chartedKeys = activeGroup ? groupKeys(activeGroup, kind) : [];
   const showsUptime = sections.some((s) => s.key === 'info');
   const railKeys = Array.from(
-    new Set([
-      ...sections.flatMap((s) => (s.group ? groupKeys(s.group, kind) : [])),
-      ...(showsUptime ? ['uptime'] : []),
-    ]),
+    new Set(
+      sections.flatMap((s) => (s.group ? groupKeys(s.group, kind) : [])),
+    ),
   );
   const nonChartedKeys = railKeys.filter((k) => !chartedKeys.includes(k));
 
@@ -479,6 +509,9 @@ export default function NodeDetailScreen({ nodeId }: { nodeId: string }) {
         keys={nonChartedKeys}
         onLatest={reportLatest}
       />
+      {showsUptime && (
+        <UptimeLatest nodeId={n.id} kind={kind} onLatest={reportLatest} />
+      )}
       <PageHeader
         crumb={['Nodes', n.serial]}
         title={

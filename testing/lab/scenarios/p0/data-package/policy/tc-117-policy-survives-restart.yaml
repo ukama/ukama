@@ -36,6 +36,21 @@ runtime:
   start: [nodes]
   wait: [nodes_ready]
 phases:
+  - name: wait_for_assigned_site
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
+
   - name: use_restart_and_finish_allowance
     events:
       - type: toggle_service
@@ -52,8 +67,18 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 120
-      - type: restart_nodes
-        nodes: all
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        restart_available: true
+        timeout_seconds: 300
+        immediate: true
+
+  - name: restart_site_and_wait_for_recovery
+    events:
+      - type: restart_site
+        sites: all
       - type: wait_node_connectivity
         nodes: all
         connectivity: Offline
@@ -62,13 +87,28 @@ phases:
         nodes: all
         connectivity: Online
         seconds: 300
-      - type: wait_nodes_ready
+    checks:
+      - type: node_status_equals
         nodes: all
+        connectivity: Online
+        state: Operational
+        timeout_seconds: 300
+        immediate: true
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        service_available: true
+        timeout_seconds: 300
+        immediate: true
+
+  - name: enable_service_and_continue_policy_test
+    events:
       - type: toggle_service
         sites: all
         state: on
       - type: wait_ues_attached
         ues: all
+        seconds: 300
       - type: traffic
         ues: all
         amount_mb: 3

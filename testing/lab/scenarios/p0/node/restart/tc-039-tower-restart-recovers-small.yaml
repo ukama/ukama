@@ -1,6 +1,6 @@
 version: 1
 name: p0-tower-restart-recovers-small
-description: Verify a UE reattaches and traffic resumes after restarting the tower node.
+description: Restart the tower, verify the UE session clears, then turn service back on and verify UE reattachment and traffic recovery.
 seed: 308
 suite: p0
 priority: p0
