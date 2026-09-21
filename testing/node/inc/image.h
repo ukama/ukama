@@ -57,7 +57,7 @@
 #define RUN_TARGET_REMOTE "remote"
 
 #define SUPERVISOR_CMD "\"/usr/bin/supervisord\",\"-c\",\"/etc/supervisor.conf\""
-#define STARTER_CMD    "\"/sbin/starter.d\""
+#define STARTER_CMD    "\"/bin/sh\",\"-ec\",\"mkdir -p /run/ukama; export LIFECYCLED_BOOT_ID_FILE=/run/ukama/boot-id; cat /proc/sys/kernel/random/uuid > \\\"$LIFECYCLED_BOOT_ID_FILE\\\"; exec /sbin/starter.d \\\"$@\\\"\",\"starter.d\""
 
 int create_vnode_image(char *target, Configs *config, Node *node,
 					   char *runTarget, RuntimeType runtime);
