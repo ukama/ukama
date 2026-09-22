@@ -18,6 +18,8 @@
 #include <uuid/uuid.h>
 
 #include "callback.h"
+#include "websocket.h"
+#include "initClient.h"
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
@@ -31,18 +33,6 @@
 
 extern MapTable *NodesTable;
 
-/* define in websocket.c */
-extern void websocket_manager(const URequest *request, WSManager *manager,
-							  void *data);
-extern void websocket_incoming_message(const URequest *request,
-									   WSManager *manager, WSMessage *message,
-									   void *data);
-extern void  websocket_onclose(const URequest *request, WSManager *manager,
-							   void *data);
-
-/* network.c */
-extern int start_forward_service(Config *config, UInst **forwardInst);
-
 /*
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
@@ -50,7 +40,7 @@ extern int start_forward_service(Config *config, UInst **forwardInst);
 int callback_websocket(const URequest *request, UResponse *response,
                        void *data) {
 	int ret;
-	char *nodeID = NULL;
+	const char *nodeID = NULL;
 	Config *config = NULL;
     MapItem *map = NULL;
     char ip[INET_ADDRSTRLEN]={0};
@@ -188,9 +178,10 @@ int callback_forward(const URequest *request,
                      void *user_data) {
 
     MapItem *map=NULL;
-    char *host=NULL, *port=NULL, *url=NULL;
+    char *host=NULL, *port=NULL;
+    const char *url=NULL;
     char *requestStr=NULL;
-    char *responseStr=NULL;
+    const char *responseStr=NULL;
     int statusCode;
     Forward *forward = NULL;
     char uuidStr[36+1];
@@ -203,6 +194,8 @@ int callback_forward(const URequest *request,
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
+        free(host);
+        free(port);
         return U_CALLBACK_CONTINUE;
     }
 

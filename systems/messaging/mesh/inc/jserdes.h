@@ -64,8 +64,8 @@
 
 /* Function headers. */
 int serialize_system_response(char **response, Message *message,
-                              int code, int len, char *data);
-int serialize_websocket_message(char **str, URequest *request,
+                              int code, int len, const char *data);
+int serialize_websocket_message(char **str, const URequest *request,
                                 char *uuid);
 int serialize_device_info(json_t **json, NodeInfo *device);
 int deserialize_forward_request(MRequest **req, json_t *json);

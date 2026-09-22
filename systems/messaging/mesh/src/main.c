@@ -12,6 +12,7 @@
 #include <getopt.h>
 #include <ulfius.h>
 #include <signal.h>
+#include <pthread.h>
 #include <unistd.h>
 
 #include "mesh.h"
@@ -22,14 +23,6 @@
 
 #define VERSION "0.0.1"
 
-typedef struct {
-
-	UInst  *websocketInst;
-	UInst  *forwardInst;
-    UInst  *adminInst;
-	Config *config;
-} ProcessState;
-
 /* Defined in network.c */
 extern int start_forward_service(Config  *config, UInst *forwardInst);
 extern int start_admin_services(Config   *config, UInst *webInst);
@@ -37,7 +30,6 @@ extern int start_websocket_server(Config *config, UInst *websocketInst);
 
 /* Global variables. */
 MapTable *NodesTable=NULL;
-ProcessState *processState=NULL;
 
 void usage(void) {
 
@@ -47,7 +39,7 @@ void usage(void) {
 	printf("--V, --version Version.\n");
     printf("Environment variable needed are: \n");
     printf("\t %s \n\t %s \n\t %s \n\t %s \n\t %s \n\t %s\n\t %s \n\t %s \n"
-           "\t %s \n\t %s \n\t %s \n",
+           "\t %s \n\t %s \n\t %s \n\t %s \n",
            ENV_WEBSOCKET_PORT,
            ENV_SERVICES_PORT,
            ENV_ADMIN_PORT,
@@ -77,48 +69,6 @@ void set_log_level(char *slevel) {
 	log_set_level(ilevel);
 }
 
-void signal_term_handler(void) {
-
-	if (processState == NULL) exit(1);
-
-	if (processState->websocketInst) {
-		ulfius_stop_framework(processState->websocketInst);
-		ulfius_clean_instance(processState->websocketInst);
-	}
-
-	if (processState->forwardInst) {
-		ulfius_stop_framework(processState->forwardInst);
-		ulfius_clean_instance(processState->forwardInst);
-	}
-
-	if (processState->adminInst) {
-		ulfius_stop_framework(processState->adminInst);
-		ulfius_clean_instance(processState->adminInst);
-	}
-
-	if (processState->config) {
-		clear_config(processState->config);
-		free(processState->config);
-	}
-
-    free(processState);
-
-	exit(1);
-}
-
-void catch_sigterm(void) {
-
-	static struct sigaction saction;
-
-    memset(&saction, 0, sizeof(saction));
-
-    saction.sa_sigaction = signal_term_handler;
-	sigemptyset(&saction.sa_mask);
-    saction.sa_flags     = 0;
-
-    sigaction(SIGTERM, &saction, NULL);
-}
-
 int main (int argc, char *argv[]) {
 
 	int    exitStatus=0;
@@ -127,18 +77,20 @@ int main (int argc, char *argv[]) {
 	UInst  websocketInst;
 	UInst  forwardInst;
     UInst  adminInst;
+    sigset_t termSignals;
+    int signalNumber;
 
     memset(&websocketInst, 0, sizeof(websocketInst));
     memset(&forwardInst,   0, sizeof(forwardInst));
     memset(&adminInst,     0, sizeof(adminInst));
 
-	processState = (ProcessState *)calloc(1, sizeof(ProcessState));
-	if (processState == NULL) return 1;
-	processState->websocketInst = &websocketInst;
-	processState->forwardInst   = &forwardInst;
-    processState->adminInst     = &adminInst;
-
-	catch_sigterm();
+    /* Worker threads inherit the blocked signal; main owns shutdown. */
+    sigemptyset(&termSignals);
+    sigaddset(&termSignals, SIGTERM);
+    if (pthread_sigmask(SIG_BLOCK, &termSignals, NULL) != 0) {
+        log_error("Unable to block SIGTERM for synchronous shutdown");
+        return 1;
+    }
 
     /* Parse command line args. */
     while (TRUE) {
@@ -179,7 +131,6 @@ int main (int argc, char *argv[]) {
 		log_error("Memory allocation failure: %d", sizeof(Config));
 		exit(1);
 	}
-    processState->config = config;
 
 	/* Step-1: read config file. */
     if (!read_config_from_env(&config)) {
@@ -216,7 +167,10 @@ int main (int argc, char *argv[]) {
     /* Step-3: publish register event with IP and binding port */
     if (publish_register_event(DEFAULT_MESH_AMQP_EXCHANGE, config->servicesPort)) {
         log_debug("Mesh(server) running for Ukama Org: %s", config->orgName);
-        pause();
+        if (sigwait(&termSignals, &signalNumber) != 0) {
+            log_error("Unable to wait for SIGTERM");
+            exitStatus = 1;
+        }
     } else {
         log_error("Unable to publish boot event to AMQP");
     }

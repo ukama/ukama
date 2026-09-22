@@ -64,7 +64,7 @@ void release_map_item(MapTable *table, MapItem *map);
 MapItem *is_existing_item(MapTable *table, char *nodeID);
 MapItem *is_existing_item_by_port(MapTable *table, int port);
 MapItem *add_map_to_table(MapTable **table,
-                          char *nodeID, UInst **instance,
+                          const char *nodeID, UInst **instance,
                           char *nodeIP, int nodePort,
                           char *meshIP, int meshPort);
 #endif /* MESH_MAP_H */

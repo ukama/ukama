@@ -34,5 +34,6 @@ int get_systemInfo_from_initClient(char *systemName,
                                    char **systemHost,
                                    int *systemPort);
 void free_system_info(SystemInfo *systemInfo);
+int verify_nodeid_with_inventory_system(const char *nodeID);
 
 #endif /* NODE_INFO_H */

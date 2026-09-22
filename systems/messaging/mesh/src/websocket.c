@@ -21,6 +21,7 @@
 #include "config.h"
 #include "u_amqp.h"
 #include "client.h"
+#include "websocket.h"
 #include "httpStatus.h"
 
 extern MapTable *NodesTable;
@@ -37,8 +38,6 @@ static void free_message(Message *message) {
 }
 
 static int is_websocket_valid(WSManager *manager, MapItem *map) {
-
-    Config *config = NULL;
 
     if (manager == NULL || map == NULL) return FALSE;
 
@@ -153,7 +152,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
 }
 
 void websocket_incoming_message(const URequest *request,
-								WSManager *manager, WSMessage *message,
+								WSManager *manager, const WSMessage *message,
 								void *data) {
     Message *rcvdMessage=NULL;
     char *responseRemote=NULL;

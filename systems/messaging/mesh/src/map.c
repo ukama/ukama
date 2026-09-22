@@ -21,7 +21,7 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-static MapItem *create_map_item(char *nodeID,
+static MapItem *create_map_item(const char *nodeID,
                                 UInst **instance,
                                 char *nodeIP, int nodePort,
                                 char *meshIP, int meshPort) {
@@ -142,7 +142,7 @@ MapItem *is_existing_item_by_port(MapTable *table, int port) {
 }
 
 MapItem *add_map_to_table(MapTable **table,
-                          char *nodeID,
+                          const char *nodeID,
                           UInst **instance,
                           char *nodeIP, int nodePort,
                           char *meshIP, int meshPort) {

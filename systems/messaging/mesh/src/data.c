@@ -183,7 +183,7 @@ static int send_data_to_system(URequest *data, char *ep,
 static URequest* create_http_request(char *jStr) {
 
     URequest *request;
-	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *obj, *jData;
+	json_t *json, *jMethod, *jURL, *jPath, *jRaw, *jData;
 
 	if (jStr == NULL) return FALSE;
 
@@ -211,6 +211,7 @@ static URequest* create_http_request(char *jStr) {
     if (ulfius_init_request(request)) {
         log_error("Error initializing new http request.");
         json_decref(json);
+        free(request);
         return NULL;
     }
 
@@ -253,7 +254,8 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
      */
 	int retCode=0;
 	URequest *request;
-	char *responseLocal=NULL, *jStr=NULL;
+	char *responseLocal=NULL;
+    const char *responseData;
     char *systemName=NULL, *systemEP=NULL;
 	char *systemHost=NULL;
     int systemPort=0;
@@ -264,37 +266,42 @@ int process_incoming_websocket_message(Message *message, char **responseRemote){
     if (request == NULL) {
         log_error("Unable to deser the request on websocket");
         retCode = HttpStatus_BadRequest;
+        goto respond;
     }
 
     if (!extract_system_path(request->url_path, &systemName, &systemEP)) {
         log_error("Unable to extract system name and path: %s",
                   request->url_path);
         retCode = HttpStatus_BadRequest;
-        responseLocal = HttpStatusStr(retCode);
+        goto respond;
     }
 
 	if (!get_systemInfo_from_initClient(systemName, &systemHost, &systemPort)) {
 		/* No match. Ignore. */
 		log_error("No matching server found for system: %s", systemName);
         retCode = HttpStatus_InternalServerError;
-        responseLocal = HttpStatusStr(retCode);
 	} else {
     
         log_debug("Matching server found for system: %s host: %s port: %d",
                   systemName, systemHost, systemPort);
 
-        send_data_to_system(request, systemEP,
+        if (!send_data_to_system(request, systemEP,
                             systemHost, systemPort,
-                            &retCode, &responseLocal);
+                            &retCode, &responseLocal) || retCode == 0) {
+            retCode = HttpStatus_BadGateway;
+        }
         log_debug("Return code from system %s:%d: code: %d Response: %s",
                   systemHost, systemPort, retCode, responseLocal);
     }
 
+respond:
+    responseData = responseLocal ? responseLocal :
+                   (retCode >= 400 ? HttpStatusStr(retCode) : "");
     serialize_system_response(responseRemote, message, retCode,
-                              strlen(responseLocal), responseLocal);
+                              strlen(responseData), responseData);
     log_debug("Sending response back: %s", *responseRemote);
 
-    ulfius_clean_request(request);
+    if (request) ulfius_clean_request(request);
     if (request)       free(request);
     if (responseLocal) free(responseLocal);
     if (systemName)    free(systemName);
