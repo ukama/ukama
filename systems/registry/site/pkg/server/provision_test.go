@@ -179,3 +179,68 @@ func TestProvisionSiteSaveFailureRollsBack(t *testing.T) {
 	require.Equal(t, 1, op.Attempt, "site persistence failure does not reconfigure nodes")
 	sites.AssertExpectations(t)
 }
+
+func TestProvisionCancelSendsDeleteOncePerWindow(t *testing.T) {
+	var mu sync.Mutex
+	calls := map[string]map[string]int{}
+	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+		mu.Lock()
+		defer mu.Unlock()
+		if calls[n.NodeID] == nil {
+			calls[n.NodeID] = map[string]int{}
+		}
+		calls[n.NodeID][n.Action]++
+		return provisionResult{Cancelled: true}, nil
+	}}}
+	op := testProvision()
+	err := server.waitNodes(context.Background(), op, "cancel", time.Now().Add(2500*time.Millisecond))
+	require.ErrorIs(t, err, context.DeadlineExceeded)
+	for _, n := range op.Nodes {
+		require.Equal(t, 1, calls[n]["cancel"], "DELETE is not re-sent inside the resend window")
+		require.GreaterOrEqual(t, calls[n]["status"], 2, "cancellation is confirmed by polling state")
+	}
+}
+
+func TestProvisionCancelOffboardedNodesFailsOperation(t *testing.T) {
+	store := &memoryProvisions{}
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+		return provisionResult{Cancelled: true, Offboarded: true}, nil
+	}}}
+	op := testProvision()
+	op.Phase = "cancelling"
+	require.NoError(t, server.runProvision(context.Background(), op))
+	require.Equal(t, "failed", op.Phase)
+	require.Equal(t, 1, op.Attempt, "offboarded nodes are not reconfigured")
+}
+
+func TestProvisionCancelGivesUpAfterLimit(t *testing.T) {
+	previous := cancelWindow
+	cancelWindow = 20 * time.Millisecond
+	defer func() { cancelWindow = previous }()
+	store := &memoryProvisions{}
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+		return provisionResult{}, errors.New("node unreachable")
+	}}}
+	op := testProvision()
+	op.Phase = "cancelling"
+	op.Failure = "context deadline exceeded"
+	op.Deadline = time.Now().Add(-cancelGiveUp - time.Second)
+	require.NoError(t, server.runProvision(context.Background(), op))
+	require.Equal(t, "failed", op.Phase)
+	require.True(t, op.Stop)
+	require.Contains(t, op.Failure, "cancel not confirmed")
+}
+
+func TestProvisionCancelKeepsRetryingBeforeLimit(t *testing.T) {
+	previous := cancelWindow
+	cancelWindow = 20 * time.Millisecond
+	defer func() { cancelWindow = previous }()
+	store := &memoryProvisions{}
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+		return provisionResult{}, errors.New("node unreachable")
+	}}}
+	op := testProvision()
+	op.Phase = "cancelling"
+	require.Error(t, server.runProvision(context.Background(), op))
+	require.Equal(t, "cancelling", op.Phase)
+}

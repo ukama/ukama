@@ -32,6 +32,8 @@ type provisionResult struct {
 	Completed bool   `json:"completed"`
 	Cancelled bool   `json:"cancelled"`
 	Cleared   bool   `json:"cleared"`
+	// Set from the node's current state, not the configuration record.
+	Offboarded bool `json:"-"`
 }
 
 // The gateway uses protobuf JSON (requestId); older responses used request_id.
@@ -53,6 +55,8 @@ func (r *provisionResult) UnmarshalJSON(data []byte) error {
 	*r = provisionResult(wire.result)
 	return nil
 }
+
+const nodeStateOffboarded = "Offboarded"
 
 type provisionClient interface {
 	Reconcile(context.Context, provisionNode) (provisionResult, error)
@@ -94,11 +98,22 @@ func (c *nodeProvisionClient) Reconcile(ctx context.Context, node provisionNode)
 	}
 
 	var response struct {
+		State *struct {
+			CurrentState string `json:"currentState"`
+		} `json:"State"`
 		Configuration *provisionResult `json:"configuration"`
 	}
 	path := "/v1/state/" + url.PathEscape(node.NodeID) + "/latest?request_id=" + url.QueryEscape(node.RequestID)
 	if err := c.request(ctx, http.MethodGet, path, nil, &response); err != nil {
 		return result, err
+	}
+	offboarded := response.State != nil && response.State.CurrentState == nodeStateOffboarded
+	if offboarded && (response.Configuration == nil || response.Configuration.RequestID == node.RequestID) {
+		if response.Configuration != nil {
+			result = *response.Configuration
+		}
+		result.RequestID, result.Offboarded = node.RequestID, true
+		return result, nil
 	}
 	if response.Configuration == nil || response.Configuration.RequestID != node.RequestID {
 		return result, fmt.Errorf("node %s: missing or mismatched configuration status", node.NodeID)

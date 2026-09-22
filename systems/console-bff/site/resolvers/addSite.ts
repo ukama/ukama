@@ -18,6 +18,6 @@ export class AddSiteResolver {
     @Ctx() ctx: AppContext
   ): Promise<SiteDto> {
     const baseURL = await ctx.urls.url("site");
-    return ctx.dataSources.site.addSite(baseURL, data);
+    return ctx.dataSources.siteProvision.addSite(baseURL, data);
   }
 }
