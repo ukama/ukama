@@ -77,6 +77,7 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 	resp, err := r.R.C.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
+			"Accept":       "*/*",
 		}).
 		SetBody(b).
 		Post(url)
