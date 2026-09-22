@@ -52,6 +52,8 @@ func main() {
 
 	svcConf = pkg.NewConfig(pkg.ServiceName)
 
+	log.SetOutput(os.Stdout)
+
 	if svcConf.DebugMode {
 		log.SetLevel(log.DebugLevel)
 	}
