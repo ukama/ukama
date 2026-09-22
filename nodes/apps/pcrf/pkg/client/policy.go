@@ -48,11 +48,15 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 		return nil, fmt.Errorf("fail to parse ukama agent url: %s. Error: %w", h, err)
 	}
 
-	return &remoteControllerClient{
+	rc := &remoteControllerClient{
 		u:     u,
 		R:     rest.NewRestyClient(u, debug),
 		debug: debug,
-	}, nil
+	}
+
+	rc.R.C.SetLogger(log.StandardLogger())
+
+	return rc, nil
 }
 
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
