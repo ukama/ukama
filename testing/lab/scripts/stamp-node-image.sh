@@ -43,7 +43,7 @@ node_type() {
 entrypoint_change() {
     case "$1" in
         starter)
-            printf '%s\n' 'ENTRYPOINT ["/sbin/starter.d"]'
+            printf '%s\n' 'ENTRYPOINT ["/bin/sh","-ec","mkdir -p /run/ukama; export LIFECYCLED_BOOT_ID_FILE=/run/ukama/boot-id; cat /proc/sys/kernel/random/uuid > \"$LIFECYCLED_BOOT_ID_FILE\"; exec /sbin/starter.d \"$@\"","starter.d"]'
             ;;
         supervisor)
             printf '%s\n' 'ENTRYPOINT ["/usr/bin/supervisord","-c","/etc/supervisor.conf"]'
