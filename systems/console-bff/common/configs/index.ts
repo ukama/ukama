@@ -22,6 +22,12 @@ export const INTROSPECTION_ENABLED =
 // Hard timeout for every upstream HTTP call made by the BFF.
 export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
 
+// addSite blocks until all three site nodes report Operational, which the
+// registry allows up to 60s per attempt; 15s aborts healthy but slow adds.
+export const SITE_ADD_TIMEOUT_MS = parseInt(
+  process.env.SITE_ADD_TIMEOUT_MS ?? "90000"
+);
+
 // Lifetime of an issued session token. The token carries its own `exp`
 // claim so staleness is self-describing (clients re-mint without guessing).
 export const TOKEN_TTL_SECONDS = parseInt(

@@ -8,6 +8,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"sync"
@@ -21,6 +22,18 @@ import (
 const configAttempts = 3
 const configTimeout = 60 * time.Second
 const configPoll = time.Second
+
+// A lost DELETE is re-sent on this period; in between the worker only polls state.
+const cancelResend = 15 * time.Second
+
+// Cancellation that is still unconfirmed this long after the configure
+// deadline is abandoned so the operation cannot loop forever.
+const cancelGiveUp = 5 * time.Minute
+
+var errNodeOffboarded = errors.New("node offboarded")
+
+// Per-pass cancel window; a variable so tests can shorten it.
+var cancelWindow = configTimeout
 
 type provisionStore interface {
 	Create(context.Context, *db.Site, []string) (*db.SiteProvision, error)
@@ -81,10 +94,19 @@ func (s *SiteServer) waitNodes(ctx context.Context, op *db.SiteProvision, action
 		}(index)
 	}
 	var first error
+	offboarded := false
 	for range op.Nodes {
-		if err := <-results; err != nil && first == nil {
+		err := <-results
+		if errors.Is(err, errNodeOffboarded) {
+			offboarded = true
+			continue
+		}
+		if err != nil && first == nil {
 			first = err
 		}
+	}
+	if first == nil && offboarded {
+		return errNodeOffboarded
 	}
 	return first
 }
@@ -93,9 +115,16 @@ func (s *SiteServer) waitNode(ctx context.Context, node provisionNode) error {
 	ticker := time.NewTicker(configPoll)
 	defer ticker.Stop()
 	action := node.Action
+	var dispatched time.Time
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
+		}
+		if action == "cancel" {
+			node.Action = "status"
+			if time.Since(dispatched) >= cancelResend {
+				node.Action, dispatched = "cancel", time.Now()
+			}
 		}
 		result, err := s.provisionClient.Reconcile(ctx, node)
 		if ctx.Err() != nil {
@@ -107,6 +136,9 @@ func (s *SiteServer) waitNode(ctx context.Context, node provisionNode) error {
 			}
 			if action == "cancel" && result.Cleared {
 				return nil
+			}
+			if action == "cancel" && result.Offboarded {
+				return errNodeOffboarded
 			}
 			if action == "configure" && result.Cancelled {
 				return fmt.Errorf("node %s attempt cancelled", node.NodeID)
@@ -138,10 +170,17 @@ func (s *SiteServer) runProvision(ctx context.Context, op *db.SiteProvision) err
 		return s.provisions.Save(ctx, op)
 	case "cancelling":
 		// Cleanup has its own retry window and never consumes another attempt.
-		if err := s.waitNodes(ctx, op, "cancel", time.Now().Add(configTimeout)); err != nil {
+		err := s.waitNodes(ctx, op, "cancel", time.Now().Add(cancelWindow))
+		offboarded := errors.Is(err, errNodeOffboarded)
+		if err != nil && !offboarded {
+			if ctx.Err() == nil && time.Now().After(op.Deadline.Add(cancelGiveUp)) {
+				op.Phase, op.Stop = "failed", true
+				op.Failure = fmt.Sprintf("%s; cancel not confirmed: %v", op.Failure, err)
+				return s.provisions.Save(ctx, op)
+			}
 			return err
 		}
-		if op.Stop || op.Attempt == configAttempts {
+		if op.Stop || offboarded || op.Attempt == configAttempts {
 			op.Phase = "failed"
 		} else {
 			op.Attempt++
