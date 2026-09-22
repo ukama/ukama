@@ -59,6 +59,23 @@ func TestProvisionClientRejectsUncorrelatedStatus(t *testing.T) {
 	}
 }
 
+func TestProvisionClientReportsOffboardedNode(t *testing.T) {
+	for _, body := range []string{
+		`{"State":{"currentState":"Offboarded"},"configuration":{"requestId":"current","cancelled":true}}`,
+		`{"State":{"currentState":"Offboarded"}}`,
+	} {
+		t.Run(body, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
+			defer server.Close()
+			client := &nodeProvisionClient{url: server.URL, http: server.Client()}
+			result, err := client.Reconcile(context.Background(), provisionNode{NodeID: "node-1", RequestID: "current", Action: "status"})
+			require.NoError(t, err)
+			require.True(t, result.Offboarded)
+			require.False(t, result.Completed)
+		})
+	}
+}
+
 func TestProvisionStatusJSONSpellings(t *testing.T) {
 	for _, body := range []string{
 		`{"configuration":{"requestId":"attempt-1","completed":true}}`,

@@ -38,6 +38,32 @@ const fetchWithTimeout: Fetcher = async (
   }
 };
 
+/** Same as fetchWithTimeout, with a caller-chosen limit. */
+export const createTimedFetch =
+  (timeoutMs: number): Fetcher =>
+  async (url: string, init?: FetcherRequestInit): Promise<FetcherResponse> => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetch(url, {
+        ...(init ?? {}),
+        signal: controller.signal,
+      } as RequestInit);
+      return response as unknown as FetcherResponse;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+/**
+ * For the few upstream calls that legitimately outlive HTTP_TIMEOUT_MS.
+ */
+export class TimedRESTDataSource extends RESTDataSource {
+  constructor(timeoutMs: number) {
+    super({ fetch: createTimedFetch(timeoutMs) });
+  }
+}
+
 /**
  * Base class for all subgraph datasources. Extends Apollo's
  * RESTDataSource with a hard request timeout. All datasources
