@@ -38,18 +38,20 @@ static MapItem *create_map_item(char *nodeID,
 		return NULL;
 	}
 
+	pthread_mutex_init(&map->mutex, NULL);
+	pthread_cond_init(&map->hasResp, NULL);
+
     map->forwardList = (ForwardList *)calloc(1, sizeof(ForwardList));
     if (map->forwardList == NULL) {
         log_error("Error allocating memory: %s", sizeof(ForwardList));
-        free(map);
-        return NULL;
+        goto error;
     }
+    init_forward_list(&map->forwardList);
 
 	map->nodeInfo = (NodeInfo *)calloc(1, sizeof(NodeInfo));
     if (map->nodeInfo == NULL) {
         log_error("Error allocating memory: %s", sizeof(NodeInfo));
-        free(map);
-        return NULL;
+        goto error;
     }
 
     map->forwardInst        = *instance;
@@ -58,15 +60,22 @@ static MapItem *create_map_item(char *nodeID,
     map->nodeInfo->nodePort = nodePort;
     map->nodeInfo->meshIP   = strdup(meshIP);
     map->nodeInfo->meshPort = meshPort;
-    map->transmit           = NULL;
-    map->receive            = NULL;
-
-	pthread_mutex_init(&map->mutex, NULL);
-	pthread_cond_init(&map->hasResp, NULL);
+    map->transmit = (WorkList *)calloc(1, sizeof(WorkList));
+    map->receive  = (WorkList *)calloc(1, sizeof(WorkList));
+    if (map->transmit) init_work_list(&map->transmit);
+    if (map->receive)  init_work_list(&map->receive);
+    if (!map->nodeInfo->nodeID || !map->nodeInfo->nodeIP ||
+        !map->nodeInfo->meshIP || !map->transmit || !map->receive) {
+        goto error;
+    }
 
 	map->next = NULL;
 
 	return map;
+
+error:
+    free_map_item(map);
+    return NULL;
 }
 
 void free_map_item(MapItem *map) {
@@ -86,6 +95,9 @@ void free_map_item(MapItem *map) {
     free_work_list(map->receive);
     free_forward_list(map->forwardList);
 
+    pthread_mutex_destroy(&map->mutex);
+    pthread_cond_destroy(&map->hasResp);
+
     free(map);
 }
 
@@ -97,17 +109,16 @@ MapItem *is_existing_item(MapTable *table, char *nodeID) {
 		return NULL;
 	}
 
-	if (table->first == NULL) {
-		return NULL;
-	}
-
+	pthread_mutex_lock(&table->mutex);
 	for (item=table->first; item; item=item->next) {
 		if (strcmp(item->nodeInfo->nodeID, nodeID) == 0) {
-			return item;
+			item->references++;
+			break;
 		}
 	}
+	pthread_mutex_unlock(&table->mutex);
 
-	return NULL;
+	return item;
 }
 
 MapItem *is_existing_item_by_port(MapTable *table, int port) {
@@ -118,11 +129,16 @@ MapItem *is_existing_item_by_port(MapTable *table, int port) {
 		return NULL;
 	}
 
-	if (table->first == NULL) {
-		return NULL;
-	}
+    pthread_mutex_lock(&table->mutex);
+    item = table->first;
+    if (item && item->online) {
+        item->references++;
+    } else {
+        item = NULL;
+    }
+    pthread_mutex_unlock(&table->mutex);
 
-    return table->first;
+    return item;
 }
 
 MapItem *add_map_to_table(MapTable **table,
@@ -136,21 +152,27 @@ MapItem *add_map_to_table(MapTable **table,
 	if (*table == NULL || nodeID == NULL)
 		return NULL;
 
-	/* An existing mapping? */
-	map = is_existing_item(*table, nodeID);
-	if (map != NULL) {
-		return map;
-	}
+    pthread_mutex_lock(&(*table)->mutex);
+    for (map=(*table)->first; map; map=map->next) {
+        if (strcmp(map->nodeInfo->nodeID, nodeID) == 0) {
+            /* Its close callback owns retirement; the client will retry. */
+            if (map->wsManager) {
+                ulfius_websocket_send_close_signal(map->wsManager);
+            }
+            pthread_mutex_unlock(&(*table)->mutex);
+            return NULL;
+        }
+    }
 
 	map = create_map_item(nodeID, instance,
                           nodeIP, nodePort,
                           meshIP, meshPort);
 	if (map == NULL) {
+		pthread_mutex_unlock(&(*table)->mutex);
 		return NULL;
 	}
-    
-	/* Try to get lock. */
-	pthread_mutex_lock(&(*table)->mutex);
+
+    map->references = 2; /* Table and websocket callback ownership. */
 
 	/* Got the lock. Add to the list and unlock. */
 	if ((*table)->first == NULL) {
@@ -172,7 +194,7 @@ MapItem *add_map_to_table(MapTable **table,
 	return map;
 }
 
-void remove_map_item_from_table(MapTable *table, char *nodeID) {
+void remove_map_item_from_table(MapTable *table, MapItem *map) {
 
     MapItem *current, *previous;
 
@@ -182,7 +204,7 @@ void remove_map_item_from_table(MapTable *table, char *nodeID) {
     previous = NULL;
 
     while (current != NULL) {
-        if (strcmp(current->nodeInfo->nodeID, nodeID) == 0) {
+        if (current == map) {
             if (previous != NULL) {
                 previous->next = current->next;
                 if (current == table->last) {
@@ -195,18 +217,29 @@ void remove_map_item_from_table(MapTable *table, char *nodeID) {
                 }
             }
 
+            current->next = NULL;
             pthread_mutex_unlock(&table->mutex);
-            pthread_mutex_destroy(&current->mutex);
-            pthread_cond_destroy(&current->hasResp);
-            free_map_item(current);
+            release_map_item(table, current);
 
             return;
         }
 
         previous = current;
         current = current->next;
-        free(previous);
     }
 
     pthread_mutex_unlock(&table->mutex);
+}
+
+void release_map_item(MapTable *table, MapItem *map) {
+
+    int unused;
+
+    if (map == NULL) return;
+
+    pthread_mutex_lock(&table->mutex);
+    unused = (--map->references == 0);
+    pthread_mutex_unlock(&table->mutex);
+
+    if (unused) free_map_item(map);
 }

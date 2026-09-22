@@ -631,9 +631,9 @@ static int publish_amqp_event(WAMQPConn *conn, char *exchange, MeshEvent event,
 							 amqp_cstring_bytes(key), 0, 0, &prop,
 							 body);
 	if (ret < 0) {
-		ret = FALSE;
 		log_error("Error sending AMQP message. Error: %s",
 				  amqp_error_string2(ret));
+		ret = FALSE;
 	} else {
 		ret = TRUE;
 		log_debug("AMQP message successfully sent to default exchange");
@@ -649,6 +649,7 @@ int publish_event(MeshEvent event, char *orgName,
                   char *meshIP, int meshPort) {
 
     WAMQPConn *conn=NULL;
+    int ret=FALSE;
     char *amqpHost=NULL;
     char *amqpPort=NULL;
     char *amqpUser=NULL;
@@ -670,7 +671,7 @@ int publish_event(MeshEvent event, char *orgName,
     }
 
     if (object_type(event) == OBJECT_LINK) {
-        publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
+        ret = publish_amqp_event(conn, DEFAULT_MESH_AMQP_EXCHANGE, event,
                            orgName, nodeID,
                            nodeIP, nodePort,
                            meshIP, meshPort);
@@ -682,7 +683,7 @@ int publish_event(MeshEvent event, char *orgName,
 	amqp_connection_close(conn, AMQP_REPLY_SUCCESS);
 	amqp_destroy_connection(conn);
 
-    return TRUE;
+    return ret;
 }
 
 int publish_register_event(char *exchange, int port) {

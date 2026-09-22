@@ -28,6 +28,10 @@ typedef struct map_item_t {
     void      *configData;
     UInst     *forwardInst;
 
+    unsigned int references; /* Table, websocket callbacks and HTTP requests. */
+    int online;              /* Protected by the table mutex. */
+    int closing;             /* Protected by the item mutex. */
+
     ForwardList *forwardList;  /* services list */
 
     pthread_mutex_t   mutex;   /* Client thread waiting on response */
@@ -54,7 +58,9 @@ typedef struct {
 /* Functions */
 void init_map_table(MapTable **table);
 void free_map_item(MapItem *map);
-void remove_map_item_from_table(MapTable *table, char *nodeID);
+void remove_map_item_from_table(MapTable *table, MapItem *map);
+void release_map_item(MapTable *table, MapItem *map);
+/* Lookups retain an item; callers must release it. */
 MapItem *is_existing_item(MapTable *table, char *nodeID);
 MapItem *is_existing_item_by_port(MapTable *table, int port);
 MapItem *add_map_to_table(MapTable **table,

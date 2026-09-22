@@ -21,6 +21,7 @@
 #include "config.h"
 #include "u_amqp.h"
 #include "client.h"
+#include "httpStatus.h"
 
 extern MapTable *NodesTable;
 
@@ -52,34 +53,35 @@ static int is_websocket_valid(WSManager *manager, MapItem *map) {
 void websocket_manager(const URequest *request, WSManager *manager,
 					   void *data) {
 
-    MapItem *map=NULL;
+    MapItem *map=(MapItem *)data;
+	Config *config=map->configData;
 	WorkList *list;
 	WorkItem *work;
     struct timespec ts;
     int ret;
     json_t *jData;
 
-    map = is_existing_item(NodesTable, (char *)data);
-    if (map == NULL) {
-        log_error("Websocket error NodeID: %s not found in table",
-                  (char *)data);
-        return;
-    }
-
     /* Keep track of WS manager for connection management */
+    pthread_mutex_lock(&NodesTable->mutex);
     map->wsManager = manager;
+    pthread_mutex_unlock(&NodesTable->mutex);
 
-    /* Setup transmit and receiving queues for the websocket */
-    map->transmit = (WorkList *)calloc(1, sizeof(WorkList));
-    map->receive  = (WorkList *)calloc(1, sizeof(WorkList));
-    if (map->transmit == NULL || map->receive == NULL) {
-        log_error("Memory allocation failure: %d", sizeof(WorkList));
+    /* The connection and its queues are ready before announcing Online. */
+    if (publish_event(CONN_CONNECT,
+                      config->orgName,
+                      map->nodeInfo->nodeID,
+                      map->nodeInfo->nodeIP,
+                      map->nodeInfo->nodePort,
+                      map->nodeInfo->meshIP,
+                      map->nodeInfo->meshPort) == FALSE) {
+        log_error("Error publishing device connect msg on AMQP exchange");
         return;
     }
 
-    /* Initializa the transmit and receive list for the websocket. */
-    init_work_list(&map->transmit);
-    init_work_list(&map->receive);
+    pthread_mutex_lock(&NodesTable->mutex);
+    map->online = TRUE;
+    pthread_mutex_unlock(&NodesTable->mutex);
+
     list = map->transmit;
 
 	while (TRUE) {
@@ -90,6 +92,7 @@ void websocket_manager(const URequest *request, WSManager *manager,
         ts.tv_sec += MESH_LOCK_TIMEOUT;
 
 		if (list->exit) { /* Likely we are closing the socket. */
+			pthread_mutex_unlock(&(list->mutex));
 			break;
 		}
 
@@ -155,16 +158,9 @@ void websocket_incoming_message(const URequest *request,
     Message *rcvdMessage=NULL;
     char *responseRemote=NULL;
 	int ret;
-    MapItem *map=NULL;
+    MapItem *map=(MapItem *)data;
     Forward *forward=NULL;
     char *rcvdDataStr=NULL;
-
-    map = is_existing_item(NodesTable, (char *)data);
-    if (map == NULL) {
-        log_error("Websocket error NodeID: %s not found in table",
-                  (char *)data);
-        return;
-    }
 
     rcvdDataStr = (char *)calloc(1, message->data_len + 1);
     strncpy(rcvdDataStr, message->data, message->data_len);
@@ -182,20 +178,27 @@ void websocket_incoming_message(const URequest *request,
             free(responseRemote);
         } else if (strcmp(rcvdMessage->reqType, UKAMA_SERVICE_RESPONSE) == 0) {
 
+            pthread_mutex_lock(&map->mutex);
             forward = is_existing_item_in_list(map->forwardList,
                                                rcvdMessage->seqNo);
 
             if (forward == NULL) {
                 log_error("No matching uuid in the list. uuid: %s",
                           rcvdMessage->seqNo);
+                pthread_mutex_unlock(&map->mutex);
                 goto done;
             }
 
-            forward->size     = rcvdMessage->dataSize;
-            forward->data     = strdup(rcvdMessage->data);
-            forward->httpCode = rcvdMessage->code;
-
-            pthread_cond_broadcast(&forward->hasData);
+            pthread_mutex_lock(&forward->mutex);
+            if (forward->httpCode == 0) {
+                forward->size     = rcvdMessage->dataSize;
+                forward->data     = strdup(rcvdMessage->data);
+                forward->httpCode = rcvdMessage->code
+                                    ? rcvdMessage->code : HttpStatus_BadGateway;
+                pthread_cond_broadcast(&forward->hasData);
+            }
+            pthread_mutex_unlock(&forward->mutex);
+            pthread_mutex_unlock(&map->mutex);
 
         } else {
             log_error("Invalid request type on websocket");
@@ -213,15 +216,26 @@ void websocket_onclose(const URequest *request,
                        WSManager *manager,
                        void *data) {
 
-    MapItem *map=NULL;
+    MapItem *map=(MapItem *)data;
     Config *config=NULL;
+    Forward *forward;
 
-    map = is_existing_item(NodesTable, (char *)data);
-    if (map == NULL) {
-        log_error("Websocket error NodeID: %s not found in table",
-                  (char *)data);
-        return;
+    pthread_mutex_lock(&NodesTable->mutex);
+    map->online = FALSE;
+    map->wsManager = NULL;
+    pthread_mutex_unlock(&NodesTable->mutex);
+
+    pthread_mutex_lock(&map->mutex);
+    map->closing = TRUE;
+    for (forward=map->forwardList->first; forward; forward=forward->next) {
+        pthread_mutex_lock(&forward->mutex);
+        if (forward->httpCode == 0) {
+            forward->httpCode = HttpStatus_ServiceUnavailable;
+            pthread_cond_broadcast(&forward->hasData);
+        }
+        pthread_mutex_unlock(&forward->mutex);
     }
+    pthread_mutex_unlock(&map->mutex);
 
     config = (Config *)map->configData;
 
@@ -241,7 +255,8 @@ void websocket_onclose(const URequest *request,
 		}
 	}
 
-    remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
+    remove_map_item_from_table(NodesTable, map);
+    release_map_item(NodesTable, map);
 
 	return;
 }
