@@ -68,6 +68,8 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 			req.Imsi, err)
 	}
 
+	log.Debugf("Posting CDR to url %s with body: %s", url, string(b))
+
 	resp, err := r.R.C.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
