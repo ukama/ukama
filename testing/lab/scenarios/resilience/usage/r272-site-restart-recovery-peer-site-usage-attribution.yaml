@@ -59,6 +59,9 @@ phases:
       - type: failure_control
         target: site_restart
         state: 'on'
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: site-001
       - type: wait_node_connectivity
@@ -67,10 +70,6 @@ phases:
         seconds: 180
       - type: wait_node_connectivity
         nodes: amplifier-site-001-001
-        connectivity: Offline
-        seconds: 180
-      - type: wait_node_connectivity
-        nodes: controller-site-001-001
         connectivity: Offline
         seconds: 180
       - type: traffic
@@ -140,6 +139,10 @@ phases:
         timeout_seconds: 180
         poll_seconds: 2
         immediate: true
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor
+
 final_checks:
   - type: usage_per_sim
     ues: all

@@ -40,6 +40,9 @@ phases:
 
   - name: start_restart
     events:
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
     checks:
@@ -69,3 +72,7 @@ phases:
         state: Operational
         timeout_seconds: 300
         immediate: true
+
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor

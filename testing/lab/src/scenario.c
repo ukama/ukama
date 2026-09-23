@@ -120,6 +120,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WAIT: return "wait";
     case EVT_RESTART_NODES: return "restart_nodes";
     case EVT_WAIT_NODE_CONNECTIVITY: return "wait_node_connectivity";
+    case EVT_START_NODE_CONNECTIVITY_MONITOR: return "start_node_connectivity_monitor";
+    case EVT_STOP_NODE_CONNECTIVITY_MONITOR: return "stop_node_connectivity_monitor";
     case EVT_WAIT_NODES_READY: return "wait_nodes_ready";
     case EVT_ADD_PACKAGE_TO_SIM: return "add_package_to_sim";
     case EVT_PURCHASE_PACKAGE: return "purchase_package";
@@ -251,6 +253,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_RESTART_NODES;
     } else if (ulab_streq(name, "wait_node_connectivity")) {
         *out = EVT_WAIT_NODE_CONNECTIVITY;
+    } else if (ulab_streq(name, "start_node_connectivity_monitor")) {
+        *out = EVT_START_NODE_CONNECTIVITY_MONITOR;
+    } else if (ulab_streq(name, "stop_node_connectivity_monitor")) {
+        *out = EVT_STOP_NODE_CONNECTIVITY_MONITOR;
     } else if (ulab_streq(name, "wait_nodes_ready")) {
         *out = EVT_WAIT_NODES_READY;
     } else if (ulab_streq(name, "add_package_to_sim")) {

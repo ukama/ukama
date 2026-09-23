@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-023-failed-site-operation-releases-lock
-description: Hold a restarted virtual site offline and verify the backend releases its site-operation lock after the restart times out.
+description: Hold the restarted tower and amplifier offline, keep the controller Online, and verify the backend releases its site-operation lock after the restart times out.
 seed: 5023
 suite: p0
 priority: p0
@@ -47,6 +47,9 @@ phases:
       - type: failure_control
         target: site_restart
         state: on
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
     checks:
@@ -86,3 +89,7 @@ phases:
         restart_available: true
         timeout_seconds: 300
         immediate: true
+
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor

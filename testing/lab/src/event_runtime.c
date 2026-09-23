@@ -603,10 +603,27 @@ static int event_restart_site(event_ctx_t *ctx,
         if (runtime_failure_control_enabled(ctx->runtime,
                                             "site_restart")) {
             selector_result_t nodes;
+            size_t j;
+            size_t kept;
 
             memset(&nodes, 0, sizeof(nodes));
-            if (site_node_selection(ctx->world, site, &nodes, err) ||
-                runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
+            if (site_node_selection(ctx->world, site, &nodes, err)) {
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            /* A site restart never restarts or holds the controller. */
+            kept = 0;
+            for (j = 0; j < nodes.count; j++) {
+                const node_t *node;
+
+                node = &ctx->world->nodes[nodes.idx[j]];
+                if (ulab_streq(node->type, ULAB_NODE_TOWER) ||
+                    ulab_streq(node->type, ULAB_NODE_AMPLIFIER)) {
+                    nodes.idx[kept++] = nodes.idx[j];
+                }
+            }
+            nodes.count = kept;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
                                    "site_restart", err)) {
                 selector_result_free(&nodes);
                 selector_result_free(&sites);

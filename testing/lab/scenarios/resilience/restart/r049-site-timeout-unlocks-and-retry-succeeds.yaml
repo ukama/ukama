@@ -1,6 +1,6 @@
 version: 1
 name: r049-site-timeout-unlocks-and-retry-succeeds
-description: Hold all restarted site nodes offline; after timeout release the hold and prove a second site restart succeeds.
+description: Hold the tower and amplifier offline while the controller remains Online; after timeout release the hold and prove a second site restart succeeds.
 seed: 6149
 suite: resilience
 priority: p1
@@ -27,10 +27,17 @@ phases:
       - type: failure_control
         target: site_restart
         state: 'on'
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 180
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 180
     checks:
@@ -43,8 +50,8 @@ phases:
       - type: site_node_counts_equals
         sites: site-001
         total: 3
-        online: 0
-        offline: 3
+        online: 1
+        offline: 2
         timeout_seconds: 180
         poll_seconds: 2
         immediate: true
@@ -99,7 +106,11 @@ phases:
       - type: restart_site
         sites: all
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 120
       - type: wait_node_connectivity
@@ -130,3 +141,7 @@ phases:
         timeout_seconds: 180
         poll_seconds: 2
         immediate: true
+
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor

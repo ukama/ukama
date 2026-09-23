@@ -65,6 +65,15 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_RESTORE_NODE:
     case EVT_FAILURE_CONTROL:
         return event_runtime(ctx, event, err);
+    case EVT_START_NODE_CONNECTIVITY_MONITOR:
+        return node_monitor_start(ctx->node_monitor, ctx->bff, ctx->world,
+                                  &event->nodes, event->status, err);
+    case EVT_STOP_NODE_CONNECTIVITY_MONITOR:
+        if (ctx->node_monitor == NULL || *ctx->node_monitor == NULL) {
+            snprintf(err->msg, sizeof(err->msg), "no active node monitor");
+            return ULAB_ERR;
+        }
+        return node_monitor_stop(ctx->node_monitor, err);
     case EVT_CHECK:
         return ULAB_OK;
     default:

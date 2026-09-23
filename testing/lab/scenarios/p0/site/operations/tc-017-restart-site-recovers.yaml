@@ -69,6 +69,9 @@ phases:
 
   - name: restart_site
     events:
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
     checks:
@@ -121,3 +124,7 @@ phases:
       - type: traffic_allowed
         ues: all
         amount_mb: 1
+
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor

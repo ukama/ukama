@@ -12,6 +12,7 @@
 #include "bff.h"
 #include "model.h"
 #include "runtime.h"
+#include "node_monitor.h"
 
 typedef struct check_ctx check_ctx_t;
 
@@ -24,6 +25,7 @@ typedef struct {
     const char *phaseName;
     const char *sim_type;
     check_ctx_t *checks;
+    node_monitor_t **node_monitor;
 } event_ctx_t;
 
 int event_run(event_ctx_t *ctx, const event_spec_t *event,
