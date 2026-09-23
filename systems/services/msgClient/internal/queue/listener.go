@@ -11,6 +11,7 @@ package queue
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -34,14 +35,22 @@ type QueueListener struct {
 	serviceUuid    string
 	serviceName    string
 	serviceHost    string
-	state          bool
+	state          atomic.Bool
 	queue          string
 	exchange       string
 	c              chan bool
 	routes         []string
 	lastPing       time.Time
 	continuousMiss uint32
+	retrying       atomic.Bool
 }
+
+// A listener whose subscribe fails keeps retrying on this backoff; giving up
+// would disconnect the service until it re-registers.
+var (
+	listenerRetryMin = 2 * time.Second
+	listenerRetryMax = 30 * time.Second
+)
 
 func NewQueueListener(s db.Service) (*QueueListener, error) {
 
@@ -83,7 +92,6 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		serviceName: s.Name,
 		serviceHost: s.ServiceUri,
 		c:           ch,
-		state:       false,
 		gConn:       conn,
 		gClient:     gc,
 		hClient:     hc,
@@ -104,24 +112,35 @@ func (q *QueueListener) queueListenerroutine() {
 	}
 
 	/* Subscribe to exchange for the routes */
-	err = q.mConn.SubscribeToServiceQueue(q.serviceName, q.exchange,
-		routes, q.serviceUuid, q.incomingMessageHandler)
-	if err != nil {
-		log.Errorf("[%s] Failed to create listener. Error %s", q.serviceName, err.Error())
-		log.Errorf("[%s] Shutting down listener.", q.serviceName)
-		q.mConn.Close()
-		q.state = false
-		return
+	backoff := listenerRetryMin
+	for {
+		err = q.mConn.SubscribeToServiceQueue(q.serviceName, q.exchange,
+			routes, q.serviceUuid, q.incomingMessageHandler)
+		if err == nil {
+			break
+		}
+		log.Errorf("[%s] Failed to create listener. Error %s. Retrying in %s.", q.serviceName, err.Error(), backoff)
+		q.retrying.Store(true)
+		select {
+		case <-q.c:
+			log.Infof("[%s] Listener stopped before it subscribed.", q.serviceName)
+			q.mConn.Close()
+			q.retrying.Store(false)
+			return
+		case <-time.After(backoff):
+		}
+		backoff = min(backoff*2, listenerRetryMax)
 	}
+	q.retrying.Store(false)
 
-	q.state = true
+	q.state.Store(true)
 	log.Infof("[%s] Queue listener started on %v routes", q.serviceName, q.routes)
 	/* Waiting for stop */
 	<-q.c
 
 	log.Infof("[%s] Shutting down queue listener", q.serviceName)
 	q.mConn.Close()
-	q.state = false
+	q.state.Store(false)
 }
 
 func (q *QueueListener) startQueueListening() {
@@ -132,7 +151,7 @@ func (q *QueueListener) startQueueListening() {
 }
 
 func (q *QueueListener) stopQueueListening() {
-	if q.state {
+	if q.state.Load() || q.retrying.Load() {
 		log.Infof("Stopping queue listener routine for service %s on %v routes", q.serviceName, q.routes)
 		q.c <- true
 	}

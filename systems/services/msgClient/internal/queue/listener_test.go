@@ -9,10 +9,12 @@
 package queue
 
 import (
+	"errors"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	mocks "github.com/ukama/ukama/systems/common/mocks"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
@@ -48,7 +50,6 @@ func NewTestQueueListener(s db.Service) *QueueListener {
 		serviceName: s.Name,
 		serviceHost: s.ServiceUri,
 		c:           ch,
-		state:       false,
 		routes:      routes,
 		queue:       s.ListQueue,
 		exchange:    s.Exchange,
@@ -74,4 +75,49 @@ func TestQueuePublisher_startstopQueueListening(t *testing.T) {
 
 	client.AssertExpectations(t)
 
+}
+
+func TestQueueListenerRetriesFailedSubscribe(t *testing.T) {
+	previous := listenerRetryMin
+	listenerRetryMin = 10 * time.Millisecond
+	defer func() { listenerRetryMin = previous }()
+
+	client := &mocks.Consumer{}
+	qp := NewTestQueueListener(service)
+	qp.mConn = client
+
+	handler := mock.AnythingOfType("func(amqp.Delivery, chan<- bool)")
+	client.On("SubscribeToServiceQueue", qp.serviceName, qp.exchange, route, qp.serviceUuid, handler).
+		Return(errors.New("dial tcp: connection refused")).Twice()
+	client.On("SubscribeToServiceQueue", qp.serviceName, qp.exchange, route, qp.serviceUuid, handler).Return(nil).Once()
+	client.On("Close").Return(nil).Once()
+
+	qp.startQueueListening()
+	require.Eventually(t, func() bool { return qp.state.Load() }, 2*time.Second, 5*time.Millisecond)
+
+	qp.stopQueueListening()
+	require.Eventually(t, func() bool { return !qp.state.Load() }, 2*time.Second, 5*time.Millisecond)
+	client.AssertExpectations(t)
+}
+
+func TestQueueListenerStopsWhileRetrying(t *testing.T) {
+	previous := listenerRetryMin
+	listenerRetryMin = time.Hour
+	defer func() { listenerRetryMin = previous }()
+
+	client := &mocks.Consumer{}
+	qp := NewTestQueueListener(service)
+	qp.mConn = client
+
+	client.On("SubscribeToServiceQueue", qp.serviceName, qp.exchange, route, qp.serviceUuid, mock.AnythingOfType("func(amqp.Delivery, chan<- bool)")).
+		Return(errors.New("dial tcp: connection refused")).Once()
+	client.On("Close").Return(nil).Once()
+
+	qp.startQueueListening()
+	require.Eventually(t, func() bool { return qp.retrying.Load() }, 2*time.Second, 5*time.Millisecond)
+
+	qp.stopQueueListening()
+	require.Eventually(t, func() bool { return !qp.retrying.Load() }, 2*time.Second, 5*time.Millisecond)
+	require.False(t, qp.state.Load())
+	client.AssertExpectations(t)
 }
