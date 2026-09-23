@@ -169,7 +169,8 @@ STATIC void serialize_message_data(URequest *request, char **data) {
 		json_object_set_new(jRaw, JSON_LENGTH,
 							json_integer((int)request->binary_body_length));
 		json_object_set_new(jRaw, JSON_DATA,
-							json_string((char *)request->binary_body));
+							json_stringn((char *)request->binary_body,
+                                         request->binary_body_length));
 	}
 
     *data = json_dumps(json, 0);
