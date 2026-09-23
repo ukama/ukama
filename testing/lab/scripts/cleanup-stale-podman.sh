@@ -4,6 +4,8 @@
 
 set -eu
 
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
+
 echo "cleanup-stale: remove old ukama-lab networks"
 
 podman network ls --format '{{.Name}}' |
@@ -13,6 +15,7 @@ podman network ls --format '{{.Name}}' |
 
         containers="$(podman ps -a --filter "network=$net" --format '{{.Names}}' 2>/dev/null || true)"
         for c in $containers; do
+            "$HOST_CONTROL" remove "$c"
             echo "cleanup-stale: rm container $c"
             podman rm -f "$c" >/dev/null 2>&1 || true
         done

@@ -17,6 +17,7 @@ if [ "$#" -ne 1 ]; then
 fi
 
 RUN_DIR="$1"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 STATE_FILE="$RUN_DIR/runtime-net/net.env"
 
 if [ ! -f "$STATE_FILE" ]; then
@@ -35,6 +36,7 @@ fi
 echo "cleanup-network: rm containers on $LAB_NET"
 containers="$(podman ps -a --filter "network=$LAB_NET" --format '{{.Names}}' 2>/dev/null || true)"
 for c in $containers; do
+    "$HOST_CONTROL" remove "$c" || exit 1
     echo "cleanup-network: rm container $c"
     podman rm -f "$c" >/dev/null 2>&1 || true
 done

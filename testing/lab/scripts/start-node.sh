@@ -19,6 +19,7 @@ IMAGE_REPO="${IMAGE_REPO:-testing/virtualnode}"
 IMAGE="$IMAGE_REPO:$NODE_ID"
 NET_STATE="$RUN_DIR/runtime-net/net.env"
 LAB_NET="${LAB_NET:-}"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 
 need_cmd() {
     if ! command -v "$1" >/dev/null 2>&1; then
@@ -81,6 +82,8 @@ if [ "${ULAB_PUBLISH_NODE_PORTS:-0}" = "1" ]; then
     esac
 fi
 
+"$HOST_CONTROL" check "$CONTAINER_NAME"
+"$HOST_CONTROL" remove "$CONTAINER_NAME"
 echo "podman: removing existing container if present: $CONTAINER_NAME"
 podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
@@ -88,9 +91,10 @@ echo "podman: starting $CONTAINER_NAME from $IMAGE network=$LAB_NET"
 
 if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     # shellcheck disable=SC2086
-    if ! podman run -d \
+    if ! podman create \
         --name "$CONTAINER_NAME" \
-        --restart=always \
+        --restart=no \
+        --label io.ukama.lab.restart-manager=systemd \
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \
@@ -104,9 +108,10 @@ if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     fi
 else
     # shellcheck disable=SC2086
-    if ! podman run -d \
+    if ! podman create \
         --name "$CONTAINER_NAME" \
-        --restart=always \
+        --restart=no \
+        --label io.ukama.lab.restart-manager=systemd \
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \
@@ -116,6 +121,13 @@ else
         podman network inspect "$LAB_NET" >&2 || true
         exit 1
     fi
+fi
+
+if ! "$HOST_CONTROL" install "$CONTAINER_NAME" "$RUN_DIR"; then
+    echo "podman: failed to start host service for $CONTAINER_NAME" >&2
+    "$HOST_CONTROL" remove "$CONTAINER_NAME" || exit 1
+    podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    exit 1
 fi
 
 CONTAINER_IP="$(container_ip_on_network "$CONTAINER_NAME" "$LAB_NET")"

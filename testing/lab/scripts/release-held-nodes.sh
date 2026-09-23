@@ -14,6 +14,7 @@ fi
 
 TARGET="$1"
 RUN_DIR="$2"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 HOLD_DIR="$RUN_DIR/failure-controls/$TARGET"
 
 if [ ! -d "$HOLD_DIR" ]; then
@@ -32,7 +33,7 @@ for HOLD_FILE in "$HOLD_DIR"/*.env; do
 
     if [ -n "$CONTAINER_NAME" ] &&
        podman inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
-        podman start "$CONTAINER_NAME" >/dev/null
+        "$HOST_CONTROL" start "$CONTAINER_NAME"
     fi
 
     echo "node-released node=$LOGICAL_NODE_ID" \

@@ -14,6 +14,7 @@ fi
 
 NODE_KEY="$1"
 RUN_DIR="$2"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 STATE_FILE="$RUN_DIR/runtime-nodes/$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-').env"
 
 if [ ! -f "$STATE_FILE" ]; then
@@ -25,6 +26,7 @@ fi
 . "$STATE_FILE"
 
 if [ -n "${CONTAINER_NAME:-}" ]; then
+    "$HOST_CONTROL" remove "$CONTAINER_NAME" || exit 1
     echo "stop-node: rm $CONTAINER_NAME"
     podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 fi
