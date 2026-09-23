@@ -1,6 +1,6 @@
 version: 1
 name: p0-site-restart-recovers
-description: Enable service, pass traffic, restart the site through BFF, observe the site operation, wait for every node to return online, and confirm traffic works again.
+description: Enable service, pass traffic, restart the site's tower and amplifier through BFF, observe the site operation, verify all nodes are online, and re-enable service to confirm traffic works again.
 seed: 4810
 suite: p0
 priority: p0
@@ -69,6 +69,9 @@ phases:
 
   - name: restart_site
     events:
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
     checks:
@@ -81,7 +84,11 @@ phases:
   - name: wait_for_site_recovery
     events:
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 180
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 180
       - type: wait_node_connectivity
@@ -107,6 +114,7 @@ phases:
       - type: toggle_service
         sites: all
         state: on
+        retry_busy_seconds: 30
       - type: wait_ues_attached
         ues: all
         seconds: 300
@@ -117,3 +125,7 @@ phases:
       - type: traffic_allowed
         ues: all
         amount_mb: 1
+
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor

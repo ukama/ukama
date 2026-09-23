@@ -139,4 +139,7 @@ typedef struct {
     char        *data;   /* RequestInfo or actual response */
 } Message;
 
+void split_strings(const char *input, char **str1, char **str2,
+                   const char *delimiter);
+
 #endif /* MESH_H */

@@ -842,10 +842,27 @@ static int write_one_event(FILE *f, const char *event,
                 "        nodes: all\n"
                 "        connectivity: Online\n"
                 "        seconds: 120\n"
+                "      - type: toggle_service\n"
+                "        sites: all\n"
+                "        state: on\n"
+                "      - type: start_ues\n"
+                "        ues: all\n"
+                "      - type: wait_ues_attached\n"
+                "        ues: all\n"
+                "      - type: traffic\n"
+                "        ues: all\n"
+                "        amount_mb: 1\n"
+                "      - type: start_node_connectivity_monitor\n"
+                "        type_selector: controller\n"
+                "        connectivity: Online\n"
                 "      - type: restart_site\n"
-                "        nodes: all\n"
+                "        sites: all\n"
                 "      - type: wait_node_connectivity\n"
-                "        nodes: all\n"
+                "        type_selector: tower\n"
+                "        connectivity: Offline\n"
+                "        seconds: 120\n"
+                "      - type: wait_node_connectivity\n"
+                "        type_selector: amplifier\n"
                 "        connectivity: Offline\n"
                 "        seconds: 120\n"
                 "      - type: wait_node_connectivity\n"
@@ -854,8 +871,13 @@ static int write_one_event(FILE *f, const char *event,
                 "        seconds: 300\n"
                 "      - type: wait_nodes_ready\n"
                 "        nodes: all\n"
+                "      - type: toggle_service\n"
+                "        sites: all\n"
+                "        state: on\n"
                 "      - type: wait_ues_attached\n"
-                "        ues: all\n");
+                "        ues: all\n"
+                "        seconds: 300\n"
+                "      - type: stop_node_connectivity_monitor\n");
         return ULAB_OK;
     }
     if (ulab_streq(event, "toggle_service_off")) {
@@ -1161,6 +1183,7 @@ static int write_case_scenario(const gen_opts_t *opts,
     int wip;
     int needs_ues;
     int software_only;
+    int site_restart;
     size_t i;
     FILE *f;
 
@@ -1181,6 +1204,7 @@ static int write_case_scenario(const gen_opts_t *opts,
     wip = case_is_wip(family, c);
     software_only = software_update_success_case(family, c);
     needs_ues = software_only ? 0 : case_needs_ues(family, c);
+    site_restart = !wip && case_has_event(c, "restart_site");
     packages = scenario_package_count(c, p);
     seed = ulab_hash32(family->name, 62000);
     seed = ulab_hash32(c->name, seed);
@@ -1219,15 +1243,35 @@ static int write_case_scenario(const gen_opts_t *opts,
 
     write_world(f, p, software_only);
     if (!software_only) {
-        write_packages(f, packages, p->traffic_mb_per_ue);
+        /* Leave room for pre/post-restart traffic probes. */
+        write_packages(f, packages, site_restart ?
+                       2 * (p->traffic_mb_per_ue ? p->traffic_mb_per_ue : 1024) :
+                       p->traffic_mb_per_ue);
     }
     write_setup(f, software_only);
-    write_runtime(f, needs_ues);
+    write_runtime(f, site_restart ? 0 : needs_ues);
     write_profile_section(f, c);
 
     fprintf(f, "phases:\n");
     if (!wip && software_only) {
         write_software_preflight(f, c);
+    }
+    if (site_restart) {
+        fprintf(f,
+                "  - name: wait_for_assigned_site\n"
+                "    checks:\n"
+                "      - type: node_status_equals\n"
+                "        nodes: all\n"
+                "        connectivity: Online\n"
+                "        state: Operational\n"
+                "        timeout_seconds: 300\n"
+                "        immediate: true\n"
+                "      - type: site_operation_status_equals\n"
+                "        sites: all\n"
+                "        busy: false\n"
+                "        service_available: true\n"
+                "        timeout_seconds: 300\n"
+                "        immediate: true\n");
     }
     fprintf(f,
             "  - name: action\n"

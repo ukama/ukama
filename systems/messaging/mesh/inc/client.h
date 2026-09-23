@@ -30,6 +30,7 @@ typedef struct {
 
 void init_forward_list(ForwardList **list);
 void free_forward_item(Forward *item);
+void free_forward_list(ForwardList *list);
 
 void remove_item_from_list(ForwardList *list, char *uuid);
 Forward *is_existing_item_in_list(ForwardList *list, char *uuid);

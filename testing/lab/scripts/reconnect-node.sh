@@ -14,6 +14,7 @@ fi
 
 NODE_KEY="$1"
 RUN_DIR="$2"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 STATE_NAME="$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-')"
 STATE_FILE="$RUN_DIR/runtime-nodes/$STATE_NAME.env"
 
@@ -44,7 +45,7 @@ fi
 # Start the same stopped container.  Podman preserves its network attachment,
 # filesystem and node identity, so the normal backend WebSocket reconnect path
 # is exercised without rebuilding or replacing the virtual node.
-podman start "$CONTAINER_NAME" >/dev/null
+"$HOST_CONTROL" start "$CONTAINER_NAME"
 
 if ! podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
     grep -q '^true$'; then

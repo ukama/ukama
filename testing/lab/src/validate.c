@@ -24,6 +24,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     size_t i;
     size_t j;
     int has_configure_sites;
+    int monitor_active = 0;
 
     has_configure_sites = 0;
     for (i = 0; i < s->phase_count; i++) {
@@ -201,6 +202,37 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->retry_busy_seconds > 0 &&
+                (event->type != EVT_TOGGLE_SERVICE ||
+                 event->retry_busy_seconds > 300 ||
+                 (event->expect_result[0] != '\0' &&
+                  !ulab_streq(event->expect_result, "success")))) {
+                return fail(err, "retry_busy_seconds requires a successful "
+                            "toggle_service and must not exceed 300 seconds");
+            }
+            if (event->type == EVT_START_NODE_CONNECTIVITY_MONITOR ||
+                event->type == EVT_STOP_NODE_CONNECTIVITY_MONITOR) {
+                if (event->expect_result[0] != '\0' &&
+                    !ulab_streq(event->expect_result, "success")) {
+                    return fail(err, "node monitor events must succeed");
+                }
+                if (event->type == EVT_START_NODE_CONNECTIVITY_MONITOR) {
+                    if (monitor_active || event->nodes.kind == SEL_NONE ||
+                        (!ulab_streq(event->status, "Online") &&
+                         !ulab_streq(event->status, "Offline"))) {
+                        return fail(err, "node monitor requires a selector, "
+                                    "Online/Offline connectivity, and no active monitor");
+                    }
+                    monitor_active = 1;
+                } else {
+                    if (!monitor_active) {
+                        return fail(err, "no active node monitor to stop");
+                    }
+                    monitor_active = 0;
+                }
+                continue;
+            }
+
             if (event->type == EVT_WAIT_UE_SESSIONS ||
                 event->type == EVT_FINALIZE_UE_SESSIONS) {
                 if (event->ues.kind == SEL_NONE) {
@@ -561,6 +593,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err, "sim_unallocated requires ues");
             }
         }
+    }
+
+    if (monitor_active) {
+        return fail(err, "node monitor requires stop_node_connectivity_monitor");
     }
 
     assertion_count += s->final_check_count;

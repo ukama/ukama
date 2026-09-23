@@ -7,25 +7,38 @@
  */
 
 #include <string.h>
+#include <stdlib.h>
+
+#include "mesh.h"
 
 /*
  * split_strings --
  *
  */
-void split_strings(char *input, char **str1, char **str2, char *delimiter) {
+void split_strings(const char *input, char **str1, char **str2,
+                   const char *delimiter) {
 
     char *token=NULL;
+    char *copy=NULL, *save=NULL;
 
-    token = strtok(input, delimiter);
+    if (str1) *str1 = NULL;
+    if (str2) *str2 = NULL;
+    if (input == NULL || delimiter == NULL) return;
+
+    copy = strdup(input);
+    if (copy == NULL) return;
+
+    token = strtok_r(copy, delimiter, &save);
 
     if (token != NULL && str1) {
         *str1 = strdup(token);
 
-        token = strtok(NULL, delimiter);
+        token = strtok_r(NULL, delimiter, &save);
         if (token != NULL && str2) {
             *str2 = strdup(token);
         }
     }
+    free(copy);
 }
 
 /*

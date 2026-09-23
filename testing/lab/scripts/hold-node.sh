@@ -15,6 +15,7 @@ fi
 TARGET="$1"
 NODE_KEY="$2"
 RUN_DIR="$3"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 STATE_NAME="$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-')"
 STATE_FILE="$RUN_DIR/runtime-nodes/$STATE_NAME.env"
 HOLD_DIR="$RUN_DIR/failure-controls/$TARGET"
@@ -40,13 +41,13 @@ if [ -f "$HOLD_FILE" ]; then
     exit 0
 fi
 
+if podman inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
+    "$HOST_CONTROL" stop "$CONTAINER_NAME"
+fi
+
 {
     echo "LOGICAL_NODE_ID=$NODE_KEY"
     echo "CONTAINER_NAME=$CONTAINER_NAME"
 } > "$HOLD_FILE"
-
-if podman inspect "$CONTAINER_NAME" >/dev/null 2>&1; then
-    podman stop -t 1 "$CONTAINER_NAME" >/dev/null
-fi
 
 echo "node-held node=$NODE_KEY container=$CONTAINER_NAME target=$TARGET"

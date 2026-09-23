@@ -11,9 +11,11 @@
 #include "selector.h"
 #include "util.h"
 
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <time.h>
 #include <unistd.h>
 
 #define NODE_CONNECTIVITY_WAIT_DEFAULT_SEC 180u
@@ -603,10 +605,27 @@ static int event_restart_site(event_ctx_t *ctx,
         if (runtime_failure_control_enabled(ctx->runtime,
                                             "site_restart")) {
             selector_result_t nodes;
+            size_t j;
+            size_t kept;
 
             memset(&nodes, 0, sizeof(nodes));
-            if (site_node_selection(ctx->world, site, &nodes, err) ||
-                runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
+            if (site_node_selection(ctx->world, site, &nodes, err)) {
+                selector_result_free(&sites);
+                return ULAB_ERR;
+            }
+            /* A site restart never restarts or holds the controller. */
+            kept = 0;
+            for (j = 0; j < nodes.count; j++) {
+                const node_t *node;
+
+                node = &ctx->world->nodes[nodes.idx[j]];
+                if (ulab_streq(node->type, ULAB_NODE_TOWER) ||
+                    ulab_streq(node->type, ULAB_NODE_AMPLIFIER)) {
+                    nodes.idx[kept++] = nodes.idx[j];
+                }
+            }
+            nodes.count = kept;
+            if (runtime_hold_nodes(ctx->runtime, ctx->world, &nodes,
                                    "site_restart", err)) {
                 selector_result_free(&nodes);
                 selector_result_free(&sites);
@@ -823,6 +842,96 @@ static int event_software_update(event_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int service_retry_time(uint64_t *milliseconds, ulab_error_t *err) {
+    struct timespec now;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &now) != 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "toggleService cannot read retry clock: %s", strerror(errno));
+        return ULAB_ERR;
+    }
+    *milliseconds = (uint64_t)now.tv_sec * 1000 +
+                    (uint64_t)now.tv_nsec / 1000000;
+    return ULAB_OK;
+}
+
+static int toggle_service_with_retry(event_ctx_t *ctx, const site_t *site,
+                                     int enabled, uint32_t retry_seconds,
+                                     ulab_error_t *err) {
+    bff_site_operation_status_t status;
+    struct timespec pause;
+    char last_reason[ULAB_MAX_ERR];
+    uint64_t now;
+    uint64_t deadline;
+    uint64_t delay;
+    unsigned int attempts;
+    int rc;
+
+    if (retry_seconds == 0) {
+        return bff_toggle_site_service(ctx->bff, site, enabled, err);
+    }
+    if (service_retry_time(&now, err)) return ULAB_ERR;
+    deadline = now + (uint64_t)retry_seconds * 1000;
+    attempts = 0;
+    snprintf(last_reason, sizeof(last_reason), "availability not yet checked");
+
+    for (;;) {
+        if (ctx->node_monitor != NULL &&
+            node_monitor_status(*ctx->node_monitor, err)) return ULAB_ERR;
+        if (service_retry_time(&now, err)) return ULAB_ERR;
+        if (now >= deadline) break;
+        if (bff_get_site_operation_status(ctx->bff, site, &status, err)) {
+            return ULAB_ERR;
+        }
+        if (ctx->node_monitor != NULL &&
+            node_monitor_status(*ctx->node_monitor, err)) return ULAB_ERR;
+
+        if (status.busy) {
+            snprintf(last_reason, sizeof(last_reason),
+                     "site operation busy: %.900s", status.service.reason);
+        } else if (!status.service.available) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "toggleService unavailable site=%.128s: %.700s",
+                     site->bff_id, status.service.reason);
+            return ULAB_ERR;
+        } else {
+            if (service_retry_time(&now, err)) return ULAB_ERR;
+            if (now >= deadline) {
+                snprintf(last_reason, sizeof(last_reason),
+                         "availability check exhausted retry window");
+                break;
+            }
+            attempts++;
+            rc = bff_toggle_site_service(ctx->bff, site, enabled, err);
+            if (rc != ULAB_EBUSY) {
+                if (rc == ULAB_OK) ulab_error_clear(err);
+                return rc;
+            }
+            snprintf(last_reason, sizeof(last_reason), "%s", err->msg);
+        }
+
+        if (service_retry_time(&now, err)) return ULAB_ERR;
+        if (now >= deadline) break;
+        delay = deadline - now < 2000 ? deadline - now : 2000;
+        ulab_status("SERVICE", "wait operation lock site=%s attempts=%u "
+                    "remaining_ms=%llu reason=%.256s", site->bff_id,
+                    attempts, (unsigned long long)(deadline - now), last_reason);
+        pause.tv_sec = (time_t)(delay / 1000);
+        pause.tv_nsec = (long)(delay % 1000) * 1000000;
+        if (nanosleep(&pause, NULL) != 0 && errno != EINTR) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "toggleService retry wait failed: %s", strerror(errno));
+            return ULAB_ERR;
+        }
+    }
+
+    snprintf(err->msg, sizeof(err->msg),
+             "toggleService retry window exhausted site=%.128s "
+             "seconds=%u attempts=%u last=%.700s", site->bff_id,
+             retry_seconds, attempts, last_reason);
+    return ULAB_ERR;
+}
+
 static int event_toggle_service(event_ctx_t *ctx,
                                 const event_spec_t *event,
                                 ulab_error_t *err) {
@@ -843,7 +952,8 @@ static int event_toggle_service(event_ctx_t *ctx,
         site_t *site;
 
         site = &ctx->world->sites[res.idx[i]];
-        if (bff_toggle_site_service(ctx->bff, site, enabled, err)) {
+        if (toggle_service_with_retry(ctx, site, enabled,
+                                      event->retry_busy_seconds, err)) {
             selector_result_free(&res);
             return ULAB_ERR;
         }

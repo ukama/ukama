@@ -82,6 +82,8 @@ Supported events:
 - `toggle_radio`
 - `toggle_internet_switch`
 - `restart_site`
+- `start_node_connectivity_monitor`
+- `stop_node_connectivity_monitor`
 - `configure_sites`
 - `promote_release`
 - `software_update`
@@ -188,6 +190,64 @@ after every selected node has been observed with the requested connectivity.
 The default timeout is 180 seconds.
 `ULAB_NODE_CONNECTIVITY_POLL_SEC` controls the polling interval and defaults to
 two seconds.
+
+Site restart contract:
+
+`restart_site` restarts the selected sites' tower and amplifier nodes. The
+controller must remain Online. The native `failure_control` target
+`site_restart` holds only those tower/amplifier nodes; it never holds the
+controller. Explicit `restart_nodes` on a controller is still supported.
+
+Wrap a successful site-restart flow with a connectivity monitor:
+
+```yaml
+- type: start_node_connectivity_monitor
+  type_selector: controller
+  connectivity: Online
+
+- type: restart_site
+  sites: all
+
+- type: wait_node_connectivity
+  type_selector: tower
+  connectivity: Offline
+  seconds: 180
+
+- type: wait_node_connectivity
+  type_selector: amplifier
+  connectivity: Offline
+  seconds: 180
+
+- type: wait_node_connectivity
+  nodes: all
+  connectivity: Online
+  seconds: 300
+
+- type: wait_nodes_ready
+  nodes: all
+
+- type: stop_node_connectivity_monitor
+```
+
+The monitor checks its baseline synchronously before the next event, then
+queries BFF in the background with a one-second pause between polling rounds.
+It spans phases until the explicit stop event. One monitor can select multiple
+nodes; only one monitor may be active per scenario. Start/stop events must be
+paired and must succeed. Use `nodes: controller-site-001-001` to watch a single
+controller, or `type_selector: controller` to watch all controllers, including
+peers during an isolated site restart.
+
+The first unexpected connectivity value or query error is retained even if
+later queries would succeed. The runner reports the failure when the current
+event or check finishes. Stopping joins the worker and performs a final sample;
+failure cleanup also joins it before deleting resources. A query error means
+connectivity could not be verified, not proof that the node was Offline.
+
+This is sampled BFF connectivity: latency and the polling interval can hide
+shorter outages. It does not measure container boot identity. The separate
+Offline waits above also depend on observing the reboot window; they are not
+an event-history subscription. `node_status_equals` with `immediate: true`
+remains an eventual phase check and does not provide this monitoring.
 
 Virtual node network outage:
 
@@ -338,6 +398,48 @@ accepts a `nodes:` selector and derives the unique sites from those nodes.
 `toggle_internet_switch` requires a positive port number. Controller action
 responses include the BFF failure message, so operation-lock scenarios can
 assert the reason with `expect.error_contains`.
+
+For a service toggle after restart, opt in to a bounded operation-lock retry:
+
+```yaml
+- type: toggle_service
+  sites: all
+  state: on
+  retry_busy_seconds: 30
+```
+
+`retry_busy_seconds` defaults to zero (one mutation, without a preflight query).
+A positive value, at most 300, requires a success expectation. For each selected
+site, the runner checks `getSiteOperationStatus` before each attempt, waits while
+`busy` is true, and requires `actions.service.available` before dispatch. If the
+mutation explicitly rejects an operation-lock conflict, it polls again every
+two seconds. Completed sites are not replayed; runtime service handling runs
+only after every selected site accepts the mutation. An active controller
+connectivity monitor continues to run and is checked between requests.
+
+The retry window starts separately for each site and uses a monotonic clock.
+No request starts after that window; an in-flight BFF request can still take
+its existing 30-second timeout. Runtime service convergence has its existing
+separate timeout.
+
+Only `toggleService` rejection codes `OPERATION_BUSY`, `RESOURCE_LOCKED`, and
+`LOCK_CONFLICT` are classified as retryable. Codes may be in GraphQL
+`errors[].extensions.code` or a JSON error's `code`. Without a code, the exact
+messages `operation busy`, `operation is busy`, `operation in progress`,
+`operation already in progress`, `another operation is in progress`,
+`resource is locked`, and `lock conflict` are accepted case-insensitively,
+optionally followed by a colon and detail. Unknown codes are not retried.
+HTTP conflicts require 409/423 plus an explicit recognized reason; HTTP 2xx
+GraphQL errors must all be recognized and must not include mutation result
+data. Authentication, transport, server, mixed, and unclassified failures
+(including bare `success: false`) fail immediately. A non-busy site with
+service unavailable also fails immediately.
+
+This does not repair backend availability/lock consistency. BFF must preserve
+the explicit operation-lock rejection rather than reduce it to `success: false`.
+Availability and mutation enforcement must use the same authoritative lock
+state, resource scope, and lease-expiry rule; mutation lock acquisition remains
+atomic because the preflight query cannot eliminate a concurrent operation.
 
 `configure_sites` is only for node lifecycle acceptance tests. The scenario
 creates the network and starts its nodes without creating the site, then calls

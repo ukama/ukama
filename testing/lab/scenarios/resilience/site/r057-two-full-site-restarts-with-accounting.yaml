@@ -1,6 +1,6 @@
 version: 1
 name: r057-two-full-site-restarts-with-accounting
-description: Two full site restarts between finalized sessions must restore service and preserve all successfully transferred usage and the original receipt.
+description: Two tower/amplifier site restarts with the controller remaining Online between finalized sessions must restore service and preserve all successfully transferred usage and the original receipt.
 seed: 6157
 suite: resilience
 priority: p1
@@ -53,10 +53,17 @@ phases:
     checks: []
   - name: restart_and_resume_1
     events:
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 120
       - type: wait_node_connectivity
@@ -107,7 +114,11 @@ phases:
       - type: restart_site
         sites: all
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 120
       - type: wait_node_connectivity
@@ -153,6 +164,10 @@ phases:
         timeout_seconds: 120
         poll_seconds: 2
         immediate: true
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor
+
 final_checks:
   - type: usage_per_sim
     ues: all

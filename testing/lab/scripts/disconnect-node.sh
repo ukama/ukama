@@ -14,6 +14,7 @@ fi
 
 NODE_KEY="$1"
 RUN_DIR="$2"
+HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
 STATE_NAME="$(printf "%s" "$NODE_KEY" | tr -c 'A-Za-z0-9_.-' '-')"
 STATE_FILE="$RUN_DIR/runtime-nodes/$STATE_NAME.env"
 
@@ -35,17 +36,11 @@ if ! podman container exists "$CONTAINER_NAME" >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
-    grep -q '^true$'; then
-    echo "node-already-disconnected node=$NODE_KEY container=$CONTAINER_NAME"
-    exit 0
-fi
-
 # Stop the virtual node process rather than only removing its Podman network
 # interface.  This deterministically closes the backend WebSocket so the
-# production offline path is exercised immediately.  An explicit podman stop
-# suppresses the container's --restart policy until reconnect-node.sh starts it.
-podman stop "$CONTAINER_NAME" >/dev/null
+# production offline path is exercised immediately. Stop the host service even
+# if the container is already down, to cancel any pending automatic restart.
+"$HOST_CONTROL" stop "$CONTAINER_NAME"
 
 if podman inspect -f '{{.State.Running}}' "$CONTAINER_NAME" 2>/dev/null |
     grep -q '^true$'; then

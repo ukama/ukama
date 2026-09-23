@@ -1064,6 +1064,20 @@ static void init_event_ctx(event_ctx_t *ctx,
     ctx->sim_type   = sim_type;
 }
 
+static int check_node_monitor(node_monitor_t *monitor, report_t *report,
+                               ulab_error_t *err) {
+    check_result_t result;
+
+    if (node_monitor_status(monitor, err) == ULAB_OK) {
+        return ULAB_OK;
+    }
+    memset(&result, 0, sizeof(result));
+    ulab_copy(result.name, sizeof(result.name), "node_connectivity_monitor");
+    ulab_copy(result.detail, sizeof(result.detail), err->msg);
+    report_check(report, &result);
+    return ULAB_ERR;
+}
+
 static int run_phase(scenario_t *scenario,
                      world_t *world,
                      model_t *model,
@@ -1071,6 +1085,7 @@ static int run_phase(scenario_t *scenario,
                      runtime_t *runtime,
                      report_t *report,
                      phase_spec_t *phase,
+                     node_monitor_t **monitor,
                      const char *sim_type,
                      ulab_error_t *err) {
 
@@ -1082,8 +1097,12 @@ static int run_phase(scenario_t *scenario,
     ulab_status("PHASE", "%s", phase->name);
     init_event_ctx(&event_ctx, scenario, world, model, bff,
                    runtime, phase->name, sim_type);
+    event_ctx.node_monitor = monitor;
 
     for (i = 0; i < phase->event_count; i++) {
+        if (check_node_monitor(*monitor, report, err)) {
+            return ULAB_ERR;
+        }
         rc = event_run(&event_ctx, &phase->events[i], err);
         report_event(report, phase->name, &phase->events[i],
                      rc == ULAB_OK, rc == ULAB_OK ? "ok" : err->msg);
@@ -1094,9 +1113,13 @@ static int run_phase(scenario_t *scenario,
 
     init_check_ctx(&check_ctx, scenario, world, model, bff, runtime,
                    sim_type);
-    return run_checks_mode(&check_ctx, phase->checks,
-                           phase->check_count, report,
-                           CHECK_RUN_LIVE_RUNTIME, err);
+    if (check_node_monitor(*monitor, report, err)) {
+        return ULAB_ERR;
+    }
+    rc = run_checks_mode(&check_ctx, phase->checks,
+                         phase->check_count, report,
+                         CHECK_RUN_LIVE_RUNTIME, err);
+    return rc != ULAB_OK ? rc : check_node_monitor(*monitor, report, err);
 }
 
 static void write_world_artifact(const world_t *world,
@@ -1254,6 +1277,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int no_cleanup;
     int failure_logs_attempted;
     int bff_opened;
+    node_monitor_t *monitor = NULL;
 
     scenario = NULL;
     rc = ULAB_OK;
@@ -1352,15 +1376,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    if (scenario->runtime.start_ues ||
-        scenario->runtime.wait_ues_attached) {
-        rc = runtime_enable_pcrf_service(&runtime, &world, &err);
-        if (rc != ULAB_OK) {
-            rc = ULAB_ERUNTIME;
-            goto done;
-        }
-    }
-
     ulab_status("BACKEND", "creating backend world resources");
     rc = setup_bff_world(&bff, scenario, &world, opts, runDir, &err);
     if (rc != ULAB_OK) {
@@ -1377,7 +1392,8 @@ static int runner_validate_one(const runner_opts_t *opts) {
 
     for (i = 0; i < scenario->phase_count; i++) {
         rc = run_phase(scenario, &world, &model, &bff, &runtime,
-                       &report, &scenario->phases[i], opts->sim_type, &err);
+                       &report, &scenario->phases[i], &monitor,
+                       opts->sim_type, &err);
         if (rc != ULAB_OK) {
             goto done;
         }
@@ -1428,6 +1444,16 @@ static int runner_validate_one(const runner_opts_t *opts) {
     }
 
 done:
+    /* Join before deleting resources or closing the main BFF client. */
+    if (monitor != NULL) {
+        ulab_error_t monitor_err;
+
+        memset(&monitor_err, 0, sizeof(monitor_err));
+        if (node_monitor_stop(&monitor, &monitor_err) && rc == ULAB_OK) {
+            err = monitor_err;
+            rc = ULAB_ERR;
+        }
+    }
     if (err.msg[0] != '\0') {
         ulab_log_error("%s", err.msg);
     }
