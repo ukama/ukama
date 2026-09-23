@@ -114,6 +114,7 @@ phases:
       - type: toggle_service
         sites: all
         state: on
+        retry_busy_seconds: 30
       - type: wait_ues_attached
         ues: all
         seconds: 300

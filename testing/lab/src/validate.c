@@ -202,6 +202,14 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->retry_busy_seconds > 0 &&
+                (event->type != EVT_TOGGLE_SERVICE ||
+                 event->retry_busy_seconds > 300 ||
+                 (event->expect_result[0] != '\0' &&
+                  !ulab_streq(event->expect_result, "success")))) {
+                return fail(err, "retry_busy_seconds requires a successful "
+                            "toggle_service and must not exceed 300 seconds");
+            }
             if (event->type == EVT_START_NODE_CONNECTIVITY_MONITOR ||
                 event->type == EVT_STOP_NODE_CONNECTIVITY_MONITOR) {
                 if (event->expect_result[0] != '\0' &&

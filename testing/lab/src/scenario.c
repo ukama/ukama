@@ -835,6 +835,13 @@ static int apply_event_field(event_spec_t *e, const char *key,
         ulab_streq(key, "seconds")) {
         return ulab_parse_u64(val, &e->amount_mb);
     }
+    if (ulab_streq(key, "retry_busy_seconds")) {
+        uint64_t seconds;
+
+        if (ulab_parse_u64(val, &seconds) || seconds > 300) return ULAB_ERR;
+        e->retry_busy_seconds = (uint32_t)seconds;
+        return ULAB_OK;
+    }
     if (ulab_streq(key, "profile")) return ulab_copy(e->profile,
         sizeof(e->profile), val);
     if (ulab_streq(key, "target")) return ulab_copy(e->target,

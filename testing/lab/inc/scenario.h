@@ -251,6 +251,7 @@ typedef struct {
     selector_t   nodes;
     selector_t   sites;
     uint64_t     amount_mb;
+    uint32_t     retry_busy_seconds;
     int64_t      offset_seconds;
     char         profile[ULAB_MAX_REF];
     char         target[ULAB_MAX_REF];
