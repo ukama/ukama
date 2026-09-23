@@ -1352,15 +1352,6 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
-    if (scenario->runtime.start_ues ||
-        scenario->runtime.wait_ues_attached) {
-        rc = runtime_enable_pcrf_service(&runtime, &world, &err);
-        if (rc != ULAB_OK) {
-            rc = ULAB_ERUNTIME;
-            goto done;
-        }
-    }
-
     ulab_status("BACKEND", "creating backend world resources");
     rc = setup_bff_world(&bff, scenario, &world, opts, runDir, &err);
     if (rc != ULAB_OK) {
