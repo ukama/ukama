@@ -55,7 +55,7 @@ int serialize_local_service_response(char **response,
                                      int len,
                                      char *data);
 int serialize_websocket_message(char **str,
-                                URequest *request,
+                                const URequest *request,
                                 const char *uuid);
 int deserialize_forward_request(MRequest **req,
                                 json_t *json);

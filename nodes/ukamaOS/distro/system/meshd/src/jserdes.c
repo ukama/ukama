@@ -132,7 +132,7 @@ int serialize_local_service_response(char **response, Message *message,
     return (*response != NULL);
 }
 
-STATIC void serialize_message_data(URequest *request, char **data) {
+STATIC void serialize_message_data(const URequest *request, char **data) {
 
     json_t *json, *jRaw;
 
@@ -169,8 +169,7 @@ STATIC void serialize_message_data(URequest *request, char **data) {
 		json_object_set_new(jRaw, JSON_LENGTH,
 							json_integer((int)request->binary_body_length));
 		json_object_set_new(jRaw, JSON_DATA,
-							json_stringn((char *)request->binary_body,
-                                         request->binary_body_length));
+							json_stringn((char *)request->binary_body, request->binary_body_length));
 	}
 
     *data = json_dumps(json, 0);
@@ -178,7 +177,7 @@ STATIC void serialize_message_data(URequest *request, char **data) {
 }
 
 int serialize_websocket_message(char **str,
-                                URequest *request,
+                                const URequest *request,
                                 const char *uuid) {
 
     json_t *json=NULL;
@@ -234,7 +233,7 @@ int deserialize_node_info(NodeInfo **node, json_t *json) {
 STATIC void deserialize_map_array(UMap **map, json_t *json) {
 
 	json_t *jArray;
-	json_t *elem, *key, *val, *len;
+	json_t *elem, *key, *val;
 	int i, size=0;
 
 	*map = (UMap *)calloc(1, sizeof(UMap));
@@ -253,7 +252,6 @@ STATIC void deserialize_map_array(UMap **map, json_t *json) {
 
 			key = json_object_get(elem, JSON_KEY);
 			val = json_object_get(elem, JSON_VALUE);
-			len = json_object_get(elem, JSON_LEN);
 
 			u_map_put(*map, json_string_value(key), json_string_value(val));
 		}
@@ -263,7 +261,7 @@ STATIC void deserialize_map_array(UMap **map, json_t *json) {
 STATIC void deserialize_map(URequest **request, json_t *json) {
 
 	json_t *obj;
-	char *str;
+	const char *str;
 
 	/* Determine the type of map. */
 	obj = json_object_get(json, JSON_TYPE);
