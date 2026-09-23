@@ -64,8 +64,11 @@ case "$ACTION" in
         # Without --new, the generated unit starts the SAME container and
         # supervises conmon. Its writable filesystem survives each reboot.
         podman generate systemd --name --container-prefix=ulab \
-            --restart-policy=always --restart-sec="$RESTART_DELAY" \
+            --restart-policy=always \
             "$CONTAINER_NAME" > "$TEMP_FILE"
+        # Older Podman versions lack --restart-sec. Set the systemd directive
+        # last so it also overrides any delay emitted by newer generators.
+        printf '\n[Service]\nRestartSec=%ss\n' "$RESTART_DELAY" >> "$TEMP_FILE"
         mv "$TEMP_FILE" "$UNIT_FILE"
         host_systemctl link --runtime "$UNIT_FILE"
         host_systemctl daemon-reload
