@@ -108,12 +108,12 @@ static void add_map_to_request(json_t **json, UMap *map, int mapType) {
 }
 
 int serialize_system_response(char **response, Message *message,
-                              int retCode, int len, char *data) {
+                              int retCode, int len, const char *data) {
 
     json_t *json, *obj;
 
     /* basic sanity check */
-	if (len == 0 || data == NULL || message == NULL)
+	if (len < 0 || data == NULL || message == NULL)
 		return FALSE;
 
 	json = json_object();
@@ -137,7 +137,7 @@ int serialize_system_response(char **response, Message *message,
 	return TRUE;
 }
 
-static void serialize_message_data(URequest *request, char **data) {
+static void serialize_message_data(const URequest *request, char **data) {
 
     json_t *json, *jRaw;
 
@@ -195,7 +195,7 @@ error:
 }
 
 int serialize_websocket_message(char **str,
-                                URequest *request,
+                                const URequest *request,
                                 char *uuid) {
 
     json_t *json = NULL;
@@ -324,54 +324,3 @@ int deserialize_websocket_message(Message **message, char *data) {
 	return TRUE;
 }
 
-static void deserialize_map_array(UMap **map, json_t *json) {
-
-	json_t *jArray;
-	json_t *elem, *key, *val;
-	int i, size=0;
-
-	*map = (UMap *)calloc(1, sizeof(UMap));
-	if (*map==NULL)
-		return;
-
-	u_map_init(*map);
-
-	jArray = json_object_get(json, JSON_DATA);
-
-	if (json_is_array(jArray)) {
-		size = json_array_size(jArray);
-
-		for (i=0; i<size; i++) {
-			elem = json_array_get(jArray, i);
-
-			key = json_object_get(elem, JSON_KEY);
-			val = json_object_get(elem, JSON_VALUE);
-
-			u_map_put(*map, json_string_value(key), json_string_value(val));
-		}
-	}
-}
-
-static void deserialize_map(URequest **request, json_t *json) {
-
-	json_t *obj;
-	char *str;
-
-	/* Determine the type of map. */
-	obj = json_object_get(json, JSON_TYPE);
-	if (obj==NULL) {
-		return;
-	}
-
-	str = json_string_value(obj);
-
-	if (strcasecmp(str, MESH_MAP_TYPE_URL_STR)==0) {
-		deserialize_map_array(&(*request)->map_url, json);
-	} else if (strcasecmp(str, MESH_MAP_TYPE_HDR_STR)==0) {
-		deserialize_map_array(&(*request)->map_header, json);
-	} else if (strcasecmp(str, MESH_MAP_TYPE_POST_STR)==0) {
-		deserialize_map_array(&(*request)->map_post_body, json);
-	} else if (strcasecmp(str, MESH_MAP_TYPE_COOKIE_STR)==0) {
-		deserialize_map_array(&(*request)->map_cookie, json);
-	}
-}

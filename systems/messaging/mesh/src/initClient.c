@@ -45,7 +45,7 @@ static char *create_url(char *systemName) {
     if (initSystemHost == NULL ||
         initSystemPort == NULL ||
         orgName        == NULL ||
-        systemName     == NULL) return;
+        systemName     == NULL) return NULL;
 
 	url = (char *)calloc(MAX_URL_LEN, sizeof(char));
 	if (url) {
@@ -164,7 +164,7 @@ int get_systemInfo_from_initClient(char *systemName,
 
 	int ret=FALSE;
 	char *url=NULL;
-	struct Response response;
+	struct Response response = {0};
 
     *systemHost = NULL;
     *systemPort = 0;
@@ -203,7 +203,7 @@ int get_systemInfo_from_initClient(char *systemName,
  *    (ORGNAME comes from ENV_SYSTEM_ORG)
  * 3) Return TRUE only if HTTP 200, otherwise FALSE (including if unreachable).
  */
-int verify_nodeid_with_inventory_system(char *nodeID) {
+int verify_nodeid_with_inventory_system(const char *nodeID) {
 
     int  ret      = FALSE;
     char *invHost = NULL;

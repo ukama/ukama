@@ -539,7 +539,7 @@ build_image() {
     cp -f ./scripts/waitfor.sh   "${BUILD_DIR}/bin/"
     cp -f ./scripts/kickstart.sh "${BUILD_DIR}/bin/"
 
-    buildah bud -f "${file}" -t "${IMAGE_NS}/${IMAGE_NAME}:${name_tag}" .
+    buildah "${BUILDAH_STORAGE_ARGS[@]}" bud -f "${file}" -t "${IMAGE_NS}/${IMAGE_NAME}:${name_tag}" .
 
     log "SUCCESS" "Buildah created image ${IMAGE_NS}/${IMAGE_NAME}:${name_tag}"
 }
@@ -556,7 +556,7 @@ push_image_to_repo() {
 
     if [ "${target}" != "remote" ]; then
         log "INFO" "Pushing to local registry ${LOCAL_REGISTRY}"
-        buildah push --tls-verify=false \
+        buildah "${BUILDAH_STORAGE_ARGS[@]}" push --tls-verify=false \
                 "${IMAGE_NS}/${IMAGE_NAME}:${tag}" \
                 "${LOCAL_REGISTRY}/${IMAGE_NS}/${IMAGE_NAME}:${tag}"
         log "SUCCESS" "Image pushed to ${LOCAL_REGISTRY}/${IMAGE_NS}/${IMAGE_NAME}:${tag}"
@@ -571,16 +571,16 @@ push_image_to_repo() {
         log "INFO" "Attempting AWS ECR login to ${REMOTE_REGISTRY}"
         local pass
         pass="$(aws ecr get-login-password)"
-        buildah login --username "AWS" --password "${pass}" "${REMOTE_REGISTRY}"
+        buildah "${BUILDAH_STORAGE_ARGS[@]}" login --username "AWS" --password "${pass}" "${REMOTE_REGISTRY}"
     else
         : "${DOCKER_USER:?DOCKER_USER must be set for remote push if aws is not available}"
         : "${DOCKER_PASS:?DOCKER_PASS must be set for remote push if aws is not available}"
         log "INFO" "Logging into ${REMOTE_REGISTRY} as ${DOCKER_USER}"
-        buildah login --username "${DOCKER_USER}" --password "${DOCKER_PASS}" "${REMOTE_REGISTRY}"
+        buildah "${BUILDAH_STORAGE_ARGS[@]}" login --username "${DOCKER_USER}" --password "${DOCKER_PASS}" "${REMOTE_REGISTRY}"
     fi
 
     log "INFO" "Pushing to remote registry ${REMOTE_REGISTRY}"
-    buildah push \
+    buildah "${BUILDAH_STORAGE_ARGS[@]}" push \
             "${IMAGE_NS}/${IMAGE_NAME}:${tag}" \
             "${REMOTE_REGISTRY}/${IMAGE_NS}/${IMAGE_NAME}:${tag}"
 
@@ -588,6 +588,17 @@ push_image_to_repo() {
 }
 
 # Main
+
+# Use a dedicated VFS store for every Buildah action inside the builder.
+BUILDAH_STORAGE_ARGS=()
+detect_env
+if [ "${BUILD_ENV}" = "container" ]; then
+    BUILDAH_STORAGE_ARGS=(
+        --storage-driver=vfs
+        --root=/tmp/ulab-vfs-store
+        --runroot=/tmp/ulab-vfs-run
+    )
+fi
 
 ACTION="${1:-}"
 shift || true
@@ -621,7 +632,7 @@ case "${ACTION}" in
     clean)
         update_ukama_os_env
         rm -f ContainerFile supervisor.conf
-        [ -n "${1:-}" ] && buildah rmi -f "localhost/${1}" || true
+        [ -n "${1:-}" ] && buildah "${BUILDAH_STORAGE_ARGS[@]}" rmi -f "localhost/${1}" || true
         pushd "${NODED_ROOT}" >/dev/null
         make clean
         popd >/dev/null

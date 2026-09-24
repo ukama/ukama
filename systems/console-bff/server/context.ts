@@ -37,6 +37,7 @@ import RateAPI from "../rate/datasource/rate_api";
 import ReportAPI from "../report/datasource/report_api";
 import SimAPI from "../sim/datasource/sim_api";
 import SiteAPI from "../site/datasource/site_api";
+import SiteProvisionAPI from "../site/datasource/site_provision_api";
 import SoftwareAPI from "../software/datasource/software_api";
 import SubscriberAPI from "../subscriber/datasource/subscriber_api";
 import UserAPI from "../user/datasource/user_api";
@@ -46,6 +47,7 @@ export interface AppDataSources {
   user: UserAPI;
   network: NetworkAPI;
   site: SiteAPI;
+  siteProvision: SiteProvisionAPI;
   member: MemberAPI;
   invitation: InvitationAPI;
   node: NodeAPI;
@@ -102,6 +104,7 @@ export const buildDataSources = (): AppDataSources => ({
   user: new UserAPI(),
   network: new NetworkAPI(),
   site: new SiteAPI(),
+  siteProvision: new SiteProvisionAPI(),
   member: new MemberAPI(),
   invitation: new InvitationAPI(),
   node: new NodeAPI(),

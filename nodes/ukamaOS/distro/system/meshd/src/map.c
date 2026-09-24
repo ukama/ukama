@@ -24,7 +24,7 @@ void init_map_table(MapTable **table) {
 	pthread_mutex_init(&(*table)->mutex, NULL);
 }
 
-STATIC MapItem *create_map_item(char *name,
+STATIC MapItem *create_map_item(const char *name,
                                 char *port,
                                 char *uuid) {
 
@@ -87,7 +87,7 @@ MapItem *is_existing_item(MapTable *table, char *uuid) {
     return NULL;
 }
 
-MapItem *add_map_to_table(MapTable **table, char *name, char *port, char *uuid) {
+MapItem *add_map_to_table(MapTable **table, const char *name, char *port, char *uuid) {
 
 	MapItem *map=NULL;
 

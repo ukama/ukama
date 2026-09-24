@@ -120,7 +120,7 @@ typedef struct _routing_key {
 	ObjectState state;  /* State of the object. */
 } AMQPRoutingKey;
 
-int publish_boot_event(char *exchange);
+int publish_register_event(char *exchange, int port);
 int publish_event(MeshEvent event, char *orgName, char *nodeID, char *nodeIP,
                   int nodePort, char *meshIP, int meshPort);
 #endif /* MESH_AMQP_H */

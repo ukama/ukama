@@ -35,6 +35,7 @@
 #define ULAB_EBFF          4
 #define ULAB_ERUNTIME      5
 #define ULAB_EINTERNAL     6
+#define ULAB_EBUSY         7
 
 typedef enum {
     ULAB_FALSE = 0,

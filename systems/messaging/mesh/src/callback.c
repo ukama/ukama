@@ -18,6 +18,8 @@
 #include <uuid/uuid.h>
 
 #include "callback.h"
+#include "websocket.h"
+#include "initClient.h"
 #include "mesh.h"
 #include "log.h"
 #include "work.h"
@@ -31,26 +33,14 @@
 
 extern MapTable *NodesTable;
 
-/* define in websocket.c */
-extern void websocket_manager(const URequest *request, WSManager *manager,
-							  void *data);
-extern void websocket_incoming_message(const URequest *request,
-									   WSManager *manager, WSMessage *message,
-									   void *data);
-extern void  websocket_onclose(const URequest *request, WSManager *manager,
-							   void *data);
-
-/* network.c */
-extern int start_forward_service(Config *config, UInst **forwardInst);
-
 /*
  * Ulfius main callback function, send AMQP msg and calls the websocket
  * manager and closes.
  */
 int callback_websocket(const URequest *request, UResponse *response,
                        void *data) {
-	int ret, forwardPort;
-	char *nodeID = NULL;
+	int ret;
+	const char *nodeID = NULL;
 	Config *config = NULL;
     MapItem *map = NULL;
     char ip[INET_ADDRSTRLEN]={0};
@@ -73,27 +63,6 @@ int callback_websocket(const URequest *request, UResponse *response,
         return U_CALLBACK_ERROR;
     }
 
-    map = is_existing_item(NodesTable, nodeID);
-    if (map != NULL) {
-        ulfius_stop_framework(map->forwardInst);
-        ulfius_clean_instance(map->forwardInst);
-        ulfius_websocket_send_close_signal(map->wsManager);
-
-        if (map->nodeInfo) {
-            if (publish_event(CONN_CLOSE,
-                              config->orgName,
-                              map->nodeInfo->nodeID,
-                              map->nodeInfo->nodeIP,
-                              map->nodeInfo->nodePort,
-                              map->nodeInfo->meshIP,
-                              map->nodeInfo->meshPort) == FALSE) {
-                log_error("Error publish device close msg on AMQP exchange: %s",
-                          map->nodeInfo->nodeID);
-            }
-		}
-        remove_map_item_from_table(NodesTable, map->nodeInfo->nodeID);
-    }
-
     map = add_map_to_table(&NodesTable,
                            nodeID,
                            &forwardInst,
@@ -101,43 +70,28 @@ int callback_websocket(const URequest *request, UResponse *response,
                            config->bindingIP,
                            config->servicesPort);
 	if (map == NULL) {
-        ulfius_stop_framework(forwardInst);
-        ulfius_clean_instance(forwardInst);
-        return U_CALLBACK_ERROR;
+        ulfius_set_string_body_response(response,
+                                        HttpStatus_ServiceUnavailable,
+                                        HttpStatusStr(HttpStatus_ServiceUnavailable));
+        return U_CALLBACK_COMPLETE;
 	}
 
     map->configData = data;
 
-    /* Publish device (nodeID) 'connect' event to AMQP exchange */
-    if (publish_event(CONN_CONNECT,
-                      config->orgName,
-                      nodeID,
-                      &ip[0], sin->sin_port,
-                      config->bindingIP,
-                      config->servicesPort) == FALSE) {
-        log_error("Error publishing device connect msg on AMQP exchange");
-        remove_map_item_from_table(NodesTable, nodeID);
-        ulfius_stop_framework(forwardInst);
-        ulfius_clean_instance(forwardInst);
-        return U_CALLBACK_ERROR;
-    }
-
-    log_debug("Forward service started on port: %d for NodeID: %s",
-              config->servicesPort, nodeID);
-    log_debug("AMQP device connect msg successfull for NodeID: %s", nodeID);
-
 	if ((ret = ulfius_set_websocket_response(response, NULL, NULL,
 											 &websocket_manager,
-											 map->nodeInfo->nodeID,
+											 map,
 											 &websocket_incoming_message,
-											 map->nodeInfo->nodeID,
+											 map,
 											 &websocket_onclose,
-											 map->nodeInfo->nodeID)) == U_OK) {
+											 map)) == U_OK) {
 		ulfius_add_websocket_deflate_extension(response);
 		return U_CALLBACK_CONTINUE;
 	}
 
-	return U_CALLBACK_CONTINUE;
+    remove_map_item_from_table(NodesTable, map);
+    release_map_item(NodesTable, map);
+    return U_CALLBACK_ERROR;
 }
 
 int callback_default_websocket(const URequest *request,
@@ -184,9 +138,15 @@ int callback_get_status(const URequest *request,
                         UResponse *response,
                         void *data) {
 
-    int status = (NodesTable && NodesTable->first)
-                 ? HttpStatus_OK
-                 : HttpStatus_NotFound;
+    int status = HttpStatus_NotFound;
+
+    if (NodesTable) {
+        pthread_mutex_lock(&NodesTable->mutex);
+        if (NodesTable->first && NodesTable->first->online) {
+            status = HttpStatus_OK;
+        }
+        pthread_mutex_unlock(&NodesTable->mutex);
+    }
 
     ulfius_set_string_body_response(response,
                                     status,
@@ -218,9 +178,10 @@ int callback_forward(const URequest *request,
                      void *user_data) {
 
     MapItem *map=NULL;
-    char *host=NULL, *port=NULL, *url=NULL;
+    char *host=NULL, *port=NULL;
+    const char *url=NULL;
     char *requestStr=NULL;
-    char *responseStr=NULL;
+    const char *responseStr=NULL;
     int statusCode;
     Forward *forward = NULL;
     char uuidStr[36+1];
@@ -233,6 +194,8 @@ int callback_forward(const URequest *request,
         ulfius_set_string_body_response(response,
                                         HttpStatus_BadRequest,
                                         HttpStatusStr(HttpStatus_BadRequest));
+        free(host);
+        free(port);
         return U_CALLBACK_CONTINUE;
     }
 
@@ -249,6 +212,14 @@ int callback_forward(const URequest *request,
 
     uuid_generate(uuid);
     uuid_unparse(uuid, uuidStr);
+
+    pthread_mutex_lock(&map->mutex);
+    if (map->closing) {
+        statusCode = HttpStatus_ServiceUnavailable;
+        responseStr = HttpStatusStr(statusCode);
+        goto done;
+    }
+
     forward = add_client_to_list(&map->forwardList, uuidStr);
     if (forward == NULL) {
         log_error("Error adding to the forward list");
@@ -269,14 +240,22 @@ int callback_forward(const URequest *request,
     }
 
     /* Add work for the websocket for transmission. */
-    add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0);
+    if (!add_work_to_queue(&map->transmit, requestStr, NULL, 0, NULL, 0)) {
+        statusCode = HttpStatus_ServiceUnavailable;
+        responseStr = HttpStatusStr(statusCode);
+        goto done;
+    }
     free(requestStr);
+    requestStr = NULL;
 
     /* Wait for the response back. The cond is set by the websocket thread */
     pthread_mutex_lock(&(forward->mutex));
+    pthread_mutex_unlock(&map->mutex);
     log_debug("Waiting for response back from the node...");
 
-    pthread_cond_wait(&forward->hasData, &forward->mutex);
+    while (forward->httpCode == 0) {
+        pthread_cond_wait(&forward->hasData, &forward->mutex);
+    }
 	pthread_mutex_unlock(&forward->mutex);
 
     log_debug("Response from System Code: %d len: %d Data: %s",
@@ -286,6 +265,7 @@ int callback_forward(const URequest *request,
 
     statusCode  = forward->httpCode;
     responseStr = (char *)forward->data;
+    pthread_mutex_lock(&map->mutex);
 
 done:
     if (forward && forward->data) {
@@ -299,6 +279,9 @@ done:
                                         responseStr ? responseStr : "");
     }
     remove_item_from_list(map->forwardList, uuidStr);
+    pthread_mutex_unlock(&map->mutex);
+    release_map_item(NodesTable, map);
+    free(requestStr);
     free(host);
     free(port);
 

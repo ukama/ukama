@@ -19,43 +19,6 @@
 #include "config.h"
 #include "jserdes.h"
 
-/* define in websocket.c */
-extern void websocket_manager(const URequest *request,
-                              WSManager *manager,
-							  void *data);
-extern void websocket_incoming_message(const URequest *request,
-									   WSManager *manager,
-                                       WSMessage *message,
-									   void *data);
-extern void  websocket_onclose(const URequest *request,
-                               WSManager *manager,
-							   void *data);
-
-static int find_first_available_port(int start, int end) {
-
-    int port = -1, sockfd;
-    struct sockaddr_in addr;
-
-    for (port = start; port <= end; port++) {
-
-        sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (sockfd < 0) return -1;
-
-        addr.sin_family      = AF_INET;
-        addr.sin_addr.s_addr = INADDR_ANY;
-        addr.sin_port        = htons(port);
-
-        if (bind(sockfd, (struct sockaddr *)&addr, sizeof(addr)) == 0) {
-            close(sockfd);
-            return port;
-        }
-
-        close(sockfd);
-    }
-
-    return 0;
-}
-
 static void setup_unsupported_methods(UInst *instance,
                                       char *allowedMethod,
                                       char *prefix,
@@ -106,16 +69,6 @@ static int init_framework(UInst *inst,
 	u_map_put(inst->default_headers, "Access-Control-Allow-Origin", "*");
 
 	return TRUE;
-}
-
-static void setup_webservice_endpoints(Config *config, UInst *instance) {
-
-    ulfius_add_endpoint_by_val(instance, "GET",
-                               EP_PING, NULL, 0,
-							   &callback_get_ping, config);
-    ulfius_set_default_endpoint(instance,
-                                &callback_default_webservice,
-                                config);
 }
 
 static void setup_admin_endpoints(Config *config, UInst *instance) {

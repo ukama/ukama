@@ -41,6 +41,7 @@ describe("getSubscribersByNetwork sim join", () => {
     });
     const ctx = {
       baseURL: "http://subscriber.test",
+      urls: { url: async () => "http://subscriber.test" },
       dataSources: {
         subscriber: { getSimsByNetwork, getSubscribersByNetwork },
       },

@@ -52,6 +52,7 @@ void free_forward_list(ForwardList *forwardList) {
     forwardList->last  = NULL;
     pthread_mutex_unlock(&forwardList->mutex);
 
+    pthread_mutex_destroy(&forwardList->mutex);
     free(forwardList);
 }
 
@@ -140,8 +141,6 @@ void remove_item_from_list(ForwardList *list, char *uuid) {
             }
 
             pthread_mutex_unlock(&list->mutex);
-            pthread_mutex_destroy(&current->mutex);
-            pthread_cond_destroy(&current->hasData);
             free_forward_item(current);
 
             return;

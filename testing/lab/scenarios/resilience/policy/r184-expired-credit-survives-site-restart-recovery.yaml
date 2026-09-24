@@ -81,10 +81,17 @@ phases:
         immediate: true
   - name: restore_availability
     events:
+      - type: start_node_connectivity_monitor
+        type_selector: controller
+        connectivity: Online
       - type: restart_site
         sites: all
       - type: wait_node_connectivity
-        nodes: all
+        type_selector: tower
+        connectivity: Offline
+        seconds: 120
+      - type: wait_node_connectivity
+        type_selector: amplifier
         connectivity: Offline
         seconds: 120
       - type: wait_node_connectivity
@@ -192,6 +199,10 @@ phases:
         timeout_seconds: 120
         poll_seconds: 2
         immediate: true
+  - name: verify_controller_remained_online
+    events:
+      - type: stop_node_connectivity_monitor
+
 final_checks:
   - type: usage_per_sim
     ues: all

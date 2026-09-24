@@ -122,7 +122,7 @@ func (m *MsgBusHandler) RestartServiceQueueListening(service string) (err error)
 	if ok {
 		q.stopQueueListening()
 		time.Sleep(500 * time.Millisecond)
-		if !q.state {
+		if !q.state.Load() {
 			q.startQueueListening()
 		}
 	}
@@ -134,7 +134,7 @@ func (m *MsgBusHandler) StopServiceQueueListening(service string) (err error) {
 	if ok {
 		q.stopQueueListening()
 		time.Sleep(500 * time.Millisecond)
-		if q.state {
+		if q.state.Load() {
 			return fmt.Errorf("failed to stop queue listening service for %s", q.serviceName)
 		}
 	} else {
@@ -236,7 +236,7 @@ func (m *MsgBusHandler) UpdateServiceQueueHandler(s *db.Service) error {
 		/* Check listner state before returning */
 		time.Sleep(500 * time.Millisecond)
 
-		if !listener.state {
+		if !listener.state.Load() {
 			return fmt.Errorf("failed to start listener for service %s", listener.serviceName)
 		}
 
@@ -272,7 +272,7 @@ func (m *MsgBusHandler) Publish(service string, key string, msg *anypb.Any) erro
 func (m *MsgBusHandler) doHealthCheck() error {
 	log.Debugf("[Health Check Monitor] Starting HealthCheck at %s", time.Now().Format(time.RFC1123))
 	for id, q := range m.ql {
-		if q.state {
+		if q.state.Load() {
 			q.healthCheck()
 			if q.continuousMiss > m.mia {
 				if err := m.RemoveServiceQueueListening(id); err != nil {

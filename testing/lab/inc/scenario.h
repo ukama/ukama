@@ -98,6 +98,8 @@ typedef enum {
     EVT_MARK_NODE_OFFLINE,
     EVT_RESTORE_NODE,
     EVT_FAILURE_CONTROL,
+    EVT_START_NODE_CONNECTIVITY_MONITOR,
+    EVT_STOP_NODE_CONNECTIVITY_MONITOR,
     EVT_CHECK
 } event_type_t;
 
@@ -249,6 +251,7 @@ typedef struct {
     selector_t   nodes;
     selector_t   sites;
     uint64_t     amount_mb;
+    uint32_t     retry_busy_seconds;
     int64_t      offset_seconds;
     char         profile[ULAB_MAX_REF];
     char         target[ULAB_MAX_REF];

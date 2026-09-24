@@ -10,6 +10,6 @@ set -euo pipefail
 
 mkdir -p /srv/media
 echo "ukama media test target" >/srv/media/index.html
-iperf3 -s -D
+iperf3 -s --forceflush &
 cd /srv/media
 exec python3 -m http.server 8080

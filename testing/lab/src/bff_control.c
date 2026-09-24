@@ -8,6 +8,7 @@
 
 #include <curl/curl.h>
 #include <jansson.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +64,65 @@ static size_t control_write_cb(void *ptr, size_t size, size_t nmemb,
     return len;
 }
 
+/* Only explicit rejection reasons are safe to retry. A generic conflict,
+ * internal error, or success:false does not establish that dispatch failed. */
+static int control_busy_error(json_t *error) {
+    static const char *messages[] = {
+        "operation busy", "operation is busy", "operation in progress",
+        "operation already in progress", "another operation is in progress",
+        "resource is locked", "lock conflict"
+    };
+    json_t *code;
+    const char *value;
+    char message[512];
+    size_t i;
+    size_t len;
+
+    code = json_object_get(error, "code");
+    if (code == NULL) {
+        code = json_object_get(json_object_get(error, "extensions"), "code");
+    }
+    if (code != NULL) {
+        value = json_string_value(code);
+        return value != NULL &&
+            (strcmp(value, "OPERATION_BUSY") == 0 ||
+             strcmp(value, "RESOURCE_LOCKED") == 0 ||
+             strcmp(value, "LOCK_CONFLICT") == 0);
+    }
+
+    value = json_string_value(json_object_get(error, "message"));
+    if (value == NULL || strlen(value) >= sizeof(message)) {
+        return 0;
+    }
+    while (isspace((unsigned char)*value)) value++;
+    len = strlen(value);
+    while (len > 0 && isspace((unsigned char)value[len - 1])) len--;
+    for (i = 0; i < len; i++) {
+        message[i] = (char)tolower((unsigned char)value[i]);
+    }
+    message[len] = '\0';
+    for (i = 0; i < sizeof(messages) / sizeof(messages[0]); i++) {
+        len = strlen(messages[i]);
+        if (strncmp(message, messages[i], len) == 0 &&
+            (message[len] == '\0' || message[len] == ':')) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int control_busy_errors(json_t *errors) {
+    size_t i;
+
+    if (!json_is_array(errors) || json_array_size(errors) == 0) {
+        return 0;
+    }
+    for (i = 0; i < json_array_size(errors); i++) {
+        if (!control_busy_error(json_array_get(errors, i))) return 0;
+    }
+    return 1;
+}
+
 static int control_response_success(json_t *root, const char *field,
                                     ulab_error_t *err) {
     json_t *data;
@@ -89,10 +149,61 @@ static int control_response_success(json_t *root, const char *field,
                  "%s failed%s%.512s", field,
                  reason && reason[0] ? ": " : "",
                  reason && reason[0] ? reason : "");
+        if (strcmp(field, "toggleService") == 0 &&
+            control_busy_error(result)) {
+            return ULAB_EBUSY;
+        }
         return ULAB_ERR;
     }
 
     return ULAB_OK;
+}
+
+static int control_parse_response(long http_code, const char *op,
+                                   const char *field, const char *body,
+                                   ulab_error_t *err) {
+    json_error_t json_err;
+    json_t *root;
+    json_t *errors;
+    json_t *result;
+    int rc;
+    int service;
+
+    rc = ULAB_ERR;
+    service = strcmp(field, "toggleService") == 0;
+    root = json_loads(body, 0, &json_err);
+    errors = json_object_get(root, "errors");
+    result = json_object_get(json_object_get(root, "data"), field);
+
+    if (http_code < 200 || http_code >= 300) {
+        snprintf(err->msg, sizeof(err->msg), "%s HTTP %ld: %.512s", op,
+                 http_code, body);
+        if (service && (http_code == 409 || http_code == 423) &&
+            (result == NULL || json_is_null(result)) &&
+            (errors != NULL ? control_busy_errors(errors) :
+                             control_busy_error(root))) {
+            rc = ULAB_EBUSY;
+        }
+    } else if (root == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "%s invalid JSON: %s", op,
+                 json_err.text);
+    } else if (errors != NULL) {
+        char *errors_json;
+
+        errors_json = json_dumps(errors, JSON_COMPACT);
+        snprintf(err->msg, sizeof(err->msg),
+                 "%s GraphQL error: %.512s", op,
+                 errors_json ? errors_json : "unknown");
+        free(errors_json);
+        if (service && (result == NULL || json_is_null(result)) &&
+            control_busy_errors(errors)) {
+            rc = ULAB_EBUSY;
+        }
+    } else {
+        rc = control_response_success(root, field, err);
+    }
+    json_decref(root);
+    return rc;
 }
 
 static int control_call(bff_client_t *c, const char *op,
@@ -106,16 +217,12 @@ static int control_call(bff_client_t *c, const char *op,
     char body[8192];
     char token_header[8192];
     long http_code;
-    json_error_t json_err;
-    json_t *root;
-    json_t *errors;
     int rc;
 
     headers = NULL;
     resp.buf = NULL;
     resp.len = 0;
     http_code = 0;
-    root = NULL;
     rc = ULAB_ERR;
 
     if (c == NULL || c->url[0] == '\0') {
@@ -177,37 +284,10 @@ static int control_call(bff_client_t *c, const char *op,
         fflush(c->logf);
     }
 
-    if (http_code < 200 || http_code >= 300) {
-        snprintf(err->msg, sizeof(err->msg), "%s HTTP %ld: %.512s", op,
-                 http_code, resp.buf ? resp.buf : "");
-        goto done;
-    }
-
-    root = json_loads(resp.buf ? resp.buf : "", 0, &json_err);
-    if (root == NULL) {
-        snprintf(err->msg, sizeof(err->msg), "%s invalid JSON: %s", op,
-                 json_err.text);
-        goto done;
-    }
-
-    errors = json_object_get(root, "errors");
-    if (errors != NULL) {
-        char *errors_json;
-
-        errors_json = json_dumps(errors, JSON_COMPACT);
-        snprintf(err->msg, sizeof(err->msg),
-                 "%s GraphQL error: %.512s", op,
-                 errors_json ? errors_json : "unknown");
-        free(errors_json);
-        goto done;
-    }
-
-    rc = control_response_success(root, field, err);
+    rc = control_parse_response(http_code, op, field,
+                                 resp.buf ? resp.buf : "", err);
 
 done:
-    if (root != NULL) {
-        json_decref(root);
-    }
     curl_slist_free_all(headers);
     curl_easy_cleanup(curl);
     free(resp.buf);

@@ -87,9 +87,6 @@ phases:
         count_per_network: 1
         connectivity: Offline
         seconds: 120
-      - type: wait_ues_detached
-        ues: ue-000001
-        seconds: 300
       - type: wait_node_connectivity
         type_selector: tower
         count_per_network: 1

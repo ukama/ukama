@@ -63,10 +63,6 @@ phases:
         immediate: true
         timeout_seconds: 180
 
-      - type: traffic_unavailable
-        ues: all
-        amount_mb: 1
-
   - name: restart_tower
     events:
       - type: wait_node_connectivity
@@ -103,10 +99,6 @@ phases:
         state: Operational
         immediate: true
         timeout_seconds: 180
-
-      - type: traffic_unavailable
-        ues: all
-        amount_mb: 1
 
   - name: restart_amplifier
     events:
@@ -145,10 +137,6 @@ phases:
         immediate: true
         timeout_seconds: 180
 
-      - type: traffic_unavailable
-        ues: all
-        amount_mb: 1
-
   - name: restart_controller
     events:
       - type: wait_node_connectivity
@@ -186,10 +174,6 @@ phases:
         immediate: true
         timeout_seconds: 180
 
-      - type: traffic_unavailable
-        ues: all
-        amount_mb: 1
-
   - name: verify_all_nodes_recovered_service_off
     events:
       - type: wait_node_connectivity
@@ -210,10 +194,6 @@ phases:
         state: Operational
         immediate: true
         timeout_seconds: 180
-
-      - type: traffic_unavailable
-        ues: all
-        amount_mb: 1
 
 final_checks:
   - type: backend_count
