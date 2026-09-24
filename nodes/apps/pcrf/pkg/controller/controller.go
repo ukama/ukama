@@ -809,6 +809,16 @@ func handleTerminatedSession(c *Controller) {
 	}
 }
 
+func safeRun(name string, fn func()) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Errorf("[Publisher] Recovered from panic in %s: %v", name, r)
+		}
+	}()
+
+	fn()
+}
+
 func (c *Controller) publishCDR() {
 	ticker := time.NewTicker(c.publisher.period)
 	defer ticker.Stop()
@@ -816,8 +826,8 @@ func (c *Controller) publishCDR() {
 	for {
 		select {
 		case <-ticker.C:
-			handlePendingSyncSession(c)
-			handleTerminatedSession(c)
+			safeRun("handlePendingSyncSession", func() { handlePendingSyncSession(c) })
+			safeRun("handleTerminatedSession", func() { handleTerminatedSession(c) })
 
 		case <-c.publisher.ctx.Done():
 			log.Infof("[Publisher] Ending routine to publish CDRs")

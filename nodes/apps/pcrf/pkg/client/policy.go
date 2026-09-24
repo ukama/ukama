@@ -48,11 +48,15 @@ func NewRemoteControllerClient(h string, debug bool) (*remoteControllerClient, e
 		return nil, fmt.Errorf("fail to parse ukama agent url: %s. Error: %w", h, err)
 	}
 
-	return &remoteControllerClient{
+	rc := &remoteControllerClient{
 		u:     u,
 		R:     rest.NewRestyClient(u, debug),
 		debug: debug,
-	}, nil
+	}
+
+	rc.R.C.SetLogger(log.StandardLogger())
+
+	return rc, nil
 }
 
 func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
@@ -68,9 +72,12 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 			req.Imsi, err)
 	}
 
-	_, err = r.R.C.R().
+	log.Debugf("Posting CDR to url %s with body: %s", url, string(b))
+
+	resp, err := r.R.C.R().
 		SetHeaders(map[string]string{
 			"Content-Type": "application/json",
+			"Accept":       "*/*",
 		}).
 		SetBody(b).
 		Post(url)
@@ -78,6 +85,13 @@ func (r *remoteControllerClient) PushCdr(req *api.CDR) error {
 		log.Errorf("Post CDR failure. error: %v", err)
 
 		return fmt.Errorf("post CDR failure: %w", err)
+	}
+
+	if resp.StatusCode() < 200 || resp.StatusCode() >= 300 {
+		log.Errorf("Post CDR failure for imsi %s. remote cdr returned http %d: %s",
+			req.Imsi, resp.StatusCode(), resp.Body())
+
+		return fmt.Errorf("remote cdr returned http %d for imsi %s", resp.StatusCode(), req.Imsi)
 	}
 
 	return nil
