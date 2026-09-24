@@ -46,6 +46,6 @@ void init_map_table(MapTable **table);
 void destroy_map_item(MapItem *map);
 MapItem *is_existing_item(MapTable *table, char *uuid);
 void remove_map_item_from_table(MapTable *table, char *uuid);
-MapItem *add_map_to_table(MapTable **table, char *name, char *port, char *uuid);
+MapItem *add_map_to_table(MapTable **table, const char *name, char *port, char *uuid);
 
 #endif /* MESH_MAP_H */

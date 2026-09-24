@@ -5,7 +5,7 @@
 
 /* jserdes.c */
 extern void add_map_to_request(json_t **json, UMap *map, int mapType);
-extern void serialize_message_data(URequest *request, char **data);
+extern void serialize_message_data(const URequest *request, char **data);
 extern int deserialize_service_info(ServiceInfo **service, json_t *json);
 extern void deserialize_map_array(UMap **map, json_t *json);
 extern void deserialize_map(URequest **request, json_t *json);
