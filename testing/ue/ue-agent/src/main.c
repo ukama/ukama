@@ -13,8 +13,10 @@
 #include <linux/if.h>
 #include <linux/if_tun.h>
 #include <netinet/ip.h>
+#include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +53,12 @@ typedef struct {
     char tunIf[UE_AGENT_MAX_STR];
     int detachOnExit;
 } Config;
+
+typedef struct {
+    Config *cfg;
+    atomic_bool running;
+    atomic_bool attached;
+} AttachMonitor;
 
 static void on_signal(int sig) {
 
@@ -263,6 +271,23 @@ static bool wait_for_attach(Config *cfg) {
     return false;
 }
 
+static void *monitor_attachment(void *data) {
+
+    AttachMonitor *monitor = data;
+
+    while (atomic_load(&monitor->running)) {
+        sleep(UE_AGENT_ATTACH_CHECK);
+        if (!atomic_load(&monitor->running)) break;
+
+        if (!ue_is_attached(monitor->cfg)) {
+            atomic_store(&monitor->attached, false);
+            break;
+        }
+    }
+
+    return NULL;
+}
+
 static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
 
     struct sockaddr_in local;
@@ -305,15 +330,24 @@ static void packet_loop(Config *cfg,
 
     unsigned char buf[UE_AGENT_PKT_MAX];
     struct timeval timeout;
-    time_t nextCheck;
+    AttachMonitor monitor;
+    pthread_t monitorThread;
     fd_set rfds;
     int maxFd;
     int rc;
     ssize_t n;
 
-    nextCheck = time(NULL) + UE_AGENT_ATTACH_CHECK;
+    monitor.cfg = cfg;
+    atomic_init(&monitor.running, true);
+    atomic_init(&monitor.attached, true);
 
-    while (gRun) {
+    rc = pthread_create(&monitorThread, NULL, monitor_attachment, &monitor);
+    if (rc != 0) {
+        fprintf(stderr, "failed to start attach monitor: %s\n", strerror(rc));
+        return;
+    }
+
+    while (gRun && atomic_load(&monitor.attached)) {
         FD_ZERO(&rfds);
         FD_SET(tunFd, &rfds);
         FD_SET(udpFd, &rfds);
@@ -325,7 +359,7 @@ static void packet_loop(Config *cfg,
         rc = select(maxFd + 1, &rfds, NULL, NULL, &timeout);
         if (rc < 0) {
             if (errno == EINTR) continue;
-            return;
+            break;
         }
 
         if (rc > 0 && FD_ISSET(tunFd, &rfds)) {
@@ -340,12 +374,10 @@ static void packet_loop(Config *cfg,
             n = recvfrom(udpFd, buf, sizeof(buf), 0, NULL, NULL);
             if (n > 0) write(tunFd, buf, n);
         }
-
-        if (time(NULL) >= nextCheck) {
-            if (!ue_is_attached(cfg)) return;
-            nextCheck = time(NULL) + UE_AGENT_ATTACH_CHECK;
-        }
     }
+
+    atomic_store(&monitor.running, false);
+    pthread_join(monitorThread, NULL);
 }
 
 static void config_load(Config *cfg) {

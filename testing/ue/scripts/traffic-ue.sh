@@ -88,10 +88,10 @@ case "$MODE" in
         ;;
     iperf)
         if [[ -n "$MB" ]]; then
-            podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
+            podman exec "ue-${IMSI}" iperf3 --forceflush -c "$MEDIA_IP" \
                 -p "$IPERF_PORT" -n "${MB}M"
         else
-            podman exec "ue-${IMSI}" iperf3 -c "$MEDIA_IP" \
+            podman exec "ue-${IMSI}" iperf3 --forceflush -c "$MEDIA_IP" \
                 -p "$IPERF_PORT" -t "${IPERF_TIME:-10}"
         fi
         ;;
