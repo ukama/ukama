@@ -1,3 +1,17 @@
+FROM alpine:3.20 AS iperf-build
+
+RUN apk add --no-cache build-base ca-certificates curl openssl-dev
+
+# iperf 3.21 fixes worker cancellation hangs at test completion (esnet/iperf#2004).
+WORKDIR /build
+RUN curl -fL --retry 3 -o iperf.tar.gz \
+        https://codeload.github.com/esnet/iperf/tar.gz/refs/tags/3.21 \
+    && echo "dd289b6700d3bc33eda7fa3ce6db217d6ca42239edbcb2e7f152bf7bf5c8a5aa  iperf.tar.gz" | sha256sum -c - \
+    && tar -xzf iperf.tar.gz --strip-components=1 \
+    && ./configure --disable-shared --enable-static --with-openssl=/usr \
+    && make -j2 \
+    && make install
+
 FROM alpine:3.20
 
 RUN apk add --no-cache \
@@ -6,10 +20,12 @@ RUN apk add --no-cache \
     ca-certificates \
     curl \
     curl-dev \
-    iperf3 \
+    libcrypto3 \
     iproute2 \
     iputils \
     linux-headers
+
+COPY --from=iperf-build /usr/local/bin/iperf3 /usr/local/bin/iperf3
 
 WORKDIR /opt/ukama/ue-agent
 COPY ue-agent/ /opt/ukama/ue-agent/
