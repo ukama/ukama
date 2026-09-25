@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/billing/collector/mocks"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 	"github.com/ukama/ukama/systems/common/msgbus"
 
@@ -554,6 +555,70 @@ func TestCollectorEventServer_HandleDataPlanPackageCreateEvent(t *testing.T) {
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.Error(t, err)
+	})
+
+	t.Run("PackageChargeKeepsSubCentUnitPrice", func(t *testing.T) {
+		// A per-unit price below half a cent must not be rounded to "0.00",
+		// which would make Lago bill every unit of usage for free.
+		billingClient := &mocks.BillingClient{}
+		billingClient.On("GetBillableMetricId", mock.Anything,
+			server.DefaultBillableMetricCode).Return(bmId, nil).Once()
+		billingClient.On("ListWebhooks", mock.Anything).Return([]string{webhookUrl}, nil).Once()
+		billingClient.On("GetCustomer", mock.Anything, OrgId).Return(custId, nil).Once()
+
+		s, err := server.NewCollectorEventServer(OrgName, OrgId, webhookUrl, billingClient)
+		assert.NoError(t, err)
+
+		for _, tc := range []struct {
+			name         string
+			pkgType      string
+			amount       float64
+			dataVolume   int64
+			dataUnitCost float64
+			charge       string
+		}{
+			{"prepaid 1024 MB for 5 USD", "prepaid", 5, 1024, 0, "0.0048828125"},
+			{"prepaid 3 GB for 5 USD", "prepaid", 5, 3, 0, "1.6666666666666667"},
+			{"postpaid 0.0045 USD per MB", "postpaid", 0, 1024, 0.0045, "0.0045"},
+		} {
+			billingClient.On("CreatePlan", mock.Anything, mock.Anything,
+				mock.MatchedBy(func(c clients.PlanCharge) bool {
+					return c.ChargeAmount == tc.charge
+				})).Return("da337d0e-5678-446f-95c3-e94ac27a93b3", nil).Once()
+
+			dataUnit := "MegaBytes"
+			if tc.name == "prepaid 3 GB for 5 USD" {
+				dataUnit = "GigaBytes"
+			}
+
+			pkg := epb.CreatePackageEvent{
+				Uuid:         "b20c61f1-1c5a-4559-bfff-cd00f746697d",
+				SimType:      "operator_data",
+				OrgId:        "75ec112a-8745-49f9-ab64-1a37edade794",
+				OwnerId:      "c214f255-0ed6-4aa1-93e7-e333658c7318",
+				DataVolume:   tc.dataVolume,
+				Amount:       tc.amount,
+				DataUnitCost: tc.dataUnitCost,
+				Type:         tc.pkgType,
+				DataUnit:     dataUnit,
+				Country:      "USA",
+				Provider:     "ukama",
+			}
+
+			anyE, err := anypb.New(&pkg)
+			assert.NoError(t, err)
+
+			msg := &epb.Event{
+				RoutingKey: routingKey,
+				Msg:        anyE,
+			}
+
+			_, err = s.EventNotification(context.TODO(), msg)
+
+			assert.NoError(t, err, tc.name)
+		}
+
+		billingClient.AssertExpectations(t)
 	})
 
 	t.Run("CreatePackageEventNotSent", func(t *testing.T) {

@@ -328,11 +328,11 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 	switch pkgType {
 	case ukama.PackageTypePostpaid:
 		pkgIntervall = postpaidBillingInterval
-		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', 2, 64)
+		amount = strconv.FormatFloat(pkg.DataUnitCost, 'f', -1, 64)
 
 	case ukama.PackageTypePrepaid:
 		dataUnitCost := pkg.Amount / float64(pkg.DataVolume)
-		amount = strconv.FormatFloat(dataUnitCost, 'f', 2, 64)
+		amount = strconv.FormatFloat(dataUnitCost, 'f', -1, 64)
 	}
 
 	billableDataSize := math.Pow(1024, float64(dataUnit-1))
