@@ -58,7 +58,7 @@ func (r *ReportEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			return nil, err
 		}
 
-		err = r.handlePaymentSuccessEvent(e.RoutingKey, msg, r)
+		err = r.handlePaymentSuccessEvent(ctx, e.RoutingKey, msg, r)
 		if err != nil {
 			return nil, err
 		}
@@ -70,11 +70,11 @@ func (r *ReportEventServer) EventNotification(ctx context.Context, e *epb.Event)
 	return &epb.EventResponse{}, nil
 }
 
-func (r *ReportEventServer) handlePaymentSuccessEvent(key string, msg *epb.Payment,
+func (r *ReportEventServer) handlePaymentSuccessEvent(ctx context.Context, key string, msg *epb.Payment,
 	b *ReportEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	_, err := update(msg.ItemId, true, msg.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
+	_, err := update(ctx, msg.ItemId, true, msg.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
 
 	return err
 }

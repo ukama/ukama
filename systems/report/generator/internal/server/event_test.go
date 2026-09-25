@@ -129,7 +129,7 @@ var raw = `{
 
 func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	paymentEvent := func(itemType string) *epb.Payment {
 		return &epb.Payment{
@@ -236,7 +236,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		store.On("Bucket").Return("report-ukama")
 
 		bus := &mbmocks.MsgBusServiceClient{}
-		bus.On("PublishRequest", mock.MatchedBy(func(route string) bool {
+		bus.On("PublishRequestWithContext", mock.Anything, mock.MatchedBy(func(route string) bool {
 			return strings.HasSuffix(route, "report.generator.receipt.generate")
 		}), mock.MatchedBy(func(m protoreflect.ProtoMessage) bool {
 			e, ok := m.(*epb.EventReceiptGenerated)
@@ -265,7 +265,7 @@ func TestGeneratorEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 		store.On("Bucket").Return("report-ukama")
 
 		bus := &mbmocks.MsgBusServiceClient{}
-		bus.On("PublishRequest", mock.Anything, mock.Anything).
+		bus.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(errors.New("rabbit down")).Once()
 
 		s := server.NewGeneratorEventServer(OrgName, pdfEngine, store, bus)
@@ -306,7 +306,7 @@ func TestGeneratorEventServer_HandleInvoiceGenerateEvent(t *testing.T) {
 		pdfEngine.On("Generate", mock.Anything).
 			Return(nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
 		val := &epb.RawReport{}

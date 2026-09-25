@@ -209,7 +209,7 @@ func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 			markup: TestMarkup5,
 			setupMocks: func(ts *testSetup) {
 				ts.defMarkupRepo.On("UpdateDefaultMarkupRate", TestMarkup5).Return(nil)
-				ts.msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+				ts.msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 			},
 			expectedError: false,
 		},
@@ -227,7 +227,7 @@ func TestRateService_UpdateDefaultMarkup(t *testing.T) {
 			markup: TestMarkup5,
 			setupMocks: func(ts *testSetup) {
 				ts.defMarkupRepo.On("UpdateDefaultMarkupRate", TestMarkup5).Return(nil)
-				ts.msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(errors.New(ErrMessageBusError))
+				ts.msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(errors.New(ErrMessageBusError))
 			},
 			expectedError: false,
 		},
@@ -639,7 +639,7 @@ func TestRateService_UpdateMarkup(t *testing.T) {
 			setupMocks: func(ts *testSetup, ownerId string, markup float64) {
 				ownerUUID, _ := uuid.FromString(ownerId)
 				ts.markupRepo.On("UpdateMarkupRate", ownerUUID, markup).Return(nil)
-				ts.msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+				ts.msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 			},
 			expectedError: false,
 		},
@@ -671,7 +671,7 @@ func TestRateService_UpdateMarkup(t *testing.T) {
 			setupMocks: func(ts *testSetup, ownerId string, markup float64) {
 				ownerUUID, _ := uuid.FromString(ownerId)
 				ts.markupRepo.On("UpdateMarkupRate", ownerUUID, markup).Return(nil)
-				ts.msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(errors.New(ErrMessageBusError))
+				ts.msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(errors.New(ErrMessageBusError))
 			},
 			expectedError: false, // Message bus errors are logged but don't fail the operation
 		},
@@ -716,7 +716,7 @@ func TestRateService_DeleteMarkup(t *testing.T) {
 			setupMocks: func(ts *testSetup, ownerId string) {
 				ownerUUID, _ := uuid.FromString(ownerId)
 				ts.markupRepo.On("DeleteMarkupRate", ownerUUID).Return(nil)
-				ts.msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+				ts.msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 			},
 			expectedError: false,
 		},

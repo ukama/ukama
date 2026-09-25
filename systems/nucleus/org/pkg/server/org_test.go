@@ -54,7 +54,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 	orchSystem.On("DeployOrg", pOrg).Return(&providers.DeployOrgResponse{}, nil)
 
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.EventOrgCreate) bool {
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *epb.EventOrgCreate) bool {
 		return e.Name == org.Name
 	})).Return(nil).Once()
 
@@ -125,7 +125,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
 		orchSystem.On("DeployOrg", mock.Anything).Return(&providers.DeployOrgResponse{}, nil)
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
 		s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registryClient, msgclientRepo, "", true)
@@ -168,7 +168,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
 		orchSystem.On("DeployOrg", mock.Anything).Return(&providers.DeployOrgResponse{}, nil)
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
 		s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registryClient, msgclientRepo, "", true)
@@ -277,7 +277,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
 		orchSystem.On("DeployOrg", mock.Anything).Return(&providers.DeployOrgResponse{}, nil)
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
 		orgRepo.On("GetOrgCount").Return(int64(1), int64(0), nil).Once()
 
 		s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registryClient, msgclientRepo, "", true)
@@ -318,7 +318,7 @@ func TestOrgServer_Add(t *testing.T) {
 
 		orgRepo.On("Add", org, mock.Anything).Return(nil).Once()
 		orchSystem.On("DeployOrg", mock.Anything).Return(&providers.DeployOrgResponse{}, nil)
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		orgRepo.On("GetOrgCount").Return(int64(0), int64(0), errors.New("metric error")).Once()
 
 		s := NewOrgServer(OrgName, orgRepo, userRepo, orchSystem, registryClient, msgclientRepo, "", true)
@@ -830,7 +830,7 @@ func TestOrgServer_RegisterUser(t *testing.T) {
 		userRepo.On("Add", mock.MatchedBy(func(user *db.User) bool {
 			return user.Uuid == userUUID
 		}), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.EventOrgRegisterUser) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *epb.EventOrgRegisterUser) bool {
 			return e.OrgId == orgUUID.String() && e.UserId == userUUID.String()
 		})).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
@@ -984,7 +984,7 @@ func TestOrgServer_RegisterUser(t *testing.T) {
 		orgRepo.On("GetByName", OrgName).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(nil, gorm.ErrRecordNotFound).Once()
 		userRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		// Act
@@ -1051,7 +1051,7 @@ func TestOrgServer_RegisterUser(t *testing.T) {
 		userRepo.On("Add", mock.MatchedBy(func(user *db.User) bool {
 			return user.Uuid == userUUID
 		}), mock.Anything).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.EventOrgRegisterUser) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *epb.EventOrgRegisterUser) bool {
 			return e.OrgId == orgUUID.String() && e.UserId == userUUID.String()
 		})).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(0), int64(0), errors.New("metric error")).Once()
@@ -1095,7 +1095,7 @@ func TestOrgServer_UpdateOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		orgRepo.On("AddUser", org, user).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		// Act
@@ -1278,7 +1278,7 @@ func TestOrgServer_UpdateOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		orgRepo.On("AddUser", org, user).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		// Act
@@ -1348,7 +1348,7 @@ func TestOrgServer_UpdateOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		orgRepo.On("AddUser", org, user).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(0), int64(0), errors.New("metric error")).Once()
 
 		// Act
@@ -1391,7 +1391,7 @@ func TestOrgServer_RemoveOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		userRepo.On("RemoveOrgFromUser", user, org).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		// Act
@@ -1574,7 +1574,7 @@ func TestOrgServer_RemoveOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		userRepo.On("RemoveOrgFromUser", user, org).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("message bus error")).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		// Act
@@ -1644,7 +1644,7 @@ func TestOrgServer_RemoveOrgForUser(t *testing.T) {
 		orgRepo.On("Get", orgUUID).Return(org, nil).Once()
 		userRepo.On("Get", userUUID).Return(user, nil).Once()
 		userRepo.On("RemoveOrgFromUser", user, org).Return(nil).Once()
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(0), int64(0), errors.New("metric error")).Once()
 
 		// Act

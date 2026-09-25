@@ -90,7 +90,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 	}
 
 	route := l.baseRoutingKey.SetAction("create").SetObject("organization").MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -134,7 +134,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 	}
 
 	route := l.baseRoutingKey.SetActionUpdate().SetObject("organization").MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -208,7 +208,7 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 	}
 
 	route := l.baseRoutingKey.SetAction("create").SetObject("node").MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -298,7 +298,7 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 	}
 
 	route := l.baseRoutingKey.SetActionDelete().SetObject("node").MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -439,7 +439,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	 * existing record is not a change to announce. */
 	if isNewSystem {
 		route := l.baseRoutingKey.SetAction("create").SetObject("system").SetGlobalScope().MustBuild()
-		err = l.msgbus.PublishRequest(route, req)
+		err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
@@ -518,7 +518,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 	}
 
 	route := l.baseRoutingKey.SetActionUpdate().SetObject("system").SetGlobalScope().MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -567,7 +567,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 	}
 
 	route := l.baseRoutingKey.SetActionDelete().SetObject("system").SetGlobalScope().MustBuild()
-	err = l.msgbus.PublishRequest(route, req)
+	err = l.msgbus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}

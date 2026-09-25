@@ -218,7 +218,7 @@ func (b *BaseRateServer) UploadBaseRates(ctx context.Context, req *pb.UploadBase
 			Country:     rates[0].Country,
 			Provider:    rates[0].Provider,
 		}
-		err = b.msgBus.PublishRequest(route, evt)
+		err = b.msgBus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

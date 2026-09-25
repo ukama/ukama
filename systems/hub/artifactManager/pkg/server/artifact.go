@@ -179,7 +179,7 @@ func (s *ArtifcatServer) chunkAndIndex(ctx context.Context, name, aType string, 
 
 	capp := &epb.EventArtifactUploaded{Name: name, Version: v.String()}
 	route := s.baseRoutingKey.SetAction("uploaded").SetObject(aType).MustBuild()
-	if err := s.msgbus.PublishRequest(route, capp); err != nil {
+	if err := s.msgbus.PublishRequestWithContext(ctx, route, capp); err != nil {
 		log.Errorf("Failed to publish uploaded event %+v key %+v: %v", capp, route, err)
 	}
 	return nil

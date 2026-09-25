@@ -345,7 +345,7 @@ func (p *PackageServer) Add(ctx context.Context, req *pb.AddPackageRequest) (*pb
 			VoiceUnitCost:   pkg.PackageRate.SmsMt,
 			NetworkId:       resp.Package.NetworkId,
 		}
-		err = p.msgbus.PublishRequest(route, evt)
+		err = p.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -375,7 +375,7 @@ func (p *PackageServer) Delete(ctx context.Context, req *pb.DeletePackageRequest
 			OrgId: p.orgId,
 		}
 		route := p.baseRoutingKey.SetActionDelete().SetObject("package").MustBuild()
-		err = p.msgbus.PublishRequest(route, evt)
+		err = p.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
@@ -441,7 +441,7 @@ func (p *PackageServer) Update(ctx context.Context, req *pb.UpdatePackageRequest
 			Uuid:  req.Uuid,
 			OrgId: p.orgId,
 		}
-		err = p.msgbus.PublishRequest(route, evt)
+		err = p.msgbus.PublishRequestWithContext(ctx, route, evt)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}

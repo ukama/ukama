@@ -110,7 +110,7 @@ func (r *RateServer) UpdateDefaultMarkup(ctx context.Context, req *pb.UpdateDefa
 	}
 
 	if r.msgBus != nil {
-		r.PublishDefaultMarkupEvents(req.Markup, msgbus.ACTION_CRUD_UPDATE)
+		r.PublishDefaultMarkupEvents(ctx, req.Markup, msgbus.ACTION_CRUD_UPDATE)
 	}
 
 	return &pb.UpdateDefaultMarkupResponse{}, nil
@@ -159,7 +159,7 @@ func (r *RateServer) UpdateMarkup(ctx context.Context, req *pb.UpdateMarkupReque
 	}
 
 	if r.msgBus != nil {
-		r.PublishMarkupEvents(req.OwnerId, req.Markup, msgbus.ACTION_CRUD_UPDATE)
+		r.PublishMarkupEvents(ctx, req.OwnerId, req.Markup, msgbus.ACTION_CRUD_UPDATE)
 	}
 
 	return &pb.UpdateMarkupResponse{}, nil
@@ -178,7 +178,7 @@ func (r *RateServer) DeleteMarkup(ctx context.Context, req *pb.DeleteMarkupReque
 	}
 
 	if r.msgBus != nil {
-		r.PublishMarkupEvents(req.OwnerId, 0, msgbus.ACTION_CRUD_DELETE)
+		r.PublishMarkupEvents(ctx, req.OwnerId, 0, msgbus.ACTION_CRUD_DELETE)
 	}
 
 	return &pb.DeleteMarkupResponse{}, nil
@@ -296,7 +296,7 @@ func (r *RateServer) GetRateById(ctx context.Context, req *pb.GetRateByIdRequest
 	return rate, nil
 }
 
-func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action string) {
+func (r *RateServer) PublishMarkupEvents(ctx context.Context, ownerId string, markup float64, action string) {
 	/* Create event */
 	e := &epb.MarkupUpdate{
 		OwnerId: ownerId,
@@ -311,14 +311,14 @@ func (r *RateServer) PublishMarkupEvents(ownerId string, markup float64, action 
 		route = r.baseRoutingKey.SetActionDelete().SetObject("markup").MustBuild()
 
 	}
-	err := r.msgBus.PublishRequest(route, e)
+	err := r.msgBus.PublishRequestWithContext(ctx, route, e)
 	if err != nil {
 
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 	}
 }
 
-func (r *RateServer) PublishDefaultMarkupEvents(markup float64, action string) {
+func (r *RateServer) PublishDefaultMarkupEvents(ctx context.Context, markup float64, action string) {
 	/* Create event */
 	e := &epb.DefaultMarkupUpdate{
 		Markup: markup,
@@ -332,7 +332,7 @@ func (r *RateServer) PublishDefaultMarkupEvents(markup float64, action string) {
 		route = r.baseRoutingKey.SetActionDelete().SetObject("defaultmarkup").MustBuild()
 
 	}
-	err := r.msgBus.PublishRequest(route, e)
+	err := r.msgBus.PublishRequestWithContext(ctx, route, e)
 	if err != nil {
 
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())

@@ -153,7 +153,7 @@ func (a *AccountingServer) SyncAccounting(ctx context.Context, req *pb.SyncAcoun
 		}
 
 		route := a.baseRoutingKey.SetAction("sync").SetObject("accounting").MustBuild()
-		err = a.msgbus.PublishRequest(route, eac)
+		err = a.msgbus.PublishRequestWithContext(ctx, route, eac)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}

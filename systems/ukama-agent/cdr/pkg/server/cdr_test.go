@@ -121,7 +121,7 @@ func TestCDR_PostCDR(t *testing.T) {
 	})).Return(nil).Once()
 	node.On("Get", cdr.NodeId).Return(&nodeInfo, nil).Once()
 
-	mbC.On("PublishRequest", "event.cloud.local.ukama.ukamaagent.cdr.cdr.create",
+	mbC.On("PublishRequestWithContext", mock.Anything, "event.cloud.local.ukama.ukamaagent.cdr.cdr.create",
 		mock.MatchedBy(func(e *epb.CDRReported) bool {
 			return e.Imsi == cdr.Imsi
 		})).Return(nil).Once()
@@ -171,7 +171,7 @@ func TestCDR_PostCDR_Duplicate(t *testing.T) {
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 	usageRepo.AssertNotCalled(t, "Add", mock.Anything)
 	asrClient.AssertNotCalled(t, "GetAsr", mock.Anything)
-	mbC.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	mbC.AssertNotCalled(t, "PublishRequestWithContext", mock.Anything, mock.Anything)
 }
 
 func TestCDR_InitUsage(t *testing.T) {

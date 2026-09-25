@@ -133,7 +133,7 @@ func TestUserService_Add(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 
 	userRepo.On("Add", testUser, mock.Anything).Return(nil).Once()
-	msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserCreate) bool {
+	msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *events.EventUserCreate) bool {
 		return e.Name == testUserName && e.Email == testUserEmail
 	})).Return(nil).Once()
 	userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
@@ -235,7 +235,7 @@ func TestUserService_Add(t *testing.T) {
 		orgClient.On("RegisterUser", mock.Anything, mock.Anything).
 			Return(&orgpb.RegisterUserResponse{}, nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("publish failed")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("publish failed")).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
@@ -272,7 +272,7 @@ func TestUserService_Add(t *testing.T) {
 		orgClient.On("RegisterUser", mock.Anything, mock.Anything).
 			Return(&orgpb.RegisterUserResponse{}, nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), errors.New("metrics error")).Once()
 
 		s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
@@ -412,7 +412,7 @@ func TestUserService_Update(t *testing.T) {
 			return u.Id == userId && u.Name == testUserName2 && u.Email == testUserEmail2 && u.Phone == testUserPhone2
 		}), mock.Anything).Return(nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserUpdate) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *events.EventUserUpdate) bool {
 			return e.UserId == userId.String() && e.Name == testUserName2 && e.Email == testUserEmail2 && e.Phone == testUserPhone2
 		})).Return(nil).Once()
 
@@ -460,7 +460,7 @@ func TestUserService_Update(t *testing.T) {
 			return u.Id == userId && u.Name == "" && u.Email == "" && u.Phone == ""
 		}), mock.Anything).Return(nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserUpdate) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *events.EventUserUpdate) bool {
 			return e.UserId == userId.String() && e.Name == "" && e.Email == "" && e.Phone == ""
 		})).Return(nil).Once()
 
@@ -566,7 +566,7 @@ func TestUserService_Deactivate(t *testing.T) {
 			return u.Id.String() == userUUID.String()
 		}), mock.Anything).Return(nil)
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
 			return e.UserId == userUUID.String()
 		})).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
@@ -743,7 +743,7 @@ func TestUserService_Deactivate(t *testing.T) {
 		orgClient.On("UpdateUser", mock.Anything, mock.Anything).
 			Return(&orgpb.UpdateUserResponse{}, nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
@@ -787,7 +787,7 @@ func TestUserService_Deactivate(t *testing.T) {
 		orgClient.On("UpdateUser", mock.Anything, mock.Anything).
 			Return(&orgpb.UpdateUserResponse{}, nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("publish failed")).Once()
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("publish failed")).Once()
 		userRepo.On("GetUserCount").Return(int64(1), int64(0), nil).Once()
 
 		s := server.NewUserService(OrgName, userRepo, orgService, msgclientRepo, "")
@@ -817,7 +817,7 @@ func TestUserService_Delete(t *testing.T) {
 		userRepo.On("Get", userId).Return(&db.User{Id: userId, Deactivated: true}, nil).Once()
 		userRepo.On("Delete", userId, mock.Anything).Return(nil).Once()
 
-		msgclientRepo.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
+		msgclientRepo.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *events.EventUserDeactivate) bool {
 			return e.UserId == userId.String()
 		})).Return(nil).Once()
 

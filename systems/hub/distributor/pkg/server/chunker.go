@@ -104,7 +104,7 @@ func (s *ChunkerServer) CreateChunk(ctx context.Context, in *pb.CreateChunkReque
 
 		route := s.baseRoutingKey.SetAction("chunkready").SetObject(in.Type).MustBuild()
 
-		err = s.msgbus.PublishRequest(route, capp)
+		err = s.msgbus.PublishRequestWithContext(ctx, route, capp)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", capp, route, err.Error())
 		}

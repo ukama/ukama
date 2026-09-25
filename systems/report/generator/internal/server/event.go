@@ -80,7 +80,7 @@ func (g *GeneratorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 			return nil, err
 		}
 
-		err = g.handlePaymentSuccessEvent(e.RoutingKey, msg)
+		err = g.handlePaymentSuccessEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func (g *GeneratorEventServer) handleInvoiceGenerateEvent(key string, msg *epb.R
 	return err
 }
 
-func (g *GeneratorEventServer) handlePaymentSuccessEvent(key string, msg *epb.Payment) error {
+func (g *GeneratorEventServer) handlePaymentSuccessEvent(ctx context.Context, key string, msg *epb.Payment) error {
 	if ukama.ParseItemType(msg.ItemType) != ukama.ItemTypePackage {
 		log.Infof("Skipping receipt for payment %s: item type %q is not a one-off package", msg.Id, msg.ItemType)
 
@@ -118,10 +118,10 @@ func (g *GeneratorEventServer) handlePaymentSuccessEvent(key string, msg *epb.Pa
 		return err
 	}
 
-	return g.publishReceiptGenerated(msg, report, objectName)
+	return g.publishReceiptGenerated(ctx, msg, report, objectName)
 }
 
-func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report *epb.Report, objectName string) error {
+func (g *GeneratorEventServer) publishReceiptGenerated(ctx context.Context, msg *epb.Payment, report *epb.Report, objectName string) error {
 	if g.storage == nil {
 		log.Warnf("Skipping receipt generated event for payment %s: storage is not configured", msg.Id)
 
@@ -146,7 +146,7 @@ func (g *GeneratorEventServer) publishReceiptGenerated(msg *epb.Payment, report 
 
 	route := g.baseRoutingKey.SetObject("receipt").SetAction("generate").MustBuild()
 
-	err := g.msgbus.PublishRequest(route, evt)
+	err := g.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish receipt generated event for payment %s on route %s: %v", msg.Id, route, err)
 

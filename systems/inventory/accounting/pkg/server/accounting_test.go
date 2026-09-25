@@ -690,7 +690,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -972,7 +972,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(errors.New("publish failed"))
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(errors.New("publish failed"))
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1006,7 +1006,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateMinimalAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1040,7 +1040,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return([]*db.Accounting{}, nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1074,7 +1074,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1108,7 +1108,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1142,7 +1142,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1176,7 +1176,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1210,7 +1210,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1244,7 +1244,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("Add", mock.AnythingOfType("[]*db.Accounting")).Return(nil)
 		accRepo.On("GetByUser", userId.String()).Return(testData.generateAccountingRecords(userId), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 
@@ -1285,7 +1285,7 @@ func TestAccountingServer_SyncAccounting(t *testing.T) {
 		accRepo.On("GetByUser", userId1.String()).Return(testData.generateAccountingRecords(userId1), nil)
 		accRepo.On("GetByUser", userId2.String()).Return(testData.generateAccountingRecords(userId2), nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil).Times(2)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil).Times(2)
 
 		s := NewAccountingServer(testData.OrgName, accRepo, msgBus, "", gitClient, "")
 

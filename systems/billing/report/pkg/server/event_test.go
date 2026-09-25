@@ -228,7 +228,7 @@ func TestReportEventServer_HandlePaymentSuccessEvent(t *testing.T) {
 			RawReport: datatypes.JSON([]byte(raw)),
 		}
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
 		reportRepo.On("Get", reportId, mock.Anything).

@@ -51,7 +51,7 @@ func TestLookupServer_AddOrg(t *testing.T) {
 
 	orgRepo.On("Add", org).Return(nil).Once()
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, porg).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.AddOrg(context.TODO(), porg)
@@ -80,7 +80,7 @@ func TestLookupServer_UpdateOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	orgRepo.On("Update", org).Return(nil).Once()
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, porg).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.UpdateOrg(context.TODO(), porg)
@@ -164,7 +164,7 @@ func TestLookupServer_AddNodeForOrg(t *testing.T) {
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	nodeRepo.On("AddOrUpdate", node).Return(nil).Once()
 	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, pnode).Return(nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.AddNodeForOrg(context.TODO(), pnode)
@@ -262,7 +262,7 @@ func TestLookupServer_DeleteNodeForOrg(t *testing.T) {
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	nodeRepo.On("Delete", testNodeId).Return(nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, pnode).Return(nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	_, err = s.DeleteNodeForOrg(context.TODO(), pnode)
@@ -373,7 +373,7 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 			s.NodeGwIp.IPNet.IP.String() == "0.0.0.0"
 	}), org.ID).Return(nil).Once()
 	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, psys).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	_, err = s.UpdateSystemForOrg(context.TODO(), psys)
@@ -416,7 +416,7 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	systemRepo.On("Delete", system.Name, org.ID).Return(nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, psys).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	_, err = s.DeleteSystemForOrg(context.TODO(), psys)
@@ -470,7 +470,7 @@ func TestLookupServer_AddSystemForOrg_NewSystemIsCreatedAndAnnounced(t *testing.
 	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
 	systemRepo.On("GetByName", "sys", org.ID).Return(nil, gorm.ErrRecordNotFound).Once()
 	systemRepo.On("Add", mock.AnythingOfType("*db.System")).Return(nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, req).Return(nil).Once()
+	msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, req).Return(nil).Once()
 	systemRepo.On("GetByName", "sys", org.ID).Return(stored, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
@@ -538,7 +538,7 @@ func TestLookupServer_AddSystemForOrg_ExistingSystemKeepsItsId(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, existingId, resp.SystemId)
-	msgbusClient.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	msgbusClient.AssertNotCalled(t, "PublishRequestWithContext", mock.Anything, mock.Anything)
 	orgRepo.AssertExpectations(t)
 	systemRepo.AssertExpectations(t)
 }

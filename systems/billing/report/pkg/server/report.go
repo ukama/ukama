@@ -160,7 +160,7 @@ func (r *ReportServer) Add(ctx context.Context, req *pb.AddRequest) (*pb.ReportR
 		CreatedAt: pbReport.CreatedAt,
 	}
 
-	err = r.msgBus.PublishRequest(route, evt)
+	err = r.msgBus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			req, route, err.Error())
@@ -237,7 +237,7 @@ func (r *ReportServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListR
 }
 
 func (r *ReportServer) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.ReportResponse, error) {
-	report, err := update(req.ReportId, req.IsPaid, req.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
+	report, err := update(ctx, req.ReportId, req.IsPaid, req.TransactionId, r.reportRepo, r.msgBus, r.baseRoutingKey)
 
 	if err != nil {
 		return nil, err
@@ -264,7 +264,7 @@ func (r *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.D
 
 	route := r.baseRoutingKey.SetAction("delete").SetObject("invoice").MustBuild()
 
-	err = r.msgBus.PublishRequest(route, req)
+	err = r.msgBus.PublishRequestWithContext(ctx, route, req)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			req, route, err.Error())
@@ -273,7 +273,7 @@ func (r *ReportServer) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.D
 	return &pb.DeleteResponse{}, nil
 }
 
-func update(reportId string, isPaid bool, transactionId string, reportRepo db.ReportRepo, msgBus mb.MsgBusServiceClient,
+func update(ctx context.Context, reportId string, isPaid bool, transactionId string, reportRepo db.ReportRepo, msgBus mb.MsgBusServiceClient,
 	baseRoutingKey msgbus.RoutingKeyBuilder) (*db.Report, error) {
 
 	log.Infof("Updating report: %v", reportId)
@@ -326,7 +326,7 @@ func update(reportId string, isPaid bool, transactionId string, reportRepo db.Re
 		CreatedAt:     report.CreatedAt.Format(time.RFC3339),
 	}
 
-	err = msgBus.PublishRequest(route, evt)
+	err = msgBus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
 			evt, route, err.Error())

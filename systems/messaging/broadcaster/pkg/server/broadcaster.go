@@ -66,7 +66,7 @@ func (b *BroadcasterServer) NodeFeederBroadcast(ctx context.Context, msg *epb.Br
 	switch msg.Scope {
 	case epb.BroadcastScope_UNKNOWN_SCOPE:
 		log.Warnf("Unknown broadcast scope: %s, Publishing msg as it is.", msg.Scope)
-		return b.publishMessage(msg.RoutingKey, nfMsg)
+		return b.publishMessage(ctx, msg.RoutingKey, nfMsg)
 	case epb.BroadcastScope_NETWORK_SCOPE:
 		listReq.NetworkId = msg.TargetId
 		log.Infof("Event will be broadcasted only to network: %s ", listReq.NetworkId)
@@ -90,7 +90,7 @@ func (b *BroadcasterServer) NodeFeederBroadcast(ctx context.Context, msg *epb.Br
 	for _, node := range nodes.Nodes {
 		nfMsg.NodeId = node.Id
 		nfMsg.Target = b.orgName + "." + "*" + "." + "*" + "." + node.Id
-		err = b.publishMessage(msg.RoutingKey, nfMsg)
+		err = b.publishMessage(ctx, msg.RoutingKey, nfMsg)
 		if err != nil {
 			log.Errorf("Failed to publish message for node %s. Error: %v", node.Id, err)
 
@@ -101,8 +101,8 @@ func (b *BroadcasterServer) NodeFeederBroadcast(ctx context.Context, msg *epb.Br
 	return nil
 }
 
-func (b *BroadcasterServer) publishMessage(routeKey string, msg protoreflect.ProtoMessage) error {
+func (b *BroadcasterServer) publishMessage(ctx context.Context, routeKey string, msg protoreflect.ProtoMessage) error {
 	log.Infof("Publishing message on route %s ", routeKey)
-	err := b.msgbus.PublishRequest(routeKey, msg)
+	err := b.msgbus.PublishRequestWithContext(ctx, routeKey, msg)
 	return err
 }

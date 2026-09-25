@@ -144,7 +144,7 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 		return err
 	}
 
-	return c.ProcessConfigStoreEvent(files, lVer, dir)
+	return c.ProcessConfigStoreEvent(ctx, files, lVer, dir)
 
 }
 
@@ -196,7 +196,7 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 		return err
 	}
 
-	return c.ProcessConfigStoreEvent(files, rVer, dir)
+	return c.ProcessConfigStoreEvent(ctx, files, rVer, dir)
 }
 
 func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
@@ -229,7 +229,7 @@ func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer str
 		return err
 	}
 
-	return c.ProcessConfigStoreEvent(files, rVer, dir)
+	return c.ProcessConfigStoreEvent(ctx, files, rVer, dir)
 }
 
 func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer string) ([]FilesToUpdate, string, error) {
@@ -286,7 +286,7 @@ func (c *ConfigStore) LookingForChanges(dir string, cVer string, rVer string) ([
 	return filesToUpdate, lfPrefix, nil
 }
 
-func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVer string, dir string) error {
+func (c *ConfigStore) ProcessConfigStoreEvent(ctx context.Context, filesToUpdate []FilesToUpdate, rVer string, dir string) error {
 
 	if len(filesToUpdate) > 0 {
 		prepCommit := make(map[string]*ConfigData, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
@@ -322,7 +322,7 @@ func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVe
 			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file.Name)
 		}
 
-		err := c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
+		err := c.CommitConfig(ctx, prepCommit, prepNodeCommit, prepMetaData, rVer)
 		if err != nil {
 			return err
 		}
@@ -430,7 +430,7 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string, reason
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
+func (c *ConfigStore) CommitConfig(ctx context.Context, m map[string]*ConfigData, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
 
 	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
 
@@ -469,7 +469,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 				Msg:        jd,
 			}
 
-			err = c.msgbus.PublishRequest(route, msg)
+			err = c.msgbus.PublishRequestWithContext(ctx, route, msg)
 			if err != nil {
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
 				goto RecordState
@@ -481,7 +481,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 		}
 
 		/* Publish config version information */
-		err = c.PublishCommitInfo(metaData, route, commit, t, count)
+		err = c.PublishCommitInfo(ctx, metaData, route, commit, t, count)
 		if err != nil {
 			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
 			goto RecordState
@@ -517,7 +517,7 @@ func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]
 	return nil
 }
 
-func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32, count int) error {
+func (c *ConfigStore) PublishCommitInfo(ctx context.Context, m *ConfigMetaData, route string, ver string, t uint32, count int) error {
 	m.app = "configd"
 	m.fileName = "version.json"
 
@@ -551,7 +551,7 @@ func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver str
 		Msg:        jsonMsg,
 	}
 
-	err = c.msgbus.PublishRequest(route, msg)
+	err = c.msgbus.PublishRequestWithContext(ctx, route, msg)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", jsonMsg, route, err.Error())
 		return err

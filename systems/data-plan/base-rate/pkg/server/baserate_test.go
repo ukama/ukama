@@ -64,7 +64,7 @@ func TestBaseRateService_UploadBaseRates(t *testing.T) {
 		}
 
 		mockRepo.On("UploadBaseRates", mock.Anything).Return(nil)
-		msgbusClient.On("PublishRequest", mock.AnythingOfType("string"), mock.AnythingOfType("*events.EventBaserateUploaded")).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*events.EventBaserateUploaded")).Return(nil).Once()
 
 		rateRes, err := rateService.UploadBaseRates(context.Background(), reqMock)
 		assert.NoError(t, err)

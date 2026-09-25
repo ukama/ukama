@@ -935,7 +935,7 @@ func TestPackageServer_Add(t *testing.T) {
 
 		packageRepo.On("GetByName", TestPackageName).Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.CreatePackageEvent) bool {
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.MatchedBy(func(e *epb.CreatePackageEvent) bool {
 			return e.NetworkId == networkId.String()
 		})).Return(nil).Once()
 
@@ -1092,7 +1092,7 @@ func TestPackageServer_Delete(t *testing.T) {
 		}
 
 		packageRepo.On("Delete", packageUUID).Return(nil)
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil)
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		resp, err := s.Delete(context.TODO(), req)
 		assert.NoError(t, err)
@@ -1157,7 +1157,7 @@ func TestPackageServer_Delete(t *testing.T) {
 
 		packageRepo.On("Delete", packageUUID).Return(nil)
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("message bus publish failed"))
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("message bus publish failed"))
 
 		resp, err := s.Delete(context.TODO(), req)
 		assert.NoError(t, err)
@@ -1195,7 +1195,7 @@ func TestPackageServer_Update(t *testing.T) {
 			To:     fixedToTime,
 		}, nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 		pkg, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
 			Uuid:   packageUUID.String(),
 			Name:   "Daily-pack-updated",
@@ -1228,7 +1228,7 @@ func TestPackageServer_Update(t *testing.T) {
 		packageUUID := uuid.NewV4()
 		packageRepo.On("GetByName", "fail-update").Return(nil, gorm.ErrRecordNotFound).Once()
 		packageRepo.On("Update", packageUUID, mock.Anything).Return(errors.New("db error")).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Maybe()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 		resp, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
 			Uuid:   packageUUID.String(),
 			Name:   "fail-update",
@@ -1255,7 +1255,7 @@ func TestPackageServer_Update(t *testing.T) {
 			To:     fixedToTime,
 		}, nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(errors.New("msgbus error")).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("msgbus error")).Once()
 		resp, err := s.Update(context.TODO(), &pb.UpdatePackageRequest{
 			Uuid:   packageUUID.String(),
 			Name:   "msgbus-fail",

@@ -100,7 +100,7 @@ func (u *UserService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespo
 		Phone:  req.User.Phone,
 	}
 	route := u.baseRoutingKey.SetAction("add").SetObject("user").MustBuild()
-	err = u.msgbus.PublishRequest(route, evt)
+	err = u.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -179,7 +179,7 @@ func (u *UserService) Update(ctx context.Context, req *pb.UpdateRequest) (*pb.Up
 		Phone:  req.User.Phone,
 	}
 	route := u.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
-	err = u.msgbus.PublishRequest(route, evt)
+	err = u.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -237,7 +237,7 @@ func (u *UserService) Deactivate(ctx context.Context, req *pb.DeactivateRequest)
 		Phone:  usr.Phone,
 	}
 	route := u.baseRoutingKey.SetAction("deactivate").SetObject("user").MustBuild()
-	err = u.msgbus.PublishRequest(route, evt)
+	err = u.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -288,7 +288,7 @@ func (u *UserService) Delete(ctx context.Context, req *pb.DeleteRequest) (*pb.De
 	}
 	route := u.baseRoutingKey.SetActionDelete().SetObject("user").MustBuild()
 
-	err = u.msgbus.PublishRequest(route, evt)
+	err = u.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}

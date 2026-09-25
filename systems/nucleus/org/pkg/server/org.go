@@ -109,7 +109,7 @@ func (o *OrgService) Add(ctx context.Context, req *pb.AddRequest) (*pb.AddRespon
 		Owner: org.Owner.String(),
 	}
 	route := o.baseRoutingKey.SetAction("add").SetObject("org").MustBuild()
-	err = o.msgbus.PublishRequest(route, evt)
+	err = o.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -285,7 +285,7 @@ func (o *OrgService) RegisterUser(ctx context.Context, req *pb.RegisterUserReque
 		UserId:  user.Uuid.String(),
 	}
 	route := o.baseRoutingKey.SetAction("register").SetObject("user").MustBuild()
-	err = o.msgbus.PublishRequest(route, evt)
+	err = o.msgbus.PublishRequestWithContext(ctx, route, evt)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
@@ -334,7 +334,7 @@ func (o *OrgService) UpdateOrgForUser(ctx context.Context, in *pb.UpdateOrgForUs
 	}
 
 	route := o.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
-	err = o.msgbus.PublishRequest(route, in)
+	err = o.msgbus.PublishRequestWithContext(ctx, route, in)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", in, route, err.Error())
 	}
@@ -378,7 +378,7 @@ func (o *OrgService) RemoveOrgForUser(ctx context.Context, in *pb.RemoveOrgForUs
 	}
 
 	route := o.baseRoutingKey.SetActionUpdate().SetObject("user").MustBuild()
-	err = o.msgbus.PublishRequest(route, in)
+	err = o.msgbus.PublishRequestWithContext(ctx, route, in)
 	if err != nil {
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", in, route, err.Error())
 	}

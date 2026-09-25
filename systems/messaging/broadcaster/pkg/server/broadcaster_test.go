@@ -44,6 +44,10 @@ func (m *mockMsgBusClient) Start() error { return nil }
 func (m *mockMsgBusClient) Stop() error { return nil }
 
 func (m *mockMsgBusClient) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
+	return m.PublishRequestWithContext(context.Background(), route, msg)
+}
+
+func (m *mockMsgBusClient) PublishRequestWithContext(ctx context.Context, route string, msg protoreflect.ProtoMessage) error {
 	m.publishCalls++
 	m.routes = append(m.routes, route)
 	if nf, ok := msg.(*epb.NodeFeederMessage); ok {

@@ -201,7 +201,7 @@ func (c *ComponentServer) SyncComponents(ctx context.Context, req *pb.SyncCompon
 		}
 
 		route := c.baseRoutingKey.SetAction("sync").SetObject("components").MustBuild()
-		err = c.msgbus.PublishRequest(route, req)
+		err = c.msgbus.PublishRequestWithContext(ctx, route, req)
 		if err != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 		}
@@ -410,7 +410,7 @@ func (c *ComponentServer) NodeSyncJob(ctx context.Context) {
 				UserId:     component.UserId.String(),
 			}
 
-			err = c.msgbus.PublishRequest(route, evt)
+			err = c.msgbus.PublishRequestWithContext(ctx, route, evt)
 			if err != nil {
 				log.Errorf(eventPublishErrorMsg, evt, route, err)
 			}

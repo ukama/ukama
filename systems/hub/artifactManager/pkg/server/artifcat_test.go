@@ -62,7 +62,7 @@ func Test_StoreArtifact(t *testing.T) {
 		return a.Name == req.Name && a.Type == strings.ToLower(req.Type.String())
 	})).Return(&dpb.CreateChunkResponse{Index: []byte("index file"), Size: 10}, nil).Once()
 	st.On("PutFile", mock.Anything, req.Name, strings.ToLower(req.Type.String()), ver, pkg.ChunkIndexExtension, mock.Anything, mock.Anything).Return("", nil).Once()
-	mbClient.On("PublishRequest", mock.Anything, mock.AnythingOfType("*events.EventArtifactUploaded")).Return(nil).Once()
+	mbClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.AnythingOfType("*events.EventArtifactUploaded")).Return(nil).Once()
 
 	s := NewArtifactServer(OrgId, OrgName, st, chS, time.Duration(timeDuration)*time.Second, mbClient, "")
 

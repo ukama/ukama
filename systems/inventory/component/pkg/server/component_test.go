@@ -260,7 +260,7 @@ specification: "` + TestSpecification2 + `"`
 		compRepo.On("Delete").Return(nil)
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
 
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
@@ -368,7 +368,7 @@ specification: "Backhaul component specification for testing"`
 
 		compRepo.On("Delete").Return(nil)
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil)
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
@@ -729,7 +729,7 @@ specification: "Test specification"`
 
 		compRepo.On("Delete").Return(nil)
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil)
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(fmt.Errorf("publish failed"))
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(fmt.Errorf("publish failed"))
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig())
 
@@ -794,7 +794,7 @@ specification: "Test specification"`
 		// Delete, Add, and PublishRequest are called for each company (2 companies)
 		compRepo.On("Delete").Return(nil).Times(2)
 		compRepo.On("Add", mock.AnythingOfType("[]*db.Component")).Return(nil).Times(2)
-		msgBus.On("PublishRequest", mock.AnythingOfType("string"), mock.Anything).Return(nil).Times(2)
+		msgBus.On("PublishRequestWithContext", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Return(nil).Times(2)
 
 		s := NewComponentServer(OrgName, compRepo, msgBus, "", gitClient, "", nil, getTestConfig("test"))
 

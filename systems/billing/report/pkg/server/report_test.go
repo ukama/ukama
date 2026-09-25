@@ -149,7 +149,7 @@ func TestReportServer_Add(t *testing.T) {
 			NetworkId:    uuid.NewV4(),
 		}, nil).Once()
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := server.NewReportServer(OrgName, OrgId, reportRepo, subscriberClient, msgbusClient)
 
@@ -1169,7 +1169,7 @@ func TestReportServer_Update(t *testing.T) {
 			RawReport: datatypes.JSON([]byte(raw)),
 		}
 
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).
 			Return(nil).Once()
 
 		reportRepo.On("Get", reportId, mock.Anything).
@@ -1202,7 +1202,7 @@ func TestReportServer_Delete(t *testing.T) {
 		msgbusClient := &cmocks.MsgBusServiceClient{}
 
 		reportRepo.On("Delete", reportId, mock.Anything).Return(nil).Once()
-		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+		msgbusClient.On("PublishRequestWithContext", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 
 		s := server.NewReportServer(OrgName, OrgId, reportRepo, nil, msgbusClient)
 

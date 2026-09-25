@@ -115,7 +115,7 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 		return &pb.CDRResp{}, nil
 	}
 
-	err = s.UpdateUsage(req.Imsi, cdr)
+	err = s.UpdateUsage(c, req.Imsi, cdr)
 	if err != nil {
 		log.Errorf("Error updating usage for imsi %s", err)
 	}
@@ -149,7 +149,7 @@ func (s *CDRServer) PostCDR(c context.Context, req *pb.CDR) (*pb.CDRResp, error)
 	e := dbCDRToepbCDR(*cdr)
 	if s.msgbus != nil {
 		route := s.baseRoutingKey.SetActionCreate().SetObject("cdr").MustBuild()
-		merr := s.msgbus.PublishRequest(route, e)
+		merr := s.msgbus.PublishRequestWithContext(c, route, e)
 		if merr != nil {
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, merr.Error())
 		}
@@ -342,7 +342,7 @@ func (s *CDRServer) QueryUsage(c context.Context, req *pb.QueryUsageReq) (*pb.Qu
 }
 
 /* If this function is getting really complex just drop this and use GetPeriodUsage which will read all the CDR from starttime to end time and report the usage */
-func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
+func (s *CDRServer) UpdateUsage(ctx context.Context, imsi string, cdrMsg *db.CDR) error {
 	ou, err := s.usageRepo.Get(imsi)
 	if err != nil {
 		if !sql.IsNotFoundError(err) {
@@ -519,7 +519,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 			if s.msgbus != nil {
 				route := s.baseRoutingKey.SetAction("terminated").SetObject("session").MustBuild()
-				merr := s.msgbus.PublishRequest(route, e)
+				merr := s.msgbus.PublishRequestWithContext(ctx, route, e)
 				if merr != nil {
 					log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 				}
@@ -544,7 +544,7 @@ func (s *CDRServer) UpdateUsage(imsi string, cdrMsg *db.CDR) error {
 
 		if s.msgbus != nil {
 			route := s.baseRoutingKey.SetActionCreate().SetObject("nodehandover").MustBuild()
-			merr := s.msgbus.PublishRequest(route, e)
+			merr := s.msgbus.PublishRequestWithContext(ctx, route, e)
 			if merr != nil {
 				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", e, route, err.Error())
 			}
