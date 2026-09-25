@@ -240,7 +240,7 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Name:        accountItem.Item,
 			Code:        accountItem.Id,
 			Interval:    postpaidBillingInterval,
-			AmountCents: int(amount * 100),
+			AmountCents: int(math.Round(amount * 100)),
 
 			//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
 			AmountCurrency: defaultCurrency,

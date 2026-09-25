@@ -21,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/billing/collector/mocks"
+	"github.com/ukama/ukama/systems/billing/collector/pkg/clients"
 	"github.com/ukama/ukama/systems/billing/collector/pkg/server"
 	"github.com/ukama/ukama/systems/common/msgbus"
 
@@ -316,6 +317,50 @@ func TestCollectorEventServer_HandleOrgSubscriptionEvent(t *testing.T) {
 		_, err = s.EventNotification(context.TODO(), msg)
 
 		assert.NoError(t, err)
+	})
+
+	t.Run("OrgSubscriptionOpexFeeKeepsEveryCent", func(t *testing.T) {
+		// 19.99 * 100 is 1998.9999999999998 in float64, so a truncating
+		// conversion would bill 1998 cents instead of 1999.
+		for _, tc := range []struct {
+			opexFee string
+			cents   int
+		}{
+			{"19.99", 1999},
+			{"0.29", 29},
+			{"4.35", 435},
+			{"100.00", 10000},
+		} {
+			billingClient.On("GetPlan", mock.Anything, mock.Anything).Return("", errors.New("Not found")).Once()
+			billingClient.On("CreatePlan", mock.Anything, mock.MatchedBy(func(p clients.Plan) bool {
+				return p.AmountCents == tc.cents
+			})).Return("", nil).Once()
+			billingClient.On("CreateSubscription", mock.Anything, mock.Anything).
+				Return("", nil).Once()
+
+			userAccountItems := epb.UserAccountingEvent{
+				UserId: OrgId,
+				Accounting: []*epb.UserAccounting{
+					&epb.UserAccounting{
+						Id:      planId,
+						Item:    "SAS subscription",
+						OpexFee: tc.opexFee,
+					},
+				},
+			}
+
+			anyE, err := anypb.New(&userAccountItems)
+			assert.NoError(t, err)
+
+			msg := &epb.Event{
+				RoutingKey: routingKey,
+				Msg:        anyE,
+			}
+
+			_, err = s.EventNotification(context.TODO(), msg)
+
+			assert.NoError(t, err, "opex fee %s", tc.opexFee)
+		}
 	})
 
 	t.Run("OrgSubscriptionEventNotSent", func(t *testing.T) {
