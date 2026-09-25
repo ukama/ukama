@@ -871,3 +871,8 @@ func (m *mockMsgBusServiceClient) PublishRequest(routingKey string, request prot
 	args := m.Called(routingKey, request)
 	return args.Error(0)
 }
+
+func (m *mockMsgBusServiceClient) PublishRequestWithContext(ctx context.Context, routingKey string, request protoreflect.ProtoMessage) error {
+	args := m.Called(routingKey, request)
+	return args.Error(0)
+}
