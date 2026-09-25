@@ -1065,6 +1065,8 @@ func TestSimManagerServer_AllocateSim(t *testing.T) {
 		assert.Equal(t, "test@example.com", publishedEvt.SubscriberEmail)
 		assert.Equal(t, OrgName, publishedEvt.OrgName)
 		assert.Equal(t, "test-user", publishedEvt.OwnerName)
+		// 3600 minutes is two and a half days, and the email renders "<value> days".
+		assert.Equal(t, "2.5", publishedEvt.PackageDuration)
 
 		simRepo.AssertExpectations(t)
 		subscriberService.AssertExpectations(t)
@@ -2538,6 +2540,73 @@ func TestSimManagerServer_AddPackageForSim(t *testing.T) {
 		packageRepo.AssertExpectations(t)
 		packageClient.AssertExpectations(t)
 	})
+}
+
+func TestSimManagerServer_AddPackageForSim_EventDurationInDays(t *testing.T) {
+	simRepo := &mocks.SimRepo{}
+	packageRepo := &mocks.PackageRepo{}
+	packageClient := &cmocks.PackageClient{}
+	msgbusClient := &cmocks.MsgBusServiceClient{}
+	subscriberService := &mocks.SubscriberRegistryClientProvider{}
+	netClient := &cmocks.NetworkClient{}
+	orgClient := &cmocks.OrgClient{}
+	userClient := &cmocks.UserClient{}
+
+	simId := uuid.NewV4()
+	packageId := uuid.NewV4()
+	networkId := uuid.NewV4()
+	orgId := uuid.NewV4()
+
+	simRepo.On("Get", simId).Return(&sims.Sim{
+		Id:        simId,
+		NetworkId: networkId,
+		Type:      ukama.SimTypeTest,
+	}, nil).Once()
+
+	// A 30 day package: data plan durations are expressed in minutes.
+	packageClient.On("Get", packageId.String()).Return(&cdplan.PackageInfo{
+		IsActive:   true,
+		Name:       "Monthly",
+		Duration:   30 * 24 * 60,
+		SimType:    simTypeTest,
+		DataVolume: 5,
+		DataUnit:   "GB",
+		Amount:     10,
+	}, nil).Once()
+
+	packageRepo.On("List", simId.String(), "", "", "", "", "", mock.Anything, mock.Anything,
+		uint32(0), true).Return([]sims.Package{}, nil).Once()
+	packageRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
+
+	subscriberService.On("GetClient").Return(nil, errors.New("unavailable")).Once()
+	netClient.On("Get", networkId.String()).Return(nil, errors.New("unavailable")).Once()
+	orgClient.On("Get", OrgName).Return(nil, errors.New("unavailable")).Once()
+
+	var publishedEvt *epb.EventSimAddPackage
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once().
+		Run(func(args mock.Arguments) {
+			publishedEvt, _ = args.Get(1).(*epb.EventSimAddPackage)
+		})
+
+	s := server.NewSimManagerServer(OrgName, simRepo, packageRepo, nil, packageClient,
+		subscriberService, nil, nil, msgbusClient, orgId.String(), "", netClient, orgClient, userClient, nil)
+
+	resp, err := s.AddPackageForSim(context.TODO(), &pb.AddPackageRequest{
+		SimId:     simId.String(),
+		PackageId: packageId.String(),
+		StartDate: from,
+	})
+
+	assert.NoError(t, err)
+	assert.NotNil(t, resp)
+
+	assert.NotNil(t, publishedEvt)
+	assert.Equal(t, "$10.00 / 5 GB / 30 days", publishedEvt.PackagesDetails)
+
+	simRepo.AssertExpectations(t)
+	packageRepo.AssertExpectations(t)
+	packageClient.AssertExpectations(t)
+	msgbusClient.AssertExpectations(t)
 }
 
 func TestSimManagerServer_MarkPackageExpiredForSim(t *testing.T) {

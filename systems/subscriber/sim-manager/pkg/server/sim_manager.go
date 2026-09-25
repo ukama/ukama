@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -379,7 +380,7 @@ func (s *SimManagerServer) AllocateSim(ctx context.Context, req *pb.AllocateSimR
 		PackageDataVolume: fmt.Sprintf("%v", packageInfo.DataVolume),
 		PackageDataUnit:   packageInfo.DataUnit,
 		PackageAmount:     fmt.Sprintf("%v", packageInfo.Amount),
-		PackageDuration:   fmt.Sprintf("%v", packageInfo.Duration),
+		PackageDuration:   packageDurationInDays(packageInfo.Duration),
 		PackageEndDate:    timestamppb.New(sim.Package.EndDate),
 		PackageTotalData:  sim.Package.InitialData,
 		PackageDlbr:       sim.Package.Dlbr,
@@ -1197,7 +1198,7 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 		OwnerName:       orgOwnerName(orgName, nucleusOrgClient, nucleusUserClient),
 		PackageName:     pkgInfo.Name,
 		PackagesCount:   fmt.Sprintf("%v", len(packages)+1),
-		PackagesDetails: fmt.Sprintf("$%.2f / %v %s / %d days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, pkgInfo.Duration),
+		PackagesDetails: fmt.Sprintf("$%.2f / %v %s / %s days", pkgInfo.Amount, pkgInfo.DataVolume, pkgInfo.DataUnit, packageDurationInDays(pkgInfo.Duration)),
 		PackageEndDate:  pkg.EndDate.Format(emailDateFormat),
 	}
 
@@ -1207,6 +1208,16 @@ func addPackageForSim(ctx context.Context, simId, packageId, startDate string, s
 	}
 
 	return nil
+}
+
+// packageDurationInDays renders a data plan duration, which is stored in
+// minutes, as the number of days shown in subscriber emails.
+func packageDurationInDays(durationMinutes uint64) string {
+	if durationMinutes%validation.MinutesInDay == 0 {
+		return strconv.FormatUint(durationMinutes/validation.MinutesInDay, 10)
+	}
+
+	return strconv.FormatFloat(float64(durationMinutes)/validation.MinutesInDay, 'f', 1, 64)
 }
 
 func orgOwnerName(orgName string, nucleusOrgClient cnuc.OrgClient, nucleusUserClient cnuc.UserClient) string {
