@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -124,6 +125,83 @@ func TestHandleStateTransition_ArmedIntentCompletes(t *testing.T) {
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 	mb.AssertExpectations(t)
+}
+
+func TestHandleStateTransition_PublishFailureCanRetry(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(true)
+	publishErr := errors.New("message bus unavailable")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Twice()
+	mb.On("PublishRequest", mock.Anything, mock.Anything).
+		Return(publishErr).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
+
+	assert.ErrorIs(t, err, publishErr)
+	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
+
+	mb.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
+		Return(&intent, nil).Once()
+
+	_, err = s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	mb.AssertExpectations(t)
+}
+
+func TestHandleStateTransition_TerminalWriteFailureCanRetry(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(true)
+	writeErr := errors.New("database unavailable")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Twice()
+	mb.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
+	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
+		Run(func(_ mock.Arguments) {
+			mb.AssertNumberOfCalls(t, "PublishRequest", 1)
+		}).Return(nil, writeErr).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
+	assert.ErrorIs(t, err, writeErr)
+
+	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
+		Return(&intent, nil).Once()
+	_, err = s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	mb.AssertExpectations(t)
+}
+
+func TestHandleStateTransition_ArmFailureCanRetry(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(false)
+	writeErr := errors.New("database unavailable")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Twice()
+	repo.On("Arm", intent.OperationId).Return(writeErr).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "off"))
+	assert.ErrorIs(t, err, writeErr)
+
+	repo.On("Arm", intent.OperationId).Return(nil).Once()
+	_, err = s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "off"))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	mb.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 }
 
 func TestRuleMatches(t *testing.T) {

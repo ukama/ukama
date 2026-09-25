@@ -103,7 +103,7 @@ export class NodeOperationStatusDto {
   @Field(() => NODE_TYPE, { nullable: true })
   type?: NODE_TYPE;
 
-  /** True while a non-terminal operation holds an unexpired lease. */
+  /** True while the manager holds a non-terminal operation lock. */
   @Field()
   busy: boolean;
 

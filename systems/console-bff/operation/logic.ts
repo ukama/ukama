@@ -36,9 +36,8 @@ const isTerminal = (op?: OperationDto): boolean =>
   !!op && TERMINAL_STATUSES.has(op.status?.toLowerCase());
 
 /**
- * A lease that has already elapsed is treated as free: the operation
- * system's sweeper (30s interval) will flip it to TIMEOUT shortly, and the
- * UI should not show a stuck spinner in the meantime.
+ * Reports lease expiry only. The manager still holds the lock until
+ * completion or its sweeper releases it; expiry alone does not free it.
  */
 export const leaseExpired = (
   op: OperationDto | undefined,
@@ -49,14 +48,16 @@ export const leaseExpired = (
   return Number.isFinite(t) && t <= now;
 };
 
-/** A node is busy iff its lock is held by a non-terminal, unexpired operation. */
+/** A node is busy while the manager holds its non-terminal operation lock. */
 export const isLockBusy = (
   lock: ResourceLockDto | undefined,
   now: number = Date.now()
 ): boolean => {
+  // Preserve the clock argument for callers; lock release is authoritative.
+  void now;
   if (!lock || !lock.locked) return false;
   const op = lock.operation;
-  if (isTerminal(op) || leaseExpired(op, now)) return false;
+  if (isTerminal(op)) return false;
   return true;
 };
 

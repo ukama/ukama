@@ -69,9 +69,9 @@ describe("isLockBusy", () => {
       false
     );
   });
-  it("false when lease already expired (sweeper will reclaim)", () => {
+  it("true when lease expired but the manager has not released the lock", () => {
     const expired = op({ leaseExpiresAt: new Date(NOW - 1000).toISOString() });
-    expect(isLockBusy(lock({ operation: expired }), NOW)).toBe(false);
+    expect(isLockBusy(lock({ operation: expired }), NOW)).toBe(true);
   });
 });
 
@@ -113,6 +113,30 @@ describe("toNodeStatus", () => {
 });
 
 describe("buildSiteActions — independent async release", () => {
+  it("keeps service unavailable after lease expiry until the manager releases it", () => {
+    const expired = op({ leaseExpiresAt: new Date(NOW - 1000).toISOString() });
+    const tower = toNodeStatus(
+      { id: "t", type: NODE_TYPE.tnode, lock: lock({ operation: expired }) },
+      NOW
+    );
+    const amp = status({ nodeId: "a", type: NODE_TYPE.anode });
+    const waiting = buildSiteActions([tower, amp]);
+
+    expect(tower.operation?.id).toBe(expired.id);
+    expect(waiting.service.available).toBe(false);
+    expect(waiting.restartSite.available).toBe(false);
+    expect(waiting.rf.available).toBe(true);
+
+    const released = toNodeStatus(
+      { id: "t", type: NODE_TYPE.tnode, lock: { locked: false } },
+      NOW
+    );
+    const ready = buildSiteActions([released, amp]);
+    expect(released.operation).toBe(undefined);
+    expect(ready.service.available).toBe(true);
+    expect(ready.restartSite.available).toBe(true);
+  });
+
   it("all idle → everything available", () => {
     const a = buildSiteActions([
       status({ nodeId: "t", type: NODE_TYPE.tnode }),

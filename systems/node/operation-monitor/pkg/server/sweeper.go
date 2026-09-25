@@ -62,12 +62,13 @@ func (s *Sweeper) sweepOnce() {
 	log.Infof("sweeper: expiring %d intent(s) past deadline", len(expired))
 	for i := range expired {
 		intent := &expired[i]
-		if _, err := s.monitor.repo.MarkTerminal(intent.OperationId, db.IntentExpired); err != nil {
-			log.Warnf("sweeper: mark expired for %s failed: %v", intent.OperationId, err)
-			continue
-		}
+		// Leave publication failures watching for the next sweep.
 		if err := s.publishFailed(intent, "deadline exceeded"); err != nil {
 			log.Warnf("sweeper: publish failed for %s: %v", intent.OperationId, err)
+			continue
+		}
+		if _, err := s.monitor.repo.MarkTerminal(intent.OperationId, db.IntentExpired); err != nil {
+			log.Warnf("sweeper: mark expired for %s failed: %v", intent.OperationId, err)
 		}
 	}
 }
