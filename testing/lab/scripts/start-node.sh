@@ -17,6 +17,7 @@ CONTAINER_NAME="$2"
 RUN_DIR="$3"
 IMAGE_REPO="${IMAGE_REPO:-testing/virtualnode}"
 IMAGE="$IMAGE_REPO:$NODE_ID"
+PROBE_IMAGE="${ULAB_NET_PROBE_IMAGE:-alpine:3.20}"
 NET_STATE="$RUN_DIR/runtime-net/net.env"
 LAB_NET="${LAB_NET:-}"
 HOST_CONTROL="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)/node-host-control.sh"
@@ -37,6 +38,7 @@ container_ip_on_network() {
 }
 
 need_cmd podman
+need_cmd awk
 
 if [ -z "$LAB_NET" ]; then
     if [ ! -f "$NET_STATE" ]; then
@@ -87,7 +89,22 @@ fi
 echo "podman: removing existing container if present: $CONTAINER_NAME"
 podman rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
 
-echo "podman: starting $CONTAINER_NAME from $IMAGE network=$LAB_NET"
+# Let Podman choose a free address, then store it as a static address on the
+# node before its first boot. UE endpoints and media routes retain this IP
+# while systemd stops and starts the same node container during a reboot.
+if ! PROBE_ADDR="$(podman run --rm --network "$LAB_NET" \
+    --entrypoint /bin/sh "$PROBE_IMAGE" -c 'ip -4 addr show dev eth0')"; then
+    echo "podman: failed to allocate node IP on $LAB_NET" >&2
+    exit 1
+fi
+NODE_IP="$(printf '%s\n' "$PROBE_ADDR" | \
+    awk '$1 == "inet" { split($2, addr, "/"); print addr[1]; exit }')"
+if [ -z "$NODE_IP" ]; then
+    echo "podman: network probe has no IPv4 address on $LAB_NET" >&2
+    exit 1
+fi
+
+echo "podman: starting $CONTAINER_NAME from $IMAGE network=$LAB_NET ip=$NODE_IP"
 
 if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     # shellcheck disable=SC2086
@@ -98,6 +115,7 @@ if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \
+        --ip "$NODE_IP" \
         --entrypoint "$ULAB_NODE_ENTRYPOINT" \
         $PUBLISH_ARGS \
         "$IMAGE" \
@@ -115,6 +133,7 @@ else
         --privileged \
         --device /dev/net/tun \
         --network "$LAB_NET" \
+        --ip "$NODE_IP" \
         $PUBLISH_ARGS \
         "$IMAGE"; then
         echo "podman: failed to start $CONTAINER_NAME on $LAB_NET" >&2
