@@ -883,58 +883,86 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId st
 	return ns, rxF, txF, nil
 }
 
+// RecoverActiveSessions closes sessions whose in-memory monitors were lost.
+// EndSession commits the counters and terminal state together, so retrying
+// recovery after another restart cannot credit the same bytes twice.
+func (s *Store) RecoverActiveSessions() error {
+	sessions, err := s.GetAllActiveSessions()
+	if err != nil {
+		return err
+	}
+
+	for i := range sessions {
+		if err := s.EndSession(&sessions[i]); err != nil {
+			return fmt.Errorf("failed to recover session %d: %w", sessions[i].ID, err)
+		}
+	}
+
+	return nil
+}
+
 func (s *Store) EndSession(session *Session) error {
 	s.policyMu.Lock()
 	defer s.policyMu.Unlock()
 
-	// Update session with TX, RX, and Total bytes
-	t := uint64(time.Now().Unix())
-	session.EndTime = t
-	session.UpdatedAt = t
-	session.TotalBytes = session.TxBytes + session.RxBytes
-	session.State = SessionCompleted
-	session.Sync = SessionSyncReady
-
-	// Update Usage for the subscriber
 	subscriber, err := s.GetSubscriberByID(session.SubscriberID.ID)
 	if err != nil {
-		log.Errorf("Error getting subscriber %s by ID. Error: %v", session.SubscriberID.Imsi, err)
-
-		return fmt.Errorf("error getting subscriber %s by ID. Error: %w", session.SubscriberID.Imsi, err)
+		return fmt.Errorf("error getting subscriber %s by ID: %w", session.SubscriberID.Imsi, err)
 	}
 
-	err = s.UpdateSessionEndUsage(session)
+	tx, err := s.db.Begin()
 	if err != nil {
-		log.Errorf("Error updating session usage for subscriber %s. Error: %v", subscriber.Imsi, err)
-
-		return fmt.Errorf("error updating session usage for subscriber %s. Error: %w", subscriber.Imsi, err)
+		return err
 	}
+	defer tx.Rollback()
 
-	if session.PolicyID.ID != subscriber.PolicyID.ID {
-		log.Warnf("Session %d for subscriber %s ended under policy %s, which the subscriber has since rolled over from (now on %s); not counting its %d bytes against the current policy's usage",
-			session.ID, subscriber.Imsi, session.PolicyID.ID, subscriber.PolicyID.ID, session.TotalBytes)
-
+	t := uint64(time.Now().Unix())
+	total := session.TxBytes + session.RxBytes
+	result, err := tx.Exec(`
+		UPDATE sessions
+		SET endtime = ?, txbytes = ?, rxbytes = ?, totalbytes = ?,
+		    state = ?, sync = ?, flowstate = ?, updatedat = ?
+		WHERE id = ? AND state = ?;
+	`, t, session.TxBytes, session.RxBytes, total, SessionCompleted,
+		SessionSyncReady, FlowsPaused, t, session.ID, SessionActive)
+	if err != nil {
+		return err
+	}
+	changed, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if changed == 0 {
 		return nil
 	}
 
-	usage, err := s.GetUsageByImsi(subscriber.Imsi)
-	if err != nil {
-		log.Errorf("Error getting usage for subscriber %s. Error: %v", subscriber.Imsi, err)
-
-		return fmt.Errorf("error getting usage for subscriber %s. Error: %w", subscriber.Imsi, err)
+	if session.PolicyID.ID == subscriber.PolicyID.ID {
+		result, err = tx.Exec(`
+			UPDATE usages SET data = data + ?, updatedat = MAX(updatedat, ?)
+			WHERE subscriber_id = ?;
+		`, total, t, subscriber.ID)
+		if err != nil {
+			return err
+		}
+		changed, err = result.RowsAffected()
+		if err != nil {
+			return err
+		}
+		if changed != 1 {
+			return fmt.Errorf("usage record missing for subscriber %s", subscriber.Imsi)
+		}
 	}
 
-	usage.Data += session.TotalBytes
-	usage.Updatedat = session.EndTime
-
-	// Update subscriber and session
-	err = s.UpdateUsage(usage)
-	if err != nil {
-		log.Errorf("Error updating usage for subscriber %s. Error: %v", subscriber.Imsi, err)
-
-		return fmt.Errorf("error updating usage for subscriber %s. Error: %w", subscriber.Imsi, err)
+	if err := tx.Commit(); err != nil {
+		return err
 	}
 
+	session.EndTime = t
+	session.UpdatedAt = t
+	session.TotalBytes = total
+	session.State = SessionCompleted
+	session.Sync = SessionSyncReady
+	session.FlowState = FlowsPaused
 	return nil
 }
 

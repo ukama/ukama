@@ -62,6 +62,46 @@ ovs_flow_ready() {
         grep -q "priority=100.*nw_dst=$UE_IP.*NORMAL"
 }
 
+print_ue_network_debug() {
+    current_tower_ip="$(podman inspect -f \
+        '{{with index .NetworkSettings.Networks "'"$LAB_NET"'"}}{{.IPAddress}}{{end}}' \
+        "$TNODE_CONTAINER" 2>/dev/null || true)"
+
+    echo "---- UE to tower network ----" >&2
+    echo "tower=$TNODE_CONTAINER configured_ip=${TOWER_IP:-unknown} current_ip=${current_tower_ip:-unknown} network=$LAB_NET" >&2
+    if [ -n "$current_tower_ip" ] && [ -n "${TOWER_IP:-}" ] && \
+       [ "$current_tower_ip" != "$TOWER_IP" ]; then
+        echo "tower IP changed since UE startup" >&2
+    fi
+    podman exec "$UE_CONTAINER" sh -c '
+        printf "EPCEMU_URL=%s EPCEMU_DATA_HOST=%s\n" "$EPCEMU_URL" "$EPCEMU_DATA_HOST"
+        ip -4 addr show
+        ip -4 rule show
+        ip -4 route show table all
+        ip neigh show
+        ip route get "$EPCEMU_DATA_HOST"
+    ' >&2 || true
+
+    echo "---- EPCEMU configured endpoint from UE ----" >&2
+    podman exec "$UE_CONTAINER" sh -c '
+        curl -sS -i --connect-timeout 2 --max-time 5 "$EPCEMU_URL/v1/status"
+    ' >&2 || true
+    echo >&2
+
+    if [ -n "$current_tower_ip" ]; then
+        echo "---- EPCEMU current tower endpoint from UE ----" >&2
+        podman exec "$UE_CONTAINER" ip route get "$current_tower_ip" >&2 || true
+        podman exec "$UE_CONTAINER" \
+            curl -sS -i --connect-timeout 2 --max-time 5 \
+            "http://$current_tower_ip:18028/v1/status" >&2 || true
+        echo >&2
+    fi
+
+    echo "---- Tower network and listeners ----" >&2
+    podman exec "$TNODE_CONTAINER" ip -4 addr show >&2 || true
+    podman exec "$TNODE_CONTAINER" ss -lnt >&2 || true
+}
+
 start_ts="$(date +%s)"
 while :; do
     ue_running=0
@@ -103,6 +143,7 @@ while :; do
         podman ps -a --filter "name=$UE_CONTAINER" >&2 || true
         echo "---- UE logs ----" >&2
         podman logs --tail 120 "$UE_CONTAINER" >&2 || true
+        print_ue_network_debug
         echo "---- EPCEMU UE ----" >&2
         podman exec "$TNODE_CONTAINER" \
             curl -i --max-time 5 "http://127.0.0.1:18028/v1/ue/$IMSI" >&2 || true

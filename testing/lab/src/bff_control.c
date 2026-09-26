@@ -28,7 +28,7 @@ static const char *BFF_RESTART_SITE =
 
 static const char *BFF_TOGGLE_SERVICE =
 "mutation ToggleService($data: ToggleSiteStatusInputDto!) {"
-" toggleService(data: $data) { success } }";
+" toggleService(data: $data) { success message } }";
 
 static const char *BFF_TOGGLE_RADIO =
 "mutation ToggleRFStatus($data: ToggleSiteStatusInputDto!) {"

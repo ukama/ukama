@@ -186,15 +186,22 @@ static long http_request(const char *method,
     CURL *curl;
     CURLcode res;
     struct curl_slist *headers;
+    char error[CURL_ERROR_SIZE];
     long code;
 
     curl = curl_easy_init();
-    if (curl == NULL) return 0;
+    if (curl == NULL) {
+        fprintf(stderr, "HTTP request failed method=%s url=%s: curl init failed\n",
+                method, url);
+        return 0;
+    }
 
     headers = NULL;
     code = 0;
+    error[0] = '\0';
 
     curl_easy_setopt(curl, CURLOPT_URL, url);
+    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error);
     curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
     curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
@@ -209,6 +216,17 @@ static long http_request(const char *method,
     res = curl_easy_perform(curl);
     if (res == CURLE_OK) {
         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
+    } else {
+        long responseCode = 0;
+        long osError = 0;
+
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
+        curl_easy_getinfo(curl, CURLINFO_OS_ERRNO, &osError);
+        fprintf(stderr,
+                "HTTP request failed method=%s url=%s curl=%d http=%ld "
+                "os_errno=%ld error=%s\n",
+                method, url, (int)res, responseCode, osError,
+                error[0] != '\0' ? error : curl_easy_strerror(res));
     }
 
     curl_slist_free_all(headers);

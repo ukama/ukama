@@ -81,6 +81,7 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 			if !intent.Armed {
 				if err := e.monitor.repo.Arm(intent.OperationId); err != nil {
 					log.Errorf("operation-monitor: arm %s: %v", intent.OperationId, err)
+					return nil, err
 				} else {
 					log.Infof("operation-monitor: intent %s armed by %v", intent.OperationId, transition)
 				}
@@ -92,13 +93,15 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 				intent.OperationId, transition)
 			continue
 		}
-		if _, err := e.monitor.repo.MarkTerminal(intent.OperationId, db.IntentCompleted); err != nil {
-			log.Errorf("operation-monitor: mark %s completed: %v", intent.OperationId, err)
-			continue
-		}
+		// Keep the intent watching until publication succeeds so a failed
+		// delivery can be retried. The manager accepts duplicate completions.
 		if err := e.publishCompleted(intent); err != nil {
 			log.Errorf("operation-monitor: publish completed for %s: %v", intent.OperationId, err)
-			continue
+			return nil, err
+		}
+		if _, err := e.monitor.repo.MarkTerminal(intent.OperationId, db.IntentCompleted); err != nil {
+			log.Errorf("operation-monitor: mark %s completed: %v", intent.OperationId, err)
+			return nil, err
 		}
 		log.Infof("operation-monitor: intent %s satisfied (rule=%q matched %v)",
 			intent.OperationId, intent.CompletionRule, transition)
