@@ -59,6 +59,12 @@ type SessionManager interface {
 }
 
 func NewSessionManager(store *store.Store, br pkg.BrdigeConfig) (*sessionManager, error) {
+	// The datapath and in-memory cache do not survive a process restart.
+	// Account for persisted counters before admitting another session.
+	if err := store.RecoverActiveSessions(); err != nil {
+		return nil, fmt.Errorf("failed to recover interrupted sessions: %w", err)
+	}
+
 	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Management)
 	if err != nil {
 		log.Errorf("Error initializing session manager. Error: %v", err)
@@ -116,12 +122,18 @@ func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
 			log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %v",
 				sc.s.ID, sc.s.SubscriberID.Imsi, err)
 
-			return fmt.Errorf("failed to read final stats for data path of Imsi %s. Error: %w",
-				sc.s.SubscriberID.Imsi, err)
-		}
+			if !lastStats {
+				return fmt.Errorf("failed to read final stats for data path of Imsi %s. Error: %w",
+					sc.s.SubscriberID.Imsi, err)
+			}
 
-		sc.s.RxBytes = sc.baseRxBytes + rx
-		sc.s.TxBytes = sc.baseTxBytes + tx
+			// The bridge may already be gone during shutdown. Finalize the
+			// last recorded counters so this session cannot remain active.
+			log.Warnf("Finalizing Imsi %s with last recorded counters", imsi)
+		} else {
+			sc.s.RxBytes = sc.baseRxBytes + rx
+			sc.s.TxBytes = sc.baseTxBytes + tx
+		}
 
 		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s",
 			sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
@@ -218,6 +230,15 @@ func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bo
 	return false
 }
 
+// A zero bandwidth is unspecified, not an OpenFlow meter with rate zero.
+// Cookie-based flow counters still enforce the package byte allowance.
+func datapathMeterID(m store.Meter) uint32 {
+	if m.Rate == 0 {
+		return 0
+	}
+	return uint32(m.ID)
+}
+
 func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscriber, ns *store.Session, rxf *store.Flow, txf *store.Flow) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -240,8 +261,8 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 		sc.paused = true
 
 		err = s.d.AddMetersOnly(
-			uint32(sc.s.RxMeterID.ID),
-			uint32(sc.s.TxMeterID.ID),
+			datapathMeterID(sc.s.RxMeterID),
+			datapathMeterID(sc.s.TxMeterID),
 			uint32(sc.s.RxMeterID.Rate),
 			uint32(sc.s.TxMeterID.Rate),
 			uint32(sc.s.RxMeterID.Burst))
@@ -252,8 +273,8 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 		}
 	} else {
 		err = s.d.AddNewDataPath(sc.s.UeIpAddr,
-			uint32(sc.s.RxMeterID.ID),
-			uint32(sc.s.TxMeterID.ID),
+			datapathMeterID(sc.s.RxMeterID),
+			datapathMeterID(sc.s.TxMeterID),
 			uint32(sc.s.RxMeterID.Rate),
 			uint32(sc.s.TxMeterID.Rate),
 			uint32(sc.s.RxMeterID.Burst),
@@ -307,26 +328,26 @@ func (s *sessionManager) endSessionLocked(ctx context.Context, sub *store.Subscr
 		return nil
 	}
 
+	err := s.storeStats(sc.s.SubscriberID.Imsi, true)
+	if err != nil {
+		return fmt.Errorf("failed to store final stats for Imsi %s: %w", sub.Imsi, err)
+	}
+
 	defer delete(s.cache, sub.Imsi)
 
-	err := s.StopSessionMonitor(ctx, sub.Imsi)
+	err = s.StopSessionMonitor(ctx, sub.Imsi)
 	if err != nil {
 		log.Errorf("Failed to stop monitor for Imsi %s. Error: %v", sub.Imsi, err)
 
 		return fmt.Errorf("failed to stop monitor for Imsi %s. Error: %w", sub.Imsi, err)
 	}
 
-	err = s.storeStats(sc.s.SubscriberID.Imsi, true)
-	if err != nil {
-		log.Warnf("Failed to store final stats for Imsi %s. Error: %v", sub.Imsi, err)
-	}
-
 	time.Sleep(1000 * time.Millisecond)
 
 	if sc.paused {
-		err = s.d.DeleteMetersOnly(uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
+		err = s.d.DeleteMetersOnly(datapathMeterID(sc.s.RxMeterID), datapathMeterID(sc.s.TxMeterID))
 	} else {
-		err = s.d.DeleteDataPath(sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID))
+		err = s.d.DeleteDataPath(sc.s.UeIpAddr, datapathMeterID(sc.s.RxMeterID), datapathMeterID(sc.s.TxMeterID))
 	}
 	if err != nil {
 		log.Errorf("Failed to delete data path for Imsi %s. Error: %v", sub.Imsi, err)
@@ -409,8 +430,8 @@ func (s *sessionManager) ResumeSession(ctx context.Context, sub *store.Subscribe
 	}
 
 	err := s.d.AddFlowOnly(sc.s.UeIpAddr,
-		uint32(sc.s.RxMeterID.ID),
-		uint32(sc.s.TxMeterID.ID),
+		datapathMeterID(sc.s.RxMeterID),
+		datapathMeterID(sc.s.TxMeterID),
 		sc.rxCookie,
 		sc.txCookie)
 	if err != nil {

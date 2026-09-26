@@ -222,6 +222,10 @@ func (o *OvsSwitch) inputTable() (*ofctrl.Table, error) {
 }
 
 func (o *OvsSwitch) DeleteMeter(id uint32) error {
+	if id == 0 {
+		return nil
+	}
+
 	var sw *ofctrl.OFSwitch
 	var err error
 
@@ -238,6 +242,10 @@ func (o *OvsSwitch) DeleteMeter(id uint32) error {
 }
 
 func (o *OvsSwitch) AddMeter(id, rate, burstSize uint32) error {
+	if id == 0 {
+		return nil
+	}
+
 	var sw *ofctrl.OFSwitch
 	var err error
 	var mb util.Message
@@ -310,10 +318,11 @@ func (o *OvsSwitch) DeleteMetersForUE(rxMeter, txMeter uint32) error {
 }
 
 func addActionsToFlow(f *ofctrl.Flow, meter uint32) *ofctrl.Flow {
-	m := ofctrl.NewMeterAction(meter)
 	normal := ofctrl.NewOutputNormal()
 
-	f.ApplyAction(m)
+	if meter != 0 {
+		f.ApplyAction(ofctrl.NewMeterAction(meter))
+	}
 	f.ApplyAction(normal)
 
 	return f
