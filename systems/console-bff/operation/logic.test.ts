@@ -112,8 +112,8 @@ describe("toNodeStatus", () => {
   });
 });
 
-describe("buildSiteActions — independent async release", () => {
-  it("keeps service unavailable after lease expiry until the manager releases it", () => {
+describe("buildSiteActions — site-wide busy state", () => {
+  it("keeps all actions unavailable after lease expiry until the manager releases it", () => {
     const expired = op({ leaseExpiresAt: new Date(NOW - 1000).toISOString() });
     const tower = toNodeStatus(
       { id: "t", type: NODE_TYPE.tnode, lock: lock({ operation: expired }) },
@@ -125,7 +125,7 @@ describe("buildSiteActions — independent async release", () => {
     expect(tower.operation?.id).toBe(expired.id);
     expect(waiting.service.available).toBe(false);
     expect(waiting.restartSite.available).toBe(false);
-    expect(waiting.rf.available).toBe(true);
+    expect(waiting.rf.available).toBe(false);
 
     const released = toNodeStatus(
       { id: "t", type: NODE_TYPE.tnode, lock: { locked: false } },
@@ -135,19 +135,21 @@ describe("buildSiteActions — independent async release", () => {
     expect(released.operation).toBe(undefined);
     expect(ready.service.available).toBe(true);
     expect(ready.restartSite.available).toBe(true);
+    expect(ready.rf.available).toBe(true);
   });
 
   it("all idle → everything available", () => {
     const a = buildSiteActions([
       status({ nodeId: "t", type: NODE_TYPE.tnode }),
       status({ nodeId: "a", type: NODE_TYPE.anode }),
+      status({ nodeId: "c", type: NODE_TYPE.cnode }),
     ]);
     expect(a.restartSite.available).toBe(true);
     expect(a.rf.available).toBe(true);
     expect(a.service.available).toBe(true);
   });
 
-  it("amplifier busy → RF and restartSite locked, service stays available", () => {
+  it("amplifier busy → all site actions locked", () => {
     const a = buildSiteActions([
       status({ nodeId: "t", type: NODE_TYPE.tnode }),
       status({
@@ -160,10 +162,11 @@ describe("buildSiteActions — independent async release", () => {
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toContain("sam");
     expect(a.restartSite.available).toBe(false);
-    expect(a.service.available).toBe(true);
+    expect(a.service.available).toBe(false);
+    expect(a.service.reason).toBe(a.restartSite.reason);
   });
 
-  it("tower busy → service and restartSite locked, RF stays available", () => {
+  it("tower busy → all site actions locked", () => {
     const a = buildSiteActions([
       status({
         nodeId: "t",
@@ -174,8 +177,53 @@ describe("buildSiteActions — independent async release", () => {
       status({ nodeId: "a", type: NODE_TYPE.anode }),
     ]);
     expect(a.service.available).toBe(false);
-    expect(a.rf.available).toBe(true);
+    expect(a.rf.available).toBe(false);
     expect(a.restartSite.available).toBe(false);
+    expect(a.rf.reason).toBe(a.restartSite.reason);
+  });
+
+  it("controller updating → all site actions locked with the same reason", () => {
+    const a = buildSiteActions([
+      status({ nodeId: "t", type: NODE_TYPE.tnode }),
+      status({ nodeId: "a", type: NODE_TYPE.anode }),
+      status({
+        nodeId: "c",
+        type: NODE_TYPE.cnode,
+        busy: true,
+        operation: op({ type: "UpdateSoftware", requestedBy: "software" }),
+      }),
+    ]);
+    const blocked = {
+      available: false,
+      reason: "UpdateSoftware in progress by software",
+    };
+    expect(a.restartSite).toEqual(blocked);
+    expect(a.rf).toEqual(blocked);
+    expect(a.service).toEqual(blocked);
+  });
+
+  it("keeps all actions locked until every busy node is released", () => {
+    const tower = status({ nodeId: "t", type: NODE_TYPE.tnode, busy: true });
+    const amp = status({ nodeId: "a", type: NODE_TYPE.anode });
+    const controller = status({ nodeId: "c", type: NODE_TYPE.cnode, busy: true });
+    const busy = buildSiteActions([tower, amp, controller]);
+    expect(busy.restartSite.available).toBe(false);
+    expect(busy.rf.available).toBe(false);
+    expect(busy.service.available).toBe(false);
+
+    const waiting = buildSiteActions([{ ...tower, busy: false }, amp, controller]);
+    expect(waiting.restartSite.available).toBe(false);
+    expect(waiting.rf.available).toBe(false);
+    expect(waiting.service.available).toBe(false);
+
+    const ready = buildSiteActions([
+      { ...tower, busy: false },
+      amp,
+      { ...controller, busy: false },
+    ]);
+    expect(ready.restartSite.available).toBe(true);
+    expect(ready.rf.available).toBe(true);
+    expect(ready.service.available).toBe(true);
   });
 
   it("missing role node → action unavailable with a clear reason", () => {
@@ -184,5 +232,25 @@ describe("buildSiteActions — independent async release", () => {
     ]);
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toBe("No amplifier node on this site");
+    const b = buildSiteActions([
+      status({ nodeId: "a", type: NODE_TYPE.anode }),
+    ]);
+    expect(b.service.available).toBe(false);
+    expect(b.service.reason).toBe("No tower node on this site");
+  });
+
+  it("preserves the missing-role reason while another node is busy", () => {
+    const a = buildSiteActions([
+      status({ nodeId: "c", type: NODE_TYPE.cnode, busy: true }),
+    ]);
+    expect(a.restartSite.available).toBe(false);
+    expect(a.rf).toEqual({
+      available: false,
+      reason: "No amplifier node on this site",
+    });
+    expect(a.service).toEqual({
+      available: false,
+      reason: "No tower node on this site",
+    });
   });
 });

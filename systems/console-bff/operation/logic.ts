@@ -108,10 +108,10 @@ export const busyReason = (op?: OperationDto): string => {
 };
 
 /**
- * Per-action availability for the site page, derived from node roles:
- *  - restartSite depends on EVERY node (all must be idle)
- *  - rf         depends on the amplifier node (anode)
- *  - service    depends on the tower node (tnode)
+ * Per-action availability for the site page:
+ *  - EVERY node must be idle for restartSite, rf, and service (including cnode)
+ *  - rf also requires an amplifier node (anode)
+ *  - service also requires a tower node (tnode)
  */
 export const buildSiteActions = (
   statuses: NodeOperationStatusDto[]
@@ -129,8 +129,8 @@ export const buildSiteActions = (
     missingReason: string
   ): SiteActionsDto["rf"] => {
     if (!node) return { available: false, reason: missingReason };
-    if (node.busy)
-      return { available: false, reason: busyReason(node.operation) };
+    if (firstBusy)
+      return { available: false, reason: busyReason(firstBusy.operation) };
     return { available: true };
   };
 
