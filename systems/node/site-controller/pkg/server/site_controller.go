@@ -15,6 +15,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -37,11 +38,13 @@ type SiteControllerServer struct {
 	nodeClient     creg.NodeClient
 	healthClient   providers.HealthClientProvider
 	controller     providers.ControllerClientProvider
+	opManager      copr.ManagerClient
+	opLeaseSecs    uint32
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, controller providers.ControllerClientProvider, dbStructs *db.DBStruct) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, controller: controller, orgName: orgName, dbStructs: dbStructs}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, controller providers.ControllerClientProvider, dbStructs *db.DBStruct, opManager copr.ManagerClient, leaseSecs uint32) *SiteControllerServer {
+	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, controller: controller, orgName: orgName, dbStructs: dbStructs, opManager: opManager, opLeaseSecs: leaseSecs}
 }
 
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
@@ -94,12 +97,21 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 		}
 	}
 
-	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: tnode, State: req.State})
+	reservations, err := s.reserveSiteOperations(nodes.Nodes, []string{tnode, anode}, "ToggleRadio")
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	defer s.releaseUnsent(reservations)
+	towerOp := reservations[tnode]
+	delete(reservations, tnode)
+	_, err = client.ToggleRadio(copr.WithReservation(ctx, towerOp), &contpb.ToggleRadioRequest{NodeId: tnode, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
 
-	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: anode, State: req.State})
+	ampOp := reservations[anode]
+	delete(reservations, anode)
+	_, err = client.ToggleRadio(copr.WithReservation(ctx, ampOp), &contpb.ToggleRadioRequest{NodeId: anode, State: req.State})
 	if err != nil {
 		return nil, mapErr(err)
 	}
@@ -117,16 +129,29 @@ func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartS
 	if err != nil {
 		return nil, mapErr(err)
 	}
-	operationIds := make([]string, 0)
+	targets := make([]string, 0)
 	for _, node := range nodes.Nodes {
-		if node.Type != ukama.NODE_ID_TYPE_CNODE {
-			resp, err := client.RestartNode(ctx, &contpb.RestartNodeRequest{NodeId: node.Id})
-			if err != nil {
-				return nil, mapErr(err)
-			}
-			log.Infof("site-controller: restarted node %s for site %s, op=%s", node.Id, req.SiteId, resp.GetOperationId())
-			operationIds = append(operationIds, resp.GetOperationId())
+		if node.Type == ukama.NODE_ID_TYPE_TOWERNODE || node.Type == ukama.NODE_ID_TYPE_AMPNODE {
+			targets = append(targets, node.Id)
 		}
+	}
+	reservations, err := s.reserveSiteOperations(nodes.Nodes, targets, "RestartNode")
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	defer s.releaseUnsent(reservations)
+	operationIds := make([]string, 0, len(targets))
+	for _, nodeID := range targets {
+		op := reservations[nodeID]
+		// Once sent, a timeout is ambiguous: leave that operation to its
+		// monitor/lease instead of unlocking a potentially running restart.
+		delete(reservations, nodeID)
+		resp, err := client.RestartNode(copr.WithReservation(ctx, op), &contpb.RestartNodeRequest{NodeId: nodeID})
+		if err != nil {
+			return nil, mapErr(err)
+		}
+		log.Infof("site-controller: restarted node %s for site %s, op=%s", nodeID, req.SiteId, resp.GetOperationId())
+		operationIds = append(operationIds, resp.GetOperationId())
 	}
 
 	log.Infof("site-controller: forwarded RESTART for site %s", req.SiteId)

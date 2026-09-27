@@ -25,6 +25,7 @@ type Config struct {
 	ComponentSyncDelay  time.Duration    `default:"30s"`
 	HealthHost          string           `default:"health:9090"`
 	NodeControllerHost  string           `default:"controller:9090"`
+	OperationLeaseSecs  uint32           `default:"120"`
 	ReconcileMaxRetries int              `default:"3"`
 	OrgName             string
 	Service             *uconf.Service
@@ -42,6 +43,7 @@ func NewConfig(name string) *Config {
 		ReconcileMaxRetries: 3,
 		HealthHost:          "health:9090",
 		NodeControllerHost:  "controller:9090",
+		OperationLeaseSecs:  120,
 		Service:             uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,

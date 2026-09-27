@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -42,7 +43,19 @@ func (f *fakeControllerProvider) GetClient() (contpb.ControllerServiceClient, er
 }
 
 func newTestServer(nodeClient *mbmocks.NodeClient, controllerClient contpb.ControllerServiceClient) *SiteControllerServer {
-	return NewSiteControllerServer(testOrgName, nil, nil, nodeClient, nil, nil, &fakeControllerProvider{client: controllerClient}, nil)
+	opManager := &mbmocks.ManagerClient{}
+	opManager.On("Start", mock.Anything).Return(func(req copr.StartRequest) *copr.StartResponse {
+		out := &copr.StartResponse{ConflictsChecked: true}
+		for i, key := range append([]string{req.ResourceKey}, req.AdditionalResourceKeys...) {
+			op := &copr.OperationInfo{Id: key, Type: req.Type, System: req.System,
+				RequestedBy: req.RequestedBy, Status: copr.StatusPending,
+				ResourceKey: key, FencingToken: uint64(i + 1)}
+			out.Operations = append(out.Operations, op)
+		}
+		out.Operation = out.Operations[0]
+		return out
+	}, nil).Maybe()
+	return NewSiteControllerServer(testOrgName, nil, nil, nodeClient, nil, nil, &fakeControllerProvider{client: controllerClient}, nil, opManager, 120)
 }
 
 func TestSetService_ForwardsToTowerNode(t *testing.T) {
