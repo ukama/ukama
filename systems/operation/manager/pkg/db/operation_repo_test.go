@@ -93,6 +93,9 @@ func Test_Start(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
+		mock.ExpectExec("SELECT pg_advisory_xact_lock").WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
 		// insert operation (returns generated id + fencing_token)
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 1))
@@ -132,11 +135,7 @@ func Test_Start(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
-		// lock insert fails on PK collision
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
-			WillReturnError(gorm.ErrDuplicatedKey)
+		mock.ExpectExec("SELECT pg_advisory_xact_lock").WillReturnResult(sqlmock.NewResult(0, 1))
 		// look up existing lock holder
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
 			WithArgs(op.ResourceKey, sqlmock.AnyArg()).

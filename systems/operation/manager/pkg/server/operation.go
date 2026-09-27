@@ -53,6 +53,9 @@ func NewOperationServer(orgName, orgId string, repo db.OperationRepo, msgBus mb.
 }
 
 func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
+	if len(req.ConflictResourceKeys) > 0 || len(req.AdditionalResourceKeys) > 0 {
+		return s.startScopedOperation(req)
+	}
 	if req.IdempotencyKey != "" {
 		existing, err := s.repo.GetByIdempotencyKey(req.IdempotencyKey)
 		if err != nil {

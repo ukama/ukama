@@ -110,7 +110,7 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("SendNodeCommand", "node:"+nId.String())
+	op, err := c.acquireAndRegister(ctx, "SendNodeCommand", "node:"+nId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -146,7 +146,7 @@ func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeR
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("RestartNode", "node:"+nId.String())
+	op, err := c.acquireAndRegister(ctx, "RestartNode", "node:"+nId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -204,7 +204,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", nodeKey(nId.String()))
+	op, err := c.acquireAndRegister(ctx, "ToggleInternetSwitch", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +237,7 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleRadio", nodeKey(nId.String()))
+	op, err := c.acquireAndRegister(ctx, "ToggleRadio", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +270,7 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		return nil, err
 	}
 
-	op, err := c.acquireAndRegister("ToggleService", nodeKey(nId.String()))
+	op, err := c.acquireAndRegister(ctx, "ToggleService", nodeKey(nId.String()))
 	if err != nil {
 		return nil, err
 	}
@@ -290,24 +290,17 @@ func nodeKey(nodeID string) string {
 	return "node:" + nodeID
 }
 
-func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {
+func (c *ControllerServer) acquireAndRegister(ctx context.Context, actionType, resourceKey string) (*copr.OperationInfo, error) {
 	if c.opManager == nil || c.opMonitor == nil {
 		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
 		return nil, fmt.Errorf("operation manager/monitor is not set")
 	}
 
-	startResp, err := c.opManager.Start(copr.StartRequest{
-		Type:         actionType,
-		System:       "node",
-		ResourceKey:  resourceKey,
-		RequestedBy:  pkg.ServiceName,
-		LeaseSeconds: c.opLeaseSecs,
-	})
+	op, err := c.acquireOperation(ctx, actionType, resourceKey)
 	if err != nil {
 		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
 		return nil, err
 	}
-	op := startResp.Operation
 	if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
 		OperationId:     op.Id,
 		ResourceKey:     resourceKey,
@@ -325,6 +318,11 @@ func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*
 
 func (c *ControllerServer) markRunning(op *copr.OperationInfo, actionType string) error {
 	if c.opManager == nil || op == nil || op.Id == "" {
+		return nil
+	}
+
+	// Reserved children were atomically claimed before monitor registration.
+	if op.Status == copr.StatusRunning {
 		return nil
 	}
 

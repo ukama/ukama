@@ -442,8 +442,8 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("OperationForceUnlocked", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"CANCELLED","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
@@ -467,8 +467,8 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("ForceUnlockFailed", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			resp := `{"error":"not found"}`
 
@@ -491,8 +491,8 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -513,8 +513,8 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			return nil
 		}

@@ -245,16 +245,24 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*co
 		return &copr.OperationInfo{Id: "", ResourceKey: resourceKey}, nil
 	}
 
+	conflicts, err := copr.NodeConflictResources(s.nodeClient, strings.TrimPrefix(resourceKey, "node:"))
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "resolve site operation scope: %v", err)
+	}
 	startResp, err := s.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
 		ResourceKey:  resourceKey,
 		RequestedBy:  pkg.ServiceName,
 		LeaseSeconds: s.opLeaseSecs,
+		ConflictResourceKeys: conflicts,
 	})
 	if err != nil {
 		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
 		return nil, err
+	}
+	if startResp == nil || startResp.Operation == nil {
+		return nil, status.Error(codes.Internal, "operation manager returned no reservation")
 	}
 	op := startResp.Operation
 	if _, err := s.opMonitor.Register(&opmonpb.RegisterIntentRequest{

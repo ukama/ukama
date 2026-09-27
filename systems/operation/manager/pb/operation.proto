@@ -57,11 +57,16 @@ message StartOperationRequest {
     string requestedBy = 4;
     string idempotencyKey = 5;
     uint32 leaseSeconds = 6;
+    // Check the entire conflict set and reserve all targets in one transaction.
+    repeated string conflictResourceKeys = 7;
+    repeated string additionalResourceKeys = 8;
 }
 
 message StartOperationResponse {
     Operation operation = 1;
     Operation conflictingOperation = 2;
+    repeated Operation operations = 3;
+    bool conflictsChecked = 4;
 }
 
 message GetOperationRequest {

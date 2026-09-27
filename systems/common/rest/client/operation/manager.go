@@ -10,13 +10,17 @@ package operation
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"github.com/ukama/ukama/systems/common/rest/client"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const OperationsEndpoint = "/v1/operations"
@@ -53,11 +57,15 @@ type StartRequest struct {
 	RequestedBy    string `json:"requested_by,omitempty"`
 	IdempotencyKey string `json:"idempotency_key,omitempty"`
 	LeaseSeconds   uint32 `json:"lease_seconds,omitempty"`
+	ConflictResourceKeys   []string `json:"conflict_resource_keys,omitempty"`
+	AdditionalResourceKeys []string `json:"additional_resource_keys,omitempty"`
 }
 
 type StartResponse struct {
 	Operation            *OperationInfo `json:"operation,omitempty"`
 	ConflictingOperation *OperationInfo `json:"conflicting_operation,omitempty"`
+	Operations           []*OperationInfo `json:"operations,omitempty"`
+	ConflictsChecked     bool `json:"conflicts_checked,omitempty"`
 }
 
 type GetResponse struct {
@@ -107,11 +115,18 @@ func (m *managerClient) Start(req StartRequest) (*StartResponse, error) {
 	}
 	resp, err := m.R.Post(m.u.String()+OperationsEndpoint, b)
 	if err != nil {
+		var responseError *client.ErrorStatus
+		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusConflict {
+			return nil, status.Error(codes.AlreadyExists, "site resource is locked by an active operation")
+		}
 		return nil, fmt.Errorf("StartOperation failure: %w", err)
 	}
 	out := &StartResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
 		return nil, fmt.Errorf("StartOperation deserialize: %w", uerr)
+	}
+	if len(req.ConflictResourceKeys) > 0 && !out.ConflictsChecked {
+		return nil, fmt.Errorf("operation manager did not confirm site conflict checks; upgrade operation manager and api-gateway")
 	}
 	return out, nil
 }
@@ -161,11 +176,10 @@ func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, e
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.R.Delete(m.u.String() + OperationsEndpoint + "/" + id)
+	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/force-unlock", b)
 	if err != nil {
 		return nil, fmt.Errorf("ForceUnlock failure: %w", err)
 	}
-	_ = b
 	out := &GetResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
 		return nil, fmt.Errorf("ForceUnlock deserialize: %w", uerr)

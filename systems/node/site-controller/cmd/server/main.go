@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/common/rest/client"
 
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -112,9 +113,16 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
+	operationURL, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+		ic.CreateHostString(svcConf.OrgName, "operation"), &svcConf.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve operation address: %v", err)
+	}
+	opManager := copr.NewManagerClient(operationURL.String())
+
 	nodeClient := creg.NewNodeClient(regUrl.String())
 	siteClient := creg.NewSiteClient(regUrl.String())
-	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, siteClient, providers.NewHealthClientProvider(svcConf.HealthHost), controllerProvider, dbStruct)
+	srv := server.NewSiteControllerServer(svcConf.OrgName, r, mbClient, nodeClient, siteClient, providers.NewHealthClientProvider(svcConf.HealthHost), controllerProvider, dbStruct, opManager, svcConf.OperationLeaseSecs)
 	eventServer := server.NewSiteControllerEventServer(
 		srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo,
 		svcConf,

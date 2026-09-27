@@ -18,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -138,14 +140,22 @@ func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*
 		RequestedBy:    req.RequestedBy,
 		IdempotencyKey: req.IdempotencyKey,
 		LeaseSeconds:   req.LeaseSeconds,
+		ConflictResourceKeys:   req.ConflictResourceKeys,
+		AdditionalResourceKeys: req.AdditionalResourceKeys,
 	})
 	if err != nil {
 		return nil, err
 	}
 
+	operations := make([]*Operation, 0, len(resp.Operations))
+	for _, op := range resp.Operations {
+		operations = append(operations, operationFromProto(op))
+	}
 	return &StartOperationResponse{
 		Operation:            operationFromProto(resp.Operation),
 		ConflictingOperation: operationFromProto(resp.ConflictingOperation),
+		Operations:           operations,
+		ConflictsChecked:     resp.ConflictsChecked,
 	}, nil
 }
 
@@ -186,7 +196,14 @@ func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest)
 }
 
 func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*ForceUnlockResponse, error) {
-	resp, err := r.clients.Manager.ForceUnlock(req.Id, req.UserId, req.Reason)
+	actor := req.UserId
+	if actor == "" {
+		actor = req.Actor
+	}
+	if actor == "" {
+		return nil, status.Error(codes.InvalidArgument, "user_id or actor is required")
+	}
+	resp, err := r.clients.Manager.ForceUnlock(req.Id, actor, req.Reason)
 	if err != nil {
 		return nil, err
 	}

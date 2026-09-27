@@ -179,3 +179,16 @@ func NewOperationRepo(t interface {
 	t.Cleanup(func() { m.AssertExpectations(t) })
 	return m
 }
+
+func (_m *OperationRepo) StartBatch(ops []*db.Operation, conflictKeys []string, lockTTL time.Duration) ([]*db.Operation, *db.Operation, error) {
+	ret := _m.Called(ops, conflictKeys, lockTTL)
+	var out []*db.Operation
+	if ret.Get(0) != nil {
+		out = ret.Get(0).([]*db.Operation)
+	}
+	var holder *db.Operation
+	if ret.Get(1) != nil {
+		holder = ret.Get(1).(*db.Operation)
+	}
+	return out, holder, ret.Error(2)
+}

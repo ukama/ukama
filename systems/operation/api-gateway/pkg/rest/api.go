@@ -17,6 +17,8 @@ type StartOperationRequest struct {
 	RequestedBy    string `json:"requested_by"`
 	IdempotencyKey string `json:"idempotency_key"`
 	LeaseSeconds   uint32 `json:"lease_seconds"`
+	ConflictResourceKeys   []string `json:"conflict_resource_keys,omitempty"`
+	AdditionalResourceKeys []string `json:"additional_resource_keys,omitempty"`
 }
 
 type GetOperationRequest struct {
@@ -34,7 +36,8 @@ type MarkRunningRequest struct {
 
 type ForceUnlockRequest struct {
 	Id     string `json:"id" path:"id" validate:"required,uuid"`
-	UserId string `json:"user_id" validate:"required,uuid"`
+	UserId string `json:"user_id" validate:"omitempty,uuid"`
+	Actor  string `json:"actor"`
 	Reason string `json:"reason" validate:"required"`
 }
 
@@ -83,6 +86,8 @@ type Operation struct {
 type StartOperationResponse struct {
 	Operation            *Operation `json:"operation"`
 	ConflictingOperation *Operation `json:"conflicting_operation,omitempty"`
+	Operations           []*Operation `json:"operations,omitempty"`
+	ConflictsChecked     bool `json:"conflicts_checked,omitempty"`
 }
 
 type GetOperationResponse struct {
