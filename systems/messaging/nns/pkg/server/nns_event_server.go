@@ -237,8 +237,6 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		MeshHostName: orgNet.MeshHostName,
 		MeshPort:     orgNet.MeshPort,
 		Org:          l.orgName,
-		Network:      msg.Network,
-		Site:         msg.Site,
 	}
 
 	err = l.Nns.nns.Add(context.Background(), obj)
