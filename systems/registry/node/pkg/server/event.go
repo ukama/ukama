@@ -150,6 +150,10 @@ func (n *NodeEventServer) handleNodeOfflineEvent(ctx context.Context, key string
 	log.Infof("Processing node offline event: %s, nodeID: %s", key, msg.NodeId)
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
+	if status.Code(err) == codes.NotFound {
+		log.Warnf("Ignoring offline event for unknown node %s", msg.NodeId)
+		return nil
+	}
 	if err != nil {
 		log.Errorf(errFailedGetNodeFmt, err)
 		return fmt.Errorf(errFailedGetNodeFmt, err)
@@ -177,6 +181,10 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 		key, msg.NodeId)
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
+	if status.Code(err) == codes.NotFound {
+		log.Warnf("Ignoring health report for unknown node %s", msg.NodeId)
+		return nil
+	}
 	if err != nil {
 		log.Errorf("Failed to get node: %v", err)
 		return fmt.Errorf("failed to get node: %w", err)
@@ -257,6 +265,11 @@ func (n *NodeEventServer) handleNodeStateTransitionEvent(ctx context.Context, ke
 	if err != nil {
 		if status.Code(err) != codes.NotFound {
 			return fmt.Errorf("error retrieving node: %w", err)
+		}
+
+		if strings.EqualFold(msg.State, npb.NodeState_Offboarded.String()) {
+			log.Warnf("Ignoring %s transition for unknown node %s", msg.State, nodeID)
+			return nil
 		}
 
 		// Node not found: create it. Concurrent state-transition events for the
