@@ -802,8 +802,8 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 	}
 
 	if msg.ItemType != ukama.ItemTypeInvoice.String() {
-		log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
-		return nil, fmt.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+		log.Infof("Ignoring successful payment for item type %s", msg.ItemType)
+		return &epb.EventResponse{}, nil
 	}
 
 	metadata := map[string]string{}

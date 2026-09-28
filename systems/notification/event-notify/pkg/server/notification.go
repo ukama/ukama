@@ -305,8 +305,11 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 		}
 	}
 
-	err = n.userNotificationRepo.Add(un)
-	return err
+	if len(un) == 0 {
+		return nil
+	}
+
+	return n.userNotificationRepo.Add(un)
 }
 
 func (n *EventToNotifyServer) storeUser(user *db.Users) error {
