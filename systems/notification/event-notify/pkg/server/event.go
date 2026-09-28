@@ -153,7 +153,7 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
 		c := evt.EventToEventConfig[evt.EventNodeRelease]
-		msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, c.Name)
+		msg, err := epb.UnmarshalNodeReleasedEvent(e.Msg, c.Name)
 		if err != nil {
 			return nil, err
 		}
@@ -527,7 +527,7 @@ func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeRelease, c *evt.EventConfig) (*epb.EventResponse, error) {
+func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.NodeReleasedEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)

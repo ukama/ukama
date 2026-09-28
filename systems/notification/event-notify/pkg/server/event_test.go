@@ -826,7 +826,7 @@ func TestEventNotification(t *testing.T) {
 	t.Run("EventNodeRelease_NodeReleasedEvent", func(t *testing.T) {
 		eventServer, nRepo, uRepo, emRepo, _, _, unRepo := createTestEventServer()
 
-		eventNodeRelease := &epb.EventRegistryNodeRelease{}
+		eventNodeRelease := &epb.NodeReleasedEvent{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventNodeRelease]),
 			createEventJSON("nodeId", "type", "network", "site"),
