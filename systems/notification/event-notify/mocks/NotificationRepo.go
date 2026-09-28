@@ -32,6 +32,24 @@ func (_m *NotificationRepo) Add(org *db.Notification) error {
 	return r0
 }
 
+// AddWithEvent provides a mock function with given fields: event, notification, un
+func (_m *NotificationRepo) AddWithEvent(event *db.EventMsg, notification *db.Notification, un []*db.UserNotification) error {
+	ret := _m.Called(event, notification, un)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddWithEvent")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.EventMsg, *db.Notification, []*db.UserNotification) error); ok {
+		r0 = rf(event, notification, un)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Get provides a mock function with given fields: id
 func (_m *NotificationRepo) Get(id uuid.UUID) (*db.Notification, error) {
 	ret := _m.Called(id)

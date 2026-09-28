@@ -889,12 +889,6 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		return nil, err
 	}
 
-	id, err := es.n.storeEvent(event)
-	if err != nil {
-		log.Errorf("failed to store event: %v", err)
-		return nil, err
-	}
-
 	dn := &db.Notification{
 		Id:           uuid.NewV4(),
 		Title:        ec.Title,
@@ -907,10 +901,9 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		NodeId:       nodeId,
 		ResourceId:   rid,
 		SubscriberId: subscriberId,
-		EventMsgID:   id,
 	}
 
-	err = es.n.storeNotification(dn)
+	err = es.n.storeNotification(event, dn)
 	if err != nil {
 		log.Errorf("failed to store notification: %v", err)
 		return nil, err

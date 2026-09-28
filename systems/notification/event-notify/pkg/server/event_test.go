@@ -227,11 +227,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventOrgAdd].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -247,7 +246,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventOrgCreate.Owner).Return(&db.Users{Id: uuid.FromStringOrNil(eventOrgCreate.Owner), Role: roles.TYPE_OWNER}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		testEvent := createTestEvent(routingKey, eventOrgCreate)
 		ctx := context.Background()
@@ -275,11 +273,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventUserAdd].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -295,7 +292,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventUserCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserCreate.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -322,11 +318,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventMemberCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		uRepo.On("Add", mock.MatchedBy(func(user *db.Users) bool {
 			return user.OrgId == eventMemberCreate.OrgId && user.UserId == eventMemberCreate.UserId
@@ -346,7 +341,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventMemberCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberCreate.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -373,11 +367,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventUserDeactivate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -393,7 +386,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventUserDeactivate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDeactivate.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -420,11 +412,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventUserDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -440,7 +431,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventUserDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDelete.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -467,11 +457,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventMemberDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -487,7 +476,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventMemberDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberDelete.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -514,11 +502,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNetworkAdd].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -533,7 +520,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -560,11 +546,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNetworkDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -579,7 +564,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -606,11 +590,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -625,7 +608,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -652,11 +634,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -671,7 +652,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -698,11 +678,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeStateUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -717,7 +696,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -744,11 +722,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -763,7 +740,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -790,11 +766,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeAssign].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -809,7 +784,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -836,11 +810,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeRelease].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -855,7 +828,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -882,11 +854,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventInviteCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -902,7 +873,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventInviteCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteCreate.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -929,11 +899,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventInviteDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -949,7 +918,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventInviteDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteDelete.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -976,11 +944,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventInviteUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -996,7 +963,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", eventInviteUpdate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteUpdate.UserId), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1023,11 +989,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeOnline].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1042,7 +1007,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1069,11 +1033,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeOffline].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1088,7 +1051,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1115,11 +1077,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimServiceOn].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1135,7 +1096,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetSubscriber", eventSimServiceOn.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1162,11 +1122,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimAllocate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1182,7 +1141,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetSubscriber", eventSimAllocate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1209,11 +1167,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1230,7 +1187,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSimDelete.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1257,11 +1213,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimAddPackage].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1278,7 +1233,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSimAddPackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1305,11 +1259,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSiteCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1324,7 +1277,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1351,11 +1303,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSiteUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1370,7 +1321,6 @@ func TestEventNotification(t *testing.T) {
 
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1397,11 +1347,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimActivePackage].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1418,7 +1367,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSimActivePackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1445,11 +1393,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimRemovePackage].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1466,7 +1413,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSimRemovePackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1493,11 +1439,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSubscriberCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1517,7 +1462,6 @@ func TestEventNotification(t *testing.T) {
 			return user.OrgId == testOrgUUID && user.UserId == eventSubscriberCreate.SubscriberId && user.Role == roles.TYPE_SUBSCRIBER
 		})).Return(nil)
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1544,11 +1488,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSubscriberUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1565,7 +1508,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSubscriberUpdate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1592,11 +1534,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSubscriberDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1613,7 +1554,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetSubscriber", eventSubscriberDelete.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1640,11 +1580,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventSimsUpload].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1660,7 +1599,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1687,11 +1625,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventBaserateUpload].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1707,7 +1644,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1734,11 +1670,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventPackageCreate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1754,7 +1689,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1781,11 +1715,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventPackageUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1801,7 +1734,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1828,11 +1760,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventPackageDelete].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1848,7 +1779,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1875,11 +1805,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventMarkupUpdate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1895,7 +1824,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1922,11 +1850,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventNodeStateTransition].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -1942,7 +1869,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1981,11 +1907,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventPaymentSuccess].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -2002,7 +1927,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 		uRepo.On("GetSubscriber", "test-target-id").Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -2041,11 +1965,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventPaymentFailed].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -2062,7 +1985,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 		uRepo.On("GetSubscriber", "test-target-id").Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -2089,11 +2011,10 @@ func TestEventNotification(t *testing.T) {
 		expectedEventMsg := &db.EventMsg{
 			Key: evt.EventToEventConfig[evt.EventInvoiceGenerate].Name,
 		}
-		emRepo.On("Add", mock.MatchedBy(func(event *db.EventMsg) bool {
+		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
-		})).Return(uint(1), nil)
+		}), mock.Anything, mock.Anything).Return(nil)
 
-		nRepo.On("Add", mock.Anything).Return(nil)
 
 		mockUsers := []*db.Users{
 			{
@@ -2109,7 +2030,6 @@ func TestEventNotification(t *testing.T) {
 		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
 		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
-		unRepo.On("Add", mock.Anything).Return(nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
