@@ -92,6 +92,7 @@ func initConfig() {
 func runGrpcServer(d sql.Db) {
 
 	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
+	queue.EventRetryPolicy = msgbus.RetryPolicy{MaxAttempts: serviceConfig.EventRetry.MaxAttempts, Delay: serviceConfig.EventRetry.Delay}
 	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
 
 	p := msgbus.NewShovelProvider(serviceConfig.MsgBus.ManagementUri, serviceConfig.DebugMode, serviceConfig.OrgName, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password,

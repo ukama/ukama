@@ -52,6 +52,8 @@ var (
 	listenerRetryMax = 30 * time.Second
 )
 
+var EventRetryPolicy = mb.RetryPolicy{MaxAttempts: 10, Delay: 30 * time.Second}
+
 func NewQueueListener(s db.Service) (*QueueListener, error) {
 
 	var gc pb.EventNotificationServiceClient
@@ -74,7 +76,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 		hc = hpb.NewHealthClient(conn)
 	}
 
-	client, err := mb.NewConsumerClient(s.MsgBusUri)
+	client, err := mb.NewConsumerClientWithRetry(s.MsgBusUri, EventRetryPolicy)
 	if err != nil {
 		return nil, err
 	}
@@ -161,12 +163,12 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
 	defer cancel()
 
-	q.processEventMsg(ctx, delivery)
+	err := q.processEventMsg(ctx, delivery)
 
-	done <- true
+	done <- err == nil
 }
 
-func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
+func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) error {
 	// Read Db for the key and find the services which we need to post message to.
 	log.Debugf("Raw message: %+v", d)
 
@@ -174,7 +176,7 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 	err := proto.Unmarshal(d.Body, evtAny)
 	if err != nil {
 		log.Errorf("Failed to parse message with key %s. Error %s", d.RoutingKey, err.Error())
-		return
+		return err
 	}
 	e := &pb.Event{
 		RoutingKey: d.RoutingKey,
@@ -185,7 +187,7 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 
 	if q.gConn == nil {
 		if err := q.reConnect(); err != nil {
-			return
+			return err
 		}
 	}
 
@@ -194,6 +196,7 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 		log.Errorf("Failed to send message to %s with key %s. Error %s", q.serviceHost, d.RoutingKey, err.Error())
 	}
 
+	return err
 }
 
 func (q *QueueListener) healthCheck() {
