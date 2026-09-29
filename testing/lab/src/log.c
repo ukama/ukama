@@ -10,11 +10,62 @@
 #include <stdarg.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
+#include <sys/ioctl.h>
 
 #include "log.h"
 
 static int g_verbose;
 static int g_quiet;
+static int g_progress_visible;
+static double g_progress_snapshot;
+
+/* All access is protected by stderr's stream lock, also used by normal logs. */
+static void clear_progress(void) {
+    if (g_progress_visible) {
+        fputs("\r\033[2K", stderr);
+        g_progress_visible = 0;
+    }
+}
+
+void ulab_progress_clear(void) {
+    flockfile(stderr);
+    clear_progress();
+    fflush(stderr);
+    funlockfile(stderr);
+}
+
+void ulab_progress(const char *fmt, ...) {
+    va_list ap;
+    char line[4096];
+    struct timespec now;
+    struct winsize size;
+    double seconds;
+    int width;
+
+    if (g_quiet) return;
+    va_start(ap, fmt);
+    vsnprintf(line, sizeof(line), fmt, ap);
+    va_end(ap);
+    flockfile(stderr);
+    if (isatty(fileno(stderr))) {
+        width = ioctl(fileno(stderr), TIOCGWINSZ, &size) == 0 && size.ws_col > 1 ? size.ws_col : 80;
+        clear_progress();
+        /* Leave the final column empty to prevent terminal line wrapping. */
+        if (width > 14) fprintf(stderr, "PROGRESS   %.*s", width - 12, line);
+        else fprintf(stderr, "%.*s", width - 1, line);
+        g_progress_visible = 1;
+    } else {
+        clock_gettime(CLOCK_MONOTONIC, &now);
+        seconds = now.tv_sec + now.tv_nsec / 1000000000.0;
+        if (!g_progress_snapshot || seconds - g_progress_snapshot >= 60) {
+            fprintf(stderr, "PROGRESS   %s\n", line);
+            g_progress_snapshot = seconds;
+        }
+    }
+    fflush(stderr);
+    funlockfile(stderr);
+}
 
 #define C_RESET  "\033[0m"
 #define C_RED    "\033[1;31m"
@@ -61,6 +112,8 @@ static void vlog(const char *lvl, const char *fmt, va_list ap) {
     strftime(ts, sizeof(ts), "%H:%M:%S", &tmv);
 
     color = level_color(lvl);
+    flockfile(stderr);
+    clear_progress();
     if (color[0] != '\0') {
         fprintf(stderr, "%s %s%-5s%s ", ts, color, lvl, C_RESET);
     } else {
@@ -69,6 +122,7 @@ static void vlog(const char *lvl, const char *fmt, va_list ap) {
 
     vfprintf(stderr, fmt, ap);
     fprintf(stderr, "\n");
+    funlockfile(stderr);
 }
 
 void ulab_log_set_verbose(int verbose) {
@@ -123,6 +177,8 @@ void ulab_status(const char *state, const char *fmt, ...) {
     }
 
     color = state_color(state);
+    flockfile(stderr);
+    clear_progress();
     fprintf(stderr, "%s%-10s%s ", color, state, C_RESET);
 
     va_start(ap, fmt);
@@ -130,4 +186,5 @@ void ulab_status(const char *state, const char *fmt, ...) {
     va_end(ap);
 
     fprintf(stderr, "\n");
+    funlockfile(stderr);
 }

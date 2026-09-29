@@ -30,6 +30,10 @@ static int run_script(runtime_t *rt,
     int n;
     unsigned long invocation;
 
+    if (rt->execute != NULL) {
+        return rt->execute(rt->execute_ctx, name, args, err);
+    }
+
     n = snprintf(script, sizeof(script), "%s/%s", rt->script_dir, name);
     if (n < 0 || (size_t)n >= sizeof(script)) {
         snprintf(err->msg, sizeof(err->msg), "script path too long");
@@ -409,6 +413,38 @@ int runtime_ensure_network(runtime_t *rt, ulab_error_t *err) {
         return ULAB_ERR;
     }
 
+    return ULAB_OK;
+}
+
+int runtime_load_workload_sites(runtime_t *rt, world_t *w, ulab_error_t *err) {
+    size_t i;
+    char path[ULAB_MAX_PATH];
+    FILE *f;
+    for (i = 0; i < w->site_count; i++) {
+        if (runtime_site_state_path(rt, &w->sites[i], path, sizeof(path), err)) return ULAB_ERR;
+        f = fopen(path, "r");
+        if (f == NULL) continue;
+        fclose(f);
+        if (load_runtime_site_state(rt, &w->sites[i], err) ||
+            map_runtime_site_nodes(rt, w, &w->sites[i], err)) return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+int runtime_start_selected_site(runtime_t *rt, world_t *w, size_t index,
+                                ulab_error_t *err) {
+    site_t *site;
+    char args[ULAB_MAX_ARGS];
+    int n;
+
+    if (index >= w->site_count) return ULAB_ERR;
+    site = &w->sites[index];
+    n = snprintf(args, sizeof(args), "%s %s %s %s %zu", rt->repo,
+                 site->ref, site->network_ref, rt->run_dir, index);
+    if (n < 0 || (size_t)n >= sizeof(args)) return ULAB_ERR;
+    if (run_script(rt, "build-and-start-site.sh", args, err) ||
+        load_runtime_site_state(rt, site, err) ||
+        map_runtime_site_nodes(rt, w, site, err)) return ULAB_ERR;
     return ULAB_OK;
 }
 

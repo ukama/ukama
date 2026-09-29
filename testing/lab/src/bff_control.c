@@ -219,6 +219,20 @@ static int control_call(bff_client_t *c, const char *op,
     long http_code;
     int rc;
 
+    if (c != NULL && c->transport != NULL) {
+        json_t *root = NULL;
+        char *response;
+
+        rc = c->transport(c->transport_ctx, op, query, vars, &root, err);
+        if (rc != ULAB_OK) return rc;
+        response = json_dumps(root, JSON_COMPACT);
+        json_decref(root);
+        if (response == NULL) return ULAB_EINTERNAL;
+        rc = control_parse_response(200, op, field, response, err);
+        free(response);
+        return rc;
+    }
+
     headers = NULL;
     resp.buf = NULL;
     resp.len = 0;

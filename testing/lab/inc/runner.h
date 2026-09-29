@@ -10,6 +10,8 @@
 #define ULAB_RUNNER_H_
 
 #include "report.h"
+#include <signal.h>
+#include <stdatomic.h>
 
 typedef struct {
     char scenario_path[ULAB_MAX_PATH];
@@ -26,6 +28,8 @@ typedef struct {
     char suite_filter[ULAB_MAX_REF];
     char priority_filter[ULAB_MAX_REF];
     char tag_filter[ULAB_MAX_REF];
+    char workload_assets[ULAB_MAX_PATH];
+    _Atomic sig_atomic_t *workload_cancel; /* NULL for legacy scenarios */
 
     uint32_t seed_override;
 

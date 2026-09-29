@@ -1,0 +1,477 @@
+{
+  "format": 1,
+  "source": "attached ukama-console snapshot 2026-09-28",
+  "sourceHashes": {
+    "analytics.graphql": "8775ed902ec6af436517d6a5687647f0074cb09387de8b837199ec38ce2e71d6",
+    "billing.graphql": "18d17f16ae3690e425582f9ede0c99d4b2c13d2631112dd3feab972f6c3626a6",
+    "commerce.graphql": "a938198b343b514b3eae3796bbd981cd9947b957e5bf36e66fdb70b12d6d8c65",
+    "components.graphql": "23961ce6b7e62a2673460c54ecef15052f5a332599146a6bef407e2932bd21c2",
+    "controller.graphql": "5507267eb77a507c97cd62354b94ba99b337a2f5f2605d762f15d64d6d1398d1",
+    "currency.graphql": "fe79c08038716a7a15a2e0cb4158a07f9cbb6d94458e93465cf94b7fead9fd7f",
+    "invitations.graphql": "6c439e53f1b4d1739030c128586bdb06e656d354bd459debdc546d9d67ca6a27",
+    "last-metrics.graphql": "aea568ab94b8070bb58c55931d5e2c621ce7bc44c30db149644b02ad8ecbe5bf",
+    "members.graphql": "5637552cab00e8bbdad026b4e6b160a309d91c2098170c5e61a5836f20794ae2",
+    "network-customers.graphql": "530305c80d57121bf6fe3f25b3d78e7c6789ca3fedec9d36dd6cb12d8e9bfd95",
+    "network-home.graphql": "75095db5fd4c036153809685a741e22f966428141c3e1797da4248ff5513bded",
+    "networks.graphql": "91800e8165e993fdcf1c91dac26f0346bdc7c85a1a1849f1a313fdd3c49cf8b8",
+    "node-detail.graphql": "a9b705e9917cb8b7220306b159305a87594b187f2a6b6ab70be3b8045520a1a4",
+    "node-kpis.graphql": "b9ca6694a2acac6a513bc7852319c331426a7e6207bb52652260475f51c7346e",
+    "nodes-list.graphql": "d1dfdba89740d00aa4a5f1ac55d762c2a60be385fcd00a655a4162359df8aec9",
+    "nodes.graphql": "6cba51dc04af4da32fd0a2a421ea93a267ec5bf86e2564921aacdd67a28c79f8",
+    "notifications.graphql": "fa0ed791b9fcf9b366349edeb7e83a1287c7c549c15fd3b222c0bf1e9650af25",
+    "onboarding-status.graphql": "dec24fa8f9c1a094f4680877d4d01631ee79262110f6d1242194a59cbf53e0a2",
+    "operation.graphql": "a9e311ff97cdd4a4acbdb535303dec23a56ad51913b2cba20c1f4574fb7df711",
+    "orgs.graphql": "0bedaf5fdb02058a0ec777b717f319b615dd7d9e4fdcd75da0b3d81b9a37dd39",
+    "packages.graphql": "5399f28962e6d32697ec5c53096676ee5273ebd1d5c70ad54c2b6bcad84de259",
+    "range-metrics.graphql": "bbc6b2e0848d2a4a247f3b639a48ca823d9d0dc1c1f3e5ccef8e3f86c84bd689",
+    "reference.graphql": "b1f05a3d736273c62e99c7e88c51d09bd7fa76f602eb97c87f655482ed2a4f12",
+    "sim-pool.graphql": "3a3c5e03e6253936c347a080f27ff7e92ab816ed47410056c243d255990b6a44",
+    "sims.graphql": "aff532c30d09132584b0c148e6109c3fe70028614b1a07e8acf7338c23bfaaad",
+    "site-detail.graphql": "514ff94a66d369d38bd82c8e30712c8526170ab51f2be9373875ae5cd1b3cb2e",
+    "sites-list.graphql": "bec695fe6cc2df1cbef0c17e2332054347298fa396f08cd1a576a98388bffe55",
+    "sites.graphql": "9dd5175ed0e75deafbc5ab85ee0bde1f1dcc25c821f493f0516c4756d316dc7f",
+    "software.graphql": "e20a5ec8f045be093e8e12d7dfd63ef3950fd88de28f7e82b905cb2b4594e46f",
+    "subscribers.graphql": "65d8b84f76b7bff07bf6b660d6b84e16bb0545c014a5c14fa4272cd5fdba3374",
+    "team.graphql": "f2f0c45b25eaf1ea4cae822af2f49e6b69f4debe5b5b63fa62175572a4a4d350",
+    "users.graphql": "b560d22dee3e82687a72aa610176c958335794d92948c007b618f410b59ce959",
+    "views-shared.graphql": "95289f75949efdc9daaec318388c7d252be191d0ab0684275abc2a8f4f4c232a"
+  },
+  "operations": [
+    {
+      "id": "sites-list",
+      "name": "SitesList",
+      "query": "query SitesList($networkId: String!) {\n  sitesView(networkId: $networkId) {\n    networkId\n    sites {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      sites {\n        ...ViewSite\n        __typename\n      }\n      __typename\n    }\n    nodeCounts {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      counts {\n        siteId\n        total\n        online\n        offline\n        __typename\n      }\n      __typename\n    }\n    customers {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      count\n      __typename\n    }\n    kpis {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}\n\nfragment ViewSite on SiteDto {\n  id\n  name\n  networkId\n  latitude\n  longitude\n  location\n  isDeactivated\n  installDate\n  createdAt\n  __typename\n}",
+      "sha256": "5ccc76cc4858f649bb8acdb636d8c49d78dde67920b4b2dfe080b0fd8f1aafce",
+      "variables": {
+        "networkId": "$networkId"
+      },
+      "required": [
+        {
+          "path": "data.sitesView.sites.sites",
+          "type": "array"
+        },
+        {
+          "path": "data.sitesView.nodeCounts.counts",
+          "type": "array"
+        },
+        {
+          "path": "data.sitesView.customers.count",
+          "type": "number"
+        }
+      ],
+      "allowed_errors": [
+        {
+          "path": "data.sitesView.kpis.error",
+          "code": "NOT_IMPLEMENTED"
+        }
+      ]
+    },
+    {
+      "id": "network-kpis",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "NETWORK_UPTIME",
+            "ACTIVE_CUSTOMERS",
+            "DATA_USAGE",
+            "SITES_ONLINE"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "business-kpis",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "REVENUE",
+            "CUSTOMERS",
+            "DATA_SOLD",
+            "NETWORK_UPTIME",
+            "SITES_ONLINE"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "revenue-kpis",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "REVENUE",
+            "PAID_CUSTOMERS"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "revenue-count",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "REVENUE"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId",
+          "op": "COUNT"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "revenue-average",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "REVENUE"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId",
+          "op": "AVG"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "package-performance",
+      "name": "GetPerformanceReport",
+      "query": "query GetPerformanceReport($data: PerformanceReportInput!) {\n  getPerformanceReport(data: $data) {\n    report\n    title\n    span\n    rows {\n      entityId\n      status\n      attributes {\n        key\n        value\n        __typename\n      }\n      cells {\n        ...ReportCellFields\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment ReportCellFields on ReportCellDto {\n  column\n  value\n  unit\n  symbol\n  format\n  __typename\n}",
+      "sha256": "322066c457500c57587c6b006c79b879fc5fde7a5ea6487019eeeb79f51b82c5",
+      "variables": {
+        "data": {
+          "report": "package_performance",
+          "span": "last_30d",
+          "networkId": "$networkId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getPerformanceReport.rows",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "revenue-series",
+      "name": "GetKpiTimeSeries",
+      "query": "query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {\n  getKpiTimeSeries(data: $data) {\n    values {\n      ...KpiValueFields\n      from\n      to\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "e2f56d132a3c00d7000a4a3af863cb50b74e42190fc85f2bdb80d4e60d2a7662",
+      "variables": {
+        "data": {
+          "keys": [
+            "REVENUE"
+          ],
+          "span": "daily",
+          "networkId": "$networkId",
+          "op": "SUM",
+          "from": "$from30d",
+          "to": "$mountedAt"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiTimeSeries.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "data-usage-kpis",
+      "name": "GetKpiValues",
+      "query": "query GetKpiValues($data: KpiValuesInput!) {\n  getKpiValues(data: $data) {\n    values {\n      ...KpiValueFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "2f47a0b7cd3abddc0333c74e00318a3c4c9dd594582eb0398be38c40374b72a7",
+      "variables": {
+        "data": {
+          "keys": [
+            "DATA_USAGE"
+          ],
+          "span": "last_30d",
+          "networkId": "$networkId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiValues.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "customers",
+      "name": "NetworkCustomers",
+      "query": "query NetworkCustomers($networkId: String!) {\n  subscribersView(networkId: $networkId) {\n    networkId\n    subscribers {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      subscribers {\n        uuid\n        name\n        phone\n        email\n        networkId\n        sim {\n          id\n          iccid\n          msisdn\n          status\n          type\n          package {\n            package_id\n            is_currently_in_use\n            updated_at\n            __typename\n          }\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    plans {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      plans {\n        packageId\n        name\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}",
+      "sha256": "5a6f942259a994602d9ef49c76cf78db534bfa378eacd126a61d14cd1bee8f7a",
+      "variables": {
+        "networkId": "$networkId"
+      },
+      "required": [
+        {
+          "path": "data.subscribersView.subscribers.subscribers",
+          "type": "array"
+        },
+        {
+          "path": "data.subscribersView.plans.plans",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "sim-usage",
+      "name": "GetSimsUsageByNetwork",
+      "query": "query GetSimsUsageByNetwork($networkId: String!) {\n  getSimsUsageByNetwork(networkId: $networkId) {\n    simId\n    usage\n    __typename\n  }\n}",
+      "sha256": "992dcc6b1879899f17c64652d30d914870886bece3cf79859b803f1910f92dc8",
+      "variables": {
+        "networkId": "$networkId"
+      },
+      "required": [
+        {
+          "path": "data.getSimsUsageByNetwork",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "site-detail",
+      "name": "NetworkSiteDetail",
+      "query": "query NetworkSiteDetail($siteId: String!) {\n  siteView(siteId: $siteId) {\n    siteId\n    site {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      site {\n        ...ViewSite\n        __typename\n      }\n      __typename\n    }\n    nodes {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      nodes {\n        ...ViewNode\n        __typename\n      }\n      __typename\n    }\n    components {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      components {\n        elementType\n        componentId\n        componentName\n        __typename\n      }\n      __typename\n    }\n    power {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      metrics {\n        key\n        value\n        timestamp\n        success\n        __typename\n      }\n      __typename\n    }\n    kpis {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      metrics {\n        key\n        value\n        timestamp\n        success\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}\n\nfragment ViewSite on SiteDto {\n  id\n  name\n  networkId\n  latitude\n  longitude\n  location\n  isDeactivated\n  installDate\n  createdAt\n  __typename\n}\n\nfragment ViewNode on Node {\n  id\n  name\n  type\n  site {\n    siteId\n    networkId\n    __typename\n  }\n  status {\n    connectivity\n    state\n    __typename\n  }\n  __typename\n}",
+      "sha256": "e0c94b2366bea73e7c5b8972b1ad311c32c4479b83fb7ce789cd67b11153ba8e",
+      "variables": {
+        "siteId": "$siteId"
+      },
+      "required": [
+        {
+          "path": "data.siteView.site.site",
+          "type": "object"
+        },
+        {
+          "path": "data.siteView.nodes.nodes",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "nodes-list",
+      "name": "NodesList",
+      "query": "query NodesList($networkId: String) {\n  nodesView(networkId: $networkId) {\n    networkId\n    nodes {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      nodes {\n        ...ViewNode\n        __typename\n      }\n      __typename\n    }\n    health {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}\n\nfragment ViewNode on Node {\n  id\n  name\n  type\n  site {\n    siteId\n    networkId\n    __typename\n  }\n  status {\n    connectivity\n    state\n    __typename\n  }\n  __typename\n}",
+      "sha256": "f4dbcdcea335925b305bb290fb2b662b9ef51dd4e46b1dd32602e2a492a8567e",
+      "variables": {
+        "networkId": "$networkId"
+      },
+      "required": [
+        {
+          "path": "data.nodesView.nodes.nodes",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": [
+        {
+          "path": "data.nodesView.health.error",
+          "code": "NOT_IMPLEMENTED"
+        }
+      ]
+    },
+    {
+      "id": "node-detail",
+      "name": "NodeDetail",
+      "query": "query NodeDetail($nodeId: String!) {\n  nodeView(nodeId: $nodeId) {\n    nodeId\n    node {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      node {\n        ...ViewNode\n        latitude\n        longitude\n        attached {\n          id\n          name\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    site {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      site {\n        id\n        name\n        __typename\n      }\n      __typename\n    }\n    siblings {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      nodes {\n        id\n        name\n        __typename\n      }\n      __typename\n    }\n    software {\n      error {\n        ...SectionErrorFields\n        __typename\n      }\n      softwares {\n        software {\n          name\n          status\n          currentVersion\n          desiredVersion\n          releaseDate\n          __typename\n        }\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}\n\nfragment ViewNode on Node {\n  id\n  name\n  type\n  site {\n    siteId\n    networkId\n    __typename\n  }\n  status {\n    connectivity\n    state\n    __typename\n  }\n  __typename\n}",
+      "sha256": "12960cadfe62909e077aa1978617cc4a0ac9cff4046bcad59c65337faeba8e78",
+      "variables": {
+        "nodeId": "$nodeId"
+      },
+      "required": [
+        {
+          "path": "data.nodeView.node.node",
+          "type": "object"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "site-operation",
+      "name": "GetSiteOperationStatus",
+      "query": "query GetSiteOperationStatus($siteId: String!) {\n  getSiteOperationStatus(data: {siteId: $siteId}) {\n    siteId\n    busy\n    degraded\n    nodes {\n      nodeId\n      type\n      busy\n      operation {\n        ...OperationFields\n        __typename\n      }\n      __typename\n    }\n    actions {\n      restartSite {\n        available\n        reason\n        __typename\n      }\n      rf {\n        available\n        reason\n        __typename\n      }\n      service {\n        available\n        reason\n        __typename\n      }\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment OperationFields on OperationDto {\n  id\n  type\n  status\n  requestedBy\n  startedAt\n  leaseExpiresAt\n  __typename\n}",
+      "sha256": "e05604e2de702c0e924b8b4cd7fd575339561997edbad0bfb271d9b083f58b78",
+      "variables": {
+        "siteId": "$siteId"
+      },
+      "required": [
+        {
+          "path": "data.getSiteOperationStatus.busy",
+          "type": "boolean"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "node-operation",
+      "name": "GetNodeOperationStatus",
+      "query": "query GetNodeOperationStatus($nodeId: String!) {\n  getNodeOperationStatus(data: {nodeId: $nodeId}) {\n    nodeId\n    busy\n    operation {\n      ...OperationFields\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment OperationFields on OperationDto {\n  id\n  type\n  status\n  requestedBy\n  startedAt\n  leaseExpiresAt\n  __typename\n}",
+      "sha256": "5f7ceba5ecbd2f5bff55a9396f2217abb9a7a23c2579c28337308c406cda4328",
+      "variables": {
+        "nodeId": "$nodeId"
+      },
+      "required": [
+        {
+          "path": "data.getNodeOperationStatus.busy",
+          "type": "boolean"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "node-uptime",
+      "name": "MetricsLast",
+      "query": "query MetricsLast($data: MetricsLastInput!) {\n  metricsLast(data: $data) {\n    error {\n      ...SectionErrorFields\n      __typename\n    }\n    metrics {\n      key\n      value\n      timestamp\n      success\n      label\n      unit\n      format\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment SectionErrorFields on SectionError {\n  section\n  code\n  message\n  __typename\n}",
+      "sha256": "75f7273a546058f2c515c4c5e7f41cd1ab681521c1507c2017542c799d824f99",
+      "variables": {
+        "data": {
+          "keys": [
+            "$uptimeKey"
+          ],
+          "nodeId": "$nodeId"
+        }
+      },
+      "required": [
+        {
+          "path": "data.metricsLast.metrics",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "site-uptime",
+      "name": "GetKpiTimeSeries",
+      "query": "query GetKpiTimeSeries($data: KpiTimeSeriesInput!) {\n  getKpiTimeSeries(data: $data) {\n    values {\n      ...KpiValueFields\n      from\n      to\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment KpiValueFields on KpiValueDto {\n  kpi\n  value\n  span\n  unit\n  symbol\n  isPartial\n  trend {\n    direction\n    changePct\n    changeAbs\n    prevValue\n    hasPrevious\n    __typename\n  }\n  __typename\n}",
+      "sha256": "e2f56d132a3c00d7000a4a3af863cb50b74e42190fc85f2bdb80d4e60d2a7662",
+      "variables": {
+        "data": {
+          "keys": [
+            "SITE_UPTIME"
+          ],
+          "span": "daily",
+          "networkId": "$networkId",
+          "siteId": "$siteId",
+          "from": "$from30d",
+          "to": "$mountedAt"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getKpiTimeSeries.values",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "networks",
+      "name": "getNetworks",
+      "query": "query getNetworks {\n  getNetworks {\n    networks {\n      ...UNetwork\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment UNetwork on NetworkDto {\n  id\n  name\n  isDefault\n  budget\n  overdraft\n  trafficPolicy\n  isDeactivated\n  paymentLinks\n  createdAt\n  countries\n  networks\n  __typename\n}",
+      "sha256": "55ae38c622907f2d7b6eec50464f1eac556eec76f4bba3ef98ad5c39e475a9c2",
+      "variables": {},
+      "required": [
+        {
+          "path": "data.getNetworks.networks",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "packages",
+      "name": "getPackages",
+      "query": "query getPackages($networkId: String) {\n  getPackages(networkId: $networkId) {\n    packages {\n      ...Package\n      __typename\n    }\n    __typename\n  }\n}\n\nfragment Package on PackageDto {\n  uuid\n  name\n  active\n  duration\n  simType\n  createdAt\n  deletedAt\n  updatedAt\n  smsVolume\n  dataVolume\n  voiceVolume\n  ulbr\n  dlbr\n  type\n  dataUnit\n  voiceUnit\n  messageUnit\n  flatrate\n  currency\n  from\n  to\n  country\n  provider\n  apn\n  ownerId\n  amount\n  networkId\n  ...PackageRate\n  ...PackageMarkup\n  __typename\n}\n\nfragment PackageRate on PackageDto {\n  rate {\n    sms_mo\n    sms_mt\n    data\n    amount\n    __typename\n  }\n  __typename\n}\n\nfragment PackageMarkup on PackageDto {\n  markup {\n    baserate\n    markup\n    __typename\n  }\n  __typename\n}",
+      "sha256": "b8138522af9dcb87bae1dc3bb00cefe7c278fa244ffeb121702981a7cc3a217a",
+      "variables": {
+        "networkId": "$networkId"
+      },
+      "required": [
+        {
+          "path": "data.getPackages.packages",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    },
+    {
+      "id": "sim-pool",
+      "name": "GetSimsFromPool",
+      "query": "query GetSimsFromPool($data: GetSimsInput!) {\n  getSimsFromPool(data: $data) {\n    sims {\n      id\n      qrCode\n      iccid\n      msisdn\n      isAllocated\n      isFailed\n      simType\n      smApAddress\n      activationCode\n      createdAt\n      deletedAt\n      updatedAt\n      isPhysical\n      __typename\n    }\n    __typename\n  }\n}",
+      "sha256": "59449f29401190fe74cc8af514e42e9911a1e310224e216414da76d983d4dc27",
+      "variables": {
+        "data": {
+          "type": "ukama_data",
+          "status": "UNASSIGNED"
+        }
+      },
+      "required": [
+        {
+          "path": "data.getSimsFromPool.sims",
+          "type": "array"
+        }
+      ],
+      "allowed_errors": []
+    }
+  ]
+}

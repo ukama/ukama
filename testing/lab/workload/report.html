@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ukama workload report</title>
+<style>
+:root{font:15px system-ui,sans-serif;color:#20332e;background:#f1f5f3}body{max-width:1280px;margin:32px auto;padding:0 24px}h1{font-size:30px;margin-bottom:8px}h2{font-size:18px}p{line-height:1.5}.muted{color:#52685f}.toolbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin:24px 0}select,button{font:inherit;padding:8px;border:1px solid #b1c2b8;border-radius:5px;background:white}.cards,.plots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.card,.plot{background:white;border:1px solid #d3ded7;border-radius:8px;padding:18px}.number{font-size:28px;font-weight:650}.plot canvas{width:100%;height:280px}.legend{font-size:13px;color:#52685f}.pass{color:#087348}.fail{color:#bc3131}table{border-collapse:collapse;width:100%;font-size:13px;background:white}td,th{padding:9px;text-align:left;border-bottom:1px solid #dae2dd}th{position:sticky;top:0;background:#e5eee8}.scroll{overflow:auto;max-height:500px}code{background:#e6ede9;padding:2px 4px;border-radius:3px}a{color:#076a53}@media(max-width:760px){.cards,.plots{grid-template-columns:1fr}body{padding:0 12px}}
+</style></head><body>
+<div class="muted">UKAMA LAB · WORKLOAD</div><h1 id="title">Workload report</h1><p id="result"></p>
+<div class="cards"><div class="card"><div class="muted">Completed console / rate requests</div><div class="number" id="requests"></div></div><div class="card"><div class="muted">Failed / missed schedules</div><div class="number" id="failures"></div></div></div>
+<h2>Phase results in scenario order</h2><p id="phase-counts"></p><p class="muted" id="phase-note"></p>
+<div class="scroll"><table><thead><tr><th>Phase</th><th>Rate ramp → target /s</th><th>Reach</th><th>Hold</th><th>Result</th><th>Hold completed</th><th>Hold successful /s</th><th>Hold errors %</th><th>Hold 429</th></tr></thead><tbody id="phase-results"></tbody></table></div>
+<h2>Expected versus actual checks</h2><p class="muted">Every observed read operation has an independent check. Population values are expected / actual at stage end; a transient population loss still fails the hold. Expand a stage to see all its checks.</p><div id="stage-results"></div>
+<h2>Final checks</h2><p id="checks"></p><p id="limits" class="muted"></p><p id="threshold-state"></p>
+<div class="scroll" id="violation-table"><table><thead><tr><th>Phase</th><th>Actor</th><th>Operation</th><th>Exceeded limits</th></tr></thead><tbody id="violation-rows"></tbody></table></div>
+<h2>Read operations across all phases</h2><p class="muted">Percentiles are merged from request histograms. Thresholds are evaluated separately for each phase, operation and actor category.</p>
+<div class="scroll"><table><thead><tr><th>Actor</th><th>Operation</th><th>Completed</th><th>Failed</th><th>Error %</th><th>Missed</th><th>p50 ms</th><th>p95 ms</th><th>p99 ms</th></tr></thead><tbody id="total-rows"></tbody></table></div>
+<details id="error-details"><summary>First error per affected phase / operation / category</summary><p class="muted">Examples may have different causes from later errors. Every attempt is recorded in requests.jsonl.</p><div class="scroll"><table><thead><tr><th>Phase</th><th>Actor</th><th>Operation</th><th>Outcome</th><th>HTTP</th><th>Detail</th><th>Request ID</th></tr></thead><tbody id="error-rows"></tbody></table></div></details>
+<div class="toolbar"><label>Operation <select id="operation"></select></label><label>Phase <select id="phase"></select></label><button id="csv">Export visible buckets as CSV</button></div>
+<div class="plots">
+<div class="plot"><h2>Request latency over time</h2><canvas id="latency"></canvas><div class="legend">p50 green · p95 blue · p99 purple · milliseconds; all outcomes included</div></div>
+<div class="plot"><h2>Request rate over time</h2><canvas id="rate"></canvas><div class="legend">Completions green · failures red · missed schedules orange · requests/second</div></div>
+<div class="plot"><h2>p95 latency versus completed request rate</h2><canvas id="capacity"></canvas><div class="legend">Each point is one operation bucket. Percentiles are never averaged across operations.</div></div>
+<div class="plot"><h2>Actual workload population</h2><canvas id="population"></canvas><div class="legend">Sites green · provisioned SIMs blue · attached UEs purple · sessions orange</div></div>
+</div>
+<h2>Operations and thresholds</h2><div class="scroll"><table><thead><tr><th>Phase</th><th>Actor</th><th>Operation</th><th>Completed</th><th>Failed</th><th>429</th><th>Timeout</th><th>Missed</th><th>p50 ms</th><th>p95 ms</th><th>p99 ms</th><th>Dispatch p95 ms</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p id="note" class="muted"></p><p class="muted">Attachment counts reflect successful attach/probe observations. Traffic-active UEs are a participating population; simultaneous transfers are recorded separately. Console profiles simulate HTTP behavior and do not measure browser rendering.</p>
+<p><a href="requests.jsonl">Every request attempt</a> · <a href="timeseries.jsonl">Time buckets and populations</a> · <a href="events.jsonl">Phase events</a> · <a href="report.json">JSON summary</a> · <a href="report.txt">Text report</a> · <a href="resources.jsonl">Resource journal</a></p>
+<script>
+function renderWorkload(){
+ const summary=JSON.parse(document.getElementById('summary-data').textContent), series=JSON.parse(document.getElementById('series-data').textContent);
+ const $=id=>document.getElementById(id), fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2});
+ $('title').textContent=summary.scenario;
+ $('result').textContent=(summary.passed?'PASS':'FAIL')+' · '+fmt(summary.duration_sec)+' seconds · cleanup: '+summary.cleanup+(summary.reason?' · '+summary.reason:'');
+ $('result').className=summary.passed?'pass':'fail';$('requests').textContent=fmt(summary.requests);$('failures').textContent=fmt(summary.failed_requests)+' / '+fmt(summary.missed_requests);$('note').textContent=summary.latency_note;
+ const thresholds=summary.thresholds, violations=summary.threshold_violations||[], examples=summary.error_examples||[];
+ $('checks').textContent='Execution: '+(summary.execution||'see result')+' · Cleanup: '+summary.cleanup+' · Metrics: '+(summary.metrics_complete?'complete':'incomplete');
+ $('limits').textContent='Per phase / operation / category: errors ≤ '+fmt(thresholds.max_error_percent)+'%; missed ≤ '+fmt(thresholds.max_missed_percent)+'%; p95 '+(thresholds.p95_ms>0?'≤ '+fmt(thresholds.p95_ms)+' ms':'disabled');
+ $('threshold-state').textContent=violations.length?violations.length+' operation/phase threshold checks failed':(summary.operations||[]).some(r=>r.category==='console'||r.category==='rate')?'All observed operation/phase threshold checks passed':'No console/rate samples; no threshold checks performed';
+ $('threshold-state').className=violations.length?'fail':'muted';
+ $('violation-table').hidden=!violations.length;
+ function tableRow(id,values){const tr=document.createElement('tr');for(const value of values){const td=document.createElement('td');td.textContent=value;tr.append(td)}$(id).append(tr)}
+ const phases=summary.phase_results||[], counts=summary.phase_counts||{};
+ $('phase-counts').textContent=['PASS','FAIL','INCOMPLETE','NOT_RUN','NO_DATA'].map(k=>k+': '+(counts[k]||0)).join(' · ')+' (setup separate)';
+ $('phase-note').textContent=summary.phase_note||'';
+ const statusClass=status=>status==='PASS'?'pass':status==='FAIL'?'fail':'muted';
+ for(const p of phases){tableRow('phase-results',[p.name,fmt(p.from.rps)+' → '+fmt(p.target.rps),p.reach.status,p.hold.status,p.status,fmt(p.hold.completed),fmt(p.hold.successful_rps),fmt(p.hold.error_percent),fmt(p.hold.throttled)]);const row=$('phase-results').lastChild;[2,3,4].forEach(i=>row.children[i].className=statusClass(row.children[i].textContent));}
+ for(const p of [summary.setup_result,...phases].filter(Boolean))for(const stage of [p.reach,p.hold]){
+  const d=document.createElement('details'), heading=document.createElement('summary'), note=document.createElement('p');
+  heading.textContent=stage.status+' '+stage.phase+' · '+stage.reason;heading.className=statusClass(stage.status);d.append(heading);
+  const expected=stage.expected_population,actual=stage.actual_population;
+  note.textContent='Duration '+fmt(stage.duration_sec)+'s; reads '+fmt(stage.completed)+', successful '+fmt(stage.successful)+', failed '+fmt(stage.failed)+', missed '+fmt(stage.missed)+', 429 '+fmt(stage.throttled)+', timeouts '+fmt(stage.timeouts)+'. Population expected/actual at end: '+['sites','provisioned_ues','attached_ues','active_ues','console_sessions'].map(k=>k+' '+fmt(expected[k])+'/'+(stage.entered?fmt(actual[k]):'n/a')).join(', ');d.append(note);
+  const table=document.createElement('table'),thead=document.createElement('thead'),body=document.createElement('tbody');
+  const add=(parent,values,tag='td')=>{const row=document.createElement('tr');for(const value of values){const cell=document.createElement(tag);cell.textContent=value;row.append(cell)}parent.append(row);return row};
+  add(thead,['Result','Actor / operation','Completed / failed','Errors actual / expected','Missed actual / expected','p95 actual / expected'],'th');
+  for(const r of stage.checks){const row=add(body,[r.status,r.category+'/'+r.operation,fmt(r.completed)+' / '+fmt(r.failed),fmt(r.error_percent)+'% / ≤'+fmt(thresholds.max_error_percent)+'%',fmt(r.missed_percent)+'% / ≤'+fmt(thresholds.max_missed_percent)+'%',(r.completed?fmt(r.p95_ms)+'ms':'n/a')+' / '+(thresholds.p95_ms>0?'≤'+fmt(thresholds.p95_ms)+'ms':'disabled')]);row.children[0].className=statusClass(r.status)}
+  table.append(thead,body);d.append(table);$('stage-results').append(d);
+ }
+ for(const v of violations){const exceeded=[];
+  if(v.error_percent>thresholds.max_error_percent)exceeded.push('errors '+fmt(v.error_percent)+'% > '+fmt(thresholds.max_error_percent)+'%');
+  if(v.missed_percent>thresholds.max_missed_percent)exceeded.push('missed '+fmt(v.missed_percent)+'% > '+fmt(thresholds.max_missed_percent)+'%');
+  if(thresholds.p95_ms>0&&v.p95_ms>thresholds.p95_ms)exceeded.push('p95 '+fmt(v.p95_ms)+' ms > '+fmt(thresholds.p95_ms)+' ms');
+  tableRow('violation-rows',[v.phase,v.category,v.operation,exceeded.join('; ')]);
+ }
+ for(const r of summary.operation_totals||[])tableRow('total-rows',[r.category,r.operation,...['completed','failed','error_percent','missed','p50_ms','p95_ms','p99_ms'].map(k=>fmt(r[k]))]);
+ for(const e of examples)tableRow('error-rows',[e.phase,e.category,e.operation,e.outcome,e.http_status,e.detail,e.request_id]);
+ $('error-details').hidden=!examples.length;
+ const data=series.filter(r=>r.kind==='requests'&&(r.category==='console'||r.category==='rate'));
+ function options(id,values){for(const value of ['All',...values]){const o=document.createElement('option');o.textContent=value;o.value=value;$(id).append(o)}}
+ options('operation',[...new Set(data.map(r=>r.operation))].sort());options('phase',[...new Set(data.map(r=>r.phase))]);
+ function selected(){return data.filter(r=>($('operation').value==='All'||r.operation===$('operation').value)&&($('phase').value==='All'||r.phase===$('phase').value))}
+ function plot(id,sets,xlabel,ylabel,scatter=false){
+   const canvas=$(id),width=canvas.clientWidth,height=280,dpr=window.devicePixelRatio||1;canvas.width=width*dpr;canvas.height=height*dpr;
+   const g=canvas.getContext('2d');g.scale(dpr,dpr);g.clearRect(0,0,width,height);const pad={l:65,r:16,t:15,b:42};
+   const points=sets.flatMap(s=>s.points).filter(p=>Number.isFinite(p[0])&&Number.isFinite(p[1]));
+   const xmax=points.reduce((m,p)=>Math.max(m,p[0]),1),ymax=points.reduce((m,p)=>Math.max(m,p[1]),1)*1.08;
+   const x=v=>pad.l+v/xmax*(width-pad.l-pad.r),y=v=>height-pad.b-v/ymax*(height-pad.t-pad.b);
+   g.font='11px system-ui';for(let i=0;i<=4;i++){let yy=y(i*ymax/4);g.strokeStyle='#e4ece7';g.beginPath();g.moveTo(pad.l,yy);g.lineTo(width-pad.r,yy);g.stroke();g.fillStyle='#52685f';g.fillText(fmt(i*ymax/4),2,yy+4);g.fillText(fmt(i*xmax/4),x(i*xmax/4)-8,height-22)}
+   g.fillText(xlabel,width/2-20,height-3);g.fillText(ylabel,2,10);
+   for(const set of sets){g.strokeStyle=set.color;g.fillStyle=set.color;g.lineWidth=1.5;g.beginPath();let first=true;
+    for(const p of set.points){if(scatter){g.moveTo(x(p[0])+2,y(p[1]));g.arc(x(p[0]),y(p[1]),2,0,Math.PI*2)}else{first?g.moveTo(x(p[0]),y(p[1])):g.lineTo(x(p[0]),y(p[1]));first=false}}
+    scatter?g.fill():g.stroke();}
+   if(!points.length){g.fillStyle='#52685f';g.fillText('No samples for this selection',pad.l+12,80)}
+ }
+ function redraw(){const rows=selected().sort((a,b)=>a.time_s-b.time_s), colors=['#07855d','#2779ba','#8952ae'];
+   // Draw separate operation series, so adjacent operations never produce a
+   // misleading connected line or an averaged percentile.
+   const groups=new Map();for(const r of rows){const k=r.category+'|'+r.operation;if(!groups.has(k))groups.set(k,[]);groups.get(k).push(r)}
+   plot('latency',[...groups.values()].flatMap(a=>['p50_ms','p95_ms','p99_ms'].map((key,i)=>({color:colors[i],points:a.map(r=>[r.time_s,r[key]])}))), 'elapsed seconds','ms');
+   plot('rate',[...groups.values()].flatMap(a=>['completed','failed','missed'].map((key,i)=>({color:['#07855d','#bc3131','#ce8623'][i],points:a.map(r=>[r.time_s,r[key]/Math.max(.001,r.window_s)])}))), 'elapsed seconds','req/s');
+   plot('capacity',[{color:'#2779ba',points:rows.map(r=>[r.completed/Math.max(.001,r.window_s),r.p95_ms])}], 'completed req/s','p95 ms',true);
+   const populations=series.filter(r=>r.kind==='population'&&($('phase').value==='All'||r.phase===$('phase').value));
+   plot('population',['sites','provisioned_ues','attached_ues','console_sessions'].map((key,i)=>({color:['#07855d','#2779ba','#8952ae','#ce8623'][i],points:populations.map(r=>[r.time_s,r.actual[key]])})), 'elapsed seconds','count');
+   $('rows').replaceChildren();for(const r of summary.operations.filter(r=>($('operation').value==='All'||r.operation===$('operation').value)&&($('phase').value==='All'||r.phase===$('phase').value))){const tr=document.createElement('tr');for(const key of ['phase','category','operation','completed','failed','throttled','timeouts','missed','p50_ms','p95_ms','p99_ms','dispatch_p95_ms']){const td=document.createElement('td');td.textContent=typeof r[key]==='number'?fmt(r[key]):r[key];tr.append(td)}$('rows').append(tr)}
+ }
+ $('operation').onchange=$('phase').onchange=redraw;window.addEventListener('resize',redraw);
+ $('csv').onclick=()=>{const keys=['phase','category','operation','time_s','window_s','completed','failed','throttled','timeouts','missed','p50_ms','p95_ms','p99_ms','dispatch_p95_ms'];const quote=x=>'"'+String(x??'').replaceAll('"','""')+'"';const text=[keys.join(','),...selected().map(r=>keys.map(k=>quote(r[k])).join(','))].join('\n');const url=URL.createObjectURL(new Blob([text],{type:'text/csv'}));const a=document.createElement('a');a.href=url;a.download='workload-buckets.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};redraw();
+}
+</script>

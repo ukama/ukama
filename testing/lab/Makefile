@@ -4,6 +4,9 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
+ifeq ($(HOST_BUILD),1)
+include Makefile.host
+else
 include ../../nodes/ukamaOS/config.mk
 
 TARGET_EXEC = ukama-lab
@@ -72,12 +75,17 @@ LIBS = $(ULFIUS_LIB) $(CURL_LIB)
 LIBS += -ljansson
 LIBS += -lpthread
 LIBS += -lusys
+LIBS += -lyaml -lm
 
 # Source files
 TARGET_CFILES = $(wildcard ./src/*.c)
 TARGET_CFILES += ./cmd/ukama-lab/main.c
 
 TARGET_OBJFILES = $(TARGET_CFILES:.c=.o)
+
+# Workload code uses C11 block declarations and optimized scheduling. Existing
+# functional sources retain their original flags and compilation behavior.
+src/workload_%.o: CFLAGS += -Wno-declaration-after-statement -O2
 
 .PHONY: all clean check fmt $(TARGET_EXEC) $(PLATFORM)
 
@@ -112,3 +120,4 @@ clean:
 	rm -f $(TARGET_OBJFILES)
 	rm -rf $(BIN_DIR)
 	rm -f version.h
+endif

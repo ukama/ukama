@@ -23,6 +23,7 @@
 #include "selector.h"
 #include "sim_factory.h"
 #include "util.h"
+#include "workload.h"
 
 static void make_run_id(char *out, size_t len, const scenario_t *scenario,
                         const runner_opts_t *opts) {
@@ -1279,6 +1280,10 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int bff_opened;
     node_monitor_t *monitor = NULL;
 
+    if (workload_is_file(opts->scenario_path)) {
+        return workload_run(opts, 0);
+    }
+
     scenario = NULL;
     rc = ULAB_OK;
     cleanup_rc = ULAB_OK;
@@ -1582,6 +1587,29 @@ static int runner_run_file_if_match(const runner_opts_t *opts,
     ulab_error_t err;
 
     if (!runner_is_yaml(path)) {
+        return ULAB_OK;
+    }
+
+    if (workload_is_file(path)) {
+        wl_config_t config;
+        memset(&err, 0, sizeof(err));
+        if (wl_config_load(path, opts, &config, &err)) {
+            fprintf(stderr, "%s: %s\n", path, err.msg);
+            wl_config_free(&config);
+            (*failed)++;
+            return ULAB_ERR;
+        }
+        if (runner_matches_filters(opts, config.environment)) {
+            one = *opts;
+            ulab_copy(one.scenario_path, sizeof(one.scenario_path), path);
+            if (opts->run_id[0] && runner_child_run_id(one.run_id,
+                sizeof(one.run_id), opts->run_id, config.name)) {
+                wl_config_free(&config); (*failed)++; return ULAB_ERR;
+            }
+            (*matched)++;
+            if (workload_run(&one, 0) != ULAB_OK) (*failed)++;
+        }
+        wl_config_free(&config);
         return ULAB_OK;
     }
 
