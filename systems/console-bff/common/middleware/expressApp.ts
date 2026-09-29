@@ -8,7 +8,7 @@
 
 /**
  * Shared express bootstrap: request-id, ALS request context, security
- * headers, rate limiting and structured access logs. Used by the gateway
+ * headers and structured access logs. Used by the gateway
  * today and the consolidated API server (server/) going forward.
  */
 import express, { type Request } from "express";
@@ -17,7 +17,7 @@ import expressWinston from "express-winston";
 import { runWithRequestId } from "../logger/requestContext";
 import { compression } from "./compression";
 import { REQUEST_ID_HEADER, requestId } from "./requestId";
-import { rateLimit, securityHeaders } from "./security";
+import { securityHeaders } from "./security";
 
 function configureExpress(logger: any) {
   const app = express();
@@ -32,7 +32,6 @@ function configureExpress(logger: any) {
     runWithRequestId(req.headers[REQUEST_ID_HEADER] as string, () => next())
   );
   app.use(securityHeaders());
-  app.use(rateLimit());
   // Gzip buffered JSON responses (GraphQL payloads) above the size threshold.
   app.use(compression());
   app.use(

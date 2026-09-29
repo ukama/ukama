@@ -7,15 +7,9 @@
  */
 
 /**
- * Security middleware for the gateway: helmet for response headers and
- * express-rate-limit for per-client throttling.
+ * Security middleware for the gateway: helmet for response headers.
  */
-import { rateLimit as expressRateLimit } from "express-rate-limit";
 import helmet from "helmet";
-
-const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 300;
-const RATE_LIMIT_SKIP_PATHS = new Set(["/healthz", "/readyz", "/ping"]);
 
 /**
  * Security response headers. CSP is disabled because this is a JSON API
@@ -23,13 +17,3 @@ const RATE_LIMIT_SKIP_PATHS = new Set(["/healthz", "/readyz", "/ping"]);
  * CSP. All other helmet protections (nosniff, frameguard, HSTS, etc.) apply.
  */
 export const securityHeaders = () => helmet({ contentSecurityPolicy: false });
-
-/** Fixed-window per-IP rate limiter; health/ping paths are exempt. */
-export const rateLimit = () =>
-  expressRateLimit({
-    windowMs: RATE_LIMIT_WINDOW_MS,
-    limit: RATE_LIMIT_MAX,
-    standardHeaders: "draft-7",
-    legacyHeaders: false,
-    skip: req => RATE_LIMIT_SKIP_PATHS.has(req.path),
-  });

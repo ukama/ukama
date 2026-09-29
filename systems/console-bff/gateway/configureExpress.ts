@@ -10,7 +10,7 @@ import expressWinston from "express-winston";
 
 import { runWithRequestId } from "../common/logger/requestContext";
 import { REQUEST_ID_HEADER, requestId } from "../common/middleware/requestId";
-import { rateLimit, securityHeaders } from "../common/middleware/security";
+import { securityHeaders } from "../common/middleware/security";
 
 function configureExpress(logger: any) {
   const app = express();
@@ -25,7 +25,6 @@ function configureExpress(logger: any) {
     runWithRequestId(req.headers[REQUEST_ID_HEADER] as string, () => next())
   );
   app.use(securityHeaders());
-  app.use(rateLimit());
   app.use(
     expressWinston.logger({
       winstonInstance: logger,

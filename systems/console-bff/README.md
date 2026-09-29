@@ -37,7 +37,7 @@ pure namespacing — it has been collapsed into **one Apollo server**. Design +
 decision log: `CONSOLIDATION-DESIGN.md`.
 
 - `server/index.ts` — the API server: shared express middleware (request-id,
-  AsyncLocalStorage logging, helmet, rate-limit), one merged type-graphql
+  AsyncLocalStorage logging, helmet), one merged type-graphql
   schema (no federation), `/healthz` `/readyz` `/ping` `/get-user`
   `/set-theme`, graceful shutdown, introspection gated by
   `ENABLE_INTROSPECTION` (off in production by default).

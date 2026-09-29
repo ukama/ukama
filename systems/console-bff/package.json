@@ -39,7 +39,6 @@
     "dayjs": "^1.11.12",
     "dotenv": "^16.4.5",
     "express": "^4",
-    "express-rate-limit": "^8.5.2",
     "express-winston": "^4.2.0",
     "graphql": "^16.9.0",
     "graphql-scalars": "^1.25.0",
