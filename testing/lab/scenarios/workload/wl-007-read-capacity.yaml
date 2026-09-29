@@ -1,0 +1,81 @@
+# Independent workload scenario; see WORKLOADS.md before running.
+version: 2
+kind: workload
+name: wl-007-read-capacity
+suite: workload
+status: active
+seed: 7001
+world:
+  sites: 1
+  ues_per_site: 0
+  backend_sims: 0
+service_enabled: false
+initial:
+  sites: 1
+console:
+  pages:
+  - network-home
+  - sites
+  - nodes
+  - site-detail
+  - node-detail
+  dwell_seconds: 120
+  visible_percent: 85
+  optional_polling: false
+limits:
+  setup_max_rps: 2
+  provision_rate: 0.25
+  provision_batch: 32
+  site_interval_seconds: 60
+  initial_timeout_seconds: 7200
+  max_inflight: 256
+  request_timeout_seconds: 30
+  setup_timeout_seconds: 120
+  max_error_percent: 1
+  max_missed_percent: 1
+  p95_ms: 3000
+phases:
+- name: rate-1
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 1
+- name: rate-3
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 3
+- name: rate-5
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 5
+- name: rate-10
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 10
+- name: rate-25
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 25
+- name: rate-100
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 100
+- name: rate-1000
+  ramp_seconds: 30
+  reach_seconds: 1800
+  hold_seconds: 180
+  requests_per_second: 1000
+- name: recovery
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  requests_per_second: 1
+rate:
+  operation: sites-list
+description: 'Explicit synthetic capacity test: sites-list 1 to 1000 req/s, then recovery.
+  BFF 429 responses are failures, not bypassed.'

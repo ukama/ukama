@@ -400,6 +400,10 @@ static int bff_call(bff_client_t *c, const char *op, const char *query,
     json_t *errors;
     json_error_t json_err;
 
+    if (c->transport != NULL) {
+        return c->transport(c->transport_ctx, op, query, vars, out, err);
+    }
+
     hdr = NULL;
     resp.buf = NULL;
     resp.len = 0;

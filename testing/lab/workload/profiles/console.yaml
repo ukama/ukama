@@ -1,0 +1,47 @@
+# Source-derived HTTP profiles. TTL is a per-operation approximation of the
+# console's normalized Apollo cache. Navigation and visibility are scenario
+# inputs; these are protocol sessions, not browser/rendering measurements.
+pages:
+  - name: network-home
+    operations:
+      - {operation: network-kpis, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: sites-list, poll_seconds: 30, ttl_seconds: 120}
+  - name: business-home
+    operations:
+      - {operation: business-kpis, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: sites-list, poll_seconds: 30, ttl_seconds: 120}
+  - name: sales
+    operations:
+      - {operation: revenue-kpis, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: revenue-count, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: revenue-average, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: package-performance, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: revenue-series, poll_seconds: 30, ttl_seconds: 300}
+  - name: packages
+    operations:
+      - {operation: package-performance, poll_seconds: 30, ttl_seconds: 300}
+      - {operation: data-usage-kpis, poll_seconds: 30, ttl_seconds: 300}
+  - name: customers
+    operations:
+      - {operation: customers, ttl_seconds: 300}
+      - {operation: sim-usage, ttl_seconds: 300, network_on_mount: true}
+      - {operation: packages, ttl_seconds: 600, network_on_mount: true}
+      - {operation: sim-pool, ttl_seconds: 300, network_on_mount: true}
+  - name: sites
+    operations:
+      - {operation: sites-list, poll_seconds: 60, optional_poll: true, ttl_seconds: 120}
+  - name: nodes
+    operations:
+      - {operation: nodes-list, poll_seconds: 60, optional_poll: true, ttl_seconds: 60}
+      - {operation: sites-list, ttl_seconds: 120}
+  - name: site-detail
+    operations:
+      - {operation: site-detail, poll_seconds: 30, optional_poll: true, ttl_seconds: 120}
+      - {operation: sites-list, ttl_seconds: 120}
+      - {operation: site-operation, ttl_seconds: 5, network_on_mount: true}
+      - {operation: site-uptime, ttl_seconds: 300}
+  - name: node-detail
+    operations:
+      - {operation: node-detail, ttl_seconds: 60}
+      - {operation: node-operation, ttl_seconds: 5, network_on_mount: true}
+      - {operation: node-uptime, poll_seconds: 30, background_poll: true, ttl_seconds: 60}

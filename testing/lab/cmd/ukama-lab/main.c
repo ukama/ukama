@@ -16,12 +16,15 @@
 #include "log.h"
 #include "util.h"
 #include "generator.h"
+#include "workload.h"
 
 static void usage(void) {
     printf("ukama-lab %s\n", ULAB_VERSION);
     printf("usage:\n");
     printf("  ukama-lab validate <scenario.yaml|dir> [options]\n");
     printf("  ukama-lab run <scenario.yaml|dir> [options]\n");
+    printf("  ukama-lab plan <workload.yaml> [options] (offline; no resources created)\n");
+    printf("  ukama-lab cleanup-workload <run-dir> [options] (recorded resources only)\n");
     printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
     printf("  ukama-lab list-checks\n");
     printf("  ukama-lab list-events\n");
@@ -34,6 +37,7 @@ static void usage(void) {
     printf("  --out <dir>           output directory\n");
     printf("  --run-id <id>         fixed run id; existing created.json is cleaned first\n");
     printf("  --scripts <dir>       runtime script directory\n");
+    printf("  --workload-assets <dir> workload catalog/report assets; default: workload\n");
     printf("  --sim-type <type>     SIM pool type; default: ukama_data\n");
     printf("  --warehouse-url <url> warehouse API URL for run SIM provisioning\n");
     printf("  --factory-url <url>   sim factory API URL for run SIM export\n");
@@ -53,6 +57,7 @@ static void usage(void) {
 
 static void opts_init(runner_opts_t *o) {
     memset(o, 0, sizeof(*o));
+    ulab_copy(o->workload_assets, sizeof(o->workload_assets), "workload");
     ulab_copy(o->bff_url, sizeof(o->bff_url),
               ulab_getenv_default("UKAMA_LAB_BFF",
                                   "http://localhost:8080/graphql"));
@@ -96,6 +101,8 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->script_dir, sizeof(o->script_dir), argv[++i]);
         } else if (ulab_streq(argv[i], "--repo") && i + 1 < argc) {
             ulab_copy(o->repo, sizeof(o->repo), argv[++i]);
+        } else if (ulab_streq(argv[i], "--workload-assets") && i + 1 < argc) {
+            ulab_copy(o->workload_assets, sizeof(o->workload_assets), argv[++i]);
         } else if (ulab_streq(argv[i], "--sim-type") && i + 1 < argc) {
             ulab_copy(o->sim_type, sizeof(o->sim_type), argv[++i]);
         } else if (ulab_streq(argv[i], "--warehouse-url") && i + 1 < argc) {
@@ -168,12 +175,18 @@ int main(int argc, char **argv) {
         return rc;
     }
 
+    if (ulab_streq(argv[1], "plan")) {
+        return workload_run(&opts, 1);
+    }
+
     /* repo path is must else we wont know how to build virtual node/ue */
     if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();
         return ULAB_EUSAGE;
     }
+
+    if (ulab_streq(argv[1], "cleanup-workload")) return workload_cleanup_run(&opts);
 
     ulab_log_set_quiet(opts.quiet);
     ulab_log_set_verbose(opts.verbose);

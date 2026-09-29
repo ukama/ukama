@@ -81,6 +81,11 @@ static int sf_join_url(char *out,
     return ULAB_OK;
 }
 
+static _Thread_local _Atomic sig_atomic_t *sf_cancel;
+static int sf_progress(void *ctx, curl_off_t a, curl_off_t b, curl_off_t c, curl_off_t d) {
+    (void)ctx; (void)a; (void)b; (void)c; (void)d;
+    return sf_cancel && *sf_cancel;
+}
 static int sf_http_request(const char *op,
                            const char *method,
                            const char *url,
@@ -118,6 +123,11 @@ static int sf_http_request(const char *op,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, sf_write_cb);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &resp);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, SIMFACTORY_HTTP_TIMEOUT_SEC);
+    if (sf_cancel) {
+        curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
+        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+        curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, sf_progress);
+    }
 
     if (ulab_streq(method, "POST")) {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
@@ -381,6 +391,7 @@ static int sf_factory_wait_batch(const runner_opts_t *opts,
                 batch_id, expected_count);
 
     for (i = 0; i < SIMFACTORY_WAIT_ATTEMPTS; i++) {
+        if (sf_cancel && *sf_cancel) { snprintf(err->msg, sizeof(err->msg), "factory wait cancelled"); return ULAB_ERR; }
         if (sf_factory_batch_count(opts, batch_id, expected_count, &got,
                                    err) == ULAB_OK && got >= expected_count) {
             return ULAB_OK;
@@ -640,6 +651,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
     size_t i;
     int rc;
 
+    sf_cancel = opts->workload_cancel;
     if (world->ue_count == 0) {
         csv_path[0] = '\0';
         return ULAB_OK;
@@ -676,6 +688,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
         int attempt;
         int added;
 
+        if (sf_cancel && *sf_cancel) { snprintf(err->msg, sizeof(err->msg), "factory provisioning cancelled"); return ULAB_ERR; }
         added = 0;
         for (attempt = 0; attempt < 50; attempt++) {
             serial = seed + (uint64_t)i + ((uint64_t)attempt * 1000000ULL);

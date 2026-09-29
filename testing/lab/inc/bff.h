@@ -14,6 +14,12 @@
 
 #include "world.h"
 #include "ulab.h"
+#include <jansson.h>
+
+/* Optional transport owned by workload mode. NULL preserves v1 behavior. */
+typedef int (*bff_transport_fn)(void *ctx, const char *operation,
+                               const char *query, const char *variables,
+                               json_t **response, ulab_error_t *err);
 
 typedef struct {
     char url[ULAB_MAX_URL];
@@ -30,6 +36,8 @@ typedef struct {
     char switch_id[ULAB_MAX_ID];
 
     FILE *logf;
+    bff_transport_fn transport;
+    void *transport_ctx;
 } bff_client_t;
 
 typedef struct {

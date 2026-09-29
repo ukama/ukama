@@ -13,6 +13,9 @@
 
 #include "selector.h"
 
+typedef int (*runtime_execute_fn)(void *ctx, const char *script,
+                                 const char *args, ulab_error_t *err);
+
 typedef struct {
     char provider[ULAB_MAX_REF];
     char script_dir[ULAB_MAX_PATH];
@@ -25,7 +28,13 @@ typedef struct {
     int node_offline;
     unsigned int failure_controls;
     char node_version[ULAB_MAX_REF];
+    runtime_execute_fn execute;
+    void *execute_ctx;
 } runtime_t;
+
+int runtime_load_workload_sites(runtime_t *rt, world_t *w, ulab_error_t *err);
+int runtime_start_selected_site(runtime_t *rt, world_t *w, size_t index,
+                                ulab_error_t *err);
 
 int runtime_init(runtime_t *rt, const char *provider,
                  const char *script_dir, const char *run_dir,

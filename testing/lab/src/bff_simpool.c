@@ -334,6 +334,10 @@ static int sim_graphql_call(bff_client_t *c,
         return ULAB_ERR;
     }
 
+    if (c->transport != NULL) {
+        return c->transport(c->transport_ctx, op, query, "{}", out, err);
+    }
+
     body = sim_make_graphql_body(query, err);
     if (body == NULL) {
         return ULAB_ERR;

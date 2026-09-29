@@ -18,5 +18,8 @@ void ulab_log_info(const char *fmt, ...);
 void ulab_log_warn(const char *fmt, ...);
 void ulab_log_error(const char *fmt, ...);
 void ulab_status(const char *state, const char *fmt, ...);
+/* Workload heartbeat: one terminal line; redirected output at most once/minute. */
+void ulab_progress(const char *fmt, ...);
+void ulab_progress_clear(void);
 
 #endif /* ULAB_LOG_H_ */
