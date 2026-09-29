@@ -1,0 +1,70 @@
+# Independent workload scenario; see WORKLOADS.md before running.
+version: 2
+kind: workload
+name: wl-091-inventory-10000
+suite: workload
+status: skip
+seed: 7001
+world:
+  sites: 25
+  ues_per_site: 0
+  backend_sims: 10000
+service_enabled: false
+initial:
+  sites: 25
+  provisioned_ues: 10000
+console:
+  pages:
+  - customers
+  - network-home
+  - business-home
+  - sales
+  - packages
+  - sites
+  dwell_seconds: 180
+  visible_percent: 85
+  optional_polling: false
+limits:
+  setup_max_rps: 2
+  provision_rate: 0.25
+  provision_batch: 32
+  site_interval_seconds: 60
+  initial_timeout_seconds: 604800
+  max_inflight: 256
+  request_timeout_seconds: 30
+  setup_timeout_seconds: 120
+  max_error_percent: 1
+  max_missed_percent: 1
+  p95_ms: 3000
+phases:
+- name: three-sessions
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  console_sessions: 3
+- name: twelve-sessions
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  console_sessions: 12
+- name: twenty-four-sessions
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  console_sessions: 24
+- name: recovery
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  console_sessions: 3
+description: 'OPT-IN: 10000 backend SIM/subscriber records, 25 real virtual sites,
+  zero live UE containers. Setup/cleanup can take days.'
+packages:
+- ref: standard
+  name: Workload Standard
+  data_mb: 102400
+  duration_days: 30
+  amount: 1
+  assign_percent: 100
+  currency: USD
+  country: USA

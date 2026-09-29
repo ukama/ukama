@@ -1,0 +1,81 @@
+# Independent workload scenario; see WORKLOADS.md before running.
+version: 2
+kind: workload
+name: wl-004-grow-sites-and-ues
+suite: workload
+status: active
+seed: 7001
+world:
+  sites: 10
+  ues_per_site: 100
+  backend_sims: 0
+service_enabled: true
+initial:
+  sites: 3
+  provisioned_ues: 100
+console:
+  pages:
+  - network-home
+  - sites
+  - nodes
+  - site-detail
+  - node-detail
+  dwell_seconds: 120
+  visible_percent: 85
+  optional_polling: false
+limits:
+  setup_max_rps: 2
+  provision_rate: 0.25
+  provision_batch: 32
+  site_interval_seconds: 60
+  initial_timeout_seconds: 7200
+  max_inflight: 256
+  request_timeout_seconds: 30
+  setup_timeout_seconds: 120
+  max_error_percent: 1
+  max_missed_percent: 1
+  p95_ms: 3000
+phases:
+- name: three-sites
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  attached_ues: 100
+  active_ues: 20
+  console_sessions: 3
+- name: five-sites
+  ramp_seconds: 1800
+  reach_seconds: 7200
+  hold_seconds: 600
+  sites: 5
+  provisioned_ues: 500
+  attached_ues: 300
+  active_ues: 60
+  console_sessions: 12
+- name: ten-sites
+  ramp_seconds: 3600
+  reach_seconds: 10800
+  hold_seconds: 600
+  sites: 10
+  provisioned_ues: 1000
+  attached_ues: 500
+  active_ues: 100
+  console_sessions: 24
+- name: recovery
+  ramp_seconds: 60
+  reach_seconds: 1800
+  hold_seconds: 600
+  attached_ues: 100
+  active_ues: 20
+  console_sessions: 3
+description: 'Add sites slowly while reads and UE traffic continue: 3, 5, then 10
+  sites.'
+packages:
+- ref: standard
+  name: Workload Standard
+  data_mb: 102400
+  duration_days: 30
+  amount: 1
+  assign_percent: 100
+  currency: USD
+  country: USA
