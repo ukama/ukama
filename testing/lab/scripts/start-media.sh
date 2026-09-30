@@ -149,6 +149,27 @@ start_site_media() {
             iptables -I FORWARD 1 -i '$TOWER_LAB_IF' -d '$UE_CIDR' -j ACCEPT
     " >/dev/null
 
+    if [ -n "$TUN_GW" ]; then
+        # In root gateway mode, the bridge and gateway addresses belong to
+        # the same network namespace. ARP requests between them therefore
+        # have a local source; rp_filter=0 alone does not allow that source.
+        # Allow it only on these internal interfaces, so neighbor refresh
+        # keeps working after the initially learned entries age out.
+        podman exec "$TNODE_CONTAINER" sh -eu -c '
+            gateway_addrs=$(ip -o -4 addr show to "$1/32")
+            [ -n "$gateway_addrs" ] || exit 0
+            gateway_if=$(printf "%s\n" "$gateway_addrs" |
+                awk "{print \$2; exit}")
+            gateway_if=${gateway_if%%@*}
+            bridge_if=$2
+            [ "$gateway_if" != "$bridge_if" ] || exit 0
+
+            sysctl -w "net/ipv4/conf/$bridge_if/accept_local=1" >/dev/null
+            sysctl -w "net/ipv4/conf/$gateway_if/accept_local=1" >/dev/null
+            echo "media: root gateway local-source acceptance bridge=$bridge_if gateway=$gateway_if"
+        ' ulab-media-root-gateway "$TUN_GW" "$MEDIA_BR"
+    fi
+
     if ! podman exec "$MEDIA_CONTAINER" curl -fsS --max-time 3 \
         "http://127.0.0.1:$HTTP_PORT/" >/dev/null 2>&1; then
         echo "media local HTTP check failed: $MEDIA_CONTAINER" >&2
