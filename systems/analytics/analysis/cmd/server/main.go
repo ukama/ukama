@@ -124,8 +124,10 @@ func run(sDb sql.Db) {
 	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
 
 	go grpcServer.StartServer()
-	go msgBusListener(mbClient)
-	go runner.StartSweeper()
+	go func() {
+		msgBusListener(mbClient)
+		runner.StartSweeper()
+	}()
 
 	waitForExit()
 }

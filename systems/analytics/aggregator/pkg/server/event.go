@@ -47,7 +47,7 @@ func (s *AggregatorEventServer) EventNotification(ctx context.Context, e *epb.Ev
 			return &epb.EventResponse{}, nil
 		}
 
-		s.engine.OnKpiComputed(msg.KpiKey, msg.WindowID)
+		go s.engine.OnKpiComputed(msg.KpiKey, msg.WindowID)
 	default:
 		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}

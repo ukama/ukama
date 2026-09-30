@@ -47,7 +47,7 @@ func (s *AnalysisEventServer) EventNotification(ctx context.Context, e *epb.Even
 			return &epb.EventResponse{}, nil
 		}
 
-		s.runner.OnDatasetReady(msg.DatasetKey, msg.WindowID)
+		go s.runner.OnDatasetReady(msg.DatasetKey, msg.WindowID)
 	default:
 		log.Errorf("No handler for routing key %s", e.RoutingKey)
 	}
