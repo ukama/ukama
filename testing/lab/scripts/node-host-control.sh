@@ -92,7 +92,11 @@ fi
 if [ -n "$LOAD_STATE" ] && [ "$LOAD_STATE" != "not-found" ]; then
     case "$ACTION" in
         start)
-            host_systemctl reset-failed "$UNIT"
+            # reset-failed errors on a cleanly stopped unit that systemd has already unloaded.
+            if [ "$(host_systemctl show --property=ActiveState --value \
+                "$UNIT" 2>/dev/null || true)" = "failed" ]; then
+                host_systemctl reset-failed "$UNIT"
+            fi
             host_systemctl start "$UNIT"
             ;;
         stop)
