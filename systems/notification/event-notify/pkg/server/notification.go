@@ -276,13 +276,7 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 	return removeDuplicatesIfAny(userList), err
 }
 
-func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
-	err := n.notificationRepo.Add(dn)
-	if err != nil {
-		log.Errorf("Error adding notification to db %v", err)
-		return err
-	}
-
+func (n *EventToNotifyServer) storeNotification(event *db.EventMsg, dn *db.Notification) error {
 	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.Scope)
 
 	if err != nil {
@@ -305,8 +299,7 @@ func (n *EventToNotifyServer) storeNotification(dn *db.Notification) error {
 		}
 	}
 
-	err = n.userNotificationRepo.Add(un)
-	return err
+	return n.notificationRepo.AddWithEvent(event, dn, un)
 }
 
 func (n *EventToNotifyServer) storeUser(user *db.Users) error {
@@ -316,15 +309,6 @@ func (n *EventToNotifyServer) storeUser(user *db.Users) error {
 		return err
 	}
 	return nil
-}
-
-func (n *EventToNotifyServer) storeEvent(event *db.EventMsg) (uint, error) {
-	id, err := n.eventMsgRepo.Add(event)
-	if err != nil {
-		log.Errorf("Error adding event to db %v", err)
-		return 0, err
-	}
-	return id, nil
 }
 
 func IsValidNotificationScopeForRole(r roles.RoleType, s cnotif.NotificationScope) bool {

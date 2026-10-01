@@ -20,6 +20,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
@@ -50,8 +51,10 @@ func (es *MailerEventServer) EventNotification(ctx context.Context, e *epb.Event
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteCreate]):
 		c := evt.EventToEventConfig[evt.EventInviteCreate]
-		msg, err := epb.UnmarshalEventInvitationCreated(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventInvitationCreated](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
+
 			return nil, err
 		}
 
@@ -59,8 +62,10 @@ func (es *MailerEventServer) EventNotification(ctx context.Context, e *epb.Event
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
-		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAllocation](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
+
 			return nil, err
 		}
 
@@ -68,8 +73,10 @@ func (es *MailerEventServer) EventNotification(ctx context.Context, e *epb.Event
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
 		c := evt.EventToEventConfig[evt.EventSimAddPackage]
-		msg, err := epb.UnmarshalEventSimAddPackage(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAddPackage](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
+
 			return nil, err
 		}
 
@@ -77,8 +84,10 @@ func (es *MailerEventServer) EventNotification(ctx context.Context, e *epb.Event
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventReceiptGenerate]):
 		c := evt.EventToEventConfig[evt.EventReceiptGenerate]
-		msg, err := epb.UnmarshalEventReceiptGenerated(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventReceiptGenerated](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
+
 			return nil, err
 		}
 

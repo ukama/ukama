@@ -22,6 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	notif "github.com/ukama/ukama/systems/common/notification"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	csub "github.com/ukama/ukama/systems/common/rest/client/subscriber"
 )
@@ -49,336 +50,378 @@ func (es *EventToNotifyEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOrgAdd]):
 		c := evt.EventToEventConfig[evt.EventOrgAdd]
-		msg, err := epb.UnmarshalEventOrgCreate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventOrgCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventOrgAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserAdd]):
 		c := evt.EventToEventConfig[evt.EventUserAdd]
-		msg, err := epb.UnmarshalEventUserCreate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventUserCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventUserAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDeactivate]):
 		c := evt.EventToEventConfig[evt.EventUserDeactivate]
-		msg, err := epb.UnmarshalEventUserDeactivate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventUserDeactivate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventUserDeactivate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventUserDelete]):
 		c := evt.EventToEventConfig[evt.EventUserDelete]
-		msg, err := epb.UnmarshalEventUserDelete(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventUserDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventUserDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberCreate]):
 		c := evt.EventToEventConfig[evt.EventMemberCreate]
-		msg, err := epb.UnmarshalAddMemberEventRequest(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.AddMemberEventRequest](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventMemberCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMemberDelete]):
 		c := evt.EventToEventConfig[evt.EventMemberDelete]
-		msg, err := epb.UnmarshalDeleteMemberEventRequest(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.DeleteMemberEventRequest](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventMemberDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkAdd]):
 		c := evt.EventToEventConfig[evt.EventNetworkAdd]
-		msg, err := epb.UnmarshalEventNetworkCreate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventNetworkCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNetworkAdd(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNetworkDelete]):
 		c := evt.EventToEventConfig[evt.EventNetworkDelete]
-		msg, err := epb.UnmarshalEventNetworkDelete(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventNetworkDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNetworkDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
 		c := evt.EventToEventConfig[evt.EventNodeCreate]
-		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeUpdate]
-		msg, err := epb.UnmarshalEventRegistryNodeUpdate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeUpdate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateUpdate]):
 		c := evt.EventToEventConfig[evt.EventNodeStateUpdate]
-		msg, err := epb.UnmarshalEventRegistryNodeStatusUpdate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeStatusUpdate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeStateUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
 		c := evt.EventToEventConfig[evt.EventNodeDelete]
-		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
 		c := evt.EventToEventConfig[evt.EventNodeAssign]
-		msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeAssign](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeAssign(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
 		c := evt.EventToEventConfig[evt.EventNodeRelease]
-		msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeReleasedEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeRelease(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteCreate]):
 		c := evt.EventToEventConfig[evt.EventInviteCreate]
-		msg, err := epb.UnmarshalEventInvitationCreated(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventInvitationCreated](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventInviteCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteDelete]):
 		c := evt.EventToEventConfig[evt.EventInviteDelete]
-		msg, err := epb.UnmarshalEventInvitationDeleted(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventInvitationDeleted](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventInviteDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInviteUpdate]):
 		c := evt.EventToEventConfig[evt.EventInviteUpdate]
-		msg, err := epb.UnmarshalEventInvitationUpdated(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventInvitationUpdated](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventInviteUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
 		c := evt.EventToEventConfig[evt.EventNodeOnline]
-		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeOnline(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
 		c := evt.EventToEventConfig[evt.EventNodeOffline]
-		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeOfflineEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeOffline(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimServiceOn]):
 		c := evt.EventToEventConfig[evt.EventSimServiceOn]
-		msg, err := epb.UnmarshalEventSimServiceOn(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimServiceOn](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimServiceOn(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAllocate]):
 		c := evt.EventToEventConfig[evt.EventSimAllocate]
-		msg, err := epb.UnmarshalEventSimAllocation(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAllocation](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimAllocate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimDelete]):
 		c := evt.EventToEventConfig[evt.EventSimDelete]
-		msg, err := epb.UnmarshalEventSimTermination(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimTermination](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimAddPackage]):
 		c := evt.EventToEventConfig[evt.EventSimAddPackage]
-		msg, err := epb.UnmarshalEventSimAddPackage(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimAddPackage](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimAddPackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteCreate]):
 		c := evt.EventToEventConfig[evt.EventSiteCreate]
-		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventAddSite](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSiteCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSiteUpdate]):
 		c := evt.EventToEventConfig[evt.EventSiteUpdate]
-		msg, err := epb.UnmarshalEventUpdateSite(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventUpdateSite](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSiteUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimActivePackage]):
 		c := evt.EventToEventConfig[evt.EventSimActivePackage]
-		msg, err := epb.UnmarshalEventSimActivePackage(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimActivePackage](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimActivePackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimRemovePackage]):
 		c := evt.EventToEventConfig[evt.EventSimRemovePackage]
-		msg, err := epb.UnmarshalEventSimRemovePackage(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimRemovePackage](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimRemovePackage(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberCreate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberCreate]
-		msg, err := epb.UnmarshalEventSubscriberAdded(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSubscriberAdded](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSubscriberCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]):
 		c := evt.EventToEventConfig[evt.EventSubscriberUpdate]
-		msg, err := epb.UnmarshalEventSubscriberAdded(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSubscriberAdded](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSubscriberUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSubscriberDelete]):
 		c := evt.EventToEventConfig[evt.EventSubscriberDelete]
-		msg, err := epb.UnmarshalEventSubscriberDeleted(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSubscriberDeleted](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSubscriberDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventSimsUpload]):
 		c := evt.EventToEventConfig[evt.EventSimsUpload]
-		msg, err := epb.UnmarshalEventSimsUploaded(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventSimsUploaded](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventSimsUpload(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventBaserateUpload]):
 		c := evt.EventToEventConfig[evt.EventBaserateUpload]
-		msg, err := epb.UnmarshalEventBaserateUploaded(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventBaserateUploaded](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventBaserateUpload(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageCreate]):
 		c := evt.EventToEventConfig[evt.EventPackageCreate]
-		msg, err := epb.UnmarshalCreatePackageEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.CreatePackageEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventPackageCreate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageUpdate]):
 		c := evt.EventToEventConfig[evt.EventPackageUpdate]
-		msg, err := epb.UnmarshalUpdatePackageEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.UpdatePackageEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventPackageUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPackageDelete]):
 		c := evt.EventToEventConfig[evt.EventPackageDelete]
-		msg, err := epb.UnmarshalDeletePackageEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.DeletePackageEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventPackageDelete(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventMarkupUpdate]):
 		c := evt.EventToEventConfig[evt.EventMarkupUpdate]
-		msg, err := epb.UnmarshalDefaultMarkupUpdate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.DefaultMarkupUpdate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventMarkupUpdate(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
 		c := evt.EventToEventConfig[evt.EventNodeStateTransition]
-		msg, err := epb.UnmarshalNodeStateChangeEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeStateChangeEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventNodeStateTransition(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentSuccess]):
 		c := evt.EventToEventConfig[evt.EventPaymentSuccess]
-		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.Payment](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventPaymentSuccess(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventPaymentFailed]):
 		c := evt.EventToEventConfig[evt.EventPaymentFailed]
-		msg, err := epb.UnmarshalPayment(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.Payment](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventPaymentFailed(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOperationCompleted]):
 		c := evt.EventToEventConfig[evt.EventOperationCompleted]
-		msg, err := epb.UnmarshalOperationCompletedEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.OperationCompletedEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventOperationCompleted(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventOperationFailed]):
 		c := evt.EventToEventConfig[evt.EventOperationFailed]
-		msg, err := epb.UnmarshalOperationFailedEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.OperationFailedEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventOperationFailed(es, msg, &c)
 
 	case msgbus.PrepareRoute(es.orgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]):
 		c := evt.EventToEventConfig[evt.EventInvoiceGenerate]
-		msg, err := epb.UnmarshalReport(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.Report](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 		return handleEventInvoiceGenerate(es, msg, &c)
@@ -527,7 +570,7 @@ func handleEventNodeAssign(es *EventToNotifyEventServer, msg *epb.EventRegistryN
 	return es.processEvent(c, es.orgId, "", msg.NodeId, "", "", jmsg, msg.NodeId)
 }
 
-func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.EventRegistryNodeRelease, c *evt.EventConfig) (*epb.EventResponse, error) {
+func handleEventNodeRelease(es *EventToNotifyEventServer, msg *epb.NodeReleasedEvent, c *evt.EventConfig) (*epb.EventResponse, error) {
 	jmsg, err := json.Marshal(msg)
 	if err != nil {
 		log.Errorf("Failed to marshal message for %s to JSON. Error %+v", c.Name, err)
@@ -802,8 +845,8 @@ func handleEventPaymentSuccess(es *EventToNotifyEventServer, msg *epb.Payment, c
 	}
 
 	if msg.ItemType != ukama.ItemTypeInvoice.String() {
-		log.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
-		return nil, fmt.Errorf("unexpected item type for successful payment: %s", msg.ItemType)
+		log.Infof("Ignoring successful payment for item type %s", msg.ItemType)
+		return &epb.EventResponse{}, nil
 	}
 
 	metadata := map[string]string{}
@@ -889,12 +932,6 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		return nil, err
 	}
 
-	id, err := es.n.storeEvent(event)
-	if err != nil {
-		log.Errorf("failed to store event: %v", err)
-		return nil, err
-	}
-
 	dn := &db.Notification{
 		Id:           uuid.NewV4(),
 		Title:        ec.Title,
@@ -907,10 +944,9 @@ func (es *EventToNotifyEventServer) processEvent(ec *evt.EventConfig, orgId, net
 		NodeId:       nodeId,
 		ResourceId:   rid,
 		SubscriberId: subscriberId,
-		EventMsgID:   id,
 	}
 
-	err = es.n.storeNotification(dn)
+	err = es.n.storeNotification(event, dn)
 	if err != nil {
 		log.Errorf("failed to store notification: %v", err)
 		return nil, err

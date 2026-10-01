@@ -81,7 +81,6 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventAccountingSync],
 				evt.EventRoutingKey[evt.EventInvoiceGenerate],
 				evt.EventRoutingKey[evt.EventInvoiceDelete],
-				evt.EventRoutingKey[evt.EventHealthReportStore],
 				evt.EventRoutingKey[evt.EventNotificationDelete],
 				evt.EventRoutingKey[evt.EventNotificationStore],
 				evt.EventRoutingKey[evt.EventPaymentSuccess],
