@@ -76,7 +76,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.released"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.release"):
 		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -237,8 +237,6 @@ func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeRelease
 		MeshHostName: orgNet.MeshHostName,
 		MeshPort:     orgNet.MeshPort,
 		Org:          l.orgName,
-		Network:      msg.Network,
-		Site:         msg.Site,
 	}
 
 	err = l.Nns.nns.Add(context.Background(), obj)

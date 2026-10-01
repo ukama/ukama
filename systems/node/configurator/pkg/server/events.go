@@ -67,8 +67,8 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 	return &epb.EventResponse{}, nil
 }
 
-func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.NodeCreatedEvent, error) {
-	p := &epb.NodeCreatedEvent{}
+func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
+	p := &epb.EventRegistryNodeCreate{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
@@ -78,7 +78,7 @@ func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) 
 }
 
 // so, commenting for compiling.
-func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *epb.NodeCreatedEvent) error {
+func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *epb.EventRegistryNodeCreate) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	//TBU

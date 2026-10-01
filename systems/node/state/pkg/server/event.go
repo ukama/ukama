@@ -263,7 +263,7 @@ func (n *StateEventServer) handleNodeAssignEvent(ctx context.Context, e *epb.Eve
 }
 
 func (n *StateEventServer) handleNodeReleaseEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalEventRegistryNodeRelease(e.Msg, e.RoutingKey)
+	msg, err := epb.UnmarshalNodeReleasedEvent(e.Msg, e.RoutingKey)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node release event: %w", err)
 	}

@@ -87,8 +87,8 @@ func (l *LookupEventServer) handleEventCloudLookupOrgCreate(key string, msg *pb.
 	return nil
 }
 
-func (l *LookupEventServer) unmarshalOrgIpUpdateEvent(msg *anypb.Any) (*epb.OrgIPUpdateEvent, error) {
-	p := &epb.OrgIPUpdateEvent{}
+func (l *LookupEventServer) unmarshalOrgIpUpdateEvent(msg *anypb.Any) (*epb.MeshRegisterEvent, error) {
+	p := &epb.MeshRegisterEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
@@ -97,13 +97,13 @@ func (l *LookupEventServer) unmarshalOrgIpUpdateEvent(msg *anypb.Any) (*epb.OrgI
 	return p, nil
 }
 
-func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.OrgIPUpdateEvent) error {
+func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.MeshRegisterEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	/* Read the Org first */
-	org, err := l.orgRepo.GetByName(msg.OrgName)
+	org, err := l.orgRepo.GetByName(l.orgName)
 	if err != nil {
-		log.Errorf("Org %s not found", msg.OrgName)
+		log.Errorf("Org %s not found", l.orgName)
 		return status.Error(codes.NotFound, "Org not found")
 	}
 
@@ -111,7 +111,7 @@ func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.Org
 
 	err = orgIp.Set(msg.Ip)
 	if err != nil {
-		log.Errorf("Invalid ip %s for Org %s. Error %s", msg.Ip, msg.OrgName, err.Error())
+		log.Errorf("Invalid ip %s for Org %s. Error %s", msg.Ip, l.orgName, err.Error())
 		return err
 	}
 
@@ -120,7 +120,7 @@ func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.Org
 	/* Update Ip */
 	err = l.orgRepo.Update(org)
 	if err != nil {
-		log.Errorf("Error updating org %s", msg.OrgName)
+		log.Errorf("Error updating org %s", l.orgName)
 		return err
 	}
 	return nil
