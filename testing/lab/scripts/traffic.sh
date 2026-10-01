@@ -76,22 +76,6 @@ podman exec "$UE_CONTAINER" \
 echo "traffic route ue=$UE_KEY media=$MEDIA_IP via=tun0"
 podman exec "$UE_CONTAINER" ip route get "$MEDIA_IP" || true
 
-dump_datapath() {
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        'curl -sS http://127.0.0.1:18028/v1/status || true' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        'curl -sS http://127.0.0.1:18030/v1/status || true' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        'ip rule; ip route show table 2000; ip route show table 1000; \
-         iptables -S FORWARD' >&2 || true
-    podman exec "$TNODE_CONTAINER" sh -lc \
-        'ovs-ofctl -O OpenFlow15 dump-meters br0 || true; \
-         ovs-ofctl -O OpenFlow15 dump-flows br0 || true' >&2 || true
-    if [ -n "${MEDIA_CONTAINER:-}" ]; then
-        podman logs --tail 120 "$MEDIA_CONTAINER" >&2 || true
-    fi
-}
-
 echo "traffic ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB media=$MEDIA_IP"
 if timeout -k 5s "${ATTEMPT_TIMEOUT_SEC}s" \
     env MEDIA_IP="$MEDIA_IP" HTTP_PORT=8080 IPERF_PORT=5201 \
@@ -105,8 +89,6 @@ else
     else
         echo "traffic transfer failed rc=$traffic_rc" >&2
     fi
-    echo "traffic transfer failed; dumping datapath state" >&2
-    dump_datapath
     exit 1
 fi
 echo "traffic-complete ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB"
