@@ -9,6 +9,7 @@
 package msgbus
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -90,7 +91,25 @@ type MsgClient struct {
 	// consumers on reconnect (the same library the publisher/qpub uses).
 	wConn     *rabbitmq.Conn
 	consumers []*rabbitmq.Consumer
+
+	retry *RetryPolicy
+	wPub  *rabbitmq.Publisher
 }
+
+// RetryPolicy retries a failed message via "<queue>.retry" every Delay, then
+// parks it in "<queue>.parking" after MaxAttempts failed deliveries.
+type RetryPolicy struct {
+	MaxAttempts int
+	Delay       time.Duration
+}
+
+const (
+	retryCountHeader   = "x-retry-count"
+	origRoutingKeyHdr  = "x-original-routing-key"
+	retryQueueSuffix   = ".retry"
+	parkingQueueSuffix = ".parking"
+	republishTimeout   = 10 * time.Second
+)
 
 // subscription captures everything required to (re)establish a consumer so
 // it can be replayed after a connection/channel drop.
@@ -143,6 +162,19 @@ func NewConsumerClient(connectionString string) (Consumer, error) {
 	return &MsgClient{
 		connectionString: connectionString,
 		log:              logrus.WithField("prefix", ""),
+	}, nil
+}
+
+// NewConsumerClientWithRetry creates a consumer client that applies policy to failed messages.
+func NewConsumerClientWithRetry(connectionString string, policy RetryPolicy) (Consumer, error) {
+	if policy.MaxAttempts < 1 || policy.Delay <= 0 {
+		return nil, fmt.Errorf("invalid retry policy %+v: MaxAttempts must be >= 1 and Delay > 0", policy)
+	}
+	p := policy
+	return &MsgClient{
+		connectionString: connectionString,
+		log:              logrus.WithField("prefix", ""),
+		retry:            &p,
 	}, nil
 }
 
@@ -345,6 +377,15 @@ func (m *MsgClient) subscribe(sub *subscription) error {
 		}
 	}
 
+	if m.retry != nil && !sub.autoAck {
+		if err := m.declareRetryTopology(sub.queueName); err != nil {
+			return err
+		}
+		if err := m.ensurePublisher(conn); err != nil {
+			return err
+		}
+	}
+
 	opts := []func(*rabbitmq.ConsumerOptions){
 		rabbitmq.WithConsumerOptionsConsumerName(sub.consumerName),
 	}
@@ -484,14 +525,24 @@ func (m *MsgClient) declareTopology(sub *subscription) error {
 // signature (streadway amqp.Delivery + done channel) and maps the outcome to a
 // wagslane Action. When autoAck is set the returned Action is ignored.
 func (m *MsgClient) wagslaneHandler(sub *subscription) rabbitmq.Handler {
+	managedRetry := m.retry != nil && !sub.autoAck
 	return func(d rabbitmq.Delivery) rabbitmq.Action {
 		done := make(chan bool, 1)
-		sub.handlerFunc(toStreadwayDelivery(d.Delivery), done)
+		sd := toStreadwayDelivery(d.Delivery)
+		if managedRetry {
+			if rk, ok := d.Headers[origRoutingKeyHdr].(string); ok && rk != "" {
+				sd.RoutingKey = rk
+			}
+		}
+		sub.handlerFunc(sd, done)
 
 		select {
 		case ok := <-done:
 			if ok {
 				return rabbitmq.Ack
+			}
+			if managedRetry {
+				return m.retryOrPark(sub, d)
 			}
 			if sub.requeueOnFailure {
 				return rabbitmq.NackRequeue
@@ -499,11 +550,152 @@ func (m *MsgClient) wagslaneHandler(sub *subscription) rabbitmq.Handler {
 			return rabbitmq.NackDiscard
 		case <-time.After(handlerAckTimeout):
 			m.log.Errorf("[msgbus] handler timed out for queue %q key %q", sub.queueName, d.RoutingKey)
+			if managedRetry {
+				return m.retryOrPark(sub, d)
+			}
 			if sub.requeueOnFailure {
 				return rabbitmq.NackRequeue
 			}
 			return rabbitmq.NackDiscard
 		}
+	}
+}
+
+func (m *MsgClient) retryOrPark(sub *subscription, d rabbitmq.Delivery) rabbitmq.Action {
+	failures := headerInt(d.Headers, retryCountHeader) + 1
+
+	origRK := d.RoutingKey
+	if rk, ok := d.Headers[origRoutingKeyHdr].(string); ok && rk != "" {
+		origRK = rk
+	}
+
+	headers := rabbitmq.Table{}
+	for k, v := range d.Headers {
+		headers[k] = v
+	}
+	headers[retryCountHeader] = int32(failures)
+	headers[origRoutingKeyHdr] = origRK
+
+	target, expiration := sub.queueName+retryQueueSuffix, fmt.Sprint(m.retry.Delay.Milliseconds())
+	if failures >= m.retry.MaxAttempts {
+		target, expiration = sub.queueName+parkingQueueSuffix, ""
+		m.log.Errorf("[msgbus] queue %q key %q failed %d/%d attempts; parking in %q",
+			sub.queueName, origRK, failures, m.retry.MaxAttempts, target)
+	} else {
+		m.log.Warnf("[msgbus] queue %q key %q failed attempt %d/%d; retrying in %s via %q",
+			sub.queueName, origRK, failures, m.retry.MaxAttempts, m.retry.Delay, target)
+	}
+
+	if err := m.republish(target, d, headers, expiration); err != nil {
+		m.log.Errorf("[msgbus] republish to %q failed: %s; requeueing", target, err)
+		return rabbitmq.NackRequeue
+	}
+	return rabbitmq.Ack
+}
+
+func (m *MsgClient) republish(queue string, d rabbitmq.Delivery, headers rabbitmq.Table, expiration string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), republishTimeout)
+	defer cancel()
+
+	opts := []func(*rabbitmq.PublishOptions){
+		rabbitmq.WithPublishOptionsExchange(""),
+		rabbitmq.WithPublishOptionsPersistentDelivery,
+		rabbitmq.WithPublishOptionsHeaders(headers),
+		rabbitmq.WithPublishOptionsContentType(d.ContentType),
+		rabbitmq.WithPublishOptionsContentEncoding(d.ContentEncoding),
+		rabbitmq.WithPublishOptionsPriority(d.Priority),
+		rabbitmq.WithPublishOptionsCorrelationID(d.CorrelationId),
+		rabbitmq.WithPublishOptionsReplyTo(d.ReplyTo),
+		rabbitmq.WithPublishOptionsMessageID(d.MessageId),
+		rabbitmq.WithPublishOptionsTimestamp(d.Timestamp),
+		rabbitmq.WithPublishOptionsType(d.Type),
+		rabbitmq.WithPublishOptionsAppID(d.AppId),
+	}
+	if expiration != "" {
+		opts = append(opts, rabbitmq.WithPublishOptionsExpiration(expiration))
+	}
+
+	m.connMu.Lock()
+	pub := m.wPub
+	m.connMu.Unlock()
+	if pub == nil {
+		return fmt.Errorf("retry publisher not available")
+	}
+
+	confs, err := pub.PublishWithDeferredConfirmWithContext(ctx, d.Body, []string{queue}, opts...)
+	if err != nil {
+		return err
+	}
+	if len(confs) != 1 || confs[0] == nil {
+		return fmt.Errorf("no publisher confirmation available")
+	}
+	acked, err := confs[0].WaitContext(ctx)
+	if err != nil {
+		return err
+	}
+	if !acked {
+		return fmt.Errorf("broker nacked the republish")
+	}
+	return nil
+}
+
+func (m *MsgClient) declareRetryTopology(queue string) error {
+	tconn, err := amqp091.Dial(m.connectionString)
+	if err != nil {
+		return fmt.Errorf("retry topology setup: dial failed: %w", err)
+	}
+	defer func() { _ = tconn.Close() }()
+
+	ch, err := tconn.Channel()
+	if err != nil {
+		return fmt.Errorf("retry topology setup: channel failed: %w", err)
+	}
+	defer func() { _ = ch.Close() }()
+
+	if _, err := ch.QueueDeclare(queue+retryQueueSuffix, true, false, false, false, amqp091.Table{
+		"x-dead-letter-exchange":    "",
+		"x-dead-letter-routing-key": queue,
+	}); err != nil {
+		return fmt.Errorf("failed to declare retry queue for %q: %w", queue, err)
+	}
+
+	if _, err := ch.QueueDeclare(queue+parkingQueueSuffix, true, false, false, false, nil); err != nil {
+		return fmt.Errorf("failed to declare parking queue for %q: %w", queue, err)
+	}
+
+	return nil
+}
+
+func (m *MsgClient) ensurePublisher(conn *rabbitmq.Conn) error {
+	m.connMu.Lock()
+	defer m.connMu.Unlock()
+
+	if m.wPub != nil {
+		return nil
+	}
+
+	pub, err := rabbitmq.NewPublisher(conn, rabbitmq.WithPublisherOptionsLogging, rabbitmq.WithPublisherOptionsConfirm)
+	if err != nil {
+		return err
+	}
+	m.wPub = pub
+	return nil
+}
+
+func headerInt(h map[string]interface{}, key string) int {
+	switch v := h[key].(type) {
+	case int32:
+		return int(v)
+	case int64:
+		return int(v)
+	case int:
+		return v
+	case int16:
+		return int(v)
+	case int8:
+		return int(v)
+	default:
+		return 0
 	}
 }
 
@@ -690,6 +882,10 @@ func (m *MsgClient) Close() {
 
 	m.connMu.Lock()
 	defer m.connMu.Unlock()
+	if m.wPub != nil {
+		m.wPub.Close()
+		m.wPub = nil
+	}
 	if m.wConn != nil {
 		_ = m.wConn.Close()
 		m.wConn = nil

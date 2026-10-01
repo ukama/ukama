@@ -27,6 +27,12 @@ type Config struct {
 	MasterOrgName    string
 	Shovel           Shovel
 	MsgBus           MsgBus
+	EventRetry       EventRetry `default:"{}"`
+}
+
+type EventRetry struct {
+	MaxAttempts int           `default:"10"`
+	Delay       time.Duration `default:"30s"`
 }
 
 type MsgBus struct {
