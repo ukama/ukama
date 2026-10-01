@@ -13,7 +13,7 @@
  * GraphQL context or network. All functions are stateless and take an
  * injectable `now` for deterministic tests.
  */
-import { NODE_TYPE } from "../common/enums";
+import { NODE_CONNECTIVITY, NODE_TYPE } from "../common/enums";
 import {
   NodeOperationStatusDto,
   OperationDto,
@@ -72,17 +72,23 @@ export const activeOperation = (
 export interface NodeLockRead {
   id: string;
   type?: NODE_TYPE;
+  connectivity?: string;
   lock?: ResourceLockDto;
   /** True when the lock read failed — fail-open (treated as not busy). */
   failed?: boolean;
 }
 
+export interface SiteNodeStatus extends NodeOperationStatusDto {
+  connectivity?: string;
+}
+
 export const toNodeStatus = (
   n: NodeLockRead,
   now: number = Date.now()
-): NodeOperationStatusDto => ({
+): SiteNodeStatus => ({
   nodeId: n.id,
   type: n.type,
+  connectivity: n.connectivity,
   busy: n.failed ? false : isLockBusy(n.lock, now),
   operation: n.failed ? undefined : activeOperation(n.lock, now),
 });
@@ -114,23 +120,38 @@ export const busyReason = (op?: OperationDto): string => {
  *  - service    depends on the tower node (tnode)
  */
 export const buildSiteActions = (
-  statuses: NodeOperationStatusDto[]
+  statuses: SiteNodeStatus[]
 ): SiteActionsDto => {
   const tower = statuses.find(s => s.type === NODE_TYPE.tnode);
   const amp = statuses.find(s => s.type === NODE_TYPE.anode);
-  const firstBusy = statuses.find(s => s.busy);
+  const controllers = statuses.filter(s => s.type === NODE_TYPE.cnode);
 
-  const restartSite: SiteActionsDto["restartSite"] = firstBusy
-    ? { available: false, reason: busyReason(firstBusy.operation) }
+  const unavailableReason = (nodes: SiteNodeStatus[]): string | undefined => {
+    const busy = nodes.find(n => n.busy);
+    if (busy) return busyReason(busy.operation);
+    const notOnline = nodes.find(
+      n =>
+        n.connectivity?.trim().toLowerCase() !==
+        NODE_CONNECTIVITY.Online.toLowerCase()
+    );
+    if (notOnline) return `Node ${notOnline.nodeId} is not online`;
+    return undefined;
+  };
+
+  const restartReason = statuses.length
+    ? unavailableReason(statuses)
+    : "No nodes on this site";
+  const restartSite: SiteActionsDto["restartSite"] = restartReason
+    ? { available: false, reason: restartReason }
     : { available: true };
 
   const roleAction = (
-    node: NodeOperationStatusDto | undefined,
+    node: SiteNodeStatus | undefined,
     missingReason: string
   ): SiteActionsDto["rf"] => {
     if (!node) return { available: false, reason: missingReason };
-    if (node.busy)
-      return { available: false, reason: busyReason(node.operation) };
+    const reason = unavailableReason([node, ...controllers]);
+    if (reason) return { available: false, reason };
     return { available: true };
   };
 
