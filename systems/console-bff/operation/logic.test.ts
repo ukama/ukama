@@ -14,10 +14,7 @@ import {
   nodeResourceKey,
   toNodeStatus,
 } from "./logic";
-import {
-  OperationDto,
-  ResourceLockDto,
-} from "./resolvers/types";
+import { OperationDto, ResourceLockDto } from "./resolvers/types";
 
 const NOW = Date.parse("2026-07-06T12:00:00Z");
 
@@ -39,9 +36,7 @@ const lock = (over: Partial<ResourceLockDto> = {}): ResourceLockDto => ({
   ...over,
 });
 
-const status = (
-  over: Partial<SiteNodeStatus>
-): SiteNodeStatus => ({
+const status = (over: Partial<SiteNodeStatus>): SiteNodeStatus => ({
   nodeId: "n",
   busy: false,
   connectivity: NODE_CONNECTIVITY.Online,
@@ -118,7 +113,12 @@ describe("buildSiteActions — independent async release", () => {
   it("keeps service unavailable after lease expiry until the manager releases it", () => {
     const expired = op({ leaseExpiresAt: new Date(NOW - 1000).toISOString() });
     const tower = toNodeStatus(
-      { id: "t", type: NODE_TYPE.tnode, lock: lock({ operation: expired }), connectivity: NODE_CONNECTIVITY.Online },
+      {
+        id: "t",
+        type: NODE_TYPE.tnode,
+        lock: lock({ operation: expired }),
+        connectivity: NODE_CONNECTIVITY.Online,
+      },
       NOW
     );
     const amp = status({ nodeId: "a", type: NODE_TYPE.anode });
@@ -130,7 +130,12 @@ describe("buildSiteActions — independent async release", () => {
     expect(waiting.rf.available).toBe(true);
 
     const released = toNodeStatus(
-      { id: "t", type: NODE_TYPE.tnode, lock: { locked: false }, connectivity: NODE_CONNECTIVITY.Online },
+      {
+        id: "t",
+        type: NODE_TYPE.tnode,
+        lock: { locked: false },
+        connectivity: NODE_CONNECTIVITY.Online,
+      },
       NOW
     );
     const ready = buildSiteActions([released, amp]);
@@ -205,7 +210,8 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
 
   it("all offline and unlocked disables every action with a reason", () => {
     const nodes = site().map(n => ({
-      ...n, connectivity: NODE_CONNECTIVITY.Offline,
+      ...n,
+      connectivity: NODE_CONNECTIVITY.Offline,
     }));
     expectBlocked(buildSiteActions(nodes));
   });
@@ -238,7 +244,9 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
 
   it("unknown or missing connectivity never enables an action", () => {
     for (const connectivity of [NODE_CONNECTIVITY.Unknown, undefined, ""]) {
-      expectBlocked(buildSiteActions(site().map(n => ({ ...n, connectivity }))));
+      expectBlocked(
+        buildSiteActions(site().map(n => ({ ...n, connectivity })))
+      );
     }
   });
 
@@ -263,11 +271,15 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
 
   it("clearing a lock while still offline does not enable actions", () => {
     const nodes = site();
-    nodes[2] = toNodeStatus({
-      id: "c", type: NODE_TYPE.cnode,
-      connectivity: NODE_CONNECTIVITY.Offline,
-      lock: { locked: false },
-    }, NOW);
+    nodes[2] = toNodeStatus(
+      {
+        id: "c",
+        type: NODE_TYPE.cnode,
+        connectivity: NODE_CONNECTIVITY.Offline,
+        lock: { locked: false },
+      },
+      NOW
+    );
     expectBlocked(buildSiteActions(nodes));
     nodes[2].connectivity = NODE_CONNECTIVITY.Online;
     const ready = buildSiteActions(nodes);
@@ -277,14 +289,24 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
   });
 
   it("failed lock reads preserve connectivity and existing fail-open behavior", () => {
-    const nodes = site().map(n => toNodeStatus({
-      id: n.nodeId, type: n.type,
-      connectivity: NODE_CONNECTIVITY.Offline, failed: true,
-    }, NOW));
+    const nodes = site().map(n =>
+      toNodeStatus(
+        {
+          id: n.nodeId,
+          type: n.type,
+          connectivity: NODE_CONNECTIVITY.Offline,
+          failed: true,
+        },
+        NOW
+      )
+    );
     expectBlocked(buildSiteActions(nodes));
-    const ready = buildSiteActions(nodes.map(n => ({
-      ...n, connectivity: NODE_CONNECTIVITY.Online,
-    })));
+    const ready = buildSiteActions(
+      nodes.map(n => ({
+        ...n,
+        connectivity: NODE_CONNECTIVITY.Online,
+      }))
+    );
     expect(ready.restartSite.available).toBe(true);
     expect(ready.rf.available).toBe(true);
     expect(ready.service.available).toBe(true);
@@ -296,9 +318,14 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
 
   it("checks every controller, even if an earlier controller is idle", () => {
     const nodes = site();
-    nodes.push(status({
-      nodeId: "c2", type: NODE_TYPE.cnode, busy: true, operation: op(),
-    }));
+    nodes.push(
+      status({
+        nodeId: "c2",
+        type: NODE_TYPE.cnode,
+        busy: true,
+        operation: op(),
+      })
+    );
     expectBlocked(buildSiteActions(nodes));
   });
 });
