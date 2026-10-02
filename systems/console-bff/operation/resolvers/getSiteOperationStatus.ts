@@ -47,14 +47,19 @@ export class GetSiteOperationStatusResolver {
 
     const reads: NodeLockRead[] = await Promise.all(
       nodes.map(async n => {
+        const node = {
+          id: n.id,
+          type: n.type,
+          connectivity: n.status?.connectivity,
+        };
         try {
           const lock = await ctx.dataSources.operation.getResourceLock(
             opURL,
             nodeResourceKey(n.id)
           );
-          return { id: n.id, type: n.type, lock };
+          return { ...node, lock };
         } catch {
-          return { id: n.id, type: n.type, failed: true };
+          return { ...node, failed: true };
         }
       })
     );
