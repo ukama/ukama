@@ -44,6 +44,9 @@ func main() {
 
 	initConfig()
 
+	/* One unacked event per listener, so a held event can't strand others */
+	msgbus.ConsumerPrefetchCount = 1
+
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
 	db := initDb()

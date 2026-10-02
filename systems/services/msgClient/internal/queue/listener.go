@@ -21,7 +21,9 @@ import (
 	hpb "google.golang.org/grpc/health/grpc_health_v1"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 )
@@ -43,6 +45,7 @@ type QueueListener struct {
 	lastPing       time.Time
 	continuousMiss uint32
 	retrying       atomic.Bool
+	stopped        chan struct{}
 }
 
 // A listener whose subscribe fails keeps retrying on this backoff; giving up
@@ -51,6 +54,11 @@ var (
 	listenerRetryMin = 2 * time.Second
 	listenerRetryMax = 30 * time.Second
 )
+
+// maxHold bounds how long one event is held unacked while its service is
+// unreachable. It stays below RabbitMQ's consumer_timeout (30 min), after
+// which the broker closes the channel.
+var maxHold = 25 * time.Minute
 
 func NewQueueListener(s db.Service) (*QueueListener, error) {
 
@@ -105,6 +113,7 @@ func NewQueueListener(s db.Service) (*QueueListener, error) {
 func (q *QueueListener) queueListenerroutine() {
 
 	log.Debugf("[%s]: Starting listener routine.", q.serviceName)
+	q.stopped = make(chan struct{})
 	/* Validate routes */ // TODO: Update ParseRoutesList implementation
 	routes, err := mb.ParseRouteList(q.routes)
 	if err != nil {
@@ -139,6 +148,7 @@ func (q *QueueListener) queueListenerroutine() {
 	<-q.c
 
 	log.Infof("[%s] Shutting down queue listener", q.serviceName)
+	close(q.stopped)
 	q.mConn.Close()
 	q.state.Store(false)
 }
@@ -158,15 +168,13 @@ func (q *QueueListener) stopQueueListening() {
 }
 
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
-	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
-	defer cancel()
-
-	q.processEventMsg(ctx, delivery)
-
-	done <- true
+	done <- q.processEventMsg(delivery)
 }
 
-func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
+// processEventMsg returns true to ack the event and false to requeue it. The
+// event is retried until it reaches the service; any reply from the service,
+// including an error, counts as delivered.
+func (q *QueueListener) processEventMsg(d amqp.Delivery) bool {
 	// Read Db for the key and find the services which we need to post message to.
 	log.Debugf("Raw message: %+v", d)
 
@@ -174,7 +182,7 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 	err := proto.Unmarshal(d.Body, evtAny)
 	if err != nil {
 		log.Errorf("Failed to parse message with key %s. Error %s", d.RoutingKey, err.Error())
-		return
+		return true
 	}
 	e := &pb.Event{
 		RoutingKey: d.RoutingKey,
@@ -183,17 +191,44 @@ func (q *QueueListener) processEventMsg(ctx context.Context, d amqp.Delivery) {
 
 	log.Infof("Received a message: %+v", e)
 
+	deadline := time.Now().Add(maxHold)
+	backoff := listenerRetryMin
+	for {
+		if q.sendEvent(e) {
+			return true
+		}
+		if time.Now().After(deadline) {
+			log.Warnf("[%s] Requeueing %s, undelivered for %s", q.serviceName, d.RoutingKey, maxHold)
+			return false
+		}
+		select {
+		case <-q.stopped:
+			return false
+		case <-time.After(backoff):
+		}
+		backoff = min(backoff*2, listenerRetryMax)
+	}
+}
+
+// sendEvent reports whether the event reached the service.
+func (q *QueueListener) sendEvent(e *pb.Event) bool {
 	if q.gConn == nil {
 		if err := q.reConnect(); err != nil {
-			return
+			return false
 		}
 	}
 
-	_, err = q.gClient.EventNotification(ctx, e)
-	if err != nil {
-		log.Errorf("Failed to send message to %s with key %s. Error %s", q.serviceHost, d.RoutingKey, err.Error())
+	ctx, cancel := context.WithTimeout(context.Background(), q.grpcTimeout)
+	defer cancel()
+
+	_, err := q.gClient.EventNotification(ctx, e)
+	if err == nil {
+		return true
 	}
 
+	log.Errorf("[%s] Failed to deliver %s: %v", q.serviceName, e.RoutingKey, err)
+	code := status.Code(err)
+	return code != codes.Unavailable && code != codes.DeadlineExceeded
 }
 
 func (q *QueueListener) healthCheck() {
