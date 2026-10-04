@@ -585,6 +585,96 @@ class ReportsTests(Fixture):
         self.create_report(marker="STOPPED")
         self.assertEqual(controller.aggregate(self.root, self.state())["infrastructure_errors"], [])
 
+    def scenario_artifacts(self, report, log):
+        base = self.root / "workers/worker-001/batch/test-w001"
+        if report is not None:
+            common.atomic_json(base / "runs/run1/report.json", report)
+        self.write("workers/worker-001/batch/test-w001/logs/a.log", log)
+        return base
+
+    def test_cleanup_only_failure_includes_exact_error_with_all_checks_passing(self):
+        self.create_report(outcome="FAIL")
+        message = "14:32:58 ERROR runtime infra cleanup had 3 failed step(s)"
+        base = self.scenario_artifacts({
+            "passed": False, "cleanup": "failed", "checks": {"total": 5, "passed": 5, "failed": 0},
+            "results": [{"kind": "check", "name": "node_status_equals", "state": "PASS", "detail": "matched=3/3"}],
+        }, "PASS       node_status_equals: matched=3/3\n"
+           "CLEANUP    stop media/nodes/network\n"
+           "14:32:58 \033[1;31mERROR\033[0m runtime infra cleanup had 3 failed step(s)\n"
+           "DIAG       failure detected; collect structured node error logs\n"
+           "14:32:59 ERROR failure log collection failed: example secondary error\n"
+           "FAIL       events=0 failed=0 checks=5 failed=0 artifacts=/opt/example\n")
+        original = (base / "runs/run1/report.json").read_bytes()
+        result = controller.aggregate(self.root, self.state())
+        self.assertEqual(result["results"][0]["failure_reason"], message)
+        self.assertEqual(result["failed"], 1)
+        self.assertEqual(result["infrastructure_errors"], [])
+        text = (self.root / "batch-report.txt").read_text()
+        self.assertIn(f'FAIL worker-001 demo/a.yaml "{message}"', text)
+        saved = common.read_json(self.root / "batch-report.json")
+        self.assertEqual(saved["results"][0]["failure_reason"], message)
+        self.assertEqual((base / "runs/run1/report.json").read_bytes(), original)
+
+    def test_structured_check_and_event_failures_include_phase_and_cleanup(self):
+        self.create_report(outcome="FAIL")
+        self.scenario_artifacts({"cleanup": "failed", "results": [
+            {"kind": "check", "state": "PASS", "name": "payment_count", "detail": "observed=1"},
+            {"kind": "check", "state": "FAIL", "name": "kpi_value", "detail": "kpi=REVENUE found=false value=0 expected=5"},
+            {"kind": "event", "state": "FAIL", "phase": "restart", "name": "restart_site", "detail": "node is busy"},
+        ]}, "12:00:01 ERROR recovered transient error\n"
+           "CLEANUP    delete backend resources\n"
+           "12:00:02 ERROR delete network failed\n"
+           "DIAG       collect structured node error logs\n"
+           "12:00:03 ERROR failure log collection failed\n")
+        reason = controller.aggregate(self.root, self.state())["results"][0]["failure_reason"]
+        self.assertEqual(reason, "check kpi_value: kpi=REVENUE found=false value=0 expected=5; "
+                         "event restart/restart_site: node is busy; 12:00:02 ERROR delete network failed")
+
+    def test_failed_check_log_is_used_when_report_is_missing_or_truncated(self):
+        for report_content in (None, '{"results": ['):
+            with self.subTest(report_content=report_content):
+                self.create_report(outcome="FAIL")
+                base = self.scenario_artifacts(None,
+                    "FAIL       kpi_value: kpi=REVENUE found=false value=0 expected=7\n"
+                    "FAIL       kpi_value: kpi=REVENUE found=false value=0 expected=7\n"
+                    "FAIL       events=1 failed=0 checks=4 failed=1 artifacts=/opt/example\n")
+                if report_content is not None:
+                    self.write("workers/worker-001/batch/test-w001/runs/run1/report.json", report_content)
+                reason = controller.aggregate(self.root, self.state())["results"][0]["failure_reason"]
+                self.assertEqual(reason, "FAIL kpi_value: kpi=REVENUE found=false value=0 expected=7")
+
+    def test_setup_error_is_used_instead_of_diagnostic_error_or_final_totals(self):
+        self.create_report(outcome="FAIL")
+        self.scenario_artifacts({"cleanup": "ok", "results": []},
+            "14:00:00 ERROR addSite: GraphQL error: 429 Too Many Requests\n"
+            "DIAG       failure detected; collect structured node error logs\n"
+            "14:00:01 ERROR failure log collection failed\n"
+            "CLEANUP    stop media/nodes/network\n"
+            "FAIL       events=0 failed=0 checks=0 failed=0 artifacts=/opt/example\n")
+        reason = controller.aggregate(self.root, self.state())["results"][0]["failure_reason"]
+        self.assertEqual(reason, "14:00:00 ERROR addSite: GraphQL error: 429 Too Many Requests")
+
+    def test_cleanup_failure_without_log_detail_uses_report(self):
+        self.create_report(outcome="FAIL")
+        self.scenario_artifacts({"cleanup": "failed", "results": []}, "")
+        reason = controller.aggregate(self.root, self.state())["results"][0]["failure_reason"]
+        self.assertEqual(reason, "cleanup failed; see scenario log for details")
+
+    def test_missing_failure_details_leave_verdict_unchanged(self):
+        self.create_report(outcome="FAIL")
+        result = controller.aggregate(self.root, self.state())
+        self.assertEqual(result["failed"], 1)
+        self.assertEqual(result["results"][0]["failure_reason"],
+                         "scenario exit code=1; no specific failure detail in collected report/log")
+
+    def test_passing_scenario_does_not_get_a_reason_from_expected_errors(self):
+        self.create_report()
+        self.scenario_artifacts({"passed": True}, "12:00:00 ERROR operation rejected as expected\n")
+        result = controller.aggregate(self.root, self.state())
+        self.assertNotIn("failure_reason", result["results"][0])
+        self.assertEqual(result["passed"], 1)
+        self.assertIn("PASS worker-001 demo/a.yaml\n", (self.root / "batch-report.txt").read_text())
+
 
 class VPNHookTests(Fixture):
     def exercise(self, *, fail_firewall=False, missing_firewall=False, routes=None):

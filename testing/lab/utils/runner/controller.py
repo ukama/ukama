@@ -454,6 +454,66 @@ def wait_for_infrastructure(aws, work, state, name):
         time.sleep(20)
 
 
+def scenario_failure_reason(row):
+    """Explain an existing FAIL from collected evidence; never change its verdict."""
+    try:
+        report = read_json(Path(row["report"]))
+        if not isinstance(report, dict):
+            report = {}
+    except (OSError, ValueError):
+        report = {}
+
+    def plain(value):
+        # Lab logs contain ANSI colors even when redirected to a file.
+        text = re.sub(r"\x1b\[[0-?]*[ -/]*[@-~]", "", str(value))
+        return " ".join("".join(c for c in text if c.isprintable() or c.isspace()).split())
+
+    reasons = []
+    details = report.get("results", [])
+    for detail in details if isinstance(details, list) else []:
+        if not isinstance(detail, dict) or detail.get("state") != "FAIL":
+            continue
+        name = detail.get("name", "unknown")
+        kind = detail.get("kind", "check")
+        if kind == "event" and detail.get("phase"):
+            name = f"{detail['phase']}/{name}"
+        reasons.append(plain(f"{kind} {name}: {detail.get('detail') or 'failed'}"))
+
+    log_failures, errors, cleanup_errors = [], [], []
+    section = "execution"
+    try:
+        with Path(row["log"]).open(encoding="utf-8", errors="replace") as stream:
+            for raw in stream:
+                line = plain(raw)
+                match = re.match(r"^(?:\d{2}:\d{2}:\d{2}\s+)?(FAIL|ERROR|CLEANUP|DIAG)\s+(.+)$", line)
+                if not match:
+                    continue
+                label, message = match.groups()
+                if label == "CLEANUP":
+                    section = "cleanup"
+                elif label == "DIAG":
+                    section = "diagnostics"
+                elif label == "FAIL" and not message.startswith("events="):
+                    log_failures.append(line)
+                elif label == "ERROR" and section != "diagnostics":
+                    (cleanup_errors if section == "cleanup" else errors).append(line)
+    except OSError:
+        pass  # Missing/truncated artifacts must not prevent the batch summary.
+
+    if not reasons:
+        reasons.extend(log_failures)
+    cleanup = report.get("cleanup", row.get("cleanup"))
+    if cleanup == "failed" or (cleanup != "ok" and cleanup_errors):
+        reasons.extend(cleanup_errors or ["cleanup failed; see scenario log for details"])
+    if not reasons and errors:
+        reasons.append(errors[-1])
+    if not reasons and row.get("report_error"):
+        reasons.append(plain(f"scenario report could not be read: {row['report_error']}"))
+    if not reasons:
+        reasons.append(f"scenario exit code={row.get('exit_code', 'unknown')}; no specific failure detail in collected report/log")
+    return "; ".join(dict.fromkeys(reasons))
+
+
 def aggregate(work, state):
     results, workers, accounted = [], {}, set()
     for name, worker in state["workers"].items():
@@ -494,6 +554,8 @@ def aggregate(work, state):
             if selected is None or selected in accounted:
                 raise RunnerError(f"unexpected or duplicate scenario report from {name}")
             accounted.add(selected)
+            if row["outcome"] == "FAIL":
+                row["failure_reason"] = scenario_failure_reason(row)
             results.append({**row, "worker": name, "selected_path": selected})
     pending = [p for p in state["scenarios"] if p not in accounted]
     counts = {field: sum(r["outcome"] == key for r in results)
@@ -514,7 +576,11 @@ def aggregate(work, state):
         lines.append(f"Infrastructure error ({len(names)} workers): {reason}")
     if infrastructure_reasons:
         lines.append("")
-    lines.extend(f"{r['outcome']:<4} {r['worker']} {r['scenario']}" for r in results)
+    for result in results:
+        line = f"{result['outcome']:<4} {result['worker']} {result['scenario']}"
+        if result.get("failure_reason"):
+            line += " " + json.dumps(result["failure_reason"], ensure_ascii=False)
+        lines.append(line)
     if pending:
         lines += ["", "Unfinished assignments:", *pending]
     (work / "batch-report.txt").write_text("\n".join(lines) + "\n")

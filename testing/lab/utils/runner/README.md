@@ -81,6 +81,19 @@ saved in the batch's `aws-lifecycle.log`. The final interactive terminal summary
 uses green PASS and red FAIL; saved reports remain plain text. Requested and
 actual worker counts are shown separately (one selected scenario uses one worker).
 
+Each FAIL in the final AWS summary includes its recorded failure reason:
+
+```text
+FAIL worker-001 console/nodes/tc-024-list-detail.yaml "14:32:58 ERROR runtime infra cleanup had 3 failed step(s)"
+```
+
+Failed checks/events come from the scenario report; cleanup and setup errors
+come from its log. The final totals line and diagnostic-collection errors are
+excluded. Multiple recorded failures are separated by semicolons. The same
+text is saved as `failure_reason` on each failed result in `batch-report.json`.
+Missing details are stated explicitly. Scenario verdicts and original artifacts
+are unchanged; PASS stays green and FAIL red in interactive terminal output.
+
 ## Run
 
 Start with one AWS worker to establish the environment against your VPN:
@@ -322,11 +335,11 @@ stored with the same private access policy.
 python3 -m unittest discover -s tests/aws_runner -v
 ```
 
-99 offline tests passed. They cover local-default behavior, exact selection,
+106 offline tests passed. They cover local-default behavior, exact selection,
 fail-fast, worker interruption and upload failure, unique assignments,
 launch configuration, archive safety, executable/library packaging, VPN/DNS
 configuration, result collection, packaged kubectl cleanup, lifecycle logging,
-termination confirmation, terminal summary colors, execution
+termination confirmation, terminal summary colors, scenario failure reasons, execution
 of generated bootstrap Bash with isolated command stubs, installer failures,
 and detection of startup failures without a worker heartbeat. VPN-hook tests
 execute the actual Python entry point with a restricted PATH and harmless
