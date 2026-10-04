@@ -62,6 +62,11 @@ static int prepare_run(const runner_opts_t *opts,
         return ULAB_ESCENARIO;
     }
 
+    /* Contract-only versions must stop before any run directory or resource. */
+    if (scenario_execution_supported(scenario, err)) {
+        return ULAB_ESCENARIO;
+    }
+
     make_run_id(run_id, sizeof(run_id), scenario, opts);
     snprintf(runDir, runDirLen, "%s/%s", opts->out_dir, run_id);
 
@@ -1481,8 +1486,10 @@ done:
         }
     }
 
+    /* An unsupported/invalid v2 contract is not an expected product failure. */
     if (scenario != NULL && ulab_streq(scenario->status, "xfail") &&
-        rc != ULAB_OK) {
+        rc != ULAB_OK &&
+        !(scenario->version == ULAB_WEBAPP_SCHEMA_VER && rc == ULAB_ESCENARIO)) {
         ulab_status("XFAIL", "%s failed as expected", scenario->name);
         rc = ULAB_OK;
     }

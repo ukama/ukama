@@ -23,6 +23,7 @@ static void usage(void) {
     printf("usage:\n");
     printf("  ukama-lab validate <scenario.yaml|dir> [options]\n");
     printf("  ukama-lab run <scenario.yaml|dir> [options]\n");
+    printf("  ukama-lab lint <scenario.yaml|dir> [...] (offline; no resources created)\n");
     printf("  ukama-lab plan <workload.yaml> [options] (offline; no resources created)\n");
     printf("  ukama-lab cleanup-workload <run-dir> [options] (recorded resources only)\n");
     printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
@@ -146,6 +147,10 @@ int main(int argc, char **argv) {
         printf("ukama-lab %s scenario-v%d\n", ULAB_VERSION,
                ULAB_SCHEMA_VER);
         return ULAB_OK;
+    }
+
+    if (ulab_streq(argv[1], "lint")) {
+        return scenario_lint_main(argc - 2, argv + 2);
     }
 
     if (ulab_streq(argv[1], "generate")) {
