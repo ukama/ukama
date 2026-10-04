@@ -6,12 +6,14 @@ browser coverage credit. Version 1 behavior and files remain supported.
 
 ## Patch status
 
-Patch 1 implements parsing, contract validation, and offline linting. It does
-not launch Playwright or execute browser steps. `run`/`validate` reject v2
+Patch 1 implements parsing, contract validation, and offline linting. Patch 2
+adds a standalone Playwright worker and local smoke command; see
+[`webapp/worker.md`](webapp/worker.md). The C scenario runner does not yet
+launch it or execute browser steps. `run`/`validate` reject v2
 before creating a run directory, contacting the BFF, or provisioning resources.
 This guard applies even to `wip`, `skip`, and `xfail`: a contract-only scenario
-must not look like an executed PASS. Patches 2-3 supply the worker and execution
-integration; patch 4 activates the first operational scenarios.
+must not look like an executed PASS. Patch 3 supplies execution integration;
+patch 4 activates the first operational scenarios.
 
 The initial v2 vocabulary covers network/site fixtures, navigation, visible
 text/count/action checks, and node disconnection/reconnection. Additional UI
@@ -84,6 +86,9 @@ webapp:
   the chosen app/auth/BFF endpoint locations.
 - Authentication state and secrets are local configuration and must not be
   included in scenarios, reports, or patch bundles.
+- The standalone Patch 2 worker accepts a `base_url` origin without a path
+  prefix; the supplied console's routes are rooted at `/`. It rejects a
+  configured subpath explicitly even though the foundation linter accepts it.
 
 ## World, setup, and resource ownership
 
@@ -186,6 +191,11 @@ phases are allowed. `final_checks` run before cleanup. BFF assertions cannot be
 used as v2 acceptance checks. Browser assertions compare scenario expectations
 to rendered content; GraphQL responses can support diagnostics/identity binding,
 but cannot replace a visible assertion or supply both actual and expected.
+
+The supplied Nodes and Sites screens render card lists, not tables. The node
+example checks the visible `Nodes count` field with `web_field_equals`.
+The Patch 2 adapter rejects table checks on those card views. Its supported
+component locators and current per-screen limitations are listed in `worker.md`.
 
 Requirement identifiers are syntax-checked by C. Catalog membership and
 example-to-requirement links are checked by the Python contract tests. A

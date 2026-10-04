@@ -42,9 +42,9 @@ int scenario_has_webapp(const scenario_t *s) {
 
 int scenario_execution_supported(const scenario_t *s, ulab_error_t *err) {
     if (s->version == ULAB_WEBAPP_SCHEMA_VER) {
-        return fail(err, "webapp v2 is contract-only in patch 1; use lint. "
-                    "Browser execution requires the Playwright worker "
-                    "and runner integration (patches 2-3)");
+        return fail(err, "webapp v2 scenarios remain contract-only until "
+                    "runner integration (patch 3); use lint or the standalone "
+                    "utils/webapp-worker.sh smoke command from patch 2");
     }
     return ULAB_OK;
 }

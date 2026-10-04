@@ -14,9 +14,12 @@ a unified patch, validation results, and its own commit message.
 | 6 | Plans, SIMs, customers, UE usage, payments, receipts | Add web-app customer and commerce journeys | Day/minute and data-unit conversion, allocation, usage, payment/entitlement/receipt reconciliation. |
 | 7 | Error states, scope, accessibility, browser coverage, coverage report | Expand web-app coverage and release reporting | Agreed critical requirements fully covered, at least 90% of agreed functional inventory, gaps retained. |
 
-Patch 1 is the only implemented patch in this bundle. Subjects for later
-patches are proposed; each final commit body must describe its actual changes
-and validation rather than claim these milestones in advance.
+Patches 1 and 2 are implemented. Patch 2 provides a standalone worker and local
+smoke command, with Chromium verification against a source-derived DOM fixture.
+The live target-app smoke milestone still needs a configured console/auth/BFF
+stack on the host; it is not claimed from fixture passes. Patch 3 supplies the
+C runner integration. See `worker.md` for setup and the protocol. Later subjects
+remain proposed; each commit body describes its actual changes and validation.
 
 ## Worker contract to implement in patches 2-3
 

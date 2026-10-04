@@ -1,6 +1,6 @@
 version: 2
 name: p0-webapp-node-list-detail
-description: Create one site through the web app and inspect the three node rows and tower detail.
+description: Create one site through the web app and inspect the visible node count and tower detail.
 seed: 4804
 suite: webapp
 priority: p0
@@ -30,10 +30,10 @@ phases:
         view: network_nodes
         networks: net-001
     checks:
-      - type: web_table_count_equals
+      - type: web_field_equals
         view: network_nodes
-        label: Nodes
-        expected_count: 3
+        label: Nodes count
+        expected: "3"
         requirement: WEB-NODE-001
   - name: tower_detail
     events:
