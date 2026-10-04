@@ -1,0 +1,97 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "Ukama lab runner: outbound-only EC2 networking, private S3 storage and worker role",
+  "Parameters": {
+    "VpcCidr": {"Type": "String", "Default": "10.240.0.0/16"},
+    "SubnetCidr": {"Type": "String", "Default": "10.240.1.0/24"},
+    "RetentionDays": {"Type": "Number", "Default": 30, "MinValue": 1}
+  },
+  "Resources": {
+    "Vpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {"CidrBlock": {"Ref": "VpcCidr"}, "EnableDnsSupport": true, "EnableDnsHostnames": true}
+    },
+    "Gateway": {"Type": "AWS::EC2::InternetGateway"},
+    "GatewayAttachment": {
+      "Type": "AWS::EC2::VPCGatewayAttachment",
+      "Properties": {"VpcId": {"Ref": "Vpc"}, "InternetGatewayId": {"Ref": "Gateway"}}
+    },
+    "Subnet": {
+      "Type": "AWS::EC2::Subnet",
+      "Properties": {"VpcId": {"Ref": "Vpc"}, "CidrBlock": {"Ref": "SubnetCidr"}, "MapPublicIpOnLaunch": true}
+    },
+    "Routes": {"Type": "AWS::EC2::RouteTable", "Properties": {"VpcId": {"Ref": "Vpc"}}},
+    "InternetRoute": {
+      "Type": "AWS::EC2::Route", "DependsOn": "GatewayAttachment",
+      "Properties": {"RouteTableId": {"Ref": "Routes"}, "DestinationCidrBlock": "0.0.0.0/0", "GatewayId": {"Ref": "Gateway"}}
+    },
+    "SubnetRoutes": {
+      "Type": "AWS::EC2::SubnetRouteTableAssociation",
+      "Properties": {"RouteTableId": {"Ref": "Routes"}, "SubnetId": {"Ref": "Subnet"}}
+    },
+    "S3Endpoint": {
+      "Type": "AWS::EC2::VPCEndpoint",
+      "Properties": {"VpcId": {"Ref": "Vpc"}, "RouteTableIds": [{"Ref": "Routes"}], "VpcEndpointType": "Gateway", "ServiceName": {"Fn::Sub": "com.amazonaws.${AWS::Region}.s3"}}
+    },
+    "WorkerSecurityGroup": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "GroupDescription": "Ukama runner outbound access; no inbound SSH required",
+        "VpcId": {"Ref": "Vpc"},
+        "SecurityGroupEgress": [{"IpProtocol": "-1", "CidrIp": "0.0.0.0/0"}]
+      }
+    },
+    "Bucket": {
+      "Type": "AWS::S3::Bucket", "DeletionPolicy": "Retain", "UpdateReplacePolicy": "Retain",
+      "Properties": {
+        "PublicAccessBlockConfiguration": {"BlockPublicAcls": true, "BlockPublicPolicy": true, "IgnorePublicAcls": true, "RestrictPublicBuckets": true},
+        "OwnershipControls": {"Rules": [{"ObjectOwnership": "BucketOwnerEnforced"}]},
+        "BucketEncryption": {"ServerSideEncryptionConfiguration": [{"ServerSideEncryptionByDefault": {"SSEAlgorithm": "AES256"}}]},
+        "LifecycleConfiguration": {"Rules": [
+          {"Id": "ExpireInputs", "Status": "Enabled", "Prefix": "inputs/", "ExpirationInDays": 2},
+          {"Id": "ExpireResults", "Status": "Enabled", "Prefix": "results/", "ExpirationInDays": {"Ref": "RetentionDays"}},
+          {"Id": "ExpireControls", "Status": "Enabled", "Prefix": "control/", "ExpirationInDays": {"Ref": "RetentionDays"}},
+          {"Id": "ExpireImageCache", "Status": "Enabled", "Prefix": "images/", "ExpirationInDays": 90},
+          {"Id": "AbortIncompleteUploads", "Status": "Enabled", "AbortIncompleteMultipartUpload": {"DaysAfterInitiation": 1}}
+        ]}
+      }
+    },
+    "BucketPolicy": {
+      "Type": "AWS::S3::BucketPolicy",
+      "Properties": {
+        "Bucket": {"Ref": "Bucket"},
+        "PolicyDocument": {"Version": "2012-10-17", "Statement": [{
+          "Effect": "Deny", "Principal": "*", "Action": "s3:*",
+          "Resource": [{"Fn::GetAtt": ["Bucket", "Arn"]}, {"Fn::Sub": "${Bucket.Arn}/*"}],
+          "Condition": {"Bool": {"aws:SecureTransport": "false"}}
+        }]}
+      }
+    },
+    "WorkerRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {"Version": "2012-10-17", "Statement": [{"Effect": "Allow", "Principal": {"Service": "ec2.amazonaws.com"}, "Action": "sts:AssumeRole"}]},
+        "Policies": [{"PolicyName": "RunnerStorage", "PolicyDocument": {
+          "Version": "2012-10-17", "Statement": [
+            {"Effect": "Allow", "Action": ["s3:ListBucket", "s3:GetBucketLocation"], "Resource": {"Fn::GetAtt": ["Bucket", "Arn"]}},
+            {"Effect": "Allow", "Action": ["s3:GetObject"], "Resource": [
+              {"Fn::Sub": "${Bucket.Arn}/inputs/*"}, {"Fn::Sub": "${Bucket.Arn}/images/*"},
+              {"Fn::Sub": "${Bucket.Arn}/control/*"}, {"Fn::Sub": "${Bucket.Arn}/results/*"}
+            ]},
+            {"Effect": "Allow", "Action": ["s3:PutObject", "s3:AbortMultipartUpload"], "Resource": [
+              {"Fn::Sub": "${Bucket.Arn}/results/*"}, {"Fn::Sub": "${Bucket.Arn}/control/*"}
+            ]}
+          ]
+        }}]
+      }
+    },
+    "WorkerProfile": {"Type": "AWS::IAM::InstanceProfile", "Properties": {"Roles": [{"Ref": "WorkerRole"}]}}
+  },
+  "Outputs": {
+    "Bucket": {"Value": {"Ref": "Bucket"}},
+    "Subnet": {"Value": {"Ref": "Subnet"}},
+    "SecurityGroup": {"Value": {"Ref": "WorkerSecurityGroup"}},
+    "InstanceProfile": {"Value": {"Ref": "WorkerProfile"}},
+    "Vpc": {"Value": {"Ref": "Vpc"}}
+  }
+}

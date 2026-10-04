@@ -1,4 +1,5 @@
-config.env
-credentials.env
-.state.env
-*.tmp
+aws.json
+*.ovpn
+*.pem
+*.key
+__pycache__/
