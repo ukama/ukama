@@ -47,6 +47,11 @@ category, a nested directory, or one scenario YAML file. Examples:
 Use "all" to select the complete selected suite.
 
 Options:
+  --mode local|aws           Execution mode (default: local)
+  --workers N                AWS worker count (default: 1; sequential scenarios per worker)
+  --aws-config FILE          AWS settings (default: utils/runner/aws.json)
+  --resume BATCH_DIR         Reattach to an AWS batch; never reruns scenarios
+  --cleanup BATCH_DIR        Collect available results and terminate that AWS batch
   --factory-nodes auto       Ensure enough complete bundles for runnable scenarios
   --factory-nodes N          Ensure at least N complete unprovisioned bundles
   --scenario-list FILE       Run exact scenario paths listed in FILE
@@ -136,10 +141,43 @@ PREPARE_ONLY=0
 SCENARIO_LIST_FILE=""
 BATCH_ID_OVERRIDE=""
 STATUS_FILE="${P0_STATUS_FILE:-}"
+RUN_MODE=local
+AWS_WORKERS=1
+AWS_WORKERS_SET=0
+AWS_CONFIG="utils/runner/aws.json"
+AWS_RESUME=""
+AWS_CLEANUP=""
 
 requested_selectors=()
 while (($#)); do
     case "$1" in
+        --mode|--workers|--aws-config|--resume|--cleanup)
+            if (($# < 2)) || [[ -z "$2" ]]; then
+                printf 'error: %s requires a value\n' "$1" >&2
+                exit 2
+            fi
+            case "$1" in
+                --mode) RUN_MODE="$2" ;;
+                --workers) AWS_WORKERS="$2"; AWS_WORKERS_SET=1 ;;
+                --aws-config) AWS_CONFIG="$2" ;;
+                --resume) AWS_RESUME="$2" ;;
+                --cleanup) AWS_CLEANUP="$2" ;;
+            esac
+            shift 2
+            ;;
+        --mode=*|--workers=*|--aws-config=*|--resume=*|--cleanup=*)
+            option="${1%%=*}"
+            value="${1#*=}"
+            [[ -n "$value" ]] || { printf 'error: %s requires a value\n' "$option" >&2; exit 2; }
+            case "$option" in
+                --mode) RUN_MODE="$value" ;;
+                --workers) AWS_WORKERS="$value"; AWS_WORKERS_SET=1 ;;
+                --aws-config) AWS_CONFIG="$value" ;;
+                --resume) AWS_RESUME="$value" ;;
+                --cleanup) AWS_CLEANUP="$value" ;;
+            esac
+            shift
+            ;;
         --factory-nodes)
             if (($# < 2)); then
                 printf 'error: --factory-nodes requires auto or a number\n' >&2
@@ -208,6 +246,33 @@ while (($#)); do
             ;;
     esac
 done
+
+if [[ "$RUN_MODE" != local && "$RUN_MODE" != aws ]]; then
+    printf 'error: --mode must be local or aws\n' >&2
+    exit 2
+fi
+if [[ ! "$AWS_WORKERS" =~ ^[1-9][0-9]*$ ]] || ((${#AWS_WORKERS} > 3)) || ((AWS_WORKERS > 100)); then
+    printf 'error: --workers must be between 1 and 100\n' >&2
+    exit 2
+fi
+if [[ "$RUN_MODE" == local ]] && ((AWS_WORKERS_SET)) ||
+   { [[ "$RUN_MODE" == local ]] && [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; }; then
+    printf 'error: --workers, --resume and --cleanup require --mode aws\n' >&2
+    exit 2
+fi
+AWS_HELPER="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/runner/controller.py"
+if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
+    if [[ -n "$AWS_RESUME" && -n "$AWS_CLEANUP" ]] || ((LIST_ONLY || PREPARE_ONLY)) ||
+       ((${#requested_selectors[@]})) || [[ -n "$SCENARIO_LIST_FILE" ]]; then
+        printf 'error: resume/cleanup cannot be combined with selection, list or preparation\n' >&2
+        exit 2
+    fi
+    if [[ -n "$AWS_RESUME" ]]; then
+        exec python3 "$AWS_HELPER" resume --batch-dir "$AWS_RESUME"
+    else
+        exec python3 "$AWS_HELPER" cleanup --batch-dir "$AWS_CLEANUP"
+    fi
+fi
 
 if [[ "$FACTORY_NODE_TARGET" != "auto" &&
       ! "$FACTORY_NODE_TARGET" =~ ^[0-9]+$ ]]; then
@@ -420,6 +485,20 @@ if ((LIST_ONLY)); then
     printf '\n\n'
     list_scenarios
     exit 0
+fi
+
+if [[ "$RUN_MODE" == aws ]]; then
+    # Select once here. Workers call this same script with an exact list in local mode.
+    aws_args=(launch --suite "$suite" --workers "$AWS_WORKERS" --config "$AWS_CONFIG"
+        --lab-dir "$(pwd)" --repo "$UKAMA_REPO" --lab-bin "$LAB_BIN"
+        --scenario-root "$SCENARIO_ROOT" --out "$P0_RUNS_DIR"
+        --factory-nodes "$FACTORY_NODE_TARGET" --batch-id "$BATCH_ID_OVERRIDE")
+    ((FAIL_FAST)) && aws_args+=(--fail-fast)
+    ((PREPARE_ONLY)) && aws_args+=(--prepare-only)
+    export UKAMA_LAB_BFF="$BFF_GRAPHQL_URL" UKAMA_LAB_WAREHOUSE_URL="$WAREHOUSE_URL"
+    export UKAMA_LAB_FACTORY_URL="$FACTORY_URL_FOR_LAB" UKAMA_LAB_SIM_TYPE="$SIM_TYPE"
+    printf '%s\0' "${selected_scenarios[@]}" | python3 "$AWS_HELPER" "${aws_args[@]}"
+    exit "${PIPESTATUS[1]}"
 fi
 
 require_env UKAMA_IDENTIFIER || exit 2
@@ -791,7 +870,19 @@ skipped_count=0
 STATUS_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 write_status RUNNING - 'starting batch'
 
+runner_hook_failed=0
 for scenario in "${selected_scenarios[@]}"; do
+    # The worker sets this internal hook. Ordinary local runs never invoke it.
+    if [[ -n "${ULAB_RUNNER_HOOK:-}" ]]; then
+        "$ULAB_RUNNER_HOOK" before
+        hook_rc=$?
+        if ((hook_rc == 10)); then
+            break
+        elif ((hook_rc != 0)); then
+            runner_hook_failed=1
+            break
+        fi
+    fi
     scenario_abs="$(readlink -f -- "$scenario")"
     relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
     category="${relative%%/*}"
@@ -826,6 +917,14 @@ for scenario in "${selected_scenarios[@]}"; do
             ;;
     esac
     write_status RUNNING - "last=$outcome $relative"
+
+    if [[ -n "${ULAB_RUNNER_HOOK:-}" ]]; then
+        "$ULAB_RUNNER_HOOK" after "$rc"
+        if (($? != 0)); then
+            runner_hook_failed=1
+            break
+        fi
+    fi
 
     if ((rc != 0 && FAIL_FAST)); then
         printf 'stopping after failed scenario (--fail-fast): %s\n' \
@@ -934,4 +1033,7 @@ sys.exit(1 if payload["failed"] else 0)
 PY
 report_rc=$?
 write_status DONE - "batch_report_exit_code=$report_rc"
+if ((runner_hook_failed)); then
+    exit 70
+fi
 exit "$report_rc"

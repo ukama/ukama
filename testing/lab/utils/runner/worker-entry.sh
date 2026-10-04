@@ -20,5 +20,8 @@ packages=(podman netavark aardvark-dns crun uidmap dbus-user-session
 for package in "${extra_packages[@]}"; do
     [[ -n "$package" ]] && packages+=("$package")
 done
+printf 'UKAMA_RUNNER_BOOTSTRAP stage=worker-packages\n'
+printf 'Worker setup: installing Podman, VPN, DNS and build dependencies\n'
 apt-get -o DPkg::Lock::Timeout=300 -o Acquire::Retries=3 install -y "${packages[@]}"
+printf 'Worker setup: dependency installation complete\n'
 python3 "$work/bootstrap/worker.py"

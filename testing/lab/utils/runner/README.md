@@ -57,12 +57,29 @@ Your existing compiled `bin/ukama-lab` must work locally. The supplied source
 archive did not include that binary or the external Ukama repository; this
 runner packages them from your working machine when you launch a batch.
 
-AWS mode does not require kubectl or Kubernetes credentials. It does not read
-or transfer your kubeconfig and does not forward `ULAB_KUBECTL` to workers.
-The existing `stop-node.sh` therefore skips its optional mesh-pod deletion;
-normal lab container, network and scenario cleanup remains in place. Local
-mode continues to use `ULAB_KUBECTL` if you export it. Legacy `KUBECTL_FILE`
-and `KUBECONFIG_FILE` settings in an existing `aws.json` are accepted and ignored.
+AWS mode packages the same kubectl executable used locally and sets
+`ULAB_KUBECTL` to its installed worker path. The existing `stop-node.sh` then
+deletes only the mesh pod matching that node's factory ID, using the existing
+VPN. Keep your normal `export ULAB_KUBECTL="$HOME/kubectl"`; if unset, the runner
+looks for `$HOME/kubectl` and then `kubectl` on PATH. Linux x86_64 binaries and
+self-contained executable scripts are supported.
+
+If your local kubectl uses an existing kubeconfig, its current context is
+exported locally with `config view --raw --flatten --minify` and transferred
+privately with the runtime. No Kubernetes login, authentication probe, or
+cluster-readiness gate is added. When no kubeconfig exists, none is required.
+Optional `KUBECTL_FILE` and `KUBECONFIG_FILE` in `aws.json` select explicit local
+paths; normally the existing tool and configuration are discovered automatically.
+Keep any existing exec-plugin dependencies available if your config uses them;
+the runner does not create new credentials. Local mode is unchanged.
+
+AWS prints timestamped instance creation/state changes, observed setup stages,
+scenario starts, result collection, and termination requests. It confirms EC2
+termination for up to 60 seconds after collection; an unconfirmed termination
+is reported honestly without changing scenario verdicts. These messages are
+saved in the batch's `aws-lifecycle.log`. The final interactive terminal summary
+uses green PASS and red FAIL; saved reports remain plain text. Requested and
+actual worker counts are shown separately (one selected scenario uses one worker).
 
 ## Run
 
@@ -305,10 +322,11 @@ stored with the same private access policy.
 python3 -m unittest discover -s tests/aws_runner -v
 ```
 
-92 offline tests passed. They cover local-default behavior, exact selection,
+99 offline tests passed. They cover local-default behavior, exact selection,
 fail-fast, worker interruption and upload failure, unique assignments,
 launch configuration, archive safety, executable/library packaging, VPN/DNS
-configuration, result collection, removal of AWS kubectl dependencies, execution
+configuration, result collection, packaged kubectl cleanup, lifecycle logging,
+termination confirmation, terminal summary colors, execution
 of generated bootstrap Bash with isolated command stubs, installer failures,
 and detection of startup failures without a worker heartbeat. VPN-hook tests
 execute the actual Python entry point with a restricted PATH and harmless

@@ -10,7 +10,7 @@ import shutil
 import tarfile
 import tempfile
 from common import RunnerError, atomic_json, read_json, run, sha256
-from config import executable
+from config import ROOT, executable
 
 EXCLUDE_DIRS = {".git", ".aws", ".ssh", ".kube", ".venv", "node_modules", "__pycache__", ".pytest_cache", "runs", "logs"}
 SECRET_SUFFIXES = {".pem", ".key", ".p12", ".pfx", ".ovpn"}
@@ -283,10 +283,64 @@ def image_archive(lab, repo, cache, env):
     return target, saved
 
 
+def bundle_kubectl(cfg, env, runtime):
+    """Carry the caller's existing cleanup tool, without Kubernetes login/probes."""
+    value = (cfg.get("KUBECTL_FILE") or cfg.get("ENV", {}).get("ULAB_KUBECTL")
+             or os.environ.get("ULAB_KUBECTL"))
+    if not value:
+        home_tool = Path.home() / "kubectl"
+        value = str(home_tool) if home_tool.is_file() else "kubectl"
+    source = executable(os.path.expandvars(str(value)))
+    destination = runtime / "kubectl"
+    with source.open("rb") as stream:
+        header = stream.read(4)
+    if header == b"\x7fELF":
+        bundle_elf(source, destination)
+    elif header.startswith(b"#!"):
+        destination.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination / "program")
+        (destination / "run").write_text(
+            '#!/bin/sh\nset -eu\nd="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"\n'
+            'exec "$d/program" "$@"\n')
+        (destination / "run").chmod(0o755)
+    else:
+        raise RunnerError("ULAB_KUBECTL must be a Linux executable or executable script")
+    env["ULAB_KUBECTL"] = str(ROOT / "runtime/kubectl/run")
+    env.pop("KUBECONFIG", None)
+
+    # Kubectl may use an existing connection config even when VPN access needs
+    # no login. Export only its selected context, embedding referenced files.
+    # This command reads local config; it does not contact Kubernetes or execute
+    # credential plugins. Do not impose authentication or connectivity gates.
+    config_env = dict(os.environ)
+    if cfg.get("KUBECONFIG_FILE"):
+        config_env["KUBECONFIG"] = cfg["KUBECONFIG_FILE"]
+    paths = [Path(p).expanduser() for p in config_env.get("KUBECONFIG", "").split(os.pathsep) if p]
+    if not paths:
+        paths = [Path.home() / ".kube/config"]
+    if cfg.get("KUBECONFIG_FILE") and not paths[0].is_file():
+        raise RunnerError(f"KUBECONFIG_FILE does not exist: {paths[0]}")
+    if any(path.is_file() for path in paths):
+        exported = run([source, "config", "view", "--raw", "--flatten", "--minify", "-o", "json"], env=config_env)
+        try:
+            contents = json.loads(exported.stdout)
+            if not isinstance(contents, dict):
+                raise ValueError("expected a configuration object")
+        except ValueError as exc:
+            raise RunnerError("kubectl could not export its existing connection configuration") from exc
+        atomic_json(destination / "kubeconfig.json", contents)
+        env["KUBECONFIG"] = str(ROOT / "runtime/kubectl/kubeconfig.json")
+    print("Packaging existing kubectl for node-specific mesh cleanup" +
+          (" (including current connection configuration)" if "KUBECONFIG" in env else ""), flush=True)
+    return paths
+
+
 def payload(lab, repo, lab_bin, cfg, env, work, excludes):
     with tempfile.TemporaryDirectory(prefix="runtime-", dir=work) as temporary:
         runtime = Path(temporary)
         bundle_elf(lab_bin, runtime / "lab")
+        kube_paths = bundle_kubectl(cfg, env, runtime)
+        excludes = [*excludes, *kube_paths]
         target = work / "source.tar.gz"
         print("Packaging current lab and Ukama repository...", flush=True)
         with tarfile.open(target, "w:gz", compresslevel=1) as archive:

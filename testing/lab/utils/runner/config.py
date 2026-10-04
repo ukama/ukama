@@ -19,10 +19,8 @@ def load_config(filename):
     values = read_json(path)
     if not isinstance(values, dict):
         raise RunnerError("AWS configuration must be a JSON object")
-    # Accepted only so an existing aws.json remains usable after this update.
-    # AWS mode no longer transfers kubectl or Kubernetes credentials.
-    for retired in ("KUBECTL_FILE", "KUBECONFIG_FILE"):
-        values.pop(retired, None)
+    # Optional explicit paths; otherwise use the caller's working kubectl setup.
+    defaults.update({"KUBECTL_FILE": "", "KUBECONFIG_FILE": ""})
     if set(values) - set(defaults):
         raise RunnerError(f"unknown AWS configuration keys: {sorted(set(values) - set(defaults))}")
     cfg = {**defaults, **values}
@@ -67,7 +65,7 @@ def load_config(filename):
             raise RunnerError(f"REPO_PATHS must include {required}")
     if not isinstance(cfg["ENV"], dict) or not all(isinstance(k, str) and isinstance(v, (str, int, float)) for k, v in cfg["ENV"].items()):
         raise RunnerError("ENV must map variable names to strings or numbers")
-    for key in ("VPN_CONFIG_FILE", "VPN_AUTH_FILE"):
+    for key in ("VPN_CONFIG_FILE", "VPN_AUTH_FILE", "KUBECTL_FILE", "KUBECONFIG_FILE"):
         if cfg[key]:
             local = Path(os.path.expandvars(cfg[key])).expanduser()
             cfg[key] = str((path.parent / local).resolve())
@@ -86,6 +84,7 @@ def environment(cfg):
     result.update({k: str(v) for k, v in cfg["ENV"].items()})
     for key in ("ULAB_KUBECTL", "ULAB_FACTORY_NODE_COUNT", "ULAB_RESILIENCE_NAME_SUFFIX"):
         result.pop(key, None)
+    # payload() replaces the local kubectl path with the packaged worker path.
     # Each worker creates its own suffix. Never propagate host paths for tools.
     result["UKAMA_REPO"] = str(ROOT / "repo")
     result["ULAB_FACTORY_NODE_COUNT"] = "0"

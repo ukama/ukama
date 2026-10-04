@@ -22,6 +22,100 @@ from config import HERE, ROOT, environment, executable, load_config, portable_vp
 from artifacts import image_archive, payload, relative_scenarios
 
 
+def lifecycle(work, name, message):
+    """Print transitions once and retain a plain-text batch lifecycle log."""
+    line = f"{now()} {name}: {message}"
+    print("\n" + line, flush=True)
+    with (work / "aws-lifecycle.log").open("a") as stream:
+        stream.write(line + "\n")
+
+
+def observe_instance(work, name, worker, instance):
+    if not instance:
+        return
+    state = instance["State"]["Name"]
+    if worker.get("observed_ec2_state") != state:
+        suffix = "; decommissioned" if state == "terminated" else ""
+        lifecycle(work, name, f"EC2 {instance['InstanceId']} {state}{suffix}")
+        worker["observed_ec2_state"] = state
+
+
+def observe_worker(work, name, worker, status):
+    phase, stage = status.get("phase"), status.get("stage")
+    key = (phase, stage)
+    if phase and worker.get("observed_worker_stage") != list(key):
+        descriptions = {
+            "source-download": "downloading lab and repository",
+            "vpn-and-dns": "setting up VPN and DNS",
+            "image-download": "downloading shared starter images",
+            "image-load": "loading starter images into local Podman",
+            "runtime-check": "installing packaged runtime and kubectl cleanup tool",
+            "connectivity": "checking existing worker connectivity",
+            "ready": "worker setup complete",
+            "scenario-execution": "worker setup complete; running assigned scenarios",
+        }
+        if phase in ("DONE", "STOPPED", "INFRA_ERROR", "BOOTSTRAP_ERROR"):
+            message = f"worker {phase.lower()}"
+        else:
+            message = descriptions.get(stage, stage or phase.lower())
+        lifecycle(work, name, message)
+        worker["observed_worker_stage"] = list(key)
+    current = status.get("progress", {}).get("current")
+    if current and current != "-" and worker.get("observed_scenario") != current:
+        lifecycle(work, name, f"scenario {current}")
+        worker["observed_scenario"] = current
+
+
+def request_termination(aws, work, name, worker, instance, reason):
+    aws.call("ec2", "terminate-instances", "--instance-ids", instance["InstanceId"])
+    if not worker.get("termination_requested_at"):
+        worker["termination_requested_at"] = now()
+        lifecycle(work, name, f"EC2 {instance['InstanceId']} termination requested ({reason})")
+
+
+def confirm_termination(aws, work, state, timeout=60):
+    """Observe teardown, without changing verdicts or retrying scenario work."""
+    pending = {name for name, worker in state["workers"].items()
+               if worker.get("instance_id") and
+               (worker.get("termination_requested_at") or worker.get("observed_ec2_state") == "shutting-down")}
+    if not pending:
+        return
+    deadline = time.monotonic() + timeout
+    for attempt in range(max(1, int(timeout / 5) + 1)):
+        try:
+            current = instances(aws, state)
+        except (RunnerError, OSError, ValueError, subprocess.TimeoutExpired) as exc:
+            lifecycle(work, "AWS", f"could not confirm EC2 termination: {exc}; check batch instance IDs")
+            break
+        for name in sorted(pending.copy()):
+            instance = current.get(name)
+            if not instance:
+                lifecycle(work, name, "instance no longer returned by EC2; termination not independently confirmed")
+                pending.remove(name)
+                continue
+            observe_instance(work, name, state["workers"][name], instance)
+            if instance["State"]["Name"] == "terminated":
+                pending.remove(name)
+        if not pending:
+            break
+        if time.monotonic() >= deadline or attempt >= int(timeout / 5):
+            for name in sorted(pending):
+                worker = state["workers"][name]
+                lifecycle(work, name, f"EC2 {worker['instance_id']} termination not yet confirmed; last state={worker.get('observed_ec2_state', 'unknown')}")
+            break
+        time.sleep(min(5, max(0, deadline - time.monotonic())))
+    atomic_json(work / "state.json", state)
+
+
+def print_report(path):
+    colors = {"PASS": "\033[1;32m", "FAIL": "\033[1;31m"} if sys.stdout.isatty() else {}
+    for line in path.read_text().splitlines():
+        label = line.split(" ", 1)[0]
+        if label in colors:
+            line = colors[label] + label + "\033[0m" + line[len(label):]
+        print(line)
+
+
 def ensure_stack(aws, cfg):
     print(f"Preparing AWS infrastructure: {cfg['STACK_NAME']} ({cfg['REGION']})", flush=True)
     parameters = [f"VpcCidr={cfg['VPC_CIDR']}", f"SubnetCidr={cfg['SUBNET_CIDR']}",
@@ -207,7 +301,7 @@ def launch(args):
              "max_hours": cfg["MAX_WORKER_HOURS"], "boot_minutes": cfg["BOOT_TIMEOUT_MINUTES"],
              "fail_fast": args.fail_fast, "scenarios": scenarios, "workers": {},
              "bootstrap_sha256": sha256(bootstrap)}
-    safe_cfg = {k: v for k, v in cfg.items() if k not in {"ENV", "VPN_CONFIG_FILE", "VPN_CONFIG_FILES", "VPN_AUTH_FILE"}}
+    safe_cfg = {k: v for k, v in cfg.items() if k not in {"ENV", "VPN_CONFIG_FILE", "VPN_CONFIG_FILES", "VPN_AUTH_FILE", "KUBECTL_FILE", "KUBECONFIG_FILE"}}
     safe_cfg["AWS_S3_CIDRS"] = aws_s3_cidrs
     for index, assigned in enumerate(assignments):
         name = f"worker-{index + 1:03d}"
@@ -228,8 +322,10 @@ def launch(args):
         raise RunnerError("this AWS batch ID already exists; choose another --batch-id or use --resume")
     aws.sync(input_dir, f"s3://{infra['Bucket']}/inputs/{batch}")
     atomic_json(work / "state.json", state)  # Saved before the first EC2 launch.
-    print(f"Requested {len(assignments)} workers using {ami}; no SSH required", flush=True)
-    print("Starting worker-001 first; remaining workers launch after its infrastructure is ready", flush=True)
+    lifecycle(work, "AWS", f"region={cfg['REGION']} stack={cfg['STACK_NAME']} instance_type={cfg['INSTANCE_TYPE']} disk={cfg['DISK_GB']} GiB AMI={ami}")
+    lifecycle(work, "AWS", f"workers requested={args.workers}, launching={len(assignments)} for {len(scenarios)} selected scenarios; no SSH required")
+    if len(assignments) > 1:
+        print("Starting worker-001 first; remaining workers launch after its infrastructure is ready", flush=True)
     for name, item in state["workers"].items():
         script = user_data(state, name)
         if len(script.encode()) > 16 * 1024:
@@ -264,7 +360,9 @@ def launch(args):
         item["instance_id"] = result["Instances"][0]["InstanceId"]
         item["launched_epoch"] = time.time()
         atomic_json(work / "state.json", state)
-        print(f"{name}: {item['instance_id']} — {len(item['scenarios'])} scenarios", flush=True)
+        lifecycle(work, name, f"EC2 {item['instance_id']} created; {len(item['scenarios'])} scenarios assigned")
+        if "State" in result["Instances"][0]:
+            observe_instance(work, name, item, result["Instances"][0])
         if name == "worker-001" and len(assignments) > 1:
             if not wait_for_infrastructure(aws, work, state, name):
                 for pending in state["workers"].values():
@@ -303,7 +401,9 @@ def verify_account(aws, state):
 def collect(aws, work, state):
     target = work / "workers"
     target.mkdir(exist_ok=True)
+    lifecycle(work, "AWS", "downloading worker logs and reports from S3")
     aws.sync(f"s3://{state['bucket']}/results/{state['batch']}", target)
+    lifecycle(work, "AWS", f"worker logs and reports collected in {target}")
     return aggregate(work, state)
 
 
@@ -324,12 +424,14 @@ def wait_for_infrastructure(aws, work, state, name):
         if ready and ready.get("worker") == name and ready.get("batch") == state["batch"]:
             item["infrastructure_ready_at"] = ready["ready_at"]
             atomic_json(work / "state.json", state)
-            print(f"{name}: infrastructure ready; launching remaining workers", flush=True)
+            lifecycle(work, name, "infrastructure ready; launching remaining workers")
             return True
         if marker:
             item["bootstrap_error"] = "worker completed without an infrastructure readiness marker"
             return False
         current = instances(aws, state).get(name)
+        observe_instance(work, name, item, current)
+        observe_worker(work, name, item, status)
         if current and current["State"]["Name"] in ("terminated", "shutting-down", "stopped"):
             item["bootstrap_error"] = "first worker stopped before infrastructure readiness"
             return False
@@ -346,7 +448,8 @@ def wait_for_infrastructure(aws, work, state, name):
                 item["bootstrap_error"] = diagnostic["error"]
                 return False
         if message != last_message:
-            print(f"{name}: {message}; waiting for infrastructure readiness", flush=True)
+            if not status:
+                lifecycle(work, name, f"{message}; waiting for infrastructure readiness")
             last_message = message
         time.sleep(20)
 
@@ -468,18 +571,22 @@ def monitor(work, state):
             instance = current.get(name)
             if instance:
                 worker["instance_id"] = instance["InstanceId"]
+                observe_instance(work, name, worker, instance)
             elif worker.get("not_started_reason"):
                 done.add(name)
                 continue
             prefix = f"results/{state['batch']}/{name}"
             marker = aws.optional_json(state["bucket"], prefix + "/complete.json")
             status = aws.optional_json(state["bucket"], prefix + "/status.json") or {}
+            observe_worker(work, name, worker, status)
             for key in overall:
                 overall[key] += int(status.get("progress", {}).get(key, 0))
             if marker:
+                if name not in done:
+                    lifecycle(work, name, f"worker finished ({marker.get('phase', 'complete')}); available results uploaded to S3")
                 done.add(name)
                 if instance and instance["State"]["Name"] in ("pending", "running", "stopping", "stopped"):
-                    aws.call("ec2", "terminate-instances", "--instance-ids", instance["InstanceId"])
+                    request_termination(aws, work, name, worker, instance, "results uploaded")
             elif name in done:
                 continue
             elif status.get("phase") == "BOOTSTRAP_ERROR":
@@ -491,7 +598,7 @@ def monitor(work, state):
                 detail = f"; console saved to {work / (name + '-console.log')}" if diagnostic["available"] else "; see worker bootstrap.log in S3"
                 print(f"\n{name}: {worker['bootstrap_error']}{detail}", flush=True)
                 if instance and instance["State"]["Name"] in ("pending", "running", "stopping", "stopped"):
-                    aws.call("ec2", "terminate-instances", "--instance-ids", instance["InstanceId"])
+                    request_termination(aws, work, name, worker, instance, "bootstrap failed")
                 done.add(name)
             elif ((not instance and time.time() - worker.get("launched_epoch", state["started_epoch"]) > 180)
                   or (instance and instance["State"]["Name"] in ("terminated", "shutting-down", "stopped"))):
@@ -506,7 +613,7 @@ def monitor(work, state):
                         worker["bootstrap_error"] = diagnostic["error"]
                         atomic_json(work / "state.json", state)
                         print(f"\n{name}: {diagnostic['error']}; console saved to {work / (name + '-console.log')}; stopping failed worker", flush=True)
-                        aws.call("ec2", "terminate-instances", "--instance-ids", instance["InstanceId"])
+                        request_termination(aws, work, name, worker, instance, "bootstrap failed")
                         done.add(name)
                     elif initial:
                         stage = diagnostic["stage"] or "startup"
@@ -523,7 +630,7 @@ def monitor(work, state):
                 limit = state["boot_minutes"] * 60 if status.get("phase", "BOOTSTRAP") in ("BOOTSTRAP", "BOOTSTRAP_ERROR", "PREPARING") else state["max_hours"] * 3600
                 if time.time() - worker.get("launched_epoch", state["started_epoch"]) > limit:
                     print(f"\n{name}: worker deadline reached; stopping instance", flush=True)
-                    aws.call("ec2", "terminate-instances", "--instance-ids", instance["InstanceId"])
+                    request_termination(aws, work, name, worker, instance, "worker deadline reached")
                     done.add(name)
         line = f"Overall: {overall['completed']}/{len(state['scenarios'])} complete | pass={overall['passed']} fail={overall['failed']} skip={overall['skipped']} | workers finished={len(done)}/{len(state['workers'])}"
         if sys.stdout.isatty():
@@ -543,7 +650,8 @@ def monitor(work, state):
         iid = state["workers"][name].get("instance_id")
         if iid:
             console_diagnostics(aws, work, name, iid)
-    print((work / "batch-report.txt").read_text(), flush=True)
+    confirm_termination(aws, work, state)
+    print_report(work / "batch-report.txt")
     print(f"Reports: {work / 'batch-report.json'}", flush=True)
     return 2 if summary["infrastructure_errors"] or (summary["unfinished"] and not state["fail_fast"]) else (1 if summary["failed"] or summary["unfinished"] else 0)
 
@@ -562,6 +670,11 @@ def cleanup(work, state):
     active = [v["InstanceId"] for v in current.values() if v["State"]["Name"] != "terminated"]
     if active:
         aws.call("ec2", "terminate-instances", "--instance-ids", *active)
+        for name, instance in current.items():
+            if instance["InstanceId"] in active:
+                state["workers"][name]["termination_requested_at"] = now()
+                lifecycle(work, name, f"EC2 {instance['InstanceId']} termination requested (explicit cleanup)")
+        confirm_termination(aws, work, state)
     print(f"Requested termination of {len(active)} batch instances. Available results: {work}")
     return 0
 

@@ -169,10 +169,14 @@ def worker(config):
                "P0_RUNS_DIR": str(RESULTS / "batch"), "P0_STATUS_FILE": str(RESULTS / "progress.tsv"),
                "SCENARIO_ROOT": str(ROOT / "lab" / config["scenario_root"]),
                "ULAB_RUNNER_HOOK": str(ROOT / "hook.sh")}
-        # AWS mode does not use optional kubectl mesh-pod cleanup.
-        # Also remove controller AWS credentials and development library paths.
-        for key in ("LD_LIBRARY_PATH", "LD_PRELOAD", "AWS_PROFILE", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN", "ULAB_KUBECTL", "KUBECONFIG"):
+        # Keep the packaged kubectl setup for the existing stop-node.sh cleanup.
+        # Remove controller AWS credentials and development library paths.
+        for key in ("LD_LIBRARY_PATH", "LD_PRELOAD", "AWS_PROFILE", "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN"):
             env.pop(key, None)
+        kubectl = env.get("ULAB_KUBECTL", "")
+        if not kubectl or not os.access(kubectl, os.X_OK):
+            raise RunnerError("packaged kubectl is missing; cannot enable existing node cleanup")
+        print("Worker setup: kubectl installed; existing node-specific mesh cleanup enabled", flush=True)
         run([ROOT / "lab/scripts/node-host-control.sh", "check", "ulab-probe"], env=env)
         # Exercise this binary/loader without contacting any backend or running a scenario.
         run([env["LAB_BIN"], "list-checks"], env=env, cwd=ROOT / "lab")
@@ -221,12 +225,14 @@ def worker(config):
         stop.set()
         publisher.join(timeout=180)
     # Upload complete.json LAST, and only after all original results are durable.
+    print("Worker lifecycle: uploading final results before EC2 termination", flush=True)
     bounded_retry(lambda: upload_results(aws, config), config["config"]["UPLOAD_RETRY_MINUTES"] * 60, "final result upload")
     publish_status(aws, config, phase["value"], error, phase["stage"])
     marker = ROOT / "complete.json"
     atomic_json(marker, {"phase": phase["value"], "error": error, "lab_exit": lab_rc,
                          "worker": config["worker"], "finished_at": now(), "progress": progress(config), "stage": phase["stage"]})
     aws.copy(marker, result_uri(config) + "/complete.json")
+    print("Worker lifecycle: results uploaded; shutting down EC2 (terminate-on-shutdown)", flush=True)
     run(["shutdown", "-h", "now"], check=False)
     return 0
 
