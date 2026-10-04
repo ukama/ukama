@@ -32,6 +32,9 @@ typedef struct {
 
     int cleanup_failed;
     int final_rc;
+    int scenario_skipped;
+    char error[ULAB_MAX_ERR];
+    char webapp_artifacts[ULAB_MAX_PATH];
 
     time_t started_at;
     time_t ended_at;
@@ -53,6 +56,8 @@ void report_event(report_t *r,
                   int passed,
                   const char *detail);
 void report_check(report_t *r, const check_result_t *res);
+int report_web_check(report_t *r, const char *phase, const check_spec_t *check,
+                      json_t *response, int passed, const char *error);
 void report_set_cleanup(report_t *r, int failed);
 void report_set_final_rc(report_t *r, int rc);
 void report_result(report_t *r);

@@ -1,0 +1,46 @@
+version: 2
+name: p0-webapp-authenticated-members
+description: Open Members and verify the owner invitation control before and after an explicit reload.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, session, read-only, members]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: true
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 180
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+phases:
+  - name: members
+    events:
+      - type: web_open
+        view: business_members
+    checks:
+      - type: web_action_available
+        view: business_members
+        label: Invite member
+        available: true
+        requirement: WEB-TEAM-002
+  - name: persisted-session
+    events:
+      - type: web_reload
+    checks:
+      - type: web_action_available
+        view: business_members
+        label: Invite member
+        available: true
+        requirement: WEB-TEAM-002

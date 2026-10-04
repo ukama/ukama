@@ -61,7 +61,7 @@ export async function fixture() {
             p.innerHTML+='<div class="kv-row"><span>Empty field</span><span><span class="tnum"></span></span></div>';
             if(selected!=='hidden-network')p.innerHTML+='<button '+(selected==='disabled-network'?'disabled':'')+'>Restart node</button>';
           }else if(path==='/business/manage/members'){
-            p.innerHTML+='<table><thead><tr><th>Member</th></tr></thead><tbody>'+(selected==='table-network'?'<tr><td>One</td></tr><tr><td>Two</td></tr>':'')+'</tbody></table>';
+            p.innerHTML+='<button>Invite member</button><table><thead><tr><th>Member</th></tr></thead><tbody>'+(selected==='table-network'?'<tr><td>One</td></tr><tr><td>Two</td></tr>':'')+'</tbody></table>';
             if(selected==='bad-table-network')p.innerHTML='<div class="MuiSkeleton-root">Loading</div>';
           }
         }

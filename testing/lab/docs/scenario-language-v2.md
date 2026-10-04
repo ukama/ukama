@@ -6,14 +6,19 @@ browser coverage credit. Version 1 behavior and files remain supported.
 
 ## Patch status
 
-Patch 1 implements parsing, contract validation, and offline linting. Patch 2
-adds a standalone Playwright worker and local smoke command; see
-[`webapp/worker.md`](webapp/worker.md). The C scenario runner does not yet
-launch it or execute browser steps. `run`/`validate` reject v2
-before creating a run directory, contacting the BFF, or provisioning resources.
-This guard applies even to `wip`, `skip`, and `xfail`: a contract-only scenario
-must not look like an executed PASS. Patch 3 supplies execution integration;
-patch 4 activates the first operational scenarios.
+Patches 1–3 implement the contract, local Playwright worker and C runner.
+`run`/`validate` now execute **active, zero-fixture authenticated scenarios**.
+See [`webapp/runner.md`](webapp/runner.md) for the executable Members example,
+setup, lifecycle, journals, cleanup and testing commands.
+
+Network/site provisioning and node runtime setup remain gated until Patch 4
+supplies their UI handlers. The two network examples remain WIP. `wip` and
+`skip` produce `outcome: SKIP`, `passed: false`, and zero checks without launching
+the worker or backend setup. V2 `xfail` execution is rejected so infrastructure
+failures cannot be converted to a passing scenario.
+
+Version 2 is also used by the existing workload language. Workloads must declare
+`kind: workload`; version alone does not select the workload runner.
 
 The initial v2 vocabulary covers network/site fixtures, navigation, visible
 text/count/action checks, and node disconnection/reconnection. Additional UI
@@ -33,7 +38,7 @@ Without the external ukamaOS build tree or a lab binary:
 
 ```sh
 ./utils/lint-scenarios.sh scenarios/webapp
-python3 -m unittest discover -s tests/webapp -v
+python3 -m unittest discover -s tests/webapp -p test_contract.py -v
 ```
 
 The helper needs a C compiler and uses the same C parser/validators as the lab.
@@ -125,9 +130,9 @@ no network/site setup. Customer, plan, SIM, UE, and traffic fixture contracts
 are added with patch 6. They currently fail with an explicit unsupported-scope
 message, so they cannot silently use a BFF shortcut.
 
-The existing run-generated names may exceed the console's network-name limit.
-Patch 3 must introduce short UI-valid names while retaining unique internal
-references and journaling every created resource, including partial creation.
+Patch 3 generates short, deterministic network/site UI names independently of
+internal references. The ownership journal is ready for UI provisioning handlers
+to record each confirmed created resource in Patch 4, including partial creation.
 
 ## Events
 
@@ -211,8 +216,8 @@ A failing automatic-update assertion must not be repaired by a hidden reload.
 
 Longer analytics deadlines are observation budgets, not a license to repeat
 creation, payment, restart, or other mutation actions. The scenario-wide deadline
-includes setup, navigation, convergence, and final checks. Cleanup needs its
-own bounded budget and must still run after failure/cancellation in patch 3.
+includes setup, navigation, convergence, and final checks. Cleanup has its
+own bounded budget and runs after failure/cancellation.
 
 The UI's day-based validity and the backend's minute-based validity represent
 one contract: 1/7/30 days correspond to 1440/10080/43200 minutes. Browser tests

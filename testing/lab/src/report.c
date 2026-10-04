@@ -13,13 +13,19 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static void json_str(FILE *f, const char *key, const char *value,
                      int comma) {
-    char esc[ULAB_MAX_LINE * 2];
+    char *encoded;
+    json_t *text;
 
-    ulab_json_escape(value ? value : "", esc, sizeof(esc));
-    fprintf(f, "  \"%s\": \"%s\"%s\n", key, esc, comma ? "," : "");
+    text = json_string(value ? value : "");
+    encoded = text ? json_dumps(text, JSON_ENCODE_ANY) : NULL;
+    fprintf(f, "  \"%s\": %s%s\n", key, encoded ? encoded : "null", comma ? "," : "");
+    free(encoded); json_decref(text);
 }
 
 static void json_result_prefix(report_t *r) {
@@ -64,6 +70,12 @@ int report_open(report_t *r,
         r->json = NULL;
         return ULAB_ERR;
     }
+    if (scenario && scenario->version == ULAB_WEBAPP_SCHEMA_VER &&
+        (fchmod(fileno(r->json), 0600) || fchmod(fileno(r->txt), 0600))) {
+        fclose(r->json); fclose(r->txt);
+        r->json = r->txt = NULL;
+        return ULAB_ERR;
+    }
 
     fprintf(r->json, "{\n");
     json_str(r->json, "run_id", r->run_id, 1);
@@ -91,10 +103,12 @@ int report_open(report_t *r,
 
 void report_close(report_t *r) {
     int passed;
+    char *directory;
+    json_t *value;
 
     r->ended_at = time(NULL);
     passed = r->final_rc == ULAB_OK && r->failed == 0 &&
-        r->event_failed == 0 && r->cleanup_failed == 0;
+        r->event_failed == 0 && r->cleanup_failed == 0 && !r->scenario_skipped;
 
     if (r->json != NULL) {
         fprintf(r->json, "\n  ],\n");
@@ -107,14 +121,31 @@ void report_close(report_t *r) {
                 r->checks, r->checks - r->failed, r->failed);
         fprintf(r->json, "  \"cleanup\": \"%s\",\n",
                 r->cleanup_failed ? "failed" : "ok");
-        fprintf(r->json, "  \"artifacts\": {"
-                "\"run_dir\": \"%s\", "
-                "\"world\": \"%s/world.json\", "
-                "\"model\": \"%s/model.json\", "
-                "\"created\": \"%s/created.json\", "
-                "\"created_final\": \"%s/created.final.json\"},\n",
-                r->run_dir, r->run_dir, r->run_dir, r->run_dir, r->run_dir);
+        value = json_string(r->run_dir);
+        directory = value ? json_dumps(value, JSON_ENCODE_ANY) : NULL;
+        fprintf(r->json, "  \"artifacts\": {\"run_dir\": %s", directory ? directory : "null");
+        free(directory); json_decref(value);
+        /* Paths are JSON encoded, including spaces, quotes and backslashes. */
+        {
+            const char *names[] = {"world", "model", "created", "created_final"};
+            const char *files[] = {"world.json", "model.json", "created.json", "created.final.json"};
+            char path[ULAB_MAX_PATH + 32];
+            size_t i;
+            for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+                /* Browser runs do not produce backend-created/model files. */
+                if ((r->webapp_artifacts[0] || r->scenario_skipped) && i > 0) continue;
+                snprintf(path, sizeof(path), "%s/%s", r->run_dir, files[i]);
+                value = json_string(path);
+                directory = value ? json_dumps(value, JSON_ENCODE_ANY) : NULL;
+                fprintf(r->json, ", \"%s\": %s", names[i], directory ? directory : "null");
+                free(directory); json_decref(value);
+            }
+        }
+        fprintf(r->json, "},\n");
         fprintf(r->json, "  \"passed\": %s,\n", passed ? "true" : "false");
+        json_str(r->json, "outcome", r->scenario_skipped ? "SKIP" : passed ? "PASS" : "FAIL", 1);
+        if (r->webapp_artifacts[0]) json_str(r->json, "webapp_artifacts", r->webapp_artifacts, 1);
+        if (r->error[0]) json_str(r->json, "error", r->error, 1);
         fprintf(r->json, "  \"final_rc\": %d\n", r->final_rc);
         fprintf(r->json, "}\n");
         fclose(r->json);
@@ -128,7 +159,8 @@ void report_close(report_t *r) {
         fprintf(r->txt, "  checks: %zu passed, %zu failed, %zu total\n",
                 r->checks - r->failed, r->failed, r->checks);
         fprintf(r->txt, "  cleanup: %s\n", r->cleanup_failed ? "failed" : "ok");
-        fprintf(r->txt, "  result: %s\n", passed ? "PASS" : "FAIL");
+        if (r->error[0]) fprintf(r->txt, "  error: %s\n", r->error);
+        fprintf(r->txt, "  result: %s\n", r->scenario_skipped ? "SKIP" : passed ? "PASS" : "FAIL");
         fclose(r->txt);
         r->txt = NULL;
     }
@@ -147,6 +179,7 @@ void report_event(report_t *r,
                   int passed,
                   const char *detail) {
     char esc_detail[ULAB_MAX_ERR * 2];
+    char esc_phase[ULAB_MAX_NAME * 2];
     const char *state;
 
     if (r == NULL || event == NULL) {
@@ -171,12 +204,13 @@ void report_event(report_t *r,
 
     if (r->json != NULL) {
         ulab_json_escape(detail ? detail : "ok", esc_detail, sizeof(esc_detail));
+        ulab_json_escape(phase ? phase : "", esc_phase, sizeof(esc_phase));
         json_result_prefix(r);
         fprintf(r->json,
                 "    {\"kind\":\"event\",\"phase\":\"%s\","
                 "\"name\":\"%s\",\"state\":\"%s\","
                 "\"detail\":\"%s\"}",
-                phase ? phase : "", scenario_event_name(event->type), state,
+                esc_phase, scenario_event_name(event->type), state,
                 esc_detail);
         fflush(r->json);
     }
@@ -217,6 +251,46 @@ void report_set_cleanup(report_t *r, int failed) {
     }
 }
 
+int report_web_check(report_t *r, const char *phase, const check_spec_t *check,
+                      json_t *response, int passed, const char *error) {
+    json_t *record;
+    json_t *expected;
+    json_t *actual;
+    json_t *artifacts;
+    char *want;
+    char *got;
+    int rc = ULAB_OK;
+    expected = json_object_get(response, "expected");
+    actual = json_object_get(response, "actual");
+    artifacts = json_object_get(response, "artifacts");
+    want = json_dumps(expected ? expected : json_null(), JSON_COMPACT | JSON_ENCODE_ANY);
+    got = json_dumps(actual ? actual : json_null(), JSON_COMPACT | JSON_ENCODE_ANY);
+    r->checks++;
+    if (!passed) r->failed++;
+    ulab_status(passed ? "PASS" : "FAIL", "%s/%s [%s] %s expected=%s actual=%s%s%s",
+                phase, scenario_check_name(check->type), check->requirement, check->label,
+                want ? want : "null", got ? got : "null", error && *error ? ": " : "", error ? error : "");
+    if (r->txt) {
+        if (fprintf(r->txt, "%s check %s/%s [%s] %s expected=%s actual=%s %s\n",
+                    passed ? "PASS" : "FAIL", phase, scenario_check_name(check->type), check->requirement,
+                    check->label, want ? want : "null", got ? got : "null", error ? error : "") < 0 || fflush(r->txt)) rc = ULAB_ERR;
+    }
+    free(want); free(got);
+    record = json_pack("{s:s,s:s,s:s,s:s,s:s,s:s,s:s,s:O,s:O}",
+                        "kind", "check", "phase", phase, "name", scenario_check_name(check->type),
+                        "state", passed ? "PASS" : "FAIL", "requirement", check->requirement,
+                        "label", check->label, "detail", error ? error : "",
+                        "expected", expected ? expected : json_null(), "actual", actual ? actual : json_null());
+    if (!record) return ULAB_ERR;
+    if (json_object_set(record, "artifacts", artifacts ? artifacts : json_null())) rc = ULAB_ERR;
+    if (r->json) {
+        json_result_prefix(r);
+        if (json_dumpf(record, r->json, JSON_COMPACT) || fflush(r->json)) rc = ULAB_ERR;
+    }
+    json_decref(record);
+    return rc;
+}
+
 void report_set_final_rc(report_t *r, int rc) {
     if (r != NULL) {
         r->final_rc = rc;
@@ -225,6 +299,11 @@ void report_set_final_rc(report_t *r, int rc) {
 
 void report_result(report_t *r) {
     if (r == NULL || (r->json == NULL && r->txt == NULL)) {
+        return;
+    }
+
+    if (r->scenario_skipped) {
+        ulab_status("SKIP", "%s status=%s; no execution or coverage credit", r->scenario, r->status);
         return;
     }
 

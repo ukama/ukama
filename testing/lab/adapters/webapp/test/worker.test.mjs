@@ -214,3 +214,13 @@ test('standalone smoke command succeeds only on a matching visible value', async
     assert.match(stderr, /no scenario coverage credit/);
   }
 });
+
+test('C-owned failures retain browser evidence and cannot close as passed', async t => {
+  const s = await session(t); ok(s.result);
+  const result = await s.send('close', { failed: true, reason: 'C_RUNNER_FAILED' });
+  ok(result); assert.equal(result.run_status, 'failed');
+  assert(result.artifacts.some(p => p.endsWith('trace.zip')));
+  const summary = JSON.parse(await readFile(result.artifacts.find(p => p.endsWith('worker-summary.json')), 'utf8'));
+  assert.equal(summary.status, 'failed');
+  assert.equal(summary.reason, 'C_RUNNER_FAILED');
+});

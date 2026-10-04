@@ -66,9 +66,13 @@ export class Worker {
       const remaining = c.deadline_ms - Date.now();
       if (remaining <= 0 || remaining > 900000) throw new WorkerError('DEADLINE_EXCEEDED', 'Command deadline must be in the next 900 seconds');
       if (c.action === 'close') {
-        keys(c.inputs, []);
+        keys(c.inputs, ['failed', 'reason']);
+        if (c.inputs.failed !== undefined && typeof c.inputs.failed !== 'boolean')
+          throw new WorkerError('INVALID_INPUT', 'close.failed must be a boolean');
+        if (c.inputs.reason !== undefined && !/^[A-Z_]{1,64}$/.test(str(c.inputs.reason, 'close.reason')))
+          throw new WorkerError('INVALID_INPUT', 'close.reason must be a diagnostic code');
         if (!this.run) throw new WorkerError('NOT_INITIALIZED', 'Cannot finish a run that was never initialized');
-        await this.shutdown(false);
+        await this.shutdown(c.inputs.failed === true, c.inputs.reason as string | undefined);
         result.actual = { closed: true }; result.run_status = this.failed ? 'failed' : 'passed';
       } else {
         const milliseconds = Math.min(remaining, this.end - performance.now());

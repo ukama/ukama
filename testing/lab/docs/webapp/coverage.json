@@ -1367,7 +1367,10 @@
       "source": "src/app/(dashboard)/business/manage/_components/MembersScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/session/wb-000-authenticated-members.yaml"
+      ],
+      "patch_3_note": "The active smoke scenario checks invitation-control availability and session persistence only. Invitation submission, role behavior and live-app verification remain outstanding; this does not complete the requirement."
     },
     {
       "id": "WEB-TEAM-003",

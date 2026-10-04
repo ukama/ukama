@@ -1,14 +1,14 @@
-# Local console-app worker — Patch 2
+# Local console-app worker — Patches 2–3
 
 Patch 2 adds a standalone Node/TypeScript Playwright worker inside ukama-lab.
 The worker and browser run on your host. It drives the console's visible
 navigation and reads rendered values. It never calls a BFF endpoint directly,
 injects application state, or reloads a page to make an assertion pass.
 
-Patch 3 connects this worker to the C scenario lifecycle. Until then,
-`ukama-lab run` and `validate` still reject v2 scenarios before provisioning.
-The two example YAML files remain WIP. No requirement in the coverage inventory
-has been marked verified by this patch.
+Patch 3 connects this worker to the C scenario lifecycle; see [runner.md](runner.md).
+Active scenarios with no provisioned world can now execute. The network/site
+examples remain WIP until Patch 4 implements their UI setup. No requirement in
+the coverage inventory has been marked verified from fixture runs.
 
 ## Install on the host
 
@@ -187,7 +187,7 @@ caller; its per-command deadline supplies any scenario step override.
 | `web_kpi_equals`, `web_field_equals` | `view`, `label`, `requirement: WEB-*`, `expected` string |
 | `web_table_count_equals` | `view`, `label`, `requirement`, `expected_count` integer |
 | `web_action_available` | `view`, `label`, `requirement`, `available` boolean |
-| `close` | Empty object; required even after failure |
+| `close` | `{}` or optional `failed: boolean`, `reason: UPPERCASE_CODE`; required even after failure |
 
 The runner resolves YAML references to visible names/identities. For example,
 `nodes: tower-site-001-001` becomes an entity object with that `ref`, the actual
@@ -207,16 +207,19 @@ IDs increase from 1 up to 10000. Repeating the exact same command returns its
 cached response and does not execute it again; keep the original deadline on
 a replay. Reusing an ID with different content is a terminal error. The cache
 is per process, not durable recovery: after a crash, never blindly resubmit a
-mutation to a new worker. The future runner owns reconciliation/journaling.
+mutation to a new worker. The C runner journals requests before sending and never replays an uncertain action.
 
 A failure stops browser work, captures evidence and closes the browser. It
 continues accepting `close` to finish the protocol, and that response preserves
 `run_status: failed`. Closing successfully means worker commands completed;
-the C runner will own the final scenario result and coverage accounting.
+the C runner owns the final scenario result and coverage accounting.
+`close` with `failed: true` preserves a C/runtime-originated failure and retains
+browser evidence even if every browser command passed. `reason` accepts 1..64
+uppercase letters/underscores; keep raw error details in the C report.
 EOF without explicit close, SIGINT/SIGTERM, broken output and scenario timeout
 are failures. Evidence has a separate five-second capture budget, followed by
-two seconds each for context/browser close. The runner must retain its own
-process-group termination fallback for an unresponsive worker (Patch 3).
+two seconds each for context/browser close. The runner uses a bounded worker shutdown followed by process-group termination
+for remaining helpers.
 
 ## Failure evidence
 

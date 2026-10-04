@@ -41,10 +41,24 @@ int scenario_has_webapp(const scenario_t *s) {
 }
 
 int scenario_execution_supported(const scenario_t *s, ulab_error_t *err) {
-    if (s->version == ULAB_WEBAPP_SCHEMA_VER) {
-        return fail(err, "webapp v2 scenarios remain contract-only until "
-                    "runner integration (patch 3); use lint or the standalone "
-                    "utils/webapp-worker.sh smoke command from patch 2");
+    size_t p;
+    size_t i;
+    if (s->version != ULAB_WEBAPP_SCHEMA_VER) return ULAB_OK;
+    if (ulab_streq(s->status, "xfail"))
+        return fail(err, "webapp xfail execution is unsupported; infrastructure failures must remain failures");
+    if (ulab_streq(s->status, "wip") || ulab_streq(s->status, "skip")) return ULAB_OK;
+    if (s->world.networks || s->world.sites_per_network || s->setup.webapp_entities ||
+        s->runtime.start_nodes || s->runtime.wait_nodes_ready)
+        return fail(err, "webapp UI provisioning requires patch 4; patch 3 executes zero-fixture authenticated scenarios");
+    for (p = 0; p < s->phase_count; p++) {
+        for (i = 0; i < s->phases[p].event_count; i++) {
+            const event_spec_t *event;
+            event = &s->phases[p].events[i];
+            if (!scenario_is_web_event(event->type))
+                return fail(err, "webapp runtime events require patch 4 provisioned fixtures");
+            if (ulab_streq(event->view, "welcome") || ulab_streq(event->view, "unauthorized"))
+                return fail(err, "welcome/unauthorized browser handlers are not implemented");
+        }
     }
     return ULAB_OK;
 }
@@ -70,7 +84,8 @@ static int view_valid(const char *view) {
 static int view_needs_network(const char *view) {
     return !ulab_streq(view, "welcome") && !ulab_streq(view, "unauthorized") &&
         !ulab_ends(view, "_settings") && !ulab_ends(view, "_members") &&
-        !ulab_ends(view, "_sim_pool") && !ulab_ends(view, "_node_pool");
+        !ulab_ends(view, "_sim_pool") && !ulab_ends(view, "_node_pool") &&
+        !ulab_streq(view, "business_data_plans");
 }
 
 static int numbered_ref(const char *ref, const char *prefix, uint32_t max,

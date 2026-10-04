@@ -236,6 +236,9 @@ int world_generate(const scenario_t *s,
         snprintf(net->id,   sizeof(net->id),   "%.240s-%.120s", run_id,
                  net->ref);
         snprintf(net->name, sizeof(net->name), "%.255s", net->id);
+        if (s->version == ULAB_WEBAPP_SCHEMA_VER)
+            snprintf(net->name, sizeof(net->name), "lab-%08x%08x-n%03zu",
+                     ulab_hash32(run_id, 0), ulab_hash32(run_id, 4711), i + 1);
 
         for (j = 0; j < s->package_count; j++) {
             const package_spec_t *spec = &s->packages[j];
@@ -259,6 +262,9 @@ int world_generate(const scenario_t *s,
             snprintf(site->id,  sizeof(site->id), "%.240s-%.120s", run_id,
                      site->ref);
             snprintf(site->name, sizeof(site->name), "%.255s", site->id);
+            if (s->version == ULAB_WEBAPP_SCHEMA_VER)
+                snprintf(site->name, sizeof(site->name), "lab-%08x%08x-s%03zu",
+                         ulab_hash32(run_id, 0), ulab_hash32(run_id, 4711), site_idx);
             snprintf(site->network_ref, sizeof(site->network_ref), "%s",
                      net->ref);
             snprintf(site->location, sizeof(site->location), "Lab");

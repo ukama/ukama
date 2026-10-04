@@ -118,12 +118,18 @@ class WebappContract(unittest.TestCase):
         self.assertIn("check=web_kpi_equals timeout=11 immediate=1", result.stdout)
         self.assertEqual(result.stdout.count("timeout=900"), 2)
 
-    def test_contract_never_claims_runtime_support(self):
+    def test_execution_gates_incomplete_handlers_without_blocking_skips(self):
         for status in ("wip", "active", "skip", "xfail"):
             with self.subTest(status=status):
                 result = self.run_scenario(self.example.replace("status: wip", "status: " + status), "execute")
-                self.assertNotEqual(result.returncode, 0)
-                self.assertIn("contract-only", result.stdout)
+                if status in ("wip", "skip"):
+                    self.assertEqual(result.returncode, 0, result.stdout)
+                else:
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("patch 4" if status == "active" else "xfail", result.stdout)
+        smoke = ROOT / "scenarios/webapp/p0/session/wb-000-authenticated-members.yaml"
+        result = self.run_scenario(smoke.read_text(), "execute")
+        self.assertEqual(result.returncode, 0, result.stdout)
 
     def test_reject_invalid_contracts(self):
         cases = [

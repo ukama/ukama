@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
-import { appendFile, chmod, mkdir, writeFile } from 'node:fs/promises';
+import { appendFile, chmod, mkdir, rename, rm, writeFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
 import type { BrowserContext, Page } from 'playwright';
 import { safeURL, type Result } from './contract.js';
@@ -44,8 +45,14 @@ export class Artifacts {
   }
   async summary(status: 'passed' | 'failed', reason: string): Promise<void> {
     const path = join(this.directory, 'worker-summary.json');
-    await writeFile(path, JSON.stringify({ status, reason, finished_at: new Date().toISOString(),
-      scope: 'worker commands only; not scenario or product coverage', artifacts: this.paths }, null, 2) + '\n', { mode: 0o600 });
+    // Signal termination can overlap a command's failure shutdown. Never
+    // truncate the last complete summary while another caller is exiting.
+    const temporary = `${path}.${randomUUID()}.tmp`;
+    try {
+      await writeFile(temporary, JSON.stringify({ status, reason, finished_at: new Date().toISOString(),
+        scope: 'worker commands only; not scenario or product coverage', artifacts: this.paths }, null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+      await rename(temporary, path);
+    } finally { await rm(temporary, { force: true }); }
     if (!this.paths.includes(path)) this.paths.push(path);
   }
   async capture(page?: Page, context?: BrowserContext): Promise<void> {
