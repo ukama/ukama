@@ -213,7 +213,7 @@ static const package_spec_t *commerce_package(const scenario_t *s, const char *r
 }
 static int commerce_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
     int plan = ulab_streq(e->target, "create_plan") || ulab_streq(e->target, "edit_plan") || ulab_streq(e->target, "rename_plan") || ulab_streq(e->target, "name_pending") || ulab_streq(e->target, "name_failure");
-    int combined = ulab_streq(e->target, "allocate_auto") || ulab_streq(e->target, "allocate_sim") || ulab_streq(e->target, "top_up") || ulab_streq(e->target, "cancel_top_up") || ulab_streq(e->target, "open_receipt");
+    int combined = ulab_streq(e->target,"download_receipt") || ulab_streq(e->target,"top_up_rapid") || ulab_streq(e->target,"failed_top_up") || ulab_streq(e->target, "allocate_auto") || ulab_streq(e->target, "allocate_sim") || ulab_streq(e->target, "top_up") || ulab_streq(e->target, "cancel_top_up") || ulab_streq(e->target, "open_receipt");
     int customer = ulab_streq(e->target, "create_customer") || ulab_streq(e->target, "open_customer") || ulab_streq(e->target, "close_customer") || ulab_streq(e->target, "activate_sim") || ulab_streq(e->target, "deactivate_sim");
     int close = ulab_streq(e->target, "close_dialog") || ulab_streq(e->target, "clear_fault");
     int pool = ulab_streq(e->target, "pool_failure");
@@ -450,8 +450,8 @@ static int requirement_valid(const char *id) {
 
 static int commerce_check_scope(const check_spec_t *c, ulab_error_t *err) {
     static const char *const plans[] = {"Commerce fault", "Plan terms", "Plan price", "Plan scope", "Validity", "Price", "Data volume", "Unit"};
-    static const char *const customer[] = {"SIM option present", "Customer plan", "ICCID", "SIM status", "Phone", "Active plan", "Cycle usage", "Total usage", "Receipt total", "Receipt payment ID", "Receipt method", "Receipt status", "Receipt empty"};
-    static const char *const scoped[] = {"Package count", "Package status", "Package dates", "Package days", "Receipt plan"};
+    static const char *const customer[] = {"SIM option present", "Customer plan", "ICCID", "SIM status", "Phone", "Active plan", "Cycle usage", "Total usage", "Receipt total", "Receipt payment ID", "Receipt method", "Receipt status", "Receipt empty", "Receipt date window", "Receipt payer"};
+    static const char *const scoped[] = {"Package count", "Package status", "Package dates", "Package days", "Receipt plan", "Receipt PDF", "Payment rejection"};
     size_t i;
     int valid = 0;
     if (ulab_streq(c->view, "business_data_plans")) {

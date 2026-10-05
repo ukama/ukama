@@ -201,7 +201,7 @@ export class ConsoleApp {
   }
   async check(action: string, inputs: ObjectValue, budget: Budget): Promise<{ expected: unknown; actual: unknown }> {
     const field = action === 'web_table_count_equals' ? 'expected_count' : action === 'web_action_available' ? 'available' : 'expected';
-    keys(inputs, action === 'web_commerce_equals' ? ['view', 'label', 'requirement', 'expected', 'plan_name', 'customer_name', 'iccid'] : ['view', 'label', 'requirement', field, 'node_id', 'app', 'match']);
+    keys(inputs, action === 'web_commerce_equals' ? ['view', 'label', 'requirement', 'expected', 'plan_name', 'customer_name', 'iccid', 'sim_id', 'payment_id', 'plan_id'] : ['view', 'label', 'requirement', field, 'node_id', 'app', 'match']);
     const name = str(inputs.view, 'view');
     const label = str(inputs.label, 'label');
     if (!/^WEB-[A-Z0-9][A-Z0-9-]*$/.test(str(inputs.requirement, 'requirement')))

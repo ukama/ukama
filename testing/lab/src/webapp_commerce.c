@@ -10,7 +10,7 @@ const char *webapp_commerce_kind(const event_spec_t *event) {
     if (!strcmp(event->target, "create_plan")) return "package";
     if (!strcmp(event->target, "create_customer")) return "subscriber";
     if ((!strcmp(event->target, "allocate_sim") || !strcmp(event->target, "allocate_auto"))) return "sim";
-    if (!strcmp(event->target, "top_up")) return "payment";
+    if (!strcmp(event->target, "top_up") || !strcmp(event->target,"top_up_rapid") || !strcmp(event->target,"failed_top_up")) return "payment";
     return NULL;
 }
 static json_t *plan_input(const package_t *p, const char *unit) {
@@ -47,11 +47,11 @@ int webapp_commerce_inputs(const event_spec_t *e, world_t *w, json_t *inputs, ul
     }
     if (ue && sub) {
         if (strcmp(e->target, "create_customer") && !sub->bff_id[0]) return webapp_error(err, "customer has not been created through the UI");
-        if ((!strcmp(e->target, "top_up") || !strcmp(e->target, "cancel_top_up") || !strcmp(e->target, "open_receipt") ||
+        if ((!strcmp(e->target, "top_up") || !strcmp(e->target,"top_up_rapid") || !strcmp(e->target,"failed_top_up") || !strcmp(e->target,"download_receipt") || !strcmp(e->target, "cancel_top_up") || !strcmp(e->target, "open_receipt") ||
              !strcmp(e->target, "activate_sim") || !strcmp(e->target, "deactivate_sim")) && !ue->bff_id[0])
             return webapp_error(err, "SIM has not been allocated through the UI");
-        json_object_set_new(inputs, "customer", json_pack("{s:s,s:s,s:s,s:s,s:s,s:s}",
-            "ref", sub->ref, "id", sub->bff_id, "name", sub->name, "email", sub->email, "iccid", ue->iccid, "sim_id", ue->bff_id));
+        json_object_set_new(inputs, "customer", json_pack("{s:s,s:s,s:s,s:s,s:s,s:s,s:s}",
+            "payment_id",ue->last_payment_id,"ref", sub->ref, "id", sub->bff_id, "name", sub->name, "email", sub->email, "iccid", ue->iccid, "sim_id", ue->bff_id));
     }
     if (kind) {
         if (!strcmp(kind, "package")) { ref = p->ref; name = p->name; id = p->bff_id; }
@@ -76,10 +76,15 @@ int webapp_commerce_check(const check_spec_t *check, check_spec_t *resolved, wor
     }
     *inputs = webapp_check_inputs(resolved);
     if (!*inputs) return webapp_error(err, "cannot encode commerce expectation");
-    if (p) json_object_set_new(*inputs, "plan_name", json_string(p->web_name[0] ? p->web_name : p->name));
+    if (p) {
+        json_object_set_new(*inputs,"plan_id",json_string(p->bff_id));
+        json_object_set_new(*inputs, "plan_name", json_string(p->web_name[0] ? p->web_name : p->name));
+    }
     if (ue) {
         json_object_set_new(*inputs, "customer_name", json_string(sub->name));
         json_object_set_new(*inputs, "iccid", json_string(ue->iccid));
+        json_object_set_new(*inputs,"sim_id",json_string(ue->bff_id));
+        json_object_set_new(*inputs,"payment_id",json_string(ue->last_payment_id));
     }
     return ULAB_OK;
 }

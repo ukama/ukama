@@ -64,3 +64,8 @@ export function commerceFaultState(page: Page) {
   const f = faults.get(page);
   return !f ? 'none' : new URL(page.url()).pathname !== f.path ? `${f.mode}:wrong_scope` : `${f.mode}:${f.applied ? 'applied' : 'armed'}`;
 }
+export function commerceEndpoint(page: Page): string {
+  const urls = new Set([...(endpoints.get(page)?.values() ?? [])].flatMap(set => [...set]));
+  if (urls.size !== 1) throw new WorkerError('AMBIGUOUS_ENDPOINT', 'Payment rejection requires one passively observed commerce endpoint');
+  return [...urls][0]!;
+}

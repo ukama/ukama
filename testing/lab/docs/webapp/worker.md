@@ -323,6 +323,14 @@ world references, units and limits. Commerce submissions have durable private
 receipts and per-run mutation guards; duplicate command replay returns the
 cached response. Observation remains separate from submission.
 
+Patches 12/13 extend this contract with `rename_plan`, `allocate_auto`, scoped
+commerce read faults, `failed_top_up`, `top_up_rapid` and `download_receipt`.
+See `lifecycle.md` and `payments.md`. Browser contexts now accept downloads so the
+requested receipt can be copied to private artifacts; temporary browser downloads
+are removed when the context closes. PDF validation requires Poppler on PATH.
+An intercepted payment rejection permits one explicit new submission, while
+unknown or ambiguous outcomes retain the existing duplicate guard and journal.
+
 Patch 6 also removes the operations adapter's dependency on console companion
 changes. Current locators target the unchanged console source. A stale or
 optimistic app value is not silently corrected by the adapter.

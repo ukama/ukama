@@ -4,8 +4,9 @@
 import { closeSync, fsyncSync, openSync, renameSync, writeFileSync } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
+import { paymentWindow, paymentDate, downloadReceipt, receiptPdf, rejectPayment, paymentRejection } from './payments.js';
 import { commerceFault, commerceFaultState } from './commerce-faults.js';
-import type { Locator, Page, Response } from 'playwright';
+import type { Locator, Page, Response, Request } from 'playwright';
 import { Budget, WorkerError, integer, keys, normalize, object, str, bool, type ObjectValue } from './contract.js';
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -34,6 +35,10 @@ class MutationReceipt {
   private document: ObjectValue;
   private path: string;
   private submitted = false;
+  private started = 0;
+  private attempted = new Set<Request>();
+  private identified = new Set<Request>();
+  private lastAttempt = 0;
   private binding?: ObjectValue;
   private failure?: Error;
   private pending = new Set<Promise<void>>();
@@ -43,8 +48,18 @@ class MutationReceipt {
     if (!['package', 'subscriber', 'sim', 'payment'].includes(String(creation.kind))) throw new WorkerError('INVALID_INPUT', 'Unsupported commerce creation kind');
     this.path = join(directory, `creation-${command}.json`);
     this.document = { ...creation, command_id: command, state: 'prepared', bindings: [] };
-    this.save(); this.page.on('response', this.response);
+    this.save(); this.page.on('response', this.response); this.page.on('request', this.request);
   }
+  private request = (request: Request) => {
+    if (!this.submitted || this.inputs.action !== 'top_up_rapid') return;
+    let b: any; try { b = request.postDataJSON(); } catch { return; }
+    const c = this.inputs.customer as ObjectValue, p = this.inputs.plan as ObjectValue;
+    if (!/\baddPayment\s*\(/.test(b?.query ?? '') || b?.variables?.data?.sim !== c.sim_id || b?.variables?.data?.itemId !== p.id || b?.variables?.data?.payerEmail !== c.email) return;
+    this.attempted.add(request); this.lastAttempt = performance.now();
+    this.document.attempt_count = this.attempted.size;
+    if ((this.document.bindings as unknown[]).length < 2) this.document.state = 'submitted';
+    this.save();
+  };
   private save() {
     const fd = openSync(`${this.path}.tmp`, 'w', 0o600);
     try { writeFileSync(fd, JSON.stringify(this.document)); fsyncSync(fd); } finally { closeSync(fd); }
@@ -70,18 +85,32 @@ class MutationReceipt {
       if (typeof id !== 'string' || !/^[A-Za-z0-9_-]{1,127}$/.test(id)) return;
       if ((kind === 'package' || kind === 'subscriber') && row.name !== this.document.name) return;
       if (kind === 'sim' && (row.iccid !== customer?.iccid || row.subscriber_id !== customer?.id || row.network_id !== this.inputs.network_id)) return;
-      if (this.binding && this.binding.id !== id) throw new WorkerError('OWNERSHIP_CONFLICT', 'Multiple IDs observed for commerce mutation');
+      if (this.binding && this.binding.id !== id) {
+        const bindings = this.document.bindings as ObjectValue[];
+        if (!bindings.some(b => b.id === id)) this.document.bindings = [...bindings, {kind,ref:this.document.ref,name:this.document.name,id,observed_via:'ui_result'}];
+        this.document.state = 'ambiguous';
+        this.save();
+        throw new WorkerError('OWNERSHIP_CONFLICT', 'Multiple IDs observed; retained all private receipts for reconciliation');
+      }
+      if ((this.document.bindings as unknown[]).length > 1) return;
       this.binding = { kind, ref: this.document.ref, name: this.document.name, id, observed_via: 'ui_result' };
-      this.document.state = 'identified'; this.document.bindings = [this.binding]; this.save();
+      this.identified.add(response.request());
+      this.document.state = this.inputs.action === 'top_up_rapid' && this.identified.size !== this.attempted.size ? 'submitted' : 'identified'; this.document.bindings = [this.binding]; this.save();
     })().catch(error => { this.failure = error; });
     this.pending.add(task); void task.finally(() => this.pending.delete(task));
   };
-  submit() { this.submitted = true; this.document.state = 'submitted'; this.save(); }
+  submit() { this.started = Date.now(); this.submitted = true; this.document.state = 'submitted'; this.save(); }
+  intercepted() { this.document.state = 'intercepted'; this.save(); }
   async result(budget: Budget) {
-    await budget.poll(async () => { if (this.failure) throw this.failure; return this.binding; }, Boolean, 'Mutation ownership was not identified');
+    await budget.poll(async () => {
+      if (this.failure) throw this.failure;
+      if (this.inputs.action === 'top_up_rapid' && (!this.attempted.size || this.attempted.size !== this.identified.size || performance.now() - this.lastAttempt < 250)) return undefined;
+      return this.binding;
+    }, Boolean, 'Mutation ownership was not identified');
+    if (this.document.kind === 'payment') paymentWindow(this.page,String(this.binding!.id),this.started,Date.now());
     return [this.binding!];
   }
-  async close() { await Promise.all(this.pending); this.page.off('response', this.response); if (this.failure) throw this.failure; }
+  async close() { await Promise.all(this.pending); this.page.off('response', this.response); this.page.off('request', this.request); if (this.failure) throw this.failure; }
 }
 export class Commerce {
   constructor(private page: Page) {}
@@ -100,14 +129,17 @@ export class Commerce {
     const action = str(inputs.action, 'action');
     const p = inputs.plan === undefined ? undefined : planValues(inputs.plan);
     const c = inputs.customer === undefined ? undefined : object(inputs.customer, 'customer');
-    if (c) { keys(c, ['ref', 'id', 'name', 'email', 'iccid', 'sim_id']); for (const k of ['ref', 'name', 'email', 'iccid']) str(c[k], k); }
-    const requiredKind = ({create_plan:'package',create_customer:'subscriber',allocate_sim:'sim',allocate_auto:'sim',top_up:'payment'} as Record<string,string>)[action];
+    if (c) { keys(c, ['ref', 'id', 'name', 'email', 'iccid', 'sim_id', 'payment_id']); for (const k of ['ref', 'name', 'email', 'iccid']) str(c[k], k); }
+    const requiredKind = ({create_plan:'package',create_customer:'subscriber',allocate_sim:'sim',allocate_auto:'sim',top_up:'payment',top_up_rapid:'payment',failed_top_up:'payment'} as Record<string,string>)[action];
     if (requiredKind ? object(inputs.creation).kind !== requiredKind : inputs.creation !== undefined) throw new WorkerError('INVALID_INPUT', 'Mutation intent does not match action');
     const receipt = requiredKind ? new MutationReceipt(this.page, inputs, directory, command) : undefined;
     const click = async (root: Locator, name: string) => root.getByRole('button', { name, exact: true }).click({ timeout: budget.remaining() });
     const submit = async (name: string) => { receipt?.submit(); await click(this.dialog(), name); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); };
     try {
-      if (['name_pending','name_failure','pool_failure','clear_fault'].includes(action)) {
+      if (action === 'download_receipt' && c && p) {
+        await this.customer(c,budget);
+        await downloadReceipt(this.page,String(p.name),str(c.payment_id,'payment_id'),directory,command,budget);
+      } else if (['name_pending','name_failure','pool_failure','clear_fault'].includes(action)) {
         await commerceFault(this.page, action, p ? String(p.name) : undefined, budget);
       } else if (action === 'rename_plan' && p) {
         const next = str(inputs.new_name, 'new_name');
@@ -149,7 +181,7 @@ export class Commerce {
         await this.customer(c, budget, Boolean(c.sim_id));
       } else if (action === 'close_customer' && c) {
         await this.customer(c, budget, Boolean(c.sim_id)); await click(this.drawer(), 'Close'); await this.drawer().waitFor({ state: 'hidden', timeout: budget.remaining() });
-      } else if (['allocate_sim', 'allocate_auto', 'top_up', 'cancel_top_up'].includes(action) && c && p) {
+      } else if (['allocate_sim', 'allocate_auto', 'top_up', 'top_up_rapid', 'failed_top_up', 'cancel_top_up'].includes(action) && c && p) {
         await this.customer(c, budget, !action.startsWith('allocate_'));
         await click(this.drawer(), action.startsWith('allocate_') ? 'Allocate a SIM' : 'Top up');
         const select = field(this.dialog(), this.page, 'Data plan').locator('select');
@@ -167,7 +199,13 @@ export class Commerce {
             throw new WorkerError('UNSAFE_AUTO_ASSIGN','Auto-assignment requires the sole available SIM to be owned by this run');
           await select.selectOption('',{timeout:budget.remaining()});
         }
-        if (action === 'cancel_top_up') { await click(this.dialog(), 'Cancel'); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); }
+        if (action === 'failed_top_up') {
+          await rejectPayment(this.page,inputs,async()=>{receipt!.intercepted();await click(this.dialog(),'Top up');},budget);
+        } else if (action === 'top_up_rapid') {
+          receipt!.submit();
+          await this.dialog().getByRole('button',{name:'Top up',exact:true}).dblclick({timeout:budget.remaining(),delay:0});
+          await this.dialog().waitFor({state:'hidden',timeout:budget.remaining()});
+        } else if (action === 'cancel_top_up') { await click(this.dialog(), 'Cancel'); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); }
         else await submit(action.startsWith('allocate_') ? 'Allocate SIM' : 'Top up');
       } else if (action === 'open_receipt' && c && p) {
         await this.customer(c, budget); await click(this.packages(String(p.name)), 'Package options');
@@ -181,7 +219,7 @@ export class Commerce {
         await this.customer(c, budget); const name = action === 'activate_sim' ? 'Activate SIM' : 'Deactivate SIM';
         await click(this.drawer(), name); await submit(name);
       } else throw new WorkerError('INVALID_INPUT', 'Unknown commerce action or missing inputs');
-      return receipt ? await receipt.result(budget) : [];
+      return receipt && action !== 'failed_top_up' ? await receipt.result(budget) : [];
     } finally { await receipt?.close(); }
   }
   async importSims(inputs: ObjectValue, budget: Budget) {
@@ -282,9 +320,16 @@ export class Commerce {
         const days = parts.length === 2 ? (parse(parts[1]!) - parse(parts[0]!)) / 86400000 : NaN;
         return Number.isInteger(days) && days >= 0 ? String(days) : null;
       }
+      if (label === 'Payment rejection' && inputs.sim_id && inputs.plan_id) return paymentRejection(this.page,String(inputs.sim_id),String(inputs.plan_id));
       const d = this.dialog();
       if (label.startsWith('Receipt ')) {
         if (!await d.getByText('Payment receipt', { exact: true }).isVisible()) return null;
+        if (label === 'Receipt PDF' && name && inputs.payment_id) return receiptPdf(this.page,name,String(inputs.payment_id));
+        if (label === 'Receipt date window' && inputs.payment_id) {
+          const date = await visibleText(d.getByText('Paid on',{exact:true}).locator('..').locator(':scope > div').nth(1));
+          return date ? paymentDate(this.page,String(inputs.payment_id),date) : null;
+        }
+        if (label === 'Receipt payer') return visibleText(d.getByText('Billed to',{exact:true}).locator('..').locator(':scope > div').nth(1));
         if (label === 'Receipt total') return visibleText(d.getByText('Total paid', { exact: true }).locator('..').locator(':scope > span').nth(1));
         if (label === 'Receipt payment ID') return visibleText(d.getByText('Payment ID', { exact: true }).locator('..').locator(':scope > div').nth(1));
         if (label === 'Receipt method') return visibleText(d.getByText('Method', { exact: true }).locator('..').locator(':scope > div').nth(1));

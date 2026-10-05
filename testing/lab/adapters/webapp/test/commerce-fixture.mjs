@@ -2,6 +2,13 @@
  * Source-shaped controlled DOM fixture. Never counts as target-app coverage.
  */
 import { provisioningFixture } from './provisioning-fixture.mjs';
+function receiptPdfFixture(lines) {
+  const escape=s=>Buffer.from(s,'latin1').toString('latin1').replace(/[\\()]/g,'\\$&');
+  const content='BT /F1 11 Tf 40 550 Td 24 TL '+lines.map((s,i)=>(i?'T* ':'')+'('+escape(s)+') Tj').join('\n')+' ET';
+  const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 420 595] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>','<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>',`<< /Length ${Buffer.byteLength(content,'latin1')} >>\nstream\n${content}\nendstream`];
+  let body='%PDF-1.4\n',offsets=[0];for(const [i,o] of objects.entries()){offsets.push(Buffer.byteLength(body,'latin1'));body+=`${i+1} 0 obj\n${o}\nendobj\n`;}
+  const xref=Buffer.byteLength(body,'latin1');body+='xref\n0 6\n0000000000 65535 f \n'+offsets.slice(1).map(o=>String(o).padStart(10,'0')+' 00000 n ').join('\n')+`\ntrailer << /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;return Buffer.from(body,'latin1');
+}
 function client() {
   const terms = minutes => ({1440:'1 day',10080:'1 week',43200:'1 month'})[minutes] || `${minutes} minutes`;
   const unit = minutes => ({1440:'day',10080:'week',43200:'month'})[minutes] || 'period';
@@ -46,7 +53,13 @@ function client() {
       else {
         button('Top up',()=>{
           const dialog=modal('Top up data'),p=field(dialog,'Data plan',`<select>${planOptions()}</select>`);addCancel(dialog);
-          const submit=button('Top up',async()=>{const plan=plans().find(x=>x.uuid===p.value);await graphql('addPayment',{itemId:p.value,sim:sim.id,payerEmail:sub.email,amount:String(plan.amount),currency:'USD'});if(db.mode==='late-payment')return;dialog.remove();await after()},dialog);submit.disabled=true;p.onchange=()=>{submit.disabled=!p.value};
+          const submit=button('Top up',async()=>{
+            if(db.mode!=='double-payment')submit.disabled=true;
+            const plan=plans().find(x=>x.uuid===p.value);
+            const response=await fetch('/graphql',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({operationName:'addPayment',query:'mutation addPayment($data: AddPaymentInputDto!) { addPayment(data: $data) { id } }',variables:{data:{itemId:p.value,sim:sim.id,payerEmail:sub.email,amount:String(plan.amount),currency:'USD'}}})}).then(r=>r.json());
+            if(response.errors){submit.disabled=false;const error=document.createElement('div');error.textContent=db.mode==='hidden-payment-error'?'':response.errors[0].message;menu.append(error);if(db.mode==='error-grants-entitlement')await graphql('fixtureEntitlement',{sim:sim.id,itemId:p.value});return;}
+            if(db.mode==='late-payment')return;dialog.remove();await after();
+          },dialog);submit.disabled=true;p.onchange=()=>{submit.disabled=!p.value};
         },d);
         const name=sim.status==='active'?'Deactivate SIM':'Activate SIM';button(name,()=>{const dialog=modal(name);addCancel(dialog);button(name,async()=>{await graphql('toggleSimServiceStatus',{sim_id:sim.id,status:sim.status==='active'?'service_off':'service_on'});dialog.remove();await after()},dialog)},d);
       }
@@ -54,7 +67,12 @@ function client() {
     function receipt(sim,plan) {
       const d=modal('Payment receipt'),p=db.payments.find(p=>p.sim===sim.id&&p.itemId===plan.uuid);
       if(!p) d.innerHTML+='<div>No receipt found for this package. It may have been allocated without a recorded payment.</div>';
-      else { d.innerHTML+=`<span>Completed</span><div><div>Method</div><div>Cash</div></div><div>${plan.name}</div><div><span>Total paid</span><span>$${Number(p.amount).toFixed(2)}</span></div><div><div>Payment ID</div><div>${db.mode==='wrong-receipt'?'foreign-payment':p.id}</div></div>`; }
+      else {
+        const date=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false}).format(new Date(p.paidAt))+' UTC';
+        const id=db.mode==='wrong-receipt'?'foreign-payment':p.id;
+        d.innerHTML+=`<div><span>Fixture Organization</span><span>Completed</span></div><div><div>Receipt no</div><div>${id.slice(0,8)}</div></div><div><div>Paid on</div><div>${date}</div></div><div><div>Method</div><div>Cash</div></div><div><div>Billed to</div><div>Walk-in customer</div><div>SIM ${sim.id.slice(0,8)} · package top-up</div></div><div><span>Description</span><span>Amount</span></div><div><div><div>${plan.name}</div><div>Data package · qty 1</div></div><div>$${Number(p.amount).toFixed(2)}</div></div><div><span>Total paid</span><span>$${Number(p.amount).toFixed(2)}</span></div><div><div>Payment ID</div><div>${id}</div></div><div>Auto-generated · not a tax invoice</div>`;
+        button('Download',()=>{const a=document.createElement('a');a.href='/receipt/'+encodeURIComponent(p.id);a.download=`receipt-${p.id.slice(0,8)}.pdf`;a.click()},d);
+      }
       button('Close',()=>d.remove(),d);
     }
     if(path==='/network'){
@@ -135,6 +153,14 @@ export const commerceFixture = mode => provisioningFixture(mode, {
   script:`(${client.toString()})();`,
   init(db){ Object.assign(db,{factory:[],plans:[],pool:[],subscribers:[],sims:[],payments:[],entitlements:[],usage:0}); },
   get(req,res,db) {
+    if(req.method==='GET' && req.url.startsWith('/receipt/')){
+      const id=decodeURIComponent(req.url.slice('/receipt/'.length)),p=db.payments.find(p=>p.id===id),plan=db.plans.find(x=>x.uuid===p.itemId);
+      const date=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false}).format(new Date(p.paidAt))+' UTC';
+      const money='$'+Number(p.amount).toFixed(2);
+      const lines=['Payment receipt','Fixture Organization','Completed','RECEIPT NO    PAID ON    METHOD',p.id.slice(0,8)+'    '+date+'    Cash','BILLED TO','Walk-in customer','SIM '+p.sim.slice(0,8)+' · package top-up','DESCRIPTION    AMOUNT',plan.name, money,'Data package · qty 1','Total paid',mode==='wrong-pdf-total'?'$999.00':money,'PAYMENT ID',mode==='wrong-pdf-id'?'foreign-payment':p.id,'Auto-generated · not a tax invoice'];
+      const pdf=receiptPdfFixture(lines);
+      res.setHeader('content-type',mode==='html-download'?'text/html':'application/pdf');res.setHeader('content-disposition',`attachment; filename="receipt-${p.id.slice(0,8)}.pdf"`);res.end(mode==='html-download'?'<html>not a receipt</html>':pdf);return true;
+    }
     if (req.method !== 'GET' || !req.url.startsWith('/v1/')) return false;
     if (req.url.startsWith('/v1/sims/csv')) {res.setHeader('content-type','text/csv');res.end('iccid,imsi\n'+db.factory.map(s=>s.iccid+','+s.imsi).join('\n')+'\n');}
     else if (req.url.startsWith('/v1/sims?')) {res.setHeader('content-type','application/json');res.end(JSON.stringify({sims:db.factory}));}
@@ -150,16 +176,17 @@ export const commerceFixture = mode => provisioningFixture(mode, {
   graphql(body,db) {
     if(body.operationName==='isPackageNameAvailable')return {data:{isPackageNameAvailable:{name:body.variables.name,isAvailable:!db.plans.some(p=>p.name===body.variables.name)}}};
     if(body.operationName==='SimPoolOverview')return {data:{simPoolView:{sims:{error:null}}}};
-    const op=/\b(updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;
+    const op=/\b(fixtureEntitlement|updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;
     const data=body.variables?.data||{},id=/\w+(?:Id|_id):\s*"([^"]+)"/.exec(body.query)?.[1];let value;
     db.operations.push({op,data,id});
+    if(op==='fixtureEntitlement'){db.entitlements.push({sim:data.sim,packageId:data.itemId,active:false});value={ok:true};}
     if(op==='updatePackage'){value=db.plans.find(p=>p.uuid===data.packageId);if(mode!=='rename-lost')value.name=data.name;if(mode==='rename-terms-drift')value.amount++;}
     if(op==='addPackage'){value={...data,uuid:'plan-'+(db.plans.length+1)};if(mode==='wrong-minutes')value.duration/=1440;db.plans.push(value);if(mode==='opaque-plan')value={name:data.name};}
     if(op==='deletePackage'){db.plans=db.plans.filter(x=>x.uuid!==id);value={uuid:id}}
     if(op==='addSubscriber'){value={...data,uuid:'sub-'+(db.subscribers.length+1)};db.subscribers.push(value)}
     if(op==='deleteSubscriber'){db.subscribers=db.subscribers.filter(x=>x.uuid!==id);value={success:true}}
     if(op==='allocateSim'){data.iccid ||= db.pool.find(s=>!s.assigned&&!s.failed)?.iccid;value={...data,id:'sim-'+(db.sims.length+1),status:'active'};db.sims.push(value);db.pool.find(s=>s.iccid===data.iccid).assigned=true;db.entitlements.push({sim:value.id,packageId:data.package_id,active:true})}
-    if(op==='addPayment'){value={...data,id:'payment-'+(db.payments.length+1)};db.payments.push(value);if(mode!=='no-entitlement')db.entitlements.push({sim:data.sim,packageId:data.itemId,active:false});if(mode==='opaque-payment')value={}}
+    if(op==='addPayment'){value={...data,paidAt:mode==='old-receipt-date'?0:Date.now(),id:'payment-'+(db.payments.length+1)};db.payments.push(value);if(mode!=='no-entitlement')db.entitlements.push({sim:data.sim,packageId:data.itemId,active:false});if(mode==='opaque-payment')value={}}
     if(op==='toggleSimServiceStatus'){const sim=db.sims.find(s=>s.id===(data.sim_id||id));if(sim)sim.status=data.status==='service_on'?'active':'inactive';value={success:true}}
     if(op==='uploadSims'){for(const line of data.csv.trim().split('\n').slice(1)){const iccid=line.split(',')[0];db.pool.push({iccid})}value={iccid:db.pool.map(s=>s.iccid)}}
     if(op==='getPackagesForSim')value={packages:[]};

@@ -1194,7 +1194,10 @@
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
         "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
-        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml",
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml",
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1229,7 +1232,10 @@
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
         "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
-        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml",
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml",
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1345,7 +1351,10 @@
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
         "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
-        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml",
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml",
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1464,7 +1473,10 @@
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
         "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
-        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml",
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml",
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1590,7 +1602,10 @@
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml",
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml",
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1605,7 +1620,8 @@
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1620,9 +1636,11 @@
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml"
       ],
-      "implementation_note": "Partial: total, symbol, plan, method, status and exact payment ID covered; paid date, payer identity and PDF reconciliation remain gaps."
+      "implementation_note": "Partial: WB130 adds local submission-window date validation to amount, plan, cash method, completed status and exact payment ID checks after reload. The source hardcodes Walk-in customer and shows a currency symbol without an ISO code; payer and unambiguous currency reconciliation remain gaps.",
+      "patch_13_note": "Partial: WB130 adds local submission-window date validation to amount, plan, cash method, completed status and exact payment ID checks after reload. The source hardcodes Walk-in customer and shows a currency symbol without an ISO code; payer and unambiguous currency reconciliation remain gaps."
     },
     {
       "id": "WEB-PAY-004",
@@ -1633,9 +1651,11 @@
       "automation": "planned",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/expanded/wb-041-topup-requires-plan.yaml"
+        "scenarios/webapp/p0/expanded/wb-041-topup-requires-plan.yaml",
+        "scenarios/webapp/p0/payments/wb-133-no-sim-payment-guard.yaml"
       ],
-      "implementation_note": "Partial: top-up submit blocked with no selected plan; all invalid/no-SIM guards remain a gap."
+      "implementation_note": "Partial: WB133 asserts no top-up action for a persisted no-SIM customer; WB041 blocks empty plan selection. A stale/deleted selected plan is not injected into the application and remains untested.",
+      "patch_13_note": "Partial: WB133 asserts no top-up action for a persisted no-SIM customer; WB041 blocks empty plan selection. A stale/deleted selected plan is not injected into the application and remains untested."
     },
     {
       "id": "WEB-PAY-005",
@@ -1645,7 +1665,11 @@
       "source": "src/features/customers/TopUpDialog.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/payments/wb-131-payment-rejection-retry.yaml"
+      ],
+      "patch_13_note": "Partial: WB131 blocks a scoped mutation in the browser, renders a GraphQL rejection, checks no entitlement after reload, and allows one explicit successful retry. A backend payment record returned with status=failed/pending is not simulated as an owned real ledger record. The source unconditionally treats onCompleted as success.",
+      "implementation_note": "Partial: WB131 blocks a scoped mutation in the browser, renders a GraphQL rejection, checks no entitlement after reload, and allows one explicit successful retry. A backend payment record returned with status=failed/pending is not simulated as an owned real ledger record. The source unconditionally treats onCompleted as success."
     },
     {
       "id": "WEB-PAY-006",
@@ -1653,9 +1677,13 @@
       "priority": "p0",
       "requirement": "Repeated clicks during submission do not create duplicate payments or entitlements.",
       "source": "src/features/customers/TopUpDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/payments/wb-132-rapid-topup.yaml"
+      ],
+      "patch_13_note": "WB132 dispatches a real double-click, tracks every matching in-flight request to an identified payment, rejects distinct returned IDs with durable ambiguous ownership, and verifies exactly one visible entitlement and correlated receipt after reload. Worker command replay is separate. Late or unidentified responses fail closed; no automatic payment retry or ledger deletion.",
+      "implementation_note": "WB132 dispatches a real double-click, tracks every matching in-flight request to an identified payment, rejects distinct returned IDs with durable ambiguous ownership, and verifies exactly one visible entitlement and correlated receipt after reload. Worker command replay is separate. Late or unidentified responses fail closed; no automatic payment retry or ledger deletion."
     },
     {
       "id": "WEB-PAY-007",
@@ -1663,9 +1691,13 @@
       "priority": "p1",
       "requirement": "Receipt download produces a PDF with the same visible purchase fields.",
       "source": "src/features/customers/TopUpDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/payments/wb-130-downloaded-receipt.yaml"
+      ],
+      "patch_13_note": "WB130 downloads via the UI into private artifacts, verifies PDF signature/filename, extracts with Poppler and renders a PNG. All rendered receipt fields must occur in the PDF; metadata, billed-to, total and payment ID must occupy their matching text sections. The dialog must remain unchanged. Currency/payer correctness against the purchase is separate from PDF-to-dialog equality.",
+      "implementation_note": "WB130 downloads via the UI into private artifacts, verifies PDF signature/filename, extracts with Poppler and renders a PNG. All rendered receipt fields must occur in the PDF; metadata, billed-to, total and payment ID must occupy their matching text sections. The dialog must remain unchanged. Currency/payer correctness against the purchase is separate from PDF-to-dialog equality."
     },
     {
       "id": "WEB-PAY-008",
@@ -2071,6 +2103,12 @@
       "state": "partial_source_and_runtime_gaps",
       "source": "docs/webapp/lifecycle.md",
       "treatment": "Keep all 132 requirements. Missing UI features, name policy, malformed/duplicate import, partial combined creation, service traffic and remaining allowance do not receive complete credit."
+    },
+    {
+      "feature": "Payment closure after Patch 13",
+      "state": "partial_purchase_identity_stale_plan_and_terminal_status",
+      "source": "docs/webapp/payments.md",
+      "treatment": "WEB-PAY-003/004/005 remain partial; no fabricated paid/failed ledger identities, app-state insertion, console changes or live credit."
     }
   ]
 }

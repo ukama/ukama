@@ -72,7 +72,7 @@ phases:
             self.assertEqual(self.coverage()['totals']['verified'],0)
 
     def test_commerce_read_faults_are_controlled(self):
-        for action in ('name_pending', 'name_failure', 'pool_failure'):
+        for action in ('name_pending', 'name_failure', 'pool_failure', 'failed_top_up'):
             self.assertTrue(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':action}]}]}))
         self.assertFalse(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':'rename_plan'}]}]}))
 

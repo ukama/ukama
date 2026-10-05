@@ -4,6 +4,10 @@ Apply **ukama-lab only**, after lab Patches 1–5. Ignore the console companion
 archives from Patches 4 and 5. This patch requires no console source changes.
 It replaces their test-ID dependency with locators from the original app.
 
+This document describes the Patch 6 foundation. For the current extensions and
+remaining gaps, read [lifecycle.md](lifecycle.md) (Patch 12) and
+[payments.md](payments.md) (Patch 13).
+
 ## Execution and fixture ownership
 
 The C runner creates networks through the UI as before. If the world contains
@@ -216,8 +220,9 @@ their scenarios. The lab never repairs URLs, injects state or changes the consol
 The pool list has a cap and no search/pagination control. A missing imported row
 fails instead of being verified by API. Customer email is not displayed in the
 drawer; receipt payer identity is hardcoded Walk-in customer. Full email/payer
-reconciliation therefore stays a gap. Receipt date/PDF contents, multiple SIMs,
-auto-assignment, invalid form states, failed cash-payment states, rapid user
-clicks, cross-network negatives, expiry/remaining-allowance semantics and actual
-UE traffic denial during service-off remain separate unimplemented assertions.
-Command replay protection is not evidence of the app's rapid-click protection.
+reconciliation therefore stays a gap. Patches 7, 12 and 13 add invalid-form and
+scope probes, guarded auto-assignment, rapid double-clicks, controlled payment
+rejection and downloaded receipt/date checks. Multiple SIM selection,
+expiry/remaining-allowance semantics, terminal failed-payment records and actual
+UE traffic denial during service-off remain gaps. See the later guides for exact
+boundaries. Command replay and app rapid-click protection are tested separately.

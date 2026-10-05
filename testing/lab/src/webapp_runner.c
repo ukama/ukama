@@ -363,6 +363,8 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
                 !json_equal(json_object_get(intent,"ref"),json_object_get(binding,"ref")) ||
                 !json_equal(json_object_get(intent,"name"),json_object_get(binding,"name")))) rc = webapp_error(err,"staged completion does not match a submitted creation intent");
             else if (!rc && webapp_journal_bind(journal,bindings,1,(unsigned int)json_integer_value(json_object_get(intent,"command_id")),err)) rc = ULAB_ERR;
+        } else if (event->type == EVT_WEB_COMMERCE && !strcmp(event->target,"failed_top_up")) {
+            if (!rc && (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply,"actual"),"executed")) || !json_is_true(json_object_get(json_object_get(reply,"actual"),"rejected")))) rc = webapp_error(err,"invalid controlled rejection acknowledgement");
         } else if (kind) {
             if (!rc && (json_array_size(bindings) != 1 ||
                 !json_equal(json_object_get(intent, "kind"), json_object_get(binding, "kind")) ||
