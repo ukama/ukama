@@ -4,6 +4,7 @@
  */
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, keys, normalize, str, type ObjectValue } from './contract.js';
+import {TeamSupport, TEAM_ACTIONS, TEAM_LABELS} from './team-support.js';
 import { getView, type ConsoleApp } from './console-app.js';
 import {Analytics, ANALYTICS_ACTIONS, ANALYTICS_LABELS, analyticsView} from './analytics.js';
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -25,9 +26,14 @@ export class Interactions {
       throw new WorkerError('WRONG_VIEW', 'UI command is not on its declared console view');
   }
   async run(i: ObjectValue, budget: Budget) {
-    keys(i, ['view', 'action', 'label', 'value', 'network_name']);
+    keys(i, ['view', 'action', 'label', 'value', 'network_name', 'network_id']);
     const view = str(i.view, 'view'), action = str(i.action, 'action');
     const label = str(i.label ?? '', 'label', true), value = str(i.value ?? '', 'value', true);
+    if (TEAM_ACTIONS.includes(action)) {
+      if (!this.app) throw new WorkerError('WRONG_VIEW','Team/support requires an opened view');
+      await this.app.assertView(view,i.network_name as string | undefined);
+      await new TeamSupport(this.page).run(view,action,label,value,budget,i.network_id as string | undefined); return;
+    }
     if (ANALYTICS_ACTIONS.includes(action)) {
       if (!analyticsView(view) || !this.app) throw new WorkerError('WRONG_VIEW','Analytics requires an opened analytics view');
       await this.app.assertView(view);
@@ -53,14 +59,14 @@ export class Interactions {
       await click(this.main().getByRole('columnheader').getByRole('button', {name: label, exact: true}));
       await click(this.page.getByRole('menuitem', {name: value, exact: true}));
     } else if (action === 'open_form') {
-      if (!['Create plan', 'Add customer'].includes(label)) throw new WorkerError('INVALID_INPUT', 'Unsupported form');
+      if (!['Create plan', 'Add customer', 'Invite member'].includes(label)) throw new WorkerError('INVALID_INPUT', 'Unsupported form');
       const opener=this.main().locator('.pagehead').getByRole('button', {name: label, exact: true});
       if (value === 'keyboard') { await opener.focus({timeout:budget.remaining()}); await opener.press('Enter',{timeout:budget.remaining()}); }
       else if (!value) await click(opener);
       else throw new WorkerError('INVALID_INPUT','Form activation is mouse (empty) or keyboard');
       // A missing prerequisite may produce a visible toast instead of a dialog.
     } else if (action === 'fill' || action === 'select') {
-      if (!['Data plan name', 'Price', 'Data volume', 'Unit', 'Validity', 'Network', 'First name', 'Last name', 'Email', 'Data plan', 'SIM'].includes(label)) throw new WorkerError('INVALID_INPUT', 'Unsupported form field');
+      if (!['Data plan name', 'Price', 'Data volume', 'Unit', 'Validity', 'Network', 'First name', 'Last name', 'Email', 'Role', 'Data plan', 'SIM'].includes(label)) throw new WorkerError('INVALID_INPUT', 'Unsupported form field');
       if (action === 'fill') await this.field(label).locator('input').fill(value, {timeout: budget.remaining()});
       else await this.field(label).locator('select').selectOption({label: value}, {timeout: budget.remaining()});
     } else if (action === 'cancel') {
@@ -101,9 +107,14 @@ export class Interactions {
     } else throw new WorkerError('INVALID_INPUT', 'Unsupported UI action');
   }
   async check(i: ObjectValue,budget: Budget) {
-    keys(i,['view','label','subject','expected','requirement','customer_name','plan_name']);
+    keys(i,['view','label','subject','expected','requirement','customer_name','plan_name','network_name']);
     const view=str(i.view,'view'), label=str(i.label,'label'), subject=str(i.subject??'','subject',true), expected=str(i.expected,'expected',true);
     const observe=async ():Promise<string|null>=>{
+      if (TEAM_LABELS.includes(label)) {
+        if (!this.app) throw new WorkerError('WRONG_VIEW','Team/support requires an opened view');
+        await this.app.assertView(view,i.network_name as string | undefined);
+        return new TeamSupport(this.page).observe(view,label,subject);
+      }
       if (ANALYTICS_LABELS.includes(label)) {
         if (!analyticsView(view) || !this.app) throw new WorkerError('WRONG_VIEW','Analytics requires an opened analytics view');
         await this.app.assertView(view);

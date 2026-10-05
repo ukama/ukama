@@ -1,0 +1,59 @@
+version: 2
+name: "p0-webapp-member-rows"
+description: "member rows. Lab-only browser acceptance; see team-support.md for prerequisites and known product gaps."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, local, team-support]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+phases:
+  - name: "members"
+    events:
+      - type: "web_open"
+        view: "business_members"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Member row"
+        expected: "${ULAB_TEAM_MEMBER_ROW}"
+        subject: "${ULAB_TEAM_MEMBER_EMAIL}"
+        requirement: "WEB-TEAM-001"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Member row"
+        expected: "${ULAB_TEAM_SECOND_ROW}"
+        subject: "${ULAB_TEAM_SECOND_EMAIL}"
+        requirement: "WEB-TEAM-001"
+  - name: "members-persist"
+    events:
+      - type: "web_reload"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Member row"
+        expected: "${ULAB_TEAM_MEMBER_ROW}"
+        subject: "${ULAB_TEAM_MEMBER_EMAIL}"
+        requirement: "WEB-TEAM-001"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Member row"
+        expected: "${ULAB_TEAM_SECOND_ROW}"
+        subject: "${ULAB_TEAM_SECOND_EMAIL}"
+        requirement: "WEB-TEAM-001"

@@ -671,6 +671,8 @@ static int apply_web_check_field(check_spec_t *c, const char *key,
         return ULAB_ERR;
     }
     if (c->type == CHECK_WEB_UI_EQUALS) {
+        if (ulab_streq(key,"sites") && !web_once(&c->web_fields,17)) return parse_selector_value(&c->sites,key,val);
+        if (ulab_streq(key,"nodes") && !web_once(&c->web_fields,9)) return parse_selector_value(&c->nodes,key,val);
         if (ulab_streq(key, "subject") && !web_once(&c->web_fields, 15)) return ulab_copy(c->status, sizeof(c->status), val);
         if (ulab_streq(key, "networks") && !web_once(&c->web_fields, 16)) return parse_selector_value(&c->networks, key, val);
     }
@@ -746,6 +748,8 @@ static int apply_web_event_field(event_spec_t *e, const char *key,
         return ULAB_ERR;
     }
     if (e->type == EVT_WEB_INTERACT) {
+        if (ulab_streq(key,"sites") && !web_once(&e->web_fields,3)) return parse_selector_value(&e->sites,key,val);
+        if (ulab_streq(key,"nodes") && !web_once(&e->web_fields,4)) return parse_selector_value(&e->nodes,key,val);
         if (ulab_streq(key, "label") && !web_once(&e->web_fields, 13)) return ulab_copy(e->profile, sizeof(e->profile), val);
         if (ulab_streq(key, "value") && !web_once(&e->web_fields, 14)) return ulab_copy(e->status, sizeof(e->status), val);
         if (ulab_streq(key, "value_from") && !web_once(&e->web_fields, 15)) return ulab_copy(e->variant, sizeof(e->variant), val);

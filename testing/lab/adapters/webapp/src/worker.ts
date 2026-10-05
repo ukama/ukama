@@ -149,7 +149,7 @@ export class Worker {
         throw new WorkerError('BROWSER_START_FAILED', 'Cannot start browser; install the Playwright browser/dependencies and check the display for headed mode');
       }
       if (this.closed) { await this.browser.close(); throw new WorkerError('CANCELLED', 'Worker stopped during initialization'); }
-      this.context = await this.browser.newContext({ storageState: state, viewport: { width: 1440, height: 1000 }, locale: 'en-US', timezoneId: 'UTC', acceptDownloads: true });
+      this.context = await this.browser.newContext({ storageState: state, viewport: { width: 1440, height: 1000 }, locale: 'en-US', timezoneId: 'UTC', acceptDownloads: true, serviceWorkers: 'block' });
       await evidence.start(this.context);
       this.page = await this.context.newPage(); evidence.attach(this.page);
       this.app = new ConsoleApp(this.page, config.base_url);
@@ -200,7 +200,7 @@ export class Worker {
           const original = primary.filter(c => c.name === 'ukama_session');
           if (original.length !== 1 || applicable.length !== 1 || !applicable[0]!.value || original[0]!.value === applicable[0]!.value)
             throw new WorkerError('AUTH_PRECONDITION', 'Peer requires a distinct unexpired ukama_session cookie for this console');
-          this.peerContext = await this.browser!.newContext({storageState:state,viewport:{width:1440,height:1000},locale:'en-US',timezoneId:'UTC',acceptDownloads:true});
+          this.peerContext = await this.browser!.newContext({storageState:state,viewport:{width:1440,height:1000},locale:'en-US',timezoneId:'UTC',acceptDownloads:true,serviceWorkers:'block'});
           context = this.peerContext;
           await this.evidence!.start(context);
         }

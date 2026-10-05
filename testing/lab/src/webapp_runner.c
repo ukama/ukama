@@ -21,14 +21,20 @@ static int absolute_path(char *out, size_t len, const char *path, ulab_error_t *
     if (!getcwd(cwd, sizeof(cwd))) return webapp_error(err, "cannot resolve lab working directory");
     return webapp_path(out, len, cwd, path, err);
 }
-static const char *ui_value(world_t *world, const char *property, const char *package_ref, const selector_t *ues, const selector_t *networks) {
+static const char *ui_value(world_t *world, const char *property, const char *package_ref, const selector_t *ues, const selector_t *networks, const selector_t *sites, const selector_t *nodes) {
     package_t *package = world_package_by_ref(world, package_ref);
     ue_t *ue = world_ue_by_ref(world, ues->value);
     subscriber_t *sub = ue ? world_subscriber_by_ref(world, ue->subscriber_ref) : NULL;
     network_t *network = world_network_by_ref(world, networks->value);
+    site_t *site = world_site_by_ref(world, sites->value);
+    node_t *node = world_node_by_ref(world, nodes->value);
     if (!strcmp(property, "plan_name")) return package && package->bff_id[0] ? (package->web_name[0] ? package->web_name : package->name) : NULL;
-    if (!strcmp(property, "customer_name")) return sub && sub->bff_id[0] ? sub->name : NULL;
+    if (!strcmp(property, "customer_name")) return sub && sub->bff_id[0] && (!network || !strcmp(sub->network_ref,network->ref)) ? sub->name : NULL;
     if (!strcmp(property, "network_name")) return network && network->bff_id[0] ? network->name : NULL;
+    if (!strcmp(property,"iccid")) return ue && ue->iccid[0] && (!network || !strcmp(ue->network_ref,network->ref)) ? ue->iccid : NULL;
+    if (!strcmp(property,"network_id")) return network && network->bff_id[0] ? network->bff_id : NULL;
+    if (!strcmp(property,"site_name") || !strcmp(property,"site_id")) return site && site->bff_id[0] && network && !strcmp(site->network_ref,network->ref) ? (!strcmp(property,"site_name") ? site->name : site->bff_id) : NULL;
+    if (!strcmp(property,"node_id")) return node && node->bff_id[0] && network && !strcmp(node->network_ref,network->ref) ? node->bff_id : NULL;
     return NULL;
 }
 static json_t *onboard_context(world_t *w) {
@@ -102,12 +108,13 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
         return ULAB_OK;
     }
     if (event->type == EVT_WEB_INTERACT) {
-        const char *value = event->variant[0] ? ui_value(world, event->variant, event->package_ref, &event->ues, &event->networks) : event->status;
+        const char *value = event->variant[0] ? ui_value(world, event->variant, event->package_ref, &event->ues, &event->networks, &event->sites, &event->nodes) : event->status;
         if (!value) goto unresolved;
         json_object_set_new(*inputs, "view", json_string(event->view));
         json_object_set_new(*inputs, "action", json_string(event->target));
         json_object_set_new(*inputs, "label", json_string(event->profile));
         json_object_set_new(*inputs, "value", json_string(value));
+        if (network && !strcmp(event->target,"support_failure")) json_object_set_new(*inputs,"network_id",json_string(network->bff_id));
         return ULAB_OK;
     }
     if (event->type == EVT_WEB_COMMERCE) {
@@ -247,19 +254,24 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
     } else if (check->type == CHECK_WEB_UI_EQUALS) {
         const char *value;
         if (check->key[0]) {
-            value = ui_value(world, check->key, check->package_ref, &check->ues, &check->networks);
+            value = ui_value(world, check->key, check->package_ref, &check->ues, &check->networks, &check->sites, &check->nodes);
             if (!value || ulab_copy(resolved.expected, sizeof(resolved.expected), value)) return webapp_error(err, "UI expected identity unresolved");
         }
         inputs = webapp_check_inputs(&resolved);
         if (inputs) {
             json_object_set_new(inputs, "subject", json_string(check->status));
+            if (check->networks.kind == SEL_REF) {
+                network_t *network = world_network_by_ref(world,check->networks.value);
+                if (!network || !network->bff_id[0]) { json_decref(inputs); return webapp_error(err,"UI check network is unresolved"); }
+                json_object_set_new(inputs,"network_name",json_string(network->name));
+            }
             if (check->ues.kind == SEL_REF) {
-                value = ui_value(world, "customer_name", "", &check->ues, &check->networks);
+                value = ui_value(world, "customer_name", "", &check->ues, &check->networks, &check->sites, &check->nodes);
                 if (!value) { json_decref(inputs); return webapp_error(err, "UI customer identity unresolved"); }
                 json_object_set_new(inputs, "customer_name", json_string(value));
             }
             if (check->package_ref[0]) {
-                value = ui_value(world, "plan_name", check->package_ref, &check->ues, &check->networks);
+                value = ui_value(world, "plan_name", check->package_ref, &check->ues, &check->networks, &check->sites, &check->nodes);
                 if (!value) { json_decref(inputs); return webapp_error(err, "UI plan identity unresolved"); }
                 json_object_set_new(inputs, "plan_name", json_string(value));
             }
@@ -270,7 +282,7 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
         inputs = webapp_check_inputs(&resolved);
         if (inputs && check->type == CHECK_WEB_SESSION_EQUALS && json_object_set_new(inputs, "subject", json_string(check->status))) { json_decref(inputs); inputs = NULL; }
     }
-    if (inputs && check->nodes.kind != SEL_NONE && check->type != CHECK_WEB_INVENTORY_EQUALS) {
+    if (inputs && check->nodes.kind != SEL_NONE && check->type != CHECK_WEB_INVENTORY_EQUALS && check->type != CHECK_WEB_UI_EQUALS) {
         node = world_node_by_ref(world, check->nodes.value);
         if (!node || !node->bff_id[0]) { json_decref(inputs); return webapp_error(err, "node card identity is unresolved"); }
         json_object_set_new(inputs, "node_id", json_string(node->bff_id));

@@ -71,6 +71,19 @@ phases:
             self.manifest['evidence']=evidence
             self.assertEqual(self.coverage()['totals']['verified'],0)
 
+    def test_team_support_probes_cannot_be_promoted_to_live(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for action in ('invite_probe','support_restart_probe','support_failure'):
+            with self.subTest(action=action):
+                path.write_text(original.replace('type: web_open','type: web_interact\n        action: '+action))
+                self.report['results'][0]['name']='web_interact'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
     def test_commerce_read_faults_are_controlled(self):
         for action in ('name_pending', 'name_failure', 'pool_failure', 'failed_top_up'):
             self.assertTrue(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':action}]}]}))

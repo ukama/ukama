@@ -1,0 +1,167 @@
+version: 2
+name: "p0-webapp-map-preference-persistence"
+description: "map preference persistence. Lab-only browser acceptance; see team-support.md for prerequisites and known product gaps."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, local, team-support]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+phases:
+  - name: "Satellite-set"
+    events:
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "map_preference"
+        value: "Satellite"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Satellite"
+        requirement: "WEB-TEAM-005"
+  - name: "Satellite-reload"
+    events:
+      - type: "web_reload"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Satellite"
+        requirement: "WEB-TEAM-005"
+  - name: "Satellite-navigate"
+    events:
+      - type: "web_open"
+        view: "business_members"
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Satellite"
+        requirement: "WEB-TEAM-005"
+  - name: "Street-set"
+    events:
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "map_preference"
+        value: "Street"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Street"
+        requirement: "WEB-TEAM-005"
+  - name: "Street-reload"
+    events:
+      - type: "web_reload"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Street"
+        requirement: "WEB-TEAM-005"
+  - name: "Street-navigate"
+    events:
+      - type: "web_open"
+        view: "business_members"
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Street"
+        requirement: "WEB-TEAM-005"
+  - name: "Terrain-set"
+    events:
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "map_preference"
+        value: "Terrain"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Terrain"
+        requirement: "WEB-TEAM-005"
+  - name: "Terrain-reload"
+    events:
+      - type: "web_reload"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Terrain"
+        requirement: "WEB-TEAM-005"
+  - name: "Terrain-navigate"
+    events:
+      - type: "web_open"
+        view: "business_members"
+      - type: "web_open"
+        view: "business_settings"
+      - type: "web_interact"
+        view: "business_settings"
+        action: "settings_tab"
+        value: "Preferences"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Map preference"
+        expected: "Terrain"
+        requirement: "WEB-TEAM-005"
+  - name: "restore"
+    events:
+      - type: "web_interact"
+        view: "business_settings"
+        action: "map_preference"
+        value: "Restore"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_settings"
+        label: "Content fits viewport"
+        expected: "true"
+        requirement: "WEB-TEAM-005"

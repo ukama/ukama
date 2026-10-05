@@ -3,6 +3,7 @@
  */
 import { Commerce } from './commerce.js';
 import { Operations } from './operations.js';
+import {trackTeamReads} from './team-support.js';
 import { trackCommerceReads } from './commerce-faults.js';
 import { trackStatusRequests } from './operation-observer.js';
 import type { Locator, Page } from 'playwright';
@@ -75,7 +76,7 @@ export async function assertSession(page: Page, origin: string, budget: Budget):
 
 export class ConsoleApp {
   private current?: { name: string; path: string; network?: string };
-  constructor(private page: Page, private origin: string) { trackStatusRequests(page); trackCommerceReads(page); }
+  constructor(private page: Page, private origin: string) { trackStatusRequests(page); trackCommerceReads(page); trackTeamReads(page); }
   forgetView(): void { this.current = undefined; }
   private main(): Locator { return this.page.locator('main.main'); }
   private async path(path: string, budget: Budget): Promise<void> {
@@ -170,9 +171,11 @@ export class ConsoleApp {
     await assertSession(this.page, this.origin, budget);
     if (this.current) await this.assertView(this.current.name);
   }
-  async assertView(name: string): Promise<void> {
+  async assertView(name: string, networkName?: string): Promise<void> {
     getView(name);
     if (!this.current || this.current.name !== name) throw new WorkerError('WRONG_VIEW', 'Check requires a preceding web_open for this view');
+    if (networkName !== undefined && this.current.network !== networkName)
+      throw new WorkerError('WRONG_NETWORK','Command network differs from the opened network');
     const url = new URL(this.page.url());
     if (url.origin !== this.origin || url.pathname !== this.current.path)
       throw new WorkerError('WRONG_VIEW', 'Browser is no longer on the expected view');

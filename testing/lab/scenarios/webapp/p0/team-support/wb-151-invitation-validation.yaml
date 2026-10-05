@@ -1,0 +1,74 @@
+version: 2
+name: "p0-webapp-invitation-validation"
+description: "invitation validation. Lab-only browser acceptance; see team-support.md for prerequisites and known product gaps."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, local, team-support]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+phases:
+  - name: "invalid-invitation"
+    events:
+      - type: "web_open"
+        view: "business_members"
+      - type: "web_interact"
+        view: "business_members"
+        action: "open_form"
+        label: "Invite member"
+      - type: "web_interact"
+        view: "business_members"
+        action: "fill"
+        value: "invalid-email"
+        label: "Email"
+      - type: "web_interact"
+        view: "business_members"
+        action: "select"
+        value: "Administrator"
+        label: "Role"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Field error"
+        expected: "Enter a valid email"
+        subject: "Email"
+        requirement: "WEB-TEAM-003"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Button enabled"
+        expected: "false"
+        subject: "Invite member"
+        requirement: "WEB-TEAM-003"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Field options"
+        expected: "Select a role|Owner|Administrator|Network owner|Vendor"
+        subject: "Role"
+        requirement: "WEB-TEAM-002"
+  - name: "cancel"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "cancel"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Dialog open"
+        expected: "false"
+        requirement: "WEB-TEAM-003"

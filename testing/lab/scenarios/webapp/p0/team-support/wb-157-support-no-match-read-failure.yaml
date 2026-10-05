@@ -1,0 +1,139 @@
+version: 2
+name: "p0-webapp-support-no-match-read-failure"
+description: "support no match read failure. Lab-only browser acceptance; see team-support.md for prerequisites and known product gaps."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: "site-lookup"
+    events:
+      - type: "web_open"
+        view: "network_support"
+        networks: "net-001"
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_lookup"
+        value_from: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support identity"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Site ID"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_id"
+        sites: "site-001"
+        networks: "net-001"
+  - name: "node-lookup"
+    events:
+      - type: "web_open"
+        view: "network_support"
+        networks: "net-001"
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_node"
+        value_from: "node_id"
+        nodes: "tower-site-001-001"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Node ID"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "node_id"
+        nodes: "tower-site-001-001"
+        networks: "net-001"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Site"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+  - name: "no-match"
+    events:
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_lookup"
+        value: "lab-no-match-7f36bd"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support state"
+        expected: "no match"
+        requirement: "WEB-SUPPORT-004"
+  - name: "failed-read"
+    events:
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_failure"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support fault"
+        expected: "applied"
+        requirement: "WEB-SUPPORT-004"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support state"
+        expected: "error"
+        requirement: "WEB-SUPPORT-004"
+  - name: "recovered"
+    events:
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_clear_fault"
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_lookup"
+        value_from: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support state"
+        expected: "match"
+        requirement: "WEB-SUPPORT-004"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support identity"
+        requirement: "WEB-SUPPORT-004"
+        expected_property: "site_name"
+        sites: "site-001"
+        networks: "net-001"

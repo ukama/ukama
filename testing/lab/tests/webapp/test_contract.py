@@ -301,6 +301,18 @@ class WebappContract(unittest.TestCase):
             with self.subTest(new=new):
                 self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
 
+    def test_support_entities_must_belong_to_the_declared_world_network(self):
+        text = (ROOT / "scenarios/webapp/p0/team-support/wb-155-network-support-lookup.yaml").read_text()
+        for before, after in [('sites: "site-001"', 'sites: "site-999"'), ('nodes: "tower-site-001-001"', 'nodes: "tower-site-002-001"'), ('value_from: "node_id"', 'value_from: "network_name"'), ('networks: "net-001"', 'networks: "net-999"')]:
+            with self.subTest(after=after):
+                self.assertNotEqual(self.run_scenario(text.replace(before, after)).returncode, 0)
+
+    def test_invitation_probe_is_closed_and_limited_to_reserved_test_addresses(self):
+        text = (ROOT / "scenarios/webapp/p0/team-support/wb-152-invitation-role-rejection.yaml").read_text()
+        for before, after in [('@example.test', '@example.com'), ('label: "Administrator"', 'label: "Superuser"'), ('action: "invite_probe"', 'action: "invite_submit"')]:
+            with self.subTest(after=after):
+                self.assertNotEqual(self.run_scenario(text.replace(before, after)).returncode, 0)
+
     def test_analytics_contract_rejects_bad_scopes_and_ranges(self):
         text = (ROOT / "scenarios/webapp/p0/analytics/wb-140-node-metric-observations.yaml").read_text()
         for before, after in [('value: "25"', 'value: "101"'), ('value: "Week"', 'value: "Year"'), ('view: "network_node_detail"', 'view: "business_members"'), ('action: "chart_hover"', 'action: "arbitrary_script"')]:
@@ -402,7 +414,7 @@ class WebappContract(unittest.TestCase):
         requirements = {r['id']:r for r in catalog['requirements']}
         self.assertEqual(len(requirements),132)
         self.assertEqual(sum(r['priority']=='p0' for r in requirements.values()),86)
-        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-PAY-006', 'WEB-PAY-007'}-{'WEB-PLAN-011', 'WEB-SIM-002', 'WEB-CUSTOMER-009', 'WEB-SIM-007', 'WEB-CUSTOMER-003', 'WEB-SIM-003'}-{'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'}-{'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'}-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'}-{'WEB-ONBOARD-'+f'{n:03}' for n in [1,2,3,5,6,7,8,9,10,11]})
+        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-TEAM-005', 'WEB-TEAM-001', 'WEB-SUPPORT-002'}-{'WEB-PAY-006', 'WEB-PAY-007'}-{'WEB-PLAN-011', 'WEB-SIM-002', 'WEB-CUSTOMER-009', 'WEB-SIM-007', 'WEB-CUSTOMER-003', 'WEB-SIM-003'}-{'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'}-{'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'}-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'}-{'WEB-ONBOARD-'+f'{n:03}' for n in [1,2,3,5,6,7,8,9,10,11]})
         self.assertEqual(requirements['WEB-SHELL-010']['automation'],'planned')
         self.assertEqual(plan['qualification_patch'],17)
 
@@ -431,7 +443,7 @@ class WebappContract(unittest.TestCase):
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {'WEB-PAY-006', 'WEB-PAY-007'} | {'WEB-PLAN-011', 'WEB-SIM-002', 'WEB-CUSTOMER-009', 'WEB-SIM-007', 'WEB-CUSTOMER-003', 'WEB-SIM-003'} | {'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'} | {'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'} | {"WEB-ONBOARD-001", "WEB-ONBOARD-002", "WEB-ONBOARD-003", "WEB-ONBOARD-005", "WEB-ONBOARD-006", "WEB-ONBOARD-007", "WEB-ONBOARD-008", "WEB-ONBOARD-009", "WEB-ONBOARD-010", "WEB-ONBOARD-011", "WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {'WEB-TEAM-005', 'WEB-TEAM-001', 'WEB-SUPPORT-002'} | {'WEB-PAY-006', 'WEB-PAY-007'} | {'WEB-PLAN-011', 'WEB-SIM-002', 'WEB-CUSTOMER-009', 'WEB-SIM-007', 'WEB-CUSTOMER-003', 'WEB-SIM-003'} | {'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'} | {'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'} | {"WEB-ONBOARD-001", "WEB-ONBOARD-002", "WEB-ONBOARD-003", "WEB-ONBOARD-005", "WEB-ONBOARD-006", "WEB-ONBOARD-007", "WEB-ONBOARD-008", "WEB-ONBOARD-009", "WEB-ONBOARD-010", "WEB-ONBOARD-011", "WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

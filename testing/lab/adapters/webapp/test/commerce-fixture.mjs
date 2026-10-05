@@ -149,9 +149,9 @@ function client() {
     }
   };
 }
-export const commerceFixture = mode => provisioningFixture(mode, {
-  script:`(${client.toString()})();`,
-  init(db){ Object.assign(db,{factory:[],plans:[],pool:[],subscribers:[],sims:[],payments:[],entitlements:[],usage:0}); },
+export const commerceFixture = (mode, extension = {}) => provisioningFixture(mode, {
+  script:`(${client.toString()})();${extension.script || ""}`,
+  init(db){ Object.assign(db,{factory:[],plans:[],pool:[],subscribers:[],sims:[],payments:[],entitlements:[],usage:0}); extension.init?.(db); },
   get(req,res,db) {
     if(req.method==='GET' && req.url.startsWith('/receipt/')){
       const id=decodeURIComponent(req.url.slice('/receipt/'.length)),p=db.payments.find(p=>p.id===id),plan=db.plans.find(x=>x.uuid===p.itemId);
@@ -174,6 +174,7 @@ export const commerceFixture = mode => provisioningFixture(mode, {
     return false;
   },
   graphql(body,db) {
+    const extra=extension.graphql?.(body,db);if(extra)return extra;
     if(body.operationName==='isPackageNameAvailable')return {data:{isPackageNameAvailable:{name:body.variables.name,isAvailable:!db.plans.some(p=>p.name===body.variables.name)}}};
     if(body.operationName==='SimPoolOverview')return {data:{simPoolView:{sims:{error:null}}}};
     const op=/\b(fixtureEntitlement|updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;
