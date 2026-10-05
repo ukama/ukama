@@ -301,6 +301,12 @@ class WebappContract(unittest.TestCase):
             with self.subTest(new=new):
                 self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
 
+    def test_analytics_contract_rejects_bad_scopes_and_ranges(self):
+        text = (ROOT / "scenarios/webapp/p0/analytics/wb-140-node-metric-observations.yaml").read_text()
+        for before, after in [('value: "25"', 'value: "101"'), ('value: "Week"', 'value: "Year"'), ('view: "network_node_detail"', 'view: "business_members"'), ('action: "chart_hover"', 'action: "arbitrary_script"')]:
+            with self.subTest(after=after):
+                self.assertNotEqual(self.run_scenario(text.replace(before, after)).returncode, 0)
+
     def test_ui_interactions_reject_unknown_actions_labels_keys_and_refs(self):
         text = (ROOT / "scenarios/webapp/p0/expanded/wb-037-keyboard-dialog.yaml").read_text()
         for old, new in [("action: open_form", "action: submit_arbitrary"),

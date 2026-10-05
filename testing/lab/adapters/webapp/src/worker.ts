@@ -226,7 +226,7 @@ export class Worker {
       return inventory.check(c.inputs,budget);
     }
     if (c.action === 'web_interact' || c.action === 'web_ui_equals') {
-      const ui = new Interactions(this.page!, this.config.base_url);
+      const ui = new Interactions(this.page!, this.config.base_url, this.app);
       if (c.action === 'web_interact') { await ui.run(c.inputs, budget); return {actual: {executed: true}}; }
       return ui.check(c.inputs, budget);
     }

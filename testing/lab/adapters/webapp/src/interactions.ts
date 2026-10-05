@@ -4,7 +4,8 @@
  */
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, keys, normalize, str, type ObjectValue } from './contract.js';
-import { getView } from './console-app.js';
+import { getView, type ConsoleApp } from './console-app.js';
+import {Analytics, ANALYTICS_ACTIONS, ANALYTICS_LABELS, analyticsView} from './analytics.js';
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 async function text(target: Locator): Promise<string | null> {
   const visible = target.filter({ visible: true }), count = await visible.count();
@@ -12,7 +13,7 @@ async function text(target: Locator): Promise<string | null> {
   return count === 1 ? normalize(await visible.innerText({ timeout: 500 })) : null;
 }
 export class Interactions {
-  constructor(private page: Page, private origin: string) {}
+  constructor(private page: Page, private origin: string, private app?: ConsoleApp) {}
   private main() { return this.page.locator('main.main'); }
   private dialog() { return this.page.getByRole('dialog').filter({ visible: true }); }
   private field(label: string) { return this.dialog().locator('.ff').filter({ has: this.page.locator('.ff-label').filter({ hasText: new RegExp(`^${escape(label)}(?:\\s*\\*)?$`) }) }); }
@@ -27,6 +28,11 @@ export class Interactions {
     keys(i, ['view', 'action', 'label', 'value', 'network_name']);
     const view = str(i.view, 'view'), action = str(i.action, 'action');
     const label = str(i.label ?? '', 'label', true), value = str(i.value ?? '', 'value', true);
+    if (ANALYTICS_ACTIONS.includes(action)) {
+      if (!analyticsView(view) || !this.app) throw new WorkerError('WRONG_VIEW','Analytics requires an opened analytics view');
+      await this.app.assertView(view);
+      await new Analytics(this.page).run(action,label,value,budget); return;
+    }
     await this.route(view);
     if (view !== 'session' && i.network_name && !view.includes('_data_plans') && !view.includes('_members') && !view.includes('_sim_pool') &&
         await text(this.page.locator('header .netswitch .nm')) !== i.network_name)
@@ -98,6 +104,11 @@ export class Interactions {
     keys(i,['view','label','subject','expected','requirement','customer_name','plan_name']);
     const view=str(i.view,'view'), label=str(i.label,'label'), subject=str(i.subject??'','subject',true), expected=str(i.expected,'expected',true);
     const observe=async ():Promise<string|null>=>{
+      if (ANALYTICS_LABELS.includes(label)) {
+        if (!analyticsView(view) || !this.app) throw new WorkerError('WRONG_VIEW','Analytics requires an opened analytics view');
+        await this.app.assertView(view);
+        return new Analytics(this.page).observe(label,subject);
+      }
       if(view !== 'session' && (new URL(this.page.url()).origin !== this.origin || new URL(this.page.url()).pathname !== getView(view).path || !await this.main().isVisible()))return null;
       if (view === 'session') {
         if (label === 'Auth origin') return new URL(this.page.url()).origin;

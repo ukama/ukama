@@ -170,7 +170,7 @@ export class ConsoleApp {
     await assertSession(this.page, this.origin, budget);
     if (this.current) await this.assertView(this.current.name);
   }
-  private async assertView(name: string): Promise<void> {
+  async assertView(name: string): Promise<void> {
     getView(name);
     if (!this.current || this.current.name !== name) throw new WorkerError('WRONG_VIEW', 'Check requires a preceding web_open for this view');
     const url = new URL(this.page.url());

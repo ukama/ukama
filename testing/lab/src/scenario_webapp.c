@@ -234,16 +234,24 @@ static int commerce_event(const scenario_t *s, const event_spec_t *e, ulab_error
 }
 
 static int ui_action_valid(const char *action) {
-    static const char *const actions[] = {"search", "sort", "filter", "open_form", "fill", "select", "cancel", "press", "viewport", "date_range", "go_back", "palette", "palette_choose", "mobile_open", "mobile_link", "open_allocate", "open_topup", "clear_session"};
+    static const char *const actions[] = {"chart_hover", "chart_range", "metric_select", "search", "sort", "filter", "open_form", "fill", "select", "cancel", "press", "viewport", "date_range", "go_back", "palette", "palette_choose", "mobile_open", "mobile_link", "open_allocate", "open_topup", "clear_session"};
     size_t i;
     for (i = 0; i < sizeof(actions) / sizeof(actions[0]); i++) if (ulab_streq(action, actions[i])) return 1;
     return 0;
 }
 static int ui_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
     int value = !!(e->web_fields & (1u << 14));
+    int analytics = ulab_streq(e->target, "chart_hover") || ulab_streq(e->target, "chart_range") || ulab_streq(e->target, "metric_select");
     int field = ulab_streq(e->target, "fill") || ulab_streq(e->target, "select");
-    int label = field || ulab_streq(e->target, "filter") || ulab_streq(e->target, "sort") || ulab_streq(e->target, "open_form") || ulab_streq(e->target, "press");
-    int need_value = field || ulab_streq(e->target, "search") || ulab_streq(e->target, "filter") || ulab_streq(e->target, "press") || ulab_streq(e->target, "viewport") || ulab_streq(e->target, "date_range") || ulab_streq(e->target, "palette_choose") || ulab_streq(e->target, "mobile_link");
+    int label = analytics || field || ulab_streq(e->target, "filter") || ulab_streq(e->target, "sort") || ulab_streq(e->target, "open_form") || ulab_streq(e->target, "press");
+    int need_value = analytics || field || ulab_streq(e->target, "search") || ulab_streq(e->target, "filter") || ulab_streq(e->target, "press") || ulab_streq(e->target, "viewport") || ulab_streq(e->target, "date_range") || ulab_streq(e->target, "palette_choose") || ulab_streq(e->target, "mobile_link");
+    if (analytics && (!value || !e->status[0] || !e->profile[0] || (!ulab_streq(e->view,"network_node_detail") && !ulab_streq(e->view,"network_site_detail") && !ulab_streq(e->view,"business_revenue") && !ulab_streq(e->view,"business_packages") && !ulab_streq(e->view,"business_home")))) return fail(err,"analytics action needs an analytics view, label and value");
+    if (ulab_streq(e->target,"chart_hover")) {
+        double fraction;
+        if (ulab_parse_double(e->status,&fraction) || !isfinite(fraction) || fraction < 0 || fraction > 100) return fail(err,"chart hover must be 0..100");
+    }
+    if (ulab_streq(e->target,"chart_range") && !ulab_streq(e->status,"Day") && !ulab_streq(e->status,"Week") && !ulab_streq(e->status,"Month")) return fail(err,"unsupported chart range");
+    if (ulab_streq(e->target,"metric_select") && !ulab_streq(e->view,"network_node_detail") && !ulab_streq(e->view,"network_site_detail")) return fail(err,"metric selection requires a detail view");
     if (!label && e->profile[0]) return fail(err, "label is not valid for this UI action");
     if (!need_value && !ulab_streq(e->target, "open_form") && (value || e->variant[0])) return fail(err, "value is not valid for this UI action");
     if (e->variant[0] && !field && !ulab_streq(e->target, "search")) return fail(err, "value_from supports fields and search only");
@@ -493,10 +501,10 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->type == CHECK_WEB_SESSION_EQUALS) return session_check(check, err);
     if (check->type == CHECK_WEB_ONBOARD_EQUALS) return onboard_check(s, check, err);
     if (check->type == CHECK_WEB_UI_EQUALS) {
-        static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Field options", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
+        static const char *const labels[] = {"Chart tooltip", "Chart x axis", "Chart y axis", "Chart legend", "Chart segments", "Chart state", "Chart range", "Metric value", "App resource", "App identity", "Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Field options", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
         size_t n;
         int found = 0;
-        int subject = ulab_starts(check->label, "Field ") || ulab_starts(check->label, "Button ") || ulab_streq(check->label, "Focus on button") || ulab_streq(check->label, "Text visible");
+        int subject = ulab_starts(check->label,"Chart ") || ulab_streq(check->label,"Metric value") || ulab_streq(check->label,"App resource") || ulab_starts(check->label, "Field ") || ulab_starts(check->label, "Button ") || ulab_streq(check->label, "Focus on button") || ulab_streq(check->label, "Text visible");
         int session = ulab_streq(check->label, "Auth origin") || ulab_streq(check->label, "Dashboard visible");
         for (n = 0; n < sizeof(labels) / sizeof(labels[0]); n++) if (ulab_streq(check->label, labels[n])) found = 1;
         if (!found || session != ulab_streq(check->view, "session") || subject != !!check->status[0]) return fail(err, "unknown UI label or mismatched subject/view");

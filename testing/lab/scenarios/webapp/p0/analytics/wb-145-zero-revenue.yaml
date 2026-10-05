@@ -1,0 +1,60 @@
+version: 2
+name: "p0-webapp-zero-revenue"
+description: "zero revenue. Read analytics.md for the required controlled telemetry profile; never infer live qualification from fixtures."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+setup:
+  create_via_webapp: [networks]
+phases:
+  - name: "zero-revenue"
+    events:
+      - type: "web_open"
+        view: "business_revenue"
+        networks: "net-001"
+    checks:
+      - type: "web_kpi_equals"
+        view: "business_revenue"
+        label: "Revenue"
+        expected: "$0"
+        requirement: "WEB-BIZ-006"
+      - type: "web_kpi_equals"
+        view: "business_revenue"
+        label: "Purchases"
+        expected: "0"
+        requirement: "WEB-BIZ-006"
+  - name: "zero-packages"
+    events:
+      - type: "web_open"
+        view: "business_packages"
+        networks: "net-001"
+    checks:
+      - type: "web_kpi_equals"
+        view: "business_packages"
+        label: "Package revenue"
+        expected: "$0"
+        requirement: "WEB-BIZ-006"
+      - type: "web_kpi_equals"
+        view: "business_packages"
+        label: "Packages sold"
+        expected: "0"
+        requirement: "WEB-BIZ-006"
