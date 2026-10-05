@@ -9,6 +9,7 @@
 #include "scenario.h"
 #include "util.h"
 #include <ctype.h>
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -18,11 +19,11 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_TAB;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_COMMERCE;
 }
 
 int scenario_is_web_check(check_type_t type) {
-    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_ACTION_AVAILABLE;
+    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_COMMERCE_EQUALS;
 }
 
 int scenario_has_webapp(const scenario_t *s) {
@@ -167,6 +168,54 @@ static int operation_event(const event_spec_t *e, ulab_error_t *err) {
     return ULAB_OK;
 }
 
+static int commerce_ue(const scenario_t *s, const selector_t *sel) {
+    uint32_t total = s->world.networks * (s->world.sites_per_network * s->world.ues_per_site + s->world.sims_per_network);
+    uint32_t n;
+    char expected[ULAB_MAX_REF];
+    if (sel->kind != SEL_REF || !ulab_starts(sel->value, "ue-") || ulab_parse_u32(sel->value + 3, &n) || !n || n > total) return 0;
+    snprintf(expected, sizeof(expected), "ue-%06u", n);
+    return ulab_streq(expected, sel->value);
+}
+static const package_spec_t *commerce_package(const scenario_t *s, const char *ref) {
+    size_t i;
+    uint32_t n;
+    char expected[ULAB_MAX_REF];
+    for (i = 0; i < s->package_count; i++) {
+        const package_spec_t *p = &s->packages[i];
+        if (ulab_streq(p->scope, "organization")) {
+            snprintf(expected, sizeof(expected), "%.96s__org", p->ref);
+            if (ulab_streq(ref, expected)) return p;
+        } else for (n = 1; n <= s->world.networks; n++) {
+            char net[ULAB_MAX_REF];
+            snprintf(net, sizeof(net), "net-%03u", n);
+            if (p->network_ref[0] && !ulab_streq(p->network_ref, net)) continue;
+            snprintf(expected, sizeof(expected), "%.96s__%.24s", p->ref, net);
+            if (ulab_streq(ref, expected)) return p;
+        }
+    }
+    return NULL;
+}
+static int commerce_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
+    int plan = ulab_streq(e->target, "create_plan") || ulab_streq(e->target, "edit_plan");
+    int combined = ulab_streq(e->target, "allocate_sim") || ulab_streq(e->target, "top_up") || ulab_streq(e->target, "cancel_top_up") || ulab_streq(e->target, "open_receipt");
+    int customer = ulab_streq(e->target, "create_customer") || ulab_streq(e->target, "open_customer") || ulab_streq(e->target, "close_customer") || ulab_streq(e->target, "activate_sim") || ulab_streq(e->target, "deactivate_sim");
+    int close = ulab_streq(e->target, "close_dialog");
+    const package_spec_t *p = e->package_ref[0] ? commerce_package(s, e->package_ref) : NULL;
+    if (!(plan || combined || customer || close) || !one_network(s, &e->networks))
+        return fail(err, "web_commerce requires a supported action and one world network");
+    if (!ulab_streq(e->view, plan ? "business_data_plans" : close ? e->view : "customer_customers") ||
+        (close && !ulab_streq(e->view, "business_data_plans") && !ulab_streq(e->view, "customer_customers")))
+        return fail(err, "commerce action is on the wrong view");
+    if (!!e->package_ref[0] != !!(plan || combined) || ((plan || combined) && !p) ||
+        ((customer || combined) ? !commerce_ue(s, &e->ues) : e->ues.kind != SEL_NONE))
+        return fail(err, "commerce action requires matching package/ues references");
+    if (ulab_streq(e->target, "create_plan")) {
+        if (!ulab_streq(e->variant, "MB") && !ulab_streq(e->variant, "GB")) return fail(err, "create_plan requires unit: MB|GB");
+        if (ulab_streq(e->variant, "GB") && p->data_mb % 1024) return fail(err, "GB plans require data_mb divisible by 1024; use MB otherwise");
+    } else if (e->variant[0]) return fail(err, "unit is only valid for create_plan");
+    return ULAB_OK;
+}
+
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -175,6 +224,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
     if (event->timeout_seconds == 0 || event->timeout_seconds > 900 ||
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
+    if (event->type == EVT_WEB_COMMERCE) return commerce_event(s, event, err);
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
     if (event->type == EVT_WEB_TAB) {
         if (!ulab_streq(event->profile, "primary") && !ulab_streq(event->profile, "secondary"))
@@ -227,6 +277,32 @@ static int requirement_valid(const char *id) {
     return 1;
 }
 
+static int commerce_check_scope(const check_spec_t *c, ulab_error_t *err) {
+    static const char *const plans[] = {"Plan terms", "Plan price", "Plan scope", "Validity", "Price", "Data volume", "Unit"};
+    static const char *const customer[] = {"ICCID", "SIM status", "Phone", "Active plan", "Cycle usage", "Total usage", "Receipt total", "Receipt payment ID", "Receipt method", "Receipt status", "Receipt empty"};
+    static const char *const scoped[] = {"Package count", "Package status", "Package dates", "Package days", "Receipt plan"};
+    size_t i;
+    int valid = 0;
+    if (ulab_streq(c->view, "business_data_plans")) {
+        for (i = 0; i < sizeof(plans) / sizeof(plans[0]); i++) if (ulab_streq(c->label, plans[i])) valid = 1;
+        if (!c->package_ref[0] || c->ues.kind != SEL_NONE) valid = 0;
+    } else if (ulab_streq(c->view, "business_packages")) {
+        valid = c->package_ref[0] && c->ues.kind == SEL_NONE &&
+            (ulab_streq(c->label, "Performance price") || ulab_streq(c->label, "Performance sold") ||
+             ulab_streq(c->label, "Performance revenue") || ulab_streq(c->label, "Performance share"));
+    } else if (ulab_streq(c->view, "business_sim_pool")) {
+        valid = ulab_streq(c->label, "Pool status") && c->ues.kind == SEL_REF && !c->package_ref[0];
+    } else if (ulab_streq(c->view, "customer_customers")) {
+        for (i = 0; i < sizeof(customer) / sizeof(customer[0]); i++) if (ulab_streq(c->label, customer[i])) valid = 1;
+        for (i = 0; i < sizeof(scoped) / sizeof(scoped[0]); i++) if (ulab_streq(c->label, scoped[i]) && c->package_ref[0]) valid = 1;
+        if (c->ues.kind != SEL_REF) valid = 0;
+    }
+    if ((ulab_streq(c->key, "iccid") && !ulab_streq(c->label, "ICCID")) ||
+        (ulab_streq(c->key, "payment_id") && !ulab_streq(c->label, "Receipt payment ID")) ||
+        (ulab_streq(c->key, "plan_name") && !ulab_streq(c->label, "Active plan") && !ulab_streq(c->label, "Receipt plan"))) valid = 0;
+    return valid ? ULAB_OK : fail(err, "commerce label, view and resource selectors do not match");
+}
+
 static int browser_check(const scenario_t *s, const check_spec_t *check,
                          ulab_error_t *err) {
     if (!scenario_is_web_check(check->type))
@@ -240,6 +316,21 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->timeout_seconds == 0 || check->timeout_seconds > 900 ||
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
+    if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
+        if (commerce_check_scope(check, err)) return ULAB_ERR;
+        if (!ulab_streq(check->view, "business_data_plans") && !ulab_streq(check->view, "customer_customers") && !ulab_streq(check->view, "business_sim_pool") && !ulab_streq(check->view, "business_packages"))
+            return fail(err, "unsupported commerce check view");
+        if (check->package_ref[0] && !commerce_package(s, check->package_ref)) return fail(err, "unknown commerce package reference");
+        if (check->ues.kind != SEL_NONE && !commerce_ue(s, &check->ues)) return fail(err, "unknown commerce UE reference");
+        if ((!!(check->web_fields & (1u << 4)) + !!check->key[0]) != 1)
+            return fail(err, "commerce check requires expected or expected_property exclusively");
+        if (check->key[0] && !ulab_streq(check->key, "iccid") && !ulab_streq(check->key, "payment_id") && !ulab_streq(check->key, "plan_name"))
+            return fail(err, "commerce expected_property must be iccid/payment_id/plan_name");
+        if ((ulab_streq(check->key, "plan_name") && !check->package_ref[0]) ||
+            ((ulab_streq(check->key, "iccid") || ulab_streq(check->key, "payment_id")) && check->ues.kind == SEL_NONE))
+            return fail(err, "commerce expected_property requires its resource selector");
+        return ULAB_OK;
+    }
     if (check->web_fields & ((1u << 7) | (1u << 8))) {
         selector_t sel;
         memset(&sel, 0, sizeof(sel)); sel.kind = SEL_REF;
@@ -319,11 +410,29 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
         s->setup.create_node_site_links || s->setup.create_packages ||
         s->setup.create_subscribers || s->setup.create_sims)
         return fail(err, "webapp scenarios must provision operator resources via create_via_webapp");
-    if (s->package_count || s->profile_count || s->world.ues_per_site ||
-        s->world.sims_per_network || s->world.sims_per_subscriber ||
-        s->runtime.start_ues || s->runtime.wait_ues_attached)
-        return fail(err, "webapp foundation supports network/site fixtures; "
-                    "customer/plan/SIM/UE contracts arrive with patch 6");
+    if (s->profile_count || s->runtime.start_ues || s->runtime.wait_ues_attached || s->world.sims_per_subscriber > 1)
+        return fail(err, "webapp commerce uses one SIM per customer and explicit start_ues events after UI allocation");
+    if ((s->world.ues_per_site && !s->world.sites_per_network) ||
+        ((s->world.ues_per_site || s->world.sims_per_network) && !s->world.networks) ||
+        s->world.ues_per_site > 100 || s->world.sims_per_network > 100 ||
+        (uint64_t)s->world.networks * ((uint64_t)s->world.sites_per_network * s->world.ues_per_site + s->world.sims_per_network) > 100)
+        return fail(err, "invalid webapp SIM/UE topology (limit 100 per site/network)");
+    for (i = 0; i < s->package_count; i++) {
+        const package_spec_t *p = &s->packages[i];
+        uint32_t days = p->duration_minutes ? p->duration_minutes / 1440 : p->duration_days;
+        if (!p->ref[0] || !p->name[0] || !p->data_mb || p->data_mb > 1048576 ||
+            !isfinite(p->amount) || p->amount <= 0 || p->amount > 1000000 ||
+            !p->currency[0] || !p->country[0] || !p->active ||
+            (p->duration_days && p->duration_minutes) || p->duration_minutes % 1440 ||
+            (days != 1 && days != 7 && days != 30))
+            return fail(err, "webapp plans require positive amount/data and exactly 1/7/30 days or 1440/10080/43200 minutes");
+        if (!ulab_streq(p->scope, "organization") && !ulab_streq(p->scope, "network"))
+            return fail(err, "plan scope must be organization or network");
+        if (!s->world.networks || (p->network_ref[0] &&
+            (ulab_streq(p->scope, "organization") || !numbered_ref(p->network_ref, "net-", s->world.networks, NULL))))
+            return fail(err, "plan scope requires existing world networks");
+        for (j = 0; j < i; j++) if (ulab_streq(p->ref, s->packages[j].ref)) return fail(err, "duplicate package reference");
+    }
     if (s->world.networks > 100 || s->world.sites_per_network > 100)
         return fail(err, "webapp foundation world limit is 100 networks and 100 sites per network");
     if (!!s->world.networks != !!(s->setup.webapp_entities & WEB_SETUP_NETWORKS))
@@ -354,6 +463,12 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
             event = &phase->events[j];
             if (scenario_is_web_event(event->type)) {
                 if (browser_event(s, event, err)) return ULAB_ERR;
+            } else if (event->type == EVT_START_UES || event->type == EVT_TRAFFIC) {
+                if (event->timeout_seconds > 900 || event->timeout_seconds > s->webapp.scenario_timeout_seconds ||
+                    ((event->web_fields & 1u) && !event->timeout_seconds) || !s->world.ues_per_site || s->world.sims_per_network ||
+                    (event->ues.kind != SEL_ALL && !commerce_ue(s, &event->ues)) ||
+                    (event->type == EVT_TRAFFIC && !event->amount_mb) || event->expect_result[0] || event->error_contains[0])
+                    return fail(err, "UE runtime events require site-anchored UEs, positive traffic and no ignored failures");
             } else if (event->type == EVT_DISCONNECT_NODES ||
                        event->type == EVT_RECONNECT_NODES) {
                 if (!node_selector(s, &event->nodes))

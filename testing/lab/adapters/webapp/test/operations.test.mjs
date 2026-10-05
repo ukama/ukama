@@ -42,3 +42,8 @@ test('reason substring mismatch fails with observed text and artifacts',async t=
   const s=await session(t,'status-error');const r=await s.send('web_field_equals',{view:'network_node_detail',label:'Restart reason',expected:'Controller busy',match:'contains',requirement:'WEB-OPS-013'},400);
   assert.equal(r.status,'error');assert.equal(r.actual,'Cannot verify operation status');assert(r.artifacts.some(p=>p.endsWith('failure.png')));
 });
+
+test('node open waits for rendered identity after a URL change before checking connectivity',async t=>{
+  const s=await session(t,'slow-detail');
+  ok(await s.send('web_field_equals',{view:'network_node_detail',label:'Connectivity',expected:'Online',requirement:'WEB-NODE-001'}));
+});

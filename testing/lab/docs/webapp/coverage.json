@@ -964,9 +964,12 @@
       "priority": "p0",
       "requirement": "Create a valid plan and display its name, price, volume, validity, and scope.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PLAN-002",
@@ -974,9 +977,13 @@
       "priority": "p0",
       "requirement": "A one-day plan retains one-day validity through create, edit, allocation, and reload; backend equivalent is 1440 minutes.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml",
+        "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PLAN-003",
@@ -984,9 +991,17 @@
       "priority": "p0",
       "requirement": "A seven-day plan retains one-week validity through create, edit, allocation, and reload; backend equivalent is 10080 minutes.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml",
+        "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
+        "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PLAN-004",
@@ -994,9 +1009,13 @@
       "priority": "p0",
       "requirement": "A thirty-day plan retains one-month validity through create, edit, allocation, and reload; backend equivalent is 43200 minutes.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml",
+        "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PLAN-005",
@@ -1004,9 +1023,18 @@
       "priority": "p0",
       "requirement": "MB and GB input retain the correct allowance and displayed unit.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
+        "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
+        "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PLAN-006",
@@ -1074,9 +1102,12 @@
       "priority": "p1",
       "requirement": "Currency formatting and displayed price remain correct after reload.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-SIM-001",
@@ -1084,9 +1115,18 @@
       "priority": "p0",
       "requirement": "Upload a valid SIM file and display every expected ICCID.",
       "source": "src/features/sims/SimPoolScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
+        "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
+        "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-SIM-002",
@@ -1164,9 +1204,18 @@
       "priority": "p0",
       "requirement": "Allocate a specific ICCID with the selected plan to the correct customer/network.",
       "source": "src/features/customers/SubscriberDrawer.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
+        "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
+        "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-CUSTOMER-003",
@@ -1206,7 +1255,10 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml"
+      ],
+      "implementation_note": "Partial: visible SIM off/on covered; traffic denial/recovery during service changes remains a gap."
     },
     {
       "id": "WEB-CUSTOMER-007",
@@ -1216,7 +1268,11 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Partial: cycle/total usage and allowance covered with explicit independent traffic expectations; remaining allowance, missing-data distinction and full usage/expiry semantics remain gaps."
     },
     {
       "id": "WEB-CUSTOMER-008",
@@ -1254,9 +1310,13 @@
       "priority": "p0",
       "requirement": "Top up the selected customer SIM using a real cash-payment flow through the UI.",
       "source": "src/features/customers/TopUpDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PAY-002",
@@ -1264,9 +1324,13 @@
       "priority": "p0",
       "requirement": "A successful payment eventually produces exactly the expected assigned package.",
       "source": "src/features/customers/TopUpDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-PAY-003",
@@ -1276,7 +1340,11 @@
       "source": "src/features/customers/TopUpDialog.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Partial: total, symbol, plan, method, status and exact payment ID covered; paid date, payer identity and PDF reconciliation remain gaps."
     },
     {
       "id": "WEB-PAY-004",
@@ -1324,9 +1392,14 @@
       "priority": "p1",
       "requirement": "An allocation without a recorded payment shows no fabricated receipt.",
       "source": "src/features/customers/TopUpDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
+        "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml"
+      ],
+      "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
     {
       "id": "WEB-BIZ-001",
@@ -1334,9 +1407,13 @@
       "priority": "p0",
       "requirement": "Revenue totals reconcile with the scenario purchases and selected network.",
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 checks independent expected purchase totals across Business Home, Revenue and Packages; persists receipts and totals across explicit reloads. Live product verification not run."
     },
     {
       "id": "WEB-BIZ-002",
@@ -1346,7 +1423,11 @@
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
     {
       "id": "WEB-BIZ-003",
@@ -1356,7 +1437,11 @@
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
     {
       "id": "WEB-BIZ-004",
@@ -1396,7 +1481,11 @@
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
     {
       "id": "WEB-BIZ-008",
@@ -1404,9 +1493,13 @@
       "priority": "p0",
       "requirement": "Reload preserves completed purchases and their displayed totals.",
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+      ],
+      "implementation_note": "Patch 6 checks independent expected purchase totals across Business Home, Revenue and Packages; persists receipts and totals across explicit reloads. Live product verification not run."
     },
     {
       "id": "WEB-TEAM-001",
@@ -1640,6 +1733,24 @@
       "state": "policy_requires_confirmation",
       "source": "src/lib/roles.ts",
       "treatment": "Keep WEB-SHELL-010 unverified until expected permissions are specified and exercised."
+    },
+    {
+      "feature": "Unchanged console scope",
+      "state": "console_companions_excluded",
+      "source": "Original uploaded console",
+      "treatment": "Ignore console Patch 4/5 archives. Patch 6 removes adapter testid dependencies. Lost wizard tower IDs, optimistic state, stale polling and lock-read failures remain app defects; no lab workaround or verified coverage."
+    },
+    {
+      "feature": "SIM pool list cap",
+      "state": "no_search_or_pagination_control",
+      "source": "src/features/sims/SimPoolScreen.tsx",
+      "treatment": "Missing imported ICCIDs fail visible validation; no hidden list fetch. Search/pagination remain gaps in WEB-SIM-005."
+    },
+    {
+      "feature": "Commerce scope",
+      "state": "partial_automation",
+      "source": "docs/webapp/commerce.md",
+      "treatment": "One SIM per customer and one cash top-up per UE/run. Refunds, multiple-SIM selection, failed-payment UI, rapid-click behavior, PDF contents, payer/date reconciliation, input validation and cross-network negative tests remain gaps."
     }
   ]
 }

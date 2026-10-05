@@ -107,7 +107,7 @@ export class Creation {
     const row = this.page.getByRole('row').filter({ has: this.page.getByText(tower, { exact: true }) });
     await row.getByRole('button', { name: 'Configure', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('heading', { name: 'Select a network', exact: true }).waitFor({ timeout: budget.remaining() });
-    if (new URL(this.page.url()).searchParams.get('nid') !== tower) throw new WorkerError('WRONG_TOWER', 'Console companion patch is required: Configure lost the selected tower');
+    if (new URL(this.page.url()).searchParams.get('nid') !== tower) throw new WorkerError('WRONG_TOWER', 'Configure lost the selected tower; console defect, no mutation submitted');
     await this.page.getByRole('radio').filter({ has: this.page.getByText(network, { exact: true }) }).click({ timeout: budget.remaining() });
     await this.page.getByRole('button', { name: 'Continue', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('checkbox', { name: "I've installed and powered on all my units", exact: true }).check({ timeout: budget.remaining() });

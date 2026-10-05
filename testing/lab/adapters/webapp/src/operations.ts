@@ -24,16 +24,16 @@ export class Operations {
   private menu(label: string) {
     return this.page.getByRole('menuitem').filter({ has: this.page.locator('.MuiListItemText-primary').getByText(label, { exact: true }) });
   }
-  private software(app: unknown) { return this.main().getByTestId(`software-${str(app, 'app')}`); }
+  private software(app: unknown) { return this.main().getByRole('button', { name: `View ${str(app, 'app')} resources`, exact: true }); }
   control(label: string, app?: unknown): Locator | undefined {
     if (label === 'Confirm restart') return this.dialog().getByRole('button').filter({ hasText: /^(Restart node|Restart|Restarting…|Node is busy|Site is busy)$/ });
     if (label === 'Cancel') return this.dialog().getByRole('button', { name: 'Cancel', exact: true });
     if (this.site) {
-      if (label === 'Site actions') return this.main().getByTestId('site-actions');
+      if (label === 'Site actions') return this.main().locator('.pagehead').getByRole('button').filter({ hasText: /^Site actions(?: • busy)?$/ });
       if (label === 'Restart site') return this.menu(label);
       if (label === 'Radio' || label === 'Cellular') return this.menu(label).getByRole('checkbox');
     } else {
-      if (label === 'Restart node') return this.main().getByTestId('node-restart');
+      if (label === 'Restart node') return this.main().locator('.pagehead').getByRole('button').filter({ hasText: /^(Restart node|Restarting…(?: \([^()]*\))?)$/ });
       if (label === 'Update Now' || label === 'Retry update') return this.software(app).getByRole('button', { name: label, exact: true });
     }
     return undefined;
@@ -49,7 +49,7 @@ export class Operations {
       return input ? input.inputValue({ timeout: 500 }) : null;
     }
     if (label === 'Notification') return rendered(this.page.getByRole('alert'));
-    if (label === 'Lifecycle') return rendered(this.main().getByTestId('node-lifecycle'));
+    if (label === 'Lifecycle') return rendered(this.main().locator('.detail-subrow > span'));
     if (label === 'Restart progress') {
       const content = await rendered(this.control(this.site ? 'Site actions' : 'Restart node')!);
       return content?.replace(/ \([^()]*\)$/, '') ?? null; // Ignore only the displayed elapsed timer.
@@ -59,10 +59,14 @@ export class Operations {
       return target ? normalize(await target.getAttribute('title') ?? '') : null;
     }
     if (label.endsWith('reason')) return rendered(this.menu(label === 'Restart reason' ? 'Restart site' : label.split(' ')[0]!).locator('.MuiListItemText-secondary'));
-    if (label === 'Radio state' || label === 'Cellular state') return rendered(this.menu(label.split(' ')[0]!).getByTestId('toggle-state'));
-    if (label === 'Current version') return rendered(this.software(app).getByTestId('software-version'));
-    if (label === 'Target version') return rendered(this.software(app).getByTestId('software-target'));
-    if (label === 'Software status') return rendered(this.software(app).getByTestId('software-status'));
+    if (label === 'Radio state' || label === 'Cellular state') return rendered(this.menu(label.split(' ')[0]!).locator(':scope > span').filter({ hasText: /^(On|Off)$/ }));
+    if (label === 'Current version') return rendered(this.software(app).locator(':scope > div').filter({ hasText: /^Version:/ }).locator('.tnum'));
+    if (label === 'Target version' || label === 'Software status') {
+      const line = await rendered(this.software(app).locator(':scope > div:last-child > span'));
+      if (line === null) return null;
+      const parts = line.split(' → ');
+      return label === 'Software status' ? parts[0]! : parts.length === 2 ? parts[1]! : null;
+    }
     throw new WorkerError('UNSUPPORTED_LOCATOR', 'Unknown operation field');
   }
   async available(label: string, app?: unknown): Promise<boolean | null> {
@@ -101,10 +105,10 @@ export class Operations {
       const value = str(inputs.value, 'value');
       if (!['on', 'off'].includes(value)) throw new WorkerError('INVALID_INPUT', 'Toggle value must be on or off');
       const label = action === 'set_radio' ? 'Radio' : 'Cellular';
-      await budget.poll(() => this.field(`${label} state`), v => v === 'On' || v === 'Off', 'Reported toggle state is unavailable');
+      await budget.poll(() => this.field(`${label} state`), v => v === 'On' || v === 'Off', 'Visible toggle state is unavailable');
       if (await this.field(`${label} state`) === (value === 'on' ? 'On' : 'Off'))
         throw new WorkerError('NO_STATE_CHANGE', 'Requested toggle is already in that state');
-      await this.click(this.menu(label), budget); return; // UI confirms checked state only after a health report.
+      await this.click(this.menu(label), budget); return; // Observe the UI separately; an optimistic state is not proof of backend completion.
     }
     if (action === 'open_software') return this.click(this.main().getByRole('tab', { name: 'Software', exact: true }), budget);
     if (update) {

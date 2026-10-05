@@ -4,6 +4,7 @@
 import { readFile, lstat } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { chromium, firefox, webkit, type Browser, type BrowserContext, type Page } from 'playwright';
+import { Commerce } from './commerce.js';
 import { Creation } from './provisioning.js';
 import { Artifacts } from './artifacts.js';
 import { ConsoleApp, assertSession } from './console-app.js';
@@ -36,6 +37,7 @@ export class Worker {
   private responses = new Map<number, { fingerprint: string; result: Result }>();
   private cleanup?: Promise<void>;
   private busy = false;
+  private commerceMutations = new Set<string>();
   private failureReason?: string;
   onScenarioTimeout?: () => void;
 
@@ -162,6 +164,22 @@ export class Worker {
       this.page = target.page; this.app = target.app;
       await this.page.bringToFront();
       return { actual: { executed: true, tab } };
+    }
+    if (c.action === 'web_import_sims') {
+      await this.app.open({view: 'business_sim_pool'}, budget);
+      await new Commerce(this.page!).importSims(c.inputs, budget);
+      return {actual: {executed: true}};
+    }
+    if (c.action === 'web_commerce') {
+      await this.app.assertCommerce(c.inputs);
+      if (c.inputs.creation) {
+        const intent = c.inputs.creation as Record<string, unknown>;
+        const key = `${str(intent.kind, 'kind')}:${str(intent.ref, 'ref')}`;
+        if (this.commerceMutations.has(key)) throw new WorkerError('DUPLICATE_MUTATION', 'Commerce resource already submitted in this run');
+        this.commerceMutations.add(key);
+      }
+      const bindings = await new Commerce(this.page!).run(c.inputs, this.evidence!.directory, c.command_id, budget);
+      return {bindings, actual: {executed: true}};
     }
     if (c.action === 'web_action') {
       await this.app.operation(c.inputs, budget); return { actual: { executed: true } };

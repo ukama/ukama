@@ -6144,13 +6144,34 @@ int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
     if (!strcmp(kind, "node")) {
         op = "deleteNode";
         snprintf(query, sizeof(query), "mutation { deleteNode(data: {id: \"%s\"}) { id } }", id);
+    } else if (!strcmp(kind, "package")) {
+        op = "deletePackage";
+        snprintf(query, sizeof(query), "mutation { deletePackage(packageId: \"%s\") { uuid } }", id);
+    } else if (!strcmp(kind, "subscriber")) {
+        op = "deleteSubscriber";
+        snprintf(query, sizeof(query), "mutation { deleteSubscriber(subscriberId: \"%s\") { success } }", id);
+    } else if (!strcmp(kind, "sim")) {
+        ue_t ue;
+        int failures = 0;
+        memset(&ue, 0, sizeof(ue)); ulab_copy(ue.bff_id, sizeof(ue.bff_id), id);
+        if (cleanup_sim_packages_from_bff(c, &ue, &failures) || failures) {
+            snprintf(err->msg, sizeof(err->msg), "cannot remove owned SIM packages during teardown"); return ULAB_ERR;
+        }
+        snprintf(query, sizeof(query), "mutation { toggleSimServiceStatus(data: {sim_id: \"%s\", status: \"service_off\"}) { success } }", id);
+        if (bff_call(c, "toggleSimServiceStatus", query, "{}", &root, err)) return ULAB_ERR;
+        ok = json_is_true(json_object_get(json_object_get(json_object_get(root, "data"), "toggleSimServiceStatus"), "success"));
+        json_decref(root); root = NULL;
+        if (!ok) { snprintf(err->msg, sizeof(err->msg), "owned SIM service-off was not confirmed"); return ULAB_ERR; }
+        op = "deleteSim";
+        snprintf(query, sizeof(query), "mutation { deleteSim(data: {simId: \"%s\"}) { simId } }", id);
     } else if (!strcmp(kind, "site") || !strcmp(kind, "network")) {
         op = !strcmp(kind, "site") ? "deleteSite" : "deleteNetwork";
         snprintf(query, sizeof(query), "mutation { %s(id: \"%s\") { success } }", op, id);
     } else return ULAB_ERR;
     if (bff_call(c, op, query, "{}", &root, err)) return ULAB_ERR;
     value = json_object_get(json_object_get(root, "data"), op);
-    ok = !strcmp(kind, "node") ? ulab_streq(json_string_value(json_object_get(value, "id")), id) : json_is_true(json_object_get(value, "success"));
+    ok = !strcmp(kind, "node") || !strcmp(kind, "sim") || !strcmp(kind, "package") ?
+        ulab_streq(json_string_value(json_object_get(value, !strcmp(kind, "node") ? "id" : !strcmp(kind, "sim") ? "simId" : "uuid")), id) : json_is_true(json_object_get(value, "success"));
     json_decref(root);
     if (!ok) { snprintf(err->msg, sizeof(err->msg), "%s did not confirm deletion", op); return ULAB_ERR; }
     return ULAB_OK;

@@ -20,6 +20,8 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
                               size_t csv_path_len,
                               ulab_error_t *err);
 
+int sim_factory_load_world_csv(world_t *world, const char *csv_path, ulab_error_t *err);
+
 int sim_factory_wait_asr(const runner_opts_t *opts,
                          const ue_t *ue,
                          ulab_error_t *err);

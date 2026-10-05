@@ -8,7 +8,7 @@ then bounded cleanup. Checks observe the current page. Only an explicit
 Patch 4 also executes UI network/site provisioning and local virtual-node
 runtime setup. The two network examples are active. See
 [provisioning.md](provisioning.md) for host prerequisites, the required console
-companion patch, creation receipts, component selection and operational runs.
+unchanged-console constraints, creation receipts, component selection and operational runs.
 
 ## Run the first scenario
 

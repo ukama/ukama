@@ -314,3 +314,15 @@ See [operations.md](operations.md) for the complete supported vocabulary and
 seven scenarios. No direct operation API requests or application-store reads
 are used by these handlers. Two tabs share authenticated browser context state;
 this is not a different-user test.
+
+## Patch 6 extension
+
+The worker accepts `web_commerce`, `web_commerce_equals` and the runner-owned
+`web_import_sims` setup command. See `commerce.md` for typed fields, UI locators,
+world references, units and limits. Commerce submissions have durable private
+receipts and per-run mutation guards; duplicate command replay returns the
+cached response. Observation remains separate from submission.
+
+Patch 6 also removes the operations adapter's dependency on console companion
+changes. Current locators target the unchanged console source. A stale or
+optimistic app value is not silently corrected by the adapter.

@@ -284,6 +284,9 @@ int report_web_check(report_t *r, const char *phase, const check_spec_t *check,
     if (!record) return ULAB_ERR;
     if (json_object_set_new(record, "match", json_string(check->variant[0] ? check->variant : "equals"))) rc = ULAB_ERR;
     if (check->app[0] && json_object_set_new(record, "app", json_string(check->app))) rc = ULAB_ERR;
+    if (check->package_ref[0] && json_object_set_new(record, "package", json_string(check->package_ref))) rc = ULAB_ERR;
+    if (check->ues.kind == SEL_REF && json_object_set_new(record, "ues", json_string(check->ues.value))) rc = ULAB_ERR;
+    if (check->type == CHECK_WEB_COMMERCE_EQUALS && check->key[0] && json_object_set_new(record, "expected_property", json_string(check->key))) rc = ULAB_ERR;
     if (json_object_set(record, "artifacts", artifacts ? artifacts : json_null())) rc = ULAB_ERR;
     if (r->json) {
         json_result_prefix(r);

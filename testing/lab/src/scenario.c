@@ -159,6 +159,7 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WEB_RELOAD: return "web_reload";
     case EVT_WEB_ACTION: return "web_action";
     case EVT_WEB_TAB: return "web_tab";
+    case EVT_WEB_COMMERCE: return "web_commerce";
     default: return "unknown";
     }
 }
@@ -244,11 +245,13 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_WEB_FIELD_EQUALS: return "web_field_equals";
     case CHECK_WEB_TABLE_COUNT_EQUALS: return "web_table_count_equals";
     case CHECK_WEB_ACTION_AVAILABLE: return "web_action_available";
+    case CHECK_WEB_COMMERCE_EQUALS: return "web_commerce_equals";
     default: return "unknown";
     }
 }
 
 int scenario_event_from_name(const char *name, event_type_t *out) {
+    if (ulab_streq(name, "web_commerce")) { *out = EVT_WEB_COMMERCE; return ULAB_OK; }
     if (ulab_streq(name, "web_open")) { *out = EVT_WEB_OPEN; return ULAB_OK; }
     if (ulab_streq(name, "web_select_network")) { *out = EVT_WEB_SELECT_NETWORK; return ULAB_OK; }
     if (ulab_streq(name, "web_action")) { *out = EVT_WEB_ACTION; return ULAB_OK; }
@@ -332,6 +335,7 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
 }
 
 int scenario_check_from_name(const char *name, check_type_t *out) {
+    if (ulab_streq(name, "web_commerce_equals")) { *out = CHECK_WEB_COMMERCE_EQUALS; return ULAB_OK; }
     if (ulab_streq(name, "web_kpi_equals")) { *out = CHECK_WEB_KPI_EQUALS; return ULAB_OK; }
     if (ulab_streq(name, "web_field_equals")) { *out = CHECK_WEB_FIELD_EQUALS; return ULAB_OK; }
     if (ulab_streq(name, "web_table_count_equals")) { *out = CHECK_WEB_TABLE_COUNT_EQUALS; return ULAB_OK; }
@@ -623,6 +627,16 @@ static int parse_web_setup(const char *val, setup_spec_t *setup) {
 
 static int apply_web_check_field(check_spec_t *c, const char *key,
                                  const char *val) {
+    if (c->type == CHECK_WEB_COMMERCE_EQUALS) {
+        if (ulab_streq(key, "package") && !web_once(&c->web_fields, 12))
+            return ulab_copy(c->package_ref, sizeof(c->package_ref), val);
+        if (ulab_streq(key, "ues") && !web_once(&c->web_fields, 13))
+            return parse_selector_value(&c->ues, key, val);
+        if (ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 14))
+            return ulab_copy(c->key, sizeof(c->key), val);
+        if (ulab_streq(key, "expected") && !web_once(&c->web_fields, 4))
+            return ulab_copy(c->expected, sizeof(c->expected), val);
+    }
     if (ulab_streq(key, "view") && !web_once(&c->web_fields, 0))
         return ulab_copy(c->view, sizeof(c->view), val);
     if (ulab_streq(key, "label") && !web_once(&c->web_fields, 1))
@@ -665,6 +679,21 @@ static int apply_web_event_field(event_spec_t *e, const char *key,
                                  const char *val) {
     if (ulab_streq(key, "timeout_seconds") && !web_once(&e->web_fields, 0))
         return web_u32(val, &e->timeout_seconds);
+    if (e->type == EVT_WEB_COMMERCE) {
+        if (ulab_streq(key, "view") && !web_once(&e->web_fields, 1))
+            return ulab_copy(e->view, sizeof(e->view), val);
+        if (ulab_streq(key, "networks") && !web_once(&e->web_fields, 2))
+            return parse_selector_value(&e->networks, key, val);
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "package") && !web_once(&e->web_fields, 10))
+            return ulab_copy(e->package_ref, sizeof(e->package_ref), val);
+        if (ulab_streq(key, "ues") && !web_once(&e->web_fields, 11))
+            return parse_selector_value(&e->ues, key, val);
+        if (ulab_streq(key, "unit") && !web_once(&e->web_fields, 12))
+            return ulab_copy(e->variant, sizeof(e->variant), val);
+        return ULAB_ERR;
+    }
     if (e->type == EVT_WEB_TAB) {
         if (ulab_streq(key, "tab") && !web_once(&e->web_fields, 5))
             return ulab_copy(e->profile, sizeof(e->profile), val);
@@ -1014,7 +1043,10 @@ static int apply_check_field(check_spec_t *c, const char *key,
 }
 
 static int apply_event_field(event_spec_t *e, const char *key,
-                             const char *val) {
+                             const char *val, int version) {
+    if (version == ULAB_WEBAPP_SCHEMA_VER && (e->type == EVT_START_UES || e->type == EVT_TRAFFIC) &&
+        ulab_streq(key, "timeout_seconds") && !web_once(&e->web_fields, 0))
+        return web_u32(val, &e->timeout_seconds);
     if (scenario_is_web_event(e->type))
         return apply_web_event_field(e, key, val);
     if (ulab_streq(key, "name")) return ulab_copy(e->name,
@@ -1484,8 +1516,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else if (ind == 8 && event != NULL) {
                 if (s->version == ULAB_WEBAPP_SCHEMA_VER &&
                     !scenario_is_web_event(event->type) &&
-                    !ulab_streq(key, "nodes")) goto unknown;
-                if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+                    !ulab_streq(key, "nodes") &&
+                    !((event->type == EVT_START_UES || event->type == EVT_TRAFFIC) &&
+                      (ulab_streq(key, "ues") || ulab_streq(key, "timeout_seconds") ||
+                       (event->type == EVT_TRAFFIC && ulab_streq(key, "amount_mb"))))) goto unknown;
+                if (apply_event_field(event, key, val, s->version) != ULAB_OK) goto unknown;
             } else if (ind == 4 && ulab_streq(key, "checks")) {
                 sec = SEC_PHASE_CHECKS;
             } else goto unknown;
@@ -1498,7 +1533,7 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 }
             } else if (ind == 8 && event != NULL) {
                 sec = SEC_PHASE_EVENTS;
-                if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+                if (apply_event_field(event, key, val, s->version) != ULAB_OK) goto unknown;
             } else if (ind == 6 && ulab_starts(p, "- ")) {
                 sec = SEC_PHASE_EVENTS;
                 if (parse_item_value(p, &key, &val) ||
@@ -1581,7 +1616,7 @@ fail:
 void scenario_list_events(void) {
     int i;
 
-    for (i = EVT_TRAFFIC; i <= EVT_WEB_TAB; i++) {
+    for (i = EVT_TRAFFIC; i <= EVT_WEB_COMMERCE; i++) {
         printf("%s\n", scenario_event_name((event_type_t)i));
     }
 }
@@ -1589,7 +1624,7 @@ void scenario_list_events(void) {
 void scenario_list_checks(void) {
     int i;
 
-    for (i = CHECK_BACKEND_COUNT; i <= CHECK_WEB_ACTION_AVAILABLE; i++) {
+    for (i = CHECK_BACKEND_COUNT; i <= CHECK_WEB_COMMERCE_EQUALS; i++) {
         printf("%s\n", scenario_check_name((check_type_t)i));
     }
 }

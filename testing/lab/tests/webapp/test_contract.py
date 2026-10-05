@@ -76,6 +76,8 @@ class WebappContract(unittest.TestCase):
         ], check=True, capture_output=True, text=True)
         cls.example = (ROOT / "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml").read_text()
         cls.env = dict(os.environ,
+                       ULAB_WEBAPP_EXPECTED_CYCLE_USAGE="64 MB of 1 GB used this cycle",
+                       ULAB_WEBAPP_EXPECTED_TOTAL_USAGE="64 MB",
                        ULAB_SOFTWARE_CURRENT_VERSION="contract-current",
                        ULAB_SOFTWARE_TARGET_VERSION="contract-target",
                        ULAB_CONTROLLER_RESTART_REASON="Controller busy",
@@ -263,12 +265,43 @@ class WebappContract(unittest.TestCase):
         self.assertEqual(self.run_scenario(text).returncode, 0)
         self.assertNotEqual(self.run_scenario(text.replace('tab: "secondary"', 'tab: "third"')).returncode, 0)
 
+    def test_commerce_duration_units_references_and_fields_are_strict(self):
+        text = (ROOT / "scenarios/webapp/p0/commerce/wb-020-plan-unit-roundtrip.yaml").read_text()
+        for old, new in [
+            ("duration_days: 1", "duration_days: 2"),
+            ("duration_minutes: 10080", "duration_minutes: 10079"),
+            ("duration_days: 1", "duration_days: 1\n    duration_minutes: 1440"),
+            ("data_mb: 1024", "data_mb: 1000"),
+            ("amount: 10", "amount: -1"),
+            ("package: weekly__net-001", "package: missing__net-001"),
+            ("unit: GB", "unit: GiB"),
+            ("unit: GB", "unit: GB\n        unit: GB"),
+            ("action: create_plan", "action: purchase_by_api"),
+        ]:
+            with self.subTest(new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
+
+    def test_commerce_ue_scope_and_runtime_order_contract(self):
+        text = (ROOT / "scenarios/webapp/p0/commerce/wb-021-customer-sim-allocation.yaml").read_text()
+        for old,new in [("ues: ue-000001", "ues: ue-000099"),
+                        ("sims_per_network: 1", "sims_per_network: 101"),
+                        ("action: allocate_sim", "action: allocate_sim\n        unit: GB"),
+                        ("expected_property: \"iccid\"", "expected_property: \"password\"")]:
+            with self.subTest(new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
+        text = (ROOT / "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml").read_text()
+        for old,new in [("amount_mb: 64", "amount_mb: 0"),
+                        ("timeout_seconds: 900", "timeout_seconds: 901"),
+                        ("ues_per_site: 1", "ues_per_site: 0")]:
+            with self.subTest(new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
+
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

@@ -4,6 +4,7 @@
 #include "webapp.h"
 #include "runtime.h"
 #include "bff.h"
+#include "sim_factory.h"
 #include "util.h"
 #include <ctype.h>
 #include <errno.h>
@@ -157,6 +158,37 @@ static int create(local_t *local, webapp_journal_t *journal, const char *kind, j
     json_decref(inputs); json_decref(reply);
     return rc;
 }
+static int prepare_sims(void *ctx, ulab_error_t *err) {
+    local_t *local = ctx;
+    char csv[ULAB_MAX_PATH];
+    return sim_factory_prepare_world(local->opts, local->world, local->run_dir, csv, sizeof(csv), err);
+}
+static int import_sims(local_t *local, webapp_journal_t *journal, ulab_error_t *err) {
+    char csv[ULAB_MAX_PATH];
+    json_t *inputs;
+    json_t *iccids;
+    json_t *reply = NULL;
+    size_t i;
+    double end = webapp_now() + 900;
+    int rc;
+    if (!local->world->ue_count) return ULAB_OK;
+    if (end > local->client->deadline) end = local->client->deadline;
+    if (webapp_bounded_job(prepare_sims, local, end, local->client->cancel, err) ||
+        webapp_path(csv, sizeof(csv), local->run_dir, "factory-sims.csv", err) ||
+        sim_factory_load_world_csv(local->world, csv, err)) return ULAB_ERR;
+    iccids = json_array();
+    for (i = 0; i < local->world->ue_count; i++) json_array_append_new(iccids, json_string(local->world->ues[i].iccid));
+    json_object_set_new(journal->root, "sim_inventory", json_pack("{s:O,s:s,s:s}", "iccids", iccids,
+        "state", "import_pending", "cleanup", "retained_factory_pool"));
+    if (webapp_journal_save(journal, err)) { json_decref(iccids); return ULAB_ERR; }
+    inputs = json_pack("{s:s,s:o}", "csv_path", csv, "iccids", iccids);
+    rc = webapp_call(local->client, "web_import_sims", inputs, 900, &reply, err);
+    if (!rc && (!json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")) ||
+        json_array_size(json_object_get(reply, "bindings")))) rc = webapp_error(err, "invalid SIM import acknowledgement");
+    json_object_set_new(json_object_get(journal->root, "sim_inventory"), "state", json_string(rc ? "uncertain" : "visible"));
+    if (webapp_journal_save(journal, err)) rc = ULAB_ERR;
+    json_decref(inputs); json_decref(reply); return rc;
+}
 static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journal, ulab_error_t *err) {
     local_t *local = ctx;
     world_t *world = local->world;
@@ -173,6 +205,7 @@ static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journ
         inputs = json_pack("{s:s,s:s}", "ref", world->networks[i].ref, "name", world->networks[i].name);
         if (!inputs || create(local, journal, "network", inputs, err)) return ULAB_ERR;
     }
+    if (import_sims(local, journal, err)) return ULAB_ERR;
     if (!world->site_count) return ULAB_OK;
     local->started = 1;
     if (runtime_ensure_network(&local->runtime, err)) return ULAB_ERR;
@@ -199,6 +232,21 @@ static int runtime_event(void *ctx, const event_spec_t *event, ulab_error_t *err
     selector_result_t nodes = {0};
     int rc;
     local->child = 1;
+    if (event->type == EVT_START_UES || event->type == EVT_TRAFFIC) {
+        size_t i;
+        if (selector_resolve_ues(local->world, &event->ues, &nodes, err)) return ULAB_ERR;
+        for (i = 0; i < nodes.count; i++) {
+            ue_t *ue = &local->world->ues[nodes.idx[i]];
+            if (!ue->bff_id[0] || !ue->site_ref[0] || (event->type == EVT_TRAFFIC && !ue->started)) { selector_result_free(&nodes); return webapp_error(err, "UE runtime requires an owned, UI-allocated site SIM"); }
+        }
+        if (event->type == EVT_START_UES) {
+            for (i = 0; i < nodes.count; i++) if (sim_factory_wait_asr(local->opts, &local->world->ues[nodes.idx[i]], err)) { selector_result_free(&nodes); return ULAB_ERR; }
+            rc = runtime_ensure_media(&local->runtime, err);
+            if (!rc) rc = runtime_build_and_start_ues(local->opts->repo, &local->runtime, local->world, &nodes, err);
+            if (!rc) rc = runtime_wait_ues_attached(&local->runtime, local->world, &nodes, err);
+        } else rc = runtime_generate_traffic(&local->runtime, local->world, &nodes, event->amount_mb, err);
+        selector_result_free(&nodes); return rc;
+    }
     if (selector_resolve_nodes(local->world, &event->nodes, &nodes, err)) return ULAB_ERR;
     rc = event->type == EVT_DISCONNECT_NODES ? runtime_disconnect_nodes(&local->runtime, local->world, &nodes, err) :
          event->type == EVT_RECONNECT_NODES ? runtime_reconnect_nodes(&local->runtime, local->world, &nodes, err) :
@@ -222,6 +270,7 @@ static int cleanup_runtime(void *ctx, ulab_error_t *err) {
     local_t *local = ctx;
     if (!local->started) return ULAB_OK;
     local->child = 1;
+    if (local->world->ue_count && runtime_cleanup_ues(&local->runtime, local->world, err)) return ULAB_ERR;
     return runtime_cleanup_infra(&local->runtime, local->world, err);
 }
 static int cleanup_resource(void *ctx, const char *kind, const char *id, ulab_error_t *err) {

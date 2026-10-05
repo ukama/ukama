@@ -1,9 +1,9 @@
 # Browser operations and recovery — Patch 5
 
-Apply the lab patch after Patches 1–4 and the console companion after its Patch 4
-companion. Rebuild both. The existing host setup, owner authentication, local
-virtual nodes, endpoint configuration and owned-resource cleanup are described
-in [provisioning.md](provisioning.md). No AWS execution is introduced.
+Apply the lab patches through Patch 6; rebuild the lab and browser worker.
+Use the unchanged uploaded console. Ignore the console Patch 4/5 companion
+archives. The existing host setup, owner authentication, local runtime and
+BFF teardown credentials still apply.
 
 ## Scenarios
 
@@ -128,16 +128,14 @@ or inject responses. A failed action/assertion terminates browser work and
 preserves screenshot/trace/diagnostics; explicit `retry_update` is a new step
 following an observed product failure, not a worker transport retry.
 
-## Console companion and limits
+## Unchanged console and limits
 
-The console now treats pending/failed lock reads as unverified, disables affected
-controls, retries reads while visible, and refreshes on focus. Restart and
-software share the node lock. Node detail polls every 30 seconds while visible,
-or every 3 seconds while busy/on Software, and refetches when the lock clears.
-RF/service show Changing… until health reports confirm the requested state;
-unknown/error reads show Unknown. A success acknowledgement alone does not set
-On/Off. Pending confirmation expires after 90 seconds with a visible notice.
-Mutation `success: false` is treated as a rejection.
+Patch 6 reads the existing page headers, menu items, lifecycle spans and
+software cards. It does not require added test IDs. The earlier companion
+changes are excluded: do not assume improved polling, fail-closed locks,
+reported RF/service state or mutation-success handling exists in the app.
+Scenarios assert the intended behavior and preserve failures as evidence.
+Visible optimistic toggle text alone does not establish runtime state.
 
 The following inventory entries retain **no full automation credit**:
 
@@ -147,8 +145,7 @@ The following inventory entries retain **no full automation credit**:
   must expose reported per-port state before UI-only isolation can be proved.
 - WEB-OPS-011: wb-014 covers interrupted-update failure and explicit retry;
   deterministic lease-expiry/timeout coverage is still needed.
-- WEB-OPS-013: the fail-closed policy has unit tests and the browser adapter has
-  a controlled error-state test. Real React/Apollo error/recovery integration
+- WEB-OPS-013: the browser adapter has a controlled error-state test. Real React/Apollo error/recovery integration
   against a configured fault profile still needs qualification.
 
 The inventory also retains distinct-session/user coverage as a gap on

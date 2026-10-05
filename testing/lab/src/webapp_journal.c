@@ -63,6 +63,15 @@ static int binding_target(world_t *w, const char *kind, const char *ref,
     } else if (!strcmp(kind, "site")) {
         site = world_site_by_ref(w, ref);
         if (site) { *id = site->bff_id; *name = site->name; return ULAB_OK; }
+    } else if (!strcmp(kind, "package")) {
+        package_t *p = world_package_by_ref(w, ref);
+        if (p) { *id = p->bff_id; *name = p->name; return ULAB_OK; }
+    } else if (!strcmp(kind, "subscriber")) {
+        subscriber_t *s = world_subscriber_by_ref(w, ref);
+        if (s) { *id = s->bff_id; *name = s->name; return ULAB_OK; }
+    } else if (!strcmp(kind, "sim") || !strcmp(kind, "payment")) {
+        ue_t *ue = world_ue_by_ref(w, ref);
+        if (ue) { *id = !strcmp(kind, "sim") ? ue->bff_id : ue->last_payment_id; *name = ue->iccid; return ULAB_OK; }
     } else if (!strcmp(kind, "node")) {
         node = world_node_by_ref(w, ref);
         if (node) { *id = node->bff_id; *name = node->name; return ULAB_OK; }
@@ -121,7 +130,7 @@ int webapp_journal_bind(webapp_journal_t *j, json_t *bindings,
         if (!found) {
             record = json_pack("{s:s,s:s,s:s,s:s,s:b,s:i,s:s}", "kind", kind, "ref", ref, "id", id,
                                 "name", name, "owned", created, "command_id", command_id,
-                                "cleanup", created ? "pending" : "not_owned");
+                                "cleanup", !strcmp(kind, "payment") ? "retained_ledger" : created ? "pending" : "not_owned");
             if (!record || json_array_append_new(array, record)) return webapp_error(err, "cannot retain entity binding");
         }
         if (!found) json_object_set_new(record, "observed_via", json_string(source));
@@ -209,7 +218,7 @@ static int delete_resource(void *arg, ulab_error_t *err) {
 }
 int webapp_journal_cleanup(webapp_journal_t *j, const webapp_hooks_t *hooks,
                             double deadline, ulab_error_t *err) {
-    const char *kinds[] = {"node", "site", "network"};
+    const char *kinds[] = {"sim", "subscriber", "package", "node", "site", "network"};
     json_t *resources;
     json_t *r;
     const char *kind;

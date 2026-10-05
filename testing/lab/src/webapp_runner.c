@@ -42,6 +42,10 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
         if (event->networks.kind != SEL_REF || !network || !network->bff_id[0]) goto unresolved;
         if (json_object_set_new(*inputs, "network_name", json_string(network->name))) goto memory;
     }
+    if (event->type == EVT_WEB_COMMERCE) {
+        if (webapp_commerce_inputs(event, world, *inputs, err)) { json_decref(*inputs); *inputs = NULL; return ULAB_ERR; }
+        return ULAB_OK;
+    }
     if (event->type == EVT_WEB_SELECT_NETWORK) {
         if (!network) goto unresolved;
         return ULAB_OK;
@@ -152,7 +156,9 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                   !strcmp(node->type, "amplifier") ? "Amplifier node" : "Controller node"))
             return webapp_error(err, "resolved browser expectation is too long");
     }
-    inputs = webapp_check_inputs(&resolved);
+    if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
+        if (webapp_commerce_check(check, &resolved, world, &inputs, err)) return ULAB_ERR;
+    } else inputs = webapp_check_inputs(&resolved);
     if (inputs && check->nodes.kind != SEL_NONE) {
         node = world_node_by_ref(world, check->nodes.value);
         if (!node || !node->bff_id[0]) { json_decref(inputs); return webapp_error(err, "node card identity is unresolved"); }
@@ -190,6 +196,8 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
     json_t *bindings;
     json_t *entity;
     json_t *binding;
+    json_t *intent = NULL;
+    const char *kind = webapp_commerce_kind(event);
     double deadline;
     runtime_job_t job;
     int rc;
@@ -198,17 +206,41 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
         job.hooks = hooks; job.event = event;
         deadline = webapp_now() + (event->timeout_seconds ? event->timeout_seconds : default_timeout);
         if (deadline > client->deadline) deadline = client->deadline;
-        return webapp_bounded_job(runtime_event_job, &job, deadline, client->cancel, err);
+        rc = webapp_bounded_job(runtime_event_job, &job, deadline, client->cancel, err);
+        if (!rc && event->type == EVT_START_UES) {
+            size_t i;
+            for (i = 0; i < journal->world->ue_count; i++) {
+                ue_t *ue = &journal->world->ues[i];
+                if (event->ues.kind == SEL_ALL || !strcmp(event->ues.value, ue->ref)) ue->started = ue->attached = 1;
+            }
+        }
+        return rc;
     }
     rc = webapp_event_inputs(event, journal->world, &inputs, err);
     if (rc) return rc;
+    if (kind) {
+        json_t *intents = json_object_get(journal->root, "creation_intents");
+        if (!intents) { intents = json_array(); json_object_set_new(journal->root, "creation_intents", intents); }
+        intent = json_deep_copy(json_object_get(inputs, "creation"));
+        json_object_set_new(intent, "command_id", json_integer(client->sequence + 1));
+        json_object_set_new(intent, "state", json_string("pending"));
+        if (json_array_append_new(intents, intent) || webapp_journal_save(journal, err)) { json_decref(inputs); return ULAB_ERR; }
+    }
     rc = webapp_call(client, scenario_event_name(event->type), inputs,
                       event->timeout_seconds, &reply, err);
     if (reply && !client->broken) {
         bindings = json_object_get(reply, "bindings");
         entity = json_object_get(inputs, "entity");
         binding = json_array_get(bindings, 0);
-        if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB) &&
+        if (kind) {
+            if (!rc && (json_array_size(bindings) != 1 ||
+                !json_equal(json_object_get(intent, "kind"), json_object_get(binding, "kind")) ||
+                !json_equal(json_object_get(intent, "ref"), json_object_get(binding, "ref")) ||
+                !json_equal(json_object_get(intent, "name"), json_object_get(binding, "name")) ||
+                !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed"))))
+                rc = webapp_error(err, "commerce creation acknowledgement does not match intent");
+            else if (!rc && webapp_journal_bind(journal, bindings, 1, client->sequence, err)) rc = ULAB_ERR;
+        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE) &&
             (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
             rc = webapp_error(err, "worker operation acknowledgement is invalid");
         } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||

@@ -1,0 +1,172 @@
+version: 2
+name: p0-webapp-plan-unit-roundtrip
+description: Create daily weekly and monthly plans through the unchanged console and verify persisted units after reload.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: daily
+    name: daily
+    data_mb: 512
+    duration_days: 1
+    amount: 2
+    currency: USD
+    country: USA
+    scope: network
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+  - ref: monthly
+    name: monthly
+    data_mb: 2048
+    duration_minutes: 43200
+    amount: 25
+    currency: USD
+    country: USA
+    scope: organization
+phases:
+  - name: create-plans
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: daily__net-001
+        unit: MB
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: monthly__org
+        unit: GB
+  - name: reload-and-verify
+    events:
+      - type: web_reload
+    checks:
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Plan terms
+        expected: "512 MB data · 1 day validity"
+        requirement: WEB-PLAN-002
+        package: daily__net-001
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Plan terms
+        expected: "1 GB data · 1 week validity"
+        requirement: WEB-PLAN-003
+        package: weekly__net-001
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Plan terms
+        expected: "2 GB data · 1 month validity"
+        requirement: WEB-PLAN-004
+        package: monthly__org
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Plan price
+        expected: "$25 / month"
+        requirement: WEB-PLAN-012
+        package: monthly__org
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Plan scope
+        expected: "All networks"
+        requirement: WEB-PLAN-001
+        package: monthly__org
+  - name: edit-daily
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: edit_plan
+        package: daily__net-001
+    checks:
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Validity
+        expected: "1 day"
+        requirement: WEB-PLAN-002
+        package: daily__net-001
+  - name: close-daily
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: close_dialog
+  - name: edit-weekly
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: edit_plan
+        package: weekly__net-001
+    checks:
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Validity
+        expected: "1 week"
+        requirement: WEB-PLAN-003
+        package: weekly__net-001
+  - name: close-weekly
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: close_dialog
+  - name: edit-monthly
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: edit_plan
+        package: monthly__org
+    checks:
+      - type: web_commerce_equals
+        view: business_data_plans
+        label: Validity
+        expected: "1 month"
+        requirement: WEB-PLAN-004
+        package: monthly__org
+  - name: close-monthly
+    events:
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: close_dialog

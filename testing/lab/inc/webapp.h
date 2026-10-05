@@ -80,4 +80,8 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
                          json_t **inputs, ulab_error_t *err);
 json_t *webapp_check_inputs(const check_spec_t *check);
 
+const char *webapp_commerce_kind(const event_spec_t *event);
+int webapp_commerce_inputs(const event_spec_t *event, world_t *world, json_t *inputs, ulab_error_t *err);
+int webapp_commerce_check(const check_spec_t *check, check_spec_t *resolved, world_t *world, json_t **inputs, ulab_error_t *err);
+
 #endif

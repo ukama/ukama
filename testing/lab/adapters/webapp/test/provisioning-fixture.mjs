@@ -35,6 +35,7 @@ function client() {
   };
   async function render() {
     await read(); const path = location.pathname;
+    if (db.mode === 'slow-detail' && path.startsWith('/network/nodes/')) await new Promise(resolve=>setTimeout(resolve,200));
     document.querySelector('header').hidden = path.startsWith('/configure');
     document.querySelector('aside').hidden = path.startsWith('/configure');
     document.querySelector('.netswitch').hidden = path.includes('/manage/');
@@ -103,11 +104,14 @@ export async function provisioningFixture(mode = '', extension = {}) {
   const db = { mode, networks: [{ id: 'existing', name: 'existing-network' }], sites: [], nodes: [], operations: [], documents: 0 };
   extension.init?.(db);
   const server = http.createServer(async (req,res) => {
+    if (extension.get?.(req, res, db)) return;
     if (req.url === '/state') { res.setHeader('content-type','application/json'); res.end(JSON.stringify(db)); return; }
     if (req.method === 'POST') {
       let text = ''; for await (const chunk of req) text += chunk;
       const body = JSON.parse(text); let result = {};
       if (extension.request?.(req.url, body, db)) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({accepted:true})); return; }
+      const custom = extension.graphql?.(body, db);
+      if (custom) { res.setHeader('content-type','application/json'); res.end(JSON.stringify(custom)); return; }
       if (req.url === '/runtime') {
         db.operations.push({ runtime: body.action, args: body.args });
         if (body.action === 'build-and-start-site.sh') {

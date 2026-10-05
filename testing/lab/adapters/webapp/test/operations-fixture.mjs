@@ -29,25 +29,25 @@ function operationsClient() {
     const reason=unknown?'Cannot verify operation status':node?.offline?`${node.id} is offline — it can't be restarted until it reconnects`:busy?'Restart in progress by fixture':'';
     const current=ctx.main.querySelector('[data-operations]');
     if(current) current.remove();
-    const root=el('div','',ctx.main,{'data-operations':''});
+    const root=el('div','',ctx.main,{'data-operations':'',class:'pagehead'});
     if(nodePage) {
       ctx.main.querySelector('[title^="Connectivity:"]')?.setAttribute('title',`Connectivity: ${node.offline?'Offline':'Online'}`);
-      el('span','Operational',root,{'data-testid':'node-lifecycle'});
-      const restart=el('button',busy?'Restarting… (1s)':'Restart node',root,{'data-testid':'node-restart','aria-disabled':String(blocked),title:reason});
+      el('span','Operational',el('div','',root,{class:'detail-subrow'}));
+      const restart=el('button',busy?'Restarting… (1s)':'Restart node',root,{'aria-disabled':String(blocked),title:reason});
       restart.onclick=()=>{if(blocked)return;dialogOpen=true;confirm='';refresh(db);};
       const tab=el('button','Software',root,{role:'tab'});tab.onclick=()=>{software=true;refresh(db);};
       if(software){
-        const card=el('div','example',root,{'data-testid':'software-example'}),status=node.software??'available';
-        el('span',node.version??'1.0.0',card,{'data-testid':'software-version'});
-        el('span',states[status],card,{'data-testid':'software-status'});
+        const card=el('div','example',root,{class:'app-card',role:'button','aria-label':'View example resources'}),status=node.software??'available';
+        el('span',node.version??'1.0.0',el('div','Version: ',card),{class:'tnum'});
+        const statusRow=el('div','',card);
+        el('span',states[status]+(status==='available'||status==='failed'?' → 2.0.0':''),statusRow);
         if(status==='available'||status==='failed'){
-          el('span','2.0.0',card,{'data-testid':'software-target'});
-          const update=el('button',status==='failed'?'Retry update':'Update Now',card);update.disabled=blocked;
+          const update=el('button',status==='failed'?'Retry update':'Update Now',statusRow);update.disabled=blocked;
           update.onclick=()=>send('update',{app:'example',tag:'2.0.0'});
         }
       }
     } else {
-      const b=el('button',busy?'Site actions • busy':'Site actions',root,{'data-testid':'site-actions'});b.onclick=()=>{menuOpen=true;refresh(db);};
+      const b=el('button',busy?'Site actions • busy':'Site actions',root,{});b.onclick=()=>{menuOpen=true;refresh(db);};
     }
     ctx.menu.querySelector('[data-operations]')?.remove();
     const portal=el('div','',ctx.menu,{'data-operations':''});
@@ -62,7 +62,7 @@ function operationsClient() {
         if(why)el('span',why,item,{class:'MuiListItemText-secondary'});
         if(label!=='Restart site'){
           const on=label==='Radio'?(site.radio??true):(site.service??true),input=el('input','',item,{type:'checkbox'});input.checked=on;input.disabled=disabled;
-          el('span',on?'On':'Off',item,{'data-testid':'toggle-state'});
+          el('span',on?'On':'Off',item,{});
           item.onclick=()=>{if(!disabled)void send(label==='Radio'?'radio':'service',{value:!on});};
         }else item.onclick=()=>{if(!disabled){menuOpen=false;dialogOpen=true;confirm='';refresh(db);}};
       }

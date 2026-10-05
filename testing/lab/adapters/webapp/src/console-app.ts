@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { Commerce } from './commerce.js';
 import { Operations } from './operations.js';
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, bool, integer, keys, normalize, object, str, type ObjectValue } from './contract.js';
@@ -149,6 +150,12 @@ export class ConsoleApp {
       await card.click({ timeout: budget.remaining() });
       path += `/${encodeURIComponent(entity.id)}`;
       await this.path(path, budget);
+      if (route.detail === 'node') {
+        // A client-side URL can change before the list is replaced. Wait for
+        // the bound detail's visible serial, not the still-visible list dots.
+        const serial = this.main().locator('.kv-row').filter({ has: this.page.getByText('Serial #', { exact: true }) }).locator(':scope > span > .tnum');
+        await budget.poll(() => text(serial), value => value === entity!.id, 'Node detail has not rendered the bound serial');
+      }
       bindings.push({ ref: entity.ref, kind: route.detail, id: entity.id, observed_via: 'url' });
     }
     this.current = { name, path, network: route.network ? network : undefined };
@@ -170,6 +177,12 @@ export class ConsoleApp {
       throw new WorkerError('WRONG_NETWORK', 'Visible network selection changed before the check');
     if (!await this.main().isVisible()) throw new WorkerError('WRONG_VIEW', 'Dashboard content is not visible');
   }
+  async assertCommerce(inputs: ObjectValue): Promise<void> {
+    const name = str(inputs.view, 'view');
+    if (!['business_data_plans', 'customer_customers'].includes(name)) throw new WorkerError('INVALID_INPUT', 'Unsupported commerce view');
+    await this.assertView(name);
+    if (name === 'customer_customers' && this.current!.network !== inputs.network_name) throw new WorkerError('WRONG_NETWORK', 'Commerce network differs from the opened network');
+  }
   async operation(inputs: ObjectValue, budget: Budget): Promise<void> {
     keys(inputs, ['view', 'network_name', 'entity', 'action', 'value', 'app', 'tag']);
     const name = str(inputs.view, 'view'), route = getView(name);
@@ -185,7 +198,7 @@ export class ConsoleApp {
   }
   async check(action: string, inputs: ObjectValue, budget: Budget): Promise<{ expected: unknown; actual: unknown }> {
     const field = action === 'web_table_count_equals' ? 'expected_count' : action === 'web_action_available' ? 'available' : 'expected';
-    keys(inputs, ['view', 'label', 'requirement', field, 'node_id', 'app', 'match']);
+    keys(inputs, action === 'web_commerce_equals' ? ['view', 'label', 'requirement', 'expected', 'plan_name', 'customer_name', 'iccid'] : ['view', 'label', 'requirement', field, 'node_id', 'app', 'match']);
     const name = str(inputs.view, 'view');
     const label = str(inputs.label, 'label');
     if (!/^WEB-[A-Z0-9][A-Z0-9-]*$/.test(str(inputs.requirement, 'requirement')))
@@ -207,6 +220,7 @@ export class ConsoleApp {
       throw new WorkerError('UNSUPPORTED_LOCATOR', 'This view renders cards; use its visible Nodes count or Sites count field');
     const actual = await budget.poll(async () => {
       await this.assertView(name);
+      if (action === 'web_commerce_equals') return new Commerce(this.page).observe(inputs);
       if (action === 'web_kpi_equals') {
         const card = main.locator('.MuiCard-root').filter({ has: this.page.getByText(label, { exact: true }) });
         const target = await visible(card);

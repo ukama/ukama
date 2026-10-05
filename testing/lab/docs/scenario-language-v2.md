@@ -265,3 +265,27 @@ an ID to a YAML file alone earns neither automation nor verified credit.
 
 Implementation sequence and commit-message subjects are recorded in
 `docs/webapp/patch-plan.md`.
+
+## Patch 6 commerce extension (lab only)
+
+`web_commerce` provides typed actions for plan/customer creation, exact SIM
+allocation, SIM service toggles, cash top-up/cancellation and receipts.
+`web_commerce_equals` asserts scoped visible fields, with independent literal
+expectations or resolved `iccid`, `plan_name`, and `payment_id` identities.
+World package durations use either days or canonical minutes; the UI permits
+only 1/7/30 days (1440/10080/43200 minutes). Binary data units use 1024 MB/GB.
+
+`start_ues` and `traffic` are permitted bounded runtime events after UI
+allocation, with `ues` and optional `timeout_seconds` (1..900). Traffic requires
+positive `amount_mb`; neither event is an acceptance check. Runtime actions
+cannot mask failures. Browser checks observe their results separately.
+
+See [webapp/commerce.md](webapp/commerce.md) for field tables, seven runnable
+examples, local services, retained inventory/ledger records, and coverage gaps.
+No console companion is required or included.
+
+Patch 6 also supports plan-scoped `web_commerce_equals` on `business_packages`
+for `Performance price`, `Performance sold`, `Performance revenue` and
+`Performance share`. Use the world `package` reference and a literal `expected`.
+Business headline totals use the existing `web_kpi_equals` checks. See wb-022
+and wb-027 for independent purchase expectations and explicit reload checks.

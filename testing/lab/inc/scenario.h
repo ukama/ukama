@@ -105,7 +105,8 @@ typedef enum {
     EVT_WEB_SELECT_NETWORK,
     EVT_WEB_RELOAD,
     EVT_WEB_ACTION,
-    EVT_WEB_TAB
+    EVT_WEB_TAB,
+    EVT_WEB_COMMERCE
 } event_type_t;
 
 typedef enum {
@@ -174,7 +175,8 @@ typedef enum {
     CHECK_WEB_KPI_EQUALS,
     CHECK_WEB_FIELD_EQUALS,
     CHECK_WEB_TABLE_COUNT_EQUALS,
-    CHECK_WEB_ACTION_AVAILABLE
+    CHECK_WEB_ACTION_AVAILABLE,
+    CHECK_WEB_COMMERCE_EQUALS
 } check_type_t;
 
 typedef struct {

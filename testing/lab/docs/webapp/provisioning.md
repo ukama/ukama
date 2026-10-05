@@ -1,12 +1,11 @@
 # Local UI provisioning and operational journeys — Patch 4
 
-Apply the lab archive after Patch 3. Apply the console companion archive to the
-uploaded console source and rebuild/restart it. Both archives contain changed
-files directly at their repository root plus a unified diff and commit message.
-The companion fix carries the chosen tower ID from Node pool through the
-select-network, network-creation fallback and install steps. Selecting an
-amplifier/controller anchors its associated tower. The worker checks that ID
-and network again on the visible site-settings screen before submission.
+Patch 6 supersedes the earlier companion-console instructions. Apply only the
+lab patches. Do not apply the console Patch 4 or Patch 5 companion archives.
+The adapter targets the original uploaded console. Its wizard currently loses
+the selected tower ID; the lab fails before site submission if that happens.
+Site-dependent scenarios (including UE usage) can therefore expose that defect.
+Console fixes are a separate workstream.
 
 ## Host prerequisites
 
