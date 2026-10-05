@@ -1,0 +1,73 @@
+version: 2
+name: p0-webapp-narrow-navigation
+description: At narrow width follow the visible navigation drawer and verify it closes.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+phases:
+  - name: narrow
+    events:
+      - type: web_open
+        view: business_members
+      - type: web_interact
+        view: business_members
+        action: viewport
+        value: narrow
+      - type: web_interact
+        view: business_members
+        action: mobile_open
+    checks:
+      - type: web_ui_equals
+        view: business_members
+        label: Mobile navigation open
+        expected: 'true'
+        requirement: WEB-SHELL-009
+  - name: follow-link
+    events:
+      - type: web_interact
+        view: business_members
+        action: mobile_link
+        value: Data plans
+    checks:
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Path
+        expected: /business/manage/data-plans
+        requirement: WEB-SHELL-009
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Mobile navigation open
+        expected: 'false'
+        requirement: WEB-SHELL-009
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Button visible
+        expected: 'true'
+        requirement: WEB-UI-008
+        subject: Create plan
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Content fits viewport
+        expected: 'true'
+        requirement: WEB-UI-008

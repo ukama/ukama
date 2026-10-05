@@ -85,6 +85,8 @@ int report_open(report_t *r,
     json_str(r->json, "priority", r->priority, 1);
     json_str(r->json, "status", r->status, 1);
     json_str(r->json, "tags", r->tags, 1);
+    if (scenario && scenario->version == ULAB_WEBAPP_SCHEMA_VER)
+        json_str(r->json, "browser", scenario->webapp.browser, 1);
     fprintf(r->json, "  \"started_at\": %ld,\n", (long)r->started_at);
     fprintf(r->json, "  \"results\": [\n");
     fflush(r->json);

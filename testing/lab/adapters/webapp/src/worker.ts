@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { Interactions } from './interactions.js';
 import { readFile, lstat } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { chromium, firefox, webkit, type Browser, type BrowserContext, type Page } from 'playwright';
@@ -164,6 +165,11 @@ export class Worker {
       this.page = target.page; this.app = target.app;
       await this.page.bringToFront();
       return { actual: { executed: true, tab } };
+    }
+    if (c.action === 'web_interact' || c.action === 'web_ui_equals') {
+      const ui = new Interactions(this.page!, this.config.base_url);
+      if (c.action === 'web_interact') { await ui.run(c.inputs, budget); return {actual: {executed: true}}; }
+      return ui.check(c.inputs, budget);
     }
     if (c.action === 'web_import_sims') {
       await this.app.open({view: 'business_sim_pool'}, budget);

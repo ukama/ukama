@@ -1,0 +1,210 @@
+version: 2
+name: p0-webapp-network-plan-isolation
+description: Two networks retain their own customers and network plans while sharing an organization plan.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 2
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+  - ref: shared
+    name: shared
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: organization
+phases:
+  - name: plans
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-002
+        action: create_plan
+        package: weekly__net-002
+        unit: GB
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: shared__org
+        unit: GB
+  - name: customer-1
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: create_customer
+        ues: ue-000001
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-SHELL-002
+        ues: ue-000001
+  - name: plan-options-1
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: open_form
+        label: Add customer
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'true'
+        requirement: WEB-PLAN-009
+        package: weekly__net-001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'false'
+        requirement: WEB-PLAN-009
+        package: weekly__net-002
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'true'
+        requirement: WEB-PLAN-010
+        package: shared__org
+  - name: cancel-1
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: cancel
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Dialog open
+        expected: 'false'
+        requirement: WEB-PLAN-010
+  - name: customer-2
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-002
+      - type: web_commerce
+        view: customer_customers
+        networks: net-002
+        action: create_customer
+        ues: ue-000002
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-SHELL-002
+        ues: ue-000002
+  - name: plan-options-2
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: open_form
+        label: Add customer
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'true'
+        requirement: WEB-PLAN-009
+        package: weekly__net-002
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'false'
+        requirement: WEB-PLAN-009
+        package: weekly__net-001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Plan option present
+        expected: 'true'
+        requirement: WEB-PLAN-010
+        package: shared__org
+  - name: cancel-2
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: cancel
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Dialog open
+        expected: 'false'
+        requirement: WEB-PLAN-010
+  - name: switch-back
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-SHELL-002
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'false'
+        requirement: WEB-SHELL-002
+        ues: ue-000002
+  - name: persist-scope
+    events:
+      - type: web_reload
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-SHELL-002
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'false'
+        requirement: WEB-SHELL-002
+        ues: ue-000002

@@ -13,13 +13,16 @@ function client() {
     const lens=path.split('/')[1];
     const nav = document.querySelector('aside');
     const home=[...nav.querySelectorAll('a')].find(a=>a.textContent==='Home');if(home){home.href='/'+lens;home.onclick=e=>{e.preventDefault();move('/'+lens)}}
-    for (const [n,p] of [['Data plans',`/${lens}/manage/data-plans`],['Customers',`/${lens}/customers`],['SIM pool',`/${lens}/manage/sim-pool`],['Revenue',`/${lens}/revenue`],['Packages',`/${lens}/packages`]]) {
+    for (const [n,p] of [['Members',`/${lens}/manage/members`],['Data plans',`/${lens}/manage/data-plans`],['Customers',`/${lens}/customers`],['SIM pool',`/${lens}/manage/sim-pool`],['Revenue',`/${lens}/revenue`],['Packages',`/${lens}/packages`]]) {
       const a=document.createElement('a');a.href=p;a.textContent=n;a.onclick=e=>{e.preventDefault();move(p)};nav.append(a);
     }
-    const modal = title => { const d=document.createElement('div');d.role='dialog';d.innerHTML=`<h2>${title}</h2>`;menu.append(d);return d; };
+    document.querySelector('[aria-label="Open navigation"]')?.remove();
+    const mobile=button('Open navigation',()=>{const d=document.createElement('div');d.className='mobile-nav';d.innerHTML=nav.innerHTML;document.body.append(d);d.querySelectorAll('a').forEach(a=>a.onclick=e=>{e.preventDefault();d.remove();move(a.getAttribute('href'))})},document.querySelector('header'));mobile.setAttribute('aria-label','Open navigation');
+    document.onkeydown=e=>{if(e.ctrlKey&&e.key==='k'){e.preventDefault();const d=modal('Jump to'),input=document.createElement('input');input.placeholder='Jump to a page…';d.append(input);input.focus();button('Data plans',()=>{d.remove();move('/business/manage/data-plans')},d)}};
+    const modal = title => { const opener=document.activeElement, d=document.createElement('div');d.role='dialog';d.innerHTML=`<h2>${title}</h2>`;menu.append(d);d.tabIndex=-1;d.focus(); const escape=e=>{if(e.key==='Escape'){d.remove();if(db.mode!=='lost-focus')opener?.focus();document.removeEventListener('keydown',escape)}};document.addEventListener('keydown',escape);return d; };
     const field = (d,label,html) => {const f=document.createElement('label');f.className='ff';f.innerHTML=`<div class="ff-label">${label}</div>${html}`;d.append(f);return f.querySelector('input,select')};
     const addCancel=d=>button('Cancel',()=>d.remove(),d);
-    const plans = () => db.plans.filter(p=>!p.networkId||p.networkId===selected);
+    const plans = () => db.plans.filter(p=>db.mode==='scope-leak'||!p.networkId||p.networkId===selected);
     const planOptions=()=>'<option value="">Select a plan</option>'+plans().map(p=>`<option value="${p.uuid}">${p.name} · $${p.amount}/${unit(p.duration)}</option>`).join('');
     const refresh=async()=>{Object.assign(db,await (await fetch('/state')).json());await render();};
     function drawer(sub) {
@@ -43,7 +46,7 @@ function client() {
       else {
         button('Top up data',()=>{
           const dialog=modal('Top up data'),p=field(dialog,'Data plan',`<select>${planOptions()}</select>`);addCancel(dialog);
-          button('Top up',async()=>{const plan=plans().find(x=>x.uuid===p.value);await graphql('addPayment',{itemId:p.value,sim:sim.id,payerEmail:sub.email,amount:String(plan.amount),currency:'USD'});if(db.mode==='late-payment')return;dialog.remove();await after()},dialog);
+          const submit=button('Top up',async()=>{const plan=plans().find(x=>x.uuid===p.value);await graphql('addPayment',{itemId:p.value,sim:sim.id,payerEmail:sub.email,amount:String(plan.amount),currency:'USD'});if(db.mode==='late-payment')return;dialog.remove();await after()},dialog);submit.disabled=true;p.onchange=()=>{submit.disabled=!p.value};
         },d);
         const name=sim.status==='active'?'Deactivate SIM':'Activate SIM';button(name,()=>{const dialog=modal(name);addCancel(dialog);button(name,async()=>{await graphql('toggleSimServiceStatus',{sim_id:sim.id,status:sim.status==='active'?'service_off':'service_on'});dialog.remove();await after()},dialog)},d);
       }
@@ -65,6 +68,7 @@ function client() {
         path.endsWith('/revenue') ? [['Revenue', money(shownRevenue)], ['Purchases', purchases.length], ['Avg purchase', money(purchases.length ? revenue / purchases.length : 0)], ['Paid customers', paid]] :
         [['Package revenue', money(shownRevenue)], ['Packages sold', purchases.length]];
       main.innerHTML = tiles.map(([label, value]) => `<div class="MuiCard-root"><div><span>${label}</span></div><div><span class="tnum">${value}</span></div></div>`).join('');
+      if(path.endsWith('/revenue')){const head=document.createElement('div');head.className='pagehead';main.prepend(head);let range='Last 30 days';const chip=button(range,()=>{for(const v of ['Last 24h','Last 7 days','Last 30 days']){const item=button(v,()=>{range=v;chip.textContent=v;menu.innerHTML=''},menu);item.role='menuitem'}},head)}
       if (path.endsWith('/packages')) {
         main.innerHTML += '<table><thead><tr><th>Package</th><th>Price</th><th>Sold</th><th>Revenue</th><th>Share</th><th>Status</th></tr></thead><tbody></tbody></table>';
         for (const p of plans()) {
@@ -74,26 +78,37 @@ function client() {
           main.querySelector('tbody').append(row);
         }
       }
+    } else if(path.endsWith('/manage/members')) {
+      main.innerHTML='<h1>Members</h1>';
     } else if(path.endsWith('/manage/data-plans')) {
       main.innerHTML='<div class="pagehead"></div>';button('Create plan',()=>{
         const d=modal('Create data plan'),n=field(d,'Data plan name','<input>'),a=field(d,'Price','<input type="number">'),v=field(d,'Data volume','<input type="number">'),u=field(d,'Unit','<select><option>GB</option><option>MB</option></select>'),days=field(d,'Validity','<select><option value="1">Daily (1 day)</option><option value="7">Weekly (7 days)</option><option value="30">Monthly (30 days)</option></select>');
-        const org=field(d,'Available to all networks','<input type="checkbox" aria-label="Available to all networks">'),net=field(d,'Network',`<select>${db.networks.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select>`);d.innerHTML+='<div>✓ Name is available</div>';
-        // innerHTML above reparses nodes; read current form values when submitting.
-        addCancel(d);button('Create plan',async()=>{
-          const f=[...d.querySelectorAll('input,select')];await graphql('addPackage',{name:f[0].value,amount:+f[1].value,dataVolume:+f[2].value,dataUnit:f[3].value,duration:+f[4].value*1440,currency:'USD',country:'USA',networkId:f[5].checked?'':f[6].value});
+        const org=field(d,'Available to all networks','<input type="checkbox" aria-label="Available to all networks">'),net=field(d,'Network',`<select>${db.networks.map(x=>`<option value="${x.id}">${x.name}</option>`).join('')}</select>`);
+        const state=document.createElement('div');d.append(state);
+        addCancel(d);const submit=button('Create plan',async()=>{
+          await graphql('addPackage',{name:n.value,amount:+a.value,dataVolume:+v.value,dataUnit:u.value,duration:+days.value*1440,currency:'USD',country:'USA',networkId:org.checked?'':net.value});
           if(db.mode==='late-plan')return;d.remove();await refresh();
         },d);
+        const validate=()=>{for(const f of [n,a,v]){f.parentNode.querySelector('.ff-err')?.remove();if(!f.value.trim()||f!==n&&+f.value<=0){const err=document.createElement('div');err.className='ff-err';err.textContent=f===n?'Plan name is required':'Must be > 0';f.parentNode.append(err)}}const duplicate=db.plans.some(p=>p.name===n.value.trim());state.textContent=duplicate?'That plan name is already taken':n.value?'✓ Name is available':'';submit.disabled=db.mode!=='validation-broken'&&(!n.value.trim()||+a.value<=0||+v.value<=0||duplicate)};
+        d.addEventListener('input',validate);d.addEventListener('change',validate);validate();
+
       },main.firstChild);
       for(const p of db.plans) {
         const card=document.createElement('div');card.className='card';card.innerHTML=`<div></div><div class="card-pad"><div><div>${p.name}</div></div><div><span class="tnum">$${p.amount}</span><span> / ${unit(p.duration)}</span></div><div>${p.dataVolume} ${p.dataUnit} data · ${terms(p.duration)} validity</div><div><span title="scope">${db.networks.find(n=>n.id===p.networkId)?.name||'All networks'}</span></div></div>`;main.append(card);
         button('Plan actions',()=>{const item=button('Edit plan',()=>{item.remove();const d=modal('Edit data plan');field(d,'Data plan name',`<input value="${p.name}">`);for(const [l,v] of [['Price',p.amount],['Data volume',p.dataVolume],['Unit',p.dataUnit],['Validity',terms(p.duration)]])field(d,l,`<div class="ff-readonly">${v}</div>`);addCancel(d)},menu);item.role='menuitem'},card.querySelector('.card-pad > div')).setAttribute('aria-label','Plan actions');
       }
     } else if(path.endsWith('/customers')) {
-      main.innerHTML='<div class="pagehead"></div><table><tbody></tbody></table>';button('Add customer',()=>{
+      main.innerHTML='<div class="pagehead"></div><input placeholder="Search name or phone"><table><thead><tr><th>Customer</th><th><button>Active plan</button></th><th>Data usage</th><th><button>SIM</button></th><th>Last seen</th></tr></thead><tbody></tbody></table><div class="empty"></div>';
+      button('Add customer',()=>{
+        if(!db.pool.length||!plans().length){const toast=document.createElement('div');toast.textContent=!db.pool.length?'No SIMs available — please upload SIMs to your SIM pool first.':'No data plans yet — please create a data plan before adding customers.';menu.append(toast);return;}
         const d=modal('Add customer'),first=field(d,'First name','<input>'),last=field(d,'Last name','<input>'),email=field(d,'Email','<input>');field(d,'Data plan',`<select>${planOptions()}</select>`);addCancel(d);
-        button('Add customer',async()=>{await graphql('addSubscriber',{name:first.value+' '+last.value,email:email.value,network_id:selected});d.remove();await refresh()},d);
+        const submit=button('Add customer',async()=>{await graphql('addSubscriber',{name:first.value+' '+last.value,email:email.value,network_id:selected});d.remove();await refresh()},d);
+        const validate=()=>{email.parentNode.querySelector('.ff-err')?.remove();const invalid=email.value&&!/^[^@]+@[^@]+\.[^@]+$/.test(email.value);if(invalid){const err=document.createElement('div');err.className='ff-err';err.textContent='Enter a valid email';email.parentNode.append(err)}submit.disabled=!first.value.trim()||!!invalid};d.addEventListener('input',validate);validate();
       },main.firstChild);
-      for(const sub of db.subscribers.filter(s=>s.network_id===selected)) {const row=document.createElement('tr');row.innerHTML=`<td><b>${sub.name}</b></td>`;row.onclick=()=>drawer(sub);main.querySelector('tbody').append(row)}
+      let search='',descending=false,simFilter='All',planFilter='All';
+      const rows=()=>{let source=db.subscribers.filter(s=>db.mode==='customer-leak'||s.network_id===selected);let shown=source.filter(s=>s.name.toLowerCase().includes(search.toLowerCase())).filter(s=>{const sim=db.sims.find(x=>x.subscriber_id===s.uuid);return(simFilter==='All'||sim?.status===simFilter.toLowerCase())&&(planFilter!=='No plan'||!sim)}).sort((a,b)=>a.name.localeCompare(b.name)*(descending?-1:1));main.querySelector('tbody').innerHTML='';main.querySelector('table').hidden=!shown.length;main.querySelector('.empty').textContent=shown.length?'':source.length?'No customers match':'No customers yet';for(const sub of shown){const row=document.createElement('tr');row.role='button';row.tabIndex=0;row.innerHTML=`<td><div><span>LU</span><div><div>${sub.name}</div><div></div></div></div></td><td>No plan</td><td>—</td><td>Inactive</td><td>—</td>`;row.onclick=()=>drawer(sub);main.querySelector('tbody').append(row)}};
+      main.querySelector('input').oninput=e=>{search=e.target.value;rows()};main.querySelector('th').onclick=()=>{descending=!descending;rows()};
+      for(const [column,opts] of [['SIM',['All','active','inactive','suspended']],['Active plan',['All','No plan']]]){const opener=[...main.querySelectorAll('th button')].find(b=>b.textContent===column);opener.onclick=()=>{for(const val of opts){const item=button(val,()=>{if(column==='SIM')simFilter=val;else planFilter=val;menu.innerHTML='';rows()},menu);item.role='menuitem'}}}rows();
     } else if(path.endsWith('/manage/sim-pool')) {
       main.innerHTML='<div class="pagehead"></div><table><tbody></tbody></table>';button('Upload SIMs',()=>{const d=modal('Upload SIMs'),file=document.createElement('input');file.type='file';d.append(file);button('Upload',async()=>{await graphql('uploadSims',{csv:await file.files[0].text()});d.remove();await refresh()},d)},main.firstChild);
       for(const sim of db.pool){const row=document.createElement('tr');row.innerHTML=`<td>${sim.iccid}</td><td><span class="MuiChip-label">${sim.assigned?'Assigned':'Available'}</span></td>`;main.querySelector('tbody').append(row)}

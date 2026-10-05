@@ -1,0 +1,52 @@
+version: 2
+name: p0-webapp-command-palette
+description: The keyboard command palette searches and opens the requested page.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: palette
+    events:
+      - type: web_open
+        view: business_members
+      - type: web_interact
+        view: business_members
+        action: palette
+      - type: web_interact
+        view: business_members
+        action: palette_choose
+        value: Data plans
+    checks:
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Path
+        expected: /business/manage/data-plans
+        requirement: WEB-SHELL-008
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Dialog open
+        expected: 'false'
+        requirement: WEB-SHELL-008

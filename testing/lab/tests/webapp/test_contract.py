@@ -76,6 +76,7 @@ class WebappContract(unittest.TestCase):
         ], check=True, capture_output=True, text=True)
         cls.example = (ROOT / "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml").read_text()
         cls.env = dict(os.environ,
+                       ULAB_WEBAPP_AUTH_ORIGIN="http://auth.example.test",
                        ULAB_WEBAPP_EXPECTED_CYCLE_USAGE="64 MB of 1 GB used this cycle",
                        ULAB_WEBAPP_EXPECTED_TOTAL_USAGE="64 MB",
                        ULAB_SOFTWARE_CURRENT_VERSION="contract-current",
@@ -296,12 +297,24 @@ class WebappContract(unittest.TestCase):
             with self.subTest(new=new):
                 self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
 
+    def test_ui_interactions_reject_unknown_actions_labels_keys_and_refs(self):
+        text = (ROOT / "scenarios/webapp/p0/expanded/wb-037-keyboard-dialog.yaml").read_text()
+        for old, new in [("action: open_form", "action: submit_arbitrary"),
+                         ("value: Escape", "value: Enter"),
+                         ("label: Dialog title", "label: Whatever"),
+                         ("value: keyboard", "value: something"),
+                         ("action: press", "action: press\n        selector: '#secret'"),
+                         ("subject: Create plan", "subject: ''"),
+                         ("label: Dialog title", "label: Dialog title\n        package: missing__net-001")]:
+            with self.subTest(new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
+
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

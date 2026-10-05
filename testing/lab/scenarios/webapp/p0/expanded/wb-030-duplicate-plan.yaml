@@ -1,0 +1,112 @@
+version: 2
+name: p0-webapp-duplicate-plan
+description: An existing plan name is rejected visibly and cannot submit a second plan.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+phases:
+  - name: plan
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+  - name: duplicate
+    events:
+      - type: web_interact
+        view: business_data_plans
+        action: open_form
+        label: Create plan
+      - type: web_interact
+        view: business_data_plans
+        action: fill
+        label: Data plan name
+        value_from: plan_name
+        package: weekly__net-001
+      - type: web_interact
+        view: business_data_plans
+        action: fill
+        label: Price
+        value: '10'
+      - type: web_interact
+        view: business_data_plans
+        action: fill
+        label: Data volume
+        value: '1'
+      - type: web_interact
+        view: business_data_plans
+        action: select
+        label: Network
+        value_from: network_name
+        networks: net-001
+    checks:
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Text visible
+        expected: 'true'
+        requirement: WEB-PLAN-006
+        subject: That plan name is already taken
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Button enabled
+        expected: 'false'
+        requirement: WEB-PLAN-006
+        subject: Create plan
+  - name: cancel
+    events:
+      - type: web_interact
+        view: business_data_plans
+        action: cancel
+    checks:
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Dialog open
+        expected: 'false'
+        requirement: WEB-PLAN-006
+  - name: persist-one-plan
+    events:
+      - type: web_reload
+    checks:
+      - type: web_ui_equals
+        view: business_data_plans
+        label: Plan count
+        package: weekly__net-001
+        expected: '1'
+        requirement: WEB-PLAN-006

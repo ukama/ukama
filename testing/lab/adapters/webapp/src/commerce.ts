@@ -122,7 +122,7 @@ export class Commerce {
       } else if (action === 'edit_plan' && p) {
         await click(this.card(String(p.name)), 'Plan actions'); await this.page.getByRole('menuitem', { name: 'Edit plan', exact: true }).click({ timeout: budget.remaining() });
       } else if (action === 'create_customer' && c) {
-        if (await this.main().getByRole('row').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).count()) throw new WorkerError('NAME_EXISTS', 'Planned customer already exists');
+        if (await this.main().locator('tbody > tr').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).count()) throw new WorkerError('NAME_EXISTS', 'Planned customer already exists');
         await click(this.main().locator('.pagehead'), 'Add customer');
         const [first, ...last] = String(c.name).split(' '), d = this.dialog();
         await field(d, this.page, 'First name').locator('input').fill(first!, { timeout: budget.remaining() });
@@ -131,9 +131,9 @@ export class Commerce {
         // Leave plan empty: creation and SIM allocation have separate ownership receipts.
         if (await field(d, this.page, 'Data plan').locator('select').inputValue() !== '') throw new WorkerError('UNEXPECTED_DEFAULT', 'Customer form preselected a plan');
         await submit('Add customer');
-        await this.main().getByRole('row').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).waitFor({ timeout: budget.remaining() });
+        await this.main().locator('tbody > tr').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).waitFor({ timeout: budget.remaining() });
       } else if (action === 'open_customer' && c) {
-        await this.main().getByRole('row').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).click({ timeout: budget.remaining() });
+        await this.main().locator('tbody > tr').filter({ has: this.page.getByText(String(c.name), { exact: true }) }).click({ timeout: budget.remaining() });
         await this.customer(c, budget, Boolean(c.sim_id));
       } else if (action === 'close_customer' && c) {
         await this.customer(c, budget, Boolean(c.sim_id)); await click(this.drawer(), 'Close'); await this.drawer().waitFor({ state: 'hidden', timeout: budget.remaining() });

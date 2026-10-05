@@ -1,0 +1,130 @@
+version: 2
+name: p0-webapp-customer-cross-lens
+description: The UI-created customer remains visible in Business, Network and Customer lists after reload.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+phases:
+  - name: plan
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+  - name: customers
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: create_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: allocate_sim
+        ues: ue-000001
+        package: weekly__net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_customer
+        ues: ue-000001
+  - name: business_customers
+    events:
+      - type: web_open
+        view: business_customers
+        networks: net-001
+      - type: web_reload
+    checks:
+      - type: web_ui_equals
+        view: business_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-009
+        ues: ue-000001
+      - type: web_ui_equals
+        view: business_customers
+        label: Path
+        expected: /business/customers
+        requirement: WEB-SHELL-001
+  - name: network_customers
+    events:
+      - type: web_open
+        view: network_customers
+        networks: net-001
+      - type: web_reload
+    checks:
+      - type: web_ui_equals
+        view: network_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-009
+        ues: ue-000001
+      - type: web_ui_equals
+        view: network_customers
+        label: Path
+        expected: /network/customers
+        requirement: WEB-SHELL-001
+  - name: customer_customers
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+      - type: web_reload
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-009
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Path
+        expected: /customer/customers
+        requirement: WEB-SHELL-001

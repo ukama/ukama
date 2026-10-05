@@ -128,3 +128,9 @@ The end-to-end harness runs the real C CLI and worker against a source-derived
 DOM fixture with real Chromium, including failure and active cancellation.
 These are infrastructure tests. They do not claim a real console/BFF journey,
 Firefox/WebKit qualification, or 90–100% product coverage.
+
+## Patch 7 expansion
+
+See [expanded.md](expanded.md) for semantic UI interactions and 14 added scenarios,
+and [matrix.md](matrix.md) for serial browser execution and conservative evidence
+reporting. Existing direct-run commands remain supported.

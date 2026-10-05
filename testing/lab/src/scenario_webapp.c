@@ -19,11 +19,11 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_COMMERCE;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_INTERACT;
 }
 
 int scenario_is_web_check(check_type_t type) {
-    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_COMMERCE_EQUALS;
+    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_UI_EQUALS;
 }
 
 int scenario_has_webapp(const scenario_t *s) {
@@ -69,7 +69,7 @@ static int view_valid(const char *view) {
         "network_nodes", "network_node_detail", "network_customers",
         "network_node_pool", "network_sim_pool", "network_support",
         "network_settings", "customer_customers", "customer_data_plans",
-        "customer_settings", "welcome", "unauthorized"
+        "customer_settings", "welcome", "unauthorized", "session"
     };
     size_t i;
     for (i = 0; i < sizeof(views) / sizeof(views[0]); i++)
@@ -216,6 +216,41 @@ static int commerce_event(const scenario_t *s, const event_spec_t *e, ulab_error
     return ULAB_OK;
 }
 
+static int ui_action_valid(const char *action) {
+    static const char *const actions[] = {"search", "sort", "filter", "open_form", "fill", "select", "cancel", "press", "viewport", "date_range", "go_back", "palette", "palette_choose", "mobile_open", "mobile_link", "open_allocate", "open_topup", "clear_session"};
+    size_t i;
+    for (i = 0; i < sizeof(actions) / sizeof(actions[0]); i++) if (ulab_streq(action, actions[i])) return 1;
+    return 0;
+}
+static int ui_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
+    int value = !!(e->web_fields & (1u << 14));
+    int field = ulab_streq(e->target, "fill") || ulab_streq(e->target, "select");
+    int label = field || ulab_streq(e->target, "filter") || ulab_streq(e->target, "sort") || ulab_streq(e->target, "open_form") || ulab_streq(e->target, "press");
+    int need_value = field || ulab_streq(e->target, "search") || ulab_streq(e->target, "filter") || ulab_streq(e->target, "press") || ulab_streq(e->target, "viewport") || ulab_streq(e->target, "date_range") || ulab_streq(e->target, "palette_choose") || ulab_streq(e->target, "mobile_link");
+    if (!label && e->profile[0]) return fail(err, "label is not valid for this UI action");
+    if (!need_value && !ulab_streq(e->target, "open_form") && (value || e->variant[0])) return fail(err, "value is not valid for this UI action");
+    if (e->variant[0] && !field && !ulab_streq(e->target, "search")) return fail(err, "value_from supports fields and search only");
+    if (e->package_ref[0] && !ulab_streq(e->variant, "plan_name")) return fail(err, "package requires value_from: plan_name");
+    if (e->ues.kind != SEL_NONE && !ulab_streq(e->variant, "customer_name")) return fail(err, "ues requires value_from: customer_name");
+    if (!view_valid(e->view) || !ui_action_valid(e->target) ||
+        (e->networks.kind != SEL_NONE && !one_network(s, &e->networks)) ||
+        (e->ues.kind != SEL_NONE && !commerce_ue(s, &e->ues)) ||
+        (e->package_ref[0] && !commerce_package(s, e->package_ref))) return fail(err, "invalid UI interaction or world reference");
+    if (e->variant[0] && (value ||
+        (!ulab_streq(e->variant, "plan_name") && !ulab_streq(e->variant, "customer_name") && !ulab_streq(e->variant, "network_name")) ||
+        (ulab_streq(e->variant, "plan_name") && !e->package_ref[0]) ||
+        (ulab_streq(e->variant, "customer_name") && e->ues.kind != SEL_REF) ||
+        (ulab_streq(e->variant, "network_name") && e->networks.kind != SEL_REF))) return fail(err, "UI value_from needs exactly one matching world reference");
+    if ((ulab_streq(e->target, "fill") || ulab_streq(e->target, "select") || ulab_streq(e->target, "filter")) && !e->profile[0]) return fail(err, "UI field action requires label");
+    if ((ulab_streq(e->target, "search") || ulab_streq(e->target, "fill") || ulab_streq(e->target, "select") || ulab_streq(e->target, "filter") || ulab_streq(e->target, "press") || ulab_streq(e->target, "viewport") || ulab_streq(e->target, "date_range") || ulab_streq(e->target, "palette_choose") || ulab_streq(e->target, "mobile_link")) && !value && !e->variant[0]) return fail(err, "UI action requires value or value_from");
+    if (ulab_streq(e->view, "session") != ulab_streq(e->target, "clear_session")) return fail(err, "session supports clear_session only");
+    if (ulab_streq(e->target, "open_form") && ((!ulab_streq(e->profile, "Create plan") && !ulab_streq(e->profile, "Add customer")) || (value && !ulab_streq(e->status, "keyboard")))) return fail(err, "unknown UI form or activation mode");
+    if (ulab_streq(e->target, "press") && !ulab_streq(e->status, "Tab") && !ulab_streq(e->status, "Shift+Tab") && !ulab_streq(e->status, "Escape")) return fail(err, "press permits focus traversal and Escape only");
+    if (ulab_streq(e->target, "viewport") && !ulab_streq(e->status, "desktop") && !ulab_streq(e->status, "narrow")) return fail(err, "unknown viewport");
+    if (ulab_streq(e->target, "clear_session") && (s->world.networks || !ulab_streq(e->view, "session"))) return fail(err, "session clearing is limited to fixture-free session scenarios");
+    return ULAB_OK;
+}
+
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -224,6 +259,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
     if (event->timeout_seconds == 0 || event->timeout_seconds > 900 ||
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
+    if (event->type == EVT_WEB_INTERACT) return ui_event(s, event, err);
     if (event->type == EVT_WEB_COMMERCE) return commerce_event(s, event, err);
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
     if (event->type == EVT_WEB_TAB) {
@@ -237,7 +273,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
             return fail(err, "web_select_network requires one existing net-NNN reference");
         return ULAB_OK;
     }
-    if (!view_valid(event->view)) return fail(err, "web_open has an unknown view");
+    if (!view_valid(event->view) || ulab_streq(event->view, "session")) return fail(err, "web_open has an unknown view");
     if ((view_needs_network(event->view) || event->networks.kind != SEL_NONE) &&
         !one_network(s, &event->networks))
         return fail(err, "web_open requires one existing net-NNN reference for this view");
@@ -316,6 +352,25 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->timeout_seconds == 0 || check->timeout_seconds > 900 ||
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
+    if (check->type == CHECK_WEB_UI_EQUALS) {
+        static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
+        size_t n;
+        int found = 0;
+        int subject = ulab_starts(check->label, "Field ") || ulab_starts(check->label, "Button ") || ulab_streq(check->label, "Focus on button") || ulab_streq(check->label, "Text visible");
+        int session = ulab_streq(check->label, "Auth origin") || ulab_streq(check->label, "Dashboard visible");
+        for (n = 0; n < sizeof(labels) / sizeof(labels[0]); n++) if (ulab_streq(check->label, labels[n])) found = 1;
+        if (!found || session != ulab_streq(check->view, "session") || subject != !!check->status[0]) return fail(err, "unknown UI label or mismatched subject/view");
+        if (ulab_streq(check->label, "Customer present") && (check->ues.kind != SEL_REF || !ulab_ends(check->view, "_customers"))) return fail(err, "customer presence requires customer view and UE");
+        if (ulab_streq(check->label, "Plan count") && (!check->package_ref[0] || !ulab_streq(check->view, "business_data_plans"))) return fail(err, "plan count requires plan view and package");
+        if (ulab_streq(check->label, "Plan option present") && (!check->package_ref[0] || !ulab_streq(check->view, "customer_customers"))) return fail(err, "plan option requires a package in customer form");
+
+        if ((!!(check->web_fields & (1u << 4)) + !!check->key[0]) != 1) return fail(err, "UI check requires expected or expected_property exclusively");
+        if ((check->networks.kind != SEL_NONE && !one_network(s, &check->networks)) ||
+            (check->ues.kind != SEL_NONE && !commerce_ue(s, &check->ues)) ||
+            (check->package_ref[0] && !commerce_package(s, check->package_ref))) return fail(err, "invalid UI check reference");
+        if (check->key[0] && !((ulab_streq(check->key, "plan_name") && check->package_ref[0]) || (ulab_streq(check->key, "customer_name") && check->ues.kind == SEL_REF) || (ulab_streq(check->key, "network_name") && check->networks.kind == SEL_REF))) return fail(err, "invalid UI expected_property");
+        return ULAB_OK;
+    }
     if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
         if (commerce_check_scope(check, err)) return ULAB_ERR;
         if (!ulab_streq(check->view, "business_data_plans") && !ulab_streq(check->view, "customer_customers") && !ulab_streq(check->view, "business_sim_pool") && !ulab_streq(check->view, "business_packages"))

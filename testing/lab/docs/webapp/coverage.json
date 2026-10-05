@@ -235,9 +235,12 @@
       "priority": "p0",
       "requirement": "A browser without a session is redirected to the configured auth app.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-040-session-clearing.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-AUTH-002",
@@ -287,7 +290,10 @@
       "source": "src/proxy.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-040-session-clearing.yaml"
+      ],
+      "implementation_note": "Partial browser assertions only; remaining requirement states are not implemented."
     },
     {
       "id": "WEB-AUTH-007",
@@ -425,9 +431,12 @@
       "priority": "p0",
       "requirement": "Business, Network, and Customer navigation opens the intended page.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-042-customer-cross-lens.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-SHELL-002",
@@ -437,7 +446,10 @@
       "source": "src/lib/useSwitchNetwork.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-032-network-plan-isolation.yaml"
+      ],
+      "implementation_note": "Partial: selected-network customer membership persists across switch and reload; counts/KPI scope and transient stale data remain gaps."
     },
     {
       "id": "WEB-SHELL-003",
@@ -495,9 +507,12 @@
       "priority": "p1",
       "requirement": "The command palette opens, searches, and navigates by keyboard.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-043-command-palette.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-SHELL-009",
@@ -505,9 +520,12 @@
       "priority": "p1",
       "requirement": "Mobile navigation opens, follows a link, and closes correctly.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-038-narrow-navigation.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-SHELL-010",
@@ -999,7 +1017,8 @@
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
         "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1032,7 +1051,8 @@
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1042,9 +1062,12 @@
       "priority": "p0",
       "requirement": "Duplicate names are rejected visibly and do not create a second plan.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-030-duplicate-plan.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-PLAN-007",
@@ -1064,7 +1087,10 @@
       "source": "src/features/plans/CreatePlanDialog.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-031-invalid-plan.yaml"
+      ],
+      "implementation_note": "Partial: required name and positive price/allowance errors; invalid validity tampering is not covered."
     },
     {
       "id": "WEB-PLAN-009",
@@ -1072,9 +1098,12 @@
       "priority": "p0",
       "requirement": "A network-scoped plan appears only in its applicable network.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-032-network-plan-isolation.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-PLAN-010",
@@ -1082,9 +1111,12 @@
       "priority": "p0",
       "requirement": "An organization-scoped plan is available across the applicable networks.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-032-network-plan-isolation.yaml"
+      ],
+      "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
     },
     {
       "id": "WEB-PLAN-011",
@@ -1124,7 +1156,8 @@
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1196,7 +1229,10 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-036-invalid-customer.yaml"
+      ],
+      "implementation_note": "Partial browser assertions only; remaining requirement states are not implemented."
     },
     {
       "id": "WEB-CUSTOMER-002",
@@ -1213,7 +1249,8 @@
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1282,7 +1319,10 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-033-customer-list-controls.yaml"
+      ],
+      "implementation_note": "Partial: search, no-match, sort and SIM/plan filters. Uploaded DataTable has no pagination control; pagination remains an explicit inventory gap."
     },
     {
       "id": "WEB-CUSTOMER-009",
@@ -1292,7 +1332,10 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-042-customer-cross-lens.yaml"
+      ],
+      "implementation_note": "Partial: customer identity and routes across three lenses after reload; cross-lens plan data remains a gap."
     },
     {
       "id": "WEB-CUSTOMER-010",
@@ -1302,7 +1345,10 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-035-missing-plan-prerequisite.yaml"
+      ],
+      "implementation_note": "Partial: missing-plan creation prerequisite; full no-SIM/no-plan action matrix remains a gap."
     },
     {
       "id": "WEB-PAY-001",
@@ -1314,7 +1360,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1328,7 +1375,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1342,7 +1390,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Partial: total, symbol, plan, method, status and exact payment ID covered; paid date, payer identity and PDF reconciliation remain gaps."
     },
@@ -1354,7 +1403,10 @@
       "source": "src/features/customers/TopUpDialog.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-041-topup-requires-plan.yaml"
+      ],
+      "implementation_note": "Partial: top-up submit blocked with no selected plan; all invalid/no-SIM guards remain a gap."
     },
     {
       "id": "WEB-PAY-005",
@@ -1411,7 +1463,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 checks independent expected purchase totals across Business Home, Revenue and Packages; persists receipts and totals across explicit reloads. Live product verification not run."
     },
@@ -1425,7 +1478,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
@@ -1439,7 +1493,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
@@ -1451,7 +1506,10 @@
       "source": "src/app/(dashboard)/business/_components/BizHomeScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+      ],
+      "implementation_note": "Partial: date selector and recent-purchase total in each rolling window; historical exclusions and trend changes remain gaps."
     },
     {
       "id": "WEB-BIZ-005",
@@ -1483,7 +1541,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Partial: customer count and one named plan sale are checked in a fresh selected network. Cross-network/date-range, per-customer revenue and full site-total reconciliation remain unimplemented; no complete automation credit."
     },
@@ -1497,7 +1556,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-022-cash-topup-receipt.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
       ],
       "implementation_note": "Patch 6 checks independent expected purchase totals across Business Home, Revenue and Packages; persists receipts and totals across explicit reloads. Live product verification not run."
     },
@@ -1602,7 +1662,10 @@
       "source": "src/components/MetricLineChart.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-034-empty-customers.yaml"
+      ],
+      "implementation_note": "Partial: explicit empty customer lists in three lenses; loading/error/stale distinctions remain gaps."
     },
     {
       "id": "WEB-UI-002",
@@ -1652,7 +1715,10 @@
       "source": "src/components/MetricLineChart.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-037-keyboard-dialog.yaml"
+      ],
+      "implementation_note": "Partial: keyboard activation of one plan dialog; complete primary-action/dialog keyboard journeys remain gaps."
     },
     {
       "id": "WEB-UI-007",
@@ -1662,7 +1728,10 @@
       "source": "src/components/MetricLineChart.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-037-keyboard-dialog.yaml"
+      ],
+      "implementation_note": "Partial: Escape and restored opener focus in plan dialog; focus traps and other dialogs remain gaps."
     },
     {
       "id": "WEB-UI-008",
@@ -1672,7 +1741,10 @@
       "source": "src/components/MetricLineChart.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/expanded/wb-038-narrow-navigation.yaml"
+      ],
+      "implementation_note": "Partial: narrow navigation and create-plan access; readable data and all layouts remain gaps."
     },
     {
       "id": "WEB-UI-009",

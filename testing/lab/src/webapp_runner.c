@@ -21,6 +21,16 @@ static int absolute_path(char *out, size_t len, const char *path, ulab_error_t *
     if (!getcwd(cwd, sizeof(cwd))) return webapp_error(err, "cannot resolve lab working directory");
     return webapp_path(out, len, cwd, path, err);
 }
+static const char *ui_value(world_t *world, const char *property, const char *package_ref, const selector_t *ues, const selector_t *networks) {
+    package_t *package = world_package_by_ref(world, package_ref);
+    ue_t *ue = world_ue_by_ref(world, ues->value);
+    subscriber_t *sub = ue ? world_subscriber_by_ref(world, ue->subscriber_ref) : NULL;
+    network_t *network = world_network_by_ref(world, networks->value);
+    if (!strcmp(property, "plan_name")) return package && package->bff_id[0] ? package->name : NULL;
+    if (!strcmp(property, "customer_name")) return sub && sub->bff_id[0] ? sub->name : NULL;
+    if (!strcmp(property, "network_name")) return network && network->bff_id[0] ? network->name : NULL;
+    return NULL;
+}
 int webapp_event_inputs(const event_spec_t *event, world_t *world,
                          json_t **inputs, ulab_error_t *err) {
     network_t *network = NULL;
@@ -41,6 +51,15 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
         network = world_network_by_ref(world, event->networks.value);
         if (event->networks.kind != SEL_REF || !network || !network->bff_id[0]) goto unresolved;
         if (json_object_set_new(*inputs, "network_name", json_string(network->name))) goto memory;
+    }
+    if (event->type == EVT_WEB_INTERACT) {
+        const char *value = event->variant[0] ? ui_value(world, event->variant, event->package_ref, &event->ues, &event->networks) : event->status;
+        if (!value) goto unresolved;
+        json_object_set_new(*inputs, "view", json_string(event->view));
+        json_object_set_new(*inputs, "action", json_string(event->target));
+        json_object_set_new(*inputs, "label", json_string(event->profile));
+        json_object_set_new(*inputs, "value", json_string(value));
+        return ULAB_OK;
     }
     if (event->type == EVT_WEB_COMMERCE) {
         if (webapp_commerce_inputs(event, world, *inputs, err)) { json_decref(*inputs); *inputs = NULL; return ULAB_ERR; }
@@ -156,7 +175,27 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                   !strcmp(node->type, "amplifier") ? "Amplifier node" : "Controller node"))
             return webapp_error(err, "resolved browser expectation is too long");
     }
-    if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
+    if (check->type == CHECK_WEB_UI_EQUALS) {
+        const char *value;
+        if (check->key[0]) {
+            value = ui_value(world, check->key, check->package_ref, &check->ues, &check->networks);
+            if (!value || ulab_copy(resolved.expected, sizeof(resolved.expected), value)) return webapp_error(err, "UI expected identity unresolved");
+        }
+        inputs = webapp_check_inputs(&resolved);
+        if (inputs) {
+            json_object_set_new(inputs, "subject", json_string(check->status));
+            if (check->ues.kind == SEL_REF) {
+                value = ui_value(world, "customer_name", "", &check->ues, &check->networks);
+                if (!value) { json_decref(inputs); return webapp_error(err, "UI customer identity unresolved"); }
+                json_object_set_new(inputs, "customer_name", json_string(value));
+            }
+            if (check->package_ref[0]) {
+                value = ui_value(world, "plan_name", check->package_ref, &check->ues, &check->networks);
+                if (!value) { json_decref(inputs); return webapp_error(err, "UI plan identity unresolved"); }
+                json_object_set_new(inputs, "plan_name", json_string(value));
+            }
+        }
+    } else if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
         if (webapp_commerce_check(check, &resolved, world, &inputs, err)) return ULAB_ERR;
     } else inputs = webapp_check_inputs(&resolved);
     if (inputs && check->nodes.kind != SEL_NONE) {
@@ -240,7 +279,7 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
                 !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed"))))
                 rc = webapp_error(err, "commerce creation acknowledgement does not match intent");
             else if (!rc && webapp_journal_bind(journal, bindings, 1, client->sequence, err)) rc = ULAB_ERR;
-        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE) &&
+        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT) &&
             (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
             rc = webapp_error(err, "worker operation acknowledgement is invalid");
         } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||
