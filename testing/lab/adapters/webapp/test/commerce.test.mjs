@@ -94,3 +94,19 @@ test('a new command ID cannot repeat the same commerce mutation reference',async
  const r=await s.act('top_up',{customer:a.c,plan:a.top,creation:{kind:'payment',ref:'ue-000001',name:a.c.iccid}});
  assert.equal(r.error.code,'DUPLICATE_MUTATION');assert.equal(s.app.db.payments.length,1);
 });
+test('auto-assignment refuses a foreign available option before any allocation',async t=>{
+ const s=await session(t),p=await createPlan(s,plan());
+ const c={ref:'sub-000001',id:'',name:'Lab User 1',email:'lab@example.test',iccid:'8901000000000000001',sim_id:''};
+ s.app.db.pool.push({iccid:c.iccid},{iccid:'8901000000000000002'});ok(await s.open('customer_customers'));
+ const made=await s.act('create_customer',{customer:c,creation:{kind:'subscriber',ref:c.ref,name:c.name}});ok(made);c.id=made.bindings[0].id;
+ ok(await s.act('open_customer',{customer:c}));
+ const r=await s.act('allocate_auto',{customer:c,plan:p,creation:{kind:'sim',ref:'ue-000001',name:c.iccid}});
+ assert.equal(r.error.code,'UNSAFE_AUTO_ASSIGN');assert.equal(s.app.db.sims.length,0);
+});
+test('pool reconciliation checks all statuses, rejects incomplete filtered inventory',async t=>{
+ const s=await session(t);s.app.db.pool.push({iccid:'8901000000000000001'},{iccid:'8901000000000000002',assigned:true},{iccid:'8901000000000000003',failed:true});
+ ok(await s.open('business_sim_pool'));
+ ok(await s.check('Pool reconciliation','matched',{view:'business_sim_pool'}));
+ ok(await s.send('web_interact',{view:'business_sim_pool',action:'filter',label:'Status',value:'Available'}));
+ const r=await s.check('Pool reconciliation','matched',{view:'business_sim_pool'},500);assert.equal(r.status,'error');assert.equal(r.actual,'incomplete inventory');
+});

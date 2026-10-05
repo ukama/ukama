@@ -1254,7 +1254,12 @@
       "source": "src/features/plans/CreatePlanDialog.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-124-name-pending.yaml",
+        "scenarios/webapp/p0/lifecycle/wb-125-name-failure.yaml"
+      ],
+      "patch_12_note": "Partial: wb-124/125 propose fail-closed behavior for pending/failed name reads. The unchanged source permits submission in both states. The agreed policy still needs confirmation; no complete credit.",
+      "implementation_note": "Partial: wb-124/125 propose fail-closed behavior for pending/failed name reads. The unchanged source permits submission in both states. The agreed policy still needs confirmation; no complete credit."
     },
     {
       "id": "WEB-PLAN-008",
@@ -1267,7 +1272,8 @@
       "scenarios": [
         "scenarios/webapp/p0/expanded/wb-031-invalid-plan.yaml"
       ],
-      "implementation_note": "Partial: required name and positive price/allowance errors; invalid validity tampering is not covered."
+      "implementation_note": "Partial: wb-031 adds the closed supported validity choices to name/price/allowance errors. Unsupported validity tampering is not injected into app state.",
+      "patch_12_note": "Partial: wb-031 adds the closed supported validity choices to name/price/allowance errors. Unsupported validity tampering is not injected into app state."
     },
     {
       "id": "WEB-PLAN-009",
@@ -1301,9 +1307,13 @@
       "priority": "p0",
       "requirement": "Editing a plan changes the name while immutable commercial fields remain read-only.",
       "source": "src/features/plans/CreatePlanDialog.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-120-rename-plan.yaml"
+      ],
+      "patch_12_note": "wb-120 renames an owned plan, reloads, verifies terms/price and all four read-only edit fields; creation ownership name is retained separately from the acknowledged UI name.",
+      "implementation_note": "wb-120 renames an owned plan, reloads, verifies terms/price and all four read-only edit fields; creation ownership name is retained separately from the acknowledged UI name."
     },
     {
       "id": "WEB-PLAN-012",
@@ -1345,9 +1355,15 @@
       "priority": "p0",
       "requirement": "Available, assigned, and faulty counts reconcile with the visible inventory.",
       "source": "src/features/sims/SimPoolScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-122-pool-allocation-choices.yaml",
+        "scenarios/webapp/p0/lifecycle/wb-123-inventory-read-failure.yaml",
+        "scenarios/webapp/p0/lifecycle/wb-126-empty-pool.yaml"
+      ],
+      "patch_12_note": "wb-122/123/126 reconcile exact unique visible ICCID/status rows against all three KPI counts. Capped or filtered lists fail reconciliation. Worker fixtures also exercise a nonzero faulty count.",
+      "implementation_note": "wb-122/123/126 reconcile exact unique visible ICCID/status rows against all three KPI counts. Capped or filtered lists fail reconciliation. Worker fixtures also exercise a nonzero faulty count."
     },
     {
       "id": "WEB-SIM-003",
@@ -1355,9 +1371,13 @@
       "priority": "p0",
       "requirement": "Allocation removes the selected ICCID from available choices.",
       "source": "src/features/sims/SimPoolScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-122-pool-allocation-choices.yaml"
+      ],
+      "patch_12_note": "wb-122 checks the allocated ICCID is absent and the other owned ICCID remains selectable, then verifies Assigned/Available after reload.",
+      "implementation_note": "wb-122 checks the allocated ICCID is absent and the other owned ICCID remains selectable, then verifies Assigned/Available after reload."
     },
     {
       "id": "WEB-SIM-004",
@@ -1367,7 +1387,9 @@
       "source": "src/features/sims/SimPoolScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [],
+      "patch_12_note": "Gap: server malformed-CSV/duplicate-import policy is not agreed; no unsafe duplicate Factory upload or fabricated inventory is used.",
+      "implementation_note": "Gap: server malformed-CSV/duplicate-import policy is not agreed; no unsafe duplicate Factory upload or fabricated inventory is used."
     },
     {
       "id": "WEB-SIM-005",
@@ -1377,7 +1399,11 @@
       "source": "src/features/sims/SimPoolScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-122-pool-allocation-choices.yaml"
+      ],
+      "patch_12_note": "Partial: wb-122 covers available/assigned filter membership. Original SIM pool has no search or pagination.",
+      "implementation_note": "Partial: wb-122 covers available/assigned filter membership. Original SIM pool has no search or pagination."
     },
     {
       "id": "WEB-SIM-006",
@@ -1387,7 +1413,11 @@
       "source": "src/features/sims/SimPoolScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-126-empty-pool.yaml"
+      ],
+      "patch_12_note": "Partial: wb-126 requires an actually empty inventory and checks the blocked Add customer allocation entry with its visible guidance. Existing no-SIM drawer allocation with an exhausted pool remains a gap.",
+      "implementation_note": "Partial: wb-126 requires an actually empty inventory and checks the blocked Add customer allocation entry with its visible guidance. Existing no-SIM drawer allocation with an exhausted pool remains a gap."
     },
     {
       "id": "WEB-SIM-007",
@@ -1395,9 +1425,13 @@
       "priority": "p1",
       "requirement": "Inventory read failure displays an error rather than a successful empty state.",
       "source": "src/features/sims/SimPoolScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-123-inventory-read-failure.yaml"
+      ],
+      "patch_12_note": "wb-123 injects an exact observed endpoint SimPoolOverview section error, proves the injection applied, rejects a successful empty state and checks restored-read recovery. Controlled evidence only.",
+      "implementation_note": "wb-123 injects an exact observed endpoint SimPoolOverview section error, proves the injection applied, rejects a successful empty state and checks restored-read recovery. Controlled evidence only."
     },
     {
       "id": "WEB-CUSTOMER-001",
@@ -1410,7 +1444,8 @@
       "scenarios": [
         "scenarios/webapp/p0/expanded/wb-036-invalid-customer.yaml"
       ],
-      "implementation_note": "Partial browser assertions only; remaining requirement states are not implemented."
+      "implementation_note": "Partial: UI-created names persist; the source renders phone, not email, in list/detail. Name/email correlation receipts establish ownership only, not visible email acceptance.",
+      "patch_12_note": "Partial: UI-created names persist; the source renders phone, not email, in list/detail. Name/email correlation receipts establish ownership only, not visible email acceptance."
     },
     {
       "id": "WEB-CUSTOMER-002",
@@ -1439,9 +1474,13 @@
       "priority": "p0",
       "requirement": "Auto-assignment displays the allocated ICCID and correct plan.",
       "source": "src/features/customers/SubscriberDrawer.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/lifecycle/wb-121-auto-assignment.yaml"
+      ],
+      "patch_12_note": "wb-121 uses Auto-assign from pool only when the sole eligible option is the run-owned ICCID; checks ICCID, current plan, allowance, validity and reload.",
+      "implementation_note": "wb-121 uses Auto-assign from pool only when the sole eligible option is the run-owned ICCID; checks ICCID, current plan, allowance, validity and reload."
     },
     {
       "id": "WEB-CUSTOMER-004",
@@ -1451,7 +1490,9 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [],
+      "patch_12_note": "Gap: source retries addSubscriber after allocation failure. Safe qualification of the combined flow needs staged ownership of every subscriber/possible SIM; separate create/allocate is not claimed as this test.",
+      "implementation_note": "Gap: source retries addSubscriber after allocation failure. Safe qualification of the combined flow needs staged ownership of every subscriber/possible SIM; separate create/allocate is not claimed as this test."
     },
     {
       "id": "WEB-CUSTOMER-005",
@@ -1461,7 +1502,9 @@
       "source": "src/features/customers/SubscriberDrawer.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [],
+      "patch_12_note": "Gap: source flattens a single SIM and has no independently selectable multi-SIM drawer.",
+      "implementation_note": "Gap: source flattens a single SIM and has no independently selectable multi-SIM drawer."
     },
     {
       "id": "WEB-CUSTOMER-006",
@@ -1474,7 +1517,8 @@
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml"
       ],
-      "implementation_note": "Partial: visible SIM off/on covered; traffic denial/recovery during service changes remains a gap."
+      "implementation_note": "Partial: wb-023 verifies visible service off/on. UE traffic denial and recovery across the service toggle remain unimplemented.",
+      "patch_12_note": "Partial: wb-023 verifies visible service off/on. UE traffic denial and recovery across the service toggle remain unimplemented."
     },
     {
       "id": "WEB-CUSTOMER-007",
@@ -1489,7 +1533,8 @@
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
         "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
-      "implementation_note": "Partial: cycle/total usage and allowance covered with explicit independent traffic expectations; remaining allowance, missing-data distinction and full usage/expiry semantics remain gaps."
+      "implementation_note": "Partial: usage/allowance/validity checks remain; no remaining-data display exists and the drawer clamps unknown cycle usage to zero.",
+      "patch_12_note": "Partial: usage/allowance/validity checks remain; no remaining-data display exists and the drawer clamps unknown cycle usage to zero."
     },
     {
       "id": "WEB-CUSTOMER-008",
@@ -1502,7 +1547,8 @@
       "scenarios": [
         "scenarios/webapp/p0/expanded/wb-033-customer-list-controls.yaml"
       ],
-      "implementation_note": "Partial: search, no-match, sort and SIM/plan filters. Uploaded DataTable has no pagination control; pagination remains an explicit inventory gap."
+      "implementation_note": "Partial: existing search/filter/sort membership; no source pagination control.",
+      "patch_12_note": "Partial: existing search/filter/sort membership; no source pagination control."
     },
     {
       "id": "WEB-CUSTOMER-009",
@@ -1510,12 +1556,13 @@
       "priority": "p0",
       "requirement": "Customer identities and plan data remain consistent across Business, Network, and Customer views.",
       "source": "src/features/customers/SubscriberDrawer.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/expanded/wb-042-customer-cross-lens.yaml"
       ],
-      "implementation_note": "Partial: customer identity and routes across three lenses after reload; cross-lens plan data remains a gap."
+      "implementation_note": "wb-042 now checks the owned customer row and exact world-derived plan name in Business, Network and Customer lists after reload.",
+      "patch_12_note": "wb-042 now checks the owned customer row and exact world-derived plan name in Business, Network and Customer lists after reload."
     },
     {
       "id": "WEB-CUSTOMER-010",
@@ -1526,9 +1573,11 @@
       "automation": "planned",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/expanded/wb-035-missing-plan-prerequisite.yaml"
+        "scenarios/webapp/p0/expanded/wb-035-missing-plan-prerequisite.yaml",
+        "scenarios/webapp/p0/lifecycle/wb-127-no-sim-actions.yaml"
       ],
-      "implementation_note": "Partial: missing-plan creation prerequisite; full no-SIM/no-plan action matrix remains a gap."
+      "implementation_note": "Partial: wb-127 adds persisted no-SIM/No plan drawer actions to missing-plan creation guidance. Assigned SIM without plan and suspended variants remain gaps.",
+      "patch_12_note": "Partial: wb-127 adds persisted no-SIM/No plan drawer actions to missing-plan creation guidance. Assigned SIM without plan and suspended variants remain gaps."
     },
     {
       "id": "WEB-PAY-001",
@@ -2016,6 +2065,12 @@
       "state": "partial_port_state_and_backend_timeout",
       "source": "docs/webapp/operation-recovery.md",
       "treatment": "WEB-SITE-006, WEB-OPS-008 and WEB-OPS-011 remain partial. Read failures are asserted against unchanged fail-open hooks. UI restart observation cannot establish physical uptime between reports. Controlled status faults never earn live coverage credit."
+    },
+    {
+      "feature": "Lifecycle closure after Patch 12",
+      "state": "partial_source_and_runtime_gaps",
+      "source": "docs/webapp/lifecycle.md",
+      "treatment": "Keep all 132 requirements. Missing UI features, name policy, malformed/duplicate import, partial combined creation, service traffic and remaining allowance do not receive complete credit."
     }
   ]
 }

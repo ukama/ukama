@@ -26,7 +26,7 @@ static const char *ui_value(world_t *world, const char *property, const char *pa
     ue_t *ue = world_ue_by_ref(world, ues->value);
     subscriber_t *sub = ue ? world_subscriber_by_ref(world, ue->subscriber_ref) : NULL;
     network_t *network = world_network_by_ref(world, networks->value);
-    if (!strcmp(property, "plan_name")) return package && package->bff_id[0] ? package->name : NULL;
+    if (!strcmp(property, "plan_name")) return package && package->bff_id[0] ? (package->web_name[0] ? package->web_name : package->name) : NULL;
     if (!strcmp(property, "customer_name")) return sub && sub->bff_id[0] ? sub->name : NULL;
     if (!strcmp(property, "network_name")) return network && network->bff_id[0] ? network->name : NULL;
     return NULL;
@@ -379,6 +379,10 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
             !json_equal(json_object_get(entity, "id"), json_object_get(binding, "id")))) {
             rc = webapp_error(err, "worker binding does not match the requested detail entity");
         } else if (webapp_journal_bind(journal, bindings, 0, client->sequence, err)) rc = ULAB_ERR;
+    }
+    if (!rc && event->type == EVT_WEB_COMMERCE && !strcmp(event->target,"rename_plan")) {
+        package_t *p = world_package_by_ref(journal->world,event->package_ref);
+        if (!p || ulab_copy(p->web_name,sizeof(p->web_name),json_string_value(json_object_get(inputs,"new_name")))) rc = webapp_error(err,"cannot retain renamed plan identity");
     }
     json_decref(inputs); json_decref(reply);
     return rc;

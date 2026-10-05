@@ -71,6 +71,11 @@ phases:
             self.manifest['evidence']=evidence
             self.assertEqual(self.coverage()['totals']['verified'],0)
 
+    def test_commerce_read_faults_are_controlled(self):
+        for action in ('name_pending', 'name_failure', 'pool_failure'):
+            self.assertTrue(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':action}]}]}))
+        self.assertFalse(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':'rename_plan'}]}]}))
+
     def test_injected_onboarding_fault_cannot_be_promoted_to_live(self):
         path=self.root/self.scenario
         path.write_text(path.read_text().replace('type: web_open','type: web_onboard\n        action: arm_fault\n        value: transport'))

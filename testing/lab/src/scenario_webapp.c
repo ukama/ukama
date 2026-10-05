@@ -212,15 +212,16 @@ static const package_spec_t *commerce_package(const scenario_t *s, const char *r
     return NULL;
 }
 static int commerce_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
-    int plan = ulab_streq(e->target, "create_plan") || ulab_streq(e->target, "edit_plan");
-    int combined = ulab_streq(e->target, "allocate_sim") || ulab_streq(e->target, "top_up") || ulab_streq(e->target, "cancel_top_up") || ulab_streq(e->target, "open_receipt");
+    int plan = ulab_streq(e->target, "create_plan") || ulab_streq(e->target, "edit_plan") || ulab_streq(e->target, "rename_plan") || ulab_streq(e->target, "name_pending") || ulab_streq(e->target, "name_failure");
+    int combined = ulab_streq(e->target, "allocate_auto") || ulab_streq(e->target, "allocate_sim") || ulab_streq(e->target, "top_up") || ulab_streq(e->target, "cancel_top_up") || ulab_streq(e->target, "open_receipt");
     int customer = ulab_streq(e->target, "create_customer") || ulab_streq(e->target, "open_customer") || ulab_streq(e->target, "close_customer") || ulab_streq(e->target, "activate_sim") || ulab_streq(e->target, "deactivate_sim");
-    int close = ulab_streq(e->target, "close_dialog");
+    int close = ulab_streq(e->target, "close_dialog") || ulab_streq(e->target, "clear_fault");
+    int pool = ulab_streq(e->target, "pool_failure");
     const package_spec_t *p = e->package_ref[0] ? commerce_package(s, e->package_ref) : NULL;
-    if (!(plan || combined || customer || close) || !one_network(s, &e->networks))
+    if (!(plan || combined || customer || close || pool) || !one_network(s, &e->networks))
         return fail(err, "web_commerce requires a supported action and one world network");
-    if (!ulab_streq(e->view, plan ? "business_data_plans" : close ? e->view : "customer_customers") ||
-        (close && !ulab_streq(e->view, "business_data_plans") && !ulab_streq(e->view, "customer_customers")))
+    if (!ulab_streq(e->view, plan ? "business_data_plans" : pool ? "business_sim_pool" : close ? e->view : "customer_customers") ||
+        (close && !ulab_streq(e->view, "business_data_plans") && !ulab_streq(e->view, "customer_customers") && !ulab_streq(e->view, "business_sim_pool")))
         return fail(err, "commerce action is on the wrong view");
     if (!!e->package_ref[0] != !!(plan || combined) || ((plan || combined) && !p) ||
         ((customer || combined) ? !commerce_ue(s, &e->ues) : e->ues.kind != SEL_NONE))
@@ -448,8 +449,8 @@ static int requirement_valid(const char *id) {
 }
 
 static int commerce_check_scope(const check_spec_t *c, ulab_error_t *err) {
-    static const char *const plans[] = {"Plan terms", "Plan price", "Plan scope", "Validity", "Price", "Data volume", "Unit"};
-    static const char *const customer[] = {"ICCID", "SIM status", "Phone", "Active plan", "Cycle usage", "Total usage", "Receipt total", "Receipt payment ID", "Receipt method", "Receipt status", "Receipt empty"};
+    static const char *const plans[] = {"Commerce fault", "Plan terms", "Plan price", "Plan scope", "Validity", "Price", "Data volume", "Unit"};
+    static const char *const customer[] = {"SIM option present", "Customer plan", "ICCID", "SIM status", "Phone", "Active plan", "Cycle usage", "Total usage", "Receipt total", "Receipt payment ID", "Receipt method", "Receipt status", "Receipt empty"};
     static const char *const scoped[] = {"Package count", "Package status", "Package dates", "Package days", "Receipt plan"};
     size_t i;
     int valid = 0;
@@ -461,15 +462,17 @@ static int commerce_check_scope(const check_spec_t *c, ulab_error_t *err) {
             (ulab_streq(c->label, "Performance price") || ulab_streq(c->label, "Performance sold") ||
              ulab_streq(c->label, "Performance revenue") || ulab_streq(c->label, "Performance share"));
     } else if (ulab_streq(c->view, "business_sim_pool")) {
-        valid = ulab_streq(c->label, "Pool status") && c->ues.kind == SEL_REF && !c->package_ref[0];
+        valid = !c->package_ref[0] && ((ulab_streq(c->label,"Pool status") && c->ues.kind == SEL_REF) ||
+            ((ulab_streq(c->label,"Pool reconciliation") || ulab_streq(c->label,"Commerce fault")) && c->ues.kind == SEL_NONE));
     } else if (ulab_streq(c->view, "customer_customers")) {
         for (i = 0; i < sizeof(customer) / sizeof(customer[0]); i++) if (ulab_streq(c->label, customer[i])) valid = 1;
         for (i = 0; i < sizeof(scoped) / sizeof(scoped[0]); i++) if (ulab_streq(c->label, scoped[i]) && c->package_ref[0]) valid = 1;
         if (c->ues.kind != SEL_REF) valid = 0;
     }
+    if ((ulab_streq(c->view,"business_customers") || ulab_streq(c->view,"network_customers")) && ulab_streq(c->label,"Customer plan") && c->ues.kind == SEL_REF && c->package_ref[0]) valid = 1;
     if ((ulab_streq(c->key, "iccid") && !ulab_streq(c->label, "ICCID")) ||
         (ulab_streq(c->key, "payment_id") && !ulab_streq(c->label, "Receipt payment ID")) ||
-        (ulab_streq(c->key, "plan_name") && !ulab_streq(c->label, "Active plan") && !ulab_streq(c->label, "Receipt plan"))) valid = 0;
+        (ulab_streq(c->key, "plan_name") && !ulab_streq(c->label, "Active plan") && !ulab_streq(c->label, "Receipt plan") && !ulab_streq(c->label,"Customer plan"))) valid = 0;
     return valid ? ULAB_OK : fail(err, "commerce label, view and resource selectors do not match");
 }
 
@@ -490,7 +493,7 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->type == CHECK_WEB_SESSION_EQUALS) return session_check(check, err);
     if (check->type == CHECK_WEB_ONBOARD_EQUALS) return onboard_check(s, check, err);
     if (check->type == CHECK_WEB_UI_EQUALS) {
-        static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
+        static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Field options", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
         size_t n;
         int found = 0;
         int subject = ulab_starts(check->label, "Field ") || ulab_starts(check->label, "Button ") || ulab_streq(check->label, "Focus on button") || ulab_streq(check->label, "Text visible");
@@ -510,7 +513,7 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     }
     if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
         if (commerce_check_scope(check, err)) return ULAB_ERR;
-        if (!ulab_streq(check->view, "business_data_plans") && !ulab_streq(check->view, "customer_customers") && !ulab_streq(check->view, "business_sim_pool") && !ulab_streq(check->view, "business_packages"))
+        if (!ulab_streq(check->view, "business_data_plans") && !ulab_streq(check->view, "customer_customers") && !ulab_streq(check->view, "business_sim_pool") && !ulab_streq(check->view, "business_packages") && !ulab_streq(check->view,"business_customers") && !ulab_streq(check->view,"network_customers"))
             return fail(err, "unsupported commerce check view");
         if (check->package_ref[0] && !commerce_package(s, check->package_ref)) return fail(err, "unknown commerce package reference");
         if (check->ues.kind != SEL_NONE && !commerce_ue(s, &check->ues)) return fail(err, "unknown commerce UE reference");

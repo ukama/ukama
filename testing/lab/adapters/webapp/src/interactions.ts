@@ -40,6 +40,9 @@ export class Interactions {
       if (!['Customer', 'Data usage', 'Last seen'].includes(label) || !view.endsWith('_customers')) throw new WorkerError('INVALID_INPUT', 'Unsupported sortable column');
       await click(this.main().getByRole('columnheader', {name: label, exact: true}));
     } else if (action === 'filter') {
+      if (view === 'business_sim_pool' && label === 'Status' && ['All statuses','Available','Assigned','Faulty'].includes(value)) {
+        await click(this.main().getByRole('button',{name:value,exact:true})); return;
+      }
       if (!['Active plan', 'SIM'].includes(label) || !view.endsWith('_customers')) throw new WorkerError('INVALID_INPUT', 'Unsupported filter column');
       await click(this.main().getByRole('columnheader').getByRole('button', {name: label, exact: true}));
       await click(this.page.getByRole('menuitem', {name: value, exact: true}));
@@ -85,7 +88,7 @@ export class Interactions {
       await click(this.page.locator('.mobile-nav').getByRole('link',{name:value,exact:true}));
       await this.page.locator('.mobile-nav').waitFor({state:'hidden',timeout:budget.remaining()});
     } else if (action === 'open_allocate' || action === 'open_topup') {
-      await click(this.page.locator('.MuiDrawer-paper:visible').getByRole('button',{name:action==='open_allocate'?'Allocate SIM':'Top up data',exact:true}));
+      await click(this.page.locator('.MuiDrawer-paper:visible').getByRole('button',{name:action==='open_allocate'?'Allocate a SIM':'Top up',exact:true}));
     } else if (action === 'clear_session' && view === 'session') {
       await this.page.context().clearCookies();
       await this.page.goto(this.origin,{waitUntil:'domcontentloaded',timeout:budget.remaining()});
@@ -107,6 +110,11 @@ export class Interactions {
       if (label==='Mobile navigation open') return String(await this.page.locator('.mobile-nav').isVisible());
       if (label==='Dialog title') return text(this.dialog().getByRole('heading'));
       if (label==='Field error') return text(this.field(subject).locator('.ff-err'));
+      if (label==='Field options') {
+        const select=this.field(subject).locator('select');
+        if(!await select.isVisible()) return null;
+        return (await select.locator('option').allTextContents()).map(normalize).join('|');
+      }
       if (label==='Field value') { const f=this.field(subject).locator('input,select');return await f.isVisible()?f.inputValue():null; }
       if (label==='Field readonly') return text(this.field(subject).locator('.ff-readonly'));
       if (label==='Text visible') return String(await this.page.getByText(subject,{exact:true}).filter({visible:true}).count()>0);

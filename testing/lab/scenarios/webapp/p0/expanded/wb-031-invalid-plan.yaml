@@ -1,18 +1,18 @@
 version: 2
-name: p0-webapp-invalid-plan
-description: Invalid plan name, price and volume remain blocked with visible field errors.
+name: "p0-webapp-invalid-plan"
+description: "Invalid plan name, price and volume remain blocked with visible field errors."
 seed: 4711
-suite: webapp
-priority: p0
-status: active
-tags: [webapp, commerce, local]
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: ["webapp", "commerce", "local"]
 provider:
-  type: virtual
+  type: "virtual"
 webapp:
-  base_url: http://localhost:3000
-  browser: chromium
+  base_url: "http://localhost:3000"
+  browser: "chromium"
   headless: false
-  auth_state: .auth/owner.json
+  auth_state: ".auth/owner.json"
   action_timeout_seconds: 30
   check_timeout_seconds: 30
   scenario_timeout_seconds: 3600
@@ -26,82 +26,88 @@ world:
   ues_per_site: 0
   sims_per_network: 0
 setup:
-  create_via_webapp: [networks]
+  create_via_webapp: ["networks"]
 phases:
-  - name: open
+  - name: "open"
     events:
-      - type: web_open
-        view: business_data_plans
-        networks: net-001
-      - type: web_interact
-        view: business_data_plans
-        action: open_form
-        label: Create plan
+      - type: "web_open"
+        view: "business_data_plans"
+        networks: "net-001"
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "open_form"
+        label: "Create plan"
     checks:
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Button enabled
-        expected: 'false'
-        requirement: WEB-PLAN-008
-        subject: Create plan
-  - name: invalid
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Button enabled"
+        expected: "false"
+        requirement: "WEB-PLAN-008"
+        subject: "Create plan"
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Field options"
+        expected: "Daily (1 day)|Weekly (7 days)|Monthly (30 days)"
+        requirement: "WEB-PLAN-008"
+        subject: "Validity"
+  - name: "invalid"
     events:
-      - type: web_interact
-        view: business_data_plans
-        action: fill
-        label: Data plan name
-        value: invalid-plan
-      - type: web_interact
-        view: business_data_plans
-        action: fill
-        label: Price
-        value: '-1'
-      - type: web_interact
-        view: business_data_plans
-        action: fill
-        label: Data volume
-        value: '0'
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "fill"
+        label: "Data plan name"
+        value: "invalid-plan"
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "fill"
+        label: "Price"
+        value: "-1"
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "fill"
+        label: "Data volume"
+        value: "0"
     checks:
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Field error
-        expected: Must be > 0
-        requirement: WEB-PLAN-008
-        subject: Price
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Field error
-        expected: Must be > 0
-        requirement: WEB-PLAN-008
-        subject: Data volume
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Button enabled
-        expected: 'false'
-        requirement: WEB-PLAN-008
-        subject: Create plan
-  - name: blank-name
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Field error"
+        expected: "Must be > 0"
+        requirement: "WEB-PLAN-008"
+        subject: "Price"
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Field error"
+        expected: "Must be > 0"
+        requirement: "WEB-PLAN-008"
+        subject: "Data volume"
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Button enabled"
+        expected: "false"
+        requirement: "WEB-PLAN-008"
+        subject: "Create plan"
+  - name: "blank-name"
     events:
-      - type: web_interact
-        view: business_data_plans
-        action: fill
-        label: Data plan name
-        value: ''
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "fill"
+        label: "Data plan name"
+        value: ""
     checks:
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Field error
-        expected: Plan name is required
-        requirement: WEB-PLAN-008
-        subject: Data plan name
-  - name: close
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Field error"
+        expected: "Plan name is required"
+        requirement: "WEB-PLAN-008"
+        subject: "Data plan name"
+  - name: "close"
     events:
-      - type: web_interact
-        view: business_data_plans
-        action: cancel
+      - type: "web_interact"
+        view: "business_data_plans"
+        action: "cancel"
     checks:
-      - type: web_ui_equals
-        view: business_data_plans
-        label: Dialog open
-        expected: 'false'
-        requirement: WEB-PLAN-008
+      - type: "web_ui_equals"
+        view: "business_data_plans"
+        label: "Dialog open"
+        expected: "false"
+        requirement: "WEB-PLAN-008"

@@ -9,13 +9,13 @@ const char *webapp_commerce_kind(const event_spec_t *event) {
     if (event->type != EVT_WEB_COMMERCE) return NULL;
     if (!strcmp(event->target, "create_plan")) return "package";
     if (!strcmp(event->target, "create_customer")) return "subscriber";
-    if (!strcmp(event->target, "allocate_sim")) return "sim";
+    if ((!strcmp(event->target, "allocate_sim") || !strcmp(event->target, "allocate_auto"))) return "sim";
     if (!strcmp(event->target, "top_up")) return "payment";
     return NULL;
 }
 static json_t *plan_input(const package_t *p, const char *unit) {
     return json_pack("{s:s,s:s,s:s,s:I,s:i,s:f,s:s,s:s,s:s,s:b}",
-        "ref", p->ref, "id", p->bff_id, "name", p->name, "data_mb", (json_int_t)p->data_mb,
+        "ref", p->ref, "id", p->bff_id, "name", p->web_name[0] ? p->web_name : p->name, "data_mb", (json_int_t)p->data_mb,
         "duration_minutes", (int)(p->duration_minutes ? p->duration_minutes : p->duration_days * 1440),
         "amount", p->amount, "currency", p->currency, "country", p->country,
         "unit", unit, "organization", !p->network_ref[0]);
@@ -36,8 +36,14 @@ int webapp_commerce_inputs(const event_spec_t *e, world_t *w, json_t *inputs, ul
     json_object_set_new(inputs, "view", json_string(e->view));
     json_object_set_new(inputs, "action", json_string(e->target));
     if (p) {
-        if (strcmp(e->target, "create_plan") && !p->bff_id[0]) return webapp_error(err, "commerce plan has not been created through the UI");
+        if (strcmp(e->target, "create_plan") && strcmp(e->target, "name_pending") && strcmp(e->target, "name_failure") && !p->bff_id[0]) return webapp_error(err, "commerce plan has not been created through the UI");
         json_object_set_new(inputs, "plan", plan_input(p, e->variant[0] ? e->variant : "MB"));
+    }
+    if (!strcmp(e->target, "rename_plan")) {
+        char name[ULAB_MAX_NAME];
+        if (!p || strlen(p->web_name[0] ? p->web_name : p->name) + strlen("-renamed") >= sizeof(name)) return webapp_error(err,"renamed plan name too long");
+        snprintf(name,sizeof(name),"%.247s-renamed",p->web_name[0] ? p->web_name : p->name);
+        json_object_set_new(inputs,"new_name",json_string(name));
     }
     if (ue && sub) {
         if (strcmp(e->target, "create_customer") && !sub->bff_id[0]) return webapp_error(err, "customer has not been created through the UI");
@@ -60,17 +66,17 @@ int webapp_commerce_check(const check_spec_t *check, check_spec_t *resolved, wor
     package_t *p = check->package_ref[0] ? world_package_by_ref(w, check->package_ref) : NULL;
     ue_t *ue = check->ues.kind == SEL_REF ? world_ue_by_ref(w, check->ues.value) : NULL;
     subscriber_t *sub = ue ? world_subscriber_by_ref(w, ue->subscriber_ref) : NULL;
-    if ((check->package_ref[0] && (!p || !p->bff_id[0])) || (check->ues.kind != SEL_NONE && (!ue || !sub)))
+    if ((check->package_ref[0] && (!p || (!p->bff_id[0] && strcmp(check->label,"Commerce fault")))) || (check->ues.kind != SEL_NONE && (!ue || !sub)))
         return webapp_error(err, "commerce check identity is unresolved");
     if (check->key[0]) {
-        const char *value = !strcmp(check->key, "plan_name") ? (p ? p->name : "") :
+        const char *value = !strcmp(check->key, "plan_name") ? (p ? (p->web_name[0] ? p->web_name : p->name) : "") :
             !strcmp(check->key, "iccid") ? (ue ? ue->iccid : "") : ue ? ue->last_payment_id : "";
         if (!*value || ulab_copy(resolved->expected, sizeof(resolved->expected), value))
             return webapp_error(err, "commerce expected identity is missing or too long");
     }
     *inputs = webapp_check_inputs(resolved);
     if (!*inputs) return webapp_error(err, "cannot encode commerce expectation");
-    if (p) json_object_set_new(*inputs, "plan_name", json_string(p->name));
+    if (p) json_object_set_new(*inputs, "plan_name", json_string(p->web_name[0] ? p->web_name : p->name));
     if (ue) {
         json_object_set_new(*inputs, "customer_name", json_string(sub->name));
         json_object_set_new(*inputs, "iccid", json_string(ue->iccid));

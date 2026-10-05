@@ -3,6 +3,7 @@
  */
 import { Commerce } from './commerce.js';
 import { Operations } from './operations.js';
+import { trackCommerceReads } from './commerce-faults.js';
 import { trackStatusRequests } from './operation-observer.js';
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, bool, integer, keys, normalize, object, str, type ObjectValue } from './contract.js';
@@ -74,7 +75,7 @@ export async function assertSession(page: Page, origin: string, budget: Budget):
 
 export class ConsoleApp {
   private current?: { name: string; path: string; network?: string };
-  constructor(private page: Page, private origin: string) { trackStatusRequests(page); }
+  constructor(private page: Page, private origin: string) { trackStatusRequests(page); trackCommerceReads(page); }
   forgetView(): void { this.current = undefined; }
   private main(): Locator { return this.page.locator('main.main'); }
   private async path(path: string, budget: Budget): Promise<void> {
@@ -181,7 +182,7 @@ export class ConsoleApp {
   }
   async assertCommerce(inputs: ObjectValue): Promise<void> {
     const name = str(inputs.view, 'view');
-    if (!['business_data_plans', 'customer_customers'].includes(name)) throw new WorkerError('INVALID_INPUT', 'Unsupported commerce view');
+    if (!['business_data_plans', 'customer_customers', 'business_sim_pool'].includes(name)) throw new WorkerError('INVALID_INPUT', 'Unsupported commerce view');
     await this.assertView(name);
     if (name === 'customer_customers' && this.current!.network !== inputs.network_name) throw new WorkerError('WRONG_NETWORK', 'Commerce network differs from the opened network');
   }

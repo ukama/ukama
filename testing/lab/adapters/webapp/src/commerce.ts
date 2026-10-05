@@ -4,6 +4,7 @@
 import { closeSync, fsyncSync, openSync, renameSync, writeFileSync } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
+import { commerceFault, commerceFaultState } from './commerce-faults.js';
 import type { Locator, Page, Response } from 'playwright';
 import { Budget, WorkerError, integer, keys, normalize, object, str, bool, type ObjectValue } from './contract.js';
 
@@ -60,7 +61,7 @@ class MutationReceipt {
       const data = request?.variables?.data;
       const matches = kind === 'package' ? data?.name === plan?.name && data?.networkId === (plan?.organization ? '' : this.inputs.network_id) :
         kind === 'subscriber' ? data?.name === customer?.name && data?.email === customer?.email && data?.network_id === this.inputs.network_id :
-        kind === 'sim' ? data?.iccid === customer?.iccid && data?.subscriber_id === customer?.id && data?.network_id === this.inputs.network_id && data?.package_id === plan?.id :
+        kind === 'sim' ? (this.inputs.action === 'allocate_auto' ? !data?.iccid : data?.iccid === customer?.iccid) && data?.subscriber_id === customer?.id && data?.network_id === this.inputs.network_id && data?.package_id === plan?.id :
         data?.sim === customer?.sim_id && data?.itemId === plan?.id && data?.payerEmail === customer?.email;
       if (!matches) return;
       let body: any; try { body = await response.json(); } catch { return; }
@@ -95,18 +96,29 @@ export class Commerce {
     if (requireSim) await budget.poll(() => visibleText(this.detail('ICCID')), v => v === customer.iccid, 'Wrong customer SIM');
   }
   async run(inputs: ObjectValue, directory: string, command: number, budget: Budget): Promise<unknown[]> {
-    keys(inputs, ['view', 'network_name', 'network_id', 'action', 'plan', 'customer', 'creation']);
+    keys(inputs, ['view', 'network_name', 'network_id', 'action', 'plan', 'customer', 'creation', 'new_name']);
     const action = str(inputs.action, 'action');
     const p = inputs.plan === undefined ? undefined : planValues(inputs.plan);
     const c = inputs.customer === undefined ? undefined : object(inputs.customer, 'customer');
     if (c) { keys(c, ['ref', 'id', 'name', 'email', 'iccid', 'sim_id']); for (const k of ['ref', 'name', 'email', 'iccid']) str(c[k], k); }
-    const requiredKind = ({create_plan:'package',create_customer:'subscriber',allocate_sim:'sim',top_up:'payment'} as Record<string,string>)[action];
+    const requiredKind = ({create_plan:'package',create_customer:'subscriber',allocate_sim:'sim',allocate_auto:'sim',top_up:'payment'} as Record<string,string>)[action];
     if (requiredKind ? object(inputs.creation).kind !== requiredKind : inputs.creation !== undefined) throw new WorkerError('INVALID_INPUT', 'Mutation intent does not match action');
     const receipt = requiredKind ? new MutationReceipt(this.page, inputs, directory, command) : undefined;
     const click = async (root: Locator, name: string) => root.getByRole('button', { name, exact: true }).click({ timeout: budget.remaining() });
     const submit = async (name: string) => { receipt?.submit(); await click(this.dialog(), name); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); };
     try {
-      if (action === 'create_plan' && p) {
+      if (['name_pending','name_failure','pool_failure','clear_fault'].includes(action)) {
+        await commerceFault(this.page, action, p ? String(p.name) : undefined, budget);
+      } else if (action === 'rename_plan' && p) {
+        const next = str(inputs.new_name, 'new_name');
+        if (next !== String(p.name) + '-renamed') throw new WorkerError('INVALID_INPUT','Rename must use the planned suffix');
+        if (await this.card(next).count()) throw new WorkerError('NAME_EXISTS','Renamed plan already exists');
+        await click(this.card(String(p.name)), 'Plan actions');
+        await this.page.getByRole('menuitem',{name:'Edit plan',exact:true}).click({timeout:budget.remaining()});
+        await field(this.dialog(), this.page, 'Data plan name').locator('input').fill(next,{timeout:budget.remaining()});
+        await this.dialog().getByText('✓ Name is available',{exact:true}).waitFor({timeout:budget.remaining()});
+        await submit('Save changes'); await this.card(next).waitFor({timeout:budget.remaining()});
+      } else if (action === 'create_plan' && p) {
         if (await this.card(String(p.name)).count()) throw new WorkerError('NAME_EXISTS', 'Planned data plan already exists');
         await click(this.main().locator('.pagehead'), 'Create plan');
         const d = this.dialog();
@@ -137,9 +149,9 @@ export class Commerce {
         await this.customer(c, budget, Boolean(c.sim_id));
       } else if (action === 'close_customer' && c) {
         await this.customer(c, budget, Boolean(c.sim_id)); await click(this.drawer(), 'Close'); await this.drawer().waitFor({ state: 'hidden', timeout: budget.remaining() });
-      } else if (['allocate_sim', 'top_up', 'cancel_top_up'].includes(action) && c && p) {
-        await this.customer(c, budget, action !== 'allocate_sim');
-        await click(this.drawer(), action === 'allocate_sim' ? 'Allocate SIM' : 'Top up data');
+      } else if (['allocate_sim', 'allocate_auto', 'top_up', 'cancel_top_up'].includes(action) && c && p) {
+        await this.customer(c, budget, !action.startsWith('allocate_'));
+        await click(this.drawer(), action.startsWith('allocate_') ? 'Allocate a SIM' : 'Top up');
         const select = field(this.dialog(), this.page, 'Data plan').locator('select');
         const option = select.locator('option').filter({ hasText: new RegExp(`^${escape(String(p.name))} · `) });
         await option.waitFor({ state: 'attached', timeout: budget.remaining() });
@@ -148,8 +160,15 @@ export class Commerce {
         if (value !== p.id) throw new WorkerError('WRONG_ENTITY', 'Visible plan option has another identity');
         await select.selectOption(value!, { timeout: budget.remaining() });
         if (action === 'allocate_sim') await field(this.dialog(), this.page, 'SIM').locator('select').selectOption({ label: String(c.iccid) }, { timeout: budget.remaining() });
+        if (action === 'allocate_auto') {
+          const select = field(this.dialog(),this.page,'SIM').locator('select');
+          const options = await select.locator('option').evaluateAll(es => es.map(e => ({value:(e as HTMLOptionElement).value,text:e.textContent?.trim()})));
+          if (options.length !== 2 || options.filter(o => o.value === '' && o.text === 'Auto-assign from pool').length !== 1 || options.filter(o => o.value === c.iccid && o.text === c.iccid).length !== 1)
+            throw new WorkerError('UNSAFE_AUTO_ASSIGN','Auto-assignment requires the sole available SIM to be owned by this run');
+          await select.selectOption('',{timeout:budget.remaining()});
+        }
         if (action === 'cancel_top_up') { await click(this.dialog(), 'Cancel'); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); }
-        else await submit(action === 'allocate_sim' ? 'Allocate SIM' : 'Top up');
+        else await submit(action.startsWith('allocate_') ? 'Allocate SIM' : 'Top up');
       } else if (action === 'open_receipt' && c && p) {
         await this.customer(c, budget); await click(this.packages(String(p.name)), 'Package options');
         await this.page.getByRole('menuitem', { name: 'View receipt', exact: true }).click({ timeout: budget.remaining() });
@@ -185,6 +204,18 @@ export class Commerce {
   }
   async observe(inputs: ObjectValue): Promise<string | null> {
     const label = str(inputs.label, 'label'), name = inputs.plan_name === undefined ? undefined : str(inputs.plan_name, 'plan_name');
+    if (label === 'Commerce fault') return commerceFaultState(this.page);
+    if (label === 'SIM option present' && inputs.view === 'customer_customers' && inputs.iccid) {
+      const select = field(this.dialog(),this.page,'SIM').locator('select');
+      if (!await this.dialog().getByText('Allocate a SIM',{exact:true}).isVisible() || !await select.isVisible() || await select.isDisabled()) return null;
+      const matches = select.locator('option').filter({hasText:new RegExp(`^${escape(String(inputs.iccid))}$`)});
+      if (await matches.count() > 1) throw new WorkerError('AMBIGUOUS_LOCATOR','Duplicate ICCID options');
+      return String(await matches.count() === 1 && await matches.getAttribute('value') === inputs.iccid);
+    }
+    if (label === 'Customer plan' && String(inputs.view).endsWith('_customers') && inputs.customer_name) {
+      const row=this.main().locator('tbody > tr').filter({has:this.page.getByText(String(inputs.customer_name),{exact:true})});
+      return visibleText(row.locator('td').nth(1));
+    }
     if (inputs.view === 'business_packages' && name) {
       const columns: Record<string, number> = { 'Performance price': 1, 'Performance sold': 2, 'Performance revenue': 3, 'Performance share': 4 };
       if (columns[label] === undefined) throw new WorkerError('UNSUPPORTED_LOCATOR', 'Unknown package performance column');
@@ -192,6 +223,25 @@ export class Commerce {
       return visibleText(row.getByRole('cell').nth(columns[label]!));
     }
     if (inputs.view === 'business_sim_pool') {
+      if (label === 'Pool reconciliation') {
+        if (await this.main().locator('.MuiSkeleton-root:visible').count() || await this.main().getByText("Couldn't load SIMs",{exact:true}).isVisible()) return null;
+        const rows=this.main().locator('tbody > tr:visible'), count=await rows.count();
+        if (!count && !await this.main().getByText('No SIMs',{exact:true}).isVisible()) return null;
+        const footer=await visibleText(this.main().locator('.tbl-foot .tnum'));
+        if (footer !== `Showing ${count} of ${count.toLocaleString('en-US')}`) return 'incomplete inventory';
+        const totals: Record<string,number>={Available:0,Assigned:0,Faulty:0}, ids=new Set<string>();
+        for (let n=0;n<count;n++) {
+          const row=rows.nth(n), id=await visibleText(row.locator('td').first()), status=await visibleText(row.locator('.MuiChip-label'));
+          if (!id || ids.has(id) || !status || !(status in totals)) return 'invalid inventory';
+          ids.add(id); totals[status]!++;
+        }
+        for (const [status,total] of Object.entries(totals)) {
+          const tile=this.main().locator('.MuiCard-root').filter({has:this.page.getByText(status,{exact:true})});
+          const value=await visibleText(tile.locator(':scope > div').nth(1));
+          if (value !== total.toLocaleString('en-US')) return `${status}: ${value} != ${total}`;
+        }
+        return 'matched';
+      }
       if (label !== 'Pool status' || !inputs.iccid) throw new WorkerError('INVALID_INPUT', 'Pool status needs a SIM identity');
       return visibleText(this.main().getByRole('row').filter({ has: this.page.getByText(String(inputs.iccid), { exact: true }) }).locator('.MuiChip-label'));
     }
@@ -202,7 +252,9 @@ export class Commerce {
       if (['Validity', 'Price', 'Data volume', 'Unit'].includes(label)) {
         const input = field(this.dialog(), this.page, 'Data plan name').locator('input');
         if (!await input.isVisible() || await input.inputValue() !== name) throw new WorkerError('WRONG_ENTITY', 'Edit dialog is not for the selected plan');
-        return visibleText(field(this.dialog(), this.page, label).locator('.ff-readonly'));
+        const f = field(this.dialog(), this.page, label);
+        if (await f.locator('input,select,textarea,[contenteditable="true"]').count()) return 'editable';
+        return visibleText(f.locator('.ff-readonly'));
       }
     }
     if (inputs.view === 'customer_customers' && inputs.customer_name) {

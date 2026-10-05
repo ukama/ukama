@@ -99,7 +99,8 @@ typedef struct {
     char     ref[ULAB_MAX_REF];
     char     base_ref[ULAB_MAX_REF];
     char     network_ref[ULAB_MAX_REF];
-    char     name[ULAB_MAX_NAME];
+    char     name[ULAB_MAX_NAME]; /* Immutable creation/ownership name. */
+    char     web_name[ULAB_MAX_NAME]; /* UI rename acknowledged in this run. */
     uint64_t data_mb;
     uint32_t duration_days;
     uint32_t duration_minutes;
