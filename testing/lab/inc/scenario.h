@@ -107,7 +107,8 @@ typedef enum {
     EVT_WEB_ACTION,
     EVT_WEB_TAB,
     EVT_WEB_COMMERCE,
-    EVT_WEB_INTERACT
+    EVT_WEB_INTERACT,
+    EVT_WEB_SESSION
 } event_type_t;
 
 typedef enum {
@@ -178,7 +179,8 @@ typedef enum {
     CHECK_WEB_TABLE_COUNT_EQUALS,
     CHECK_WEB_ACTION_AVAILABLE,
     CHECK_WEB_COMMERCE_EQUALS,
-    CHECK_WEB_UI_EQUALS
+    CHECK_WEB_UI_EQUALS,
+    CHECK_WEB_SESSION_EQUALS
 } check_type_t;
 
 typedef struct {
@@ -339,6 +341,8 @@ typedef struct {
     char         base_url[ULAB_MAX_URL];
     char         browser[ULAB_MAX_REF];
     char         auth_state[ULAB_MAX_PATH];
+    char         session_mode[ULAB_MAX_REF];
+    char         auth_origin[ULAB_MAX_URL];
     int          headless;
     char         switch_component[ULAB_MAX_NAME];
     char         backhaul_component[ULAB_MAX_NAME];

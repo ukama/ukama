@@ -1,0 +1,155 @@
+version: 2
+name: p1-webapp-expired-session
+description: Use a saved real session independently expired or revoked at the auth service; do not synthesize its value or clear it in the test.
+seed: 4711
+suite: webapp
+priority: p1
+status: active
+tags:
+  - webapp
+  - auth
+  - local
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  session_mode: auth_test
+  auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}
+  auth_state: ${ULAB_AUTH_EXPIRED_STATE}
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: expired-protected-route
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/manage/members
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-006
+  - name: expired-settings
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-006
+  - name: expired-other-lens
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /customer/customers
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-006
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-006

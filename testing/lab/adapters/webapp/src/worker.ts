@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { Session } from './session.js';
 import { Interactions } from './interactions.js';
 import { readFile, lstat } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
@@ -30,6 +31,7 @@ export class Worker {
   private context?: BrowserContext;
   private page?: Page;
   private app?: ConsoleApp;
+  private session?: Session;
   private tabs = new Map<string, { page: Page; app: ConsoleApp }>();
   private evidence?: Artifacts;
   private end = Infinity;
@@ -131,9 +133,12 @@ export class Worker {
       const evidence = new Artifacts(str(c.inputs.artifacts_dir, 'artifacts_dir'), this.run);
       try { await evidence.create(); } catch { throw new WorkerError('ARTIFACT_DIRECTORY', 'Artifact run directory must be new and writable'); }
       this.evidence = evidence;
-      const state = await loadState(config.auth_state);
+      const state = config.session_mode === 'auth_test' && config.auth_state === 'none' ? {cookies:[],origins:[]} : await loadState(config.auth_state);
       try {
+        // The CLI owns signal shutdown so tracing finishes before browser close.
+        // Playwright's automatic handlers otherwise race our artifact capture.
         this.browser = await BROWSERS[config.browser].launch({ headless: config.headless, timeout: budget.remaining(),
+          handleSIGINT: false, handleSIGTERM: false,
           ...(process.env.ULAB_WEBAPP_EXECUTABLE_PATH ? { executablePath: process.env.ULAB_WEBAPP_EXECUTABLE_PATH } : {}) });
       } catch {
         throw new WorkerError('BROWSER_START_FAILED', 'Cannot start browser; install the Playwright browser/dependencies and check the display for headed mode');
@@ -144,12 +149,22 @@ export class Worker {
       this.page = await this.context.newPage(); evidence.attach(this.page);
       this.app = new ConsoleApp(this.page, config.base_url);
       this.tabs.set('primary', { page: this.page, app: this.app });
+      if (config.session_mode === 'auth_test') {
+        this.session = new Session(this.page, config.base_url, config.auth_origin!);
+        return {actual:{initialized:true,authenticated:false,session_mode:'auth_test',browser:config.browser,browser_version:this.browser.version()}};
+      }
       const response = await this.page.goto(config.base_url, { waitUntil: 'domcontentloaded', timeout: budget.remaining() });
       if (response && response.status() >= 400) throw new WorkerError('APP_UNAVAILABLE', 'Console initial navigation returned an HTTP error', response.status());
       await assertSession(this.page, config.base_url, budget);
       return { actual: { authenticated: true, browser: config.browser, browser_version: this.browser.version(), page_url: safeURL(this.page.url()) } };
     }
     if (!this.app || !this.config) throw new WorkerError('NOT_INITIALIZED', 'init must precede browser commands');
+    if (c.action === 'web_session' || c.action === 'web_session_equals') {
+      if (!this.session || this.config.session_mode !== 'auth_test') throw new WorkerError('SESSION_MODE','Session commands require auth_test mode');
+      if (c.action === 'web_session') { await this.session.run(c.inputs,budget); return {actual:{executed:true}}; }
+      return this.session.check(c.inputs,budget);
+    }
+    if (this.config.session_mode === 'auth_test') throw new WorkerError('SESSION_MODE','Auth tests permit session commands only');
     if (c.action === 'web_tab') {
       keys(c.inputs, ['tab']);
       const tab = str(c.inputs.tab, 'tab');

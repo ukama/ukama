@@ -52,6 +52,10 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
         if (event->networks.kind != SEL_REF || !network || !network->bff_id[0]) goto unresolved;
         if (json_object_set_new(*inputs, "network_name", json_string(network->name))) goto memory;
     }
+    if (event->type == EVT_WEB_SESSION) {
+        if (json_object_set_new(*inputs, "view", json_string(event->view)) || json_object_set_new(*inputs, "action", json_string(event->target)) || json_object_set_new(*inputs, "value", json_string(event->status))) goto memory;
+        return ULAB_OK;
+    }
     if (event->type == EVT_WEB_INTERACT) {
         const char *value = event->variant[0] ? ui_value(world, event->variant, event->package_ref, &event->ues, &event->networks) : event->status;
         if (!value) goto unresolved;
@@ -197,7 +201,10 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
         }
     } else if (check->type == CHECK_WEB_COMMERCE_EQUALS) {
         if (webapp_commerce_check(check, &resolved, world, &inputs, err)) return ULAB_ERR;
-    } else inputs = webapp_check_inputs(&resolved);
+    } else {
+        inputs = webapp_check_inputs(&resolved);
+        if (inputs && check->type == CHECK_WEB_SESSION_EQUALS && json_object_set_new(inputs, "subject", json_string(check->status))) { json_decref(inputs); inputs = NULL; }
+    }
     if (inputs && check->nodes.kind != SEL_NONE) {
         node = world_node_by_ref(world, check->nodes.value);
         if (!node || !node->bff_id[0]) { json_decref(inputs); return webapp_error(err, "node card identity is unresolved"); }
@@ -279,7 +286,7 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
                 !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed"))))
                 rc = webapp_error(err, "commerce creation acknowledgement does not match intent");
             else if (!rc && webapp_journal_bind(journal, bindings, 1, client->sequence, err)) rc = ULAB_ERR;
-        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT) &&
+        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT || event->type == EVT_WEB_SESSION) &&
             (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
             rc = webapp_error(err, "worker operation acknowledgement is invalid");
         } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||
@@ -299,7 +306,7 @@ static int initialize(webapp_client_t *client, const scenario_t *scenario,
     json_t *inputs;
     json_t *reply = NULL;
     int rc;
-    if (absolute_path(auth, sizeof(auth), scenario->webapp.auth_state, err) ||
+    if ((ulab_streq(scenario->webapp.auth_state, "none") ? ulab_copy(auth, sizeof(auth), "none") : absolute_path(auth, sizeof(auth), scenario->webapp.auth_state, err)) ||
         webapp_path(artifacts, sizeof(artifacts), run_dir, "browser", err)) return ULAB_ERR;
     profile = json_pack("{s:s,s:s,s:s,s:b,s:i,s:i,s:i}",
                         "base_url", scenario->webapp.base_url, "auth_state", auth,
@@ -307,11 +314,17 @@ static int initialize(webapp_client_t *client, const scenario_t *scenario,
                         "action_timeout_seconds", scenario->webapp.action_timeout_seconds,
                         "check_timeout_seconds", scenario->webapp.check_timeout_seconds,
                         "scenario_timeout_seconds", scenario->webapp.scenario_timeout_seconds);
+    if (profile && (json_object_set_new(profile, "session_mode", json_string(scenario->webapp.session_mode)) ||
+        (scenario->webapp.auth_origin[0] && json_object_set_new(profile, "auth_origin", json_string(scenario->webapp.auth_origin))))) { json_decref(profile); profile = NULL; }
     inputs = profile ? json_pack("{s:o,s:s}", "profile", profile, "artifacts_dir", artifacts) : NULL;
     if (!inputs) return webapp_error(err, "cannot encode worker initialization");
     rc = webapp_call(client, "init", inputs, scenario->webapp.action_timeout_seconds, &reply, err);
-    if (!rc && (!json_is_true(json_object_get(json_object_get(reply, "actual"), "authenticated")) ||
-                json_array_size(json_object_get(reply, "bindings")))) rc = webapp_error(err, "worker initialization did not establish an authenticated session");
+    if (!rc && json_array_size(json_object_get(reply, "bindings"))) rc = webapp_error(err, "initialization returned unexpected bindings");
+    if (!rc && ulab_streq(scenario->webapp.session_mode, "auth_test")) {
+        json_t *actual = json_object_get(reply, "actual");
+        const char *mode = json_string_value(json_object_get(actual, "session_mode"));
+        if (!json_is_true(json_object_get(actual, "initialized")) || !json_is_false(json_object_get(actual, "authenticated")) || !mode || strcmp(mode, "auth_test")) rc = webapp_error(err, "worker did not establish the isolated auth_test context");
+    } else if (!rc && !json_is_true(json_object_get(json_object_get(reply, "actual"), "authenticated"))) rc = webapp_error(err, "worker initialization did not establish an authenticated session");
     json_decref(inputs); json_decref(reply);
     return rc;
 }

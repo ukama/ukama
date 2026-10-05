@@ -84,6 +84,10 @@ class WebappContract(unittest.TestCase):
                        ULAB_CONTROLLER_RESTART_REASON="Controller busy",
                        ULAB_CONTROLLER_RF_REASON="Controller busy",
                        ULAB_CONTROLLER_SERVICE_REASON="Controller busy")
+        for path in (ROOT / "scenarios/webapp/p0/auth").glob("*.yaml"):
+            for name in re.findall(r"\$\{([A-Z0-9_]+)\}", path.read_text()):
+                cls.env.setdefault(name, ".auth/test.json" if name.endswith("_STATE") else "dashboard" if name.endswith("_SURFACE") else "absent" if name.endswith("_CONTROL") else "Independent expected value")
+
 
     @classmethod
     def tearDownClass(cls):
@@ -309,12 +313,45 @@ class WebappContract(unittest.TestCase):
             with self.subTest(new=new):
                 self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
 
+    def test_session_profiles_actions_subjects_and_modes_are_closed(self):
+        text = (ROOT / "scenarios/webapp/p0/auth/wb-050-account-settings.yaml").read_text()
+        self.assertEqual(self.run_scenario(text, "execute").returncode, 0)
+        for old,new in [("session_mode: auth_test", "session_mode: maybe"),
+                        ("session_mode: auth_test", "session_mode: authenticated"),
+                        ("auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}", "auth_origin: http://localhost:3000"),
+                        ("auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}", "auth_origin: http://auth.test/path"),
+                        ("auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}", "auth_origin: http://name:secret@auth.test"),
+                        ("networks: 0", "networks: 1"),
+                        ("action: navigate", "action: arbitrary_script"),
+                        ("value: /business/settings", "value: //other.test"),
+                        ("value: /business/settings", "value: /api/auth/logout"),
+                        ("subject: Full name", "subject: Password"),
+                        ("label: Surface", "label: Cookie value"),
+                        ("action: reload", "action: reload\n        value: /business"),
+                        ("type: web_session_equals", "type: web_ui_equals"),
+                        ("action: open_account", "action: open_account\n        selector: html")]:
+            with self.subTest(new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
+
+    def test_remaining_roadmap_accounts_for_the_frozen_gap(self):
+        catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
+        plan = json.loads((ROOT / "docs/webapp/remaining-patches.json").read_text())
+        ids = [rid for patch in plan['patches'] for rid in patch['requirements']]
+        self.assertEqual(len(ids),96)
+        self.assertEqual(len(set(ids)),96)
+        requirements = {r['id']:r for r in catalog['requirements']}
+        self.assertEqual(len(requirements),132)
+        self.assertEqual(sum(r['priority']=='p0' for r in requirements.values()),86)
+        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'})
+        self.assertEqual(requirements['WEB-SHELL-010']['automation'],'planned')
+        self.assertEqual(plan['qualification_patch'],17)
+
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

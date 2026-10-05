@@ -17,7 +17,9 @@ for line in sys.stdin:
     actual = expected
     if action == 'init':
         actual = {'authenticated': True}
-    if action == 'web_tab':
+        if inputs['profile'].get('session_mode') == 'auth_test' and mode != 'wrong_auth_ack':
+            actual = {'initialized': True, 'authenticated': False, 'session_mode': 'auth_test'}
+    if action in ('web_tab', 'web_session'):
         actual = {'executed': mode != 'bad_ack'}
     if action == 'web_field_equals' and inputs.get('match') == 'contains':
         actual = 'unrelated reason' if mode == 'lie' else expected + ' by fixture'

@@ -19,11 +19,11 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_INTERACT;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_SESSION;
 }
 
 int scenario_is_web_check(check_type_t type) {
-    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_UI_EQUALS;
+    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_SESSION_EQUALS;
 }
 
 int scenario_has_webapp(const scenario_t *s) {
@@ -251,6 +251,38 @@ static int ui_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *er
     return ULAB_OK;
 }
 
+static int choice(const char *value, const char *const *choices, size_t count) {
+    size_t i;
+    for (i = 0; i < count; i++) if (ulab_streq(value, choices[i])) return 1;
+    return 0;
+}
+#define IN_CHOICES(v, a) choice((v), (a), sizeof(a) / sizeof((a)[0]))
+static int session_event(const event_spec_t *e, ulab_error_t *err) {
+    static const char *const actions[] = {"navigate", "reload", "drop_token", "invalidate_token", "reject_token", "expire_token", "open_account", "logout", "ack_welcome", "settings_tab"};
+    static const char *const paths[] = {"/", "/business", "/business/settings", "/network/settings", "/customer/settings", "/business/manage/members", "/business/manage/data-plans", "/business/manage/sim-pool", "/customer/customers", "/welcome", "/unauthorized", "/business/manage/billing"};
+    static const char *const tabs[] = {"My account", "Organization", "Preferences"};
+    int navigate = ulab_streq(e->target, "navigate"), tab = ulab_streq(e->target, "settings_tab");
+    if (!ulab_streq(e->view, "session") || !IN_CHOICES(e->target, actions) ||
+        ((navigate || tab) != !!(e->web_fields & (1u << 14))) ||
+        (navigate && !IN_CHOICES(e->status, paths)) || (tab && !IN_CHOICES(e->status, tabs)))
+        return fail(err, "invalid session action, view or value");
+    return ULAB_OK;
+}
+static int session_check(const check_spec_t *c, ulab_error_t *err) {
+    static const char *const labels[] = {"Surface", "Path", "Auth origin", "Dashboard visible", "Organization", "Settings field", "Account name", "Account details", "Welcome field", "Welcome title", "Welcome error", "Access blocked", "Sensitive text absent", "Logout handoff", "Refresh observed", "Navigation stable", "Nav visible", "Control state", "Unauthorized title", "Unauthorized logout", "Unauthorized support", "Document status"};
+    static const char *const fields[] = {"Full name", "Email", "Role", "Email verified", "Organization name", "Country", "Currency"};
+    static const char *const welcome[] = {"Network operating country", "Organization name", "Role"};
+    static const char *const controls[] = {"Invite member", "Create plan", "Upload SIMs", "Add customer", "Continue"};
+    static const char *const nav[] = {"Home", "Revenue", "Customers", "Packages", "Data plans", "Members", "SIM pool", "Node pool", "Sites", "Nodes", "Settings", "Billing", "Support"};
+    int subject = ulab_streq(c->label, "Settings field") || ulab_streq(c->label, "Welcome field") || ulab_streq(c->label, "Sensitive text absent") || ulab_streq(c->label, "Nav visible") || ulab_streq(c->label, "Control state");
+    if (!ulab_streq(c->view, "session") || !IN_CHOICES(c->label, labels) || !(c->web_fields & (1u << 4)) || subject != !!c->status[0]) return fail(err, "invalid session assertion label, subject or expectation");
+    if ((ulab_streq(c->label, "Settings field") && !IN_CHOICES(c->status, fields)) ||
+        (ulab_streq(c->label, "Welcome field") && !IN_CHOICES(c->status, welcome)) ||
+        (ulab_streq(c->label, "Control state") && !IN_CHOICES(c->status, controls)) ||
+        (ulab_streq(c->label, "Nav visible") && !IN_CHOICES(c->status, nav))) return fail(err, "unsupported session assertion subject");
+    return ULAB_OK;
+}
+
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -259,6 +291,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
     if (event->timeout_seconds == 0 || event->timeout_seconds > 900 ||
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
+    if (event->type == EVT_WEB_SESSION) return session_event(event, err);
     if (event->type == EVT_WEB_INTERACT) return ui_event(s, event, err);
     if (event->type == EVT_WEB_COMMERCE) return commerce_event(s, event, err);
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
@@ -352,6 +385,7 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->timeout_seconds == 0 || check->timeout_seconds > 900 ||
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
+    if (check->type == CHECK_WEB_SESSION_EQUALS) return session_check(check, err);
     if (check->type == CHECK_WEB_UI_EQUALS) {
         static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
         size_t n;
@@ -452,6 +486,12 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
     if (!ulab_streq(w->browser, "chromium") && !ulab_streq(w->browser, "firefox") &&
         !ulab_streq(w->browser, "webkit"))
         return fail(err, "webapp.browser must be chromium/firefox/webkit");
+    if (!ulab_streq(w->session_mode, "authenticated") && !ulab_streq(w->session_mode, "auth_test")) return fail(err, "session_mode must be authenticated or auth_test");
+    if (ulab_streq(w->session_mode, "auth_test")) {
+        const char *origin = ulab_starts(w->auth_origin, "http://") ? w->auth_origin + 7 : ulab_starts(w->auth_origin, "https://") ? w->auth_origin + 8 : NULL;
+        if (!origin || !*origin || strpbrk(origin, "/@?# \t\r\n") || ulab_streq(w->auth_origin, w->base_url)) return fail(err, "auth_test requires a distinct auth_origin without a path or credentials");
+        if (s->world.networks || s->world.sites_per_network || s->world.ues_per_site || s->world.sims_per_network || s->package_count || s->setup.webapp_entities) return fail(err, "auth_test cannot own provisioning resources");
+    } else if (w->auth_origin[0] || ulab_streq(w->auth_state, "none")) return fail(err, "auth_origin and auth_state: none are limited to auth_test");
     if (!w->auth_state[0]) return fail(err, "webapp.auth_state is required");
     if (w->scenario_timeout_seconds == 0 || w->scenario_timeout_seconds > 86400 ||
         w->action_timeout_seconds == 0 || w->action_timeout_seconds > 900 ||
@@ -516,6 +556,7 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
         checks += phase->check_count;
         for (j = 0; j < phase->event_count; j++) {
             event = &phase->events[j];
+            if (ulab_streq(w->session_mode, "auth_test") != (event->type == EVT_WEB_SESSION)) return fail(err, "auth_test permits only web_session events; session events require auth_test");
             if (scenario_is_web_event(event->type)) {
                 if (browser_event(s, event, err)) return ULAB_ERR;
             } else if (event->type == EVT_START_UES || event->type == EVT_TRAFFIC) {
@@ -535,11 +576,15 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
                             "operator actions must use browser handlers");
             }
         }
-        for (j = 0; j < phase->check_count; j++)
+        for (j = 0; j < phase->check_count; j++) {
+            if (ulab_streq(w->session_mode, "auth_test") != (phase->checks[j].type == CHECK_WEB_SESSION_EQUALS)) return fail(err, "auth_test permits only session checks; session checks require auth_test");
             if (browser_check(s, &phase->checks[j], err)) return ULAB_ERR;
+        }
     }
-    for (i = 0; i < s->final_check_count; i++)
+    for (i = 0; i < s->final_check_count; i++) {
+        if (ulab_streq(w->session_mode, "auth_test") != (s->final_checks[i].type == CHECK_WEB_SESSION_EQUALS)) return fail(err, "auth_test permits only session checks; session checks require auth_test");
         if (browser_check(s, &s->final_checks[i], err)) return ULAB_ERR;
+    }
     if (!checks) return fail(err, "webapp scenarios require at least one browser check");
     return ULAB_OK;
 }

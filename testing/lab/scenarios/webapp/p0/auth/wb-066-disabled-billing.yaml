@@ -1,0 +1,126 @@
+version: 2
+name: p1-webapp-disabled-billing
+description: Check Billing exclusion in each lens and the direct route HTTP 404 with visible not-found state.
+seed: 4711
+suite: webapp
+priority: p1
+status: active
+tags:
+  - webapp
+  - auth
+  - local
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  session_mode: auth_test
+  auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}
+  auth_state: ${ULAB_AUTH_OWNER_STATE}
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: business-navigation
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Nav visible
+        subject: Billing
+        expected: 'false'
+        requirement: WEB-UI-012
+  - name: network-navigation
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /network/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Nav visible
+        subject: Billing
+        expected: 'false'
+        requirement: WEB-UI-012
+  - name: customer-navigation
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /customer/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Nav visible
+        subject: Billing
+        expected: 'false'
+        requirement: WEB-UI-012
+  - name: direct-billing
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/manage/billing
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: not_found
+        requirement: WEB-UI-012
+      - type: web_session_equals
+        view: session
+        label: Document status
+        expected: '404'
+        requirement: WEB-UI-012
+  - name: recover-settings
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: dashboard
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Organization
+        expected: ${ULAB_AUTH_ORG}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Full name
+        expected: ${ULAB_AUTH_OWNER_NAME}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Email
+        expected: ${ULAB_AUTH_OWNER_EMAIL}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Role
+        expected: Owner
+        requirement: WEB-AUTH-002

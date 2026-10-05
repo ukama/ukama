@@ -19,7 +19,8 @@ const usage = `Ukama-lab local web-app worker (Node 22+)
     --network lab-network --view network_home --label 'Sites online' --expected '2/2'
 
 worker: JSONL stdin/stdout, one process per scenario. EOF without close is failure.
-auth: opens Chromium for manual sign-in, then saves real state after dashboard verification.
+auth: manual sign-in, save private state after visible landing verification.
+  --landing dashboard|welcome|unauthorized (default dashboard)
 smoke: one visible KPI/field/action/table check; no provisioning or coverage credit.
   --kind kpi|field|action|table (default kpi)
   --artifacts runs/webapp-worker (default)
@@ -74,8 +75,9 @@ async function serve(): Promise<void> {
 }
 
 async function authenticate(args: string[]): Promise<void> {
-  const { values } = parseArgs({ args, options: { 'base-url': { type: 'string' }, out: { type: 'string' } }, strict: true });
+  const { values } = parseArgs({ args, options: { 'base-url': { type: 'string' }, out: { type: 'string' }, landing: { type: 'string', default: 'dashboard' } }, strict: true });
   const origin = baseURL(values['base-url']);
+  if (!['dashboard','welcome','unauthorized'].includes(values.landing!)) throw new WorkerError('INVALID_INPUT', '--landing must be dashboard, welcome or unauthorized');
   if (!values.out) throw new WorkerError('INVALID_INPUT', '--out is required');
   if (!process.stdin.isTTY) throw new WorkerError('INVALID_INPUT', 'Authentication requires an interactive terminal and display');
   const destination = resolve(values.out);
@@ -87,8 +89,14 @@ async function authenticate(args: string[]): Promise<void> {
   try {
     const page = await context.newPage();
     await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await prompt.question('Sign in through the browser and finish any welcome/setup screen. When the dashboard is visible, press Enter here. ');
-    await assertSession(page, origin, new Budget(10000));
+    await prompt.question(`Sign in through the browser. Leave the ${values.landing} screen visible and press Enter here. `);
+    if (values.landing === 'dashboard') await assertSession(page, origin, new Budget(10000));
+    else {
+      const path = values.landing === 'welcome' ? '/welcome' : '/unauthorized';
+      if (new URL(page.url()).origin !== origin || new URL(page.url()).pathname !== path) throw new WorkerError('AUTH_REQUIRED', 'Expected console landing is not visible');
+      const visible = values.landing === 'welcome' ? page.locator('main.welcome-root').getByRole('heading', {name:'Welcome to Ukama!',exact:true}) : page.getByText("Your account isn't set up for this console", {exact:true});
+      await visible.waitFor({state:'visible',timeout:10000});
+    }
     const state = await context.storageState({ indexedDB: true });
     await mkdir(dirname(destination), { recursive: true, mode: 0o700 });
     const file = await open(temporary, 'wx', 0o600);

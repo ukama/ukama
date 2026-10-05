@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
-import { spawn } from 'node:child_process';
+import { spawn, execFileSync } from 'node:child_process';
 import { fixture } from '../../adapters/webapp/test/fixture.mjs';
 
 const root = resolve(import.meta.dirname, '../..');
@@ -19,7 +19,7 @@ before(async () => {
   example = (await readFile(join(root, 'scenarios/webapp/p0/session/wb-000-authenticated-members.yaml'), 'utf8'))
     .replace('http://localhost:3000', app.origin).replace('.auth/owner.json', state);
 });
-after(async () => { await app?.close(); if (directory) await rm(directory, { recursive: true, force: true }); });
+after(async () => { await app?.close(); if (directory && !process.env.ULAB_KEEP_FIXTURE) await rm(directory, { recursive: true, force: true }); });
 async function run(name, text, cancel = false) {
   const scenario = join(directory, `${name}.yaml`); await writeFile(scenario, text);
   const runDir = join(directory, name);
@@ -69,6 +69,9 @@ test('cancelling a live browser command retains complete evidence across repeate
     const name = `browser-cancel-${attempt}`;
     const r = await run(name, example.replaceAll('Invite member', 'Missing fixture control'), true);
     assert.notEqual(r.code, 0, r.output); assert.equal(r.report.outcome, 'FAIL'); assert.equal(r.summary.status, 'failed');
-    await readFile(join(r.runDir, 'browser', name, 'trace.zip'));
+    const trace = join(r.runDir, 'browser', name, 'trace.zip');
+    execFileSync('python3', ['-c', 'import sys,zipfile; z=zipfile.ZipFile(sys.argv[1]); assert z.testzip() is None; assert any(n.endswith(".trace") for n in z.namelist())', trace]);
+    const diagnostics = JSON.parse(await readFile(join(r.runDir, 'browser', name, 'diagnostics.json'), 'utf8'));
+    assert(!diagnostics.events.some(e=>e.detail.type==='artifact_error' && e.detail.artifact==='trace.zip'));
   }
 });

@@ -95,6 +95,21 @@ class RunnerLifecycle(unittest.TestCase):
         self.assertEqual(report['outcome'], 'FAIL')
         self.assertFalse(any(x['message']['action'] == 'web_open' for x in self.messages()))
 
+    def test_auth_mode_requires_distinct_initialization_acknowledgement(self):
+        text = EXAMPLE.read_text().replace("  auth_state: .auth/owner.json", "  auth_state: none\n  session_mode: auth_test\n  auth_origin: http://auth.example.test")
+        text = text.replace("type: web_open\n        view: business_members", "type: web_session\n        view: session\n        action: navigate\n        value: /business/settings")
+        text = text.replace("type: web_reload", "type: web_session\n        view: session\n        action: navigate\n        value: /business/settings")
+        text = text.replace("type: web_action_available", "type: web_session_equals").replace("view: business_members", "view: session").replace("label: Invite member", "label: Surface").replace("available: true", "expected: auth")
+        self.scenario.write_text(text)
+        for mode in ("ok", "wrong_auth_ack", "bad_ack"):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory(dir=self.directory) as out:
+                self.out = Path(out); self.run = self.out / 'test-run'
+                result,report = self.run_case(mode)
+                self.assertEqual(result.returncode == 0, mode == "ok", result.stdout + result.stderr)
+                requests = [x['message'] for x in self.messages() if x['direction'] == 'request']
+                self.assertEqual(requests[0]['inputs']['profile']['auth_state'], 'none')
+                if mode == "wrong_auth_ack":self.assertFalse(any(x['action'] == 'web_session' for x in requests))
+
     def test_skip_is_not_pass_and_launches_no_worker(self):
         for status in ('skip', 'wip'):
             with self.subTest(status=status), tempfile.TemporaryDirectory(dir=self.directory) as out:

@@ -44,14 +44,18 @@ export interface Profile {
   base_url: string; auth_state: string; browser: 'chromium' | 'firefox' | 'webkit';
   headless: boolean; action_timeout_seconds: number; check_timeout_seconds: number;
   scenario_timeout_seconds: number;
+  session_mode: 'authenticated' | 'auth_test'; auth_origin?: string;
 }
 export function profile(value: unknown): Profile {
   const p = object(value, 'profile');
-  keys(p, ['base_url', 'auth_state', 'browser', 'headless', 'action_timeout_seconds', 'check_timeout_seconds', 'scenario_timeout_seconds']);
+  keys(p, ['base_url', 'auth_state', 'browser', 'headless', 'action_timeout_seconds', 'check_timeout_seconds', 'scenario_timeout_seconds', 'session_mode', 'auth_origin']);
   const browser = p.browser ?? 'chromium';
   if (!['chromium', 'firefox', 'webkit'].includes(String(browser)))
     throw new WorkerError('INVALID_INPUT', 'Unknown browser');
+  const mode = p.session_mode ?? 'authenticated';
+  if (mode !== 'authenticated' && mode !== 'auth_test') throw new WorkerError('INVALID_INPUT','Unknown session_mode');
   const result: Profile = {
+    session_mode: mode,
     base_url: baseURL(p.base_url), auth_state: str(p.auth_state, 'auth_state'),
     browser: browser as Profile['browser'], headless: bool(p.headless ?? true, 'headless'),
     action_timeout_seconds: integer(p.action_timeout_seconds ?? 30, 'action timeout', 1, 900),
@@ -60,9 +64,13 @@ export function profile(value: unknown): Profile {
   };
   if (Math.max(result.action_timeout_seconds, result.check_timeout_seconds) > result.scenario_timeout_seconds)
     throw new WorkerError('INVALID_INPUT', 'Step timeout exceeds scenario timeout');
+  if (mode === 'auth_test') {
+    result.auth_origin = baseURL(p.auth_origin);
+    if (result.auth_origin === result.base_url) throw new WorkerError('INVALID_INPUT','auth_origin must differ from console origin');
+  } else if (p.auth_origin !== undefined || result.auth_state === 'none') throw new WorkerError('INVALID_INPUT','Auth test fields require auth_test mode');
   return result;
 }
-export const ACTIONS = ['init', 'web_interact', 'web_ui_equals', 'web_commerce', 'web_commerce_equals', 'web_import_sims', 'web_create_network', 'web_create_site', 'web_open', 'web_select_network', 'web_reload', 'web_action', 'web_tab', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
+export const ACTIONS = ['init', 'web_session', 'web_session_equals', 'web_interact', 'web_ui_equals', 'web_commerce', 'web_commerce_equals', 'web_import_sims', 'web_create_network', 'web_create_site', 'web_open', 'web_select_network', 'web_reload', 'web_action', 'web_tab', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
 export type Action = typeof ACTIONS[number];
 export interface Command {
   protocol: 1; run_id: string; command_id: number; action: Action;
