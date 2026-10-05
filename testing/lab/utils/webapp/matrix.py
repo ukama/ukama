@@ -17,6 +17,26 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 CATALOG = 'docs/webapp/coverage.json'
 BROWSERS = ('chromium', 'firefox', 'webkit')
+POLICY = 'docs/webapp/qualification-policy.json'
+
+def inventory_contract(requirements):
+    rows = sorted(({k:r[k] for k in ('id','priority','requirement')} for r in requirements), key=lambda r:r['id'])
+    return hashlib.sha256(json.dumps(rows, sort_keys=True, separators=(',',':')).encode()).hexdigest()
+
+def validate_inventory(root, inventory):
+    """Freeze semantics as well as counts. Temporary algorithm fixtures omit policy."""
+    path = root / POLICY
+    if path.is_file():
+        policy = json.loads(path.read_text())
+        rows = inventory['requirements']
+        if (len(rows) != policy['requirements'] or sum(r['priority']=='p0' for r in rows) != policy['p0'] or
+                inventory_contract(rows) != policy['inventory_contract_sha256']):
+            raise ValueError('frozen requirement inventory changed; restore the agreed contract')
+
+def validate_browser_overrides(browsers):
+    if len(browsers)>1 and os.environ.get('ULAB_WEBAPP_EXECUTABLE_PATH') and any(
+            not os.environ.get(f'ULAB_WEBAPP_{b.upper()}_EXECUTABLE_PATH') for b in browsers):
+        raise ValueError('multi-browser runs require default runtimes or a per-browser executable override; unset ULAB_WEBAPP_EXECUTABLE_PATH')
 
 class UniqueLoader(yaml.SafeLoader):
     pass
@@ -41,6 +61,7 @@ def fingerprint(root):
     for part in ('src', 'inc', 'cmd', 'scenarios/webapp', 'adapters/webapp/src'):
         files += [p for p in (root / part).rglob('*') if p.is_file()]
     files += [root / 'adapters/webapp/package-lock.json']
+    files += [p for p in [root / POLICY, root / 'utils/webapp/qualify.py', root / 'adapters/webapp/preflight.mjs'] if p.is_file()]
     for p in sorted(files):
         result.update(str(p.relative_to(root)).encode() + b'\0' + p.read_bytes() + b'\0')
     return result.hexdigest()
@@ -85,6 +106,8 @@ def environment_hash(text):
 def run_matrix(args):
     root = args.root.resolve()
     inventory = json.loads((root / CATALOG).read_text())
+    validate_inventory(root, inventory)
+    validate_browser_overrides(args.browser)
     paths = args.scenario or sorted({p for r in inventory['requirements'] for p in r['scenarios']})
     paths = sorted(set(paths))
     if not paths:
@@ -218,6 +241,28 @@ def evaluate(root, manifest_path, manifest, attempt, source_hash, catalog_hash):
                     return 'inconsistent_values'
             elif r.get('match', 'equals') != 'equals' or type(expected) is not type(actual) or expected != actual:
                 return 'inconsistent_values'
+        # A self-consistent forged expected/actual pair is not enough. Match
+        # static scenario expectations, after the same explicit env expansion.
+        declared = {}
+        for phase in case.get('phases', []) + [{'name':'final','checks':case.get('final_checks', [])}]:
+            for c in phase.get('checks', []):
+                key = (phase['name'],c['type'],c['requirement'],c['label'])
+                declared.setdefault(key, []).append(c)
+        for r in checks:
+            c = declared[(r['phase'],r['name'],r['requirement'],r['label'])].pop(0)
+            if c.get('match','equals') != r.get('match','equals'):
+                return 'modified_expectation'
+            field = 'available' if c['type']=='web_action_available' else 'expected_count' if c['type']=='web_table_count_equals' else 'expected'
+            if field in c:
+                expected = c[field]
+                if field=='expected':
+                    expected = str(expected).lower() if isinstance(expected,bool) else str(expected)
+                    expected = re.sub(r'\$\{([A-Za-z_][A-Za-z_0-9]*)\}', lambda x: os.environ[x[1]], expected)
+                    expected = ' '.join(expected.split())
+                actual_expected = r['expected']
+                if isinstance(actual_expected,str): actual_expected=' '.join(actual_expected.split())
+                if type(expected) is not type(actual_expected) or expected != actual_expected:
+                    return 'modified_expectation'
         for name, rows in [('checks', checks), ('events', events)]:
             if report.get(name) != {'total': len(rows), 'passed': len(rows), 'failed': 0}:
                 return 'inconsistent_totals'
@@ -227,6 +272,7 @@ def evaluate(root, manifest_path, manifest, attempt, source_hash, catalog_hash):
 
 def coverage(root, manifest_paths, browsers, app_build, backend_build):
     inventory = json.loads((root / CATALOG).read_text())
+    validate_inventory(root, inventory)
     requirements = inventory['requirements']
     ids = {r['id'] for r in requirements}
     if len(ids) != len(requirements) or not requirements:

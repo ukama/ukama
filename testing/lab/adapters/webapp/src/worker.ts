@@ -146,7 +146,7 @@ export class Worker {
         // Playwright's automatic handlers otherwise race our artifact capture.
         this.browser = await BROWSERS[config.browser].launch({ headless: config.headless, timeout: budget.remaining(),
           handleSIGINT: false, handleSIGTERM: false,
-          ...(process.env.ULAB_WEBAPP_EXECUTABLE_PATH ? { executablePath: process.env.ULAB_WEBAPP_EXECUTABLE_PATH } : {}) });
+          ...((process.env[`ULAB_WEBAPP_${config.browser.toUpperCase()}_EXECUTABLE_PATH`] || process.env.ULAB_WEBAPP_EXECUTABLE_PATH) ? { executablePath: process.env[`ULAB_WEBAPP_${config.browser.toUpperCase()}_EXECUTABLE_PATH`] || process.env.ULAB_WEBAPP_EXECUTABLE_PATH } : {}) });
       } catch {
         throw new WorkerError('BROWSER_START_FAILED', 'Cannot start browser; install the Playwright browser/dependencies and check the display for headed mode');
       }

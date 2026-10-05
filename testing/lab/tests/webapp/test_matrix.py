@@ -6,6 +6,7 @@ from pathlib import Path
 import subprocess
 import tempfile
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location('matrix', ROOT / 'utils/webapp/matrix.py')
@@ -115,6 +116,11 @@ phases:
                 self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
 
     def test_inventory_arrays_preserve_duplicates_and_wrong_membership(self):
+        path=self.root/self.scenario
+        path.write_text(path.read_text().replace("expected: 'true'",'expected_property: site_names').replace('web_ui_equals','web_inventory_equals'))
+        self.report['results'][1]['name']='web_inventory_equals'
+        self.manifest['source_sha256']=m.fingerprint(self.root)
+        self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
         self.report['results'][1].update(expected=['site-one','site-two'],actual=['site-one','site-two'])
         self.assertEqual(self.coverage()['totals']['verified'],1)
         for actual in (['site-one','site-one'],['site-one'],['site-two','foreign']):
@@ -186,6 +192,39 @@ phases:
         cmd=['python3',str(ROOT/'utils/webapp/matrix.py'),'report','--root',str(self.root),'--out',str(out),'--browser','chromium','--gate']
         p=subprocess.run(cmd,capture_output=True,text=True);self.assertEqual(p.returncode,1,p.stderr);self.assertTrue((out/'coverage.html').is_file())
         p=subprocess.run(cmd,capture_output=True,text=True);self.assertEqual(p.returncode,2)
+
+    def test_self_consistent_forged_expected_actual_pair_gets_no_credit(self):
+        self.report['results'][1].update(expected='forged',actual='forged')
+        r=self.coverage();self.assertEqual(r['totals']['verified'],0)
+        self.assertEqual(r['requirements'][0]['evidence'][0]['state'],'modified_expectation')
+
+    def test_report_cannot_weaken_the_declared_match(self):
+        self.report['results'][1].update(match='contains',actual='true plus unwanted content')
+        self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_declared_environment_expectation_is_resolved_without_exposing_values(self):
+        path=self.root/self.scenario;path.write_text(path.read_text().replace("expected: 'true'",'expected: ${ULAB_EXPECTED_TEST}'))
+        self.manifest['source_sha256']=m.fingerprint(self.root);self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+        with patch.dict('os.environ',{'ULAB_EXPECTED_TEST':'  true  '}):
+            self.manifest['attempts'][0]['environment_sha256']=m.environment_hash(path.read_text())
+            self.assertEqual(self.coverage()['totals']['verified'],1)
+            self.report['results'][1].update(expected='other',actual='other')
+            self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_frozen_inventory_rejects_removed_or_reworded_requirements(self):
+        path=self.root/m.CATALOG;data=json.loads(path.read_text())
+        (self.root/m.POLICY).write_text(json.dumps({'requirements':1,'p0':1,'inventory_contract_sha256':m.inventory_contract(data['requirements'])}))
+        self.manifest.update(source_sha256=m.fingerprint(self.root))
+        self.assertTrue(self.coverage()['gate_passed'])
+        data['requirements'][0]['requirement']='weaker';path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError,'frozen'):self.coverage()
+
+    def test_multi_browser_override_fails_before_any_run(self):
+        with patch.dict('os.environ',{'ULAB_WEBAPP_EXECUTABLE_PATH':'/chromium'},clear=True):
+            m.validate_browser_overrides(['chromium'])
+            with self.assertRaisesRegex(ValueError,'multi-browser'):m.validate_browser_overrides(['chromium','firefox'])
+        with patch.dict('os.environ',{'ULAB_WEBAPP_CHROMIUM_EXECUTABLE_PATH':'/chromium','ULAB_WEBAPP_FIREFOX_EXECUTABLE_PATH':'/firefox'},clear=True):
+            m.validate_browser_overrides(['chromium','firefox'])
 
     def test_matrix_records_launch_failure_and_private_artifacts(self):
         binary=self.root/'badbinary';binary.write_text('invalid executable');binary.chmod(0o700)
