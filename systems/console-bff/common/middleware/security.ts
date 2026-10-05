@@ -13,8 +13,9 @@
 import { rateLimit as expressRateLimit } from "express-rate-limit";
 import helmet from "helmet";
 
+import { RATE_LIMIT_MAX } from "../configs";
+
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 300;
 const RATE_LIMIT_SKIP_PATHS = new Set(["/healthz", "/readyz", "/ping"]);
 
 /**
