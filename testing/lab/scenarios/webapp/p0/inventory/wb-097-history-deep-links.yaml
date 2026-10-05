@@ -1,0 +1,123 @@
+version: 2
+name: p0-webapp-history-deep-links
+description: Verify browser Back and direct links preserve current network and the bound site and node identities.
+seed: 4810
+suite: webapp
+priority: p1
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: list
+    events:
+      - type: web_open
+        view: network_sites
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SHELL-007
+        expected_property: site_names
+  - name: detail
+    events:
+      - type: web_open
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site title
+        requirement: WEB-SHELL-007
+        sites: site-001
+        expected_property: site_name
+  - name: back
+    events:
+      - type: web_inventory
+        view: network_sites
+        networks: net-001
+        action: back
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Path
+        requirement: WEB-SHELL-007
+        expected_property: path
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SHELL-007
+        expected_property: site_names
+  - name: direct-site
+    events:
+      - type: web_inventory
+        view: network_site_detail
+        networks: net-001
+        action: direct
+        sites: site-001
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Path
+        requirement: WEB-SHELL-007
+        sites: site-001
+        expected_property: path
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site title
+        requirement: WEB-SHELL-007
+        sites: site-001
+        expected_property: site_name
+  - name: direct-node
+    events:
+      - type: web_inventory
+        view: network_node_detail
+        networks: net-001
+        action: direct
+        nodes: tower-site-001-001
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_node_detail
+        networks: net-001
+        label: Path
+        requirement: WEB-SHELL-007
+        nodes: tower-site-001-001
+        expected_property: path
+      - type: web_inventory_equals
+        view: network_node_detail
+        networks: net-001
+        label: Node serial
+        requirement: WEB-SHELL-007
+        nodes: tower-site-001-001
+        expected_property: node_id

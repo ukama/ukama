@@ -572,7 +572,7 @@ static int sf_csv_field(char **p, char *out, size_t out_len) {
     return rc;
 }
 
-static int sf_assign_ues_from_csv(world_t *world,
+int sim_factory_load_world_csv(world_t *world,
                                   const char *csv_path,
                                   ulab_error_t *err) {
     FILE *f;
@@ -734,7 +734,7 @@ int sim_factory_prepare_world(const runner_opts_t *opts,
         return ULAB_ERR;
     }
 
-    return sf_assign_ues_from_csv(world, csv_path, err);
+    return sim_factory_load_world_csv(world, csv_path, err);
 }
 
 int sim_factory_wait_asr(const runner_opts_t *opts,

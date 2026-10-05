@@ -886,3 +886,9 @@ when the package metadata changed but the old process is still running.
 The default check timeout is 180 seconds with a five-second polling interval.
 They can be adjusted with `ULAB_SOFTWARE_UPDATE_TIMEOUT_SEC` and
 `ULAB_SOFTWARE_UPDATE_POLL_SEC`.
+
+## Browser scenarios
+
+Version 2 web-app scenarios have a separate contract in
+`docs/scenario-language-v2.md`. The existing console/console-kpi checks in this
+version validate BFF behavior; they do not establish browser coverage.

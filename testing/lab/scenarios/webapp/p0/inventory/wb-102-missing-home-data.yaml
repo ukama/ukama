@@ -1,0 +1,111 @@
+version: 2
+name: p0-webapp-missing-home-data
+description: Controlled missing KPI and registry responses must render unavailable and recover after restoring reads.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: home
+    events:
+      - type: web_open
+        view: network_home
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 1/1
+        requirement: WEB-NET-008
+  - name: missing-kpis
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: mask_home
+        value: kpis
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: KPI fault applied
+        requirement: WEB-NET-008
+        expected: kpis
+      - type: web_kpi_equals
+        view: network_home
+        label: Network uptime
+        expected: —
+        requirement: WEB-NET-008
+      - type: web_kpi_equals
+        view: network_home
+        label: Active customers
+        expected: —
+        requirement: WEB-NET-008
+      - type: web_kpi_equals
+        view: network_home
+        label: Data volume
+        expected: —
+        requirement: WEB-NET-008
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: —
+        requirement: WEB-NET-008
+  - name: missing-registry
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: mask_home
+        value: registry
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: KPI fault applied
+        requirement: WEB-NET-008
+        expected: registry
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: —
+        requirement: WEB-NET-008
+  - name: restored
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: mask_home
+        value: reset
+      - type: web_reload
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 1/1
+        requirement: WEB-NET-008

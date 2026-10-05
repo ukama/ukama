@@ -23,6 +23,7 @@ static void usage(void) {
     printf("usage:\n");
     printf("  ukama-lab validate <scenario.yaml|dir> [options]\n");
     printf("  ukama-lab run <scenario.yaml|dir> [options]\n");
+    printf("  ukama-lab lint <scenario.yaml|dir> [...] (offline; no resources created)\n");
     printf("  ukama-lab plan <workload.yaml> [options] (offline; no resources created)\n");
     printf("  ukama-lab cleanup-workload <run-dir> [options] (recorded resources only)\n");
     printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
@@ -35,12 +36,13 @@ static void usage(void) {
     printf("  --bff <url>           BFF GraphQL endpoint\n");
     printf("  --hub-url <url>       Hub API base URL\n");
     printf("  --out <dir>           output directory\n");
-    printf("  --run-id <id>         fixed run id; existing created.json is cleaned first\n");
+    printf("  --run-id <id>         fixed run id; webapp requires a new directory\n");
     printf("  --scripts <dir>       runtime script directory\n");
     printf("  --workload-assets <dir> workload catalog/report assets; default: workload\n");
+    printf("  --webapp-worker <path> local browser worker launcher; default: utils/webapp-worker.sh\n");
     printf("  --sim-type <type>     SIM pool type; default: ukama_data\n");
     printf("  --warehouse-url <url> warehouse API URL for run SIM provisioning\n");
-    printf("  --factory-url <url>   sim factory API URL for run SIM export\n");
+    printf("  --factory-url <url>   factory API URL for SIM export / webapp node setup\n");
     printf("  --asr-url <url>       optional ukama-agent ASR API URL for post-allocation check\n");
     printf("generate options:\n");
     printf("  --model <name|all>    org/network/site/node/sim/subscriber/package\n");
@@ -58,6 +60,8 @@ static void usage(void) {
 static void opts_init(runner_opts_t *o) {
     memset(o, 0, sizeof(*o));
     ulab_copy(o->workload_assets, sizeof(o->workload_assets), "workload");
+    ulab_copy(o->webapp_worker, sizeof(o->webapp_worker),
+              ulab_getenv_default("UKAMA_LAB_WEBAPP_WORKER", "utils/webapp-worker.sh"));
     ulab_copy(o->bff_url, sizeof(o->bff_url),
               ulab_getenv_default("UKAMA_LAB_BFF",
                                   "http://localhost:8080/graphql"));
@@ -103,6 +107,8 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
             ulab_copy(o->repo, sizeof(o->repo), argv[++i]);
         } else if (ulab_streq(argv[i], "--workload-assets") && i + 1 < argc) {
             ulab_copy(o->workload_assets, sizeof(o->workload_assets), argv[++i]);
+        } else if (ulab_streq(argv[i], "--webapp-worker") && i + 1 < argc) {
+            ulab_copy(o->webapp_worker, sizeof(o->webapp_worker), argv[++i]);
         } else if (ulab_streq(argv[i], "--sim-type") && i + 1 < argc) {
             ulab_copy(o->sim_type, sizeof(o->sim_type), argv[++i]);
         } else if (ulab_streq(argv[i], "--warehouse-url") && i + 1 < argc) {
@@ -146,6 +152,10 @@ int main(int argc, char **argv) {
         printf("ukama-lab %s scenario-v%d\n", ULAB_VERSION,
                ULAB_SCHEMA_VER);
         return ULAB_OK;
+    }
+
+    if (ulab_streq(argv[1], "lint")) {
+        return scenario_lint_main(argc - 2, argv + 2);
     }
 
     if (ulab_streq(argv[1], "generate")) {

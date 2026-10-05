@@ -1,0 +1,157 @@
+version: 2
+name: p0-webapp-operation-prerequisites
+description: Tower connectivity gates radio and cellular controls; controller connectivity gates all switch ports; reconnect restores availability.
+seed: 5116
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, operations]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+  browser: chromium
+  headless: true
+  action_timeout_seconds: 30
+  check_timeout_seconds: 180
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: tower_offline
+    events:
+      - type: "disconnect_nodes"
+        nodes: "tower-site-001-001"
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: false
+        requirement: "WEB-OPS-007"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: false
+        requirement: "WEB-OPS-007"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Radio reason"
+        expected: "Tower node is offline — it can't be reached"
+        requirement: "WEB-OPS-007"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Cellular reason"
+        expected: "Tower node is offline — it can't be reached"
+        requirement: "WEB-OPS-007"
+  - name: tower_returns
+    events:
+      - type: "reconnect_nodes"
+        nodes: "tower-site-001-001"
+      - type: "web_reload"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: true
+        requirement: "WEB-OPS-007"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: true
+        requirement: "WEB-OPS-007"
+  - name: controller_offline
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "close_site_actions"
+      - type: "disconnect_nodes"
+        nodes: "controller-site-001-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_ports"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 1"
+        available: false
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 2"
+        available: false
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 3"
+        available: false
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 9"
+        available: false
+        requirement: "WEB-OPS-008"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port 1 reason"
+        expected: "Controller node is offline — ports can't be switched"
+        requirement: "WEB-OPS-008"
+  - name: controller_returns
+    events:
+      - type: "reconnect_nodes"
+        nodes: "controller-site-001-001"
+      - type: "web_reload"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_ports"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 1"
+        available: true
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 2"
+        available: true
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 3"
+        available: true
+        requirement: "WEB-OPS-008"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Port 9"
+        available: true
+        requirement: "WEB-OPS-008"

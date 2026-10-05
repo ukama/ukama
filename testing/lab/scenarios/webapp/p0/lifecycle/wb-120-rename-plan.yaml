@@ -1,0 +1,109 @@
+version: 2
+name: "p0-webapp-rename-plan"
+description: "rename plan. UI assertions against unchanged console; see lifecycle.md for prerequisites and gaps."
+seed: 4711
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: ["webapp", "commerce", "local"]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  browser: "chromium"
+  headless: false
+  auth_state: ".auth/owner.json"
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: ["networks"]
+packages:
+  - ref: "weekly"
+    name: "weekly"
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: "USD"
+    country: "USA"
+    scope: "network"
+phases:
+  - name: "plan"
+    events:
+      - type: "web_open"
+        view: "business_data_plans"
+        networks: "net-001"
+      - type: "web_commerce"
+        view: "business_data_plans"
+        networks: "net-001"
+        action: "create_plan"
+        package: "weekly__net-001"
+        unit: "GB"
+  - name: "rename"
+    events:
+      - type: "web_commerce"
+        view: "business_data_plans"
+        networks: "net-001"
+        action: "rename_plan"
+        package: "weekly__net-001"
+      - type: "web_reload"
+    checks:
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Plan terms"
+        expected: "1 GB data · 1 week validity"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Plan price"
+        expected: "$10 / week"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+  - name: "immutable"
+    events:
+      - type: "web_commerce"
+        view: "business_data_plans"
+        networks: "net-001"
+        action: "edit_plan"
+        package: "weekly__net-001"
+    checks:
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Price"
+        expected: "$10"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Data volume"
+        expected: "1"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Unit"
+        expected: "GB"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+      - type: "web_commerce_equals"
+        view: "business_data_plans"
+        label: "Validity"
+        expected: "1 week"
+        requirement: "WEB-PLAN-011"
+        package: "weekly__net-001"
+  - name: "close"
+    events:
+      - type: "web_commerce"
+        view: "business_data_plans"
+        networks: "net-001"
+        action: "close_dialog"

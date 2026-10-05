@@ -1,0 +1,454 @@
+version: 2
+name: p0-webapp-revenue-date-ranges
+description: One recent purchase retains its expected total through each visible rolling date range.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 1
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+  - ref: topup
+    name: topup
+    data_mb: 2048
+    duration_minutes: 43200
+    amount: 25
+    currency: USD
+    country: USA
+    scope: network
+phases:
+  - name: imported-inventory
+    events:
+      - type: web_open
+        view: business_sim_pool
+        networks: net-001
+    checks:
+      - type: web_commerce_equals
+        view: business_sim_pool
+        label: Pool status
+        expected: Available
+        requirement: WEB-SIM-001
+        ues: ue-000001
+  - name: plans
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: topup__net-001
+        unit: GB
+  - name: create-customer-and-allocate
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: create_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: allocate_sim
+        package: weekly__net-001
+        ues: ue-000001
+    checks:
+      - type: web_commerce_equals
+        view: customer_customers
+        label: ICCID
+        expected_property: iccid
+        requirement: WEB-CUSTOMER-002
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Active plan
+        expected_property: plan_name
+        requirement: WEB-CUSTOMER-002
+        package: weekly__net-001
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Package status
+        expected: Current
+        requirement: WEB-CUSTOMER-002
+        package: weekly__net-001
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Cycle usage
+        expected: 0 B of 1 GB used this cycle
+        requirement: WEB-PLAN-005
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Package days
+        expected: '7'
+        requirement: WEB-PLAN-003
+        package: weekly__net-001
+        ues: ue-000001
+  - name: cancel-topup
+    events:
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: cancel_top_up
+        package: topup__net-001
+        ues: ue-000001
+    checks:
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Package count
+        expected: '0'
+        requirement: WEB-PAY-001
+        package: topup__net-001
+        ues: ue-000001
+  - name: pay-and-observe-entitlement
+    events:
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: top_up
+        package: topup__net-001
+        ues: ue-000001
+    checks:
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Package count
+        expected: '1'
+        requirement: WEB-PAY-002
+        package: topup__net-001
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Package status
+        expected: Upcoming
+        requirement: WEB-PAY-002
+        package: topup__net-001
+        ues: ue-000001
+  - name: receipt
+    events:
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_receipt
+        package: topup__net-001
+        ues: ue-000001
+    checks:
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt payment ID
+        expected_property: payment_id
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt plan
+        expected_property: plan_name
+        requirement: WEB-PAY-003
+        package: topup__net-001
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt total
+        expected: $25.00
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt method
+        expected: Cash
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt status
+        expected: Completed
+        requirement: WEB-PAY-003
+        ues: ue-000001
+  - name: persisted-receipt
+    events:
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_dialog
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_customer
+        ues: ue-000001
+      - type: web_reload
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_receipt
+        ues: ue-000001
+        package: topup__net-001
+    checks:
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt payment ID
+        expected_property: payment_id
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt plan
+        expected_property: plan_name
+        requirement: WEB-PAY-003
+        package: topup__net-001
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt total
+        expected: $25.00
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt method
+        expected: Cash
+        requirement: WEB-PAY-003
+        ues: ue-000001
+      - type: web_commerce_equals
+        view: customer_customers
+        label: Receipt status
+        expected: Completed
+        requirement: WEB-PAY-003
+        ues: ue-000001
+  - name: business-home
+    events:
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_dialog
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_customer
+        ues: ue-000001
+      - type: web_open
+        view: business_home
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: business_home
+        label: Revenue
+        expected: $25
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_home
+        label: Customers
+        expected: '1'
+        requirement: WEB-BIZ-002
+        timeout_seconds: 900
+  - name: revenue-summary
+    events:
+      - type: web_open
+        view: business_revenue
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Revenue
+        expected: $25
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Purchases
+        expected: '1'
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Avg purchase
+        expected: $25
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Paid customers
+        expected: '1'
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+  - name: package-sales
+    events:
+      - type: web_open
+        view: business_packages
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: business_packages
+        label: Package revenue
+        expected: $25
+        requirement: WEB-BIZ-001
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_packages
+        label: Packages sold
+        expected: '1'
+        requirement: WEB-BIZ-007
+        timeout_seconds: 900
+      - type: web_commerce_equals
+        view: business_packages
+        package: topup__net-001
+        label: Performance price
+        expected: $25
+        requirement: WEB-BIZ-003
+        timeout_seconds: 900
+      - type: web_commerce_equals
+        view: business_packages
+        package: topup__net-001
+        label: Performance sold
+        expected: '1'
+        requirement: WEB-BIZ-003
+        timeout_seconds: 900
+      - type: web_commerce_equals
+        view: business_packages
+        package: topup__net-001
+        label: Performance revenue
+        expected: $25
+        requirement: WEB-BIZ-003
+        timeout_seconds: 900
+      - type: web_commerce_equals
+        view: business_packages
+        package: topup__net-001
+        label: Performance share
+        expected: 100%
+        requirement: WEB-BIZ-003
+        timeout_seconds: 900
+  - name: persisted-package-sales
+    events:
+      - type: web_reload
+    checks:
+      - type: web_kpi_equals
+        view: business_packages
+        label: Package revenue
+        expected: $25
+        requirement: WEB-BIZ-008
+        timeout_seconds: 900
+      - type: web_kpi_equals
+        view: business_packages
+        label: Packages sold
+        expected: '1'
+        requirement: WEB-BIZ-008
+        timeout_seconds: 900
+      - type: web_commerce_equals
+        view: business_packages
+        package: topup__net-001
+        label: Performance revenue
+        expected: $25
+        requirement: WEB-BIZ-008
+        timeout_seconds: 900
+  - name: range-Last-24h
+    events:
+      - type: web_open
+        view: business_revenue
+        networks: net-001
+      - type: web_interact
+        view: business_revenue
+        action: date_range
+        value: Last 24h
+    checks:
+      - type: web_ui_equals
+        view: business_revenue
+        label: Date range
+        expected: Last 24h
+        requirement: WEB-BIZ-004
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Revenue
+        expected: $25
+        requirement: WEB-BIZ-004
+        timeout_seconds: 900
+  - name: range-Last-7-days
+    events:
+      - type: web_open
+        view: business_revenue
+        networks: net-001
+      - type: web_interact
+        view: business_revenue
+        action: date_range
+        value: Last 7 days
+    checks:
+      - type: web_ui_equals
+        view: business_revenue
+        label: Date range
+        expected: Last 7 days
+        requirement: WEB-BIZ-004
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Revenue
+        expected: $25
+        requirement: WEB-BIZ-004
+        timeout_seconds: 900
+  - name: range-Last-30-days
+    events:
+      - type: web_open
+        view: business_revenue
+        networks: net-001
+      - type: web_interact
+        view: business_revenue
+        action: date_range
+        value: Last 30 days
+    checks:
+      - type: web_ui_equals
+        view: business_revenue
+        label: Date range
+        expected: Last 30 days
+        requirement: WEB-BIZ-004
+      - type: web_kpi_equals
+        view: business_revenue
+        label: Revenue
+        expected: $25
+        requirement: WEB-BIZ-004
+        timeout_seconds: 900

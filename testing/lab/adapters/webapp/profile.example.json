@@ -1,0 +1,9 @@
+{
+  "base_url": "http://localhost:3000",
+  "auth_state": ".auth/owner.json",
+  "browser": "chromium",
+  "headless": true,
+  "action_timeout_seconds": 30,
+  "check_timeout_seconds": 30,
+  "scenario_timeout_seconds": 3600
+}

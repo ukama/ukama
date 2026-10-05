@@ -1,0 +1,91 @@
+version: 2
+name: "p0-webapp-member-loading-retry"
+description: "member loading retry. See ui-quality.md for boundaries and controlled evidence."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, local, ui-quality]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+phases:
+  - name: "baseline"
+    events:
+      - type: "web_open"
+        view: "business_members"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Members state"
+        expected: "data"
+        requirement: "WEB-UI-001"
+  - name: "loading"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "member_fault"
+        value: "loading"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Members state"
+        expected: "loading"
+        requirement: "WEB-UI-001"
+  - name: "loaded"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "member_release"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Members state"
+        expected: "data"
+        requirement: "WEB-UI-001"
+  - name: "failed"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "member_fault"
+        value: "error"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Members state"
+        expected: "error"
+        requirement: "WEB-UI-001"
+  - name: "retry"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "member_release"
+      - type: "web_interact"
+        view: "business_members"
+        action: "member_retry"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Members state"
+        expected: "data"
+        requirement: "WEB-UI-002"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Text visible"
+        expected: "false"
+        requirement: "WEB-UI-002"
+        subject: "Couldn't load members"

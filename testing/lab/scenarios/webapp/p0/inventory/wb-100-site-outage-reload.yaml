@@ -1,0 +1,78 @@
+version: 2
+name: p0-webapp-site-outage-reload
+description: Observe site connectivity degradation after explicit reload and recovery with correct membership.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: online
+    events:
+      - type: web_open
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-004
+        sites: site-001
+        expected: Online
+  - name: outage
+    events:
+      - type: disconnect_nodes
+        nodes: tower-site-001-001
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-004
+        sites: site-001
+        expected: Degraded
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site node IDs
+        requirement: WEB-SITE-004
+        sites: site-001
+        expected_property: site_node_ids
+  - name: recovery
+    events:
+      - type: reconnect_nodes
+        nodes: tower-site-001-001
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-004
+        sites: site-001
+        expected: Online

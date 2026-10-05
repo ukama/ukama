@@ -1,0 +1,175 @@
+version: 2
+name: p0-webapp-customer-list-controls
+description: Search, sort and SIM/plan filters retain the independently created customer identities.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 2
+setup:
+  create_via_webapp: [networks]
+packages:
+  - ref: weekly
+    name: weekly
+    data_mb: 1024
+    duration_minutes: 10080
+    amount: 10
+    currency: USD
+    country: USA
+    scope: network
+phases:
+  - name: plan
+    events:
+      - type: web_open
+        view: business_data_plans
+        networks: net-001
+      - type: web_commerce
+        view: business_data_plans
+        networks: net-001
+        action: create_plan
+        package: weekly__net-001
+        unit: GB
+  - name: customers
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: create_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: create_customer
+        ues: ue-000002
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: open_customer
+        ues: ue-000001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: allocate_sim
+        ues: ue-000001
+        package: weekly__net-001
+      - type: web_commerce
+        view: customer_customers
+        networks: net-001
+        action: close_customer
+        ues: ue-000001
+  - name: search
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: search
+        value_from: customer_name
+        ues: ue-000001
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'false'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000002
+  - name: no-match
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: search
+        value: no-such-lab-user
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Text visible
+        expected: 'true'
+        requirement: WEB-CUSTOMER-008
+        subject: No customers match
+  - name: descending
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: search
+        value: ''
+      - type: web_interact
+        view: customer_customers
+        action: sort
+        label: Customer
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer order
+        expected: Lab User 2|Lab User 1
+        requirement: WEB-CUSTOMER-008
+  - name: active-filter
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: filter
+        label: SIM
+        value: active
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'false'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000002
+  - name: no-plan-filter
+    events:
+      - type: web_interact
+        view: customer_customers
+        action: filter
+        label: SIM
+        value: All
+      - type: web_interact
+        view: customer_customers
+        action: filter
+        label: Active plan
+        value: No plan
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'false'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000001
+      - type: web_ui_equals
+        view: customer_customers
+        label: Customer present
+        expected: 'true'
+        requirement: WEB-CUSTOMER-008
+        ues: ue-000002

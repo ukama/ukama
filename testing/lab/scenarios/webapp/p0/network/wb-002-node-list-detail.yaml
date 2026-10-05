@@ -1,0 +1,226 @@
+version: 2
+name: p0-webapp-node-list-detail
+description: Create one site through the web app and reconcile all three node identities, models, sites and connectivity in the list and details.
+seed: 4804
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: nodes_list
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_field_equals
+        view: network_nodes
+        label: Nodes count
+        expected: "3"
+        requirement: WEB-NODE-001
+  - name: tower_card
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_field_equals
+        view: network_nodes
+        label: "Serial #"
+        nodes: tower-site-001-001
+        expected_ref: tower-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Model type"
+        nodes: tower-site-001-001
+        expected_ref: tower-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Site"
+        nodes: tower-site-001-001
+        expected_ref: tower-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Connectivity"
+        nodes: tower-site-001-001
+        expected: "Online"
+        requirement: WEB-NODE-002
+  - name: tower_detail
+    events:
+      - type: web_open
+        view: network_node_detail
+        networks: net-001
+        nodes: tower-site-001-001
+    checks:
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Serial #"
+        expected_ref: tower-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Model type"
+        expected_ref: tower-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Site"
+        expected_ref: tower-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Connectivity"
+        expected: "Online"
+        requirement: WEB-NODE-002
+  - name: amplifier_card
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_field_equals
+        view: network_nodes
+        label: "Serial #"
+        nodes: amplifier-site-001-001
+        expected_ref: amplifier-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Model type"
+        nodes: amplifier-site-001-001
+        expected_ref: amplifier-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Site"
+        nodes: amplifier-site-001-001
+        expected_ref: amplifier-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Connectivity"
+        nodes: amplifier-site-001-001
+        expected: "Online"
+        requirement: WEB-NODE-002
+  - name: amplifier_detail
+    events:
+      - type: web_open
+        view: network_node_detail
+        networks: net-001
+        nodes: amplifier-site-001-001
+    checks:
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Serial #"
+        expected_ref: amplifier-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Model type"
+        expected_ref: amplifier-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Site"
+        expected_ref: amplifier-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Connectivity"
+        expected: "Online"
+        requirement: WEB-NODE-002
+  - name: controller_card
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_field_equals
+        view: network_nodes
+        label: "Serial #"
+        nodes: controller-site-001-001
+        expected_ref: controller-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Model type"
+        nodes: controller-site-001-001
+        expected_ref: controller-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Site"
+        nodes: controller-site-001-001
+        expected_ref: controller-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_nodes
+        label: "Connectivity"
+        nodes: controller-site-001-001
+        expected: "Online"
+        requirement: WEB-NODE-002
+  - name: controller_detail
+    events:
+      - type: web_open
+        view: network_node_detail
+        networks: net-001
+        nodes: controller-site-001-001
+    checks:
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Serial #"
+        expected_ref: controller-site-001-001
+        expected_property: id
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Model type"
+        expected_ref: controller-site-001-001
+        expected_property: model
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Site"
+        expected_ref: controller-site-001-001
+        expected_property: site_name
+        requirement: WEB-NODE-002
+      - type: web_field_equals
+        view: network_node_detail
+        label: "Connectivity"
+        expected: "Online"
+        requirement: WEB-NODE-002

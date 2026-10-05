@@ -1,0 +1,60 @@
+version: 2
+name: p0-webapp-onboarding-sim-guidance
+description: Staged onboarding against the original console; injected faults are controlled evidence only.
+seed: 4881
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, onboarding]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  session_mode: onboarding
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+phases:
+  - name: sim-guidance
+    events:
+      - type: web_onboard
+        view: configure
+        action: open
+        value: sims
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Upload SIMs
+        requirement: WEB-ONBOARD-012
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: SIM upload present
+        expected: 'false'
+        requirement: WEB-ONBOARD-012
+        timeout_seconds: 180
+  - name: finish
+    events:
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Finish setup
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: You're all set!
+        requirement: WEB-ONBOARD-012
+        timeout_seconds: 180

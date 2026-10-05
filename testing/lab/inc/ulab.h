@@ -17,6 +17,7 @@
 
 #define ULAB_VERSION       VERSION
 #define ULAB_SCHEMA_VER    1
+#define ULAB_WEBAPP_SCHEMA_VER 2
 #define ULAB_MAX_NAME      256
 #define ULAB_MAX_ID        512
 #define ULAB_MAX_REF       128

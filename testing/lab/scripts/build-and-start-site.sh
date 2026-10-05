@@ -181,6 +181,9 @@ reserve_node() {
 
     case "$code" in
         2??)
+            if [ "${ULAB_WEBAPP_RUN:-0}" = 1 ]; then
+                printf "%s\t%s\n" "$SITE_REF" "$node_id" >> "$STATE_DIR/factory-claims.tsv"
+            fi
             rm -f "$body"
             return 0
             ;;
@@ -271,6 +274,7 @@ write_site_state() {
         echo "LAB_NET=${LAB_NET:-}"
     } > "$state_file"
 
+    [ "${1:-complete}" != early ] || return 0
     {
         printf "%s\t%s\t%s\t%s\t%s\t%s\n" \
             "$SITE_REF" "$NETWORK_REF" "$TNODE_ID" "$CNODE_ID" \
@@ -355,6 +359,15 @@ done
 TNODE_CONTAINER="$(container_name "$TNODE_ID")"
 CNODE_CONTAINER="$(container_name "$CNODE_ID")"
 ANODE_CONTAINER="$(container_name "$ANODE_ID")"
+
+# Persist the exclusively reserved, assigned bundle before any build/start can
+# fail. The webapp parent reloads this state for bounded teardown on failure.
+if [ "${ULAB_WEBAPP_RUN:-0}" = 1 ]; then
+    write_site_state early
+    write_node_state "$SITE_REF-tnode" "$TNODE_ID" "tnode" "$TNODE_CONTAINER"
+    write_node_state "$SITE_REF-cnode" "$CNODE_ID" "cnode" "$CNODE_CONTAINER"
+    write_node_state "$SITE_REF-anode" "$ANODE_ID" "anode" "$ANODE_CONTAINER"
+fi
 
 # Build only after the complete Factory bundle has been reserved.
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$TNODE_ID" "$NODE_RUNTIME"

@@ -1,0 +1,215 @@
+version: 2
+name: p0-webapp-logout
+description: Use a dedicated disposable logout session; follow the real logout handoff and prove protected routes stay blocked.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags:
+  - webapp
+  - auth
+  - local
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  session_mode: auth_test
+  auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}
+  auth_state: ${ULAB_AUTH_LOGOUT_STATE}
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: before-logout
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: dashboard
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Organization
+        expected: ${ULAB_AUTH_ORG}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Full name
+        expected: ${ULAB_AUTH_OWNER_NAME}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Email
+        expected: ${ULAB_AUTH_OWNER_EMAIL}
+        requirement: WEB-AUTH-002
+      - type: web_session_equals
+        view: session
+        label: Settings field
+        subject: Role
+        expected: Owner
+        requirement: WEB-AUTH-002
+  - name: open-menu
+    events:
+      - type: web_session
+        view: session
+        action: open_account
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Account name
+        expected: ${ULAB_AUTH_OWNER_NAME}
+        requirement: WEB-AUTH-005
+  - name: logout
+    events:
+      - type: web_session
+        view: session
+        action: logout
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Logout handoff
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: auth
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Auth origin
+        expected: ${ULAB_WEBAPP_AUTH_ORIGIN}
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-005
+  - name: protected-return
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/settings
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-005
+  - name: other-lens-denied
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /customer/customers
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Access blocked
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Dashboard visible
+        expected: 'false'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_NAME}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_OWNER_EMAIL}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Sensitive text absent
+        subject: ${ULAB_AUTH_ORG}
+        expected: 'true'
+        requirement: WEB-AUTH-005
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-005

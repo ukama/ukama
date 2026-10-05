@@ -197,19 +197,13 @@ static int targets(json_t *o, wl_targets_t *t, ulab_error_t *err) {
         number(o,"requests_per_second",&t->rps,0,1000000,0,err);
 }
 int workload_is_file(const char *path) {
-    FILE *f = fopen(path, "r");
-    char line[1024];
-    int result = 0;
-    if (!f) return 0;
-    while (fgets(line, sizeof(line), f)) {
-        if ((strncmp(line, "kind:", 5) == 0 || strstr(line, "\"kind\":")) && strstr(line, "workload")) {
-            result = 1; break;
-        }
-        if (strncmp(line, "version:", 8) == 0 && atoi(line + 8) == 2) {
-            result = 1; break;
-        }
-    }
-    fclose(f);
+    /* Version 2 is shared by workloads and browser scenarios. Dispatch by the
+     * explicit top-level kind, never by the version or text in a description. */
+    ulab_error_t err = {{0}};
+    json_t *root = wl_yaml_load(path, &err);
+    const char *kind = json_string_value(json_object_get(root, "kind"));
+    int result = kind && !strcmp(kind, "workload");
+    json_decref(root);
     return result;
 }
 

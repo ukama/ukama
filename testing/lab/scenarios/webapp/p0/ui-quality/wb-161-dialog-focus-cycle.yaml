@@ -1,0 +1,70 @@
+version: 2
+name: "p0-webapp-dialog-focus-cycle"
+description: "dialog focus cycle. See ui-quality.md for boundaries and controlled evidence."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, local, ui-quality]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+phases:
+  - name: "keyboard-open"
+    events:
+      - type: "web_open"
+        view: "business_members"
+      - type: "web_interact"
+        view: "business_members"
+        action: "open_form"
+        value: "keyboard"
+        label: "Invite member"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Dialog focus"
+        expected: "true"
+        requirement: "WEB-UI-006"
+  - name: "traverse"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "focus_cycle"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Dialog keyboard cycle"
+        expected: "true"
+        requirement: "WEB-UI-007"
+  - name: "escape"
+    events:
+      - type: "web_interact"
+        view: "business_members"
+        action: "press"
+        value: "Escape"
+    checks:
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Dialog open"
+        expected: "false"
+        requirement: "WEB-UI-007"
+      - type: "web_ui_equals"
+        view: "business_members"
+        label: "Focus on button"
+        expected: "true"
+        requirement: "WEB-UI-007"
+        subject: "Invite member"

@@ -1,0 +1,64 @@
+version: 2
+name: p0-webapp-empty-inventory
+description: An empty newly created network has explicit empty site and node inventories.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+setup:
+  create_via_webapp: [networks]
+phases:
+  - name: sites
+    events:
+      - type: web_open
+        view: network_sites
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SITE-001
+        expected_property: site_names
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Header count
+        requirement: WEB-SITE-001
+        expected: '0'
+  - name: nodes
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_nodes
+        networks: net-001
+        label: Node IDs
+        requirement: WEB-NODE-004
+        expected_property: node_ids
+      - type: web_inventory_equals
+        view: network_nodes
+        networks: net-001
+        label: Header count
+        requirement: WEB-NODE-004
+        expected: '0'

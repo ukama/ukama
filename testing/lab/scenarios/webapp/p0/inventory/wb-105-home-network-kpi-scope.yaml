@@ -1,0 +1,84 @@
+version: 2
+name: p0-webapp-home-network-kpi-scope
+description: Disconnect one network tower and verify distinct online-site totals across switch and reload.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 2
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: fault
+    events:
+      - type: disconnect_nodes
+        nodes: tower-site-002-001
+      - type: web_open
+        view: network_home
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 1/1
+        requirement: WEB-SHELL-002
+  - name: switch
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-002
+        action: switch
+      - type: web_open
+        view: network_home
+        networks: net-002
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 0/1
+        requirement: WEB-SHELL-002
+  - name: reload
+    events:
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-002
+        label: Selected network
+        requirement: WEB-SHELL-002
+        expected_property: network_name
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 0/1
+        requirement: WEB-SHELL-002
+  - name: restore
+    events:
+      - type: reconnect_nodes
+        nodes: tower-site-002-001
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Sites online
+        expected: 1/1
+        requirement: WEB-SHELL-002

@@ -1,0 +1,56 @@
+version: 2
+name: p0-webapp-stale-network-preference
+description: Inject an invalid stored network in the isolated browser then require a real selectable network after reload.
+seed: 4810
+suite: webapp
+priority: p1
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: selected
+    events:
+      - type: web_open
+        view: network_home
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Selected network
+        requirement: WEB-SHELL-006
+        expected_property: network_name
+  - name: stale
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: stale_selection
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Selection valid
+        requirement: WEB-SHELL-006
+        expected: 'true'

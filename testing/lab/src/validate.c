@@ -35,6 +35,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         }
     }
 
+    if (s->version == ULAB_WEBAPP_SCHEMA_VER) {
+        return scenario_webapp_validate(s, err);
+    }
+    if (scenario_has_webapp(s)) {
+        return fail(err, "webapp fields and steps require scenario version 2");
+    }
+
     if (s->version != ULAB_SCHEMA_VER) {
         return fail(err, "unsupported scenario version");
     }

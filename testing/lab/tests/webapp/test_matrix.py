@@ -1,0 +1,254 @@
+"""Adversarial evidence/report checks. SPDX-License-Identifier: MPL-2.0"""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import unittest
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[2]
+spec = importlib.util.spec_from_file_location('matrix', ROOT / 'utils/webapp/matrix.py')
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
+
+class CoverageTest(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.scenario = 'scenarios/webapp/p0/a.yaml'
+        p = self.root / self.scenario
+        p.parent.mkdir(parents=True)
+        p.write_text('''version: 2
+suite: webapp
+name: example
+status: active
+webapp:
+  browser: chromium
+  scenario_timeout_seconds: 1
+phases:
+  - name: baseline
+    events:
+      - type: web_open
+    checks:
+      - type: web_ui_equals
+        requirement: WEB-TEST-001
+        label: Visible
+        expected: 'true'
+''')
+        catalog = self.root / m.CATALOG
+        catalog.parent.mkdir(parents=True)
+        catalog.write_text(json.dumps({'requirements': [{'id':'WEB-TEST-001','automation':'implemented','priority':'p0','requirement':'Visible <script>alert(1)</script>','scenarios':[self.scenario]}]}))
+        for path in ['utils/webapp-worker.sh','utils/webapp/matrix.py','adapters/webapp/package-lock.json']:
+            f=self.root/path;f.parent.mkdir(parents=True,exist_ok=True);f.write_text('test')
+        self.report = {'run_id':'run-1','scenario':'example','status':'active','suite':'webapp','browser':'chromium','outcome':'PASS','passed':True,'final_rc':0,'cleanup':'ok',
+                       'checks':{'total':1,'passed':1,'failed':0},'events':{'total':1,'passed':1,'failed':0},
+                       'results':[{'kind':'event','phase':'baseline','name':'web_open','state':'PASS'},
+                                  {'kind':'check','phase':'baseline','name':'web_ui_equals','requirement':'WEB-TEST-001','label':'Visible','state':'PASS','expected':'true','actual':'true'}]}
+        self.manifest = {'schema_version':1,'evidence':'live','app_build':'app1','backend_build':'backend1','source_sha256':m.fingerprint(self.root),'inventory_sha256':m.digest(catalog),
+                         'attempts':[{'scenario':self.scenario,'browser':'chromium','state':'complete','exit_code':0,'run_id':'run-1','report':'report.json','scenario_sha256':m.digest(p),'started_ns':1,'environment_sha256':m.environment_hash(p.read_text())}]}
+        self.write()
+
+    def write(self, folder='one'):
+        out=self.root/folder;out.mkdir(exist_ok=True)
+        generated=out/'case.yaml';generated.write_text(m.generated_case((self.root/self.scenario).read_text(),self.manifest['attempts'][0]['browser']))
+        self.manifest['attempts'][0].update(generated_case='case.yaml',generated_sha256=m.digest(generated))
+        m.write_json(out/'report.json',self.report)
+        self.manifest['attempts'][0]['report_sha256']=m.digest(out/'report.json')
+        m.write_json(out/'matrix.json',self.manifest)
+        return out/'matrix.json'
+
+    def coverage(self, paths=None, browsers=None):
+        return m.coverage(self.root,paths or [self.write()],browsers or ['chromium'],'app1','backend1')
+
+    def test_complete_evidence_and_html_escaping(self):
+        r=self.coverage();self.assertTrue(r['gate_passed']);self.assertEqual(r['totals']['verified'],1)
+        page=m.render_html(r);self.assertNotIn('<script>',page);self.assertIn('&lt;script&gt;',page)
+
+    def test_fixture_and_unverified_never_get_live_credit(self):
+        for evidence in ['fixture','unverified','unknown']:
+            self.manifest['evidence']=evidence
+            self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_team_support_probes_cannot_be_promoted_to_live(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for action in ('member_fault','member_release','invite_probe','support_restart_probe','support_failure'):
+            with self.subTest(action=action):
+                path.write_text(original.replace('type: web_open','type: web_interact\n        action: '+action))
+                self.report['results'][0]['name']='web_interact'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
+    def test_commerce_read_faults_are_controlled(self):
+        for action in ('name_pending', 'name_failure', 'pool_failure', 'failed_top_up'):
+            self.assertTrue(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':action}]}]}))
+        self.assertFalse(m.controlled({'phases':[{'events':[{'type':'web_commerce','action':'rename_plan'}]}]}))
+
+    def test_injected_onboarding_fault_cannot_be_promoted_to_live(self):
+        path=self.root/self.scenario
+        path.write_text(path.read_text().replace('type: web_open','type: web_onboard\n        action: arm_fault\n        value: transport'))
+        self.report['results'][0]['name']='web_onboard'
+        self.manifest['source_sha256']=m.fingerprint(self.root)
+        self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+        report=self.coverage()
+        self.assertEqual(report['totals']['verified'],0)
+        self.assertEqual(report['requirements'][0]['evidence'][0]['state'],'passed')
+        self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
+    def test_inventory_injection_and_stale_preference_are_controlled(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for action in ('mask_home','stale_selection'):
+            with self.subTest(action=action):
+                path.write_text(original.replace('type: web_open','type: web_inventory\n        action: '+action))
+                self.report['results'][0]['name']='web_inventory'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['state'],'passed')
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
+    def test_inventory_arrays_preserve_duplicates_and_wrong_membership(self):
+        path=self.root/self.scenario
+        path.write_text(path.read_text().replace("expected: 'true'",'expected_property: site_names').replace('web_ui_equals','web_inventory_equals'))
+        self.report['results'][1]['name']='web_inventory_equals'
+        self.manifest['source_sha256']=m.fingerprint(self.root)
+        self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+        self.report['results'][1].update(expected=['site-one','site-two'],actual=['site-one','site-two'])
+        self.assertEqual(self.coverage()['totals']['verified'],1)
+        for actual in (['site-one','site-one'],['site-one'],['site-two','foreign']):
+            self.report['results'][1]['actual']=actual
+            self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_status_faults_cannot_be_labelled_live(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for value in ('read_error', 'idle', 'none'):
+            with self.subTest(value=value):
+                path.write_text(original.replace('type: web_open', 'type: web_action\n        action: status_fault\n        value: '+value))
+                self.report['results'][0]['name']='web_action'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
+    def test_partial_planned_requirement_never_gets_credit(self):
+        p=self.root/m.CATALOG;catalog=json.loads(p.read_text());catalog['requirements'][0]['automation']='planned';p.write_text(json.dumps(catalog))
+        self.manifest.update(inventory_sha256=m.digest(p),source_sha256=m.fingerprint(self.root))
+        self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_empty_partial_duplicate_null_and_failed_assertions_are_rejected(self):
+        original=copy.deepcopy(self.report)
+        variants=[[],original['results'][:1],original['results']+[original['results'][1]]]
+        for field,value in [('state','FAIL'),('actual',None),('actual','false'),('requirement','WEB-UNKNOWN'),('label','Different')]:
+            v=copy.deepcopy(original['results']);v[1][field]=value;variants.append(v)
+        for rows in variants:
+            with self.subTest(rows=rows):
+                self.report['results']=rows;self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_failed_cleanup_skips_and_wrong_report_are_rejected(self):
+        for key,value in [('cleanup','failed'),('outcome','SKIP'),('status','skip'),('run_id','wrong'),('browser','webkit'),('final_rc',1),('passed',False),('checks',{'total':0,'passed':0,'failed':0})]:
+            with self.subTest(key=key):
+                old=self.report[key];self.report[key]=value;self.assertEqual(self.coverage()['totals']['verified'],0);self.report[key]=old
+
+    def test_stale_or_tampered_evidence_is_rejected(self):
+        path=self.write();(path.parent/'report.json').write_text('{}')
+        self.assertEqual(self.coverage([path])['totals']['verified'],0)
+        self.write();(self.root/self.scenario).write_text((self.root/self.scenario).read_text()+'\n# newer\n')
+        self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_latest_failure_and_flaky_later_pass_withhold_credit(self):
+        first=self.write('first');self.manifest['attempts'][0].update(started_ns=2,exit_code=1)
+        second=self.write('second');self.assertEqual(self.coverage([first,second])['totals']['verified'],0)
+        self.manifest['attempts'][0].update(started_ns=3,exit_code=0)
+        third=self.write('third');r=self.coverage([first,second,third]);self.assertEqual(r['totals']['verified'],0);self.assertTrue(r['requirements'][0]['evidence'][0]['flaky'])
+
+    def test_all_browsers_and_same_build_are_required(self):
+        self.assertEqual(self.coverage(browsers=['chromium','firefox'])['totals']['verified'],0)
+        self.manifest['app_build']='another';self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_missing_or_failed_attempt_cannot_reuse_earlier_pass(self):
+        first=self.write('first')
+        for state in ['pending','running','skipped','launch_failed']:
+            self.manifest['attempts'][0].update(started_ns=2,state=state)
+            second=self.write('second');self.assertEqual(self.coverage([first,second])['totals']['verified'],0)
+
+    def test_catalog_mapping_and_duplicate_yaml_are_validated(self):
+        p=self.root/self.scenario;p.write_text(p.read_text().replace('WEB-TEST-001','WEB-UNKNOWN'))
+        with self.assertRaises(ValueError):self.coverage()
+        p.write_text('version: 2\nversion: 2\nsuite: webapp\n')
+        with self.assertRaises(ValueError):m.load_case(p)
+
+    def test_report_command_enforces_gate_and_refuses_overwrite(self):
+        out=self.root/'report-output'
+        cmd=['python3',str(ROOT/'utils/webapp/matrix.py'),'report','--root',str(self.root),'--out',str(out),'--browser','chromium','--gate']
+        p=subprocess.run(cmd,capture_output=True,text=True);self.assertEqual(p.returncode,1,p.stderr);self.assertTrue((out/'coverage.html').is_file())
+        p=subprocess.run(cmd,capture_output=True,text=True);self.assertEqual(p.returncode,2)
+
+    def test_self_consistent_forged_expected_actual_pair_gets_no_credit(self):
+        self.report['results'][1].update(expected='forged',actual='forged')
+        r=self.coverage();self.assertEqual(r['totals']['verified'],0)
+        self.assertEqual(r['requirements'][0]['evidence'][0]['state'],'modified_expectation')
+
+    def test_report_cannot_weaken_the_declared_match(self):
+        self.report['results'][1].update(match='contains',actual='true plus unwanted content')
+        self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_declared_environment_expectation_is_resolved_without_exposing_values(self):
+        path=self.root/self.scenario;path.write_text(path.read_text().replace("expected: 'true'",'expected: ${ULAB_EXPECTED_TEST}'))
+        self.manifest['source_sha256']=m.fingerprint(self.root);self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+        with patch.dict('os.environ',{'ULAB_EXPECTED_TEST':'  true  '}):
+            self.manifest['attempts'][0]['environment_sha256']=m.environment_hash(path.read_text())
+            self.assertEqual(self.coverage()['totals']['verified'],1)
+            self.report['results'][1].update(expected='other',actual='other')
+            self.assertEqual(self.coverage()['totals']['verified'],0)
+
+    def test_frozen_inventory_rejects_removed_or_reworded_requirements(self):
+        path=self.root/m.CATALOG;data=json.loads(path.read_text())
+        (self.root/m.POLICY).write_text(json.dumps({'requirements':1,'p0':1,'inventory_contract_sha256':m.inventory_contract(data['requirements'])}))
+        self.manifest.update(source_sha256=m.fingerprint(self.root))
+        self.assertTrue(self.coverage()['gate_passed'])
+        data['requirements'][0]['requirement']='weaker';path.write_text(json.dumps(data))
+        with self.assertRaisesRegex(ValueError,'frozen'):self.coverage()
+
+    def test_multi_browser_override_fails_before_any_run(self):
+        with patch.dict('os.environ',{'ULAB_WEBAPP_EXECUTABLE_PATH':'/chromium'},clear=True):
+            m.validate_browser_overrides(['chromium'])
+            with self.assertRaisesRegex(ValueError,'multi-browser'):m.validate_browser_overrides(['chromium','firefox'])
+        with patch.dict('os.environ',{'ULAB_WEBAPP_CHROMIUM_EXECUTABLE_PATH':'/chromium','ULAB_WEBAPP_FIREFOX_EXECUTABLE_PATH':'/firefox'},clear=True):
+            m.validate_browser_overrides(['chromium','firefox'])
+
+    def test_matrix_records_launch_failure_and_private_artifacts(self):
+        binary=self.root/'badbinary';binary.write_text('invalid executable');binary.chmod(0o700)
+        out=self.root/'matrix-output'
+        cmd=['python3',str(ROOT/'utils/webapp/matrix.py'),'run','--root',str(self.root),'--out',str(out),'--binary',str(binary),'--browser','chromium']
+        p=subprocess.run(cmd,capture_output=True,text=True);self.assertEqual(p.returncode,1,p.stderr)
+        manifest=json.loads((out/'matrix.json').read_text());self.assertEqual(manifest['attempts'][0]['state'],'launch_failed');self.assertEqual((out/'matrix.json').stat().st_mode&0o777,0o600)
+        self.assertEqual(manifest['evidence'],'unverified')
+
+
+class MatrixProcessTest(unittest.TestCase):
+    setUp = CoverageTest.setUp
+    write = CoverageTest.write
+    def test_matrix_profiles_and_process_results_are_recorded(self):
+        binary=self.root/'fake lab';binary.write_text('''#!/usr/bin/env python3
+import json,sys,pathlib,yaml
+args=sys.argv;source=pathlib.Path(args[2]);case=yaml.safe_load(source.read_text());run=args[args.index('--run-id')+1];out=pathlib.Path(args[args.index('--out')+1])/run;out.mkdir(parents=True)
+(out/'report.json').write_text(json.dumps({'scenario':case['name'],'browser':case['webapp']['browser'],'run_id':run}))
+''');binary.chmod(0o700)
+        out=self.root/'profiles'
+        p=subprocess.run(['python3',str(ROOT/'utils/webapp/matrix.py'),'run','--root',str(self.root),'--out',str(out),'--binary',str(binary),'--browser','chromium','--browser','firefox','--evidence','fixture','--','--repo','/path with spaces'],capture_output=True,text=True)
+        self.assertEqual(p.returncode,0,p.stderr)
+        manifest=json.loads((out/'matrix.json').read_text());self.assertEqual([a['browser'] for a in manifest['attempts']],['chromium','firefox']);self.assertEqual(len({a['run_id'] for a in manifest['attempts']}),2)
+        for a in manifest['attempts']:
+            self.assertEqual(a['exit_code'],0);self.assertEqual(a['report_sha256'],m.digest(out/a['report']));self.assertEqual(m.load_case(out/a['generated_case'])['webapp']['browser'],a['browser'])
+
+if __name__=='__main__':unittest.main()

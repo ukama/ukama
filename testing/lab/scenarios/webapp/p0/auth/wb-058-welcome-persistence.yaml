@@ -1,0 +1,119 @@
+version: 2
+name: p1-webapp-welcome-persistence
+description: Use a disposable first-visit account in an already activated organization. Continue permanently acknowledges welcome.
+seed: 4711
+suite: webapp
+priority: p1
+status: active
+tags:
+  - webapp
+  - auth
+  - local
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  session_mode: auth_test
+  auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}
+  auth_state: ${ULAB_AUTH_WELCOME_STATE}
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: first-visit
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: welcome
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Welcome title
+        expected: Welcome to Ukama!
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Welcome field
+        subject: Network operating country
+        expected: ${ULAB_AUTH_COUNTRY}
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Welcome field
+        subject: Organization name
+        expected: ${ULAB_AUTH_ORG}
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Welcome field
+        subject: Role
+        expected: ${ULAB_AUTH_WELCOME_NAME} | Member
+        requirement: WEB-AUTH-007
+  - name: acknowledge
+    events:
+      - type: web_session
+        view: session
+        action: ack_welcome
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: dashboard
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Navigation stable
+        expected: 'true'
+        requirement: WEB-AUTH-007
+  - name: gate-removed
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /welcome
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: dashboard
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Path
+        expected: /business
+        requirement: WEB-AUTH-007
+  - name: reload-persisted
+    events:
+      - type: web_session
+        view: session
+        action: reload
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: dashboard
+        requirement: WEB-AUTH-007
+      - type: web_session_equals
+        view: session
+        label: Path
+        expected: /business
+        requirement: WEB-AUTH-007

@@ -1,0 +1,107 @@
+version: 2
+name: p0-webapp-role-policy-probe
+description: Read-only route and control checks against an independently approved role policy. No permission coverage credit until allowed and forbidden executions are also exercised.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags:
+  - webapp
+  - auth
+  - local
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  session_mode: auth_test
+  auth_origin: ${ULAB_WEBAPP_AUTH_ORIGIN}
+  auth_state: ${ULAB_AUTH_POLICY_STATE}
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: []
+phases:
+  - name: members
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/manage/members
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: ${ULAB_POLICY_MEMBERS_SURFACE}
+        requirement: WEB-SHELL-010
+      - type: web_session_equals
+        view: session
+        label: Control state
+        subject: Invite member
+        expected: ${ULAB_POLICY_MEMBERS_CONTROL}
+        requirement: WEB-SHELL-010
+  - name: plans
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/manage/data-plans
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: ${ULAB_POLICY_PLANS_SURFACE}
+        requirement: WEB-SHELL-010
+      - type: web_session_equals
+        view: session
+        label: Control state
+        subject: Create plan
+        expected: ${ULAB_POLICY_PLANS_CONTROL}
+        requirement: WEB-SHELL-010
+  - name: sims
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /business/manage/sim-pool
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: ${ULAB_POLICY_SIMS_SURFACE}
+        requirement: WEB-SHELL-010
+      - type: web_session_equals
+        view: session
+        label: Control state
+        subject: Upload SIMs
+        expected: ${ULAB_POLICY_SIMS_CONTROL}
+        requirement: WEB-SHELL-010
+  - name: customers
+    events:
+      - type: web_session
+        view: session
+        action: navigate
+        value: /customer/customers
+    checks:
+      - type: web_session_equals
+        view: session
+        label: Surface
+        expected: ${ULAB_POLICY_CUSTOMERS_SURFACE}
+        requirement: WEB-SHELL-010
+      - type: web_session_equals
+        view: session
+        label: Control state
+        subject: Add customer
+        expected: ${ULAB_POLICY_CUSTOMERS_CONTROL}
+        requirement: WEB-SHELL-010

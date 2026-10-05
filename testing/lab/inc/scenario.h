@@ -100,7 +100,17 @@ typedef enum {
     EVT_FAILURE_CONTROL,
     EVT_START_NODE_CONNECTIVITY_MONITOR,
     EVT_STOP_NODE_CONNECTIVITY_MONITOR,
-    EVT_CHECK
+    EVT_CHECK,
+    EVT_WEB_OPEN,
+    EVT_WEB_SELECT_NETWORK,
+    EVT_WEB_RELOAD,
+    EVT_WEB_ACTION,
+    EVT_WEB_TAB,
+    EVT_WEB_COMMERCE,
+    EVT_WEB_INTERACT,
+    EVT_WEB_SESSION,
+    EVT_WEB_ONBOARD,
+    EVT_WEB_INVENTORY
 } event_type_t;
 
 typedef enum {
@@ -165,7 +175,16 @@ typedef enum {
     CHECK_BALANCE_NON_NEGATIVE,
     CHECK_COMPONENT_COUNT_BY_CATEGORY,
     CHECK_NODE_COMPONENT_REGISTERED,
-    CHECK_SIM_POOL_CONTAINS_SIMS
+    CHECK_SIM_POOL_CONTAINS_SIMS,
+    CHECK_WEB_KPI_EQUALS,
+    CHECK_WEB_FIELD_EQUALS,
+    CHECK_WEB_TABLE_COUNT_EQUALS,
+    CHECK_WEB_ACTION_AVAILABLE,
+    CHECK_WEB_COMMERCE_EQUALS,
+    CHECK_WEB_UI_EQUALS,
+    CHECK_WEB_SESSION_EQUALS,
+    CHECK_WEB_ONBOARD_EQUALS,
+    CHECK_WEB_INVENTORY_EQUALS
 } check_type_t;
 
 typedef struct {
@@ -242,6 +261,10 @@ typedef struct {
     uint32_t     tolerance_percent;
     uint32_t     required;
     int          immediate;
+    /* Version 2 browser contract; legacy checks leave these zero. */
+    char         label[ULAB_MAX_REF];
+    char         requirement[64];
+    uint32_t     web_fields;
 } check_spec_t;
 
 typedef struct {
@@ -264,6 +287,7 @@ typedef struct {
     char         payer_email[ULAB_MAX_NAME];
     char         payer_phone[ULAB_MAX_REF];
     char         idempotency_key[ULAB_MAX_ID];
+    char         peer_auth_state[ULAB_MAX_PATH];
     char         other_package_ref[ULAB_MAX_REF];
     char         variant[ULAB_MAX_REF];
     double       amount;
@@ -276,6 +300,11 @@ typedef struct {
     char         package_ref[ULAB_MAX_REF];
     check_spec_t checks[ULAB_MAX_CHECKS];
     size_t       check_count;
+    /* A browser event selects one existing world reference at a time. */
+    char         view[ULAB_MAX_REF];
+    selector_t   networks;
+    uint32_t     timeout_seconds;
+    uint32_t     web_fields;
 } event_spec_t;
 
 typedef struct {
@@ -305,7 +334,29 @@ typedef struct {
     int create_packages;
     int create_subscribers;
     int create_sims;
+    unsigned int webapp_entities;
+    int has_webapp_entities;
 } setup_spec_t;
+
+#define WEB_SETUP_NETWORKS 1u
+#define WEB_SETUP_SITES    2u
+
+typedef struct {
+    int          present;
+    char         base_url[ULAB_MAX_URL];
+    char         browser[ULAB_MAX_REF];
+    char         auth_state[ULAB_MAX_PATH];
+    char         session_mode[ULAB_MAX_REF];
+    char         auth_origin[ULAB_MAX_URL];
+    int          headless;
+    char         switch_component[ULAB_MAX_NAME];
+    char         backhaul_component[ULAB_MAX_NAME];
+    char         power_component[ULAB_MAX_NAME];
+    uint32_t     action_timeout_seconds;
+    uint32_t     check_timeout_seconds;
+    uint32_t     scenario_timeout_seconds;
+    uint32_t     fields;
+} webapp_spec_t;
 
 typedef struct {
     char type[ULAB_MAX_REF];
@@ -336,6 +387,7 @@ typedef struct {
     setup_spec_t   setup;
     provider_spec_t provider;
     runtime_spec_t runtime;
+    webapp_spec_t  webapp;
     profile_spec_t profiles[ULAB_MAX_BUCKETS];
     size_t         profile_count;
     phase_spec_t   phases[ULAB_MAX_PHASES];
@@ -347,6 +399,12 @@ typedef struct {
 int scenario_load(const char *path, scenario_t *s, ulab_error_t *err);
 int scenario_validate(const scenario_t *s, ulab_error_t *err);
 void scenario_init(scenario_t *s);
+int scenario_is_web_event(event_type_t type);
+int scenario_is_web_check(check_type_t type);
+int scenario_has_webapp(const scenario_t *s);
+int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err);
+int scenario_execution_supported(const scenario_t *s, ulab_error_t *err);
+int scenario_lint_main(int argc, char **argv);
 const char *scenario_event_name(event_type_t type);
 const char *scenario_check_name(check_type_t type);
 int scenario_event_from_name(const char *name, event_type_t *out);

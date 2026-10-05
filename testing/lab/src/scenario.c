@@ -87,6 +87,7 @@ typedef enum {
     SEC_PACKAGES,
     SEC_SETUP,
     SEC_SETUP_LIST,
+    SEC_WEBAPP,
     SEC_PROVIDER,
     SEC_RUNTIME,
     SEC_PROFILES,
@@ -105,6 +106,12 @@ void scenario_init(scenario_t *s) {
     snprintf(s->priority, sizeof(s->priority), "p2");
     snprintf(s->status, sizeof(s->status), "active");
     snprintf(s->provider.type, sizeof(s->provider.type), "virtual");
+    snprintf(s->webapp.browser, sizeof(s->webapp.browser), "chromium");
+    snprintf(s->webapp.session_mode, sizeof(s->webapp.session_mode), "authenticated");
+    s->webapp.headless = 1;
+    s->webapp.action_timeout_seconds = 30;
+    s->webapp.check_timeout_seconds = 30;
+    s->webapp.scenario_timeout_seconds = 3600;
 }
 
 const char *scenario_event_name(event_type_t type) {
@@ -148,6 +155,16 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_RESTORE_NODE: return "restore_node";
     case EVT_FAILURE_CONTROL: return "failure_control";
     case EVT_CHECK: return "check";
+    case EVT_WEB_OPEN: return "web_open";
+    case EVT_WEB_SELECT_NETWORK: return "web_select_network";
+    case EVT_WEB_RELOAD: return "web_reload";
+    case EVT_WEB_ACTION: return "web_action";
+    case EVT_WEB_TAB: return "web_tab";
+    case EVT_WEB_SESSION: return "web_session";
+    case EVT_WEB_INVENTORY: return "web_inventory";
+    case EVT_WEB_ONBOARD: return "web_onboard";
+    case EVT_WEB_INTERACT: return "web_interact";
+    case EVT_WEB_COMMERCE: return "web_commerce";
     default: return "unknown";
     }
 }
@@ -229,11 +246,30 @@ const char *scenario_check_name(check_type_t type) {
         return "node_component_registered";
     case CHECK_SIM_POOL_CONTAINS_SIMS:
         return "sim_pool_contains_sims";
+    case CHECK_WEB_KPI_EQUALS: return "web_kpi_equals";
+    case CHECK_WEB_FIELD_EQUALS: return "web_field_equals";
+    case CHECK_WEB_TABLE_COUNT_EQUALS: return "web_table_count_equals";
+    case CHECK_WEB_ACTION_AVAILABLE: return "web_action_available";
+    case CHECK_WEB_SESSION_EQUALS: return "web_session_equals";
+    case CHECK_WEB_INVENTORY_EQUALS: return "web_inventory_equals";
+    case CHECK_WEB_ONBOARD_EQUALS: return "web_onboard_equals";
+    case CHECK_WEB_UI_EQUALS: return "web_ui_equals";
+    case CHECK_WEB_COMMERCE_EQUALS: return "web_commerce_equals";
     default: return "unknown";
     }
 }
 
 int scenario_event_from_name(const char *name, event_type_t *out) {
+    if (ulab_streq(name, "web_inventory")) { *out = EVT_WEB_INVENTORY; return ULAB_OK; }
+    if (ulab_streq(name, "web_onboard")) { *out = EVT_WEB_ONBOARD; return ULAB_OK; }
+    if (ulab_streq(name, "web_session")) { *out = EVT_WEB_SESSION; return ULAB_OK; }
+    if (ulab_streq(name, "web_interact")) { *out = EVT_WEB_INTERACT; return ULAB_OK; }
+    if (ulab_streq(name, "web_commerce")) { *out = EVT_WEB_COMMERCE; return ULAB_OK; }
+    if (ulab_streq(name, "web_open")) { *out = EVT_WEB_OPEN; return ULAB_OK; }
+    if (ulab_streq(name, "web_select_network")) { *out = EVT_WEB_SELECT_NETWORK; return ULAB_OK; }
+    if (ulab_streq(name, "web_action")) { *out = EVT_WEB_ACTION; return ULAB_OK; }
+    if (ulab_streq(name, "web_tab")) { *out = EVT_WEB_TAB; return ULAB_OK; }
+    if (ulab_streq(name, "web_reload")) { *out = EVT_WEB_RELOAD; return ULAB_OK; }
     if (ulab_streq(name, "traffic")) *out = EVT_TRAFFIC;
     else if (ulab_streq(name, "traffic_by_profile")) {
         *out = EVT_TRAFFIC_BY_PROFILE;
@@ -312,6 +348,15 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
 }
 
 int scenario_check_from_name(const char *name, check_type_t *out) {
+    if (ulab_streq(name, "web_inventory_equals")) { *out = CHECK_WEB_INVENTORY_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_onboard_equals")) { *out = CHECK_WEB_ONBOARD_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_session_equals")) { *out = CHECK_WEB_SESSION_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_ui_equals")) { *out = CHECK_WEB_UI_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_commerce_equals")) { *out = CHECK_WEB_COMMERCE_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_kpi_equals")) { *out = CHECK_WEB_KPI_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_field_equals")) { *out = CHECK_WEB_FIELD_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_table_count_equals")) { *out = CHECK_WEB_TABLE_COUNT_EQUALS; return ULAB_OK; }
+    if (ulab_streq(name, "web_action_available")) { *out = CHECK_WEB_ACTION_AVAILABLE; return ULAB_OK; }
     if (ulab_streq(name, "count") || ulab_streq(name, "backend_count")) {
         *out = CHECK_BACKEND_COUNT;
     } else if (ulab_streq(name, "list_contains")) {
@@ -519,6 +564,245 @@ static int parse_inline_list(const char *v, const char *item) {
     return 0;
 }
 
+static int web_once(uint32_t *fields, unsigned int bit) {
+    uint32_t mask = 1u << bit;
+    if (*fields & mask) return ULAB_ERR;
+    *fields |= mask;
+    return ULAB_OK;
+}
+
+static int web_bool(const char *value, int *out) {
+    if (ulab_streq(value, "true")) { *out = 1; return ULAB_OK; }
+    if (ulab_streq(value, "false")) { *out = 0; return ULAB_OK; }
+    return ULAB_ERR;
+}
+
+static int web_u32(const char *value, uint32_t *out) {
+    const char *p;
+    uint64_t number;
+    if (value == NULL || !*value) return ULAB_ERR;
+    for (p = value; *p; p++) {
+        if (*p < '0' || *p > '9') return ULAB_ERR;
+    }
+    if (ulab_parse_u64(value, &number) || number > UINT32_MAX) return ULAB_ERR;
+    *out = (uint32_t)number;
+    return ULAB_OK;
+}
+
+static int apply_webapp_field(webapp_spec_t *w, const char *key,
+                              const char *val) {
+    if (ulab_streq(key, "session_mode") && !web_once(&w->fields, 10)) return ulab_copy(w->session_mode, sizeof(w->session_mode), val);
+    if (ulab_streq(key, "auth_origin") && !web_once(&w->fields, 11)) return ulab_copy(w->auth_origin, sizeof(w->auth_origin), val);
+    if (ulab_streq(key, "base_url") && !web_once(&w->fields, 0))
+        return ulab_copy(w->base_url, sizeof(w->base_url), val);
+    if (ulab_streq(key, "browser") && !web_once(&w->fields, 1))
+        return ulab_copy(w->browser, sizeof(w->browser), val);
+    if (ulab_streq(key, "auth_state") && !web_once(&w->fields, 2))
+        return ulab_copy(w->auth_state, sizeof(w->auth_state), val);
+    if (ulab_streq(key, "headless") && !web_once(&w->fields, 3))
+        return web_bool(val, &w->headless);
+    if (ulab_streq(key, "action_timeout_seconds") && !web_once(&w->fields, 4))
+        return web_u32(val, &w->action_timeout_seconds);
+    if (ulab_streq(key, "check_timeout_seconds") && !web_once(&w->fields, 5))
+        return web_u32(val, &w->check_timeout_seconds);
+    if (ulab_streq(key, "scenario_timeout_seconds") && !web_once(&w->fields, 6))
+        return web_u32(val, &w->scenario_timeout_seconds);
+    if (ulab_streq(key, "switch_component") && !web_once(&w->fields, 7))
+        return ulab_copy(w->switch_component, sizeof(w->switch_component), val);
+    if (ulab_streq(key, "backhaul_component") && !web_once(&w->fields, 8))
+        return ulab_copy(w->backhaul_component, sizeof(w->backhaul_component), val);
+    if (ulab_streq(key, "power_component") && !web_once(&w->fields, 9))
+        return ulab_copy(w->power_component, sizeof(w->power_component), val);
+    return ULAB_ERR;
+}
+
+/* Version 2 starts with network/site provisioning. Additional entity types
+ * are added with their browser handlers, not silently accepted here. */
+static int parse_web_setup(const char *val, setup_spec_t *setup) {
+    char buf[ULAB_MAX_LINE];
+    char *item;
+    char *next;
+    unsigned int bit;
+    if (setup->has_webapp_entities || !ulab_starts(val, "[") ||
+        !ulab_ends(val, "]") || ulab_copy(buf, sizeof(buf), val + 1))
+        return ULAB_ERR;
+    setup->has_webapp_entities = 1;
+    buf[strlen(buf) - 1] = '\0';
+    item = ulab_trim(buf);
+    if (!*item) return ULAB_OK;
+    for (;;) {
+        next = strchr(item, ',');
+        if (next != NULL) *next = '\0';
+        item = ulab_trim(item);
+        bit = ulab_streq(item, "networks") ? WEB_SETUP_NETWORKS :
+            (ulab_streq(item, "sites") ? WEB_SETUP_SITES : 0u);
+        if (bit == 0 || (setup->webapp_entities & bit)) return ULAB_ERR;
+        setup->webapp_entities |= bit;
+        if (next == NULL) break;
+        item = next + 1;
+    }
+    return ULAB_OK;
+}
+
+static int apply_web_check_field(check_spec_t *c, const char *key,
+                                 const char *val) {
+    if (c->type == CHECK_WEB_INVENTORY_EQUALS) {
+        if (ulab_streq(key, "view") && !web_once(&c->web_fields, 0)) return ulab_copy(c->view, sizeof(c->view), val);
+        if (ulab_streq(key, "label") && !web_once(&c->web_fields, 1)) return ulab_copy(c->label, sizeof(c->label), val);
+        if (ulab_streq(key, "requirement") && !web_once(&c->web_fields, 2)) return ulab_copy(c->requirement, sizeof(c->requirement), val);
+        if (ulab_streq(key, "timeout_seconds") && !web_once(&c->web_fields, 3)) return web_u32(val, &c->timeout_seconds);
+        if (ulab_streq(key, "expected") && !web_once(&c->web_fields, 4)) return ulab_copy(c->expected, sizeof(c->expected), val);
+        if (ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 14)) return ulab_copy(c->key, sizeof(c->key), val);
+        if (ulab_streq(key, "networks") && !web_once(&c->web_fields, 16)) return parse_selector_value(&c->networks, key, val);
+        if (ulab_streq(key, "sites") && !web_once(&c->web_fields, 17)) return parse_selector_value(&c->sites, key, val);
+        if (ulab_streq(key, "nodes") && !web_once(&c->web_fields, 9)) return parse_selector_value(&c->nodes, key, val);
+        return ULAB_ERR;
+    }
+    if (c->type == CHECK_WEB_ONBOARD_EQUALS) {
+        if (ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 14)) return ulab_copy(c->key, sizeof(c->key), val);
+    }
+    if (c->type == CHECK_WEB_SESSION_EQUALS || c->type == CHECK_WEB_ONBOARD_EQUALS) {
+        if (ulab_streq(key, "view") && !web_once(&c->web_fields, 0)) return ulab_copy(c->view, sizeof(c->view), val);
+        if (ulab_streq(key, "label") && !web_once(&c->web_fields, 1)) return ulab_copy(c->label, sizeof(c->label), val);
+        if (ulab_streq(key, "requirement") && !web_once(&c->web_fields, 2)) return ulab_copy(c->requirement, sizeof(c->requirement), val);
+        if (ulab_streq(key, "timeout_seconds") && !web_once(&c->web_fields, 3)) return web_u32(val, &c->timeout_seconds);
+        if (ulab_streq(key, "expected") && !web_once(&c->web_fields, 4)) return ulab_copy(c->expected, sizeof(c->expected), val);
+        if (ulab_streq(key, "subject") && !web_once(&c->web_fields, 15)) return ulab_copy(c->status, sizeof(c->status), val);
+        return ULAB_ERR;
+    }
+    if (c->type == CHECK_WEB_UI_EQUALS) {
+        if (ulab_streq(key,"sites") && !web_once(&c->web_fields,17)) return parse_selector_value(&c->sites,key,val);
+        if (ulab_streq(key,"nodes") && !web_once(&c->web_fields,9)) return parse_selector_value(&c->nodes,key,val);
+        if (ulab_streq(key, "subject") && !web_once(&c->web_fields, 15)) return ulab_copy(c->status, sizeof(c->status), val);
+        if (ulab_streq(key, "networks") && !web_once(&c->web_fields, 16)) return parse_selector_value(&c->networks, key, val);
+    }
+    if (c->type == CHECK_WEB_COMMERCE_EQUALS || c->type == CHECK_WEB_UI_EQUALS) {
+        if (ulab_streq(key, "package") && !web_once(&c->web_fields, 12))
+            return ulab_copy(c->package_ref, sizeof(c->package_ref), val);
+        if (ulab_streq(key, "ues") && !web_once(&c->web_fields, 13))
+            return parse_selector_value(&c->ues, key, val);
+        if (ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 14))
+            return ulab_copy(c->key, sizeof(c->key), val);
+        if (ulab_streq(key, "expected") && !web_once(&c->web_fields, 4))
+            return ulab_copy(c->expected, sizeof(c->expected), val);
+    }
+    if (ulab_streq(key, "view") && !web_once(&c->web_fields, 0))
+        return ulab_copy(c->view, sizeof(c->view), val);
+    if (ulab_streq(key, "label") && !web_once(&c->web_fields, 1))
+        return ulab_copy(c->label, sizeof(c->label), val);
+    if (ulab_streq(key, "requirement") && !web_once(&c->web_fields, 2))
+        return ulab_copy(c->requirement, sizeof(c->requirement), val);
+    if (ulab_streq(key, "timeout_seconds") && !web_once(&c->web_fields, 3))
+        return web_u32(val, &c->timeout_seconds);
+    if ((c->type == CHECK_WEB_KPI_EQUALS || c->type == CHECK_WEB_FIELD_EQUALS) &&
+        ulab_streq(key, "expected") && !web_once(&c->web_fields, 4))
+        return ulab_copy(c->expected, sizeof(c->expected), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "expected_ref") && !web_once(&c->web_fields, 7))
+        return ulab_copy(c->ref, sizeof(c->ref), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 8))
+        return ulab_copy(c->key, sizeof(c->key), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "nodes") && !web_once(&c->web_fields, 9))
+        return parse_selector_value(&c->nodes, key, val);
+    if ((c->type == CHECK_WEB_FIELD_EQUALS || c->type == CHECK_WEB_ACTION_AVAILABLE) &&
+        ulab_streq(key, "app") && !web_once(&c->web_fields, 10))
+        return ulab_copy(c->app, sizeof(c->app), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "match") && !web_once(&c->web_fields, 11))
+        return ulab_copy(c->variant, sizeof(c->variant), val);
+    if (c->type == CHECK_WEB_TABLE_COUNT_EQUALS &&
+        ulab_streq(key, "expected_count") && !web_once(&c->web_fields, 5)) {
+        c->has_expected_count = 1;
+        return web_u32(val, &c->expected_count);
+    }
+    if (c->type == CHECK_WEB_ACTION_AVAILABLE &&
+        ulab_streq(key, "available") && !web_once(&c->web_fields, 6)) {
+        c->has_expected_value = 1;
+        if (!ulab_streq(val, "true") && !ulab_streq(val, "false"))
+            return ULAB_ERR;
+        c->expected_value = ulab_streq(val, "true") ? 1.0 : 0.0;
+        return ULAB_OK;
+    }
+    return ULAB_ERR;
+}
+
+static int apply_web_event_field(event_spec_t *e, const char *key,
+                                 const char *val) {
+    if (ulab_streq(key, "timeout_seconds") && !web_once(&e->web_fields, 0))
+        return web_u32(val, &e->timeout_seconds);
+    if (e->type == EVT_WEB_INVENTORY) {
+        if (ulab_streq(key, "view") && !web_once(&e->web_fields, 1)) return ulab_copy(e->view, sizeof(e->view), val);
+        if (ulab_streq(key, "networks") && !web_once(&e->web_fields, 2)) return parse_selector_value(&e->networks, key, val);
+        if (ulab_streq(key, "sites") && !web_once(&e->web_fields, 3)) return parse_selector_value(&e->sites, key, val);
+        if (ulab_streq(key, "nodes") && !web_once(&e->web_fields, 4)) return parse_selector_value(&e->nodes, key, val);
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5)) return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "value") && !web_once(&e->web_fields, 14)) return ulab_copy(e->status, sizeof(e->status), val);
+        return ULAB_ERR;
+    }
+    if (e->type == EVT_WEB_ONBOARD) {
+        if (ulab_streq(key, "label") && !web_once(&e->web_fields, 13)) return ulab_copy(e->profile, sizeof(e->profile), val);
+        if (ulab_streq(key, "value_from") && !web_once(&e->web_fields, 15)) return ulab_copy(e->variant, sizeof(e->variant), val);
+    }
+    if (e->type == EVT_WEB_SESSION || e->type == EVT_WEB_ONBOARD) {
+        if (ulab_streq(key, "view") && !web_once(&e->web_fields, 1)) return ulab_copy(e->view, sizeof(e->view), val);
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5)) return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "value") && !web_once(&e->web_fields, 14)) return ulab_copy(e->status, sizeof(e->status), val);
+        return ULAB_ERR;
+    }
+    if (e->type == EVT_WEB_INTERACT) {
+        if (ulab_streq(key,"sites") && !web_once(&e->web_fields,3)) return parse_selector_value(&e->sites,key,val);
+        if (ulab_streq(key,"nodes") && !web_once(&e->web_fields,4)) return parse_selector_value(&e->nodes,key,val);
+        if (ulab_streq(key, "label") && !web_once(&e->web_fields, 13)) return ulab_copy(e->profile, sizeof(e->profile), val);
+        if (ulab_streq(key, "value") && !web_once(&e->web_fields, 14)) return ulab_copy(e->status, sizeof(e->status), val);
+        if (ulab_streq(key, "value_from") && !web_once(&e->web_fields, 15)) return ulab_copy(e->variant, sizeof(e->variant), val);
+    }
+    if (e->type == EVT_WEB_COMMERCE || e->type == EVT_WEB_INTERACT) {
+        if (ulab_streq(key, "view") && !web_once(&e->web_fields, 1))
+            return ulab_copy(e->view, sizeof(e->view), val);
+        if (ulab_streq(key, "networks") && !web_once(&e->web_fields, 2))
+            return parse_selector_value(&e->networks, key, val);
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "package") && !web_once(&e->web_fields, 10))
+            return ulab_copy(e->package_ref, sizeof(e->package_ref), val);
+        if (ulab_streq(key, "ues") && !web_once(&e->web_fields, 11))
+            return parse_selector_value(&e->ues, key, val);
+        if (e->type == EVT_WEB_COMMERCE && ulab_streq(key, "unit") && !web_once(&e->web_fields, 12))
+            return ulab_copy(e->variant, sizeof(e->variant), val);
+        return ULAB_ERR;
+    }
+    if (e->type == EVT_WEB_TAB) {
+        if (ulab_streq(key, "tab") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->profile, sizeof(e->profile), val);
+        if (ulab_streq(key, "auth_state") && !web_once(&e->web_fields, 9))
+            return ulab_copy(e->peer_auth_state, sizeof(e->peer_auth_state), val);
+        return ULAB_ERR;
+    }
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "view") &&
+        !web_once(&e->web_fields, 1))
+        return ulab_copy(e->view, sizeof(e->view), val);
+    if (e->type != EVT_WEB_RELOAD && ulab_streq(key, "networks") &&
+        !web_once(&e->web_fields, 2))
+        return parse_selector_value(&e->networks, key, val);
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "sites") &&
+        !web_once(&e->web_fields, 3))
+        return parse_selector_value(&e->sites, key, val);
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "nodes") &&
+        !web_once(&e->web_fields, 4))
+        return parse_selector_value(&e->nodes, key, val);
+    if (e->type == EVT_WEB_ACTION) {
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "value") && !web_once(&e->web_fields, 6))
+            return ulab_copy(e->status, sizeof(e->status), val);
+        if (ulab_streq(key, "value_from") && !web_once(&e->web_fields, 7))
+            return ulab_copy(e->variant, sizeof(e->variant), val);
+        if (ulab_streq(key, "app") && !web_once(&e->web_fields, 8))
+            return ulab_copy(e->app, sizeof(e->app), val);
+        if (ulab_streq(key, "tag") && !web_once(&e->web_fields, 9))
+            return ulab_copy(e->tag, sizeof(e->tag), val);
+    }
+    return ULAB_ERR;
+}
+
 static event_spec_t *new_event(phase_spec_t *p, const char *type,
                                ulab_error_t *err) {
     event_spec_t *e;
@@ -533,6 +817,7 @@ static event_spec_t *new_event(phase_spec_t *p, const char *type,
         snprintf(err->msg, sizeof(err->msg), "unknown event type: %s", type);
         return NULL;
     }
+    if (scenario_is_web_event(e->type)) e->timeout_seconds = 30;
     return e;
 }
 
@@ -582,11 +867,18 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
         c->timeout_seconds = 60;
         c->poll_seconds = 10;
     }
+    if (scenario_is_web_check(c->type)) {
+        c->immediate = 1;
+        c->timeout_seconds = 30;
+        c->poll_seconds = 1;
+    }
     return c;
 }
 
 static int apply_check_field(check_spec_t *c, const char *key,
                              const char *val) {
+    if (scenario_is_web_check(c->type))
+        return apply_web_check_field(c, key, val);
     if (ulab_streq(key, "target")) return ulab_copy(c->target,
         sizeof(c->target), val);
     if (ulab_streq(key, "expected")) return ulab_copy(c->expected,
@@ -828,7 +1120,12 @@ static int apply_check_field(check_spec_t *c, const char *key,
 }
 
 static int apply_event_field(event_spec_t *e, const char *key,
-                             const char *val) {
+                             const char *val, int version) {
+    if (version == ULAB_WEBAPP_SCHEMA_VER && (e->type == EVT_START_UES || e->type == EVT_TRAFFIC) &&
+        ulab_streq(key, "timeout_seconds") && !web_once(&e->web_fields, 0))
+        return web_u32(val, &e->timeout_seconds);
+    if (scenario_is_web_event(e->type))
+        return apply_web_event_field(e, key, val);
     if (ulab_streq(key, "name")) return ulab_copy(e->name,
         sizeof(e->name), val);
     if (ulab_streq(key, "amount_mb") ||
@@ -941,6 +1238,7 @@ static int apply_event_field(event_spec_t *e, const char *key,
 
 static int apply_event_expect_field(event_spec_t *e, const char *key,
                                     const char *val) {
+    if (scenario_is_web_event(e->type)) return ULAB_ERR;
     if (ulab_streq(key, "result")) {
         return ulab_copy(e->expect_result, sizeof(e->expect_result), val);
     }
@@ -982,12 +1280,14 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
     while (fgets(line, sizeof(line), fp) != NULL) {
         char expanded[ULAB_MAX_LINE];
         char missing[ULAB_MAX_REF];
-        char *key;
-        char *val;
+        char *key = "";
+        char *val = "";
         char *p;
         int ind;
 
         lineno++;
+        if (strlen(line) == sizeof(line) - 1 && strchr(line, '\n') == NULL)
+            goto bad;
         strip_comment(line);
         memset(missing, 0, sizeof(missing));
         if (expand_environment(line, expanded, sizeof(expanded),
@@ -1023,7 +1323,7 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
 
         if (ind == 0 && !ulab_starts(p, "- ")) {
             if (ulab_streq(key, "version")) {
-                if (ulab_parse_u32(val, &s->version) != ULAB_OK) goto bad;
+                if (web_u32(val, &s->version) != ULAB_OK) goto bad;
             } else if (ulab_streq(key, "name")) {
                 if (ulab_copy(s->name, sizeof(s->name), val) != ULAB_OK) {
                     goto bad;
@@ -1053,6 +1353,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             else if (ulab_streq(key, "setup")) sec = SEC_SETUP;
             else if (ulab_streq(key, "provider")) sec = SEC_PROVIDER;
             else if (ulab_streq(key, "runtime")) sec = SEC_RUNTIME;
+            else if (ulab_streq(key, "webapp")) {
+                if (s->webapp.present || val[0]) goto bad;
+                s->webapp.present = 1;
+                sec = SEC_WEBAPP;
+            }
             else if (ulab_streq(key, "profiles")) sec = SEC_PROFILES;
             else if (ulab_streq(key, "phases")) sec = SEC_PHASES;
             else if (ulab_streq(key, "final_checks")) sec = SEC_FINAL_CHECKS;
@@ -1060,19 +1365,24 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             continue;
         }
 
+        if (sec == SEC_WEBAPP) {
+            if (ind != 2 || apply_webapp_field(&s->webapp, key, val)) goto bad;
+            continue;
+        }
+
         if (sec == SEC_WORLD) {
             if (ind == 2 && ulab_streq(key, "networks")) {
-                if (ulab_parse_u32(val, &s->world.networks) != ULAB_OK) {
+                if (web_u32(val, &s->world.networks) != ULAB_OK) {
                     goto bad;
                 }
             } else if (ind == 2 && ulab_streq(key, "sites_per_network")) {
-                if (ulab_parse_u32(val, &s->world.sites_per_network)) goto bad;
+                if (web_u32(val, &s->world.sites_per_network)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
-                if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
+                if (web_u32(val, &s->world.ues_per_site)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "sims_per_network")) {
-                if (ulab_parse_u32(val, &s->world.sims_per_network)) goto bad;
+                if (web_u32(val, &s->world.sims_per_network)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
-                if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {
+                if (web_u32(val, &s->world.sims_per_subscriber)) {
                     goto bad;
                 }
             } else if (ind == 2 && ulab_streq(key, "nodes_per_site")) {
@@ -1082,27 +1392,27 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
         }
         if (sec == SEC_NODES_PER_SITE) {
             if (ind == 4 && ulab_streq(key, "tower")) {
-                if (ulab_parse_u32(val, &s->world.tower_per_site)) goto bad;
+                if (web_u32(val, &s->world.tower_per_site)) goto bad;
             } else if (ind == 4 && ulab_streq(key, "amplifier")) {
-                if (ulab_parse_u32(val, &s->world.amplifier_per_site)) goto bad;
+                if (web_u32(val, &s->world.amplifier_per_site)) goto bad;
             } else if (ind == 4 && ulab_streq(key, "controller")) {
-                if (ulab_parse_u32(val, &s->world.controller_per_site)) goto bad;
+                if (web_u32(val, &s->world.controller_per_site)) goto bad;
             } else if (ind == 2 && ulab_streq(key, "ues_per_site")) {
-                if (ulab_parse_u32(val, &s->world.ues_per_site)) goto bad;
+                if (web_u32(val, &s->world.ues_per_site)) goto bad;
                 sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "sims_per_network")) {
-                if (ulab_parse_u32(val, &s->world.sims_per_network)) goto bad;
+                if (web_u32(val, &s->world.sims_per_network)) goto bad;
                 sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "sims_per_subscriber")) {
-                if (ulab_parse_u32(val, &s->world.sims_per_subscriber)) {
+                if (web_u32(val, &s->world.sims_per_subscriber)) {
                     goto bad;
                 }
                 sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "networks")) {
-                if (ulab_parse_u32(val, &s->world.networks)) goto bad;
+                if (web_u32(val, &s->world.networks)) goto bad;
                 sec = SEC_WORLD;
             } else if (ind == 2 && ulab_streq(key, "sites_per_network")) {
-                if (ulab_parse_u32(val, &s->world.sites_per_network)) goto bad;
+                if (web_u32(val, &s->world.sites_per_network)) goto bad;
                 sec = SEC_WORLD;
             } else goto unknown;
             continue;
@@ -1162,7 +1472,9 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             continue;
         }
         if (sec == SEC_SETUP) {
-            if (ind == 2 && ulab_streq(key, "create_via_bff")) {
+            if (ind == 2 && ulab_streq(key, "create_via_webapp")) {
+                if (parse_web_setup(val, &s->setup)) goto bad;
+            } else if (ind == 2 && ulab_streq(key, "create_via_bff")) {
                 if (val[0] != '\0') {
                     s->setup.create_networks =
                         parse_inline_list(val, "networks");
@@ -1247,6 +1559,11 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else goto unknown;
             continue;
         }
+        if ((sec == SEC_PHASE_EVENTS || sec == SEC_EVENT_EXPECT) &&
+            ind == 2 && ulab_starts(p, "- ")) {
+            sec = SEC_PHASES;
+            event = NULL;
+        }
         if (sec == SEC_PHASES) {
             if (ind == 2 && ulab_starts(p, "- ")) {
                 if (s->phase_count >= ULAB_MAX_PHASES) goto many;
@@ -1262,6 +1579,8 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
             } else goto unknown;
             continue;
         }
+        if ((sec == SEC_PHASE_EVENTS || sec == SEC_PHASE_CHECKS) &&
+            phase == NULL) goto bad;
         if (sec == SEC_PHASE_EVENTS) {
             if (ind == 6 && ulab_starts(p, "- ")) {
                 if (parse_item_value(p, &key, &val) ||
@@ -1272,7 +1591,13 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                        ulab_streq(key, "expect") && val[0] == '\0') {
                 sec = SEC_EVENT_EXPECT;
             } else if (ind == 8 && event != NULL) {
-                if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+                if (s->version == ULAB_WEBAPP_SCHEMA_VER &&
+                    !scenario_is_web_event(event->type) &&
+                    !ulab_streq(key, "nodes") &&
+                    !((event->type == EVT_START_UES || event->type == EVT_TRAFFIC) &&
+                      (ulab_streq(key, "ues") || ulab_streq(key, "timeout_seconds") ||
+                       (event->type == EVT_TRAFFIC && ulab_streq(key, "amount_mb"))))) goto unknown;
+                if (apply_event_field(event, key, val, s->version) != ULAB_OK) goto unknown;
             } else if (ind == 4 && ulab_streq(key, "checks")) {
                 sec = SEC_PHASE_CHECKS;
             } else goto unknown;
@@ -1285,7 +1610,7 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
                 }
             } else if (ind == 8 && event != NULL) {
                 sec = SEC_PHASE_EVENTS;
-                if (apply_event_field(event, key, val) != ULAB_OK) goto unknown;
+                if (apply_event_field(event, key, val, s->version) != ULAB_OK) goto unknown;
             } else if (ind == 6 && ulab_starts(p, "- ")) {
                 sec = SEC_PHASE_EVENTS;
                 if (parse_item_value(p, &key, &val) ||
@@ -1328,6 +1653,27 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
         }
     }
 
+    if (s->webapp.present) {
+        size_t i;
+        size_t j;
+        for (i = 0; i < s->phase_count; i++) {
+            for (j = 0; j < s->phases[i].event_count; j++) {
+                event = &s->phases[i].events[j];
+                if (scenario_is_web_event(event->type) && !(event->web_fields & 1u))
+                    event->timeout_seconds = s->webapp.action_timeout_seconds;
+            }
+            for (j = 0; j < s->phases[i].check_count; j++) {
+                check = &s->phases[i].checks[j];
+                if (scenario_is_web_check(check->type) && !(check->web_fields & 8u))
+                    check->timeout_seconds = s->webapp.check_timeout_seconds;
+            }
+        }
+        for (i = 0; i < s->final_check_count; i++) {
+            check = &s->final_checks[i];
+            if (scenario_is_web_check(check->type) && !(check->web_fields & 8u))
+                check->timeout_seconds = s->webapp.check_timeout_seconds;
+        }
+    }
     fclose(fp);
     return ULAB_OK;
 
@@ -1347,7 +1693,7 @@ fail:
 void scenario_list_events(void) {
     int i;
 
-    for (i = EVT_TRAFFIC; i <= EVT_CHECK; i++) {
+    for (i = EVT_TRAFFIC; i <= EVT_WEB_INVENTORY; i++) {
         printf("%s\n", scenario_event_name((event_type_t)i));
     }
 }
@@ -1355,7 +1701,7 @@ void scenario_list_events(void) {
 void scenario_list_checks(void) {
     int i;
 
-    for (i = CHECK_BACKEND_COUNT; i <= CHECK_SIM_POOL_CONTAINS_SIMS; i++) {
+    for (i = CHECK_BACKEND_COUNT; i <= CHECK_WEB_INVENTORY_EQUALS; i++) {
         printf("%s\n", scenario_check_name((check_type_t)i));
     }
 }

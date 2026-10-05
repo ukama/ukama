@@ -1,0 +1,115 @@
+version: 2
+name: "p0-webapp-node-metric-observations"
+description: "node metric observations. Read analytics.md for the required controlled telemetry profile; never infer live qualification from fixtures."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: "node-health"
+    events:
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+      - type: "web_interact"
+        view: "network_node_detail"
+        action: "metric_select"
+        label: "section"
+        value: "Node health"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Metric value"
+        subject: "Temperature"
+        expected: "55.50 °C"
+        requirement: "WEB-NODE-006"
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Metric value"
+        subject: "Memory"
+        expected: "—"
+        requirement: "WEB-NODE-006"
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart state"
+        subject: "Memory"
+        expected: "empty"
+        requirement: "WEB-NODE-006"
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart segments"
+        subject: "Temperature"
+        expected: "2"
+        requirement: "WEB-UI-004"
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart legend"
+        subject: "Temperature"
+        expected: "Below 60 °C: Normal|60–80 °C: High|Above 80 °C: Critical"
+        requirement: "WEB-UI-003"
+  - name: "known-sample"
+    events:
+      - type: "web_interact"
+        view: "network_node_detail"
+        action: "chart_hover"
+        label: "Temperature"
+        value: "25"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart tooltip"
+        subject: "Temperature"
+        expected: "Mon, Oct 5, 2026, 12:15 PM Temperature: 55.50 °C (normal)"
+        requirement: "WEB-UI-005"
+  - name: "missing-sample"
+    events:
+      - type: "web_interact"
+        view: "network_node_detail"
+        action: "chart_hover"
+        label: "Temperature"
+        value: "50"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart tooltip"
+        subject: "Temperature"
+        expected: "absent"
+        requirement: "WEB-UI-004"
+  - name: "chart-period"
+    events:
+      - type: "web_interact"
+        view: "network_node_detail"
+        action: "chart_range"
+        label: "Temperature"
+        value: "Week"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_node_detail"
+        label: "Chart range"
+        subject: "Temperature"
+        expected: "Week"
+        requirement: "WEB-UI-005"

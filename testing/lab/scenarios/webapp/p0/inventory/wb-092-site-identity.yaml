@@ -1,0 +1,86 @@
+version: 2
+name: p0-webapp-site-identity
+description: Reconcile site name location coordinates and all three node identities against independent inputs.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: card
+    events:
+      - type: web_open
+        view: network_sites
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site location
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected: ${ULAB_WEBAPP_SITE_LOCATION}
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site node count
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected: 3 nodes
+  - name: detail
+    events:
+      - type: web_open
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site title
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected_property: site_name
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site location
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected: ${ULAB_WEBAPP_SITE_LOCATION}
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site coordinates
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected: ${ULAB_WEBAPP_SITE_COORDINATES}
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site node IDs
+        requirement: WEB-SITE-002
+        sites: site-001
+        expected_property: site_node_ids

@@ -1,0 +1,207 @@
+version: 2
+name: p0-webapp-switch-port-isolation
+description: Verify all four port identities and toggle isolation, then require the off state to survive reload; optimistic-only source controls remain a known product gap.
+seed: 5111
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, operations]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+  browser: chromium
+  headless: true
+  action_timeout_seconds: 30
+  check_timeout_seconds: 180
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: port_identity
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_ports"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-SITE-006"
+  - name: port_1_only_off
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "1:off"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=Off;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_1_restore
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "1:on"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_2_only_off
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "2:off"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=Off;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_2_restore
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "2:on"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_3_only_off
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "3:off"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=Off;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_3_restore
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "3:on"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: port_9_only_off
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "9:off"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=Off"
+        requirement: "WEB-OPS-008"
+  - name: port_9_restore
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "9:on"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"
+  - name: reported_port_after_reload
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "9:off"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=Off"
+        requirement: "WEB-OPS-008"
+  - name: reload_requires_persistence
+    events:
+      - type: "web_reload"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_ports"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=Off"
+        requirement: "WEB-SITE-006"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=Off"
+        requirement: "WEB-OPS-008"
+  - name: restore_port
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "set_port"
+        value: "9:on"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Port states"
+        expected: "1:Tnode PoE=On;2:Cnode PoE=On;3:Anode PoE=On;9:Uplink SFP=On"
+        requirement: "WEB-OPS-008"

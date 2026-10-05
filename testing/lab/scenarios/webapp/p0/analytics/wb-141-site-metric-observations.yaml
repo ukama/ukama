@@ -1,0 +1,74 @@
+version: 2
+name: "p0-webapp-site-metric-observations"
+description: "site metric observations. Read analytics.md for the required controlled telemetry profile; never infer live qualification from fixtures."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: "battery"
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_interact"
+        view: "network_site_detail"
+        action: "metric_select"
+        label: "component"
+        value: "Batteries"
+      - type: "web_interact"
+        view: "network_site_detail"
+        action: "chart_hover"
+        label: "Battery charge"
+        value: "25"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_site_detail"
+        label: "Chart state"
+        subject: "Battery charge"
+        expected: "data"
+        requirement: "WEB-SITE-007"
+      - type: "web_ui_equals"
+        view: "network_site_detail"
+        label: "Chart tooltip"
+        subject: "Battery charge"
+        expected: "Mon, Oct 5, 2026, 12:15 PM Battery charge: 55.50 % (normal)"
+        requirement: "WEB-SITE-008"
+  - name: "unavailable-component"
+    events:
+      - type: "web_interact"
+        view: "network_site_detail"
+        action: "metric_select"
+        label: "component"
+        value: "Backhaul"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_site_detail"
+        label: "Chart state"
+        subject: "Backhaul downlink"
+        expected: "error"
+        requirement: "WEB-SITE-007"

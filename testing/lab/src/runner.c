@@ -24,11 +24,13 @@
 #include "sim_factory.h"
 #include "util.h"
 #include "workload.h"
+#include "webapp.h"
 
 static void make_run_id(char *out, size_t len, const scenario_t *scenario,
                         const runner_opts_t *opts) {
 
     time_t now;
+    static unsigned int web_sequence;
 
     if (opts != NULL && opts->run_id[0] != '\0') {
         snprintf(out, len, "%s", opts->run_id);
@@ -36,6 +38,10 @@ static void make_run_id(char *out, size_t len, const scenario_t *scenario,
     }
 
     now = time(NULL);
+    if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
+        snprintf(out, len, "web-%ld-%ld-%u", (long)now, (long)getpid(), ++web_sequence);
+        return;
+    }
     snprintf(out, len, "lab-%s-%u-%ld", scenario->name,
              scenario->seed, (long)now);
 }
@@ -62,12 +68,28 @@ static int prepare_run(const runner_opts_t *opts,
         return ULAB_ESCENARIO;
     }
 
-    make_run_id(run_id, sizeof(run_id), scenario, opts);
-    snprintf(runDir, runDirLen, "%s/%s", opts->out_dir, run_id);
+    /* Reject unsupported execution before any run directory or resource. */
+    if (scenario_execution_supported(scenario, err)) {
+        return ULAB_ESCENARIO;
+    }
 
-    if (ulab_mkdir_p(runDir)) {
-        snprintf(err->msg, sizeof(err->msg), "failed to create run dir");
-        return ULAB_EINTERNAL;
+    make_run_id(run_id, sizeof(run_id), scenario, opts);
+    if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
+        if (!webapp_valid_run_id(run_id)) {
+            snprintf(err->msg, sizeof(err->msg), "invalid web-app run ID: use 1..80 letters/digits/hyphens/underscores, starting with a letter/digit");
+            return ULAB_ESCENARIO;
+        }
+        if (webapp_path(runDir, runDirLen, opts->out_dir, run_id, err)) return ULAB_EINTERNAL;
+        if (ulab_mkdir_p(opts->out_dir) || mkdir(runDir, 0700)) {
+            snprintf(err->msg, sizeof(err->msg), "cannot create new web-app run directory; use a unique --run-id");
+            return ULAB_EINTERNAL;
+        }
+    } else {
+        snprintf(runDir, runDirLen, "%s/%s", opts->out_dir, run_id);
+        if (ulab_mkdir_p(runDir)) {
+            snprintf(err->msg, sizeof(err->msg), "failed to create run dir");
+            return ULAB_EINTERNAL;
+        }
     }
 
     if (world_generate(scenario, run_id, world, err)) {
@@ -1319,6 +1341,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
     if (report_open(&report, scenario, world.run_id, runDir)) {
         snprintf(err.msg, sizeof(err.msg), "failed to open report files");
         rc = ULAB_EINTERNAL;
+        if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) skip_cleanup = 1;
         goto done;
     }
     report_world(&world);
@@ -1329,7 +1352,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
         ulab_status("SKIP", "%s status=%s", scenario->name,
                     scenario->status);
         skip_cleanup = 1;
+        if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) report.scenario_skipped = 1;
         rc = ULAB_OK;
+        goto done;
+    }
+
+    if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
+        skip_cleanup = 1; /* webapp_execute owns its bounded cleanup. */
+        rc = webapp_run_local(opts, scenario, &world, &report, runDir, &err);
         goto done;
     }
 
@@ -1481,8 +1511,10 @@ done:
         }
     }
 
+    /* An unsupported/invalid v2 contract is not an expected product failure. */
     if (scenario != NULL && ulab_streq(scenario->status, "xfail") &&
-        rc != ULAB_OK) {
+        rc != ULAB_OK &&
+        scenario->version != ULAB_WEBAPP_SCHEMA_VER) {
         ulab_status("XFAIL", "%s failed as expected", scenario->name);
         rc = ULAB_OK;
     }

@@ -1,0 +1,86 @@
+version: 2
+name: "p0-webapp-network-support-lookup"
+description: "network support lookup. Lab-only browser acceptance; see team-support.md for prerequisites and known product gaps."
+seed: 4804
+suite: "webapp"
+priority: "p0"
+status: "active"
+tags: [webapp, virtual, nodes, list-detail]
+provider:
+  type: "virtual"
+webapp:
+  base_url: "http://localhost:3000"
+  auth_state: ".auth/owner.json"
+  browser: "chromium"
+  headless: false
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: "site-lookup"
+    events:
+      - type: "web_open"
+        view: "network_support"
+        networks: "net-001"
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_lookup"
+        value_from: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support identity"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_name"
+        sites: "site-001"
+        networks: "net-001"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Site ID"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_id"
+        sites: "site-001"
+        networks: "net-001"
+  - name: "node-lookup"
+    events:
+      - type: "web_open"
+        view: "network_support"
+        networks: "net-001"
+      - type: "web_interact"
+        view: "network_support"
+        action: "support_node"
+        value_from: "node_id"
+        nodes: "tower-site-001-001"
+        networks: "net-001"
+    checks:
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Node ID"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "node_id"
+        nodes: "tower-site-001-001"
+        networks: "net-001"
+      - type: "web_ui_equals"
+        view: "network_support"
+        label: "Support field"
+        subject: "Site"
+        requirement: "WEB-SUPPORT-002"
+        expected_property: "site_name"
+        sites: "site-001"
+        networks: "net-001"

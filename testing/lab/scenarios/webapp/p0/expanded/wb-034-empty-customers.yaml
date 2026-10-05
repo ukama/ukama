@@ -1,0 +1,66 @@
+version: 2
+name: p0-webapp-empty-customers
+description: A newly created network has an explicit empty customer state in every lens.
+seed: 4711
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, commerce, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+  sims_per_network: 0
+setup:
+  create_via_webapp: [networks]
+phases:
+  - name: business_customers
+    events:
+      - type: web_open
+        view: business_customers
+        networks: net-001
+    checks:
+      - type: web_ui_equals
+        view: business_customers
+        label: Text visible
+        expected: 'true'
+        requirement: WEB-UI-001
+        subject: No customers yet
+  - name: network_customers
+    events:
+      - type: web_open
+        view: network_customers
+        networks: net-001
+    checks:
+      - type: web_ui_equals
+        view: network_customers
+        label: Text visible
+        expected: 'true'
+        requirement: WEB-UI-001
+        subject: No customers yet
+  - name: customer_customers
+    events:
+      - type: web_open
+        view: customer_customers
+        networks: net-001
+    checks:
+      - type: web_ui_equals
+        view: customer_customers
+        label: Text visible
+        expected: 'true'
+        requirement: WEB-UI-001
+        subject: No customers yet
