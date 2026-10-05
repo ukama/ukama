@@ -33,6 +33,7 @@ type MsgBus struct {
 	ManagementUri string
 	User          string
 	Password      string
+	PrefetchCount int `default:"1"`
 }
 
 type Shovel struct {
