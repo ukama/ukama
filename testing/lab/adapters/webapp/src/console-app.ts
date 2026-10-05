@@ -3,6 +3,7 @@
  */
 import { Commerce } from './commerce.js';
 import { Operations } from './operations.js';
+import {trackQualityReads} from './ui-quality.js';
 import {trackTeamReads} from './team-support.js';
 import { trackCommerceReads } from './commerce-faults.js';
 import { trackStatusRequests } from './operation-observer.js';
@@ -76,7 +77,7 @@ export async function assertSession(page: Page, origin: string, budget: Budget):
 
 export class ConsoleApp {
   private current?: { name: string; path: string; network?: string };
-  constructor(private page: Page, private origin: string) { trackStatusRequests(page); trackCommerceReads(page); trackTeamReads(page); }
+  constructor(private page: Page, private origin: string) { trackStatusRequests(page); trackCommerceReads(page); trackTeamReads(page); trackQualityReads(page); }
   forgetView(): void { this.current = undefined; }
   private main(): Locator { return this.page.locator('main.main'); }
   private async path(path: string, budget: Budget): Promise<void> {

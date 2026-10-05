@@ -9,12 +9,15 @@ function install(){
   const query=async(name,variables={})=>fetch('/graphql',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({operationName:name,query:`query ${name}${name==='TeamList'?'': '($networkId: String!)'} { fixture }`,variables})}).then(r=>r.json());
   const field=(d,label,type='input',options='')=>{const f=document.createElement('label');f.className='ff';f.innerHTML=`<div class="ff-label">${label}</div><${type}${type==='input'?' type="email"':''}>${options}</${type}><span class="ff-err"></span>`;d.append(f);return f.querySelector(type)};
   if(path==='/business/manage/members'){
-   main.innerHTML='<div class="MuiSkeleton-root">Loading</div>';await query('TeamList');
+   main.innerHTML='<div class="MuiSkeleton-root">Loading</div>';const members=await query('TeamList');
+   if(members.data?.membersView?.team?.error){main.innerHTML="<div>Couldn't load members</div>";button('Try again',()=>{if(db.mode!=='broken-retry')void render()},main);return;}
    main.innerHTML='<div class="pagehead"></div><table><thead><tr><th>Member</th><th>Role</th><th>Member since</th><th>Status</th><th></th></tr></thead><tbody></tbody></table>';
    let rows=db.members;if(db.mode==='duplicate-member')rows=[...rows,rows[0]];
    for(const m of rows)main.querySelector('tbody').innerHTML+=`<tr><td><div><span class="av-sm">L</span><div><div>${m.name}</div><div class="muted">${m.email}</div></div></div></td><td><div>${db.mode==='wrong-role'?'Vendor':m.role}</div><div>Role description</div></td><td>Oct 1, 2026</td><td><span>${m.status}</span></td><td><button>More actions</button></td></tr>`;
+   if(db.mode==='page-error')queueMicrotask(()=>{throw Error('controlled browser error')});
    button('Invite member',()=>{
-    const d=document.createElement('div');d.role='dialog';d.innerHTML='<h2>Invite member</h2>';menu.append(d);
+    const opener=document.activeElement,d=document.createElement('div');d.role='dialog';d.innerHTML='<h2>Invite member</h2>';menu.append(d);d.tabIndex=-1;d.style.cssText='position:fixed;inset:10% auto auto 3%;width:90vw;max-width:520px;background:white;padding:8px;box-sizing:border-box';if(db.mode==='wide-dialog')d.style.width='800px';if(db.mode==='wide-dialog')d.style.maxWidth='none';d.focus();
+    d.addEventListener('keydown',e=>{if(e.key==='Escape'){d.remove();if(db.mode!=='lost-focus')opener.focus()}if(e.key==='Tab'&&db.mode!=='untrapped'){const list=[...d.querySelectorAll('input,select,button')].filter(e=>!e.disabled);let i=list.indexOf(document.activeElement);if(e.shiftKey&&i<=0){e.preventDefault();list.at(-1).focus()}else if(!e.shiftKey&&(i<0||i===list.length-1)){e.preventDefault();list[0].focus()}}});
     const email=field(d,'Email'),role=field(d,'Role','select','<option value="">Select a role</option>'+['Owner','Administrator','Network owner','Vendor'].map(r=>`<option>${r}</option>`).join(''));
     const submit=button('Invite member',async()=>{const map={Owner:'ROLE_OWNER',Administrator:'ROLE_ADMIN','Network owner':'ROLE_NETWORK_OWNER',Vendor:'ROLE_VENDOR'};
      const data={email:email.value.toLowerCase(),name:email.value.split('@')[0],role:db.mode==='wrong-invite-role'?'ROLE_OWNER':map[role.value]};

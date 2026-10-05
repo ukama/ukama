@@ -4,6 +4,7 @@
  */
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, keys, normalize, str, type ObjectValue } from './contract.js';
+import {UIQuality, QUALITY_ACTIONS, QUALITY_LABELS} from './ui-quality.js';
 import {TeamSupport, TEAM_ACTIONS, TEAM_LABELS} from './team-support.js';
 import { getView, type ConsoleApp } from './console-app.js';
 import {Analytics, ANALYTICS_ACTIONS, ANALYTICS_LABELS, analyticsView} from './analytics.js';
@@ -29,6 +30,11 @@ export class Interactions {
     keys(i, ['view', 'action', 'label', 'value', 'network_name', 'network_id']);
     const view = str(i.view, 'view'), action = str(i.action, 'action');
     const label = str(i.label ?? '', 'label', true), value = str(i.value ?? '', 'value', true);
+    if (QUALITY_ACTIONS.includes(action)) {
+      if (!this.app) throw new WorkerError('WRONG_VIEW','UI quality requires an opened view');
+      await this.app.assertView(view,i.network_name as string | undefined);
+      await new UIQuality(this.page).run(view,action,value,budget); return;
+    }
     if (TEAM_ACTIONS.includes(action)) {
       if (!this.app) throw new WorkerError('WRONG_VIEW','Team/support requires an opened view');
       await this.app.assertView(view,i.network_name as string | undefined);
@@ -110,6 +116,12 @@ export class Interactions {
     keys(i,['view','label','subject','expected','requirement','customer_name','plan_name','network_name']);
     const view=str(i.view,'view'), label=str(i.label,'label'), subject=str(i.subject??'','subject',true), expected=str(i.expected,'expected',true);
     const observe=async ():Promise<string|null>=>{
+      if (QUALITY_LABELS.includes(label)) {
+        if (!this.app) throw new WorkerError('WRONG_VIEW','UI quality requires an opened view');
+        await this.app.assertView(view,i.network_name as string | undefined);
+        if (label==='Members state' && view!=='business_members') throw new WorkerError('WRONG_VIEW','Members state requires members view');
+        return new UIQuality(this.page).observe(label,subject);
+      }
       if (TEAM_LABELS.includes(label)) {
         if (!this.app) throw new WorkerError('WRONG_VIEW','Team/support requires an opened view');
         await this.app.assertView(view,i.network_name as string | undefined);

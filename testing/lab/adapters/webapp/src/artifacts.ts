@@ -4,13 +4,20 @@
 import { appendFile, chmod, mkdir, rename, rm, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { join, resolve } from 'node:path';
-import type { BrowserContext, Page } from 'playwright';
-import { safeURL, type Result } from './contract.js';
+import type { BrowserContext, Page, Request } from 'playwright';
+import { safeURL, type Result, type Command } from './contract.js';
 
 export class Artifacts {
   readonly paths: string[] = [];
   readonly directory: string;
   private diagnostics: unknown[] = [];
+  private step?: {command_id:number; action:string};
+  private dropped = 0;
+  private problems = new WeakMap<Page,number>();
+  private requestSteps = new WeakMap<Request,unknown>();
+  begin(command:Command):void { this.step={command_id:command.command_id,action:command.action}; }
+  end():void { this.step=undefined; }
+  health(page:Page):string { return (this.problems.get(page)??0)===0?'clean':'errors'; }
   private tracing = new Map<BrowserContext, string>();
   private captured = false;
   constructor(root: string, run: string) { this.directory = resolve(root, run); }
@@ -21,19 +28,22 @@ export class Artifacts {
     this.paths.push(join(this.directory, 'results.jsonl'));
     await writeFile(this.paths[0]!, '', { mode: 0o600, flag: 'wx' });
   }
-  private note(value: unknown): void {
-    if (this.diagnostics.length === 200) this.diagnostics.shift();
-    this.diagnostics.push({ at: new Date().toISOString(), detail: value });
+  private note(value: unknown, initiated?:unknown): void {
+    if (this.diagnostics.length === 200) { this.diagnostics.shift(); this.dropped++; }
+    this.diagnostics.push({ at: new Date().toISOString(), command: this.step??null, initiated_by: initiated??null, detail: value });
   }
   attach(page: Page): void {
     // Do not record console arguments, headers, bodies or URLs with queries:
     // they can contain session tokens and customer data. Trace is separate,
     // private raw evidence, not a sanitized/shareable report.
     page.on('console', message => this.note({ type: 'console', level: message.type(), source: safeURL(message.location().url) }));
-    page.on('pageerror', () => this.note({ type: 'pageerror', message: 'Uncaught browser exception; inspect private trace' }));
-    page.on('requestfailed', request => this.note({ type: 'requestfailed', method: request.method(), url: safeURL(request.url()) }));
+    const problem=()=>this.problems.set(page,(this.problems.get(page)??0)+1);
+    const critical=(r:Request)=>['document','fetch','xhr'].includes(r.resourceType());
+    page.on('request',request=>this.requestSteps.set(request,this.step??null));
+    page.on('pageerror', () => {problem();this.note({ type: 'pageerror', message: 'Uncaught browser exception; inspect private trace' });});
+    page.on('requestfailed', request => {if(critical(request))problem();this.note({ type: 'requestfailed', critical:critical(request), method: request.method(), url: safeURL(request.url()) },this.requestSteps.get(request));});
     page.on('response', response => {
-      if (response.status() >= 400) this.note({ type: 'http_error', status: response.status(), url: safeURL(response.url()) });
+      if (response.status() >= 400) {if(critical(response.request()))problem();this.note({ type: 'http_error', critical:critical(response.request()), status: response.status(), url: safeURL(response.url()) },this.requestSteps.get(response.request()));}
     });
   }
   async start(context: BrowserContext): Promise<void> {
@@ -41,6 +51,14 @@ export class Artifacts {
     this.tracing.set(context, this.tracing.size ? 'trace-peer.zip' : 'trace.zip');
   }
   async record(result: Result): Promise<void> {
+    // Each command references its own snapshot; asynchronous failures retain
+    // both their request's initiating command and the command observing them.
+    if(this.diagnostics.length||this.dropped){
+      const path=join(this.directory,`diagnostics-${result.command_id??'protocol'}-${randomUUID()}.json`);
+      await writeFile(path,JSON.stringify({command:this.step??null,dropped_events:this.dropped,events:this.diagnostics},null,2)+'\n',{mode:0o600});
+      this.paths.push(path);result.artifacts.push(path);
+      this.diagnostics=[];this.dropped=0;
+    }
     await appendFile(join(this.directory, 'results.jsonl'), `${JSON.stringify(result)}\n`, { mode: 0o600 });
   }
   async summary(status: 'passed' | 'failed', reason: string): Promise<void> {
@@ -74,7 +92,7 @@ export class Artifacts {
     }
     this.tracing.clear();
     const path = join(this.directory, 'diagnostics.json');
-    await writeFile(path, JSON.stringify({ page_url: page ? safeURL(page.url()) : null, events: this.diagnostics }, null, 2) + '\n', { mode: 0o600 });
+    await writeFile(path, JSON.stringify({ command:this.step??null,dropped_events:this.dropped,page_url: page ? safeURL(page.url()) : null, events: this.diagnostics }, null, 2) + '\n', { mode: 0o600 });
     this.paths.push(path);
   }
   async discardTrace(_context?: BrowserContext): Promise<void> {

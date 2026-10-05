@@ -74,7 +74,7 @@ phases:
     def test_team_support_probes_cannot_be_promoted_to_live(self):
         path=self.root/self.scenario
         original=path.read_text()
-        for action in ('invite_probe','support_restart_probe','support_failure'):
+        for action in ('member_fault','member_release','invite_probe','support_restart_probe','support_failure'):
             with self.subTest(action=action):
                 path.write_text(original.replace('type: web_open','type: web_interact\n        action: '+action))
                 self.report['results'][0]['name']='web_interact'

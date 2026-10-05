@@ -73,6 +73,7 @@ export class Worker {
       }
       if (c.command_id <= this.highest) throw new WorkerError('COMMAND_ORDER', 'New command IDs must increase');
       this.highest = c.command_id;
+      this.evidence?.begin(c);
       if (this.closed && c.action !== 'close') throw new WorkerError('WORKER_CLOSED', 'Worker has already closed');
       if (this.failed && c.action !== 'close') throw new WorkerError('RUN_FAILED', 'Run already failed; only close is accepted');
       const remaining = c.deadline_ms - Date.now();
@@ -122,6 +123,7 @@ export class Worker {
         await this.shutdown(true);
       }
     }
+    this.evidence?.end();
     if (c && !this.responses.has(c.command_id)) this.responses.set(c.command_id, { fingerprint, result: structuredClone(result) });
     return result;
   }
@@ -137,7 +139,7 @@ export class Worker {
       }, config.scenario_timeout_seconds * 1000);
       const evidence = new Artifacts(str(c.inputs.artifacts_dir, 'artifacts_dir'), this.run);
       try { await evidence.create(); } catch { throw new WorkerError('ARTIFACT_DIRECTORY', 'Artifact run directory must be new and writable'); }
-      this.evidence = evidence;
+      this.evidence = evidence; evidence.begin(c);
       const state = config.session_mode === 'auth_test' && config.auth_state === 'none' ? {cookies:[],origins:[]} : await loadState(config.auth_state);
       try {
         // The CLI owns signal shutdown so tracing finishes before browser close.
@@ -224,6 +226,15 @@ export class Worker {
       const inventory = new Inventory(this.page!, this.config.base_url, this.app);
       if (c.action === 'web_inventory') { await inventory.run(c.inputs,budget); return {actual:{executed:true}}; }
       return inventory.check(c.inputs,budget);
+    }
+    if (c.action === 'web_ui_equals' && c.inputs.label === 'Browser health') {
+      keys(c.inputs,['view','label','expected','requirement','network_name','subject']);
+      if(c.inputs.subject)throw new WorkerError('INVALID_INPUT','Browser health does not accept a subject');
+      if(c.inputs.expected!=='clean')throw new WorkerError('INVALID_INPUT','Browser health expects clean');
+      await this.app.assertView(str(c.inputs.view,'view'),c.inputs.network_name as string|undefined);
+      const actual=this.evidence!.health(this.page!);
+      if(actual!=='clean')throw new WorkerError('BROWSER_HEALTH','JavaScript or critical transport errors occurred; inspect step diagnostics',actual);
+      return {expected:'clean',actual};
     }
     if (c.action === 'web_interact' || c.action === 'web_ui_equals') {
       const ui = new Interactions(this.page!, this.config.base_url, this.app);

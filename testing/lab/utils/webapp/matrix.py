@@ -53,7 +53,7 @@ def load_case(path):
 
 def controlled(case):
     """Injected response faults cannot be promoted to live product evidence."""
-    return any((e.get('type') == 'web_interact' and e.get('action') in ('invite_probe','support_restart_probe','support_failure')) or (e.get('type') == 'web_commerce' and e.get('action') in ('name_pending','name_failure','pool_failure','failed_top_up')) or (e.get('type') == 'web_action' and e.get('action') == 'status_fault') or (e.get('type') == 'web_onboard' and e.get('action') == 'arm_fault') or (e.get('type') == 'web_inventory' and e.get('action') in ('mask_home', 'stale_selection'))
+    return any((e.get('type') == 'web_interact' and e.get('action') in ('member_fault','member_release','invite_probe','support_restart_probe','support_failure')) or (e.get('type') == 'web_commerce' and e.get('action') in ('name_pending','name_failure','pool_failure','failed_top_up')) or (e.get('type') == 'web_action' and e.get('action') == 'status_fault') or (e.get('type') == 'web_onboard' and e.get('action') == 'arm_fault') or (e.get('type') == 'web_inventory' and e.get('action') in ('mask_home', 'stale_selection'))
                for phase in case.get('phases', []) for e in phase.get('events', []))
 
 def planned(case):
