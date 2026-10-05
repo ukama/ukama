@@ -53,7 +53,7 @@ def load_case(path):
 
 def controlled(case):
     """Injected response faults cannot be promoted to live product evidence."""
-    return any(e.get('type') == 'web_onboard' and e.get('action') == 'arm_fault'
+    return any((e.get('type') == 'web_onboard' and e.get('action') == 'arm_fault') or (e.get('type') == 'web_inventory' and e.get('action') in ('mask_home', 'stale_selection'))
                for phase in case.get('phases', []) for e in phase.get('events', []))
 
 def planned(case):

@@ -289,3 +289,14 @@ for `Performance price`, `Performance sold`, `Performance revenue` and
 `Performance share`. Use the world `package` reference and a literal `expected`.
 Business headline totals use the existing `web_kpi_equals` checks. See wb-022
 and wb-027 for independent purchase expectations and explicit reload checks.
+
+## Patch 10 inventory and navigation
+
+`web_inventory` and `web_inventory_equals` add closed navigation commands,
+owned-world list memberships, detail identity, map selection and transient
+scope observation. The C runner resolves identity expectations as strings or
+complete JSON arrays and independently verifies returned values. See
+[webapp/inventory.md](webapp/inventory.md) for action/label mappings, local
+expectation inputs and the eighteen runnable scenarios. Controlled stale
+preference and masked read-response scenarios never receive live coverage
+credit. Missing list controls and geographic map placement remain partial.

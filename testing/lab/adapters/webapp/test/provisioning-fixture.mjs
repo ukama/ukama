@@ -21,7 +21,7 @@ function client() {
   document.querySelector('.netswitch').onclick = () => {
     menu.innerHTML = '';
     for (const n of db.networks) {
-      const b = button(n.name, () => { selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; void render(); }, menu); b.role = 'menuitem';
+      const b = button(n.name, () => { selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; window.inventorySwitch?.(); void render(); }, menu); b.role = 'menuitem';
     }
     const b = button('Add network', () => {
       menu.innerHTML = '<div role="dialog"><h2>Add network</h2><input placeholder="network-name"></div>';
@@ -58,10 +58,11 @@ function client() {
       if (!sites.length) main.innerHTML += '<div>No sites yet</div>';
       for (const site of sites) { const card = document.createElement('div'); card.className = 'ecard'; card.role = 'button'; card.innerHTML = `<span>${site.name}</span>`; card.onclick = () => move('/network/sites/' + site.id); main.append(card); }
     } else if (path.startsWith('/network/sites/')) {
-      const site = db.sites.find(s => path.endsWith('/' + s.id)); main.innerHTML = `<h1>${site.name}</h1>`;
+      const site = db.sites.find(s => path.endsWith('/' + s.id)); main.innerHTML = `<div class="pagehead"><div class="pagetitle">${site.name}</div></div>`;
     } else if (path === '/network/nodes') {
       const nodes = db.nodes.filter(n => db.sites.some(s => s.id === n.site && s.network_id === selected));
-      main.innerHTML = `<div class="pagehead"><div class="pagetitle">Nodes<span class="cnt">${nodes.length}</span></div></div>`;
+      main.innerHTML = `<div class="pagehead"><div class="pagetitle">Nodes<span class="cnt">${nodes.length || ''}</span></div></div>`;
+      if (!nodes.length) main.innerHTML += '<div>No nodes yet</div>';
       for (const node of nodes) {
         const card = document.createElement('div'); card.className = 'ecard'; card.role = 'button';
         card.innerHTML = `<div><span title="Connectivity: Online" class="dot"></span><span>${node.type}</span><div class="tnum">${node.type} · ${node.id}</div></div><hr><div><span>${db.sites.find(s=>s.id===node.site).name}</span></div>`;
@@ -89,7 +90,7 @@ function client() {
       });
     } else if (path === '/configure/sims') { main.innerHTML = '<h1>Upload SIMs</h1>'; button('Finish setup', () => move('/configure/complete')); }
     else if (path === '/configure/complete') button('Go to Console', () => move('/network'));
-    window.renderOperations?.({ db, main, menu, button, graphql, render });
+    await window.renderOperations?.({ db, main, menu, button, graphql, render, move, selected });
   }
   function updateKpi() {
     const value = main.querySelector('.value'); if (!value) return;
@@ -98,6 +99,7 @@ function client() {
   }
   setInterval(async () => { await read(); updateKpi(); window.updateOperations?.(db); }, 100);
   if (location.pathname === '/') history.replaceState({}, '', '/network');
+  window.addEventListener('popstate',()=>void render());
   void render();
 }
 export async function provisioningFixture(mode = '', extension = {}) {

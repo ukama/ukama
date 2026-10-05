@@ -149,6 +149,6 @@ export class Creation {
     await budget.poll(async () => { if (this.error) throw this.error; return this.binding; }, Boolean, 'Site receipt missing');
     await card.click({ timeout: budget.remaining() });
     await budget.poll(async () => new URL(this.page.url()).pathname, p => p === `/network/sites/${this.binding!.id}`, 'Created site detail identity differs');
-    await this.page.locator('main.main').getByRole('heading', { name, exact: true }).waitFor({ timeout: budget.remaining() });
+    await budget.poll(() => this.page.locator('main.main .pagehead .pagetitle').innerText({timeout:budget.remaining()}), value => value.trim() === name, 'Created site title differs from the owned site');
   }
 }

@@ -47,6 +47,8 @@ function operationsClient() {
         }
       }
     } else {
+      ctx.main.querySelector('.detail-subrow')?.remove();
+      const status=el('div','',ctx.main,{class:'detail-subrow'});el('span',db.mode==='conflated-state'&&site.service===false?'Offline':'Online',status,{class:'MuiChip-label'});
       const b=el('button',busy?'Site actions • busy':'Site actions',root,{});b.onclick=()=>{menuOpen=true;refresh(db);};
     }
     ctx.menu.querySelector('[data-operations]')?.remove();

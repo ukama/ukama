@@ -536,12 +536,14 @@
       "priority": "p0",
       "requirement": "Switching networks replaces visible list rows, counts, and KPI scope.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/expanded/wb-032-network-plan-isolation.yaml"
+        "scenarios/webapp/p0/expanded/wb-032-network-plan-isolation.yaml",
+        "scenarios/webapp/p0/inventory/wb-090-site-membership.yaml",
+        "scenarios/webapp/p0/inventory/wb-105-home-network-kpi-scope.yaml"
       ],
-      "implementation_note": "Partial: selected-network customer membership persists across switch and reload; counts/KPI scope and transient stale data remain gaps."
+      "implementation_note": "Patch 10: complete site/node memberships and counts plus distinct online-site KPI scope; UE/customer usage verified independently on both networks. Existing customer/plan isolation scenarios retained."
     },
     {
       "id": "WEB-SHELL-003",
@@ -549,9 +551,12 @@
       "priority": "p0",
       "requirement": "Switching from site detail lands on the new network site list.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-093-site-detail-network-switch.yaml"
+      ],
+      "implementation_note": "Patch 10: switch directly from an owned site detail, require new-network site list path and full membership without corrective web_open."
     },
     {
       "id": "WEB-SHELL-004",
@@ -559,9 +564,12 @@
       "priority": "p0",
       "requirement": "Switching from node detail lands on the new network node list.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-094-node-detail-network-switch.yaml"
+      ],
+      "implementation_note": "Patch 10: switch directly from an owned node detail, require new-network node list path and full membership without corrective web_open."
     },
     {
       "id": "WEB-SHELL-005",
@@ -571,7 +579,11 @@
       "source": "src/lib/useSwitchNetwork.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-095-site-transient-scope.yaml",
+        "scenarios/webapp/p0/inventory/wb-096-node-transient-scope.yaml"
+      ],
+      "implementation_note": "Partial: sticky DOM mutation/frame monitor catches foreign site and node identities during switches. Anonymous KPI values, canvases, every paint and unvisited screens remain outside this observer; no full completion credit."
     },
     {
       "id": "WEB-SHELL-006",
@@ -579,9 +591,13 @@
       "priority": "p1",
       "requirement": "Reload restores a valid selected network and self-heals a removed selection.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-090-site-membership.yaml",
+        "scenarios/webapp/p0/inventory/wb-098-stale-network-preference.yaml"
+      ],
+      "implementation_note": "Patch 10: selected-network membership survives reload. Separate controlled invalid-preference probe requires a visible valid network; it earns no live credit and does not delete a real network."
     },
     {
       "id": "WEB-SHELL-007",
@@ -589,9 +605,12 @@
       "priority": "p1",
       "requirement": "Browser Back and direct links preserve the expected entity and network context.",
       "source": "src/lib/useSwitchNetwork.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-097-history-deep-links.yaml"
+      ],
+      "implementation_note": "Patch 10: browser Back and same-origin direct links resolve owned site/node identities and current network; no automatic network selection in direct navigation."
     },
     {
       "id": "WEB-SHELL-008",
@@ -677,9 +696,12 @@
       "priority": "p0",
       "requirement": "Displayed active-customer count and data volume match the scenario scope.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
+      ],
+      "implementation_note": "Patch 10: UI-allocated local UE generates traffic; Network Home active customers and volume match independent host expectations on the UE network and an unused second network, then after reload."
     },
     {
       "id": "WEB-NET-005",
@@ -687,9 +709,12 @@
       "priority": "p1",
       "requirement": "Network uptime uses the selected date window and displays the correct percentage.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-103-home-date-windows.yaml"
+      ],
+      "implementation_note": "Patch 10: three selected date windows compare displayed uptime against independent declared expectations. Host must derive percentages from known site-time records, not copy UI/BFF output."
     },
     {
       "id": "WEB-NET-006",
@@ -699,7 +724,10 @@
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-099-map-selection.yaml"
+      ],
+      "implementation_note": "Partial: marker count, online fill token, popup/selection names and location text. Geographic pin placement and offline/degraded status colors are not qualified; no completion credit."
     },
     {
       "id": "WEB-NET-007",
@@ -707,9 +735,12 @@
       "priority": "p1",
       "requirement": "Selecting a map site opens the matching site information and detail.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-099-map-selection.yaml"
+      ],
+      "implementation_note": "Patch 10: choose both owned map sites, validate selected identity, open exact matching detail and clear selection."
     },
     {
       "id": "WEB-NET-008",
@@ -717,9 +748,12 @@
       "priority": "p0",
       "requirement": "Missing KPI/registry data displays unavailable rather than an invented zero.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-102-missing-home-data.yaml"
+      ],
+      "implementation_note": "Patch 10: controlled missing KPI keys and registry-section failure require unavailable display and recovery. Injection count is checked; synthetic responses cannot earn live credit."
     },
     {
       "id": "WEB-SITE-001",
@@ -727,9 +761,13 @@
       "priority": "p0",
       "requirement": "Site list count and names match the sites created in the selected network.",
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-090-site-membership.yaml",
+        "scenarios/webapp/p0/inventory/wb-104-empty-inventory.yaml"
+      ],
+      "implementation_note": "Patch 10: compare whole name multisets and visible total across two networks/reload; explicit empty-state scenario rejects loading/error as empty."
     },
     {
       "id": "WEB-SITE-002",
@@ -739,7 +777,10 @@
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-092-site-identity.yaml"
+      ],
+      "implementation_note": "Partial: list name/location/node count and bound detail name/location/independent coordinates/all node IDs. Original list does not expose coordinates or individual node IDs; complete list-to-detail field equivalence remains a gap."
     },
     {
       "id": "WEB-SITE-003",
@@ -747,9 +788,12 @@
       "priority": "p0",
       "requirement": "Detail displays connectivity and service/radio state as distinct fields.",
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-107-site-distinct-states.yaml"
+      ],
+      "implementation_note": "Patch 10: toggle radio and cellular separately, require their displayed On/Off states while site connectivity remains Online. This checks visible separation, not command convergence already assigned to operations."
     },
     {
       "id": "WEB-SITE-004",
@@ -757,9 +801,12 @@
       "priority": "p0",
       "requirement": "An outage is shown correctly after an explicit reload on a non-polling screen.",
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-100-site-outage-reload.yaml"
+      ],
+      "implementation_note": "Patch 10: tower outage followed by explicit reload shows Degraded with unchanged node identities, then reconnect/reload returns Online."
     },
     {
       "id": "WEB-SITE-005",
@@ -769,7 +816,10 @@
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-091-site-search.yaml"
+      ],
+      "implementation_note": "Partial: exact site search, no-match state, clear and complete restored membership. Original Sites has no filtering, sorting or pagination controls; no completion credit."
     },
     {
       "id": "WEB-SITE-006",
@@ -850,7 +900,11 @@
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/inventory/wb-101-node-network-membership.yaml",
+        "scenarios/webapp/p0/inventory/wb-104-empty-inventory.yaml"
+      ],
+      "implementation_note": "Partial: complete node membership/count through network switch/reload and explicit empty state. Original Nodes has no search/filter/sort/pagination controls; no completion credit."
     },
     {
       "id": "WEB-NODE-005",
@@ -1113,7 +1167,8 @@
         "scenarios/webapp/p0/commerce/wb-023-sim-service-toggle.yaml",
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1147,7 +1202,8 @@
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1252,7 +1308,8 @@
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1345,7 +1402,8 @@
         "scenarios/webapp/p0/commerce/wb-025-daily-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-026-monthly-allocation.yaml",
         "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
-        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml"
+        "scenarios/webapp/p0/expanded/wb-039-revenue-date-ranges.yaml",
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
       "implementation_note": "Patch 6 lab-only handlers and scenario assertions. Controlled fixtures passed; live target stack not run."
     },
@@ -1402,7 +1460,8 @@
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/commerce/wb-024-ue-usage.yaml",
-        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml"
+        "scenarios/webapp/p0/commerce/wb-027-customer-commerce-journey.yaml",
+        "scenarios/webapp/p0/inventory/wb-106-network-customer-usage.yaml"
       ],
       "implementation_note": "Partial: cycle/total usage and allowance covered with explicit independent traffic expectations; remaining allowance, missing-data distinction and full usage/expiry semantics remain gaps."
     },
@@ -1924,6 +1983,7 @@
       "state": "partial_automation",
       "source": "docs/webapp/commerce.md",
       "treatment": "One SIM per customer and one cash top-up per UE/run. Refunds, multiple-SIM selection, failed-payment UI, rapid-click behavior, PDF contents, payer/date reconciliation, input validation and cross-network negative tests remain gaps."
-    }
+    },
+    "Patch 10: five assigned requirements remain partial (WEB-SHELL-005, WEB-NET-006, WEB-SITE-002, WEB-SITE-005, WEB-NODE-004). See inventory.md; injected missing-data and stale-preference scenarios cannot earn live credit."
   ]
 }

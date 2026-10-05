@@ -82,6 +82,27 @@ phases:
         self.assertEqual(report['requirements'][0]['evidence'][0]['state'],'passed')
         self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
 
+    def test_inventory_injection_and_stale_preference_are_controlled(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for action in ('mask_home','stale_selection'):
+            with self.subTest(action=action):
+                path.write_text(original.replace('type: web_open','type: web_inventory\n        action: '+action))
+                self.report['results'][0]['name']='web_inventory'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['state'],'passed')
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
+    def test_inventory_arrays_preserve_duplicates_and_wrong_membership(self):
+        self.report['results'][1].update(expected=['site-one','site-two'],actual=['site-one','site-two'])
+        self.assertEqual(self.coverage()['totals']['verified'],1)
+        for actual in (['site-one','site-one'],['site-one'],['site-two','foreign']):
+            self.report['results'][1]['actual']=actual
+            self.assertEqual(self.coverage()['totals']['verified'],0)
+
     def test_partial_planned_requirement_never_gets_credit(self):
         p=self.root/m.CATALOG;catalog=json.loads(p.read_text());catalog['requirements'][0]['automation']='planned';p.write_text(json.dumps(catalog))
         self.manifest.update(inventory_sha256=m.digest(p),source_sha256=m.fingerprint(self.root))

@@ -1,0 +1,125 @@
+version: 2
+name: p0-webapp-map-selection
+description: Inspect each run-created map site then open its exact detail and clear the selection.
+seed: 4810
+suite: webapp
+priority: p1
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: home
+    events:
+      - type: web_open
+        view: network_home
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map count
+        requirement: WEB-NET-006
+        expected: '2'
+  - name: select
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: map_select
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map selection
+        requirement: WEB-NET-007
+        sites: site-001
+        expected_property: site_name
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map location
+        requirement: WEB-NET-006
+        sites: site-001
+        expected: ${ULAB_WEBAPP_SITE_LOCATION}
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map color
+        requirement: WEB-NET-006
+        sites: site-001
+        expected: var(--uk-success-bright)
+  - name: open
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: map_open
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Path
+        requirement: WEB-NET-007
+        sites: site-001
+        expected_property: path
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site title
+        requirement: WEB-NET-007
+        sites: site-001
+        expected_property: site_name
+  - name: second
+    events:
+      - type: web_open
+        view: network_home
+        networks: net-001
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: map_select
+        sites: site-002
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map selection
+        requirement: WEB-NET-007
+        sites: site-002
+        expected_property: site_name
+  - name: clear
+    events:
+      - type: web_inventory
+        view: network_home
+        networks: net-001
+        action: map_clear
+    checks:
+      - type: web_inventory_equals
+        view: network_home
+        networks: net-001
+        label: Map clear
+        requirement: WEB-NET-007
+        expected: 'true'

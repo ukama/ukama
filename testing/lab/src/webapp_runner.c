@@ -65,6 +65,7 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     const char *id = NULL;
     const char *text = NULL;
     const char *network_ref = NULL;
+    if (event->type == EVT_WEB_INVENTORY) return webapp_inventory_event(event,world,inputs,err);
     *inputs = json_object();
     if (!*inputs) return webapp_error(err, "cannot allocate browser event");
     if (event->type == EVT_WEB_ONBOARD) {
@@ -222,7 +223,9 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                   !strcmp(node->type, "amplifier") ? "Amplifier node" : "Controller node"))
             return webapp_error(err, "resolved browser expectation is too long");
     }
-    if (check->type == CHECK_WEB_ONBOARD_EQUALS) {
+    if (check->type == CHECK_WEB_INVENTORY_EQUALS) {
+        if (webapp_inventory_check(check,world,&inputs,err)) return ULAB_ERR;
+    } else if (check->type == CHECK_WEB_ONBOARD_EQUALS) {
         if (check->key[0] && onboard_expected(world,check->key,resolved.expected,sizeof(resolved.expected),err)) return ULAB_ERR;
         inputs = webapp_check_inputs(&resolved);
         if (inputs) {
@@ -255,7 +258,7 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
         inputs = webapp_check_inputs(&resolved);
         if (inputs && check->type == CHECK_WEB_SESSION_EQUALS && json_object_set_new(inputs, "subject", json_string(check->status))) { json_decref(inputs); inputs = NULL; }
     }
-    if (inputs && check->nodes.kind != SEL_NONE) {
+    if (inputs && check->nodes.kind != SEL_NONE && check->type != CHECK_WEB_INVENTORY_EQUALS) {
         node = world_node_by_ref(world, check->nodes.value);
         if (!node || !node->bff_id[0]) { json_decref(inputs); return webapp_error(err, "node card identity is unresolved"); }
         json_object_set_new(inputs, "node_id", json_string(node->bff_id));
@@ -356,7 +359,7 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
                 !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed"))))
                 rc = webapp_error(err, "commerce creation acknowledgement does not match intent");
             else if (!rc && webapp_journal_bind(journal, bindings, 1, client->sequence, err)) rc = ULAB_ERR;
-        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT || event->type == EVT_WEB_SESSION || event->type == EVT_WEB_ONBOARD) &&
+        } else if (!rc && (event->type == EVT_WEB_INVENTORY || event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT || event->type == EVT_WEB_SESSION || event->type == EVT_WEB_ONBOARD) &&
             (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
             rc = webapp_error(err, "worker operation acknowledgement is invalid");
         } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||

@@ -1,3 +1,4 @@
+import { Inventory } from './inventory.js';
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
@@ -192,6 +193,11 @@ export class Worker {
       this.page = target.page; this.app = target.app;
       await this.page.bringToFront();
       return { actual: { executed: true, tab } };
+    }
+    if (c.action === 'web_inventory' || c.action === 'web_inventory_equals') {
+      const inventory = new Inventory(this.page!, this.config.base_url, this.app);
+      if (c.action === 'web_inventory') { await inventory.run(c.inputs,budget); return {actual:{executed:true}}; }
+      return inventory.check(c.inputs,budget);
     }
     if (c.action === 'web_interact' || c.action === 'web_ui_equals') {
       const ui = new Interactions(this.page!, this.config.base_url);

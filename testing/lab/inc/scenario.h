@@ -109,7 +109,8 @@ typedef enum {
     EVT_WEB_COMMERCE,
     EVT_WEB_INTERACT,
     EVT_WEB_SESSION,
-    EVT_WEB_ONBOARD
+    EVT_WEB_ONBOARD,
+    EVT_WEB_INVENTORY
 } event_type_t;
 
 typedef enum {
@@ -182,7 +183,8 @@ typedef enum {
     CHECK_WEB_COMMERCE_EQUALS,
     CHECK_WEB_UI_EQUALS,
     CHECK_WEB_SESSION_EQUALS,
-    CHECK_WEB_ONBOARD_EQUALS
+    CHECK_WEB_ONBOARD_EQUALS,
+    CHECK_WEB_INVENTORY_EQUALS
 } check_type_t;
 
 typedef struct {

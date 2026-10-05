@@ -20,7 +20,7 @@ class ResourceLifecycle(unittest.TestCase):
         (cls.directory / 'version.h').write_text('#define VERSION "journal-test"\n')
         cls.binary = cls.directory / 'probe'
         files = ['scenario', 'validate', 'scenario_webapp', 'world', 'report', 'util', 'log',
-                 'webapp_client', 'webapp_journal', 'webapp_runner', 'webapp_commerce', 'workload_config']
+                 'webapp_client', 'webapp_journal', 'webapp_runner', 'webapp_commerce', 'webapp_inventory', 'workload_config']
         sources = [str(ROOT / f'src/{f}.c') for f in files]
         command = [os.environ.get('CC', 'cc'), '-std=gnu11', '-D_POSIX_C_SOURCE=200809L', '-Wall', '-Wextra', '-Werror',
                    '-ffunction-sections', '-fdata-sections', '-O1', '-I' + str(ROOT / 'inc'), '-I' + str(cls.directory),

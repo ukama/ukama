@@ -1,0 +1,78 @@
+version: 2
+name: p0-webapp-home-date-windows
+description: Compare displayed uptime to independently supplied expectations for all three selected windows.
+seed: 4810
+suite: webapp
+priority: p1
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: daily
+    events:
+      - type: web_open
+        view: network_home
+        networks: net-001
+    checks:
+      - type: web_kpi_equals
+        view: network_home
+        label: Network uptime
+        expected: ${ULAB_WEBAPP_UPTIME_DAY}
+        requirement: WEB-NET-005
+  - name: week
+    events:
+      - type: web_interact
+        view: network_home
+        networks: net-001
+        action: date_range
+        value: Last 7 days
+    checks:
+      - type: web_ui_equals
+        view: network_home
+        label: Date range
+        expected: Last 7 days
+        requirement: WEB-NET-005
+      - type: web_kpi_equals
+        view: network_home
+        label: Network uptime
+        expected: ${ULAB_WEBAPP_UPTIME_WEEK}
+        requirement: WEB-NET-005
+  - name: month
+    events:
+      - type: web_interact
+        view: network_home
+        networks: net-001
+        action: date_range
+        value: Last 30 days
+    checks:
+      - type: web_ui_equals
+        view: network_home
+        label: Date range
+        expected: Last 30 days
+        requirement: WEB-NET-005
+      - type: web_kpi_equals
+        view: network_home
+        label: Network uptime
+        expected: ${ULAB_WEBAPP_UPTIME_MONTH}
+        requirement: WEB-NET-005

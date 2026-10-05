@@ -1,0 +1,92 @@
+version: 2
+name: p0-webapp-site-search
+description: Search a run-scoped site and a nonmatching name then clear search; preserve total and membership.
+seed: 4810
+suite: webapp
+priority: p1
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: all
+    events:
+      - type: web_open
+        view: network_sites
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SITE-005
+        expected_property: site_names
+  - name: one
+    events:
+      - type: web_inventory
+        view: network_sites
+        networks: net-001
+        action: search
+        sites: site-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SITE-005
+        sites: site-001
+        expected_property: site_name
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Header count
+        requirement: WEB-SITE-005
+        expected: '2'
+  - name: no-match
+    events:
+      - type: web_inventory
+        view: network_sites
+        networks: net-001
+        action: search
+        value: no-matching-ulab-site
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Empty search
+        requirement: WEB-SITE-005
+        expected: 'true'
+  - name: clear
+    events:
+      - type: web_inventory
+        view: network_sites
+        networks: net-001
+        action: search
+        value: ''
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SITE-005
+        expected_property: site_names

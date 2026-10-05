@@ -57,7 +57,12 @@ function client() {
       else { d.innerHTML+=`<span>Completed</span><div><div>Method</div><div>Cash</div></div><div>${plan.name}</div><div><span>Total paid</span><span>$${Number(p.amount).toFixed(2)}</span></div><div><div>Payment ID</div><div>${db.mode==='wrong-receipt'?'foreign-payment':p.id}</div></div>`; }
       button('Close',()=>d.remove(),d);
     }
-    if (['/business', '/business/revenue', '/business/packages'].includes(path)) {
+    if(path==='/network'){
+      const active=db.sims.filter(s=>s.network_id===selected&&s.status==='active').length;
+      const wrong=db.mode==='foreign-network-usage';
+      const fields=[['Active customers',active],['Data volume',bytes(active||wrong?db.usage:0)]];
+      main.innerHTML=fields.map(([label,value])=>`<div class="MuiCard-root"><div><span>${label}</span></div><div>${value}</div></div>`).join('');
+    } else if (['/business', '/business/revenue', '/business/packages'].includes(path)) {
       const purchases = db.payments.filter(p => db.sims.some(s => s.id === p.sim && s.network_id === selected));
       const revenue = purchases.reduce((sum, p) => sum + Number(p.amount), 0);
       const shownRevenue = db.mode === 'wrong-revenue' ? revenue + 1 : revenue;

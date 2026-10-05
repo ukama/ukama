@@ -74,6 +74,7 @@ export async function assertSession(page: Page, origin: string, budget: Budget):
 export class ConsoleApp {
   private current?: { name: string; path: string; network?: string };
   constructor(private page: Page, private origin: string) {}
+  forgetView(): void { this.current = undefined; }
   private main(): Locator { return this.page.locator('main.main'); }
   private async path(path: string, budget: Budget): Promise<void> {
     await budget.poll(async () => {

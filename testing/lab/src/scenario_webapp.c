@@ -19,11 +19,11 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_ONBOARD;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_INVENTORY;
 }
 
 int scenario_is_web_check(check_type_t type) {
-    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_ONBOARD_EQUALS;
+    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_INVENTORY_EQUALS;
 }
 
 int scenario_has_webapp(const scenario_t *s) {
@@ -314,6 +314,62 @@ static int onboard_check(const scenario_t *s, const check_spec_t *c, ulab_error_
     if ((ulab_streq(c->key,"site_name") || ulab_streq(c->key,"tower_id") || ulab_streq(c->key,"node_ids")) && !s->world.sites_per_network) return fail(err,"onboarding expected site identity requires a planned trio");
     return ULAB_OK;
 }
+/* Inventory/navigation have closed actions and resolved, owned world scope. */
+static int inventory_scope(const scenario_t *s, const char *view, const selector_t *net,
+                           const selector_t *sites, const selector_t *nodes, ulab_error_t *err) {
+    static const char *const views[] = {"network_home", "network_sites", "network_nodes", "network_site_detail", "network_node_detail"};
+    event_spec_t e;
+    if (!IN_CHOICES(view, views) || !one_network(s, net)) return fail(err,"inventory requires a network view and one world network");
+    if (sites->kind != SEL_NONE || nodes->kind != SEL_NONE) {
+        memset(&e,0,sizeof(e)); e.networks=*net; e.sites=*sites; e.nodes=*nodes;
+        ulab_copy(e.view,sizeof(e.view),sites->kind != SEL_NONE ? "network_site_detail" : "network_node_detail");
+        if (!detail_reference(s,&e)) return fail(err,"inventory entity must belong to the selected network");
+    }
+    if ((ulab_streq(view,"network_site_detail") && sites->kind != SEL_REF) ||
+        (ulab_streq(view,"network_node_detail") && nodes->kind != SEL_REF)) return fail(err,"inventory detail requires its entity reference");
+    return ULAB_OK;
+}
+static int inventory_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
+    static const char *const actions[] = {"switch", "switch_watch", "search", "direct", "back", "map_select", "map_open", "map_clear", "stale_selection", "mask_home"};
+    int value = !!(e->web_fields & (1u<<14));
+    if (!IN_CHOICES(e->target,actions) || inventory_scope(s,e->view,&e->networks,&e->sites,&e->nodes,err)) return fail(err,"invalid inventory action or scope");
+    if (ulab_streq(e->target,"switch_watch") && (s->world.networks < 2 || !s->world.sites_per_network)) return fail(err,"scope watch requires identities in multiple networks");
+    if (ulab_streq(e->target,"stale_selection") && !ulab_streq(e->view,"network_home")) return fail(err,"stale preference probe requires home");
+    if (ulab_streq(e->target,"search")) {
+        if (!ulab_streq(e->view,"network_sites") || (value == (e->sites.kind == SEL_REF)) || e->nodes.kind != SEL_NONE) return fail(err,"site search requires a literal value or one site reference");
+    } else if (ulab_streq(e->target,"mask_home")) {
+        if (!ulab_streq(e->view,"network_home") || !value || (!ulab_streq(e->status,"kpis") && !ulab_streq(e->status,"registry") && !ulab_streq(e->status,"reset"))) return fail(err,"home masking accepts kpis/registry/reset only");
+    } else if (value) return fail(err,"value is only valid for search and mask_home");
+    if (ulab_starts(e->target,"map_") && (!ulab_streq(e->view,"network_home") || (ulab_streq(e->target,"map_clear") ? e->sites.kind != SEL_NONE : e->sites.kind != SEL_REF))) return fail(err,"map actions require home and a selected site except clear");
+    if ((ulab_streq(e->target,"direct") || ulab_streq(e->target,"back")) && !ulab_ends(e->view,"_detail") && (e->sites.kind != SEL_NONE || e->nodes.kind != SEL_NONE)) return fail(err,"list navigation cannot specify detail identities");
+    if ((ulab_starts(e->target,"switch") || ulab_streq(e->target,"stale_selection") || ulab_streq(e->target,"mask_home")) && (e->sites.kind != SEL_NONE || e->nodes.kind != SEL_NONE)) return fail(err,"network action cannot specify an entity");
+    return ULAB_OK;
+}
+static int inventory_check(const scenario_t *s, const check_spec_t *c, ulab_error_t *err) {
+    static const char *const labels[] = {"Path", "Selected network", "Site names", "Node IDs", "Header count", "Site location", "Site node count", "Site status", "Site title", "Site coordinates", "Site node IDs", "Node serial", "Scope leaks", "Map count", "Map selection", "Map color", "Map location", "Map clear", "KPI fault applied", "Empty search", "Selection valid"};
+    const char *property = NULL;
+    if (!IN_CHOICES(c->label,labels) || inventory_scope(s,c->view,&c->networks,&c->sites,&c->nodes,err)) return fail(err,"invalid inventory check label or scope");
+    if (ulab_streq(c->label,"Path")) property="path";
+    if (ulab_streq(c->label,"Selected network")) property="network_name";
+    if (ulab_streq(c->label,"Site names")) property=c->sites.kind==SEL_REF?"site_name":"site_names";
+    if (ulab_streq(c->label,"Node IDs")) property="node_ids";
+    if (ulab_streq(c->label,"Site title") || ulab_streq(c->label,"Map selection")) property="site_name";
+    if (ulab_streq(c->label,"Site node IDs")) property="site_node_ids";
+    if (ulab_streq(c->label,"Node serial")) property="node_id";
+    if (c->nodes.kind != SEL_NONE && !ulab_streq(c->view,"network_node_detail")) return fail(err,"node identity scopes node detail only");
+    if ((ulab_streq(c->label,"Empty search") && !ulab_streq(c->view,"network_sites")) || (ulab_streq(c->label,"Selection valid") && !ulab_streq(c->view,"network_home"))) return fail(err,"inventory special state on wrong view");
+    if (property && (strcmp(c->key,property) || (c->web_fields & (1u<<4)))) return fail(err,"inventory identity check requires its exact world expected_property");
+    if (!property && (!(c->web_fields & (1u<<4)) || c->key[0])) return fail(err,"inventory value check requires literal expected only");
+    if ((ulab_streq(c->label,"Site names") && !ulab_streq(c->view,"network_sites")) ||
+        (ulab_streq(c->label,"Node IDs") && !ulab_streq(c->view,"network_nodes")) ||
+        (ulab_streq(c->label,"Node serial") && !ulab_streq(c->view,"network_node_detail")) ||
+        (ulab_streq(c->label,"Header count") && !ulab_streq(c->view,"network_sites") && !ulab_streq(c->view,"network_nodes"))) return fail(err,"inventory label is on the wrong view");
+    if (ulab_starts(c->label,"Site ") && !ulab_streq(c->label,"Site names") && (c->sites.kind!=SEL_REF || (!ulab_streq(c->view,"network_sites") && !ulab_streq(c->view,"network_site_detail")))) return fail(err,"site field requires one site on list/detail");
+    if ((ulab_streq(c->label,"Site title") || ulab_streq(c->label,"Site coordinates") || ulab_streq(c->label,"Site node IDs")) && !ulab_streq(c->view,"network_site_detail")) return fail(err,"site detail field requires site detail");
+    if (ulab_starts(c->label,"Map ") && (!ulab_streq(c->view,"network_home") || ((!ulab_streq(c->label,"Map count") && !ulab_streq(c->label,"Map clear")) && c->sites.kind!=SEL_REF))) return fail(err,"map check requires home and selected site");
+    if (ulab_streq(c->label,"KPI fault applied") && !ulab_streq(c->view,"network_home")) return fail(err,"fault check requires home");
+    return ULAB_OK;
+}
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -322,6 +378,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
     if (event->timeout_seconds == 0 || event->timeout_seconds > 900 ||
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
+    if (event->type == EVT_WEB_INVENTORY) return inventory_event(s, event, err);
     if (event->type == EVT_WEB_SESSION) return session_event(event, err);
     if (event->type == EVT_WEB_ONBOARD) return onboard_event(s, event, err);
     if (event->type == EVT_WEB_INTERACT) return ui_event(s, event, err);
@@ -417,6 +474,7 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->timeout_seconds == 0 || check->timeout_seconds > 900 ||
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
+    if (check->type == CHECK_WEB_INVENTORY_EQUALS) return inventory_check(s, check, err);
     if (check->type == CHECK_WEB_SESSION_EQUALS) return session_check(check, err);
     if (check->type == CHECK_WEB_ONBOARD_EQUALS) return onboard_check(s, check, err);
     if (check->type == CHECK_WEB_UI_EQUALS) {

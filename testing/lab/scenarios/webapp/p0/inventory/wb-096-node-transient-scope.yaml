@@ -1,0 +1,62 @@
+version: 2
+name: p0-webapp-node-transient-scope
+description: Observe rendered node identities throughout a network switch and reject sticky transient leaks.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 2
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: source
+    events:
+      - type: web_open
+        view: network_nodes
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_nodes
+        networks: net-001
+        label: Node IDs
+        requirement: WEB-SHELL-005
+        expected_property: node_ids
+  - name: switch
+    events:
+      - type: web_inventory
+        view: network_nodes
+        networks: net-002
+        action: switch_watch
+    checks:
+      - type: web_inventory_equals
+        view: network_nodes
+        networks: net-002
+        label: Node IDs
+        requirement: WEB-SHELL-005
+        expected_property: node_ids
+      - type: web_inventory_equals
+        view: network_nodes
+        networks: net-002
+        label: Scope leaks
+        requirement: WEB-SHELL-005
+        expected: none

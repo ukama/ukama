@@ -1,0 +1,90 @@
+version: 2
+name: p0-webapp-site-membership
+description: Validate all site names and counts in both networks and after reload; reject extras and duplicates.
+seed: 4810
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, inventory, local]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 2
+  sites_per_network: 2
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+setup:
+  create_via_webapp: [networks, sites]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+phases:
+  - name: network-one
+    events:
+      - type: web_open
+        view: network_sites
+        networks: net-001
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Site names
+        requirement: WEB-SITE-001
+        expected_property: site_names
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-001
+        label: Header count
+        requirement: WEB-SITE-001
+        expected: '2'
+  - name: network-two
+    events:
+      - type: web_inventory
+        view: network_sites
+        networks: net-002
+        action: switch
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-002
+        label: Path
+        requirement: WEB-SHELL-002
+        expected_property: path
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-002
+        label: Site names
+        requirement: WEB-SITE-001
+        expected_property: site_names
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-002
+        label: Header count
+        requirement: WEB-SITE-001
+        expected: '2'
+  - name: reload
+    events:
+      - type: web_reload
+    checks:
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-002
+        label: Selected network
+        requirement: WEB-SHELL-006
+        expected_property: network_name
+      - type: web_inventory_equals
+        view: network_sites
+        networks: net-002
+        label: Site names
+        requirement: WEB-SITE-001
+        expected_property: site_names

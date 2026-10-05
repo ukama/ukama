@@ -1,0 +1,215 @@
+version: 2
+name: p0-webapp-site-distinct-states
+description: Radio and cellular state change independently while reachable site connectivity remains Online.
+seed: 4911
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, operations]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+  browser: chromium
+  headless: true
+  action_timeout_seconds: 30
+  check_timeout_seconds: 180
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: open_menu
+    events:
+      - type: web_open
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: open_site_actions
+    checks:
+      - type: web_action_available
+        view: network_site_detail
+        label: Restart site
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_radio_off_ready
+    checks:
+      - type: web_action_available
+        view: network_site_detail
+        label: Radio
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_radio_off
+    events:
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: set_radio
+        value: 'off'
+    checks:
+      - type: web_field_equals
+        view: network_site_detail
+        label: Radio state
+        expected: 'Off'
+        requirement: WEB-SITE-003
+      - type: web_action_available
+        view: network_site_detail
+        label: Radio
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_radio_on_ready
+    checks:
+      - type: web_action_available
+        view: network_site_detail
+        label: Radio
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_radio_on
+    events:
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: set_radio
+        value: 'on'
+    checks:
+      - type: web_field_equals
+        view: network_site_detail
+        label: Radio state
+        expected: 'On'
+        requirement: WEB-SITE-003
+      - type: web_action_available
+        view: network_site_detail
+        label: Radio
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_service_off_ready
+    checks:
+      - type: web_action_available
+        view: network_site_detail
+        label: Cellular
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_service_off
+    events:
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: set_service
+        value: 'off'
+    checks:
+      - type: web_field_equals
+        view: network_site_detail
+        label: Cellular state
+        expected: 'Off'
+        requirement: WEB-SITE-003
+      - type: web_action_available
+        view: network_site_detail
+        label: Cellular
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_service_on_ready
+    checks:
+      - type: web_action_available
+        view: network_site_detail
+        label: Cellular
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
+  - name: set_service_on
+    events:
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: set_service
+        value: 'on'
+    checks:
+      - type: web_field_equals
+        view: network_site_detail
+        label: Cellular state
+        expected: 'On'
+        requirement: WEB-SITE-003
+      - type: web_action_available
+        view: network_site_detail
+        label: Cellular
+        available: true
+        requirement: WEB-SITE-003
+      - type: web_inventory_equals
+        view: network_site_detail
+        networks: net-001
+        label: Site status
+        requirement: WEB-SITE-003
+        sites: site-001
+        expected: Online
