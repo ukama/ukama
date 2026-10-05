@@ -134,3 +134,10 @@ Firefox/WebKit qualification, or 90–100% product coverage.
 See [expanded.md](expanded.md) for semantic UI interactions and 14 added scenarios,
 and [matrix.md](matrix.md) for serial browser execution and conservative evidence
 reporting. Existing direct-run commands remain supported.
+
+## Patch 8 session suite
+
+`auth.md` documents the explicit `auth_test` profile and 17 session scenarios.
+The default authenticated profile and existing resource journeys retain their
+initial dashboard requirement. Auth tests cannot provision resources or run
+ordinary resource/runtime events. `remaining-patches.md` gives the full roadmap.

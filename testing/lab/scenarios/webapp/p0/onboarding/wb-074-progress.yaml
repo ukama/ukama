@@ -1,0 +1,169 @@
+version: 2
+name: p0-webapp-onboarding-progress
+description: Staged onboarding against the original console; injected faults are controlled evidence only.
+seed: 4874
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, onboarding]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  session_mode: onboarding
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: network-form
+    events:
+      - type: web_onboard
+        view: configure
+        action: open
+        value: add_network
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value_from: network_name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field value
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        expected_property: network_name
+        subject: Network name
+  - name: create-network
+    events:
+      - type: web_onboard
+        view: configure
+        action: submit_network
+      - type: web_onboard
+        view: configure
+        action: finish_network
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Install your site
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Network ID
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        expected_property: network_id
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '1'
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        subject: network
+  - name: installed
+    events:
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Installed
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Next
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Name your site
+        requirement: WEB-ONBOARD-006
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Network ID
+        requirement: WEB-ONBOARD-003
+        timeout_seconds: 180
+        expected_property: network_id
+  - name: site-settings
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Site name
+        value_from: site_name
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Name site
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Configure site settings
+        requirement: WEB-ONBOARD-006
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Tower
+        requirement: WEB-ONBOARD-004
+        timeout_seconds: 180
+        expected_property: tower_id
+      - type: web_onboard_equals
+        view: configure
+        label: Network ID
+        requirement: WEB-ONBOARD-006
+        timeout_seconds: 180
+        expected_property: network_id
+  - name: submit-site
+    events:
+      - type: web_onboard
+        view: configure
+        action: submit_site
+      - type: web_onboard
+        view: configure
+        action: finish_site
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Upload SIMs
+        requirement: WEB-ONBOARD-006
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '1'
+        requirement: WEB-ONBOARD-006
+        timeout_seconds: 180
+        subject: site
+  - name: progress
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Progress order
+        expected: Checking your nodes > Creating your site > Confirming your site
+        requirement: WEB-ONBOARD-007
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Progress complete
+        expected: 'true'
+        requirement: WEB-ONBOARD-007
+        timeout_seconds: 180

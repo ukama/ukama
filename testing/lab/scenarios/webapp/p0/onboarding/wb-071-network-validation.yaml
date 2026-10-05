@@ -1,0 +1,171 @@
+version: 2
+name: p0-webapp-onboarding-network-validation
+description: Staged onboarding against the original console; injected faults are controlled evidence only.
+seed: 4871
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, onboarding]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  session_mode: onboarding
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 0
+  sites_per_network: 0
+  nodes_per_site:
+    tower: 0
+    amplifier: 0
+    controller: 0
+  ues_per_site: 0
+phases:
+  - name: validation-form
+    events:
+      - type: web_onboard
+        view: configure
+        action: open
+        value: add_network
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Name your network
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+  - name: invalid-short
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value: ab
+      - type: web_onboard
+        view: configure
+        action: validate_name
+        label: Network name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field error
+        expected: At least 3 characters
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: Network name
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: network
+  - name: invalid-long
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - type: web_onboard
+        view: configure
+        action: validate_name
+        label: Network name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field error
+        expected: At most 40 characters
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: Network name
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: network
+  - name: invalid-uppercase
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value: Bad-name
+      - type: web_onboard
+        view: configure
+        action: validate_name
+        label: Network name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field error
+        expected: Lowercase letters, numbers, and "-" only (no spaces).
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: Network name
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: network
+  - name: invalid-space
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value: bad name
+      - type: web_onboard
+        view: configure
+        action: validate_name
+        label: Network name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field error
+        expected: Lowercase letters, numbers, and "-" only (no spaces).
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: Network name
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: network
+  - name: invalid-symbol
+    events:
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value: bad_name
+      - type: web_onboard
+        view: configure
+        action: validate_name
+        label: Network name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field error
+        expected: Lowercase letters, numbers, and "-" only (no spaces).
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: Network name
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-002
+        timeout_seconds: 180
+        subject: network

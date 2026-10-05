@@ -326,3 +326,11 @@ cached response. Observation remains separate from submission.
 Patch 6 also removes the operations adapter's dependency on console companion
 changes. Current locators target the unchanged console source. A stale or
 optimistic app value is not silently corrected by the adapter.
+
+## Staged onboarding (Patch 9)
+
+`session_mode: onboarding` initializes an isolated saved-auth context without
+opening a dashboard. `web_onboard` and `web_onboard_equals` drive the configure
+wizard with staged ownership receipts. Manual auth capture additionally accepts
+`--landing configure`. See `onboarding.md` for the closed command contract, local
+prerequisites, controlled-evidence limits and original console gaps.

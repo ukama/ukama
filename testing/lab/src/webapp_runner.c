@@ -31,6 +31,31 @@ static const char *ui_value(world_t *world, const char *property, const char *pa
     if (!strcmp(property, "network_name")) return network && network->bff_id[0] ? network->name : NULL;
     return NULL;
 }
+static json_t *onboard_context(world_t *w) {
+    json_t *value = json_object();
+    if (w->network_count) {
+        network_t *n = &w->networks[0];
+        json_object_set_new(value,"network",json_pack("{s:s,s:s,s:s}","ref",n->ref,"id",n->bff_id,"name",n->name));
+    }
+    if (w->site_count) {
+        site_t *site = &w->sites[0];
+        json_object_set_new(value,"site",json_pack("{s:s,s:s,s:s,s:s,s:s,s:s}","ref",site->ref,"id",site->bff_id,"name",site->name,"tower_id",site->tnode_id,"amplifier_id",site->anode_id,"controller_id",site->cnode_id));
+    }
+    return value;
+}
+static int onboard_expected(world_t *w, const char *key, char *out, size_t len, ulab_error_t *err) {
+    const char *value = NULL;
+    if (!strcmp(key,"network_name") && w->network_count) value = w->networks[0].name;
+    if (!strcmp(key,"network_id") && w->network_count) value = w->networks[0].bff_id;
+    if (!strcmp(key,"site_name") && w->site_count) value = w->sites[0].name;
+    if (!strcmp(key,"tower_id") && w->site_count) value = w->sites[0].tnode_id;
+    if (!strcmp(key,"node_ids") && w->site_count) {
+        site_t *site = &w->sites[0];
+        if (!site->tnode_id[0] || !site->anode_id[0] || !site->cnode_id[0] || snprintf(out,len,"%s | %s | %s",site->tnode_id,site->anode_id,site->cnode_id) >= (int)len) return webapp_error(err,"onboarding node identities unresolved or too long");
+        return ULAB_OK;
+    }
+    return !value || !*value || ulab_copy(out,len,value) ? webapp_error(err,"onboarding expectation unresolved") : ULAB_OK;
+}
 int webapp_event_inputs(const event_spec_t *event, world_t *world,
                          json_t **inputs, ulab_error_t *err) {
     network_t *network = NULL;
@@ -42,6 +67,24 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     const char *network_ref = NULL;
     *inputs = json_object();
     if (!*inputs) return webapp_error(err, "cannot allocate browser event");
+    if (event->type == EVT_WEB_ONBOARD) {
+        const char *kind = !strcmp(event->target,"submit_network") ? "network" : !strcmp(event->target,"submit_site") ? "site" : NULL;
+        json_t *context = onboard_context(world);
+        char value[ULAB_MAX_REF];
+        if (!context || ulab_copy(value,sizeof(value),event->status) || (event->variant[0] && onboard_expected(world,event->variant,value,sizeof(value),err))) { json_decref(context); goto unresolved; }
+        json_object_set_new(*inputs,"context",context);
+        json_object_set_new(*inputs,"view",json_string(event->view));
+        json_object_set_new(*inputs,"action",json_string(event->target));
+        json_object_set_new(*inputs,"label",json_string(event->profile));
+        json_object_set_new(*inputs,"value",json_string(value));
+        if (kind) {
+            json_t *entity = json_object_get(context,kind);
+            const char *bound = json_string_value(json_object_get(entity,"id"));
+            if (!entity || !bound || *bound) goto unresolved;
+            json_object_set_new(*inputs,"creation",json_pack("{s:s,s:O,s:O}","kind",kind,"ref",json_object_get(entity,"ref"),"name",json_object_get(entity,"name")));
+        }
+        return ULAB_OK;
+    }
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
     if (event->type == EVT_WEB_TAB) {
         if (json_object_set_new(*inputs, "tab", json_string(event->profile))) goto memory;
@@ -179,7 +222,14 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                   !strcmp(node->type, "amplifier") ? "Amplifier node" : "Controller node"))
             return webapp_error(err, "resolved browser expectation is too long");
     }
-    if (check->type == CHECK_WEB_UI_EQUALS) {
+    if (check->type == CHECK_WEB_ONBOARD_EQUALS) {
+        if (check->key[0] && onboard_expected(world,check->key,resolved.expected,sizeof(resolved.expected),err)) return ULAB_ERR;
+        inputs = webapp_check_inputs(&resolved);
+        if (inputs) {
+            json_object_set_new(inputs,"subject",json_string(check->status));
+            json_object_set_new(inputs,"context",onboard_context(world));
+        }
+    } else if (check->type == CHECK_WEB_UI_EQUALS) {
         const char *value;
         if (check->key[0]) {
             value = ui_value(world, check->key, check->package_ref, &check->ues, &check->networks);
@@ -244,6 +294,8 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
     json_t *binding;
     json_t *intent = NULL;
     const char *kind = webapp_commerce_kind(event);
+    int onboard_submit = event->type == EVT_WEB_ONBOARD && (!strcmp(event->target,"submit_network") || !strcmp(event->target,"submit_site"));
+    int onboard_finish = event->type == EVT_WEB_ONBOARD && (!strcmp(event->target,"finish_network") || !strcmp(event->target,"finish_site"));
     double deadline;
     runtime_job_t job;
     int rc;
@@ -264,6 +316,7 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
     }
     rc = webapp_event_inputs(event, journal->world, &inputs, err);
     if (rc) return rc;
+    if (onboard_submit) kind = !strcmp(event->target,"submit_network") ? "network" : "site";
     if (kind) {
         json_t *intents = json_object_get(journal->root, "creation_intents");
         if (!intents) { intents = json_array(); json_object_set_new(journal->root, "creation_intents", intents); }
@@ -278,7 +331,24 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
         bindings = json_object_get(reply, "bindings");
         entity = json_object_get(inputs, "entity");
         binding = json_array_get(bindings, 0);
-        if (kind) {
+        if (onboard_submit) {
+            if (!rc && (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply,"actual"),"executed")) || !json_is_true(json_object_get(json_object_get(reply,"actual"),"pending")))) rc = webapp_error(err,"invalid staged creation acknowledgement");
+        } else if (onboard_finish) {
+            const char *entity_kind = !strcmp(event->target,"finish_network") ? "network" : "site";
+            json_t *planned_entity = json_object_get(json_object_get(inputs,"context"),entity_kind);
+            json_t *candidate;
+            size_t n;
+            intent = NULL;
+            json_array_foreach(json_object_get(journal->root,"creation_intents"),n,candidate) {
+                if (ulab_streq(json_string_value(json_object_get(candidate,"kind")),entity_kind) && json_equal(json_object_get(candidate,"ref"),json_object_get(planned_entity,"ref"))) intent = candidate;
+            }
+            if (!rc && (!intent || json_array_size(bindings)!=1 || !json_is_true(json_object_get(json_object_get(reply,"actual"),"executed")) ||
+                !json_equal(json_object_get(intent,"command_id"),json_object_get(json_object_get(reply,"actual"),"creation_command_id")) ||
+                !json_equal(json_object_get(intent,"kind"),json_object_get(binding,"kind")) ||
+                !json_equal(json_object_get(intent,"ref"),json_object_get(binding,"ref")) ||
+                !json_equal(json_object_get(intent,"name"),json_object_get(binding,"name")))) rc = webapp_error(err,"staged completion does not match a submitted creation intent");
+            else if (!rc && webapp_journal_bind(journal,bindings,1,(unsigned int)json_integer_value(json_object_get(intent,"command_id")),err)) rc = ULAB_ERR;
+        } else if (kind) {
             if (!rc && (json_array_size(bindings) != 1 ||
                 !json_equal(json_object_get(intent, "kind"), json_object_get(binding, "kind")) ||
                 !json_equal(json_object_get(intent, "ref"), json_object_get(binding, "ref")) ||
@@ -286,7 +356,7 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
                 !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed"))))
                 rc = webapp_error(err, "commerce creation acknowledgement does not match intent");
             else if (!rc && webapp_journal_bind(journal, bindings, 1, client->sequence, err)) rc = ULAB_ERR;
-        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT || event->type == EVT_WEB_SESSION) &&
+        } else if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB || event->type == EVT_WEB_COMMERCE || event->type == EVT_WEB_INTERACT || event->type == EVT_WEB_SESSION || event->type == EVT_WEB_ONBOARD) &&
             (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
             rc = webapp_error(err, "worker operation acknowledgement is invalid");
         } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||
@@ -320,10 +390,10 @@ static int initialize(webapp_client_t *client, const scenario_t *scenario,
     if (!inputs) return webapp_error(err, "cannot encode worker initialization");
     rc = webapp_call(client, "init", inputs, scenario->webapp.action_timeout_seconds, &reply, err);
     if (!rc && json_array_size(json_object_get(reply, "bindings"))) rc = webapp_error(err, "initialization returned unexpected bindings");
-    if (!rc && ulab_streq(scenario->webapp.session_mode, "auth_test")) {
+    if (!rc && (ulab_streq(scenario->webapp.session_mode, "auth_test") || ulab_streq(scenario->webapp.session_mode,"onboarding"))) {
         json_t *actual = json_object_get(reply, "actual");
         const char *mode = json_string_value(json_object_get(actual, "session_mode"));
-        if (!json_is_true(json_object_get(actual, "initialized")) || !json_is_false(json_object_get(actual, "authenticated")) || !mode || strcmp(mode, "auth_test")) rc = webapp_error(err, "worker did not establish the isolated auth_test context");
+        if (!json_is_true(json_object_get(actual, "initialized")) || !json_is_false(json_object_get(actual, "authenticated")) || !mode || strcmp(mode, scenario->webapp.session_mode)) rc = webapp_error(err, "worker did not establish the requested isolated test context");
     } else if (!rc && !json_is_true(json_object_get(json_object_get(reply, "actual"), "authenticated"))) rc = webapp_error(err, "worker initialization did not establish an authenticated session");
     json_decref(inputs); json_decref(reply);
     return rc;

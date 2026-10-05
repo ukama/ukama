@@ -69,6 +69,18 @@ export class Creation {
     if (new RegExp(`\\b${mutation}\\s*\\(`).test(body?.query ?? '') && data?.name === this.inputs.name &&
         (this.kind === 'network' || data?.network_id === this.inputs.network_id)) this.requestSeen = true;
   };
+  begin(): void { this.page.on('request',this.request); this.page.on('response',this.response); }
+  markSubmitted(): void { this.submit(); }
+  markIntercepted(): void {
+    if (this.binding) throw new WorkerError('OWNERSHIP_CONFLICT','Cannot mark an identified creation as intercepted');
+    this.receipt.state = 'intercepted'; this.save();
+  }
+  async finish(budget: Budget): Promise<ObjectValue[]> {
+    await budget.poll(async()=>{if(this.error)throw this.error;return this.binding;},Boolean,'Created resource identity was not observed');
+    await Promise.all(this.pending); if(this.error)throw this.error;
+    this.page.off('request',this.request); this.page.off('response',this.response);
+    return [this.binding!];
+  }
   private submit(): void { this.submitted = true; this.receipt.state = 'submitted'; this.save(); }
   async run(app: ConsoleApp, budget: Budget): Promise<ObjectValue[]> {
     this.page.on('request', this.request); this.page.on('response', this.response);

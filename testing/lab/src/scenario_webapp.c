@@ -19,11 +19,11 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_SESSION;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_ONBOARD;
 }
 
 int scenario_is_web_check(check_type_t type) {
-    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_SESSION_EQUALS;
+    return type >= CHECK_WEB_KPI_EQUALS && type <= CHECK_WEB_ONBOARD_EQUALS;
 }
 
 int scenario_has_webapp(const scenario_t *s) {
@@ -62,7 +62,7 @@ int scenario_execution_supported(const scenario_t *s, ulab_error_t *err) {
 /* These are semantic browser views, not BFF query/view names. */
 static int view_valid(const char *view) {
     static const char *const views[] = {
-        "business_home", "business_revenue", "business_customers",
+        "configure", "business_home", "business_revenue", "business_customers",
         "business_packages", "business_data_plans", "business_members",
         "business_sim_pool", "business_support", "business_settings",
         "network_home", "network_sites", "network_site_detail",
@@ -283,6 +283,37 @@ static int session_check(const check_spec_t *c, ulab_error_t *err) {
     return ULAB_OK;
 }
 
+static int onboard_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *err) {
+    static const char *const actions[] = {"open", "fill", "click", "choose_network", "select_component", "submit_network", "finish_network", "submit_site", "finish_site", "retry_site", "reload", "site_detail", "arm_fault", "clear_fault", "validate_name"};
+    static const char *const paths[] = {"overview", "network", "add_network", "select_network", "install", "sims", "complete"};
+    static const char *const buttons[] = {"Get started", "Next", "Name site", "Finish setup", "Go to Console", "Skip for now", "Check now", "Installed"};
+    static const char *const components[] = {"Switch", "Backhaul", "Power"};
+    static const char *const faults[] = {"transport", "rejection", "missing_amplifier", "offline_tower", "unready_controller", "missing_location"};
+    int fill = ulab_streq(e->target, "fill"), select = ulab_streq(e->target, "select_component");
+    int validate = ulab_streq(e->target,"validate_name");
+    int takes_value = fill || select || ulab_streq(e->target, "open") || ulab_streq(e->target, "click") || ulab_streq(e->target, "arm_fault");
+    if (!ulab_streq(e->view, "configure") || !ulab_streq(s->webapp.session_mode, "onboarding") || !IN_CHOICES(e->target, actions)) return fail(err, "onboarding event requires configure view and onboarding mode");
+    if ((takes_value != !!(e->web_fields & ((1u<<14)|(1u<<15)))) || ((fill || select || validate) != !!e->profile[0])) return fail(err, "onboarding action value/label mismatch");
+    if (e->variant[0] && (!fill || (e->web_fields & (1u<<14)) || (!ulab_streq(e->variant,"network_name") && !ulab_streq(e->variant,"site_name")))) return fail(err,"onboarding value_from requires one matching planned name");
+    if (((fill || validate) && !ulab_streq(e->profile,"Network name") && !ulab_streq(e->profile,"Site name")) ||
+        (select && !IN_CHOICES(e->profile,components)) ||
+        (ulab_streq(e->target,"open") && !IN_CHOICES(e->status,paths)) ||
+        (ulab_streq(e->target,"click") && !IN_CHOICES(e->status,buttons)) ||
+        (ulab_streq(e->target,"arm_fault") && !IN_CHOICES(e->status,faults))) return fail(err,"unknown onboarding field, path, button or fault");
+    if (e->variant[0] && ((ulab_streq(e->variant,"network_name") && !ulab_streq(e->profile,"Network name")) || (ulab_streq(e->variant,"site_name") && !ulab_streq(e->profile,"Site name")))) return fail(err,"value_from must match its field");
+    if ((strstr(e->target,"network") || ulab_streq(e->target,"choose_network") || ulab_streq(e->variant,"network_name")) && !s->world.networks) return fail(err,"onboarding network action needs one planned network");
+    if ((strstr(e->target,"site") || select || ulab_streq(e->target,"arm_fault") || ulab_streq(e->variant,"site_name")) && !s->world.sites_per_network) return fail(err,"onboarding site action needs one planned site");
+    return ULAB_OK;
+}
+static int onboard_check(const scenario_t *s, const check_spec_t *c, ulab_error_t *err) {
+    static const char *const labels[] = {"Heading", "Path", "Step", "Network ID", "Selected network", "Field error", "Field value", "Button state", "Readiness", "Readiness count", "Tower", "Component", "Error", "Progress order", "Progress complete", "Mutation count", "Fault consumed", "Site name", "Site nodes", "Coordinates", "Saved component", "SIM guidance", "SIM upload present"};
+    static const char *const properties[] = {"network_name", "network_id", "site_name", "tower_id", "node_ids"};
+    int subject = ulab_streq(c->label,"Field error") || ulab_streq(c->label,"Field value") || ulab_streq(c->label,"Button state") || ulab_streq(c->label,"Readiness") || ulab_streq(c->label,"Component") || ulab_streq(c->label,"Saved component") || ulab_streq(c->label,"Mutation count");
+    if (!ulab_streq(c->view,"configure") || !ulab_streq(s->webapp.session_mode,"onboarding") || !IN_CHOICES(c->label,labels) || subject != !!c->status[0]) return fail(err,"unknown onboarding assertion or subject mismatch");
+    if ((!!(c->web_fields & (1u<<4)) + !!c->key[0]) != 1 || (c->key[0] && (!IN_CHOICES(c->key,properties) || !s->world.networks))) return fail(err,"onboarding check requires expected or a known world property");
+    if ((ulab_streq(c->key,"site_name") || ulab_streq(c->key,"tower_id") || ulab_streq(c->key,"node_ids")) && !s->world.sites_per_network) return fail(err,"onboarding expected site identity requires a planned trio");
+    return ULAB_OK;
+}
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -292,6 +323,7 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
     if (event->type == EVT_WEB_SESSION) return session_event(event, err);
+    if (event->type == EVT_WEB_ONBOARD) return onboard_event(s, event, err);
     if (event->type == EVT_WEB_INTERACT) return ui_event(s, event, err);
     if (event->type == EVT_WEB_COMMERCE) return commerce_event(s, event, err);
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
@@ -386,6 +418,7 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
     if (check->type == CHECK_WEB_SESSION_EQUALS) return session_check(check, err);
+    if (check->type == CHECK_WEB_ONBOARD_EQUALS) return onboard_check(s, check, err);
     if (check->type == CHECK_WEB_UI_EQUALS) {
         static const char *const labels[] = {"Path", "Selected network", "Dialog open", "Mobile navigation open", "Dialog title", "Field error", "Field value", "Field readonly", "Text visible", "Button enabled", "Button visible", "Focus on button", "Date range", "Plan option present", "Plan count", "Customer present", "Customer order", "Content fits viewport", "Auth origin", "Dashboard visible"};
         size_t n;
@@ -486,12 +519,13 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
     if (!ulab_streq(w->browser, "chromium") && !ulab_streq(w->browser, "firefox") &&
         !ulab_streq(w->browser, "webkit"))
         return fail(err, "webapp.browser must be chromium/firefox/webkit");
-    if (!ulab_streq(w->session_mode, "authenticated") && !ulab_streq(w->session_mode, "auth_test")) return fail(err, "session_mode must be authenticated or auth_test");
+    if (!ulab_streq(w->session_mode, "authenticated") && !ulab_streq(w->session_mode, "auth_test") && !ulab_streq(w->session_mode, "onboarding")) return fail(err, "session_mode must be authenticated, auth_test or onboarding");
     if (ulab_streq(w->session_mode, "auth_test")) {
         const char *origin = ulab_starts(w->auth_origin, "http://") ? w->auth_origin + 7 : ulab_starts(w->auth_origin, "https://") ? w->auth_origin + 8 : NULL;
         if (!origin || !*origin || strpbrk(origin, "/@?# \t\r\n") || ulab_streq(w->auth_origin, w->base_url)) return fail(err, "auth_test requires a distinct auth_origin without a path or credentials");
         if (s->world.networks || s->world.sites_per_network || s->world.ues_per_site || s->world.sims_per_network || s->package_count || s->setup.webapp_entities) return fail(err, "auth_test cannot own provisioning resources");
     } else if (w->auth_origin[0] || ulab_streq(w->auth_state, "none")) return fail(err, "auth_origin and auth_state: none are limited to auth_test");
+    if (ulab_streq(w->session_mode,"onboarding") && (s->world.networks > 1 || s->world.sites_per_network > 1 || s->world.ues_per_site || s->world.sims_per_network || s->package_count || w->auth_origin[0] || ulab_streq(w->auth_state,"none"))) return fail(err,"onboarding requires saved auth, at most one network/trio and no commerce resources");
     if (!w->auth_state[0]) return fail(err, "webapp.auth_state is required");
     if (w->scenario_timeout_seconds == 0 || w->scenario_timeout_seconds > 86400 ||
         w->action_timeout_seconds == 0 || w->action_timeout_seconds > 900 ||
@@ -557,6 +591,7 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
         for (j = 0; j < phase->event_count; j++) {
             event = &phase->events[j];
             if (ulab_streq(w->session_mode, "auth_test") != (event->type == EVT_WEB_SESSION)) return fail(err, "auth_test permits only web_session events; session events require auth_test");
+            if (scenario_is_web_event(event->type) && (ulab_streq(w->session_mode,"onboarding") != (event->type == EVT_WEB_ONBOARD))) return fail(err,"onboarding browser events require onboarding mode exclusively");
             if (scenario_is_web_event(event->type)) {
                 if (browser_event(s, event, err)) return ULAB_ERR;
             } else if (event->type == EVT_START_UES || event->type == EVT_TRAFFIC) {
@@ -578,11 +613,13 @@ int scenario_webapp_validate(const scenario_t *s, ulab_error_t *err) {
         }
         for (j = 0; j < phase->check_count; j++) {
             if (ulab_streq(w->session_mode, "auth_test") != (phase->checks[j].type == CHECK_WEB_SESSION_EQUALS)) return fail(err, "auth_test permits only session checks; session checks require auth_test");
+            if (ulab_streq(w->session_mode,"onboarding") != (phase->checks[j].type == CHECK_WEB_ONBOARD_EQUALS)) return fail(err,"onboarding assertions require onboarding mode exclusively");
             if (browser_check(s, &phase->checks[j], err)) return ULAB_ERR;
         }
     }
     for (i = 0; i < s->final_check_count; i++) {
         if (ulab_streq(w->session_mode, "auth_test") != (s->final_checks[i].type == CHECK_WEB_SESSION_EQUALS)) return fail(err, "auth_test permits only session checks; session checks require auth_test");
+        if (ulab_streq(w->session_mode,"onboarding") != (s->final_checks[i].type == CHECK_WEB_ONBOARD_EQUALS)) return fail(err,"onboarding assertions require onboarding mode exclusively");
         if (browser_check(s, &s->final_checks[i], err)) return ULAB_ERR;
     }
     if (!checks) return fail(err, "webapp scenarios require at least one browser check");

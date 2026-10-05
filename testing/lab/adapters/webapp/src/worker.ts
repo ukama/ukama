@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { Onboarding } from './onboarding.js';
 import { Session } from './session.js';
 import { Interactions } from './interactions.js';
 import { readFile, lstat } from 'node:fs/promises';
@@ -32,6 +33,7 @@ export class Worker {
   private page?: Page;
   private app?: ConsoleApp;
   private session?: Session;
+  private onboarding?: Onboarding;
   private tabs = new Map<string, { page: Page; app: ConsoleApp }>();
   private evidence?: Artifacts;
   private end = Infinity;
@@ -149,6 +151,10 @@ export class Worker {
       this.page = await this.context.newPage(); evidence.attach(this.page);
       this.app = new ConsoleApp(this.page, config.base_url);
       this.tabs.set('primary', { page: this.page, app: this.app });
+      if (config.session_mode === 'onboarding') {
+        this.onboarding = new Onboarding(this.page,config.base_url,this.app,evidence.directory);
+        return {actual:{initialized:true,authenticated:false,session_mode:'onboarding',browser:config.browser,browser_version:this.browser.version()}};
+      }
       if (config.session_mode === 'auth_test') {
         this.session = new Session(this.page, config.base_url, config.auth_origin!);
         return {actual:{initialized:true,authenticated:false,session_mode:'auth_test',browser:config.browser,browser_version:this.browser.version()}};
@@ -159,6 +165,12 @@ export class Worker {
       return { actual: { authenticated: true, browser: config.browser, browser_version: this.browser.version(), page_url: safeURL(this.page.url()) } };
     }
     if (!this.app || !this.config) throw new WorkerError('NOT_INITIALIZED', 'init must precede browser commands');
+    if (c.action === 'web_onboard' || c.action === 'web_onboard_equals') {
+      if (!this.onboarding || this.config.session_mode !== 'onboarding') throw new WorkerError('SESSION_MODE','Onboarding requires its isolated mode');
+      if (c.action === 'web_onboard') return this.onboarding.run(c.inputs,c.command_id,budget);
+      return this.onboarding.check(c.inputs,budget);
+    }
+    if (this.config.session_mode === 'onboarding') throw new WorkerError('SESSION_MODE','Onboarding permits its own browser commands only');
     if (c.action === 'web_session' || c.action === 'web_session_equals') {
       if (!this.session || this.config.session_mode !== 'auth_test') throw new WorkerError('SESSION_MODE','Session commands require auth_test mode');
       if (c.action === 'web_session') { await this.session.run(c.inputs,budget); return {actual:{executed:true}}; }

@@ -20,7 +20,7 @@ const usage = `Ukama-lab local web-app worker (Node 22+)
 
 worker: JSONL stdin/stdout, one process per scenario. EOF without close is failure.
 auth: manual sign-in, save private state after visible landing verification.
-  --landing dashboard|welcome|unauthorized (default dashboard)
+  --landing dashboard|welcome|unauthorized|configure (default dashboard)
 smoke: one visible KPI/field/action/table check; no provisioning or coverage credit.
   --kind kpi|field|action|table (default kpi)
   --artifacts runs/webapp-worker (default)
@@ -77,7 +77,7 @@ async function serve(): Promise<void> {
 async function authenticate(args: string[]): Promise<void> {
   const { values } = parseArgs({ args, options: { 'base-url': { type: 'string' }, out: { type: 'string' }, landing: { type: 'string', default: 'dashboard' } }, strict: true });
   const origin = baseURL(values['base-url']);
-  if (!['dashboard','welcome','unauthorized'].includes(values.landing!)) throw new WorkerError('INVALID_INPUT', '--landing must be dashboard, welcome or unauthorized');
+  if (!['dashboard','welcome','unauthorized','configure'].includes(values.landing!)) throw new WorkerError('INVALID_INPUT', '--landing must be dashboard, welcome, unauthorized or configure');
   if (!values.out) throw new WorkerError('INVALID_INPUT', '--out is required');
   if (!process.stdin.isTTY) throw new WorkerError('INVALID_INPUT', 'Authentication requires an interactive terminal and display');
   const destination = resolve(values.out);
@@ -92,9 +92,10 @@ async function authenticate(args: string[]): Promise<void> {
     await prompt.question(`Sign in through the browser. Leave the ${values.landing} screen visible and press Enter here. `);
     if (values.landing === 'dashboard') await assertSession(page, origin, new Budget(10000));
     else {
-      const path = values.landing === 'welcome' ? '/welcome' : '/unauthorized';
+      const path = values.landing === 'configure' ? new URL(page.url()).pathname : values.landing === 'welcome' ? '/welcome' : '/unauthorized';
+      if (values.landing === 'configure' && !/^\/configure(?:\/(network|select-network|install|site(?:\/settings)?|sims|complete))?$/.test(path)) throw new WorkerError('AUTH_REQUIRED','Expected configure route');
       if (new URL(page.url()).origin !== origin || new URL(page.url()).pathname !== path) throw new WorkerError('AUTH_REQUIRED', 'Expected console landing is not visible');
-      const visible = values.landing === 'welcome' ? page.locator('main.welcome-root').getByRole('heading', {name:'Welcome to Ukama!',exact:true}) : page.getByText("Your account isn't set up for this console", {exact:true});
+      const visible = values.landing === 'configure' ? page.locator('main.cfg-root h1.cfg-title') : values.landing === 'welcome' ? page.locator('main.welcome-root').getByRole('heading', {name:'Welcome to Ukama!',exact:true}) : page.getByText("Your account isn't set up for this console", {exact:true});
       await visible.waitFor({state:'visible',timeout:10000});
     }
     const state = await context.storageState({ indexedDB: true });

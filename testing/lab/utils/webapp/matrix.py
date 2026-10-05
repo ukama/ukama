@@ -51,6 +51,11 @@ def load_case(path):
         raise ValueError(f'not a v2 webapp scenario: {path}')
     return case
 
+def controlled(case):
+    """Injected response faults cannot be promoted to live product evidence."""
+    return any(e.get('type') == 'web_onboard' and e.get('action') == 'arm_fault'
+               for phase in case.get('phases', []) for e in phase.get('events', []))
+
 def planned(case):
     checks, events = [], []
     phases = case.get('phases', []) + [{'name': 'final', 'checks': case.get('final_checks', [])}]
@@ -255,6 +260,8 @@ def coverage(root, manifest_paths, browsers, app_build, backend_build):
                 latest = attempts[-1] if attempts else {'state': 'not_run', 'evidence': 'none'}
                 live = [a['state'] for a in attempts if a['evidence'] == 'live' and a['state'] != 'stale_source']
                 flaky = 'passed' in live and any(s != 'passed' for s in live)
+                if controlled(case) and latest['evidence'] == 'live':
+                    latest = {**latest, 'evidence': 'controlled_ui'}
                 credit = latest['state'] == 'passed' and latest['evidence'] == 'live' and not flaky and bool(app_build and backend_build)
                 verified &= credit
                 cells.append({'scenario': scenario, 'browser': browser, **latest, 'flaky': flaky})
@@ -277,7 +284,7 @@ def render_html(report):
         states = sorted({a['state'] + '/' + a['evidence'] + (' (flaky)' if a['flaky'] else '') for a in r['evidence']})
         rows.append('<tr>' + ''.join('<td>' + e(v) + '</td>' for v in [r['id'], r['priority'], r['requirement'], r['automation'], 'yes' if r['verified'] else 'no', ', '.join(states) or 'not_run', r.get('implementation_note', '')]) + '</tr>')
     t = report['totals']
-    return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Ukama browser coverage</title><style>body{font:16px system-ui;margin:2rem}table{border-collapse:collapse;width:100%}th,td{text-align:left;vertical-align:top;padding:.6rem;border:1px solid #bbb}th{background:#eee}td{overflow-wrap:anywhere}</style><h1>Ukama browser coverage</h1><p>' + e(f"{t['automated']}/{t['total']} automated; {t['verified']}/{t['total']} live verified. Gate: {'PASS' if report['gate_passed'] else 'FAIL'}. Requires 100% P0 and 90% overall.") + '</p><p>' + e(f"App: {report['app_build'] or 'unspecified'}; backend: {report['backend_build'] or 'unspecified'}; browsers: {', '.join(report['browsers'])}") + '</p><p>Fixture, skipped, incomplete, stale and flaky results earn no live credit. Build identifiers and evidence type are operator declarations; this report is not a signed attestation.</p><table><thead><tr><th>ID</th><th>Priority</th><th>Requirement</th><th>Automation</th><th>Verified</th><th>Evidence</th><th>Gaps / notes</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></html>\n'
+    return '<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Ukama browser coverage</title><style>body{font:16px system-ui;margin:2rem}table{border-collapse:collapse;width:100%}th,td{text-align:left;vertical-align:top;padding:.6rem;border:1px solid #bbb}th{background:#eee}td{overflow-wrap:anywhere}</style><h1>Ukama browser coverage</h1><p>' + e(f"{t['automated']}/{t['total']} automated; {t['verified']}/{t['total']} live verified. Gate: {'PASS' if report['gate_passed'] else 'FAIL'}. Requires 100% P0 and 90% overall.") + '</p><p>' + e(f"App: {report['app_build'] or 'unspecified'}; backend: {report['backend_build'] or 'unspecified'}; browsers: {', '.join(report['browsers'])}") + '</p><p>Fixture, injected-response, skipped, incomplete, stale and flaky results earn no live credit. Build identifiers and evidence type are operator declarations; this report is not a signed attestation.</p><table><thead><tr><th>ID</th><th>Priority</th><th>Requirement</th><th>Automation</th><th>Verified</th><th>Evidence</th><th>Gaps / notes</th></tr></thead><tbody>' + ''.join(rows) + '</tbody></table></html>\n'
 
 def main():
     os.umask(0o077)

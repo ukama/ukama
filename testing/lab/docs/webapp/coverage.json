@@ -238,6 +238,7 @@
       "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
+        "scenarios/webapp/p0/auth/wb-064-missing-session.yaml",
         "scenarios/webapp/p0/expanded/wb-040-session-clearing.yaml"
       ],
       "implementation_note": "Patch 7 source-derived browser handlers and complete requirement assertions; controlled Chromium fixtures only. Live target stack not run."
@@ -248,9 +249,18 @@
       "priority": "p0",
       "requirement": "A valid session reaches the console with the correct organization and identity.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-050-account-settings.yaml",
+        "scenarios/webapp/p0/auth/wb-056-logout.yaml",
+        "scenarios/webapp/p0/auth/wb-060-admin-identity.yaml",
+        "scenarios/webapp/p0/auth/wb-061-network-owner-identity.yaml",
+        "scenarios/webapp/p0/auth/wb-062-vendor-identity.yaml",
+        "scenarios/webapp/p0/auth/wb-063-member-identity.yaml",
+        "scenarios/webapp/p0/auth/wb-066-disabled-billing.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-AUTH-003",
@@ -258,9 +268,15 @@
       "priority": "p0",
       "requirement": "A missing or stale gateway token recovers through the existing session without a redirect loop.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-051-recover-drop-token.yaml",
+        "scenarios/webapp/p0/auth/wb-052-recover-invalidate-token.yaml",
+        "scenarios/webapp/p0/auth/wb-053-recover-reject-token.yaml",
+        "scenarios/webapp/p0/auth/wb-059-recover-expire-token.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-AUTH-004",
@@ -268,9 +284,13 @@
       "priority": "p0",
       "requirement": "An unresolved organization or role lands on the unauthorized screen.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-054-no-org.yaml",
+        "scenarios/webapp/p0/auth/wb-055-no-role.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-AUTH-005",
@@ -278,9 +298,12 @@
       "priority": "p0",
       "requirement": "Logout removes console access and sends the browser through the logout flow.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-056-logout.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-AUTH-006",
@@ -288,12 +311,13 @@
       "priority": "p1",
       "requirement": "An expired session fails visibly without leaving usable stale account data.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
+        "scenarios/webapp/p0/auth/wb-057-expired-session.yaml",
         "scenarios/webapp/p0/expanded/wb-040-session-clearing.yaml"
       ],
-      "implementation_note": "Partial browser assertions only; remaining requirement states are not implemented."
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-AUTH-007",
@@ -301,9 +325,12 @@
       "priority": "p1",
       "requirement": "Welcome acknowledgment persists and removes the first-visit welcome gate.",
       "source": "src/proxy.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-058-welcome-persistence.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-ONBOARD-001",
@@ -311,9 +338,21 @@
       "priority": "p0",
       "requirement": "Create a valid network through the network form and observe it selected.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-070-network-create.yaml",
+        "scenarios/webapp/p0/onboarding/wb-072-existing-selection.yaml",
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-074-progress.yaml",
+        "scenarios/webapp/p0/onboarding/wb-075-missing-amplifier.yaml",
+        "scenarios/webapp/p0/onboarding/wb-076-offline-tower.yaml",
+        "scenarios/webapp/p0/onboarding/wb-077-unready-controller.yaml",
+        "scenarios/webapp/p0/onboarding/wb-078-missing-location.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-002",
@@ -321,9 +360,12 @@
       "priority": "p0",
       "requirement": "Network-name validation covers length and permitted characters with visible errors.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-071-network-validation.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-003",
@@ -331,9 +373,16 @@
       "priority": "p0",
       "requirement": "Select an existing network and retain its identity throughout configuration.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-072-existing-selection.yaml",
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-074-progress.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-004",
@@ -343,7 +392,13 @@
       "source": "src/app/configure/_components/useCreateSite.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-074-progress.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Partial: verify planned tower in settings and all three visible node IDs on saved site detail. Original discovery checklist does not expose all three identities. No complete automation credit."
     },
     {
       "id": "WEB-ONBOARD-005",
@@ -351,9 +406,15 @@
       "priority": "p0",
       "requirement": "Show missing, offline, or unready units and prevent premature site creation.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-075-missing-amplifier.yaml",
+        "scenarios/webapp/p0/onboarding/wb-076-offline-tower.yaml",
+        "scenarios/webapp/p0/onboarding/wb-077-unready-controller.yaml",
+        "scenarios/webapp/p0/onboarding/wb-078-missing-location.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run. Injected-response scenarios can never receive live evidence credit; real fault qualification remains required in Patch 17."
     },
     {
       "id": "WEB-ONBOARD-006",
@@ -361,9 +422,15 @@
       "priority": "p0",
       "requirement": "Save the site name, coordinates, and selected hardware through the site form.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-074-progress.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-007",
@@ -371,9 +438,12 @@
       "priority": "p0",
       "requirement": "Display checking, creating, and confirming progress in the correct order.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-074-progress.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run. Strict observer requires each visible active stage in order. Source useCreateSite does not activate confirm; expected to fail until that product behavior is resolved."
     },
     {
       "id": "WEB-ONBOARD-008",
@@ -381,9 +451,12 @@
       "priority": "p0",
       "requirement": "Handle a transport timeout during provisioning without submitting a duplicate site.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run. Injected-response scenarios can never receive live evidence credit; real fault qualification remains required in Patch 17."
     },
     {
       "id": "WEB-ONBOARD-009",
@@ -391,9 +464,12 @@
       "priority": "p0",
       "requirement": "Display a backend rejection and allow an appropriate user retry.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run. Injected-response scenarios can never receive live evidence credit; real fault qualification remains required in Patch 17."
     },
     {
       "id": "WEB-ONBOARD-010",
@@ -401,9 +477,14 @@
       "priority": "p0",
       "requirement": "Show the completed site in its selected network and retain it after reload.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-011",
@@ -411,9 +492,14 @@
       "priority": "p1",
       "requirement": "Persist selected switch, power, and backhaul configuration on site setup.",
       "source": "src/app/configure/_components/useCreateSite.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml"
+      ],
+      "implementation_note": "Patch 9 staged browser commands and visible assertions implemented; controlled Chromium fixtures qualify the lab only. Live console execution remains not_run."
     },
     {
       "id": "WEB-ONBOARD-012",
@@ -423,7 +509,13 @@
       "source": "src/app/configure/_components/useCreateSite.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml",
+        "scenarios/webapp/p0/onboarding/wb-079-transport-once.yaml",
+        "scenarios/webapp/p0/onboarding/wb-080-rejection-retry.yaml",
+        "scenarios/webapp/p0/onboarding/wb-081-sim-guidance.yaml"
+      ],
+      "implementation_note": "Product gap: original onboarding SIM step has guidance and Finish setup only, no upload control. Scenario records the current absence; it does not satisfy inventory upload. No complete automation credit."
     },
     {
       "id": "WEB-SHELL-001",
@@ -535,7 +627,10 @@
       "source": "src/lib/useSwitchNetwork.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-065-role-policy-probe.yaml"
+      ],
+      "implementation_note": "Partial: five real-account role-label journeys plus a configurable route/control policy probe. The uploaded sidebar is static for all roles; agreed permissions and allowed/forbidden action executions are outstanding. No complete automation or live credit."
     },
     {
       "id": "WEB-NET-001",
@@ -1600,9 +1695,12 @@
       "priority": "p0",
       "requirement": "Settings show the authenticated account, organization, country, and currency.",
       "source": "src/app/(dashboard)/business/manage/_components/MembersScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-050-account-settings.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     },
     {
       "id": "WEB-TEAM-005",
@@ -1782,9 +1880,12 @@
       "priority": "p1",
       "requirement": "Disabled Billing navigation stays hidden and direct access has the intended 404 result.",
       "source": "src/components/MetricLineChart.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/auth/wb-066-disabled-billing.yaml"
+      ],
+      "implementation_note": "Patch 8 implements source-derived browser assertions using independently prepared accounts and expected visible identity values. Controlled Chromium fixtures only; live product verification not run."
     }
   ],
   "known_gaps": [

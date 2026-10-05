@@ -118,3 +118,10 @@ manifest remain useful diagnostics but do not qualify for verified coverage.
 The HTML contains requirement text, evidence classifications and gap notes. Raw
 traces, screenshots, auth state and observed customer/payment values remain in
 private per-run artifacts; the report does not embed them.
+
+## Onboarding injected faults
+
+Patch 9 scenarios containing `web_onboard` / `arm_fault` are controlled UI
+evidence. The report derives this from the unchanged scenario, overrides a
+`live` declaration with `controlled_ui`, and withholds live coverage credit.
+Real service-side fault qualification remains required; see `onboarding.md`.

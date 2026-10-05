@@ -112,7 +112,7 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
                    json_equal(json_object_get(b, "ref"), json_object_get(intent, "ref")) &&
                    !webapp_journal_bind(journal, bindings, 1, (unsigned int)json_integer_value(json_object_get(intent, "command_id")), err)) {
             json_object_set_new(intent, "state", json_string("identified"));
-        } else if (ulab_streq(state, "prepared") && json_is_array(bindings) && !json_array_size(bindings)) {
+        } else if ((ulab_streq(state, "prepared") || ulab_streq(state,"intercepted")) && json_is_array(bindings) && !json_array_size(bindings)) {
             json_object_set_new(intent, "state", json_string("not_submitted"));
         } else { local->uncertain = failed = 1; }
         json_decref(receipt);
@@ -201,7 +201,7 @@ static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journ
     int rc;
     local->client = client;
     json_object_set_new(journal->root, "creation_intents", json_array());
-    for (i = 0; i < world->network_count; i++) {
+    for (i = 0; i < world->network_count && !ulab_streq(profile->session_mode,"onboarding"); i++) {
         inputs = json_pack("{s:s,s:s}", "ref", world->networks[i].ref, "name", world->networks[i].name);
         if (!inputs || create(local, journal, "network", inputs, err)) return ULAB_ERR;
     }
@@ -220,6 +220,7 @@ static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journ
         rc = runtime_wait_nodes_ready(&local->runtime, world, &selected, err);
         selector_result_free(&selected);
         if (rc) return rc;
+        if (ulab_streq(profile->session_mode,"onboarding")) continue;
         components = json_pack("{s:s,s:s,s:s}", "switch", profile->switch_component, "backhaul", profile->backhaul_component, "power", profile->power_component);
         inputs = json_pack("{s:s,s:s,s:s,s:s,s:s,s:o}", "ref", site->ref, "name", site->name, "network_name", network->name,
                            "network_id", network->bff_id, "tower_id", site->tnode_id, "components", components);

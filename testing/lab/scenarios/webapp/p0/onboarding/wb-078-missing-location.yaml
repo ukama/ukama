@@ -1,0 +1,157 @@
+version: 2
+name: p0-webapp-onboarding-missing-location
+description: Staged onboarding against the original console; injected faults are controlled evidence only.
+seed: 4878
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, onboarding]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  browser: chromium
+  headless: false
+  auth_state: .auth/owner.json
+  session_mode: onboarding
+  action_timeout_seconds: 30
+  check_timeout_seconds: 30
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: network-form
+    events:
+      - type: web_onboard
+        view: configure
+        action: open
+        value: add_network
+      - type: web_onboard
+        view: configure
+        action: fill
+        label: Network name
+        value_from: network_name
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Field value
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        expected_property: network_name
+        subject: Network name
+  - name: create-network
+    events:
+      - type: web_onboard
+        view: configure
+        action: submit_network
+      - type: web_onboard
+        view: configure
+        action: finish_network
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Install your site
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Network ID
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        expected_property: network_id
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '1'
+        requirement: WEB-ONBOARD-001
+        timeout_seconds: 180
+        subject: network
+  - name: controlled-readiness
+    events:
+      - type: web_onboard
+        view: configure
+        action: arm_fault
+        value: missing_location
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Installed
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Next
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Bring your site online
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Readiness
+        expected: active
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+        subject: Confirming your site location
+      - type: web_onboard_equals
+        view: configure
+        label: Readiness count
+        expected: 3/4 done
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Button state
+        expected: absent
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+        subject: Name site
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+        subject: site
+      - type: web_onboard_equals
+        view: configure
+        label: Fault consumed
+        expected: 'true'
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+  - name: readiness-recovered
+    events:
+      - type: web_onboard
+        view: configure
+        action: clear_fault
+      - type: web_onboard
+        view: configure
+        action: click
+        value: Check now
+    checks:
+      - type: web_onboard_equals
+        view: configure
+        label: Heading
+        expected: Name your site
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+      - type: web_onboard_equals
+        view: configure
+        label: Mutation count
+        expected: '0'
+        requirement: WEB-ONBOARD-005
+        timeout_seconds: 180
+        subject: site

@@ -44,7 +44,7 @@ export interface Profile {
   base_url: string; auth_state: string; browser: 'chromium' | 'firefox' | 'webkit';
   headless: boolean; action_timeout_seconds: number; check_timeout_seconds: number;
   scenario_timeout_seconds: number;
-  session_mode: 'authenticated' | 'auth_test'; auth_origin?: string;
+  session_mode: 'authenticated' | 'auth_test' | 'onboarding'; auth_origin?: string;
 }
 export function profile(value: unknown): Profile {
   const p = object(value, 'profile');
@@ -53,7 +53,7 @@ export function profile(value: unknown): Profile {
   if (!['chromium', 'firefox', 'webkit'].includes(String(browser)))
     throw new WorkerError('INVALID_INPUT', 'Unknown browser');
   const mode = p.session_mode ?? 'authenticated';
-  if (mode !== 'authenticated' && mode !== 'auth_test') throw new WorkerError('INVALID_INPUT','Unknown session_mode');
+  if (mode !== 'authenticated' && mode !== 'auth_test' && mode !== 'onboarding') throw new WorkerError('INVALID_INPUT','Unknown session_mode');
   const result: Profile = {
     session_mode: mode,
     base_url: baseURL(p.base_url), auth_state: str(p.auth_state, 'auth_state'),
@@ -70,7 +70,7 @@ export function profile(value: unknown): Profile {
   } else if (p.auth_origin !== undefined || result.auth_state === 'none') throw new WorkerError('INVALID_INPUT','Auth test fields require auth_test mode');
   return result;
 }
-export const ACTIONS = ['init', 'web_session', 'web_session_equals', 'web_interact', 'web_ui_equals', 'web_commerce', 'web_commerce_equals', 'web_import_sims', 'web_create_network', 'web_create_site', 'web_open', 'web_select_network', 'web_reload', 'web_action', 'web_tab', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
+export const ACTIONS = ['init', 'web_onboard', 'web_onboard_equals', 'web_session', 'web_session_equals', 'web_interact', 'web_ui_equals', 'web_commerce', 'web_commerce_equals', 'web_import_sims', 'web_create_network', 'web_create_site', 'web_open', 'web_select_network', 'web_reload', 'web_action', 'web_tab', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
 export type Action = typeof ACTIONS[number];
 export interface Command {
   protocol: 1; run_id: string; command_id: number; action: Action;

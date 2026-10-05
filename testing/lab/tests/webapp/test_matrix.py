@@ -71,6 +71,17 @@ phases:
             self.manifest['evidence']=evidence
             self.assertEqual(self.coverage()['totals']['verified'],0)
 
+    def test_injected_onboarding_fault_cannot_be_promoted_to_live(self):
+        path=self.root/self.scenario
+        path.write_text(path.read_text().replace('type: web_open','type: web_onboard\n        action: arm_fault\n        value: transport'))
+        self.report['results'][0]['name']='web_onboard'
+        self.manifest['source_sha256']=m.fingerprint(self.root)
+        self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+        report=self.coverage()
+        self.assertEqual(report['totals']['verified'],0)
+        self.assertEqual(report['requirements'][0]['evidence'][0]['state'],'passed')
+        self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
     def test_partial_planned_requirement_never_gets_credit(self):
         p=self.root/m.CATALOG;catalog=json.loads(p.read_text());catalog['requirements'][0]['automation']='planned';p.write_text(json.dumps(catalog))
         self.manifest.update(inventory_sha256=m.digest(p),source_sha256=m.fingerprint(self.root))

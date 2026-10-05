@@ -84,7 +84,7 @@ class WebappContract(unittest.TestCase):
                        ULAB_CONTROLLER_RESTART_REASON="Controller busy",
                        ULAB_CONTROLLER_RF_REASON="Controller busy",
                        ULAB_CONTROLLER_SERVICE_REASON="Controller busy")
-        for path in (ROOT / "scenarios/webapp/p0/auth").glob("*.yaml"):
+        for path in (ROOT / "scenarios/webapp/p0").rglob("*.yaml"):
             for name in re.findall(r"\$\{([A-Z0-9_]+)\}", path.read_text()):
                 cls.env.setdefault(name, ".auth/test.json" if name.endswith("_STATE") else "dashboard" if name.endswith("_SURFACE") else "absent" if name.endswith("_CONTROL") else "Independent expected value")
 
@@ -333,6 +333,25 @@ class WebappContract(unittest.TestCase):
             with self.subTest(new=new):
                 self.assertNotEqual(self.run_scenario(text.replace(old,new,1)).returncode,0)
 
+    def test_onboarding_rejects_unsafe_modes_worlds_and_fields(self):
+        text=(ROOT/'scenarios/webapp/p0/onboarding/wb-073-site-persistence.yaml').read_text()
+        self.assertEqual(self.run_scenario(text,'execute').returncode,0)
+        for old,new in [('session_mode: onboarding','session_mode: authenticated'),
+                        ('auth_state: .auth/owner.json','auth_state: none'),
+                        ('networks: 1','networks: 2'),('sites_per_network: 1','sites_per_network: 2'),
+                        ('ues_per_site: 0','ues_per_site: 1'),
+                        ('view: configure','view: network_home'),
+                        ('action: fill','action: execute_script'),
+                        ('action: submit_site','action: submit_site\n        value: yes'),
+                        ('value_from: network_name','value_from: site_name'),
+                        ('expected_property: tower_id','expected_property: password'),
+                        ('expected_property: tower_id','expected_property: tower_id\n        expected: wrong'),
+                        ('action: submit_network','action: submit_network\n        selector: button')]:
+            with self.subTest(new=new):
+                self.assertIn(old,text)
+                result=self.run_scenario(text.replace(old,new,1))
+                self.assertNotEqual(result.returncode,0,result.stdout)
+
     def test_remaining_roadmap_accounts_for_the_frozen_gap(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         plan = json.loads((ROOT / "docs/webapp/remaining-patches.json").read_text())
@@ -342,7 +361,7 @@ class WebappContract(unittest.TestCase):
         requirements = {r['id']:r for r in catalog['requirements']}
         self.assertEqual(len(requirements),132)
         self.assertEqual(sum(r['priority']=='p0' for r in requirements.values()),86)
-        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'})
+        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'}-{'WEB-ONBOARD-'+f'{n:03}' for n in [1,2,3,5,6,7,8,9,10,11]})
         self.assertEqual(requirements['WEB-SHELL-010']['automation'],'planned')
         self.assertEqual(plan['qualification_patch'],17)
 
@@ -351,7 +370,7 @@ class WebappContract(unittest.TestCase):
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-ONBOARD-001", "WEB-ONBOARD-002", "WEB-ONBOARD-003", "WEB-ONBOARD-005", "WEB-ONBOARD-006", "WEB-ONBOARD-007", "WEB-ONBOARD-008", "WEB-ONBOARD-009", "WEB-ONBOARD-010", "WEB-ONBOARD-011", "WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())
