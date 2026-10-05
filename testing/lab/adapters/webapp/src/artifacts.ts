@@ -11,7 +11,7 @@ export class Artifacts {
   readonly paths: string[] = [];
   readonly directory: string;
   private diagnostics: unknown[] = [];
-  private tracing = false;
+  private tracing = new Map<BrowserContext, string>();
   private captured = false;
   constructor(root: string, run: string) { this.directory = resolve(root, run); }
   async create(): Promise<void> {
@@ -38,7 +38,7 @@ export class Artifacts {
   }
   async start(context: BrowserContext): Promise<void> {
     await context.tracing.start({ screenshots: true, snapshots: true, sources: false });
-    this.tracing = true;
+    this.tracing.set(context, this.tracing.size ? 'trace-peer.zip' : 'trace.zip');
   }
   async record(result: Result): Promise<void> {
     await appendFile(join(this.directory, 'results.jsonl'), `${JSON.stringify(result)}\n`, { mode: 0o600 });
@@ -55,7 +55,7 @@ export class Artifacts {
     } finally { await rm(temporary, { force: true }); }
     if (!this.paths.includes(path)) this.paths.push(path);
   }
-  async capture(page?: Page, context?: BrowserContext): Promise<void> {
+  async capture(page?: Page, _context?: BrowserContext): Promise<void> {
     if (this.captured) return;
     this.captured = true;
     if (page && !page.isClosed()) {
@@ -65,19 +65,20 @@ export class Artifacts {
         await chmod(path, 0o600); this.paths.push(path);
       } catch { this.note({ type: 'artifact_error', artifact: 'failure.png' }); }
     }
-    if (context && this.tracing) {
-      const path = join(this.directory, 'trace.zip');
+    for (const [traced, filename] of this.tracing) {
+      const path = join(this.directory, filename);
       try {
-        await context.tracing.stop({ path });
+        await traced.tracing.stop({ path });
         await chmod(path, 0o600); this.paths.push(path);
-      } catch { this.note({ type: 'artifact_error', artifact: 'trace.zip' }); }
-      this.tracing = false;
+      } catch { this.note({ type: 'artifact_error', artifact: filename }); }
     }
+    this.tracing.clear();
     const path = join(this.directory, 'diagnostics.json');
     await writeFile(path, JSON.stringify({ page_url: page ? safeURL(page.url()) : null, events: this.diagnostics }, null, 2) + '\n', { mode: 0o600 });
     this.paths.push(path);
   }
-  async discardTrace(context?: BrowserContext): Promise<void> {
-    if (context && this.tracing) { this.tracing = false; await context.tracing.stop(); }
+  async discardTrace(_context?: BrowserContext): Promise<void> {
+    for (const traced of this.tracing.keys()) await traced.tracing.stop();
+    this.tracing.clear();
   }
 }

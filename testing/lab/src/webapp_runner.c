@@ -89,6 +89,7 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
     if (event->type == EVT_WEB_TAB) {
         if (json_object_set_new(*inputs, "tab", json_string(event->profile))) goto memory;
+        if (event->peer_auth_state[0] && json_object_set_new(*inputs, "auth_state", json_string(event->peer_auth_state))) goto memory;
         return ULAB_OK;
     }
     if (event->networks.kind != SEL_NONE) {
@@ -139,6 +140,17 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
             if (json_object_set_new(*inputs, "value", json_string(event->variant[0] ? text : event->status))) goto memory;
         if (event->app[0] && json_object_set_new(*inputs, "app", json_string(event->app))) goto memory;
         if (event->tag[0] && json_object_set_new(*inputs, "tag", json_string(event->tag))) goto memory;
+        if (!strcmp(event->target, "watch_restart")) {
+            size_t i;
+            json_t *nodes = json_array();
+            if (!nodes) goto memory;
+            for (i = 0; i < world->node_count; i++) {
+                node_t *n = &world->nodes[i];
+                if (!strcmp(n->site_ref, ref))
+                    json_array_append_new(nodes, json_pack("{s:s,s:s,s:s}", "id", n->bff_id, "name", n->name, "type", n->type));
+            }
+            if (json_object_set_new(*inputs, "nodes", nodes)) goto memory;
+        }
     }
     return ULAB_OK;
 unresolved:

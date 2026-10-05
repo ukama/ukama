@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
- * Only rendered controls and text: no GraphQL, app-store or response assertions.
+ * Actions and assertions use rendered controls/text. Explicit read-fault
+ * profiles are isolated in operation-observer; no API operator mutations.
  */
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, normalize, str, type ObjectValue } from './contract.js';
+import { faultState, observation, statusFault, watchOperation } from './operation-observer.js';
+
+export const PORTS = [{n:1,name:'Tnode PoE'},{n:2,name:'Cnode PoE'},{n:3,name:'Anode PoE'},{n:9,name:'Uplink SFP'}] as const;
 
 async function one(target: Locator): Promise<Locator | undefined> {
   const visible = target.filter({ visible: true });
@@ -25,7 +29,14 @@ export class Operations {
     return this.page.getByRole('menuitem').filter({ has: this.page.locator('.MuiListItemText-primary').getByText(label, { exact: true }) });
   }
   private software(app: unknown) { return this.main().getByRole('button', { name: `View ${str(app, 'app')} resources`, exact: true }); }
+  private port(n: number) {
+    const port = PORTS.find(p=>p.n===n);
+    if (!this.site || !port) throw new WorkerError('INVALID_INPUT','Unsupported switch port');
+    // Source SwitchPortRow: identity div and label in the same header div.
+    return this.main().getByText(`Port ${port.n}: ${port.name}`,{exact:true}).locator('..');
+  }
   control(label: string, app?: unknown): Locator | undefined {
+    if (/^Port [1239]$/.test(label)) return this.port(Number(label.slice(5))).getByRole('checkbox');
     if (label === 'Confirm restart') return this.dialog().getByRole('button').filter({ hasText: /^(Restart node|Restart|Restarting…|Node is busy|Site is busy)$/ });
     if (label === 'Cancel') return this.dialog().getByRole('button', { name: 'Cancel', exact: true });
     if (this.site) {
@@ -39,10 +50,32 @@ export class Operations {
     return undefined;
   }
   supportsField(label: string): boolean {
+    if (['Port states','Restart observation','Optimistic timeout','Status fault'].includes(label) || /^Port [1239] reason$/.test(label)) return true;
     return ['Dialog', 'Confirmation', 'Restart progress', 'Restart reason', 'Radio state', 'Cellular state',
       'Radio reason', 'Cellular reason', 'Software status', 'Current version', 'Target version', 'Lifecycle', 'Notification'].includes(label);
   }
   async field(label: string, app?: unknown): Promise<string | null> {
+    if (label === 'Status fault') return faultState(this.page);
+    if (label === 'Restart observation' || label === 'Optimistic timeout') return observation(this.page, label === 'Restart observation' ? 'restart' : 'timeout');
+    if (/^Port [1239] reason$/.test(label)) {
+      const row = await one(this.port(Number(label[5])));
+      return row ? normalize(await row.locator('label').getAttribute('title') ?? '') : null;
+    }
+    if (label === 'Port states') {
+      if (!this.site) throw new WorkerError('INVALID_INPUT','Ports require site detail');
+      const identities = this.main().getByText(/^Port \d+: /);
+      if (await identities.filter({visible:true}).count() !== PORTS.length) return null;
+      const states:string[]=[];
+      for (const p of PORTS) {
+        const row=await one(this.port(p.n));
+        if (!row) return null;
+        const checkbox=await one(row.getByRole('checkbox'));
+        const visibleState=await rendered(row.locator('label > span').filter({hasText:/^(On|Off)$/}));
+        if (!checkbox || visibleState !== (await checkbox.isChecked() ? 'On' : 'Off')) return null;
+        states.push(`${p.n}:${p.name}=${visibleState}`);
+      }
+      return states.join(';');
+    }
     if (label === 'Dialog') return await one(this.dialog()) ? 'open' : 'closed';
     if (label === 'Confirmation') {
       const input = await one(this.dialog().getByRole('textbox'));
@@ -82,14 +115,25 @@ export class Operations {
   }
   async run(inputs: ObjectValue, budget: Budget): Promise<void> {
     const action = str(inputs.action, 'action');
-    const siteOnly = ['open_site_actions', 'close_site_actions', 'fill_confirmation', 'set_radio', 'set_service'];
-    const nodeOnly = ['open_software', 'update_software', 'retry_update'];
+    const siteOnly = ['open_site_actions', 'close_site_actions', 'fill_confirmation', 'set_radio', 'set_service', 'open_ports', 'open_nodes', 'set_port', 'watch_restart'];
+    const nodeOnly = ['open_software', 'update_software', 'retry_update', 'watch_timeout'];
     if ((siteOnly.includes(action) && !this.site) || (nodeOnly.includes(action) && this.site))
       throw new WorkerError('INVALID_INPUT', 'Action does not belong to this detail view');
     const fill = action === 'fill_confirmation', toggle = action === 'set_radio' || action === 'set_service';
     const update = action === 'update_software' || action === 'retry_update';
-    if ((!fill && !toggle && inputs.value !== undefined) || (!update && (inputs.app !== undefined || inputs.tag !== undefined)))
+    if ((!fill && !toggle && !['set_port','status_fault'].includes(action) && inputs.value !== undefined) || (!update && (inputs.app !== undefined || inputs.tag !== undefined)) || (action !== 'watch_restart' && inputs.nodes !== undefined))
       throw new WorkerError('INVALID_INPUT', 'Action has unrelated parameters');
+    if (action === 'status_fault') return statusFault(this.page,this.site,inputs,budget);
+    if (action === 'watch_restart' || action === 'watch_timeout') return watchOperation(this.page,action === 'watch_restart' ? 'restart' : 'timeout',inputs);
+    if (action === 'open_ports' || action === 'open_nodes') return this.click(this.main().locator('.comp-tile').filter({has:this.page.locator('.comp-tile-label').getByText(action === 'open_ports' ? 'Switch' : 'Node',{exact:true})}),budget);
+    if (action === 'set_port') {
+      const value = str(inputs.value,'value');
+      if (!/^[1239]:(on|off)$/.test(value)) throw new WorkerError('INVALID_INPUT','Invalid switch port/value');
+      const control = this.port(Number(value[0])).getByRole('checkbox');
+      await control.waitFor({state:'visible',timeout:budget.remaining()});
+      if (await control.isChecked() === value.endsWith(':on')) throw new WorkerError('NO_STATE_CHANGE','Port is already in requested state');
+      return this.click(control,budget);
+    }
     if (action === 'open_restart') return this.click(this.control(this.site ? 'Restart site' : 'Restart node')!, budget);
     if (action === 'confirm_restart') return this.click(this.control('Confirm restart')!, budget);
     if (action === 'cancel_dialog') return this.click(this.control('Cancel')!, budget);

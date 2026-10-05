@@ -768,6 +768,8 @@ static int apply_web_event_field(event_spec_t *e, const char *key,
     if (e->type == EVT_WEB_TAB) {
         if (ulab_streq(key, "tab") && !web_once(&e->web_fields, 5))
             return ulab_copy(e->profile, sizeof(e->profile), val);
+        if (ulab_streq(key, "auth_state") && !web_once(&e->web_fields, 9))
+            return ulab_copy(e->peer_auth_state, sizeof(e->peer_auth_state), val);
         return ULAB_ERR;
     }
     if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "view") &&

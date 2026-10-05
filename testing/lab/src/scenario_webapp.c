@@ -140,16 +140,26 @@ static int detail_reference(const scenario_t *s, const event_spec_t *event) {
         (site - 1) / s->world.sites_per_network + 1 == network;
 }
 
+static int choice(const char *value, const char *const *choices, size_t count) {
+    size_t i;
+    for (i = 0; i < count; i++) if (ulab_streq(value, choices[i])) return 1;
+    return 0;
+}
+#define IN_CHOICES(v, a) choice((v), (a), sizeof(a) / sizeof((a)[0]))
+
 static int operation_event(const event_spec_t *e, ulab_error_t *err) {
     int site = ulab_streq(e->view, "network_site_detail");
     int node = ulab_streq(e->view, "network_node_detail");
     int fill = ulab_streq(e->target, "fill_confirmation");
     int toggle = ulab_streq(e->target, "set_radio") || ulab_streq(e->target, "set_service");
     int update = ulab_streq(e->target, "update_software") || ulab_streq(e->target, "retry_update");
+    int port = ulab_streq(e->target, "set_port");
+    int fault = ulab_streq(e->target, "status_fault");
     int common = ulab_streq(e->target, "open_restart") || ulab_streq(e->target, "confirm_restart") || ulab_streq(e->target, "cancel_dialog");
-    if (!(site || node) || !(common || (site && (fill || toggle ||
+    if (!(site || node) || !(common || fault || (site && (fill || toggle || port ||
+        ulab_streq(e->target, "open_ports") || ulab_streq(e->target, "open_nodes") || ulab_streq(e->target, "watch_restart") ||
         ulab_streq(e->target, "open_site_actions") || ulab_streq(e->target, "close_site_actions"))) ||
-        (node && (update || ulab_streq(e->target, "open_software")))))
+        (node && (update || ulab_streq(e->target, "watch_timeout") || ulab_streq(e->target, "open_software")))))
         return fail(err, "web_action requires a supported operation on its matching detail view");
     if (fill) {
         if ((!!(e->web_fields & (1u << 6)) + !!(e->web_fields & (1u << 7))) != 1 ||
@@ -159,6 +169,12 @@ static int operation_event(const event_spec_t *e, ulab_error_t *err) {
         if (!ulab_streq(e->status, "on") && !ulab_streq(e->status, "off"))
             return fail(err, "radio/service value must be on or off");
         if (e->variant[0]) return fail(err, "value_from is only valid for fill_confirmation");
+    } else if (port || fault) {
+        static const char *const ports[] = {"1:on", "1:off", "2:on", "2:off", "3:on", "3:off", "9:on", "9:off"};
+        static const char *const faults[] = {"read_error", "idle", "none"};
+        if (e->variant[0] || !(e->web_fields & (1u << 6)) ||
+            (port && !IN_CHOICES(e->status, ports)) || (fault && !IN_CHOICES(e->status, faults)))
+            return fail(err, "invalid port or status fault value");
     } else if (e->web_fields & ((1u << 6) | (1u << 7)))
         return fail(err, "value/value_from are not valid for this action");
     if (update) {
@@ -251,12 +267,6 @@ static int ui_event(const scenario_t *s, const event_spec_t *e, ulab_error_t *er
     return ULAB_OK;
 }
 
-static int choice(const char *value, const char *const *choices, size_t count) {
-    size_t i;
-    for (i = 0; i < count; i++) if (ulab_streq(value, choices[i])) return 1;
-    return 0;
-}
-#define IN_CHOICES(v, a) choice((v), (a), sizeof(a) / sizeof((a)[0]))
 static int session_event(const event_spec_t *e, ulab_error_t *err) {
     static const char *const actions[] = {"navigate", "reload", "drop_token", "invalidate_token", "reject_token", "expire_token", "open_account", "logout", "ack_welcome", "settings_tab"};
     static const char *const paths[] = {"/", "/business", "/business/settings", "/network/settings", "/customer/settings", "/business/manage/members", "/business/manage/data-plans", "/business/manage/sim-pool", "/customer/customers", "/welcome", "/unauthorized", "/business/manage/billing"};
@@ -385,8 +395,10 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
     if (event->type == EVT_WEB_COMMERCE) return commerce_event(s, event, err);
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
     if (event->type == EVT_WEB_TAB) {
-        if (!ulab_streq(event->profile, "primary") && !ulab_streq(event->profile, "secondary"))
-            return fail(err, "web_tab requires primary or secondary");
+        if (!ulab_streq(event->profile, "primary") && !ulab_streq(event->profile, "secondary") && !ulab_streq(event->profile, "peer"))
+            return fail(err, "web_tab requires primary, secondary or peer");
+        if ((event->web_fields & (1u << 9)) && (!ulab_streq(event->profile, "peer") || !event->peer_auth_state[0]))
+            return fail(err, "auth_state is nonempty and only valid on peer tab creation");
         return ULAB_OK;
     }
     if (event->type == EVT_WEB_ACTION && operation_event(event, err)) return ULAB_ERR;

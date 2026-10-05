@@ -334,3 +334,12 @@ opening a dashboard. `web_onboard` and `web_onboard_equals` drive the configure
 wizard with staged ownership receipts. Manual auth capture additionally accepts
 `--landing configure`. See `onboarding.md` for the closed command contract, local
 prerequisites, controlled-evidence limits and original console gaps.
+
+## Operation observation and distinct sessions (Patch 11)
+
+See [operation-recovery.md](operation-recovery.md) for WB110–117. `web_action`
+adds port controls, read-only restart/timeout watches and explicitly classified
+status-read faults. Only `watch_restart` accepts C-resolved `nodes`; YAML cannot
+supply this identity array. First `web_tab` with `tab: peer` requires a separate
+saved `auth_state`; its context is isolated and both contexts retain failure
+traces. Existing primary/secondary tabs still share their original context.

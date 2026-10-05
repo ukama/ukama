@@ -31,6 +31,7 @@ export class Worker {
   private config?: Profile;
   private browser?: Browser;
   private context?: BrowserContext;
+  private peerContext?: BrowserContext;
   private page?: Page;
   private app?: ConsoleApp;
   private session?: Session;
@@ -179,20 +180,44 @@ export class Worker {
     }
     if (this.config.session_mode === 'auth_test') throw new WorkerError('SESSION_MODE','Auth tests permit session commands only');
     if (c.action === 'web_tab') {
-      keys(c.inputs, ['tab']);
+      keys(c.inputs, ['tab', 'auth_state']);
       const tab = str(c.inputs.tab, 'tab');
-      if (!['primary', 'secondary'].includes(tab)) throw new WorkerError('INVALID_INPUT', 'Unknown tab');
+      if (!['primary', 'secondary', 'peer'].includes(tab)) throw new WorkerError('INVALID_INPUT', 'Unknown tab');
       let target = this.tabs.get(tab);
+      if (c.inputs.auth_state !== undefined && (tab !== 'peer' || target))
+        throw new WorkerError('INVALID_INPUT', 'auth_state belongs only to first peer creation');
       if (!target) {
-        const page = await this.context!.newPage(); this.evidence!.attach(page);
+        let context = this.context!;
+        if (tab === 'peer') {
+          const state = await loadState(str(c.inputs.auth_state, 'auth_state'));
+          if (!state || typeof state === 'string') throw new WorkerError('AUTH_STATE_INVALID', 'Peer requires a saved session');
+          const primary = await this.context!.cookies(this.config.base_url);
+          const applicable = state.cookies.filter(c => c.name === 'ukama_session' &&
+            (new URL(this.config!.base_url).hostname === c.domain.replace(/^\./, '') ||
+              (c.domain.startsWith('.') && new URL(this.config!.base_url).hostname.endsWith(c.domain))) &&
+            (c.expires === -1 || c.expires * 1000 > Date.now()));
+          const original = primary.filter(c => c.name === 'ukama_session');
+          if (original.length !== 1 || applicable.length !== 1 || !applicable[0]!.value || original[0]!.value === applicable[0]!.value)
+            throw new WorkerError('AUTH_PRECONDITION', 'Peer requires a distinct unexpired ukama_session cookie for this console');
+          this.peerContext = await this.browser!.newContext({storageState:state,viewport:{width:1440,height:1000},locale:'en-US',timezoneId:'UTC',acceptDownloads:false});
+          context = this.peerContext;
+          await this.evidence!.start(context);
+        }
+        const page = await context.newPage(); this.evidence!.attach(page);
         target = { page, app: new ConsoleApp(page, this.config.base_url) }; this.tabs.set(tab, target);
         this.page = page; this.app = target.app;
         await page.goto(this.config.base_url, { waitUntil: 'domcontentloaded', timeout: budget.remaining() });
         await assertSession(page, this.config.base_url, budget);
+        if (tab === 'peer') {
+          const primary=(await this.context!.cookies(this.config.base_url)).filter(c=>c.name==='ukama_session');
+          const peer=(await context.cookies(this.config.base_url)).filter(c=>c.name==='ukama_session');
+          if (primary.length!==1 || peer.length!==1 || !peer[0]!.value || peer[0]!.value===primary[0]!.value)
+            throw new WorkerError('AUTH_PRECONDITION','Peer navigation did not retain a distinct console session');
+        }
       }
       this.page = target.page; this.app = target.app;
       await this.page.bringToFront();
-      return { actual: { executed: true, tab } };
+      return { actual: { executed: true, tab, isolated: tab === 'peer' } };
     }
     if (c.action === 'web_inventory' || c.action === 'web_inventory_equals') {
       const inventory = new Inventory(this.page!, this.config.base_url, this.app);
@@ -266,6 +291,7 @@ export class Worker {
         finally { clearTimeout(timeout); }
       };
       await bounded(async () => this.context?.close());
+      await bounded(async () => this.peerContext?.close());
       await bounded(async () => this.browser?.close());
       try { await this.evidence?.summary(this.failed ? 'failed' : 'passed', this.failureReason ?? 'EXPLICIT_CLOSE'); }
       catch { this.failed = true; }

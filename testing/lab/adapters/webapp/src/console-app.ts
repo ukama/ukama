@@ -3,6 +3,7 @@
  */
 import { Commerce } from './commerce.js';
 import { Operations } from './operations.js';
+import { trackStatusRequests } from './operation-observer.js';
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, bool, integer, keys, normalize, object, str, type ObjectValue } from './contract.js';
 
@@ -73,7 +74,7 @@ export async function assertSession(page: Page, origin: string, budget: Budget):
 
 export class ConsoleApp {
   private current?: { name: string; path: string; network?: string };
-  constructor(private page: Page, private origin: string) {}
+  constructor(private page: Page, private origin: string) { trackStatusRequests(page); }
   forgetView(): void { this.current = undefined; }
   private main(): Locator { return this.page.locator('main.main'); }
   private async path(path: string, budget: Budget): Promise<void> {
@@ -185,7 +186,7 @@ export class ConsoleApp {
     if (name === 'customer_customers' && this.current!.network !== inputs.network_name) throw new WorkerError('WRONG_NETWORK', 'Commerce network differs from the opened network');
   }
   async operation(inputs: ObjectValue, budget: Budget): Promise<void> {
-    keys(inputs, ['view', 'network_name', 'entity', 'action', 'value', 'app', 'tag']);
+    keys(inputs, ['view', 'network_name', 'entity', 'action', 'value', 'app', 'tag', 'nodes']);
     const name = str(inputs.view, 'view'), route = getView(name);
     if (!route.detail) throw new WorkerError('INVALID_INPUT', 'Operations require a detail view');
     const entity = object(inputs.entity, 'entity'); keys(entity, ['ref', 'id', 'text']);

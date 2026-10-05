@@ -287,6 +287,7 @@ typedef struct {
     char         payer_email[ULAB_MAX_NAME];
     char         payer_phone[ULAB_MAX_REF];
     char         idempotency_key[ULAB_MAX_ID];
+    char         peer_auth_state[ULAB_MAX_PATH];
     char         other_package_ref[ULAB_MAX_REF];
     char         variant[ULAB_MAX_REF];
     double       amount;

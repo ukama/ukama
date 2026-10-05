@@ -125,3 +125,9 @@ Patch 9 scenarios containing `web_onboard` / `arm_fault` are controlled UI
 evidence. The report derives this from the unchanged scenario, overrides a
 `live` declaration with `controlled_ui`, and withholds live coverage credit.
 Real service-side fault qualification remains required; see `onboarding.md`.
+
+Patch 11 applies the same rule to every `web_action` / `status_fault` scenario,
+including fault removal. A passing injected operation read-error or optimistic
+fallback journey is controlled UI evidence and cannot become live credit by
+changing the manifest classification. Backend lease-timeout qualification remains
+separate; see `operation-recovery.md`.

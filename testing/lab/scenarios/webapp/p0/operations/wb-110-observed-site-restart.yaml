@@ -1,0 +1,102 @@
+version: 2
+name: p0-webapp-observed-site-restart
+description: Require an observed tower/amplifier offline and recovery cycle while every rendered controller sample remains online; verify cellular remains off after reload.
+seed: 5110
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, operations]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+  browser: chromium
+  headless: true
+  action_timeout_seconds: 30
+  check_timeout_seconds: 180
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: arm_continuous_observation
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_nodes"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "watch_restart"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_restart"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "fill_confirmation"
+        value_from: "site_name"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Restart observation"
+        expected: "armed"
+        requirement: "WEB-OPS-004"
+  - name: restart_once
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "confirm_restart"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Restart observation"
+        expected: "complete"
+        requirement: "WEB-OPS-004"
+        timeout_seconds: 180
+  - name: reported_service_after_reload
+    events:
+      - type: "web_reload"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Cellular state"
+        expected: "Off"
+        requirement: "WEB-OPS-004"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: true
+        requirement: "WEB-OPS-004"

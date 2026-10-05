@@ -1,4 +1,8 @@
-# Browser operations and recovery — Patch 5
+# Browser operations and recovery — original journeys
+
+For Patch 11 additions and current coverage boundaries, see
+[operation-recovery.md](operation-recovery.md). The partial-coverage notes below
+record the Patch 5/6 baseline and are superseded by that extension.
 
 Apply the lab patches through Patch 6; rebuild the lab and browser worker.
 Use the unchanged uploaded console. Ignore the console Patch 4/5 companion

@@ -396,16 +396,36 @@ class WebappContract(unittest.TestCase):
         requirements = {r['id']:r for r in catalog['requirements']}
         self.assertEqual(len(requirements),132)
         self.assertEqual(sum(r['priority']=='p0' for r in requirements.values()),86)
-        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'}-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'}-{'WEB-ONBOARD-'+f'{n:03}' for n in [1,2,3,5,6,7,8,9,10,11]})
+        self.assertEqual({r['id'] for r in catalog['requirements'] if r['automation']!='implemented'}, set(ids)-{'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'}-{'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'}-{'WEB-AUTH-'+f'{n:03}' for n in range(2,8)}-{'WEB-TEAM-004','WEB-UI-012'}-{'WEB-ONBOARD-'+f'{n:03}' for n in [1,2,3,5,6,7,8,9,10,11]})
         self.assertEqual(requirements['WEB-SHELL-010']['automation'],'planned')
         self.assertEqual(plan['qualification_patch'],17)
+
+    def test_port_and_status_fault_contracts_reject_unrelated_fields(self):
+        text=(ROOT/'scenarios/webapp/p0/operations/wb-111-switch-port-isolation.yaml').read_text()
+        for old,new in [('value: "1:off"','value: "4:off"'),('value: "1:off"','value: "1:toggle"'),
+                        ('action: "open_ports"','action: "open_ports"\n        value: "1:off"'),
+                        ('action: "set_port"','action: "set_port"\n        app: "example"')]:
+            with self.subTest(new=new):self.assertNotEqual(self.run_scenario(text.replace(old,new)).returncode,0)
+        text=(ROOT/'scenarios/webapp/p0/operations/wb-112-node-status-read-failure.yaml').read_text()
+        for old,new in [('value: "read_error"','value: "arbitrary_response"'),
+                        ('action: "status_fault"','action: "status_fault"\n        value_from: "site_name"'),
+                        ('action: "status_fault"','action: "watch_restart"')]:
+            with self.subTest(new=new):self.assertNotEqual(self.run_scenario(text.replace(old,new)).returncode,0)
+
+    def test_peer_auth_state_is_exclusive_nonempty_and_not_repeatable(self):
+        text=(ROOT/'scenarios/webapp/p0/operations/wb-115-distinct-session-recovery.yaml').read_text()
+        self.assertEqual(self.run_scenario(text).returncode,0)
+        for old,new in [('tab: "peer"','tab: "secondary"'),
+                        ('auth_state: "${ULAB_WEBAPP_PEER_AUTH_STATE}"','auth_state: ""'),
+                        ('auth_state: "${ULAB_WEBAPP_PEER_AUTH_STATE}"','auth_state: "one"\n        auth_state: "two"')]:
+            with self.subTest(new=new):self.assertNotEqual(self.run_scenario(text.replace(old,new)).returncode,0)
 
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'} | {"WEB-ONBOARD-001", "WEB-ONBOARD-002", "WEB-ONBOARD-003", "WEB-ONBOARD-005", "WEB-ONBOARD-006", "WEB-ONBOARD-007", "WEB-ONBOARD-008", "WEB-ONBOARD-009", "WEB-ONBOARD-010", "WEB-ONBOARD-011", "WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {'WEB-OPS-004','WEB-OPS-012','WEB-OPS-013'} | {'WEB-SHELL-007', 'WEB-SITE-001', 'WEB-NET-008', 'WEB-SHELL-004', 'WEB-NET-004', 'WEB-SHELL-003', 'WEB-SHELL-006', 'WEB-SITE-004', 'WEB-SITE-003', 'WEB-NET-007', 'WEB-NET-005', 'WEB-SHELL-002'} | {"WEB-ONBOARD-001", "WEB-ONBOARD-002", "WEB-ONBOARD-003", "WEB-ONBOARD-005", "WEB-ONBOARD-006", "WEB-ONBOARD-007", "WEB-ONBOARD-008", "WEB-ONBOARD-009", "WEB-ONBOARD-010", "WEB-ONBOARD-011", "WEB-AUTH-002", "WEB-AUTH-003", "WEB-AUTH-004", "WEB-AUTH-005", "WEB-AUTH-006", "WEB-AUTH-007", "WEB-TEAM-004", "WEB-UI-012", "WEB-AUTH-001", "WEB-SHELL-001", "WEB-SHELL-008", "WEB-SHELL-009", "WEB-PLAN-006", "WEB-PLAN-009", "WEB-PLAN-010", "WEB-BIZ-001", "WEB-BIZ-008", "WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010", "WEB-CUSTOMER-002", "WEB-PAY-001", "WEB-PAY-002", "WEB-PAY-008", "WEB-PLAN-001", "WEB-PLAN-002", "WEB-PLAN-003", "WEB-PLAN-004", "WEB-PLAN-005", "WEB-PLAN-012", "WEB-SIM-001"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

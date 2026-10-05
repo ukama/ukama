@@ -829,7 +829,11 @@
       "source": "src/app/(dashboard)/network/_components/SiteDetailScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-111-switch-port-isolation.yaml"
+      ],
+      "patch_11_note": "Partial: wb-111 checks all four exact port identities and full state vectors, including off-state reload persistence. The original SwitchPortRow resets local enabled=true and exposes no reported per-port on/off value; correct hardware state cannot be established.",
+      "implementation_note": "Patch 11: Partial: wb-111 checks all four exact port identities and full state vectors, including off-state reload persistence. The original SwitchPortRow resets local enabled=true and exposes no reported per-port on/off value; correct hardware state cannot be established."
     },
     {
       "id": "WEB-SITE-007",
@@ -942,7 +946,8 @@
         "scenarios/webapp/p0/operations/wb-012-software-update.yaml",
         "scenarios/webapp/p0/operations/wb-013-node-and-site-locks.yaml",
         "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml",
-        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml",
+        "scenarios/webapp/p0/operations/wb-115-distinct-session-recovery.yaml"
       ],
       "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
@@ -1001,12 +1006,15 @@
       "priority": "p0",
       "requirement": "Site restart recovers tower/amplifier while the controller remains online.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml"
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml",
+        "scenarios/webapp/p0/operations/wb-110-observed-site-restart.yaml"
       ],
-      "patch_5_note": "Partial: wb-011 observes post-restart recovery snapshots; uninterrupted controller connectivity during restart remains unimplemented."
+      "patch_5_note": "Partial: wb-011 observes post-restart recovery snapshots; uninterrupted controller connectivity during restart remains unimplemented.",
+      "patch_11_note": "Continuous read-only DOM observation arms before restart, requires tower/amplifier offline then recovery, retains any controller non-online/missing/ambiguous sample, and fails on lost visibility/navigation. Cellular must remain off after reload. This proves observed UI continuity, not uninterrupted physical uptime between backend reports.",
+      "implementation_note": "Patch 11: Continuous read-only DOM observation arms before restart, requires tower/amplifier offline then recovery, retains any controller non-online/missing/ambiguous sample, and fails on lost visibility/navigation. Cellular must remain off after reload. This proves observed UI continuity, not uninterrupted physical uptime between backend reports."
     },
     {
       "id": "WEB-OPS-005",
@@ -1044,7 +1052,8 @@
       "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml"
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml",
+        "scenarios/webapp/p0/operations/wb-116-operation-prerequisites.yaml"
       ],
       "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
@@ -1056,8 +1065,14 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": [],
-      "patch_5_note": "Blocked by product observability: port controls keep optimistic local state; no reported per-port state is rendered to prove port isolation."
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-111-switch-port-isolation.yaml",
+        "scenarios/webapp/p0/operations/wb-116-operation-prerequisites.yaml",
+        "scenarios/webapp/p0/operations/wb-117-busy-controller-ports.yaml"
+      ],
+      "patch_5_note": "Blocked by product observability: port controls keep optimistic local state; no reported per-port state is rendered to prove port isolation.",
+      "patch_11_note": "Partial: wb-111 toggles each port separately and checks all four controls before/after and after reload; wb-113/116/117 cover unknown status, offline controller and controller-busy restrictions. Optimistic local port state cannot prove reported hardware isolation.",
+      "implementation_note": "Patch 11: Partial: wb-111 toggles each port separately and checks all four controls before/after and after reload; wb-113/116/117 cover unknown status, offline controller and controller-busy restrictions. Optimistic local port state cannot prove reported hardware isolation."
     },
     {
       "id": "WEB-OPS-009",
@@ -1097,9 +1112,12 @@
       "automation": "planned",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml"
+        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml",
+        "scenarios/webapp/p0/operations/wb-114-optimistic-timeout.yaml"
       ],
-      "patch_5_note": "Partial: wb-014 covers interrupted-update failure and explicit retry. Deterministic lease-expiry/timeout coverage remains unimplemented."
+      "patch_5_note": "Partial: wb-014 covers interrupted-update failure and explicit retry. Deterministic lease-expiry/timeout coverage remains unimplemented.",
+      "patch_11_note": "Partial: wb-014 covers interrupted-update failure/retry; wb-114 adds real-time ten-second optimistic-lock timeout and one explicit retry after restoring reads. Deterministic backend lease expiry, terminal backend timeout and live recovery are not implemented by an injected idle read.",
+      "implementation_note": "Patch 11: Partial: wb-014 covers interrupted-update failure/retry; wb-114 adds real-time ten-second optimistic-lock timeout and one explicit retry after restoring reads. Deterministic backend lease expiry, terminal backend timeout and live recovery are not implemented by an injected idle read."
     },
     {
       "id": "WEB-OPS-012",
@@ -1107,12 +1125,15 @@
       "priority": "p1",
       "requirement": "Reload and tab refocus recover an operation started in another session.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
-        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml",
+        "scenarios/webapp/p0/operations/wb-115-distinct-session-recovery.yaml"
       ],
-      "patch_5_note": "Partial: wb-015 covers refocus and reload across two same-account tabs in one context. Distinct authenticated session/user coverage remains unimplemented."
+      "patch_5_note": "Partial: wb-015 covers refocus and reload across two same-account tabs in one context. Distinct authenticated session/user coverage remains unimplemented.",
+      "patch_11_note": "wb-115 uses a separate BrowserContext with a different unexpired saved ukama_session cookie, verified again after navigation, then checks refocus, stale confirmation, reload, progress and completion. Both contexts retain private traces on failure. This proves distinct sessions; it does not assert different user identities or role policy.",
+      "implementation_note": "Patch 11: wb-115 uses a separate BrowserContext with a different unexpired saved ukama_session cookie, verified again after navigation, then checks refocus, stale confirmation, reload, progress and completion. Both contexts retain private traces on failure. This proves distinct sessions; it does not assert different user identities or role policy."
     },
     {
       "id": "WEB-OPS-013",
@@ -1120,10 +1141,15 @@
       "priority": "p0",
       "requirement": "Operation-status read failures do not present unverified availability as confirmed safe.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": [],
-      "patch_5_note": "Partial: fail-closed console policy unit tests and controlled browser error-state checks exist; real React/Apollo error/recovery qualification remains unimplemented."
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-112-node-status-read-failure.yaml",
+        "scenarios/webapp/p0/operations/wb-113-site-status-read-failure.yaml"
+      ],
+      "patch_5_note": "Partial: fail-closed console policy unit tests and controlled browser error-state checks exist; real React/Apollo error/recovery qualification remains unimplemented.",
+      "patch_11_note": "wb-112/113 implement controlled exact-entity GraphQL read failures, applied-fault proof, visible fail-closed controls and reasons, and restored-read recovery on node/site/ports. The unchanged React hooks fail open, so these are regression assertions, not product fixes or live passes. Injected scenarios cannot earn live credit.",
+      "implementation_note": "Patch 11: wb-112/113 implement controlled exact-entity GraphQL read failures, applied-fault proof, visible fail-closed controls and reasons, and restored-read recovery on node/site/ports. The unchanged React hooks fail open, so these are regression assertions, not product fixes or live passes. Injected scenarios cannot earn live credit."
     },
     {
       "id": "WEB-PLAN-001",
@@ -1984,6 +2010,12 @@
       "source": "docs/webapp/commerce.md",
       "treatment": "One SIM per customer and one cash top-up per UE/run. Refunds, multiple-SIM selection, failed-payment UI, rapid-click behavior, PDF contents, payer/date reconciliation, input validation and cross-network negative tests remain gaps."
     },
-    "Patch 10: five assigned requirements remain partial (WEB-SHELL-005, WEB-NET-006, WEB-SITE-002, WEB-SITE-005, WEB-NODE-004). See inventory.md; injected missing-data and stale-preference scenarios cannot earn live credit."
+    "Patch 10: five assigned requirements remain partial (WEB-SHELL-005, WEB-NET-006, WEB-SITE-002, WEB-SITE-005, WEB-NODE-004). See inventory.md; injected missing-data and stale-preference scenarios cannot earn live credit.",
+    {
+      "feature": "Operation closure after Patch 11",
+      "state": "partial_port_state_and_backend_timeout",
+      "source": "docs/webapp/operation-recovery.md",
+      "treatment": "WEB-SITE-006, WEB-OPS-008 and WEB-OPS-011 remain partial. Read failures are asserted against unchanged fail-open hooks. UI restart observation cannot establish physical uptime between reports. Controlled status faults never earn live coverage credit."
+    }
   ]
 }

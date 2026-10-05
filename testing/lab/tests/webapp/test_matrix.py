@@ -103,6 +103,19 @@ phases:
             self.report['results'][1]['actual']=actual
             self.assertEqual(self.coverage()['totals']['verified'],0)
 
+    def test_status_faults_cannot_be_labelled_live(self):
+        path=self.root/self.scenario
+        original=path.read_text()
+        for value in ('read_error', 'idle', 'none'):
+            with self.subTest(value=value):
+                path.write_text(original.replace('type: web_open', 'type: web_action\n        action: status_fault\n        value: '+value))
+                self.report['results'][0]['name']='web_action'
+                self.manifest['source_sha256']=m.fingerprint(self.root)
+                self.manifest['attempts'][0]['scenario_sha256']=m.digest(path)
+                report=self.coverage()
+                self.assertEqual(report['totals']['verified'],0)
+                self.assertEqual(report['requirements'][0]['evidence'][0]['evidence'],'controlled_ui')
+
     def test_partial_planned_requirement_never_gets_credit(self):
         p=self.root/m.CATALOG;catalog=json.loads(p.read_text());catalog['requirements'][0]['automation']='planned';p.write_text(json.dumps(catalog))
         self.manifest.update(inventory_sha256=m.digest(p),source_sha256=m.fingerprint(self.root))
