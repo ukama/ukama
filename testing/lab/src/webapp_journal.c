@@ -97,8 +97,10 @@ int webapp_journal_bind(webapp_journal_t *j, json_t *bindings,
             return webapp_error(err, "invalid entity binding");
         for (p = (const unsigned char *)id; *p; p++)
             if (!isalnum(*p) && *p != '-' && *p != '_') return webapp_error(err, "invalid binding ID");
-        if (strcmp(source, created ? "ui_result" : "url")) return webapp_error(err, "binding source does not establish requested ownership");
+        if (strcmp(source, created == 2 ? "runtime_claim" : created ? "ui_result" : "url")) return webapp_error(err, "binding source does not establish requested ownership");
         if (binding_target(j->world, kind, ref, &target, &name, err) || !target || !name) return ULAB_ERR;
+        if (created == 2 && (strcmp(kind, "node") || !*target || strcmp(target, id)))
+            return webapp_error(err, "runtime claim requires an established factory node identity");
         if (*target && strcmp(target, id)) return webapp_error(err, "binding conflicts with an established entity ID");
         if (created) {
             reported_name = json_string_value(json_object_get(binding, "name"));
@@ -122,6 +124,7 @@ int webapp_journal_bind(webapp_journal_t *j, json_t *bindings,
                                 "cleanup", created ? "pending" : "not_owned");
             if (!record || json_array_append_new(array, record)) return webapp_error(err, "cannot retain entity binding");
         }
+        if (!found) json_object_set_new(record, "observed_via", json_string(source));
         /* Keep ownership in memory even if disk persistence fails, so the
          * caller can still attempt bounded cleanup before reporting failure. */
         if (created) ulab_copy(target, ULAB_MAX_ID, id);
@@ -218,6 +221,9 @@ int webapp_journal_cleanup(webapp_journal_t *j, const webapp_hooks_t *hooks,
     int rc;
     ulab_error_t local;
     if (!j->root) return ULAB_OK;
+    if (json_is_true(json_object_get(j->root, "uncertain_creation"))) {
+        failed = 1; webapp_error(err, "unresolved creation requires manual reconciliation; cleanup is incomplete");
+    }
     resources = json_object_get(j->root, "resources");
     for (k = 0; k < sizeof(kinds) / sizeof(kinds[0]); k++) {
         for (i = json_array_size(resources); i > 0; i--) {

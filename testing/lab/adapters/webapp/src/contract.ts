@@ -62,7 +62,7 @@ export function profile(value: unknown): Profile {
     throw new WorkerError('INVALID_INPUT', 'Step timeout exceeds scenario timeout');
   return result;
 }
-export const ACTIONS = ['init', 'web_open', 'web_select_network', 'web_reload', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
+export const ACTIONS = ['init', 'web_create_network', 'web_create_site', 'web_open', 'web_select_network', 'web_reload', 'web_kpi_equals', 'web_field_equals', 'web_table_count_equals', 'web_action_available', 'close'] as const;
 export type Action = typeof ACTIONS[number];
 export interface Command {
   protocol: 1; run_id: string; command_id: number; action: Action;

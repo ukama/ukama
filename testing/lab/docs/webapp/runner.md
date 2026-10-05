@@ -1,15 +1,14 @@
-# Local browser scenario runner — Patch 3
+# Local browser scenario runner — Patch 4
 
 The C lab runner now launches one persistent Playwright worker per active v2
 scenario. It runs each phase's events and checks in order, then final checks,
 then bounded cleanup. Checks observe the current page. Only an explicit
 `web_reload` event reloads it. All components run locally on the host.
 
-This patch activates **zero-fixture authenticated scenarios**. The network/site
-world, UI provisioning and actual node-runtime setup need Patch 4. Those active
-scenarios fail preflight; their WIP examples produce SKIP. Runtime-event and
-owned-resource cleanup hooks are implemented and exercised with controlled
-fixtures, but are not connected to production provisioning in this patch.
+Patch 4 also executes UI network/site provisioning and local virtual-node
+runtime setup. The two network examples are active. See
+[provisioning.md](provisioning.md) for host prerequisites, the required console
+companion patch, creation receipts, component selection and operational runs.
 
 ## Run the first scenario
 
@@ -79,8 +78,8 @@ alone does not establish ownership or replace a visible assertion.
 ## Ownership and cleanup
 
 The resource journal writes through a temporary file, fsyncs it, atomically
-renames it and fsyncs the containing directory. A future UI provisioning handler
-must explicitly record `created=1` with a matching planned name and UI-result ID.
+renames it and fsyncs the containing directory. The UI provisioning handler
+explicitly records `created=1` with a matching planned name and UI-result ID.
 Navigation records observations only. Conflicting IDs or unknown references fail.
 Only resources marked owned can reach the deletion hook; name prefixes and
 observed IDs never imply ownership. Cleanup proceeds nodes → sites → networks,
@@ -94,7 +93,8 @@ process-group members and reaps the worker. Missing shutdown acknowledgement is
 reported as unconfirmed cleanup, never a successful run. Screenshots/traces are
 best effort after a browser crash or forced termination.
 
-Owned-resource cleanup has a fresh 30-second total budget; final runtime cleanup
+Runtime reconnection has a separate 30-second budget. Owned-resource cleanup
+has a fresh 120-second total budget; final runtime cleanup
 has a separate 15-second budget. SIGINT/SIGTERM stop acceptance work, but do not
 cancel cleanup. Runtime/cleanup hooks execute in bounded child process groups;
 callbacks must not depend on child memory changes reaching the parent. The
@@ -117,7 +117,7 @@ supplied with `ULAB_TEST_CFLAGS` and `ULAB_TEST_LIBS` for the journal probe.
 ```sh
 python3 -m unittest discover -s tests/webapp -v
 npm --prefix adapters/webapp test
-node --test --test-concurrency=1 tests/webapp/runner-browser.mjs
+node --test --test-concurrency=1 tests/webapp/runner-browser.mjs tests/webapp/provisioning-browser.mjs
 ```
 
 The C tests cover the real parser and runner, workload/webapp dispatch, command

@@ -30,9 +30,13 @@ typedef struct {
 
 /* Hooks are called serially. Runtime/final cleanup jobs are bounded child
  * processes; they must not depend on copying child memory back to the parent.
- * UI provisioning in Patch 4 will use the client/journal in the parent. */
+ * Provision/recover use client/journal in the parent; they must persist
+ * mutation receipts before reporting acceptance. */
 typedef struct {
     void *ctx;
+    int (*provision)(void *ctx, webapp_client_t *client, webapp_journal_t *journal, ulab_error_t *err);
+    int (*recover)(void *ctx, webapp_journal_t *journal, ulab_error_t *err);
+    int (*prepare_cleanup)(void *ctx, ulab_error_t *err);
     int (*runtime_event)(void *ctx, const event_spec_t *event, ulab_error_t *err);
     int (*cleanup_resource)(void *ctx, const char *kind, const char *id,
                             ulab_error_t *err);
@@ -55,7 +59,7 @@ int webapp_client_stop(webapp_client_t *client, int failed, ulab_error_t *err);
 
 int webapp_journal_open(webapp_journal_t *journal, world_t *world,
                          const char *run_dir, ulab_error_t *err);
-/* Only a provisioning handler can pass created=1. Navigation passes 0. */
+/* Provisioning uses created=1 (UI receipt), 2 (mapped runtime claim); navigation 0. */
 int webapp_journal_bind(webapp_journal_t *journal, json_t *bindings,
                          int created, unsigned int command_id, ulab_error_t *err);
 int webapp_journal_save(webapp_journal_t *journal, ulab_error_t *err);
@@ -67,6 +71,8 @@ typedef int (*webapp_job_fn)(void *ctx, ulab_error_t *err);
 int webapp_bounded_job(webapp_job_fn fn, void *ctx, double deadline,
                         volatile sig_atomic_t *cancel, ulab_error_t *err);
 
+int webapp_run_local(const runner_opts_t *opts, const scenario_t *scenario,
+                     world_t *world, report_t *report, const char *run_dir, ulab_error_t *err);
 int webapp_execute(const runner_opts_t *opts, const scenario_t *scenario,
                     world_t *world, report_t *report, const char *run_dir,
                     const webapp_hooks_t *hooks, ulab_error_t *err);

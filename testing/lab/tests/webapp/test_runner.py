@@ -97,9 +97,8 @@ class RunnerLifecycle(unittest.TestCase):
             self.assertNotEqual(self.run_case(run_id=run_id)[0].returncode, 0)
         self.assertFalse((self.directory / 'escape').exists())
 
-    def test_unimplemented_provisioning_and_xfail_fail_before_launch(self):
-        text = (ROOT / 'scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml').read_text()
-        for scenario in (text.replace('status: wip', 'status: active'), EXAMPLE.read_text().replace('status: active', 'status: xfail')):
+    def test_xfail_fails_before_launch(self):
+        for scenario in (EXAMPLE.read_text().replace('status: active', 'status: xfail'),):
             self.scenario.write_text(scenario)
             r, report = self.run_case()
             self.assertNotEqual(r.returncode, 0)

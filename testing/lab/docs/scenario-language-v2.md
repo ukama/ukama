@@ -6,16 +6,11 @@ browser coverage credit. Version 1 behavior and files remain supported.
 
 ## Patch status
 
-Patches 1–3 implement the contract, local Playwright worker and C runner.
-`run`/`validate` now execute **active, zero-fixture authenticated scenarios**.
-See [`webapp/runner.md`](webapp/runner.md) for the executable Members example,
-setup, lifecycle, journals, cleanup and testing commands.
-
-Network/site provisioning and node runtime setup remain gated until Patch 4
-supplies their UI handlers. The two network examples remain WIP. `wip` and
-`skip` produce `outcome: SKIP`, `passed: false`, and zero checks without launching
-the worker or backend setup. V2 `xfail` execution is rejected so infrastructure
-failures cannot be converted to a passing scenario.
+Patches 1–4 implement the contract, local Playwright worker, C runner and UI
+network/site provisioning with local virtual-node runtime. The two operational
+network examples are active; see [`webapp/provisioning.md`](webapp/provisioning.md).
+`wip` and `skip` produce `outcome: SKIP`, `passed: false`, and zero checks without
+launching the worker or backend setup. V2 `xfail` remains unsupported.
 
 Version 2 is also used by the existing workload language. Workloads must declare
 `kind: workload`; version alone does not select the workload runner.
@@ -113,7 +108,7 @@ setup:
 ```
 
 `world` is the desired fixture inventory. It does not prove that any UI action
-succeeded. `create_via_webapp` instructs the future executor to perform real UI
+succeeded. `create_via_webapp` instructs the executor to perform real UI
 workflows, log their substeps, verify visible completion, and bind actual
 identities back to `net-NNN`, `site-NNN`, and node references.
 
@@ -131,8 +126,9 @@ are added with patch 6. They currently fail with an explicit unsupported-scope
 message, so they cannot silently use a BFF shortcut.
 
 Patch 3 generates short, deterministic network/site UI names independently of
-internal references. The ownership journal is ready for UI provisioning handlers
-to record each confirmed created resource in Patch 4, including partial creation.
+internal references. The ownership journal records UI creation receipts and factory runtime claims,
+including partial setup. Unresolved submitted mutations fail cleanup and retain
+resources for manual reconciliation; they are never automatically resubmitted.
 
 ## Events
 
@@ -176,7 +172,7 @@ view; a check does not navigate or reload to repair state.
 | Type | Additional required field | Observation |
 |---|---|---|
 | `web_kpi_equals` | `expected` | Exact rendered KPI value, including units/formatting. |
-| `web_field_equals` | `expected` | Exact visible field value. |
+| `web_field_equals` | `expected`, or `expected_ref` + `expected_property` | Exact visible field value. |
 | `web_table_count_equals` | `expected_count` | Matching visible data rows, excluding header/loading rows. |
 | `web_action_available` | `available: true|false` | Visible action exists and is enabled/disabled as expected. |
 
@@ -201,6 +197,31 @@ The supplied Nodes and Sites screens render card lists, not tables. The node
 example checks the visible `Nodes count` field with `web_field_equals`.
 The Patch 2 adapter rejects table checks on those card views. Its supported
 component locators and current per-screen limitations are listed in `worker.md`.
+
+Patch 4 supports `expected_ref` for an existing node and `expected_property`
+`id`, `model`, or `site_name`. Use both fields instead of literal `expected`.
+C resolves these from the planned world and confirmed runtime identity, never
+from the browser's displayed value. On `network_nodes`, add `nodes: <ref>` to
+scope a field assertion to one visible card. Supported card labels are
+`Serial #`, `Model type`, `Site`, and `Connectivity`. On node detail, omit the
+card selector after `web_open` has selected the exact entity. Connectivity is
+read from the visible dot's native tooltip (`title`), independently of lifecycle.
+
+```yaml
+- type: web_field_equals
+  view: network_nodes
+  nodes: tower-site-001-001
+  label: "Serial #"
+  expected_ref: tower-site-001-001
+  expected_property: id
+  requirement: WEB-NODE-002
+```
+
+The `webapp` block additionally accepts optional `switch_component`,
+`backhaul_component`, and `power_component` visible option labels. Omit them
+when the wizard auto-selects a single available component. Creation commands
+and each runtime setup script receive at most 900 seconds, capped by the
+remaining scenario budget; ordinary events/checks keep their declared budgets.
 
 Requirement identifiers are syntax-checked by C. Catalog membership and
 example-to-requirement links are checked by the Python contract tests. A

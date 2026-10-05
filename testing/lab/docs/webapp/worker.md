@@ -1,4 +1,4 @@
-# Local console-app worker — Patches 2–3
+# Local console-app worker — Patches 2–4
 
 Patch 2 adds a standalone Node/TypeScript Playwright worker inside ukama-lab.
 The worker and browser run on your host. It drives the console's visible
@@ -7,7 +7,7 @@ injects application state, or reloads a page to make an assertion pass.
 
 Patch 3 connects this worker to the C scenario lifecycle; see [runner.md](runner.md).
 Active scenarios with no provisioned world can now execute. The network/site
-examples remain WIP until Patch 4 implements their UI setup. No requirement in
+examples now execute through Patch 4 UI setup (see provisioning.md). No live requirement in
 the coverage inventory has been marked verified from fixture runs.
 
 ## Install on the host
@@ -126,7 +126,7 @@ visible match is an error, not permission to select the first element.
 
 Nodes and Sites are card lists. The Patch 1 node example has been corrected to
 check the `Nodes count` field. That count alone does not satisfy the complete
-requirement to reconcile every card and detail; Patch 4 adds those assertions.
+requirement to reconcile every card and detail; Patch 4 now adds those assertions.
 
 Fields rendered outside the shared KV structure need explicit handlers in
 later patches. The current table handler refuses card lists and ambiguous
@@ -278,3 +278,23 @@ Playwright API references used for this implementation:
 [Browser contexts](https://playwright.dev/docs/api/class-browsercontext),
 [tracing](https://playwright.dev/docs/api/class-tracing),
 [library usage](https://playwright.dev/docs/library).
+
+
+## Patch 4 extension
+
+The C setup lifecycle sends `web_create_network` and `web_create_site`; these
+are internal setup commands, not arbitrary YAML events. Network inputs contain
+`ref` and planned `name`. Site inputs additionally contain `network_name`,
+`network_id`, `tower_id` and optional exact component labels in `components`.
+The worker only clicks/fills real UI controls. It passively observes matching
+mutation responses (or the site's UI-triggered scoped polling) to write durable
+creation receipts. It does not issue direct create, GraphQL or acceptance reads.
+See [provisioning.md](provisioning.md) for receipt recovery and uncertain outcomes.
+
+`web_field_equals` accepts an optional resolved `node_id` on `network_nodes` to
+scope Serial #, Model type, Site and Connectivity to one card. Detail navigation
+matches a node card's serial line, then verifies the exact requested URL.
+C resolves YAML `expected_ref`/`expected_property` before dispatch; the worker
+never computes the expected value from the displayed value. The connectivity
+dot's native tooltip is read only when its element is visible. Lifecycle states
+remain separate and are not inferred from connectivity.

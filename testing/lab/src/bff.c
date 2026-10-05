@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 #include "bff.h"
+#include <ctype.h>
 #include "log.h"
 #include "util.h"
 
@@ -6117,5 +6118,40 @@ int bff_cleanup_world(bff_client_t *c,
         return ULAB_ERR;
     }
 
+    return ULAB_OK;
+}
+
+/* Strict teardown for individually journaled webapp resources. No reads or
+ * creation calls from this path may be used as browser acceptance evidence. */
+int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
+                         int linked, ulab_error_t *err) {
+    char query[1024];
+    json_t *root = NULL;
+    json_t *value;
+    const char *op;
+    const unsigned char *p;
+    int ok;
+    if (!id || !*id || strlen(id) >= ULAB_MAX_ID) return ULAB_ERR;
+    for (p = (const unsigned char *)id; *p; p++)
+        if (!isalnum(*p) && *p != '-' && *p != '_') return ULAB_ERR;
+    if (!strcmp(kind, "node") && linked) {
+        snprintf(query, sizeof(query), "mutation { releaseNodeFromSite(data: {id: \"%s\"}) { success } }", id);
+        if (bff_call(c, "releaseNodeFromSite", query, "{}", &root, err)) return ULAB_ERR;
+        ok = json_is_true(json_object_get(json_object_get(json_object_get(root, "data"), "releaseNodeFromSite"), "success"));
+        json_decref(root); root = NULL;
+        if (!ok) { snprintf(err->msg, sizeof(err->msg), "releaseNodeFromSite did not confirm success"); return ULAB_ERR; }
+    }
+    if (!strcmp(kind, "node")) {
+        op = "deleteNode";
+        snprintf(query, sizeof(query), "mutation { deleteNode(data: {id: \"%s\"}) { id } }", id);
+    } else if (!strcmp(kind, "site") || !strcmp(kind, "network")) {
+        op = !strcmp(kind, "site") ? "deleteSite" : "deleteNetwork";
+        snprintf(query, sizeof(query), "mutation { %s(id: \"%s\") { success } }", op, id);
+    } else return ULAB_ERR;
+    if (bff_call(c, op, query, "{}", &root, err)) return ULAB_ERR;
+    value = json_object_get(json_object_get(root, "data"), op);
+    ok = !strcmp(kind, "node") ? ulab_streq(json_string_value(json_object_get(value, "id")), id) : json_is_true(json_object_get(value, "success"));
+    json_decref(root);
+    if (!ok) { snprintf(err->msg, sizeof(err->msg), "%s did not confirm deletion", op); return ULAB_ERR; }
     return ULAB_OK;
 }

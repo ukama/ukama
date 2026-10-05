@@ -525,11 +525,12 @@
       "priority": "p0",
       "requirement": "Sites online displays 2/2 after two UI-created sites become online.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml"
-      ]
+      ],
+      "patch_4_note": "Executable browser assertions and controlled Chromium integration coverage; live console/BFF/runtime verification has not been run."
     },
     {
       "id": "WEB-NET-002",
@@ -537,11 +538,12 @@
       "priority": "p0",
       "requirement": "A tower outage changes Sites online from 2/2 to 1/2 without a reload.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml"
-      ]
+      ],
+      "patch_4_note": "Executable browser assertions and controlled Chromium integration coverage; live console/BFF/runtime verification has not been run."
     },
     {
       "id": "WEB-NET-003",
@@ -549,11 +551,12 @@
       "priority": "p0",
       "requirement": "Restoring the tower changes Sites online from 1/2 to 2/2 without a reload.",
       "source": "src/app/(dashboard)/network/_components/NetworkHomeScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml"
-      ]
+      ],
+      "patch_4_note": "Executable browser assertions and controlled Chromium integration coverage; live console/BFF/runtime verification has not been run."
     },
     {
       "id": "WEB-NET-004",
@@ -691,11 +694,12 @@
       "priority": "p0",
       "requirement": "The Nodes card list displays all three units of one UI-created site.",
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
       "scenarios": [
         "scenarios/webapp/p0/network/wb-002-node-list-detail.yaml"
-      ]
+      ],
+      "patch_4_note": "Executable browser assertions and controlled Chromium integration coverage; live console/BFF/runtime verification has not been run."
     },
     {
       "id": "WEB-NODE-002",
@@ -703,9 +707,12 @@
       "priority": "p0",
       "requirement": "Each node card and detail agree on node ID, type, site, and connectivity.",
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/network/wb-002-node-list-detail.yaml"
+      ],
+      "patch_4_note": "Executable browser assertions and controlled Chromium integration coverage; live console/BFF/runtime verification has not been run."
     },
     {
       "id": "WEB-NODE-003",
@@ -735,9 +742,7 @@
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": [
-        "scenarios/webapp/p0/network/wb-002-node-list-detail.yaml"
-      ]
+      "scenarios": []
     },
     {
       "id": "WEB-NODE-006",

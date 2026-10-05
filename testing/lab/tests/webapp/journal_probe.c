@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     if (!strncmp(mode, "runtime-", 8)) {
         assert(argc == 5);
         assert(!scenario_load(argv[3], s, &err));
-        /* Inject a controlled runtime step below the public Patch 4 gate to
+        /* Inject a controlled runtime step without a live node runtime to
          * exercise ordering and failure cleanup. It is not a runnable product scenario. */
         s->phases[1].events[1] = s->phases[1].events[0];
         memset(&s->phases[1].events[0], 0, sizeof(event_spec_t));

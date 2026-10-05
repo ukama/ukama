@@ -95,6 +95,12 @@ export class ConsoleApp {
     }
     await this.path(route.path, budget);
   }
+  async networkHome(budget: Budget): Promise<void> {
+    this.current = undefined;
+    await assertSession(this.page, this.origin, budget);
+    await this.lens('network', budget);
+    await this.sidebar(VIEWS.network_home!, budget);
+  }
   async selectNetwork(name: string, budget: Budget): Promise<void> {
     this.current = undefined;
     // Manage pages deliberately have no network switcher. Leave them through
@@ -135,7 +141,10 @@ export class ConsoleApp {
     const bindings: unknown[] = [];
     if (entity) {
       const escaped = entity.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const card = this.main().locator('.ecard[role="button"]').filter({ hasText: new RegExp(`(?:^|[\\s·])${escaped}(?=$|[\\s·])`) });
+      const cards = this.main().locator('.ecard[role="button"]');
+      const card = route.detail === 'node'
+        ? cards.filter({ has: this.page.locator('.tnum').filter({ hasText: new RegExp(`(?:^|[\\s·])${escaped}$`) }) })
+        : cards.filter({ has: this.page.getByText(entity.text, { exact: true }) });
       await card.click({ timeout: budget.remaining() });
       path += `/${encodeURIComponent(entity.id)}`;
       await this.path(path, budget);
@@ -162,13 +171,16 @@ export class ConsoleApp {
   }
   async check(action: string, inputs: ObjectValue, budget: Budget): Promise<{ expected: unknown; actual: unknown }> {
     const field = action === 'web_table_count_equals' ? 'expected_count' : action === 'web_action_available' ? 'available' : 'expected';
-    keys(inputs, ['view', 'label', 'requirement', field]);
+    keys(inputs, ['view', 'label', 'requirement', field, 'node_id']);
     const name = str(inputs.view, 'view');
     const label = str(inputs.label, 'label');
     if (!/^WEB-[A-Z0-9][A-Z0-9-]*$/.test(str(inputs.requirement, 'requirement')))
       throw new WorkerError('INVALID_INPUT', 'Invalid requirement identifier');
     const expected = field === 'expected_count' ? integer(inputs[field], field, 0, 1000000) :
       field === 'available' ? bool(inputs[field], field) : normalize(str(inputs[field], field, true));
+    const nodeId = inputs.node_id === undefined ? undefined : str(inputs.node_id, 'node_id');
+    if (nodeId && (name !== 'network_nodes' || action !== 'web_field_equals' || !/^[A-Za-z0-9_-]+$/.test(nodeId)))
+      throw new WorkerError('INVALID_INPUT', 'node_id requires a node-list field check');
     const main = this.main();
     if (action === 'web_table_count_equals' && ['network_nodes', 'network_sites'].includes(name))
       throw new WorkerError('UNSUPPORTED_LOCATOR', 'This view renders cards; use its visible Nodes count or Sites count field');
@@ -180,6 +192,26 @@ export class ConsoleApp {
         return target ? text(target.locator(':scope > div').nth(1)) : null;
       }
       if (action === 'web_field_equals') {
+        if (nodeId) {
+          const card = await visible(main.locator('.ecard[role="button"]').filter({ has: this.page.locator('.tnum').filter({ hasText: new RegExp(` · ${nodeId}$`) }) }));
+          if (!card) return null;
+          if (label === 'Site') return text(card.locator(':scope > div:last-child > span'));
+          if (label === 'Serial #' || label === 'Model type') {
+            const identity = await text(card.locator('.tnum'));
+            if (identity === null) return null;
+            const parts = identity.split(' · ');
+            return parts.length === 2 ? parts[label === 'Serial #' ? 1 : 0] : null;
+          }
+          if (label === 'Connectivity') {
+            const dot = await visible(card.locator('[title^="Connectivity: "]'));
+            return dot ? (await dot.getAttribute('title'))!.slice('Connectivity: '.length) : null;
+          }
+          throw new WorkerError('UNSUPPORTED_LOCATOR', 'Unknown node card field');
+        }
+        if (name === 'network_node_detail' && label === 'Connectivity') {
+          const dot = await visible(main.locator('[title^="Connectivity: "]'));
+          return dot ? (await dot.getAttribute('title'))!.slice('Connectivity: '.length) : null;
+        }
         if ((name === 'network_nodes' && label === 'Nodes count') || (name === 'network_sites' && label === 'Sites count')) {
           if (await main.locator('.MuiSkeleton-root:visible').count()) return null;
           // PageHeader hides a numeric zero; only an explicit empty state is

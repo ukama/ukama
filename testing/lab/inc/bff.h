@@ -677,6 +677,8 @@ int bff_backend_contains(bff_client_t *c,
                          int *found,
                          ulab_error_t *err);
 
+int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
+                         int linked, ulab_error_t *err);
 int bff_cleanup_world(bff_client_t *c,
                       const world_t *w,
                       ulab_error_t *err);

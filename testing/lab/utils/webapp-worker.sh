@@ -14,6 +14,6 @@ if [ ! -f "$lab_root/adapters/webapp/dist/cli.js" ]; then
     echo "  npm --prefix adapters/webapp run install:browser" >&2
     exit 1
 fi
-# Keep auth/profile/artifact paths consistent with future C-runner execution.
+# Keep auth/profile/artifact paths consistent with C-runner execution.
 cd "$lab_root"
 exec node "$lab_root/adapters/webapp/dist/cli.js" "$@"

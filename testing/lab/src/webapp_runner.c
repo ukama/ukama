@@ -51,7 +51,7 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     } else if (!strcmp(event->view, "network_node_detail")) {
         node = world_node_by_ref(world, event->nodes.value);
         if (!node || !node->bff_id[0]) goto unresolved;
-        ref = node->ref; id = node->bff_id; text = node->id; network_ref = node->network_ref;
+        ref = node->ref; id = node->bff_id; text = node->bff_id; network_ref = node->network_ref;
     }
     if (ref) {
         if (!network || strcmp(network->ref, network_ref)) goto unresolved;
@@ -111,14 +111,33 @@ fail:
     json_decref(inputs);
     return NULL;
 }
-static int check_one(webapp_client_t *client, report_t *report,
+static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                        const char *phase, const check_spec_t *check,
                        ulab_error_t *err) {
     json_t *inputs;
     json_t *reply = NULL;
     json_t *expected;
     int rc;
-    inputs = webapp_check_inputs(check);
+    check_spec_t resolved;
+    node_t *node;
+    site_t *site;
+    resolved = *check;
+    if (check->ref[0]) {
+        node = world_node_by_ref(world, check->ref);
+        if (!node || !node->bff_id[0]) return webapp_error(err, "expected_ref has no provisioned node identity");
+        site = world_site_by_ref(world, node->site_ref);
+        if (!site) return webapp_error(err, "expected_ref site missing");
+        if (ulab_copy(resolved.expected, sizeof(resolved.expected), !strcmp(check->key, "id") ? node->bff_id :
+                  !strcmp(check->key, "site_name") ? site->name : !strcmp(node->type, "tower") ? "Tower node" :
+                  !strcmp(node->type, "amplifier") ? "Amplifier node" : "Controller node"))
+            return webapp_error(err, "resolved browser expectation is too long");
+    }
+    inputs = webapp_check_inputs(&resolved);
+    if (inputs && check->nodes.kind != SEL_NONE) {
+        node = world_node_by_ref(world, check->nodes.value);
+        if (!node || !node->bff_id[0]) { json_decref(inputs); return webapp_error(err, "node card identity is unresolved"); }
+        json_object_set_new(inputs, "node_id", json_string(node->bff_id));
+    }
     if (!inputs) return webapp_error(err, "cannot encode browser assertion");
     expected = json_object_get(inputs, check->type == CHECK_WEB_ACTION_AVAILABLE ? "available" :
                                check->type == CHECK_WEB_TABLE_COUNT_EQUALS ? "expected_count" : "expected");
@@ -240,6 +259,7 @@ int webapp_execute(const runner_opts_t *opts, const scenario_t *scenario,
     if (webapp_client_start(&client, worker, world->run_id, absolute, deadline, &stopped, err)) goto done;
     browser_started = 1;
     if (initialize(&client, scenario, absolute, err)) goto done;
+    if (hooks && hooks->provision && hooks->provision(hooks->ctx, &client, &journal, err)) goto done;
     for (p = 0; p < scenario->phase_count; p++) {
         const phase_spec_t *phase;
         phase = &scenario->phases[p];
@@ -250,10 +270,10 @@ int webapp_execute(const runner_opts_t *opts, const scenario_t *scenario,
             if (rc) goto done;
         }
         for (i = 0; i < phase->check_count; i++)
-            if ((rc = check_one(&client, report, phase->name, &phase->checks[i], err))) goto done;
+            if ((rc = check_one(&client, world, report, phase->name, &phase->checks[i], err))) goto done;
     }
     for (i = 0; i < scenario->final_check_count; i++)
-        if ((rc = check_one(&client, report, "final", &scenario->final_checks[i], err))) goto done;
+        if ((rc = check_one(&client, world, report, "final", &scenario->final_checks[i], err))) goto done;
     rc = ULAB_OK;
 done:
     if (stopped || webapp_now() > deadline) {
@@ -263,7 +283,10 @@ done:
     memset(&cleanup_error, 0, sizeof(cleanup_error));
     if (browser_started && webapp_client_stop(&client, rc != ULAB_OK, &cleanup_error)) worker_cleanup_failed = cleanup_failed = 1;
     ulab_status("CLEANUP", "web-app worker and test-owned resources");
-    if (webapp_journal_cleanup(&journal, hooks, webapp_now() + 30, &cleanup_error)) cleanup_failed = 1;
+    if (hooks && hooks->recover && hooks->recover(hooks->ctx, &journal, &cleanup_error)) cleanup_failed = 1;
+    if (hooks && hooks->prepare_cleanup && webapp_bounded_job(hooks->prepare_cleanup, hooks->ctx,
+        webapp_now() + 30, NULL, &cleanup_error)) cleanup_failed = 1;
+    if (webapp_journal_cleanup(&journal, hooks, webapp_now() + 120, &cleanup_error)) cleanup_failed = 1;
     if (hooks && hooks->cleanup_runtime && webapp_bounded_job(hooks->cleanup_runtime, hooks->ctx,
         webapp_now() + 15, NULL, &cleanup_error)) runtime_cleanup_failed = cleanup_failed = 1;
     if (world && (webapp_path(world_path, sizeof(world_path), run_dir, "world.json", &cleanup_error) ||

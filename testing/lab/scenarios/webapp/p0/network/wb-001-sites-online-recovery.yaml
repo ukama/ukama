@@ -4,7 +4,7 @@ description: Create two sites through the web app and observe outage and recover
 seed: 4711
 suite: webapp
 priority: p0
-status: wip
+status: active
 tags: [webapp, virtual, network, sites-online, recovery]
 provider:
   type: virtual

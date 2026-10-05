@@ -580,6 +580,12 @@ static int apply_webapp_field(webapp_spec_t *w, const char *key,
         return web_u32(val, &w->check_timeout_seconds);
     if (ulab_streq(key, "scenario_timeout_seconds") && !web_once(&w->fields, 6))
         return web_u32(val, &w->scenario_timeout_seconds);
+    if (ulab_streq(key, "switch_component") && !web_once(&w->fields, 7))
+        return ulab_copy(w->switch_component, sizeof(w->switch_component), val);
+    if (ulab_streq(key, "backhaul_component") && !web_once(&w->fields, 8))
+        return ulab_copy(w->backhaul_component, sizeof(w->backhaul_component), val);
+    if (ulab_streq(key, "power_component") && !web_once(&w->fields, 9))
+        return ulab_copy(w->power_component, sizeof(w->power_component), val);
     return ULAB_ERR;
 }
 
@@ -624,6 +630,12 @@ static int apply_web_check_field(check_spec_t *c, const char *key,
     if ((c->type == CHECK_WEB_KPI_EQUALS || c->type == CHECK_WEB_FIELD_EQUALS) &&
         ulab_streq(key, "expected") && !web_once(&c->web_fields, 4))
         return ulab_copy(c->expected, sizeof(c->expected), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "expected_ref") && !web_once(&c->web_fields, 7))
+        return ulab_copy(c->ref, sizeof(c->ref), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "expected_property") && !web_once(&c->web_fields, 8))
+        return ulab_copy(c->key, sizeof(c->key), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "nodes") && !web_once(&c->web_fields, 9))
+        return parse_selector_value(&c->nodes, key, val);
     if (c->type == CHECK_WEB_TABLE_COUNT_EQUALS &&
         ulab_streq(key, "expected_count") && !web_once(&c->web_fields, 5)) {
         c->has_expected_count = 1;

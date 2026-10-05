@@ -4,6 +4,7 @@
 import { readFile, lstat } from 'node:fs/promises';
 import { performance } from 'node:perf_hooks';
 import { chromium, firefox, webkit, type Browser, type BrowserContext, type Page } from 'playwright';
+import { Creation } from './provisioning.js';
 import { Artifacts } from './artifacts.js';
 import { ConsoleApp, assertSession } from './console-app.js';
 import { Budget, WorkerError, canonical, command, keys, profile, safeURL, str, type Command, type Profile, type Result } from './contract.js';
@@ -144,6 +145,10 @@ export class Worker {
       return { actual: { authenticated: true, browser: config.browser, browser_version: this.browser.version(), page_url: safeURL(this.page.url()) } };
     }
     if (!this.app || !this.config) throw new WorkerError('NOT_INITIALIZED', 'init must precede browser commands');
+    if (c.action === 'web_create_network' || c.action === 'web_create_site') {
+      const creation = new Creation(this.page!, c.inputs, c.action === 'web_create_network' ? 'network' : 'site', this.evidence!.directory, c.command_id);
+      return { bindings: await creation.run(this.app, budget), actual: { visible: true } };
+    }
     if (c.action === 'web_open') return { bindings: await this.app.open(c.inputs, budget), actual: { page_url: safeURL(this.page!.url()) } };
     if (c.action === 'web_select_network') {
       keys(c.inputs, ['network_name']); await this.app.selectNetwork(str(c.inputs.network_name, 'network_name'), budget);

@@ -47,15 +47,10 @@ int scenario_execution_supported(const scenario_t *s, ulab_error_t *err) {
     if (ulab_streq(s->status, "xfail"))
         return fail(err, "webapp xfail execution is unsupported; infrastructure failures must remain failures");
     if (ulab_streq(s->status, "wip") || ulab_streq(s->status, "skip")) return ULAB_OK;
-    if (s->world.networks || s->world.sites_per_network || s->setup.webapp_entities ||
-        s->runtime.start_nodes || s->runtime.wait_nodes_ready)
-        return fail(err, "webapp UI provisioning requires patch 4; patch 3 executes zero-fixture authenticated scenarios");
     for (p = 0; p < s->phase_count; p++) {
         for (i = 0; i < s->phases[p].event_count; i++) {
             const event_spec_t *event;
             event = &s->phases[p].events[i];
-            if (!scenario_is_web_event(event->type))
-                return fail(err, "webapp runtime events require patch 4 provisioned fixtures");
             if (ulab_streq(event->view, "welcome") || ulab_streq(event->view, "unauthorized"))
                 return fail(err, "welcome/unauthorized browser handlers are not implemented");
         }
@@ -211,8 +206,19 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
     if (check->timeout_seconds == 0 || check->timeout_seconds > 900 ||
         check->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web check timeout must be 1..900 and fit scenario timeout");
+    if (check->web_fields & ((1u << 7) | (1u << 8))) {
+        selector_t sel;
+        memset(&sel, 0, sizeof(sel)); sel.kind = SEL_REF;
+        ulab_copy(sel.value, sizeof(sel.value), check->ref);
+        if (check->type != CHECK_WEB_FIELD_EQUALS || (check->web_fields & (1u << 4)) ||
+            !node_selector(s, &sel) || (!ulab_streq(check->key, "id") && !ulab_streq(check->key, "model") && !ulab_streq(check->key, "site_name")))
+            return fail(err, "expected_ref/property requires an existing node, id/model/site_name, and no literal expected");
+    }
+    if (check->nodes.kind != SEL_NONE && (check->type != CHECK_WEB_FIELD_EQUALS ||
+        !ulab_streq(check->view, "network_nodes") || check->nodes.kind != SEL_REF || !node_selector(s, &check->nodes)))
+        return fail(err, "web field nodes selector requires one node on network_nodes");
     if ((check->type == CHECK_WEB_KPI_EQUALS || check->type == CHECK_WEB_FIELD_EQUALS) &&
-        !(check->web_fields & (1u << 4)))
+        !(check->web_fields & (1u << 4)) && !check->ref[0])
         return fail(err, "web text checks require expected (including an explicit empty string)");
     if (check->type == CHECK_WEB_TABLE_COUNT_EQUALS && !check->has_expected_count)
         return fail(err, "web_table_count_equals requires expected_count");

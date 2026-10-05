@@ -334,6 +334,9 @@ typedef struct {
     char         browser[ULAB_MAX_REF];
     char         auth_state[ULAB_MAX_PATH];
     int          headless;
+    char         switch_component[ULAB_MAX_NAME];
+    char         backhaul_component[ULAB_MAX_NAME];
+    char         power_component[ULAB_MAX_NAME];
     uint32_t     action_timeout_seconds;
     uint32_t     check_timeout_seconds;
     uint32_t     scenario_timeout_seconds;

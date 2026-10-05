@@ -121,12 +121,12 @@ class WebappContract(unittest.TestCase):
     def test_execution_gates_incomplete_handlers_without_blocking_skips(self):
         for status in ("wip", "active", "skip", "xfail"):
             with self.subTest(status=status):
-                result = self.run_scenario(self.example.replace("status: wip", "status: " + status), "execute")
-                if status in ("wip", "skip"):
+                result = self.run_scenario(self.example.replace("status: active", "status: " + status), "execute")
+                if status in ("wip", "active", "skip"):
                     self.assertEqual(result.returncode, 0, result.stdout)
                 else:
                     self.assertNotEqual(result.returncode, 0)
-                    self.assertIn("patch 4" if status == "active" else "xfail", result.stdout)
+                    self.assertIn("xfail", result.stdout)
         smoke = ROOT / "scenarios/webapp/p0/session/wb-000-authenticated-members.yaml"
         result = self.run_scenario(smoke.read_text(), "execute")
         self.assertEqual(result.returncode, 0, result.stdout)
@@ -225,12 +225,23 @@ class WebappContract(unittest.TestCase):
         result = self.run_scenario(text)
         self.assertGreater(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_world_expectations_reject_invalid_refs_properties_and_literal_conflicts(self):
+        text = (ROOT / "scenarios/webapp/p0/network/wb-002-node-list-detail.yaml").read_text()
+        self.assertEqual(self.run_scenario(text).returncode, 0)
+        for modified in (
+            text.replace("expected_ref: tower-site-001-001", "expected_ref: tower-site-999-001"),
+            text.replace("expected_property: id", "expected_property: unknown"),
+            text.replace("expected_property: id", 'expected_property: id\n        expected: "same"'),
+            text.replace("nodes: tower-site-001-001", "nodes: all"),
+        ):
+            self.assertNotEqual(self.run_scenario(modified).returncode, 0)
+
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())

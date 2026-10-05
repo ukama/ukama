@@ -14,11 +14,11 @@ a unified patch, validation results, and its own commit message.
 | 6 | Plans, SIMs, customers, UE usage, payments, receipts | Add web-app customer and commerce journeys | Day/minute and data-unit conversion, allocation, usage, payment/entitlement/receipt reconciliation. |
 | 7 | Error states, scope, accessibility, browser coverage, coverage report | Expand web-app coverage and release reporting | Agreed critical requirements fully covered, at least 90% of agreed functional inventory, gaps retained. |
 
-Patches 1–3 are implemented. Patch 3 executes zero-fixture authenticated browser
+Patches 1–4 are implemented. Patch 3 executes zero-fixture authenticated browser
 scenarios through the C CLI and verifies transport, ordering, resource ownership,
-cancellation and cleanup against controlled local fixtures. Runtime and resource
-cleanup hooks are present; actual UI provisioning/runtime setup remains gated
-until Patch 4. See `runner.md` and `worker.md`.
+cancellation and cleanup against controlled local fixtures. Patch 4 connects UI network/site creation, local virtual-node setup, fault
+injection and owned-resource teardown. The two operational examples are active.
+See `provisioning.md`, `runner.md` and `worker.md`.
 
 The live target-app milestones still need a configured console/auth/BFF/runtime
 stack on the host. Fixture passes do not establish those milestones or product

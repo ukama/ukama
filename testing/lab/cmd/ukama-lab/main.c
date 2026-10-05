@@ -42,7 +42,7 @@ static void usage(void) {
     printf("  --webapp-worker <path> local browser worker launcher; default: utils/webapp-worker.sh\n");
     printf("  --sim-type <type>     SIM pool type; default: ukama_data\n");
     printf("  --warehouse-url <url> warehouse API URL for run SIM provisioning\n");
-    printf("  --factory-url <url>   sim factory API URL for run SIM export\n");
+    printf("  --factory-url <url>   factory API URL for SIM export / webapp node setup\n");
     printf("  --asr-url <url>       optional ukama-agent ASR API URL for post-allocation check\n");
     printf("generate options:\n");
     printf("  --model <name|all>    org/network/site/node/sim/subscriber/package\n");

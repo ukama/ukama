@@ -1359,7 +1359,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
 
     if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
         skip_cleanup = 1; /* webapp_execute owns its bounded cleanup. */
-        rc = webapp_execute(opts, scenario, &world, &report, runDir, NULL, &err);
+        rc = webapp_run_local(opts, scenario, &world, &report, runDir, &err);
         goto done;
     }
 

@@ -55,7 +55,7 @@ export async function fixture() {
             if(selected==='empty-network'){p.innerHTML+='<div>No '+title.toLowerCase()+' yet</div>';return;}
             p.querySelector('.pagetitle').innerHTML+='<span class="cnt tnum">'+(nodes?'3':'1')+'</span>';
             const ids=nodes?['tower-001','amp-001','ctrl-001']:['site-001'];
-            for(const id of ids){const card=document.createElement('div');card.className='card ecard';card.setAttribute('role','button');card.innerHTML='<span>Fixture</span><div class="tnum">Unit · '+id+'</div>';card.onclick=()=>goto(path+'/'+id);p.appendChild(card);}
+            for(const id of ids){const card=document.createElement('div');card.className='card ecard';card.setAttribute('role','button');card.innerHTML='<span>'+(nodes?'Fixture':id)+'</span><div class="tnum">Unit · '+id+'</div>';card.onclick=()=>goto(path+'/'+id);p.appendChild(card);}
           }else if(path.startsWith('/network/nodes/')){
             p.innerHTML+='<div class="kv-row"><span>Serial #</span><span><span class="tnum">'+path.split('/').pop()+'</span></span></div>';
             p.innerHTML+='<div class="kv-row"><span>Empty field</span><span><span class="tnum"></span></span></div>';
