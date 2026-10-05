@@ -298,11 +298,10 @@ deploy_to_rootfs() {
     copy_required_libs "$UKAMA_REPO_LIB_PKG" "${target}/lib"
     create_manifest_file "${target}/ukama/manifest.json" "${APPS[@]}"
 
-    # app configs, same as the virtual node (mk_vnode.sh)
-    sudo cp -r "${APP_CONFIGS_DIR}/." "${target}/ukama/configs/"
-    if [ -f "${target}/ukama/configs/metricsd/cnode_config.toml" ]; then
-        sudo ln -sfn cnode_config.toml "${target}/ukama/configs/metricsd/config.toml"
-    fi
+    # configs needed to come online (bootstrap exits without its config)
+    for app in bootstrap meshd; do
+        sudo cp -r "${APP_CONFIGS_DIR}/${app}" "${target}/ukama/configs/"
+    done
 
     echo "${BOOTSTRAP_SERVER}" | sudo tee "${target}/ukama/bootstrap" > /dev/null
     check_status $? "Deployed into ${target}" ${STAGE}
