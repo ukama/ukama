@@ -17,6 +17,10 @@ for line in sys.stdin:
     actual = expected
     if action == 'init':
         actual = {'authenticated': True}
+    if action == 'web_tab':
+        actual = {'executed': mode != 'bad_ack'}
+    if action == 'web_field_equals' and inputs.get('match') == 'contains':
+        actual = 'unrelated reason' if mode == 'lie' else expected + ' by fixture'
     if mode in ('hang', 'cancel') and action == 'web_open':
         while True:
             time.sleep(.1)

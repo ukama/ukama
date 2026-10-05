@@ -157,6 +157,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_WEB_OPEN: return "web_open";
     case EVT_WEB_SELECT_NETWORK: return "web_select_network";
     case EVT_WEB_RELOAD: return "web_reload";
+    case EVT_WEB_ACTION: return "web_action";
+    case EVT_WEB_TAB: return "web_tab";
     default: return "unknown";
     }
 }
@@ -249,6 +251,8 @@ const char *scenario_check_name(check_type_t type) {
 int scenario_event_from_name(const char *name, event_type_t *out) {
     if (ulab_streq(name, "web_open")) { *out = EVT_WEB_OPEN; return ULAB_OK; }
     if (ulab_streq(name, "web_select_network")) { *out = EVT_WEB_SELECT_NETWORK; return ULAB_OK; }
+    if (ulab_streq(name, "web_action")) { *out = EVT_WEB_ACTION; return ULAB_OK; }
+    if (ulab_streq(name, "web_tab")) { *out = EVT_WEB_TAB; return ULAB_OK; }
     if (ulab_streq(name, "web_reload")) { *out = EVT_WEB_RELOAD; return ULAB_OK; }
     if (ulab_streq(name, "traffic")) *out = EVT_TRAFFIC;
     else if (ulab_streq(name, "traffic_by_profile")) {
@@ -636,6 +640,11 @@ static int apply_web_check_field(check_spec_t *c, const char *key,
         return ulab_copy(c->key, sizeof(c->key), val);
     if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "nodes") && !web_once(&c->web_fields, 9))
         return parse_selector_value(&c->nodes, key, val);
+    if ((c->type == CHECK_WEB_FIELD_EQUALS || c->type == CHECK_WEB_ACTION_AVAILABLE) &&
+        ulab_streq(key, "app") && !web_once(&c->web_fields, 10))
+        return ulab_copy(c->app, sizeof(c->app), val);
+    if (c->type == CHECK_WEB_FIELD_EQUALS && ulab_streq(key, "match") && !web_once(&c->web_fields, 11))
+        return ulab_copy(c->variant, sizeof(c->variant), val);
     if (c->type == CHECK_WEB_TABLE_COUNT_EQUALS &&
         ulab_streq(key, "expected_count") && !web_once(&c->web_fields, 5)) {
         c->has_expected_count = 1;
@@ -656,18 +665,35 @@ static int apply_web_event_field(event_spec_t *e, const char *key,
                                  const char *val) {
     if (ulab_streq(key, "timeout_seconds") && !web_once(&e->web_fields, 0))
         return web_u32(val, &e->timeout_seconds);
-    if (e->type == EVT_WEB_OPEN && ulab_streq(key, "view") &&
+    if (e->type == EVT_WEB_TAB) {
+        if (ulab_streq(key, "tab") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->profile, sizeof(e->profile), val);
+        return ULAB_ERR;
+    }
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "view") &&
         !web_once(&e->web_fields, 1))
         return ulab_copy(e->view, sizeof(e->view), val);
     if (e->type != EVT_WEB_RELOAD && ulab_streq(key, "networks") &&
         !web_once(&e->web_fields, 2))
         return parse_selector_value(&e->networks, key, val);
-    if (e->type == EVT_WEB_OPEN && ulab_streq(key, "sites") &&
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "sites") &&
         !web_once(&e->web_fields, 3))
         return parse_selector_value(&e->sites, key, val);
-    if (e->type == EVT_WEB_OPEN && ulab_streq(key, "nodes") &&
+    if ((e->type == EVT_WEB_OPEN || e->type == EVT_WEB_ACTION) && ulab_streq(key, "nodes") &&
         !web_once(&e->web_fields, 4))
         return parse_selector_value(&e->nodes, key, val);
+    if (e->type == EVT_WEB_ACTION) {
+        if (ulab_streq(key, "action") && !web_once(&e->web_fields, 5))
+            return ulab_copy(e->target, sizeof(e->target), val);
+        if (ulab_streq(key, "value") && !web_once(&e->web_fields, 6))
+            return ulab_copy(e->status, sizeof(e->status), val);
+        if (ulab_streq(key, "value_from") && !web_once(&e->web_fields, 7))
+            return ulab_copy(e->variant, sizeof(e->variant), val);
+        if (ulab_streq(key, "app") && !web_once(&e->web_fields, 8))
+            return ulab_copy(e->app, sizeof(e->app), val);
+        if (ulab_streq(key, "tag") && !web_once(&e->web_fields, 9))
+            return ulab_copy(e->tag, sizeof(e->tag), val);
+    }
     return ULAB_ERR;
 }
 
@@ -1555,7 +1581,7 @@ fail:
 void scenario_list_events(void) {
     int i;
 
-    for (i = EVT_TRAFFIC; i <= EVT_WEB_RELOAD; i++) {
+    for (i = EVT_TRAFFIC; i <= EVT_WEB_TAB; i++) {
         printf("%s\n", scenario_event_name((event_type_t)i));
     }
 }

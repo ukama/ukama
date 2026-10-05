@@ -282,6 +282,8 @@ int report_web_check(report_t *r, const char *phase, const check_spec_t *check,
                         "label", check->label, "detail", error ? error : "",
                         "expected", expected ? expected : json_null(), "actual", actual ? actual : json_null());
     if (!record) return ULAB_ERR;
+    if (json_object_set_new(record, "match", json_string(check->variant[0] ? check->variant : "equals"))) rc = ULAB_ERR;
+    if (check->app[0] && json_object_set_new(record, "app", json_string(check->app))) rc = ULAB_ERR;
     if (json_object_set(record, "artifacts", artifacts ? artifacts : json_null())) rc = ULAB_ERR;
     if (r->json) {
         json_result_prefix(r);

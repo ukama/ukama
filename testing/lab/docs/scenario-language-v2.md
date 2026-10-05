@@ -6,9 +6,12 @@ browser coverage credit. Version 1 behavior and files remain supported.
 
 ## Patch status
 
-Patches 1–4 implement the contract, local Playwright worker, C runner and UI
+Patches 1–5 implement the contract, local Playwright worker, C runner and UI
 network/site provisioning with local virtual-node runtime. The two operational
 network examples are active; see [`webapp/provisioning.md`](webapp/provisioning.md).
+Patch 5 adds browser operations, lock/recovery assertions and software updates;
+see [`webapp/operations.md`](webapp/operations.md) for the action vocabulary,
+scenario authoring and host preconditions.
 `wip` and `skip` produce `outcome: SKIP`, `passed: false`, and zero checks without
 launching the worker or backend setup. V2 `xfail` remains unsupported.
 
@@ -17,7 +20,8 @@ Version 2 is also used by the existing workload language. Workloads must declare
 
 The initial v2 vocabulary covers network/site fixtures, navigation, visible
 text/count/action checks, and node disconnection/reconnection. Additional UI
-operations are introduced with their adapter handlers in later patches.
+operations are introduced with their adapter handlers; Patch 5 provides
+`web_action` and `web_tab`.
 Unknown operations are rejected rather than treated as no-ops.
 
 ## Offline validation
@@ -230,8 +234,9 @@ contract example does not count as implemented browser automation.
 ## Refresh and unit semantics
 
 Network Home explicitly polls every 30 seconds in the supplied console. Node
-and site list/detail queries commonly use the shared helper's disabled default;
-operation locks have separate busy/focus polling. Scenarios must state whether
+detail now opts into visible polling (30 seconds, or 3 seconds during operations
+and on Software). Other lists/site detail can still use the disabled default;
+operation locks have separate busy/unverified/focus polling. Scenarios must state whether
 they expect automatic convergence or use an explicit `web_reload` event.
 A failing automatic-update assertion must not be repaired by a hidden reload.
 
@@ -249,12 +254,13 @@ allocation, and reload. This is a conversion requirement, not a missing feature.
 
 `docs/webapp/coverage.json` contains the initial source-derived inventory and
 all supplied page-route files, including redirects and the disabled Billing
-route. It records 132 requirements, all `planned`/`not_run`. It is a starting
-inventory for scope review, not an assertion of exhaustive coverage or a passed
-release. Role permissions require an agreed behavior matrix.
+route. It records 132 requirements; after Patch 5, 16 have complete automation and
+all retain `verification: not_run`. Partial cases remain planned with explicit
+gap notes. This is a scope inventory, not a passed release. Role permissions
+require an agreed behavior matrix.
 
-The first two YAML files are `wip` contract examples. Later patches must add
-handlers, necessary assertions, real run evidence, and activate them. Mapping
+The network and operation YAML examples are active and have local fixture
+qualification. Live target-app runs must still provide build/profile evidence. Mapping
 an ID to a YAML file alone earns neither automation nor verified credit.
 
 Implementation sequence and commit-message subjects are recorded in

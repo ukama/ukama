@@ -18,7 +18,7 @@ static int fail(ulab_error_t *err, const char *message) {
 }
 
 int scenario_is_web_event(event_type_t type) {
-    return type >= EVT_WEB_OPEN && type <= EVT_WEB_RELOAD;
+    return type >= EVT_WEB_OPEN && type <= EVT_WEB_TAB;
 }
 
 int scenario_is_web_check(check_type_t type) {
@@ -139,6 +139,34 @@ static int detail_reference(const scenario_t *s, const event_spec_t *event) {
         (site - 1) / s->world.sites_per_network + 1 == network;
 }
 
+static int operation_event(const event_spec_t *e, ulab_error_t *err) {
+    int site = ulab_streq(e->view, "network_site_detail");
+    int node = ulab_streq(e->view, "network_node_detail");
+    int fill = ulab_streq(e->target, "fill_confirmation");
+    int toggle = ulab_streq(e->target, "set_radio") || ulab_streq(e->target, "set_service");
+    int update = ulab_streq(e->target, "update_software") || ulab_streq(e->target, "retry_update");
+    int common = ulab_streq(e->target, "open_restart") || ulab_streq(e->target, "confirm_restart") || ulab_streq(e->target, "cancel_dialog");
+    if (!(site || node) || !(common || (site && (fill || toggle ||
+        ulab_streq(e->target, "open_site_actions") || ulab_streq(e->target, "close_site_actions"))) ||
+        (node && (update || ulab_streq(e->target, "open_software")))))
+        return fail(err, "web_action requires a supported operation on its matching detail view");
+    if (fill) {
+        if ((!!(e->web_fields & (1u << 6)) + !!(e->web_fields & (1u << 7))) != 1 ||
+            ((e->web_fields & (1u << 7)) && !ulab_streq(e->variant, "site_name")))
+            return fail(err, "fill_confirmation requires value or value_from: site_name");
+    } else if (toggle) {
+        if (!ulab_streq(e->status, "on") && !ulab_streq(e->status, "off"))
+            return fail(err, "radio/service value must be on or off");
+        if (e->variant[0]) return fail(err, "value_from is only valid for fill_confirmation");
+    } else if (e->web_fields & ((1u << 6) | (1u << 7)))
+        return fail(err, "value/value_from are not valid for this action");
+    if (update) {
+        if (!e->app[0] || !e->tag[0]) return fail(err, "software action requires app and expected target tag");
+    } else if (e->web_fields & ((1u << 8) | (1u << 9)))
+        return fail(err, "app/tag are only valid for software update actions");
+    return ULAB_OK;
+}
+
 static int browser_event(const scenario_t *s, const event_spec_t *event,
                          ulab_error_t *err) {
     if (event->expect_result[0] || event->error_contains[0])
@@ -148,6 +176,12 @@ static int browser_event(const scenario_t *s, const event_spec_t *event,
         event->timeout_seconds > s->webapp.scenario_timeout_seconds)
         return fail(err, "web action timeout must be 1..900 and fit scenario timeout");
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
+    if (event->type == EVT_WEB_TAB) {
+        if (!ulab_streq(event->profile, "primary") && !ulab_streq(event->profile, "secondary"))
+            return fail(err, "web_tab requires primary or secondary");
+        return ULAB_OK;
+    }
+    if (event->type == EVT_WEB_ACTION && operation_event(event, err)) return ULAB_ERR;
     if (event->type == EVT_WEB_SELECT_NETWORK) {
         if (!one_network(s, &event->networks))
             return fail(err, "web_select_network requires one existing net-NNN reference");
@@ -214,6 +248,21 @@ static int browser_check(const scenario_t *s, const check_spec_t *check,
             !node_selector(s, &sel) || (!ulab_streq(check->key, "id") && !ulab_streq(check->key, "model") && !ulab_streq(check->key, "site_name")))
             return fail(err, "expected_ref/property requires an existing node, id/model/site_name, and no literal expected");
     }
+    if ((check->web_fields & (1u << 11)) && (!ulab_streq(check->variant, "contains") ||
+        check->type != CHECK_WEB_FIELD_EQUALS || !ulab_ends(check->label, "reason") ||
+        !check->expected[0] || check->ref[0]))
+        return fail(err, "match: contains is limited to nonempty literal reason checks");
+    if ((!check->app[0] && (ulab_streq(check->label, "Software status") ||
+        ulab_streq(check->label, "Current version") || ulab_streq(check->label, "Target version") ||
+        ulab_streq(check->label, "Update Now") || ulab_streq(check->label, "Retry update"))))
+        return fail(err, "software fields/actions require app");
+    if ((check->web_fields & (1u << 10)) && (!check->app[0]))
+        return fail(err, "app cannot be empty");
+    if (check->app[0] && (!ulab_streq(check->view, "network_node_detail") ||
+        !(ulab_streq(check->label, "Software status") || ulab_streq(check->label, "Current version") ||
+          ulab_streq(check->label, "Target version") || ulab_streq(check->label, "Update Now") ||
+          ulab_streq(check->label, "Retry update"))))
+        return fail(err, "app scopes only software fields/actions on node detail");
     if (check->nodes.kind != SEL_NONE && (check->type != CHECK_WEB_FIELD_EQUALS ||
         !ulab_streq(check->view, "network_nodes") || check->nodes.kind != SEL_REF || !node_selector(s, &check->nodes)))
         return fail(err, "web field nodes selector requires one node on network_nodes");

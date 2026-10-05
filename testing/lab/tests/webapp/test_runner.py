@@ -76,6 +76,25 @@ class RunnerLifecycle(unittest.TestCase):
                 self.assertFalse(any(x['action'] == 'web_reload' for x in requests))
                 self.assertEqual(len({x['command_id'] for x in requests}), len(requests))
 
+    def test_parent_verifies_contains_and_preserves_observed_reason(self):
+        text = EXAMPLE.read_text().replace('type: web_action_available', 'type: web_field_equals').replace('available: true', 'expected: Busy\n        match: contains').replace('label: Invite member', 'label: Restart reason')
+        self.scenario.write_text(text)
+        for mode in ('ok', 'lie'):
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory(dir=self.directory) as out:
+                self.out = Path(out); self.run = self.out / 'test-run'
+                r, report = self.run_case(mode)
+                self.assertEqual(r.returncode == 0, mode == 'ok', r.stdout + r.stderr)
+                checks = [x for x in report['results'] if x['kind'] == 'check']
+                self.assertEqual(checks[0]['actual'], 'Busy by fixture' if mode == 'ok' else 'unrelated reason')
+
+    def test_operation_acknowledgement_is_required(self):
+        text = EXAMPLE.read_text().replace('      - type: web_open', '      - type: web_tab\n        tab: secondary\n      - type: web_open')
+        self.scenario.write_text(text)
+        r, report = self.run_case('bad_ack')
+        self.assertNotEqual(r.returncode, 0)
+        self.assertEqual(report['outcome'], 'FAIL')
+        self.assertFalse(any(x['message']['action'] == 'web_open' for x in self.messages()))
+
     def test_skip_is_not_pass_and_launches_no_worker(self):
         for status in ('skip', 'wip'):
             with self.subTest(status=status), tempfile.TemporaryDirectory(dir=self.directory) as out:

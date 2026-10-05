@@ -5,7 +5,7 @@ import http from 'node:http';
 import { once } from 'node:events';
 
 function client() {
-  let db, selected = 'existing', tower, siteName;
+  let db, selected = sessionStorage.getItem('network') || 'existing', tower, siteName;
   const main = document.querySelector('main'), menu = document.querySelector('#menu');
   const button = (label, action, parent = main) => { const b = document.createElement('button'); b.textContent = label; b.onclick = action; parent.append(b); return b; };
   const move = async path => { history.pushState({}, '', path); await render(); };
@@ -21,7 +21,7 @@ function client() {
   document.querySelector('.netswitch').onclick = () => {
     menu.innerHTML = '';
     for (const n of db.networks) {
-      const b = button(n.name, () => { selected = n.id; menu.innerHTML = ''; void render(); }, menu); b.role = 'menuitem';
+      const b = button(n.name, () => { selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; void render(); }, menu); b.role = 'menuitem';
     }
     const b = button('Add network', () => {
       menu.innerHTML = '<div role="dialog"><h2>Add network</h2><input placeholder="network-name"></div>';
@@ -29,7 +29,7 @@ function client() {
       button('Create network', async () => {
         const n = await graphql('addNetwork', { name: dialog.querySelector('input').value, isDefault: false });
         if (db.mode === 'late-network') return;
-        selected = n.id; menu.innerHTML = ''; await render();
+        selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; await render();
       }, dialog);
     }, menu); b.role = 'menuitem';
   };
@@ -88,30 +88,33 @@ function client() {
       });
     } else if (path === '/configure/sims') { main.innerHTML = '<h1>Upload SIMs</h1>'; button('Finish setup', () => move('/configure/complete')); }
     else if (path === '/configure/complete') button('Go to Console', () => move('/network'));
+    window.renderOperations?.({ db, main, menu, button, graphql, render });
   }
   function updateKpi() {
     const value = main.querySelector('.value'); if (!value) return;
     const sites = db.sites.filter(s=>s.network_id===selected);
     value.textContent = `${sites.filter(s=>!db.nodes.some(n=>n.site===s.id && n.offline)).length}/${sites.length}`;
   }
-  setInterval(async () => { await read(); updateKpi(); }, 100);
+  setInterval(async () => { await read(); updateKpi(); window.updateOperations?.(db); }, 100);
   if (location.pathname === '/') history.replaceState({}, '', '/network');
   void render();
 }
-export async function provisioningFixture(mode = '') {
+export async function provisioningFixture(mode = '', extension = {}) {
   const db = { mode, networks: [{ id: 'existing', name: 'existing-network' }], sites: [], nodes: [], operations: [], documents: 0 };
+  extension.init?.(db);
   const server = http.createServer(async (req,res) => {
     if (req.url === '/state') { res.setHeader('content-type','application/json'); res.end(JSON.stringify(db)); return; }
     if (req.method === 'POST') {
       let text = ''; for await (const chunk of req) text += chunk;
       const body = JSON.parse(text); let result = {};
+      if (extension.request?.(req.url, body, db)) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({accepted:true})); return; }
       if (req.url === '/runtime') {
         db.operations.push({ runtime: body.action, args: body.args });
         if (body.action === 'build-and-start-site.sh') {
           for (const [kind,type] of [['tnode','Tower node'],['anode','Amplifier node'],['cnode','Controller node']]) db.nodes.push({ id: `uk-${kind}-${body.args[4]}`, type, site: null });
         }
         if (body.action === 'disconnect-node.sh' || body.action === 'reconnect-node.sh') {
-          const n = db.nodes.find(n=>n.id === body.id); if(n) n.offline = body.action === 'disconnect-node.sh';
+          const n = db.nodes.find(n=>n.id === body.id); if(n) { n.offline = body.action === 'disconnect-node.sh'; extension.connectivity?.(n,db); }
         }
       } else {
         const op = /\b(addNetwork|addSite|deleteNetwork|deleteSite|deleteNode|releaseNodeFromSite)\s*\(/.exec(body.query)?.[1];
@@ -129,7 +132,7 @@ export async function provisioningFixture(mode = '') {
       res.setHeader('content-type','application/json'); res.end(JSON.stringify(result)); return;
     }
     db.documents++;
-    res.setHeader('content-type','text/html; charset=utf-8'); res.end(`<!doctype html><html><style>.ecard,.MuiCard-root{border:1px solid;padding:8px;margin:8px}.dot{display:inline-block;width:8px;height:8px;background:green}button,a{margin:5px}.tnum{display:inline-block}</style><header class="topbar"><button class="netswitch"><span class="nm">existing-network</span></button><div class="viewseg"><button>Business</button><button>Network</button><button>Customer</button></div></header><aside class="sidebar"></aside><main class="main"></main><div id="menu"></div><script>(${client.toString()})()</script></html>`);
+    res.setHeader('content-type','text/html; charset=utf-8'); res.end(`<!doctype html><html><style>.ecard,.MuiCard-root{border:1px solid;padding:8px;margin:8px}.dot{display:inline-block;width:8px;height:8px;background:green}button,a{margin:5px}.tnum{display:inline-block}</style><header class="topbar"><button class="netswitch"><span class="nm">existing-network</span></button><div class="viewseg"><button>Business</button><button>Network</button><button>Customer</button></div></header><aside class="sidebar"></aside><main class="main"></main><div id="menu"></div><script>${extension.script || ''};(${client.toString()})()</script></html>`);
   });
   server.listen(0,'127.0.0.1'); await once(server,'listening');
   return { db, origin:`http://127.0.0.1:${server.address().port}`, close:()=>new Promise(resolve=>server.close(resolve)), state:{cookies:[],origins:[]} };

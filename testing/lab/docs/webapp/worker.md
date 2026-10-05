@@ -298,3 +298,19 @@ C resolves YAML `expected_ref`/`expected_property` before dispatch; the worker
 never computes the expected value from the displayed value. The connectivity
 dot's native tooltip is read only when its element is visible. Lifecycle states
 remain separate and are not inferred from connectivity.
+
+
+## Patch 5 extension
+
+`web_action` accepts the resolved detail `view`, `network_name`, `entity`,
+semantic `action` and action-specific `value` or `app`/`tag`. `web_tab` accepts
+`tab: primary|secondary`; each tab has an independent navigation scope. Operation
+acknowledgements contain `actual.executed: true` and no resource bindings.
+`web_field_equals` and `web_action_available` accept `app` for software scope.
+A reason check can use `match: contains`; every other value remains exact. C
+verifies the acknowledgement and expected/actual match independently.
+
+See [operations.md](operations.md) for the complete supported vocabulary and
+seven scenarios. No direct operation API requests or application-store reads
+are used by these handlers. Two tabs share authenticated browser context state;
+this is not a different-user test.

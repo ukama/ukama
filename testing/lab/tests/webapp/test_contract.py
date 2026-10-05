@@ -77,7 +77,10 @@ class WebappContract(unittest.TestCase):
         cls.example = (ROOT / "scenarios/webapp/p0/network/wb-001-sites-online-recovery.yaml").read_text()
         cls.env = dict(os.environ,
                        ULAB_SOFTWARE_CURRENT_VERSION="contract-current",
-                       ULAB_SOFTWARE_TARGET_VERSION="contract-target")
+                       ULAB_SOFTWARE_TARGET_VERSION="contract-target",
+                       ULAB_CONTROLLER_RESTART_REASON="Controller busy",
+                       ULAB_CONTROLLER_RF_REASON="Controller busy",
+                       ULAB_CONTROLLER_SERVICE_REASON="Controller busy")
 
     @classmethod
     def tearDownClass(cls):
@@ -236,17 +239,41 @@ class WebappContract(unittest.TestCase):
         ):
             self.assertNotEqual(self.run_scenario(modified).returncode, 0)
 
+    def test_operation_contract_rejects_unsafe_or_unrelated_fields(self):
+        text = (ROOT / "scenarios/webapp/p0/operations/wb-012-software-update.yaml").read_text()
+        self.assertEqual(self.run_scenario(text).returncode, 0)
+        for old, new in (
+            ('action: "update_software"', 'action: "made_up_operation"'),
+            ('tag: "${ULAB_SOFTWARE_TARGET_VERSION}"', 'unknown_tag: "v2"'),
+            ('action: "open_software"', 'action: "set_radio"'),
+            ('app: "example"', 'app: ""'),
+            ('label: "Current version"', 'label: "Current version"\n        match: contains'),
+            ('action: "open_software"', 'action: "open_software"\n        value: nope'),
+            ('nodes: "controller-site-001-001"', 'nodes: "controller-site-999-001"'),
+        ):
+            with self.subTest(old=old, new=new):
+                self.assertNotEqual(self.run_scenario(text.replace(old, new)).returncode, 0)
+
+    def test_site_confirmation_source_and_tab_names_are_closed_contracts(self):
+        text = (ROOT / "scenarios/webapp/p0/operations/wb-011-site-operations.yaml").read_text()
+        self.assertEqual(self.run_scenario(text).returncode, 0)
+        for replacement in ('value_from: "anything"', 'value_from: "site_name"\n        value: explicit'):
+            self.assertNotEqual(self.run_scenario(text.replace('value_from: "site_name"', replacement)).returncode, 0)
+        text = (ROOT / "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml").read_text()
+        self.assertEqual(self.run_scenario(text).returncode, 0)
+        self.assertNotEqual(self.run_scenario(text.replace('tab: "secondary"', 'tab: "third"')).returncode, 0)
+
     def test_coverage_inventory_has_no_unearned_credit(self):
         catalog = json.loads((ROOT / "docs/webapp/coverage.json").read_text())
         identifiers = {r["id"] for r in catalog["requirements"]}
         self.assertEqual(len(identifiers), len(catalog["requirements"]))
         for r in catalog["requirements"]:
-            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002"} else "planned")
+            self.assertEqual(r["automation"], "implemented" if r["id"] in {"WEB-NET-001", "WEB-NET-002", "WEB-NET-003", "WEB-NODE-001", "WEB-NODE-002", "WEB-NODE-003", "WEB-NODE-005", "WEB-NODE-007", "WEB-OPS-001", "WEB-OPS-002", "WEB-OPS-003", "WEB-OPS-005", "WEB-OPS-006", "WEB-OPS-007", "WEB-OPS-009", "WEB-OPS-010"} else "planned")
             self.assertEqual(r["verification"], "not_run")
             for path in r["scenarios"]:
                 self.assertTrue((ROOT / path).is_file())
         for path in (ROOT / "scenarios/webapp").rglob("*.yaml"):
-            for identifier in re.findall(r"requirement:\s+(WEB-[A-Z0-9-]+)", path.read_text()):
+            for identifier in re.findall(r'requirement:\s+"?(WEB-[A-Z0-9-]+)', path.read_text()):
                 self.assertIn(identifier, identifiers)
 
 

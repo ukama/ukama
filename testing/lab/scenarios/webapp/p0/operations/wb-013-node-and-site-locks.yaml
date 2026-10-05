@@ -1,0 +1,461 @@
+version: 2
+name: p0-webapp-node-and-site-locks
+description: Update each node independently, verify blocked site restart, verify controller RF and service lock reasons, and observe release.
+seed: 4913
+suite: webapp
+priority: p0
+status: active
+tags: [webapp, virtual, operations]
+provider:
+  type: virtual
+webapp:
+  base_url: http://localhost:3000
+  auth_state: .auth/owner.json
+  browser: chromium
+  headless: true
+  action_timeout_seconds: 30
+  check_timeout_seconds: 180
+  scenario_timeout_seconds: 3600
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+setup:
+  create_via_webapp: [networks, sites]
+phases:
+  - name: controller_published_release_is_visible
+    events:
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "controller-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "controller-site-001-001"
+        action: "open_software"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_CURRENT_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Target version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Update available"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Update Now"
+        available: true
+        requirement: "WEB-OPS-009"
+        app: "example"
+  - name: controller_request_update
+    events:
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "controller-site-001-001"
+        action: "update_software"
+        app: "example"
+        tag: "${ULAB_SOFTWARE_TARGET_VERSION}"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Updating…"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: false
+        requirement: "WEB-OPS-009"
+  - name: controller_site_conflicts
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: false
+        requirement: "WEB-OPS-005"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: false
+        requirement: "WEB-OPS-006"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: false
+        requirement: "WEB-OPS-006"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Restart reason"
+        expected: "${ULAB_CONTROLLER_RESTART_REASON}"
+        requirement: "WEB-OPS-005"
+        match: "contains"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Radio reason"
+        expected: "${ULAB_CONTROLLER_RF_REASON}"
+        requirement: "WEB-OPS-006"
+        match: "contains"
+      - type: "web_field_equals"
+        view: "network_site_detail"
+        label: "Cellular reason"
+        expected: "${ULAB_CONTROLLER_SERVICE_REASON}"
+        requirement: "WEB-OPS-006"
+        match: "contains"
+  - name: controller_site_unlock
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: true
+        requirement: "WEB-OPS-005"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: true
+        requirement: "WEB-OPS-006"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: true
+        requirement: "WEB-OPS-006"
+  - name: controller_return_to_software
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "close_site_actions"
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "controller-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "controller-site-001-001"
+        action: "open_software"
+  - name: controller_terminal_version_and_unlock
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Up to date"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: true
+        requirement: "WEB-OPS-009"
+        timeout_seconds: 600
+  - name: tower_published_release_is_visible
+    events:
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+        action: "open_software"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_CURRENT_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Target version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Update available"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Update Now"
+        available: true
+        requirement: "WEB-OPS-009"
+        app: "example"
+  - name: tower_request_update
+    events:
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+        action: "update_software"
+        app: "example"
+        tag: "${ULAB_SOFTWARE_TARGET_VERSION}"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Updating…"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: false
+        requirement: "WEB-OPS-009"
+  - name: tower_site_conflicts
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: false
+        requirement: "WEB-OPS-005"
+  - name: tower_site_unlock
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: true
+        requirement: "WEB-OPS-005"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: true
+        requirement: "WEB-OPS-006"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: true
+        requirement: "WEB-OPS-006"
+  - name: tower_return_to_software
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "close_site_actions"
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "tower-site-001-001"
+        action: "open_software"
+  - name: tower_terminal_version_and_unlock
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Up to date"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: true
+        requirement: "WEB-OPS-009"
+        timeout_seconds: 600
+  - name: amplifier_published_release_is_visible
+    events:
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "amplifier-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "amplifier-site-001-001"
+        action: "open_software"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_CURRENT_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Target version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Update available"
+        requirement: "WEB-NODE-007"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Update Now"
+        available: true
+        requirement: "WEB-OPS-009"
+        app: "example"
+  - name: amplifier_request_update
+    events:
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "amplifier-site-001-001"
+        action: "update_software"
+        app: "example"
+        tag: "${ULAB_SOFTWARE_TARGET_VERSION}"
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Updating…"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: false
+        requirement: "WEB-OPS-009"
+  - name: amplifier_site_conflicts
+    events:
+      - type: "web_open"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "open_site_actions"
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: false
+        requirement: "WEB-OPS-005"
+  - name: amplifier_site_unlock
+    checks:
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Restart site"
+        available: true
+        requirement: "WEB-OPS-005"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Radio"
+        available: true
+        requirement: "WEB-OPS-006"
+      - type: "web_action_available"
+        view: "network_site_detail"
+        label: "Cellular"
+        available: true
+        requirement: "WEB-OPS-006"
+  - name: amplifier_return_to_software
+    events:
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
+        action: "close_site_actions"
+      - type: "web_open"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "amplifier-site-001-001"
+      - type: "web_action"
+        view: "network_node_detail"
+        networks: "net-001"
+        nodes: "amplifier-site-001-001"
+        action: "open_software"
+  - name: amplifier_terminal_version_and_unlock
+    checks:
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Software status"
+        expected: "Up to date"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_field_equals"
+        view: "network_node_detail"
+        label: "Current version"
+        expected: "${ULAB_SOFTWARE_TARGET_VERSION}"
+        requirement: "WEB-OPS-009"
+        app: "example"
+        timeout_seconds: 600
+      - type: "web_action_available"
+        view: "network_node_detail"
+        label: "Restart node"
+        available: true
+        requirement: "WEB-OPS-009"
+        timeout_seconds: 600

@@ -2,7 +2,7 @@
   "schema_version": 1,
   "scope": "console-app browser acceptance only",
   "baseline": "Uploaded console source dated 2026-10-04; static inspection, not a live run.",
-  "status": "initial_inventory",
+  "status": "implementation_in_progress",
   "coverage_rules": {
     "automation": "A requirement counts only after its browser handlers and all necessary assertions are implemented; contract examples alone do not count.",
     "verified": "A requirement counts only when all required assertions passed on the reported app/backend build and browser profile.",
@@ -720,9 +720,14 @@
       "priority": "p0",
       "requirement": "Connectivity and lifecycle states remain distinct in the visible node detail.",
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-010-node-restart.yaml",
+        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml",
+        "scenarios/webapp/p0/operations/wb-016-offline-recovery.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-NODE-004",
@@ -740,9 +745,13 @@
       "priority": "p0",
       "requirement": "Restart node is available for an online idle node.",
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-010-node-restart.yaml",
+        "scenarios/webapp/p0/operations/wb-016-offline-recovery.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-NODE-006",
@@ -760,9 +769,15 @@
       "priority": "p0",
       "requirement": "Node applications display the correct installed and desired versions and update state.",
       "source": "src/app/(dashboard)/network/_components/NodeDetailScreen.tsx",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-012-software-update.yaml",
+        "scenarios/webapp/p0/operations/wb-013-node-and-site-locks.yaml",
+        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml",
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-NODE-008",
@@ -780,9 +795,12 @@
       "priority": "p0",
       "requirement": "Restart node confirmation starts one operation and displays progress to completion.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-010-node-restart.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-002",
@@ -790,9 +808,12 @@
       "priority": "p0",
       "requirement": "Canceling a restart confirmation leaves the node unchanged.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-010-node-restart.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-003",
@@ -800,9 +821,12 @@
       "priority": "p0",
       "requirement": "Site restart requires the correct confirmation text.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-004",
@@ -812,7 +836,10 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml"
+      ],
+      "patch_5_note": "Partial: wb-011 observes post-restart recovery snapshots; uninterrupted controller connectivity during restart remains unimplemented."
     },
     {
       "id": "WEB-OPS-005",
@@ -820,9 +847,13 @@
       "priority": "p0",
       "requirement": "Any busy node, including the controller, disables the conflicting site restart.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml",
+        "scenarios/webapp/p0/operations/wb-013-node-and-site-locks.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-006",
@@ -830,9 +861,12 @@
       "priority": "p0",
       "requirement": "A busy controller blocks RF and service actions with the correct visible reason.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-013-node-and-site-locks.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-007",
@@ -840,9 +874,12 @@
       "priority": "p0",
       "requirement": "RF and service toggles each show the requested state after successful completion.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-011-site-operations.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-008",
@@ -852,7 +889,8 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [],
+      "patch_5_note": "Blocked by product observability: port controls keep optimistic local state; no reported per-port state is rendered to prove port isolation."
     },
     {
       "id": "WEB-OPS-009",
@@ -860,9 +898,15 @@
       "priority": "p0",
       "requirement": "A software update shows requested, busy, and terminal states with matching version.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-012-software-update.yaml",
+        "scenarios/webapp/p0/operations/wb-013-node-and-site-locks.yaml",
+        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml",
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-010",
@@ -870,9 +914,12 @@
       "priority": "p0",
       "requirement": "Conflicting operations cannot be submitted again through a stale confirmation dialog.",
       "source": "src/features/operations/useOperationStatus.ts",
-      "automation": "planned",
+      "automation": "implemented",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+      ],
+      "patch_5_note": "Browser actions and required assertions implemented; controlled local C/Chromium fixture qualification only. Live verification not run."
     },
     {
       "id": "WEB-OPS-011",
@@ -882,7 +929,10 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-014-software-failure-retry.yaml"
+      ],
+      "patch_5_note": "Partial: wb-014 covers interrupted-update failure and explicit retry. Deterministic lease-expiry/timeout coverage remains unimplemented."
     },
     {
       "id": "WEB-OPS-012",
@@ -892,7 +942,10 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [
+        "scenarios/webapp/p0/operations/wb-015-stale-confirmation.yaml"
+      ],
+      "patch_5_note": "Partial: wb-015 covers refocus and reload across two same-account tabs in one context. Distinct authenticated session/user coverage remains unimplemented."
     },
     {
       "id": "WEB-OPS-013",
@@ -902,7 +955,8 @@
       "source": "src/features/operations/useOperationStatus.ts",
       "automation": "planned",
       "verification": "not_run",
-      "scenarios": []
+      "scenarios": [],
+      "patch_5_note": "Partial: fail-closed console policy unit tests and controlled browser error-state checks exist; real React/Apollo error/recovery qualification remains unimplemented."
     },
     {
       "id": "WEB-PLAN-001",

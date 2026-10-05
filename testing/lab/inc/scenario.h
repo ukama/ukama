@@ -103,7 +103,9 @@ typedef enum {
     EVT_CHECK,
     EVT_WEB_OPEN,
     EVT_WEB_SELECT_NETWORK,
-    EVT_WEB_RELOAD
+    EVT_WEB_RELOAD,
+    EVT_WEB_ACTION,
+    EVT_WEB_TAB
 } event_type_t;
 
 typedef enum {

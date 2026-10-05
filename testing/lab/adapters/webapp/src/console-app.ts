@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { Operations } from './operations.js';
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, bool, integer, keys, normalize, object, str, type ObjectValue } from './contract.js';
 
@@ -169,9 +170,22 @@ export class ConsoleApp {
       throw new WorkerError('WRONG_NETWORK', 'Visible network selection changed before the check');
     if (!await this.main().isVisible()) throw new WorkerError('WRONG_VIEW', 'Dashboard content is not visible');
   }
+  async operation(inputs: ObjectValue, budget: Budget): Promise<void> {
+    keys(inputs, ['view', 'network_name', 'entity', 'action', 'value', 'app', 'tag']);
+    const name = str(inputs.view, 'view'), route = getView(name);
+    if (!route.detail) throw new WorkerError('INVALID_INPUT', 'Operations require a detail view');
+    const entity = object(inputs.entity, 'entity'); keys(entity, ['ref', 'id', 'text']);
+    str(entity.ref, 'entity.ref'); str(entity.text, 'entity.text');
+    const id = str(entity.id, 'entity.id');
+    await this.assertView(name);
+    if (this.current!.path !== `${route.path}/${encodeURIComponent(id)}` ||
+        this.current!.network !== str(inputs.network_name, 'network_name'))
+      throw new WorkerError('WRONG_ENTITY', 'Operation does not match the opened entity and network');
+    await new Operations(this.page, route.detail === 'site').run(inputs, budget);
+  }
   async check(action: string, inputs: ObjectValue, budget: Budget): Promise<{ expected: unknown; actual: unknown }> {
     const field = action === 'web_table_count_equals' ? 'expected_count' : action === 'web_action_available' ? 'available' : 'expected';
-    keys(inputs, ['view', 'label', 'requirement', field, 'node_id']);
+    keys(inputs, ['view', 'label', 'requirement', field, 'node_id', 'app', 'match']);
     const name = str(inputs.view, 'view');
     const label = str(inputs.label, 'label');
     if (!/^WEB-[A-Z0-9][A-Z0-9-]*$/.test(str(inputs.requirement, 'requirement')))
@@ -182,6 +196,13 @@ export class ConsoleApp {
     if (nodeId && (name !== 'network_nodes' || action !== 'web_field_equals' || !/^[A-Za-z0-9_-]+$/.test(nodeId)))
       throw new WorkerError('INVALID_INPUT', 'node_id requires a node-list field check');
     const main = this.main();
+    const ops = getView(name).detail ? new Operations(this.page, getView(name).detail === 'site') : undefined;
+    if (inputs.app !== undefined && (!ops || name !== 'network_node_detail' ||
+        !['Software status', 'Current version', 'Target version', 'Update Now', 'Retry update'].includes(label)))
+      throw new WorkerError('INVALID_INPUT', 'app only scopes node software checks');
+    const contains = inputs.match === 'contains';
+    if (inputs.match !== undefined && (!contains || action !== 'web_field_equals' || !label.endsWith('reason') || !expected))
+      throw new WorkerError('INVALID_INPUT', 'contains is limited to nonempty reason checks');
     if (action === 'web_table_count_equals' && ['network_nodes', 'network_sites'].includes(name))
       throw new WorkerError('UNSUPPORTED_LOCATOR', 'This view renders cards; use its visible Nodes count or Sites count field');
     const actual = await budget.poll(async () => {
@@ -192,6 +213,7 @@ export class ConsoleApp {
         return target ? text(target.locator(':scope > div').nth(1)) : null;
       }
       if (action === 'web_field_equals') {
+        if (ops?.supportsField(label)) return ops.field(label, inputs.app);
         if (nodeId) {
           const card = await visible(main.locator('.ecard[role="button"]').filter({ has: this.page.locator('.tnum').filter({ hasText: new RegExp(` · ${nodeId}$`) }) }));
           if (!card) return null;
@@ -226,6 +248,7 @@ export class ConsoleApp {
         return target ? text(target.locator(':scope > span > .tnum'), true) : null;
       }
       if (action === 'web_action_available') {
+        if (ops?.control(label, inputs.app)) return ops.available(label, inputs.app);
         const button = await visible(main.getByRole('button', { name: label, exact: true }));
         return button ? await button.isEnabled() : null;
       }
@@ -236,7 +259,7 @@ export class ConsoleApp {
       const table = await visible(main.getByRole('table'));
       if (!table || await table.locator('.MuiSkeleton-root').count()) return null;
       return table.locator('tbody > tr:visible').count();
-    }, value => value !== null && value === expected, 'Visible value did not match the scenario expectation');
+    }, value => value !== null && (contains ? typeof value === 'string' && value.includes(String(expected)) : value === expected), 'Visible value did not match the scenario expectation');
     return { expected, actual };
   }
 }

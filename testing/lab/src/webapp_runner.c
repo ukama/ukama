@@ -33,6 +33,10 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     *inputs = json_object();
     if (!*inputs) return webapp_error(err, "cannot allocate browser event");
     if (event->type == EVT_WEB_RELOAD) return ULAB_OK;
+    if (event->type == EVT_WEB_TAB) {
+        if (json_object_set_new(*inputs, "tab", json_string(event->profile))) goto memory;
+        return ULAB_OK;
+    }
     if (event->networks.kind != SEL_NONE) {
         network = world_network_by_ref(world, event->networks.value);
         if (event->networks.kind != SEL_REF || !network || !network->bff_id[0]) goto unresolved;
@@ -42,7 +46,7 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
         if (!network) goto unresolved;
         return ULAB_OK;
     }
-    if (event->type != EVT_WEB_OPEN) goto unresolved;
+    if (event->type != EVT_WEB_OPEN && event->type != EVT_WEB_ACTION) goto unresolved;
     if (json_object_set_new(*inputs, "view", json_string(event->view))) goto memory;
     if (!strcmp(event->view, "network_site_detail")) {
         site = world_site_by_ref(world, event->sites.value);
@@ -56,6 +60,14 @@ int webapp_event_inputs(const event_spec_t *event, world_t *world,
     if (ref) {
         if (!network || strcmp(network->ref, network_ref)) goto unresolved;
         if (json_object_set_new(*inputs, "entity", json_pack("{s:s,s:s,s:s}", "ref", ref, "id", id, "text", text))) goto memory;
+    }
+    if (event->type == EVT_WEB_ACTION) {
+        if (!ref) goto unresolved;
+        if (json_object_set_new(*inputs, "action", json_string(event->target))) goto memory;
+        if ((event->web_fields & (1u << 6)) || event->variant[0])
+            if (json_object_set_new(*inputs, "value", json_string(event->variant[0] ? text : event->status))) goto memory;
+        if (event->app[0] && json_object_set_new(*inputs, "app", json_string(event->app))) goto memory;
+        if (event->tag[0] && json_object_set_new(*inputs, "tag", json_string(event->tag))) goto memory;
     }
     return ULAB_OK;
 unresolved:
@@ -92,6 +104,8 @@ json_t *webapp_check_inputs(const check_spec_t *check) {
     int space = 0;
     inputs = json_pack("{s:s,s:s,s:s}", "view", check->view, "label", check->label, "requirement", check->requirement);
     if (!inputs) return NULL;
+    if (check->app[0] && json_object_set_new(inputs, "app", json_string(check->app))) goto fail;
+    if (check->variant[0] && json_object_set_new(inputs, "match", json_string(check->variant))) goto fail;
     if (check->type == CHECK_WEB_ACTION_AVAILABLE) {
         if (json_object_set_new(inputs, "available", json_boolean(check->expected_value != 0))) goto fail;
     } else if (check->type == CHECK_WEB_TABLE_COUNT_EQUALS) {
@@ -110,6 +124,12 @@ json_t *webapp_check_inputs(const check_spec_t *check) {
 fail:
     json_decref(inputs);
     return NULL;
+}
+static int actual_matches(const check_spec_t *check, json_t *expected, json_t *actual) {
+    if (!strcmp(check->variant, "contains"))
+        return json_is_string(expected) && json_is_string(actual) &&
+            strstr(json_string_value(actual), json_string_value(expected)) != NULL;
+    return json_equal(expected, actual);
 }
 static int check_one(webapp_client_t *client, world_t *world, report_t *report,
                        const char *phase, const check_spec_t *check,
@@ -145,7 +165,7 @@ static int check_one(webapp_client_t *client, world_t *world, report_t *report,
     rc = webapp_call(client, scenario_check_name(check->type), inputs,
                       check->timeout_seconds, &reply, err);
     if (!rc && (!json_equal(expected, json_object_get(reply, "expected")) ||
-                !json_equal(expected, json_object_get(reply, "actual")) ||
+                !actual_matches(check, expected, json_object_get(reply, "actual")) ||
                 json_array_size(json_object_get(reply, "bindings")))) {
         client->broken = 1;
         rc = webapp_error(err, "worker PASS does not match the requested visible expectation");
@@ -188,7 +208,10 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
         bindings = json_object_get(reply, "bindings");
         entity = json_object_get(inputs, "entity");
         binding = json_array_get(bindings, 0);
-        if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||
+        if (!rc && (event->type == EVT_WEB_ACTION || event->type == EVT_WEB_TAB) &&
+            (json_array_size(bindings) || !json_is_true(json_object_get(json_object_get(reply, "actual"), "executed")))) {
+            rc = webapp_error(err, "worker operation acknowledgement is invalid");
+        } else if (json_array_size(bindings) && (!entity || json_array_size(bindings) != 1 ||
             !json_equal(json_object_get(entity, "ref"), json_object_get(binding, "ref")) ||
             !json_equal(json_object_get(entity, "id"), json_object_get(binding, "id")))) {
             rc = webapp_error(err, "worker binding does not match the requested detail entity");

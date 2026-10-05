@@ -28,6 +28,7 @@ export class Worker {
   private context?: BrowserContext;
   private page?: Page;
   private app?: ConsoleApp;
+  private tabs = new Map<string, { page: Page; app: ConsoleApp }>();
   private evidence?: Artifacts;
   private end = Infinity;
   private watchdog?: NodeJS.Timeout;
@@ -139,13 +140,33 @@ export class Worker {
       await evidence.start(this.context);
       this.page = await this.context.newPage(); evidence.attach(this.page);
       this.app = new ConsoleApp(this.page, config.base_url);
+      this.tabs.set('primary', { page: this.page, app: this.app });
       const response = await this.page.goto(config.base_url, { waitUntil: 'domcontentloaded', timeout: budget.remaining() });
       if (response && response.status() >= 400) throw new WorkerError('APP_UNAVAILABLE', 'Console initial navigation returned an HTTP error', response.status());
       await assertSession(this.page, config.base_url, budget);
       return { actual: { authenticated: true, browser: config.browser, browser_version: this.browser.version(), page_url: safeURL(this.page.url()) } };
     }
     if (!this.app || !this.config) throw new WorkerError('NOT_INITIALIZED', 'init must precede browser commands');
-    if (c.action === 'web_create_network' || c.action === 'web_create_site') {
+    if (c.action === 'web_tab') {
+      keys(c.inputs, ['tab']);
+      const tab = str(c.inputs.tab, 'tab');
+      if (!['primary', 'secondary'].includes(tab)) throw new WorkerError('INVALID_INPUT', 'Unknown tab');
+      let target = this.tabs.get(tab);
+      if (!target) {
+        const page = await this.context!.newPage(); this.evidence!.attach(page);
+        target = { page, app: new ConsoleApp(page, this.config.base_url) }; this.tabs.set(tab, target);
+        this.page = page; this.app = target.app;
+        await page.goto(this.config.base_url, { waitUntil: 'domcontentloaded', timeout: budget.remaining() });
+        await assertSession(page, this.config.base_url, budget);
+      }
+      this.page = target.page; this.app = target.app;
+      await this.page.bringToFront();
+      return { actual: { executed: true, tab } };
+    }
+    if (c.action === 'web_action') {
+      await this.app.operation(c.inputs, budget); return { actual: { executed: true } };
+    }
+    if (c.action === 'web_create_network'  || c.action === 'web_create_site') {
       const creation = new Creation(this.page!, c.inputs, c.action === 'web_create_network' ? 'network' : 'site', this.evidence!.directory, c.command_id);
       return { bindings: await creation.run(this.app, budget), actual: { visible: true } };
     }
