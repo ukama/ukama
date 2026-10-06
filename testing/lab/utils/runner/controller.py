@@ -20,6 +20,7 @@ import uuid
 from common import AWS, RunnerError, atomic_json, now, read_json, run, sha256
 from config import HERE, ROOT, environment, executable, load_config, portable_vpn
 from artifacts import image_archive, payload, relative_scenarios
+from batch_summary import format_summary, summarize
 
 
 def lifecycle(work, name, message):
@@ -564,6 +565,7 @@ def aggregate(work, state):
     summary = {"batch": state["batch"], "selected": len(state["scenarios"]), "completed": len(results), "total": len(results),
                **counts, "infrastructure_errors": incomplete_workers, "unfinished": pending,
                "workers": workers, "results": results}
+    summary.update(summarize(results))
     atomic_json(work / "batch-report.json", summary)
     lines = [f"Ukama {state['suite']} AWS batch {state['batch']}",
              f"selected={summary['selected']} complete={len(results)} pass={counts['passed']} fail={counts['failed']} skip={counts['skipped']} unfinished={len(pending)}",
@@ -583,6 +585,7 @@ def aggregate(work, state):
         lines.append(line)
     if pending:
         lines += ["", "Unfinished assignments:", *pending]
+    lines += ["", format_summary(summary, state["suite"])]
     (work / "batch-report.txt").write_text("\n".join(lines) + "\n")
     return summary
 

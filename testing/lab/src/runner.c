@@ -1207,18 +1207,30 @@ static int cleanup_run(bff_client_t *bff,
         ulab_status("CLEANUP", "detach UE sessions");
         if (runtime_detach_ues(runtime, world, &cleanup_err)) {
             failures++;
-            ulab_log_error("%s", cleanup_err.msg);
-            collect_failure_logs_once(runtime, world,
-                                      failure_logs_attempted);
+            if (report_cleanup_errors_suppressed()) {
+                ulab_log_warn("%s", cleanup_err.msg);
+            } else {
+                ulab_log_error("%s", cleanup_err.msg);
+            }
+            if (!report_cleanup_errors_suppressed()) {
+                collect_failure_logs_once(runtime, world,
+                                          failure_logs_attempted);
+            }
         }
 
         memset(&cleanup_err, 0, sizeof(cleanup_err));
         ulab_status("CLEANUP", "cleanup UE containers");
         if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
             failures++;
-            ulab_log_error("%s", cleanup_err.msg);
-            collect_failure_logs_once(runtime, world,
-                                      failure_logs_attempted);
+            if (report_cleanup_errors_suppressed()) {
+                ulab_log_warn("%s", cleanup_err.msg);
+            } else {
+                ulab_log_error("%s", cleanup_err.msg);
+            }
+            if (!report_cleanup_errors_suppressed()) {
+                collect_failure_logs_once(runtime, world,
+                                          failure_logs_attempted);
+            }
         }
     }
 
@@ -1226,9 +1238,15 @@ static int cleanup_run(bff_client_t *bff,
     ulab_status("CLEANUP", "delete backend resources");
     if (bff_cleanup_world(bff, world, &cleanup_err)) {
         failures++;
-        ulab_log_error("%s", cleanup_err.msg);
-        collect_failure_logs_once(runtime, world,
-                                  failure_logs_attempted);
+        if (report_cleanup_errors_suppressed()) {
+            ulab_log_warn("%s", cleanup_err.msg);
+        } else {
+            ulab_log_error("%s", cleanup_err.msg);
+        }
+        if (!report_cleanup_errors_suppressed()) {
+            collect_failure_logs_once(runtime, world,
+                                      failure_logs_attempted);
+        }
     }
 
     if (cleanup_runtime) {
@@ -1236,9 +1254,15 @@ static int cleanup_run(bff_client_t *bff,
         ulab_status("CLEANUP", "stop media/nodes/network");
         if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
             failures++;
-            ulab_log_error("%s", cleanup_err.msg);
-            collect_failure_logs_once(runtime, world,
-                                      failure_logs_attempted);
+            if (report_cleanup_errors_suppressed()) {
+                ulab_log_warn("%s", cleanup_err.msg);
+            } else {
+                ulab_log_error("%s", cleanup_err.msg);
+            }
+            if (!report_cleanup_errors_suppressed()) {
+                collect_failure_logs_once(runtime, world,
+                                          failure_logs_attempted);
+            }
         }
     }
 
@@ -1506,7 +1530,8 @@ done:
             &bff, &runtime, &world, runDir, &failure_logs_attempted,
             scenario_uses_virtual_network(scenario));
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
-        if (cleanup_rc != ULAB_OK && rc == ULAB_OK) {
+        if (cleanup_rc != ULAB_OK && rc == ULAB_OK &&
+            !report_cleanup_errors_suppressed()) {
             rc = ULAB_ERR;
         }
     }
