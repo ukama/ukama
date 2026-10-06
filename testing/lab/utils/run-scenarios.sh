@@ -935,7 +935,7 @@ done
 
 write_status FINALIZING - 'building batch report'
 
-python3 - "$SUMMARY_TSV" "$BATCH_DIR" <<'PY'
+python3 - "$SUMMARY_TSV" "$BATCH_DIR" "$(dirname -- "$AWS_HELPER")" "$suite" <<'PY'
 import csv
 import json
 import sys
@@ -944,6 +944,9 @@ from pathlib import Path
 
 summary_path = Path(sys.argv[1])
 batch_dir = Path(sys.argv[2])
+sys.path.insert(0, sys.argv[3])
+from batch_summary import format_summary, summarize
+
 results = []
 
 with summary_path.open(newline="", encoding="utf-8") as stream:
@@ -994,6 +997,8 @@ payload = {
     "duration_sec": sum(item["duration_sec"] for item in results),
     "results": results,
 }
+payload.update(summarize(results))
+category_summary = format_summary(payload, sys.argv[4])
 
 json_path = batch_dir / "batch-report.json"
 text_path = batch_dir / "batch-report.txt"
@@ -1012,6 +1017,7 @@ for item in results:
         f"{item['outcome']:<4}  {item['category']:<18}  "
         f"{item['scenario']}  ({item['duration_sec']}s)"
     )
+lines += ["", category_summary]
 text_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 print("\n============================================================")
@@ -1028,6 +1034,7 @@ print(
 )
 print(f"text report: {text_path}")
 print(f"json report: {json_path}")
+print("\n" + category_summary)
 
 sys.exit(1 if payload["failed"] else 0)
 PY
