@@ -13,23 +13,21 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
-	"github.com/ukama/ukama/systems/common/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
-
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 const errFailedAddNodeToSiteFmt = "failed to add node to site: %v"
-const errFailedGetNodeFmt = "failed to get node: %v"
-const errFailedUpdateNodeStatusFmt = "failed to update node status: %v"
-const errNodeNotFoundFmt = "node %s not found"
 
 type NodeEventServer struct {
 	s         *NodeServer
