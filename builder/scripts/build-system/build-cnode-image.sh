@@ -195,15 +195,14 @@ copy_rootfs() {
 
     for target in "${PRIMARY_MOUNT}" "${PASSIVE_MOUNT}"; do
         log "INFO" "Copying rootfs to ${target}"
-        sudo rsync -aAX \
+        # -x: never copy anything still mounted inside the chroot
+        sudo rsync -aAXx \
              --exclude=/dev/* --exclude=/proc/* --exclude=/sys/* \
              --exclude=/run/* --exclude=/tmp/* --exclude=/ukamarepo \
              --exclude=/destroy --exclude=/enter-chroot --exclude=/env.sh \
-             --exclude=/setup.log \
+             --exclude=/setup.log --exclude=/usr/bin/qemu-*-static \
              "${ROOTFS_DIR}/" "${target}/"
-        sudo mkdir -p "${target}/dev" "${target}/proc" "${target}/sys" \
-                      "${target}/run" "${target}/tmp" "${target}/boot/firmware"
-        sudo chmod 1777 "${target}/tmp"
+        sudo mkdir -p "${target}/boot/firmware"
     done
     check_status $? "Rootfs copied to primary and passive" ${STAGE}
 }
@@ -252,6 +251,12 @@ option classless_static_routes
 option interface_mtu
 require dhcp_server_identifier
 EOF
+
+    # apps talk over localhost, and lo is down unless OpenRC brings it up
+    sudo ln -sfn /etc/init.d/loopback "${target}/etc/runlevels/boot/loopback"
+
+    # the clock starts at 1970, so set it from the network
+    sudo ln -sfn /etc/init.d/ntpd "${target}/etc/runlevels/default/ntpd"
 }
 
 setup_noded_sysfs() {
@@ -279,7 +284,6 @@ start() {
 }
 EOF
     sudo chmod 0755 "${target}/etc/init.d/ukama-sysfs"
-    sudo mkdir -p "${target}/etc/runlevels/boot"
     sudo ln -sfn /etc/init.d/ukama-sysfs "${target}/etc/runlevels/boot/ukama-sysfs"
 }
 
@@ -288,12 +292,6 @@ deploy_to_rootfs() {
     local target="$1"
 
     log "INFO" "Deploying apps, libs, configs and manifest into ${target}"
-    sudo mkdir -p "${target}/ukama/apps/pkgs" \
-                  "${target}/ukama/configs" \
-                  "${target}/ukama/logs" \
-                  "${target}/ukama/state/starterd/log-spool" \
-                  "${target}/lib"
-
     copy_all_apps      "$UKAMA_REPO_APP_PKG" "${target}/ukama/apps/pkgs"
     copy_required_libs "$UKAMA_REPO_LIB_PKG" "${target}/lib"
     create_manifest_file "${target}/ukama/manifest.json" "${APPS[@]}"
