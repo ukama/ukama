@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
@@ -51,8 +51,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.state.node.transition"):
-		c := evt.NodeEventToEventConfig[evt.NodeStateTransition]
-		msg, err := epb.UnmarshalNodeStateChangeEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeStateChangeEvent](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -61,8 +60,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.report.store"):
-		c := evt.EventToEventConfig[evt.EventHealthReportStore]
-		msg, err := epb.UnmarshalHealthReportEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.HealthReportEvent](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -71,8 +69,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
-		c := evt.EventToEventConfig[evt.EventSiteCreate]
-		msg, err := epb.UnmarshalEventAddSite(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventAddSite](e.Msg)
 		if err != nil {
 			return nil, err
 		}
@@ -85,7 +82,7 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		return &epb.EventResponse{}, nil
 
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.inventory.component.node.added"):
-		msg, err := epb.UnmarshalEventInventoryNodeComponentAdd(e.Msg, "EventInventoryComponentNodeAdded")
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventInventoryNodeComponentAdd](e.Msg)
 		if err != nil {
 			return nil, err
 		}
