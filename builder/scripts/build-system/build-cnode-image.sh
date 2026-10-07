@@ -81,6 +81,11 @@ check_prerequisites() {
         log "ERROR" "No rootfs at ${ROOTFS_DIR}. Run rootfs-env-setup.sh -a aarch64 first"
         exit 1
     }
+    # x86 image builds (com, amplifier) use the same rootfs folder
+    [ -e "${ROOTFS_DIR}/lib/ld-musl-aarch64.so.1" ] || {
+        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not aarch64. Run rootfs-env-setup.sh -a aarch64 first"
+        exit 1
+    }
     [ -d "${UKAMA_REPO_APP_PKG}" ] && [ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ] || {
         log "ERROR" "No apps in ${UKAMA_ROOT}/build. Run build-env-setup.sh -a aarch64 first"
         exit 1
