@@ -1085,14 +1085,14 @@ static int apply_check_field(check_spec_t *c, const char *key,
         c->immediate = ulab_streq(val, "true") || ulab_streq(val, "1");
         return ULAB_OK;
     }
-    if (parse_selector_value(&c->ues, key, val) == ULAB_OK &&
-        ulab_streq(key, "ues")) return ULAB_OK;
-    if (parse_selector_value(&c->nodes, key, val) == ULAB_OK &&
-        ulab_streq(key, "nodes")) return ULAB_OK;
-    if (parse_selector_value(&c->sites, key, val) == ULAB_OK &&
-        ulab_streq(key, "sites")) return ULAB_OK;
-    if (parse_selector_value(&c->networks, key, val) == ULAB_OK &&
-        ulab_streq(key, "networks")) return ULAB_OK;
+    if (ulab_streq(key, "ues"))
+        return parse_selector_value(&c->ues, key, val);
+    if (ulab_streq(key, "nodes"))
+        return parse_selector_value(&c->nodes, key, val);
+    if (ulab_streq(key, "sites"))
+        return parse_selector_value(&c->sites, key, val);
+    if (ulab_streq(key, "networks"))
+        return parse_selector_value(&c->networks, key, val);
     if (ulab_streq(key, "sample_per_site")) {
         c->ues.kind = SEL_SAMPLE_PER_SITE;
         return ulab_parse_u32(val, &c->ues.count);
@@ -1203,12 +1203,12 @@ static int apply_event_field(event_spec_t *e, const char *key,
         sizeof(e->expect_result), val);
     if (ulab_streq(key, "error_contains")) return ulab_copy(e->error_contains,
         sizeof(e->error_contains), val);
-    if (parse_selector_value(&e->ues, key, val) == ULAB_OK &&
-        ulab_streq(key, "ues")) return ULAB_OK;
-    if (parse_selector_value(&e->sites, key, val) == ULAB_OK &&
-        ulab_streq(key, "sites")) return ULAB_OK;
-    if (parse_selector_value(&e->nodes, key, val) == ULAB_OK &&
-        ulab_streq(key, "nodes")) return ULAB_OK;
+    if (ulab_streq(key, "ues"))
+        return parse_selector_value(&e->ues, key, val);
+    if (ulab_streq(key, "sites"))
+        return parse_selector_value(&e->sites, key, val);
+    if (ulab_streq(key, "nodes"))
+        return parse_selector_value(&e->nodes, key, val);
     if (ulab_streq(key, "created_in_phase")) {
         e->ues.kind = SEL_CREATED_IN_PHASE;
         return ulab_copy(e->ues.value, sizeof(e->ues.value), val);
