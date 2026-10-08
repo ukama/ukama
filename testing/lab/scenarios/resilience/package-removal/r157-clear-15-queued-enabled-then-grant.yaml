@@ -28,7 +28,7 @@ packages:
     name: Resilience Next
     data_mb: 100
     duration_days: 1
-    amount: 0.01
+    amount: 1.01
     currency: USD
     country: USA
     assign_percent: 0
@@ -208,7 +208,7 @@ final_checks:
     span: daily
     op: SUM
     networks: net-001
-    expected_value: 1.15
+    expected_value: 16.15
     tolerance: 0.001
     timeout_seconds: 600
     poll_seconds: 5
