@@ -1,6 +1,6 @@
 version: 1
 name: r005-underpriced-sale-then-valid-retry
-description: Reject underpriced sale without a payment or entitlement; a corrected purchase must create exactly one settled sale.
+description: Reject a below-minimum sale without a payment or entitlement; a corrected purchase must create exactly one settled sale.
 seed: 6105
 suite: resilience
 priority: p1
@@ -41,6 +41,7 @@ phases:
         amount: 0.01
         expect:
           result: failure
+          error_contains: "Amount can not be less than 1"
     checks:
       - type: package_state
         ues: all

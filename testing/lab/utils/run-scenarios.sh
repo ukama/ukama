@@ -32,10 +32,11 @@ export ULAB_CDR_DIAG_DISABLE="${ULAB_CDR_DIAG_DISABLE:-1}"
 
 usage() {
     cat <<EOF_USAGE
-usage: $0 <p0|resilience|resilience-hooks>[/selector] [options] [selector ...]
+usage: $0 <p0|resilience|resilience-hooks|webapp>[/selector] [options] [selector ...]
 
 Select a suite first, optionally with a category or YAML path after a slash.
-Examples: resilience/allocation, p0/billing, or resilience billing sim.
+Examples: resilience/allocation, p0/billing, webapp/p0/session,
+or resilience billing sim. Webapp batches support --mode local.
 With no selectors, every scenario below SCENARIO_ROOT is run.
 Selectors are paths relative to SCENARIO_ROOT and may name a top-level
 category, a nested directory, or one scenario YAML file. Examples:
@@ -63,6 +64,8 @@ Options:
 
 Environment overrides:
   UKAMA_REPO                 Ukama repository root
+  UKAMA_IDENTIFIER           Account login (also used for automatic webapp login)
+  UKAMA_PASSWORD             Account password
   UKAMA_LAB_BFF              BFF GraphQL URL
   UKAMA_LAB_WAREHOUSE_URL    Warehouse API URL
   UKAMA_LAB_FACTORY_URL      Factory API URL used by ukama-lab
@@ -72,9 +75,14 @@ Environment overrides:
                              Auto-mode safety margin (default: 10)
   ULAB_FACTORY_SEED_URL      Factory URL used to generate node sets
   P0_RUNS_DIR                Parent directory for batch results
-  SCENARIO_ROOT              Scenario root (default: scenarios/<suite>)
+  SCENARIO_ROOT              Scenario root (webapp: scenarios/webapp/p0;
+                             other suites: scenarios/<suite>)
   LAB_BIN                    ukama-lab executable (default: ./bin/ukama-lab)
   P0_STATUS_FILE             Optional live worker status TSV
+  ULAB_WEBAPP_BASE_URL        Console URL (default: https://app.udev.ukama.com)
+  ULAB_WEBAPP_BROWSER         chromium (default), firefox or webkit
+  ULAB_WEBAPP_HEADLESS        true (default) or false
+  ULAB_WEBAPP_AUTH_ORIGIN     Explicit password-app origin, if outside the deployment
 EOF_USAGE
 }
 
@@ -96,15 +104,19 @@ case "${1:-}" in
         exit 0
         ;;
 
-    p0|resilience|resilience-hooks)
+    p0|resilience|resilience-hooks|webapp)
         suite="$1"
         shift
         ;;
 
-    p0/*|resilience/*|resilience-hooks/*)
+    p0/*|resilience/*|resilience-hooks/*|webapp/*)
         selection="$1"
         suite="${selection%%/*}"
         selector="${selection#*/}"
+        if [[ "$suite" == webapp ]]; then
+            [[ "$selector" == p0 ]] && selector=""
+            selector="${selector#p0/}"
+        fi
         shift
 
         if [[ -n "$selector" ]]; then
@@ -125,7 +137,12 @@ if [[ "$suite" == resilience* && -z "${ULAB_RESILIENCE_NAME_SUFFIX:-}" ]]; then
 fi
 
 LAB_BIN="${LAB_BIN:-./bin/ukama-lab}"
-SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/$suite}"
+if [[ "$suite" == webapp ]]; then
+    umask 077
+    SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/webapp/p0}"
+else
+    SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/$suite}"
+fi
 UKAMA_REPO="${UKAMA_REPO:-}"
 BFF_GRAPHQL_URL="${UKAMA_LAB_BFF:-${BFF_BASE_URL%/}/gateway/graphql}"
 WAREHOUSE_URL="${UKAMA_LAB_WAREHOUSE_URL:-http://warehouse-ukama.udev.ukama.com}"
@@ -261,6 +278,10 @@ if [[ "$RUN_MODE" == local ]] && ((AWS_WORKERS_SET)) ||
     exit 2
 fi
 AWS_HELPER="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/runner/controller.py"
+if [[ "$suite" == webapp && "$RUN_MODE" != local ]]; then
+    printf 'error: webapp batches currently support --mode local only\n' >&2
+    exit 2
+fi
 if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
     if [[ -n "$AWS_RESUME" && -n "$AWS_CLEANUP" ]] || ((LIST_ONLY || PREPARE_ONLY)) ||
        ((${#requested_selectors[@]})) || [[ -n "$SCENARIO_LIST_FILE" ]]; then
@@ -478,9 +499,9 @@ PY
 }
 
 if ((LIST_ONLY)); then
-    printf 'P0 selectors:'
+    printf '%s selectors:' "${suite^^}"
     printf ' %s' "${selected_selectors[@]}"
-    printf '\nP0 categories:'
+    printf '\n%s categories:' "${suite^^}"
     printf ' %s' "${categories[@]}"
     printf '\n\n'
     list_scenarios
@@ -529,6 +550,10 @@ RUNS_DIR="${BATCH_DIR}/runs"
 LOGS_DIR="${BATCH_DIR}/logs"
 SUMMARY_TSV="${BATCH_DIR}/scenarios.tsv"
 
+if [[ "$suite" == webapp && -e "$BATCH_DIR" ]]; then
+    printf 'error: webapp batch directory already exists: %s\n' "$BATCH_DIR" >&2
+    exit 2
+fi
 mkdir -p "$RUNS_DIR" "$LOGS_DIR"
 printf 'category\tscenario\trun_id\texit_code\treport\tlog\n' \
     >"$SUMMARY_TSV"
@@ -790,6 +815,30 @@ if ((PREPARE_ONLY)); then
     exit 0
 fi
 
+if [[ "$suite" == webapp ]]; then
+    WEBAPP_UTILS="$(dirname -- "$AWS_HELPER")/../webapp"
+    source "$WEBAPP_UTILS/setup.sh"
+    webapp_setup || exit 2
+    export ULAB_WEBAPP_BASE_URL="${ULAB_WEBAPP_BASE_URL:-https://app.udev.ukama.com}"
+    export ULAB_WEBAPP_BROWSER="${ULAB_WEBAPP_BROWSER:-chromium}"
+    export ULAB_WEBAPP_HEADLESS="${ULAB_WEBAPP_HEADLESS:-true}"
+    WEBAPP_AUTH_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ukama-lab-webapp-auth.XXXXXX")" || exit 2
+    trap 'rm -rf -- "$WEBAPP_AUTH_DIR"' EXIT
+    export ULAB_WEBAPP_BATCH_AUTH_STATE="$WEBAPP_AUTH_DIR/owner.json"
+    "$WEBAPP_NODE" adapters/webapp/dist/cli.js auth --automatic \
+        --base-url "$ULAB_WEBAPP_BASE_URL" --browser "$ULAB_WEBAPP_BROWSER" \
+        --out "$ULAB_WEBAPP_BATCH_AUTH_STATE" \
+        --metadata "$WEBAPP_AUTH_DIR/profile.json" || exit 2
+    export ULAB_AUTH_OWNER_STATE="${ULAB_AUTH_OWNER_STATE:-$ULAB_WEBAPP_BATCH_AUTH_STATE}"
+    if [[ -z "${ULAB_WEBAPP_AUTH_ORIGIN:-}" ]]; then
+        ULAB_WEBAPP_AUTH_ORIGIN="$(python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["auth_origin"])' \
+            "$WEBAPP_AUTH_DIR/profile.json")" || exit 2
+        export ULAB_WEBAPP_AUTH_ORIGIN
+    fi
+    mkdir -p "$BATCH_DIR/scenarios"
+fi
+
 common_args=(
     --sim-type "$SIM_TYPE"
     --warehouse-url "$WAREHOUSE_URL"
@@ -854,7 +903,7 @@ PY_STATUS
 }
 
 printf '\n============================================================\n'
-printf 'P0 batch: %s\n' "$BATCH_STAMP"
+printf '%s batch: %s\n' "${suite^^}" "$BATCH_STAMP"
 printf 'Selectors (%s):' "${#selected_selectors[@]}"
 printf ' %s' "${selected_selectors[@]}"
 printf '\nCategories (%s):' "${#categories[@]}"
@@ -892,15 +941,30 @@ for scenario in "${selected_scenarios[@]}"; do
     slug="${slug,,}"
     slug="${slug//[^a-z0-9-]/-}"
     run_id="p0-${BATCH_STAMP}-${slug}"
+    scenario_input="$scenario"
+    if [[ "$suite" == webapp ]]; then
+        webapp_batch_hash="$(printf '%s' "$BATCH_STAMP" | sha256sum)"
+        run_id="web-${webapp_batch_hash:0:16}-${completed_count}"
+        scenario_input="$BATCH_DIR/scenarios/$run_id.yaml"
+        python3 "$WEBAPP_UTILS/profile.py" "$scenario" "$scenario_input"
+        profile_rc=$?
+    else
+        profile_rc=0
+    fi
     report_path="${RUNS_DIR}/${run_id}/report.json"
     log_path="${LOGS_DIR}/${slug}.log"
 
     write_status RUNNING "$relative" 'scenario started'
     printf '\n-- Running: %s --\n' "$relative"
-    "$LAB_BIN" validate "$scenario" \
-        "${common_args[@]}" \
-        --run-id "$run_id" 2>&1 | tee "$log_path"
-    rc=${PIPESTATUS[0]}
+    if ((profile_rc == 0)); then
+        "$LAB_BIN" validate "$scenario_input" \
+            "${common_args[@]}" \
+            --run-id "$run_id" 2>&1 | tee "$log_path"
+        rc=${PIPESTATUS[0]}
+    else
+        printf 'error: cannot prepare webapp profile for %s\n' "$relative" | tee "$log_path"
+        rc=2
+    fi
 
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$category" "$relative" "$run_id" "$rc" \
@@ -1005,7 +1069,7 @@ text_path = batch_dir / "batch-report.txt"
 json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 lines = [
-    "P0 scenario batch report",
+    f"{sys.argv[4].upper()} scenario batch report",
     "",
     f"total={payload['total']} pass={payload['passed']} "
     f"fail={payload['failed']} skip={payload['skipped']} "
@@ -1021,7 +1085,7 @@ lines += ["", category_summary]
 text_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 print("\n============================================================")
-print("P0 batch summary")
+print(f"{sys.argv[4].upper()} batch summary")
 print("============================================================")
 print(f"{'RESULT':<7} {'CATEGORY':<19} SCENARIO")
 for item in results:
