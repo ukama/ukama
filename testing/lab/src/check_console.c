@@ -135,6 +135,14 @@ static int check_list_count(check_ctx_t *ctx,
                 selector_result_free(&networks);
                 return ULAB_ERR;
             }
+        } else if (ulab_streq(check->target, "packages") ||
+                   ulab_streq(check->target, "plans")) {
+            if (bff_get_package_list_count(
+                    ctx->bff, ctx->world, &ctx->world->networks[i],
+                    &actual, err)) {
+                selector_result_free(&networks);
+                return ULAB_ERR;
+            }
         } else if (bff_get_list_count(
                        ctx->bff, check->target,
                        &ctx->world->networks[i], &actual, err)) {

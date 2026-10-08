@@ -565,6 +565,12 @@ int bff_get_list_count(bff_client_t *c,
                        size_t *count,
                        ulab_error_t *err);
 
+int bff_get_package_list_count(bff_client_t *c,
+                               const world_t *w,
+                               const network_t *network,
+                               size_t *count,
+                               ulab_error_t *err);
+
 typedef struct {
     size_t total;
     size_t online;
