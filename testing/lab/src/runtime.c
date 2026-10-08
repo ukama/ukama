@@ -6,10 +6,12 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 #include "runtime.h"
 #include "node_provider.h"
@@ -137,26 +139,26 @@ static int env_enabled(const char *name) {
            strcmp(v, "NO") != 0;
 }
 
-static void safe_name(const char *in, char *out, size_t out_len) {
+static int safe_name(const char *in, char *out, size_t out_len) {
     size_t i;
-    size_t j;
     unsigned char ch;
 
-    if (out_len == 0) {
-        return;
+    if (in == NULL || in[0] == '\0' || strlen(in) >= out_len) {
+        return ULAB_ERR;
     }
 
-    j = 0;
-    for (i = 0; in != NULL && in[i] != '\0' && j + 1 < out_len; i++) {
+    for (i = 0; in[i] != '\0'; i++) {
         ch = (unsigned char)in[i];
-        if (isalnum(ch) || ch == '_' || ch == '.' || ch == '-') {
-            out[j++] = (char)ch;
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') ||
+            (ch >= '0' && ch <= '9') || ch == '_' || ch == '.' || ch == '-') {
+            out[i] = (char)ch;
         } else {
-            out[j++] = '-';
+            out[i] = '-';
         }
     }
 
-    out[j] = '\0';
+    out[i] = '\0';
+    return ULAB_OK;
 }
 
 static int read_state_value(const char *path,
@@ -202,7 +204,11 @@ static int runtime_site_state_path(runtime_t *rt,
     char safe[ULAB_MAX_REF];
     int rc;
 
-    safe_name(site->ref, safe, sizeof(safe));
+    if (safe_name(site->ref, safe, sizeof(safe))) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "invalid or truncated runtime site state filename");
+        return ULAB_ERR;
+    }
     rc = snprintf(path, path_len, "%s/runtime-sites/%s.env",
                   rt->run_dir, safe);
     if (rc < 0 || (size_t)rc >= path_len) {
@@ -221,17 +227,47 @@ static int write_runtime_node_state(runtime_t *rt,
                                     const char *node_kind,
                                     const char *container,
                                     ulab_error_t *err) {
-    char safe[ULAB_MAX_REF];
+    char safe[ULAB_MAX_ID];
+    char existing_id[ULAB_MAX_ID];
     char path[ULAB_MAX_PATH];
+    struct stat st;
     FILE *f;
     int rc;
 
-    safe_name(node->id, safe, sizeof(safe));
+    if (safe_name(node->id, safe, sizeof(safe)) ||
+        strlen(safe) + strlen(".env") > NAME_MAX) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "invalid or too long runtime node state filename for %s",
+                 node->id);
+        return ULAB_ERR;
+    }
     rc = snprintf(path, sizeof(path), "%s/runtime-nodes/%s.env",
                   rt->run_dir, safe);
     if (rc < 0 || (size_t)rc >= sizeof(path)) {
         snprintf(err->msg, sizeof(err->msg),
                  "runtime node state path too long for %s", node->id);
+        return ULAB_ERR;
+    }
+
+    if (lstat(path, &st) == 0) {
+        if (!S_ISREG(st.st_mode) ||
+            read_state_value(path, "LOGICAL_NODE_ID", existing_id,
+                             sizeof(existing_id))) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "cannot verify existing runtime node state for %s",
+                     node->id);
+            return ULAB_ERR;
+        }
+        if (!ulab_streq(existing_id, node->id)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "runtime node state filename collision: %.440s and %.440s",
+                     existing_id, node->id);
+            return ULAB_ERR;
+        }
+    } else if (errno != ENOENT) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "failed to inspect runtime node state for %s: %s",
+                 node->id, strerror(errno));
         return ULAB_ERR;
     }
 
