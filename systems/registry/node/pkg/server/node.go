@@ -11,7 +11,6 @@ package server
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -229,7 +228,6 @@ func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStat
 		Nodes: dbNodesToPbNodes(nodes),
 	}
 
-	fmt.Printf("Nodes Resp returning %v", resp)
 	return resp, nil
 }
 

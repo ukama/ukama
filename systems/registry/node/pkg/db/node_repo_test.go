@@ -964,6 +964,29 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 
 		mock.ExpectBegin()
 
+		// Lock the parent row, then re-count its currently-attached nodes
+		// inside the transaction (the TOCTOU-safe re-check).
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(parentId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(parentId.StringLowercase()))
+
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id`).
+			WithArgs(parentId.StringLowercase()).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		// Re-fetch and lock the attached node fresh inside the transaction.
+		ampRowsLocked := sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
+			AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId)
+
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(ampId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(ampRowsLocked)
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(ampId.StringLowercase()).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
+				AddRow(ampId.StringLowercase(), siteId))
+
 		mock.ExpectExec(`^UPDATE "nodes" SET`).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
@@ -979,6 +1002,51 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	// Regression test for the TOCTOU race
+	t.Run("ConcurrentAttachRejectedInsideTx", func(t *testing.T) {
+		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
+
+		ampRows := sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
+			AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId)
+
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(ampId.StringLowercase()).
+			WillReturnRows(ampRows)
+
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
+				AddRow(ampId.StringLowercase(), siteId))
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+
+		mock.ExpectBegin()
+
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(parentId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(parentId.StringLowercase()))
+
+		// Another concurrent AttachNodes call already filled both slots
+		// between our pre-transaction Get and this lock.
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id`).
+			WithArgs(parentId.StringLowercase()).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(2))
+
+		mock.ExpectRollback()
+
+		// Act
+		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
+
+		// Assert
+		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

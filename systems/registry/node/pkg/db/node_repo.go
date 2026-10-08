@@ -252,17 +252,32 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			attachedNodeIds)
 	}
 
-	if parentNode.Attached == nil {
-		parentNode.Attached = make([]*Node, 0)
-	}
-
-	if len(attachedNodes)+len(parentNode.Attached) > MaxAttachedNodes {
-		return status.Errorf(codes.InvalidArgument,
-			"max number of attached nodes should not be more than %d", MaxAttachedNodes)
-	}
-
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, an := range attachedNodes {
+		if lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&Node{}, "id = ?", parentNode.Id).Error; lockErr != nil {
+			return lockErr
+		}
+
+		var currentlyAttached int64
+		if countErr := tx.Model(&Node{}).
+			Where("parent_node_id = ?", parentNode.Id).
+			Count(&currentlyAttached).Error; countErr != nil {
+			return countErr
+		}
+
+		if currentlyAttached+int64(len(attachedNodes)) > MaxAttachedNodes {
+			return status.Errorf(codes.InvalidArgument,
+				"max number of attached nodes should not be more than %d", MaxAttachedNodes)
+		}
+
+		for _, id := range attachedNodeIds {
+			var an Node
+
+			if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Preload("Site").First(&an, "id = ?", id).Error; getErr != nil {
+				return getErr
+			}
+
 			if an.ParentNodeId != nil {
 				return status.Errorf(codes.InvalidArgument,
 					"node %v is already attached to a parent", an.Id)
