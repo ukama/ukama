@@ -457,7 +457,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	attachednodes := make([]string, len(node.Attached))
+	attachednodes := make([]string, 0, len(node.Attached))
 	for _, an := range node.Attached {
 		attachednodes = append(attachednodes, an.Id)
 	}
