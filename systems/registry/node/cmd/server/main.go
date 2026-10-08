@@ -10,32 +10,31 @@ package main
 
 import (
 	"os"
-
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
-	"github.com/ukama/ukama/systems/registry/node/pkg/server"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/registry/node/pkg"
-
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/cmd/version"
-
+	"github.com/ukama/ukama/systems/registry/node/pkg"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
+	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	node "github.com/ukama/ukama/systems/common/rest/client/node"
-	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"google.golang.org/grpc"
 )
 
 var serviceConfig *pkg.Config
@@ -124,7 +123,6 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
@@ -136,9 +134,9 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan bool, 1)
 	go func() {
-
 		sig := <-sigs
 		log.Info(sig)
 		done <- true
