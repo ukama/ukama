@@ -36,7 +36,8 @@ type NodeEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNodeEventServer(orgName string, s *NodeServer, invClient cinvent.ComponentClient) *NodeEventServer {
+func NewNodeEventServer(orgName string, s *NodeServer,
+	invClient cinvent.ComponentClient) *NodeEventServer {
 	return &NodeEventServer{
 		s:         s,
 		orgName:   orgName,
@@ -44,11 +45,13 @@ func NewNodeEventServer(orgName string, s *NodeServer, invClient cinvent.Compone
 	}
 }
 
-func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *NodeEventServer) EventNotification(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.state.node.transition"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.node.state.node.transition"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.NodeStateChangeEvent](e.Msg)
 		if err != nil {
 			return nil, err
@@ -57,7 +60,8 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.report.store"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.node.health.report.store"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.HealthReportEvent](e.Msg)
 		if err != nil {
 			return nil, err
@@ -66,7 +70,8 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.registry.site.site.create"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.EventAddSite](e.Msg)
 		if err != nil {
 			return nil, err
@@ -79,7 +84,8 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 
 		return &epb.EventResponse{}, nil
 
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.inventory.component.node.added"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.inventory.component.node.added"):
 		msg, err := cpb.UnmarshalProtoEvent[epb.EventInventoryNodeComponentAdd](e.Msg)
 		if err != nil {
 			return nil, err
@@ -96,7 +102,8 @@ func (n *NodeEventServer) EventNotification(ctx context.Context, e *epb.Event) (
 	return &epb.EventResponse{}, nil
 }
 
-func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key string, msg *epb.HealthReportEvent) error {
+func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key string,
+	msg *epb.HealthReportEvent) error {
 	log.Infof("Processing health report event: %s, nodeID: %s",
 		key, msg.NodeId)
 
@@ -174,7 +181,8 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 	return nil
 }
 
-func (n *NodeEventServer) handleNodeStateTransitionEvent(ctx context.Context, key string, msg *epb.NodeStateChangeEvent) error {
+func (n *NodeEventServer) handleNodeStateTransitionEvent(ctx context.Context, key string,
+	msg *epb.NodeStateChangeEvent) error {
 	log.Infof("Processing state transition event: %s, nodeID: %s, state: %s, substate: %s",
 		key, msg.GetNodeId(), msg.State, msg.Substate)
 
@@ -246,7 +254,8 @@ func (n *NodeEventServer) handleNodeStateTransitionEvent(ctx context.Context, ke
 	return nil
 }
 
-func (n *NodeEventServer) handleAddNode(ctx context.Context, key string, msg *epb.EventInventoryNodeComponentAdd) error {
+func (n *NodeEventServer) handleAddNode(ctx context.Context, key string,
+	msg *epb.EventInventoryNodeComponentAdd) error {
 	log.Infof("Processing add node event: %s, nodeID: %s, nodeType: %s",
 		key, msg.PartNumber, msg.Type)
 
@@ -272,7 +281,8 @@ func parseCoordinates(coordinates string) (string, string, error) {
 
 	parts := strings.Split(coordinates, ",")
 	if len(parts) != 2 {
-		return "", "", fmt.Errorf("invalid coordinates format: expected 'lat,lon', got %d parts", len(parts))
+		return "", "", fmt.Errorf(
+			"invalid coordinates format: expected 'lat,lon', got %d parts", len(parts))
 	}
 
 	latStr := strings.TrimSpace(parts[0])
@@ -285,8 +295,10 @@ func parseCoordinates(coordinates string) (string, string, error) {
 	return latStr, lonStr, nil
 }
 
-func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId string, siteID string, networkID string) error {
-	log.Infof("Adding node with access id %s to site %s with network %s", accessId, siteID, networkID)
+func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId string,
+	siteID string, networkID string) error {
+	log.Infof("Adding node with access id %s to site %s with network %s", accessId, siteID,
+		networkID)
 
 	component, err := n.invClient.Get(accessId)
 	if err != nil {
@@ -324,14 +336,16 @@ func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId stri
 	}
 
 	// Add Amplifier Node to Site
-	log.Infof("Adding Amplifier Node %s to Site %s with Network %s", aNodeId.StringLowercase(), siteID, networkID)
+	log.Infof("Adding Amplifier Node %s to Site %s with Network %s",
+		aNodeId.StringLowercase(), siteID, networkID)
 	err = n.addNodeToSite(ctx, aNodeId.StringLowercase(), siteID, networkID)
 	if err != nil {
 		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
 	}
 
 	// Add Controller Node to Site
-	log.Infof("Adding Controller Node %s to Site %s with Network %s", cNodeId.StringLowercase(), siteID, networkID)
+	log.Infof("Adding Controller Node %s to Site %s with Network %s",
+		cNodeId.StringLowercase(), siteID, networkID)
 	err = n.addNodeToSite(ctx, cNodeId.StringLowercase(), siteID, networkID)
 	if err != nil {
 		return fmt.Errorf(errFailedAddNodeToSiteFmt, err)
@@ -339,7 +353,8 @@ func (n *NodeEventServer) handleAddNodeToSite(ctx context.Context, accessId stri
 	return nil
 }
 
-func (n *NodeEventServer) addNodeToSite(ctx context.Context, nodeID string, siteID string, networkID string) error {
+func (n *NodeEventServer) addNodeToSite(ctx context.Context, nodeID string, siteID string,
+	networkID string) error {
 	log.Infof("Adding node %s to site %s with network %s", nodeID, siteID, networkID)
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
 	if err != nil {

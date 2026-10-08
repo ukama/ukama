@@ -40,7 +40,8 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 	}
 }
 
-func (s *siteRepo) AddNode(node *Site, nestedFunc func(node *Site, tx *gorm.DB) error) error {
+func (s *siteRepo) AddNode(node *Site,
+	nestedFunc func(node *Site, tx *gorm.DB) error) error {
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Create(node)
 		if result.Error != nil {
@@ -69,10 +70,12 @@ func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 
 	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
+			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
-		Where("sites.site_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
+		Where("sites.site_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS"+
+			" NULL",
 			siteId.String()).Find(&nodes)
 
 	if result.Error != nil {
@@ -91,10 +94,12 @@ func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 
 	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
+			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
-		Where("sites.network_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
+		Where("sites.network_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at"+
+			" IS NULL",
 			networkId.String()).Find(&nodes)
 
 	if result.Error != nil {
@@ -127,8 +132,10 @@ func (s *siteRepo) GetFreeNodesForOrg(orgId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
 	result := s.Db.GetGormDb().
-		Preload(clause.Associations).Preload("Attached.Site").Where("id NOT IN (?) AND org_id= ?",
-		s.Db.GetGormDb().Table("sites").Select("node_id").Where("deleted_at IS NULL"), orgId).Find(&nodes)
+		Preload(clause.Associations).
+		Preload("Attached.Site").Where("id NOT IN (?) AND org_id= ?",
+		s.Db.GetGormDb().
+			Table("sites").Select("node_id").Where("deleted_at IS NULL"), orgId).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -145,7 +152,8 @@ func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 	}
 
 	res := s.Db.GetGormDb().
-		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is NOT NULL)",
+		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is"+
+			" NOT NULL)",
 			nodeId.StringLowercase(), nodeId.StringLowercase())
 
 	if res.Error != nil {

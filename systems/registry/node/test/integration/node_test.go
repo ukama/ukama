@@ -234,7 +234,8 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, ukama.NodeConnectivityOffline.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.NodeConnectivityOffline.String(),
+			nodeResp.Node.Status.Connectivity)
 	}
 }
 
@@ -295,7 +296,8 @@ func Test_NodeStateTransitionEvent_SetsConnectivity(t *testing.T) {
 	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
 	assert.NoError(t, err)
 	if err == nil {
-		assert.Equal(t, ukama.NodeConnectivityOnline.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.NodeConnectivityOnline.String(),
+			nodeResp.Node.Status.Connectivity)
 	}
 
 	// Act: node goes offline.
@@ -307,7 +309,8 @@ func Test_NodeStateTransitionEvent_SetsConnectivity(t *testing.T) {
 	nodeResp, err = c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
 	assert.NoError(t, err)
 	if err == nil {
-		assert.Equal(t, ukama.NodeConnectivityOffline.String(), nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.NodeConnectivityOffline.String(),
+			nodeResp.Node.Status.Connectivity)
 	}
 }
 
@@ -329,7 +332,8 @@ func sendNodeStateTransitionToQueue(t *testing.T, nodeId, state, substate string
 		return err
 	}
 
-	route := msgbus.PrepareRoute(orgName, "event.cloud.local.{{ .Org}}.node.state.node.transition")
+	route := msgbus.PrepareRoute(orgName,
+		"event.cloud.local.{{ .Org}}.node.state.node.transition")
 
 	err = rabbit.Publish(payload, "", "amq.topic", msgbus.RoutingKey(route), "topic")
 	assert.NoError(t, err)

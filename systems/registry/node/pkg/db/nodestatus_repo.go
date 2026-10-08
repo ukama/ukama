@@ -86,7 +86,8 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 	return ns, nil
 }
 
-func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
+func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64,
+	err error) {
 	db := n.Db.GetGormDb()
 
 	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
