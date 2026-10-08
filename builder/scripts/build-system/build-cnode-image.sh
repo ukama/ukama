@@ -22,7 +22,7 @@ UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
 APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
 COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
-CNODE_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/controller.config"
+CNODE_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/cnode.config"
 
 BOOT_MOUNT="/media/boot"
 PRIMARY_MOUNT="/media/primary"
@@ -301,9 +301,16 @@ deploy_to_rootfs() {
     copy_required_libs "$UKAMA_REPO_LIB_PKG" "${target}/lib"
     create_manifest_file "${target}/ukama/manifest.json" "${APPS[@]}"
 
-    # configs needed to come online (bootstrap exits without its config)
-    for app in bootstrap meshd; do
+    # configs the apps read from /ukama/configs (bootstrap exits without its config)
+    for app in bootstrap meshd notifyd switchd; do
         sudo cp -r "${APP_CONFIGS_DIR}/${app}" "${target}/ukama/configs/"
+    done
+
+    # metricsd and aggregator read config.toml; the repo has one per node type
+    for app in metricsd aggregator; do
+        sudo mkdir -p "${target}/ukama/configs/${app}"
+        sudo cp "${APP_CONFIGS_DIR}/${app}/cnode_config.toml" \
+                "${target}/ukama/configs/${app}/config.toml"
     done
 
     echo "${BOOTSTRAP_SERVER}" | sudo tee "${target}/ukama/bootstrap" > /dev/null
