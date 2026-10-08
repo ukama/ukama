@@ -23,9 +23,10 @@ import (
 )
 
 func TestNodeStatusRepo_Update(t *testing.T) {
-	var nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
-	var db *extsql.DB
+	var (
+		nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+		db     *extsql.DB
+	)
 
 	ns := &nodedb.NodeStatus{
 		NodeId:       nodeId.StringLowercase(),
@@ -53,12 +54,8 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 	t.Run("UpdateSuccess", func(t *testing.T) {
 		mock.ExpectBegin()
 
-		mock.ExpectExec(`UPDATE "node_statuses" SET "deleted_at"=`).
-			WithArgs(sqlmock.AnyArg(), ns.NodeId).
-			WillReturnResult(sqlmock.NewResult(0, 0))
-
-		mock.ExpectQuery("INSERT INTO \"node_statuses\"").
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
+			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
@@ -72,14 +69,32 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("UpdateCreateFails", func(t *testing.T) {
+	// No row matched node_id: the status row should already exist (created
+	// alongside the Node), so zero rows affected means it's missing, not a
+	// no-op update.
+	t.Run("NodeNotFound", func(t *testing.T) {
 		mock.ExpectBegin()
 
-		mock.ExpectExec(`UPDATE "node_statuses" SET "deleted_at"=`).
-			WithArgs(sqlmock.AnyArg(), ns.NodeId).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
+			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		mock.ExpectQuery("INSERT INTO \"node_statuses\"").
+		mock.ExpectCommit()
+
+		// Act
+		err = r.Update(ns)
+
+		// Assert
+		assert.Error(t, err)
+		assert.Equal(t, gorm.ErrRecordNotFound, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("UpdateQueryError", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
 			WillReturnError(errors.New("internal"))
 
 		mock.ExpectRollback()
@@ -89,6 +104,31 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 
 		// Assert
 		assert.Error(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("PartialUpdateOmitsZeroFields", func(t *testing.T) {
+		mock.ExpectBegin()
+
+		// Exactly 4 args (updated_at, node_id, connectivity, then the WHERE
+		// node_id) proves State was NOT included in the SET clause.
+		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
+			WithArgs(sqlmock.AnyArg(), nodeId.StringLowercase(), ukama.NodeConnectivityOffline,
+				nodeId.StringLowercase()).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+
+		mock.ExpectCommit()
+
+		// Act
+		err = r.Update(&nodedb.NodeStatus{
+			NodeId:       nodeId.StringLowercase(),
+			Connectivity: ukama.NodeConnectivityOffline,
+		})
+
+		// Assert
+		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
