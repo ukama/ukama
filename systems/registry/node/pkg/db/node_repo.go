@@ -204,8 +204,9 @@ func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity,
 	return nodes, nil
 }
 
-// Update updated node with `id`. Only fields that are not nil are updated,
-// eg name and state.
+// Update updated node with `id`. Only non-zero fields on `node` are written
+// (GORM's struct-based Updates semantics), eg an empty Name or Latitude is
+// left untouched rather than clearing the existing value.
 func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Updates(node)
