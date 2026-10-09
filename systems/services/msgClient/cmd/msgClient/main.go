@@ -18,8 +18,10 @@ import (
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/services/msgClient/cmd/version"
 	"github.com/ukama/ukama/systems/services/msgClient/internal"
-	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
-	"github.com/ukama/ukama/systems/services/msgClient/internal/queue"
+	"github.com/ukama/ukama/systems/services/msgClient/internal/broker"
+	"github.com/ukama/ukama/systems/services/msgClient/internal/delivery"
+	"github.com/ukama/ukama/systems/services/msgClient/internal/publish"
+	"github.com/ukama/ukama/systems/services/msgClient/internal/registry"
 	"github.com/ukama/ukama/systems/services/msgClient/internal/server"
 	"gopkg.in/yaml.v3"
 
@@ -28,7 +30,6 @@ import (
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	msgbus "github.com/ukama/ukama/systems/common/msgbus"
 	generated "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
-	"github.com/ukama/ukama/systems/common/sql"
 
 	"google.golang.org/grpc"
 )
@@ -46,30 +47,15 @@ func main() {
 
 	metrics.StartMetricsServer(serviceConfig.Metrics)
 
-	db := initDb()
-
-	runGrpcServer(db)
+	runGrpcServer()
 
 	log.Infof("Exiting service %s", internal.ServiceName)
 
 }
 
-func initDb() sql.Db {
-	log.Infof("Initializing Database")
-	d := sql.NewDb(serviceConfig.DB, internal.IsDebugMode)
-	err := d.Init(&db.Service{}, &db.Route{})
-	if err != nil {
-		log.Fatalf("Database initialization failed. Error: %v", err)
-	}
-	return d
-}
-
 func initConfig() {
 	log.Infof("Initializing config")
 	serviceConfig = &internal.Config{
-		DB: &uconf.Database{
-			DbName: internal.ServiceName,
-		},
 		Grpc: &uconf.Grpc{
 			Port: 9095,
 		},
@@ -89,10 +75,38 @@ func initConfig() {
 
 }
 
-func runGrpcServer(d sql.Db) {
+func runGrpcServer() {
+	b, err := broker.New(serviceConfig.Queue.Uri, serviceConfig.MsgBus.ManagementUri, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password)
+	if err != nil {
+		log.Fatalf("Failed to connect to RabbitMQ. Error: %s", err.Error())
+	}
 
-	serviceRepo, routeRepo := db.NewServiceRepo(d), db.NewRouteRepo(d)
-	handler := queue.NewMessageBusHandler(serviceRepo, routeRepo, serviceConfig.HeathCheck.AllowedMiss, serviceConfig.HeathCheck.Period)
+	pub, err := publish.New(b.Publish, serviceConfig.Publish.Timeout)
+	if err != nil {
+		log.Fatalf("Failed to create publisher. Error: %s", err.Error())
+	}
+
+	startListener := func(service, uri string, onUnreachable func()) (registry.Listener, error) {
+		l, err := delivery.Start(b.Listen, service, uri, serviceConfig.Delivery.Timeout, onUnreachable)
+		if err != nil {
+			return nil, err
+		}
+		return l, nil
+	}
+
+	reg := registry.New(b, startListener, registry.Config{
+		RefreshInterval: serviceConfig.Lease.RefreshInterval,
+		MissedRefreshes: serviceConfig.Lease.MissedRefreshes,
+		QueueMaxLength:  serviceConfig.MsgBus.QueueMaxLength,
+		FlushAfter:      serviceConfig.MsgBus.QueueFlushAfter,
+	})
+
+	if err := reg.LoadOwned(); err != nil {
+		log.Warnf("Failed to list existing service queues. Error: %s", err.Error())
+	}
+
+	stop := make(chan struct{})
+	go reg.Run(stop)
 
 	p := msgbus.NewShovelProvider(serviceConfig.MsgBus.ManagementUri, serviceConfig.DebugMode, serviceConfig.OrgName, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password,
 		serviceConfig.Shovel.SrcUri, serviceConfig.Shovel.DestUri, serviceConfig.Shovel.DestExchange,
@@ -101,19 +115,13 @@ func runGrpcServer(d sql.Db) {
 	initShovel(p)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewMsgClientServer(serviceRepo, routeRepo, p, handler, serviceConfig.System)
+		srv := server.NewMsgClientServer(reg, pub, p, serviceConfig.System, serviceConfig.Lease.RefreshInterval)
 		generated.RegisterMsgClientServiceServer(s, srv)
 	})
 
-	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(d))
 	// grpcServer.RegisterDependency("rabbitmq", true, ugrpc.AmqpCheck(serviceConfig.Queue.Uri))
 
-	signalHandler(handler, grpcServer)
-	log.Infof("Message Bus Handler is %+v", handler)
-	err := handler.CreateServiceMsgBusHandler()
-	if err != nil {
-		log.Fatalf("Failed to start message bus queue listener. Error: %s", err.Error())
-	}
+	signalHandler(reg, grpcServer, stop)
 
 	grpcServer.StartServer()
 }
@@ -131,12 +139,13 @@ func initShovel(p msgbus.MsgBusShovelProvider) {
 	}
 }
 
-func signalHandler(handler *queue.MsgBusHandler, server *ugrpc.UkamaGrpcServer) {
+func signalHandler(reg *registry.Registry, server *ugrpc.UkamaGrpcServer, stop chan struct{}) {
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-ch
-		handler.StopQueueListener()
+		close(stop)
+		reg.Close()
 		server.StopServer()
 	}()
 }

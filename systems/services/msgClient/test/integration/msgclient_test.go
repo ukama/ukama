@@ -23,7 +23,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	// "github.com/stretchr/testify/assert"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
-	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
 	"google.golang.org/grpc"
 	// "google.golang.org/protobuf/types/known/anypb"
 )
@@ -35,12 +34,15 @@ type TestConfig struct {
 
 var tConfig *TestConfig
 
-var route1 = db.Route{
+var route1 = struct{ Key string }{
 	Key: "event.cloud.msgClient.testintegration.create",
 }
 
 var ServiceUuid = "1ce2fa2f-2997-422c-83bf-92cf2e7334dd"
-var service1 = db.Service{
+var service1 = struct {
+	Name, InstanceId, MsgBusUri, ListQueue, PublQueue, Exchange, ServiceUri string
+	GrpcTimeout                                                             uint32
+}{
 	Name:        "test-service",
 	InstanceId:  "1",
 	MsgBusUri:   "amqp://guest:guest@localhost:5672",
