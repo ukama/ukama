@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -24,6 +25,7 @@ type ControllerClientProvider interface {
 }
 
 type controllerClientProvider struct {
+	mu                sync.Mutex
 	controllerService pb.ControllerServiceClient
 	controllerHost    string
 }
@@ -33,6 +35,9 @@ func NewControllerClientProvider(controllerHost string) ControllerClientProvider
 }
 
 func (o *controllerClientProvider) GetClient() (pb.ControllerServiceClient, error) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	if o.controllerService == nil {
 		var conn *grpc.ClientConn
 

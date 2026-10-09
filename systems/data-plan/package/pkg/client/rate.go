@@ -10,6 +10,7 @@ package client
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -24,6 +25,7 @@ type RateClientProvider interface {
 }
 
 type rateClientProvider struct {
+	mu          sync.Mutex
 	rateService pb.RateServiceClient
 	rateHost    string
 	timeout     time.Duration
@@ -34,6 +36,9 @@ func NewRateClientProvider(rateHost string, timeout time.Duration) RateClientPro
 }
 
 func (rt *rateClientProvider) GetClient() (pb.RateServiceClient, error) {
+	rt.mu.Lock()
+	defer rt.mu.Unlock()
+
 	if rt.rateService == nil {
 		var conn *grpc.ClientConn
 
