@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * Copyright (c) 2026-present, Ukama Inc.
  */
-package server
+package client_test
 
 import (
 	"context"
@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"github.com/ukama/ukama/systems/registry/site/pkg/client"
 )
 
 func TestProvisionClientExistingEndpoints(t *testing.T) {
@@ -31,17 +32,18 @@ func TestProvisionClientExistingEndpoints(t *testing.T) {
 		_, _ = w.Write([]byte(`{"status":"DISPATCHED"}`))
 	}))
 	defer server.Close()
-	client := &nodeProvisionClient{url: server.URL, http: server.Client()}
-	node := provisionNode{NodeID: "node-1", RequestID: "attempt-1", SiteID: "site-1", NetworkID: "network-1", Action: "configure"}
-	result, err := client.Reconcile(context.Background(), node)
+	nodeClient := client.NewNodeProvisionClient(server.URL, server.Client())
+	node := client.ProvisionNode{NodeID: "node-1", RequestID: "attempt-1", SiteID: "site-1", NetworkID: "network-1", Action: "configure"}
+
+	result, err := nodeClient.Reconcile(context.Background(), node)
 	require.NoError(t, err)
 	require.False(t, result.Completed, "dispatch is not configuration completion")
 	node.Action = "status"
-	result, err = client.Reconcile(context.Background(), node)
+	result, err = nodeClient.Reconcile(context.Background(), node)
 	require.NoError(t, err)
 	require.True(t, result.Completed)
 	node.Action = "cancel"
-	result, err = client.Reconcile(context.Background(), node)
+	result, err = nodeClient.Reconcile(context.Background(), node)
 	require.NoError(t, err)
 	require.True(t, result.Cleared)
 	require.Equal(t, []string{"POST /v1/controller/nodes/node-1/config", "GET /v1/state/node-1/latest", "DELETE /v1/controller/nodes/node-1/config", "GET /v1/state/node-1/latest"}, calls)
@@ -52,8 +54,8 @@ func TestProvisionClientRejectsUncorrelatedStatus(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
 			defer server.Close()
-			client := &nodeProvisionClient{url: server.URL, http: server.Client()}
-			_, err := client.Reconcile(context.Background(), provisionNode{NodeID: "node-1", RequestID: "current", Action: "status"})
+			nodeClient := client.NewNodeProvisionClient(server.URL, server.Client())
+			_, err := nodeClient.Reconcile(context.Background(), client.ProvisionNode{NodeID: "node-1", RequestID: "current", Action: "status"})
 			require.Error(t, err)
 		})
 	}
@@ -67,8 +69,8 @@ func TestProvisionClientReportsOffboardedNode(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
 			defer server.Close()
-			client := &nodeProvisionClient{url: server.URL, http: server.Client()}
-			result, err := client.Reconcile(context.Background(), provisionNode{NodeID: "node-1", RequestID: "current", Action: "status"})
+			nodeClient := client.NewNodeProvisionClient(server.URL, server.Client())
+			result, err := nodeClient.Reconcile(context.Background(), client.ProvisionNode{NodeID: "node-1", RequestID: "current", Action: "status"})
 			require.NoError(t, err)
 			require.True(t, result.Offboarded)
 			require.False(t, result.Completed)
@@ -84,15 +86,15 @@ func TestProvisionStatusJSONSpellings(t *testing.T) {
 		t.Run(body, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
 			defer server.Close()
-			client := &nodeProvisionClient{url: server.URL, http: server.Client()}
-			result, err := client.Reconcile(context.Background(), provisionNode{NodeID: "node", RequestID: "attempt-1", Action: "status"})
+			nodeClient := client.NewNodeProvisionClient(server.URL, server.Client())
+			result, err := nodeClient.Reconcile(context.Background(), client.ProvisionNode{NodeID: "node", RequestID: "attempt-1", Action: "status"})
 			require.NoError(t, err)
 			require.True(t, result.Completed)
 			require.Equal(t, "attempt-1", result.RequestID)
 		})
 	}
 	for _, body := range []string{`{"request_id":"old","requestId":"new"}`, `{"completed":"invalid"}`} {
-		var result provisionResult
+		var result client.ProvisionResult
 		require.Error(t, json.Unmarshal([]byte(body), &result))
 	}
 }

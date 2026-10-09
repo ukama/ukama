@@ -17,14 +17,15 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/site/mocks"
+	"github.com/ukama/ukama/systems/registry/site/pkg/client"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
 )
 
 type fakeProvisionClient struct {
-	call func(context.Context, provisionNode) (provisionResult, error)
+	call func(context.Context, client.ProvisionNode) (client.ProvisionResult, error)
 }
 
-func (c fakeProvisionClient) Reconcile(ctx context.Context, n provisionNode) (provisionResult, error) {
+func (c fakeProvisionClient) Reconcile(ctx context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 	return c.call(ctx, n)
 }
 
@@ -61,13 +62,13 @@ func testProvision() *db.SiteProvision {
 func TestProvisionWaitsForAllThree(t *testing.T) {
 	started := make(chan string, 3)
 	release := make(chan struct{})
-	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(ctx context.Context, n provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(ctx context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 		started <- n.NodeID
 		select {
 		case <-release:
-			return provisionResult{Completed: true}, nil
+			return client.ProvisionResult{Completed: true}, nil
 		case <-ctx.Done():
-			return provisionResult{}, ctx.Err()
+			return client.ProvisionResult{}, ctx.Err()
 		}
 	}}}
 	op := testProvision()
@@ -90,12 +91,12 @@ func TestProvisionWaitsForAllThree(t *testing.T) {
 }
 
 func TestProvisionSharedDeadline(t *testing.T) {
-	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(ctx context.Context, n provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(ctx context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 		if n.NodeID != "controller" {
-			return provisionResult{Completed: true}, nil
+			return client.ProvisionResult{Completed: true}, nil
 		}
 		<-ctx.Done()
-		return provisionResult{}, ctx.Err()
+		return client.ProvisionResult{}, ctx.Err()
 	}}}
 	start := time.Now()
 	err := server.waitNodes(context.Background(), testProvision(), "configure", start.Add(30*time.Millisecond))
@@ -107,18 +108,18 @@ func TestProvisionThreeAttemptsAndCleanup(t *testing.T) {
 	store := &memoryProvisions{}
 	var mu sync.Mutex
 	cleared := make(map[string]int)
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 		mu.Lock()
 		defer mu.Unlock()
 		if n.Action == "cancel" {
 			cleared[n.NodeID]++
-			return provisionResult{Cancelled: true, Cleared: true}, nil
+			return client.ProvisionResult{Cancelled: true, Cleared: true}, nil
 		}
 		if n.Action == "release" {
-			return provisionResult{Cleared: true}, nil
+			return client.ProvisionResult{Cleared: true}, nil
 		}
 		t.Errorf("unexpected action %s", n.Action)
-		return provisionResult{}, errors.New("unexpected action")
+		return client.ProvisionResult{}, errors.New("unexpected action")
 	}}}
 	op := testProvision()
 	for attempt := 1; attempt <= 3; attempt++ {
@@ -137,9 +138,9 @@ func TestProvisionThreeAttemptsAndCleanup(t *testing.T) {
 
 func TestProvisionIncompleteCleanupDoesNotRetry(t *testing.T) {
 	store := &memoryProvisions{}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(ctx context.Context, n provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(ctx context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 		<-ctx.Done()
-		return provisionResult{}, ctx.Err()
+		return client.ProvisionResult{}, ctx.Err()
 	}}}
 	op := testProvision()
 	op.Phase = "cancelling"
@@ -168,8 +169,8 @@ func TestProvisionSiteSaveFailureRollsBack(t *testing.T) {
 	store := &memoryProvisions{op: *op}
 	sites := &mocks.SiteRepo{}
 	sites.On("Add", mock.Anything, mock.Anything).Return(errors.New("site insert failed")).Once()
-	server := &SiteServer{provisions: store, siteRepo: sites, provisionClient: fakeProvisionClient{call: func(_ context.Context, node provisionNode) (provisionResult, error) {
-		return provisionResult{Cancelled: true, Cleared: true}, nil
+	server := &SiteServer{provisions: store, siteRepo: sites, provisionClient: fakeProvisionClient{call: func(_ context.Context, node client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{Cancelled: true, Cleared: true}, nil
 	}}}
 	require.NoError(t, server.runProvision(context.Background(), op))
 	require.Equal(t, "cancelling", op.Phase)
@@ -183,14 +184,14 @@ func TestProvisionSiteSaveFailureRollsBack(t *testing.T) {
 func TestProvisionCancelSendsDeleteOncePerWindow(t *testing.T) {
 	var mu sync.Mutex
 	calls := map[string]map[string]int{}
-	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(_ context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
 		mu.Lock()
 		defer mu.Unlock()
 		if calls[n.NodeID] == nil {
 			calls[n.NodeID] = map[string]int{}
 		}
 		calls[n.NodeID][n.Action]++
-		return provisionResult{Cancelled: true}, nil
+		return client.ProvisionResult{Cancelled: true}, nil
 	}}}
 	op := testProvision()
 	err := server.waitNodes(context.Background(), op, "cancel", time.Now().Add(2500*time.Millisecond))
@@ -203,8 +204,8 @@ func TestProvisionCancelSendsDeleteOncePerWindow(t *testing.T) {
 
 func TestProvisionCancelOffboardedNodesFailsOperation(t *testing.T) {
 	store := &memoryProvisions{}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
-		return provisionResult{Cancelled: true, Offboarded: true}, nil
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{Cancelled: true, Offboarded: true}, nil
 	}}}
 	op := testProvision()
 	op.Phase = "cancelling"
@@ -218,8 +219,8 @@ func TestProvisionCancelGivesUpAfterLimit(t *testing.T) {
 	cancelWindow = 20 * time.Millisecond
 	defer func() { cancelWindow = previous }()
 	store := &memoryProvisions{}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
-		return provisionResult{}, errors.New("node unreachable")
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{}, errors.New("node unreachable")
 	}}}
 	op := testProvision()
 	op.Phase = "cancelling"
@@ -236,8 +237,8 @@ func TestProvisionCancelKeepsRetryingBeforeLimit(t *testing.T) {
 	cancelWindow = 20 * time.Millisecond
 	defer func() { cancelWindow = previous }()
 	store := &memoryProvisions{}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n provisionNode) (provisionResult, error) {
-		return provisionResult{}, errors.New("node unreachable")
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(_ context.Context, n client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{}, errors.New("node unreachable")
 	}}}
 	op := testProvision()
 	op.Phase = "cancelling"
