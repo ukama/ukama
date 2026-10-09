@@ -9,6 +9,8 @@
 package providers
 
 import (
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/nucleus/org/pb/gen"
 
@@ -23,6 +25,7 @@ type OrgClientProvider interface {
 }
 
 type orgClientProvider struct {
+	mu         sync.Mutex
 	orgService pb.OrgServiceClient
 	orgHost    string
 }
@@ -32,6 +35,9 @@ func NewOrgClientProvider(orgHost string) OrgClientProvider {
 }
 
 func (u *orgClientProvider) GetClient() (pb.OrgServiceClient, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	if u.orgService == nil {
 		var conn *grpc.ClientConn
 

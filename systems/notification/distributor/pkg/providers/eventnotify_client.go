@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
@@ -23,6 +24,7 @@ type EventNotifyClientProvider interface {
 }
 
 type eventNotifyClientProvider struct {
+	mu                 sync.Mutex
 	eventNotifyService pb.EventToNotifyServiceClient
 	eventNotifyHost    string
 }
@@ -32,6 +34,9 @@ func NewEventNotifyClientProvider(eventNotifyHost string) EventNotifyClientProvi
 }
 
 func (o *eventNotifyClientProvider) GetClient() (pb.EventToNotifyServiceClient, error) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	if o.eventNotifyService == nil {
 		var conn *grpc.ClientConn
 
