@@ -501,7 +501,7 @@ func TestNodeRepo_List(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	// TODO: Issue #1585: the network-scoped list must report the same connectivity as
+	// Regression test: the network-scoped list must report the same connectivity as
 	// GetNode. Status is populated by Preload, never by the joined columns, so a
 	// stale value on the join row must not leak into the result.
 	t.Run("ListReportsPreloadedConnectivityNotJoinedColumns", func(t *testing.T) {
