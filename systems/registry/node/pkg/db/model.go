@@ -11,21 +11,22 @@ package db
 import (
 	"time"
 
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type Node struct {
-	Id           string     `gorm:"primaryKey;type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
-	Name         string     `gorm:"type:string"`
-	Status       NodeStatus `gorm:"not null"`
+	Id           string         `gorm:"primaryKey;type:string;uniqueIndex:idx_node_id_case_insensitive,expression:lower(id),where:deleted_at is null;size:23;not null"`
+	Name         string         `gorm:"type:string"`
+	Status       NodeStatus     `gorm:"not null"`
 	Type         ukama.NodeType `gorm:"type:string;not null"`
-	ParentNodeId *string    `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
-	Attached     []*Node    `gorm:"foreignKey:ParentNodeId"`
-	Latitude     string    `gorm:"type:string;default:null"`
-	Longitude    string    `gorm:"type:string;default:null"`
+	ParentNodeId *string        `gorm:"type:string;expression:lower(id),where:deleted_at is null;size:23:default:null;"`
+	Attached     []*Node        `gorm:"foreignKey:ParentNodeId"`
+	Latitude     string         `gorm:"type:string;default:null"`
+	Longitude    string         `gorm:"type:string;default:null"`
 	Site         Site
 	CreatedAt    time.Time
 	UpdatedAt    time.Time

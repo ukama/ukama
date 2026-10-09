@@ -81,8 +81,13 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 
 func (n *nodeRepo) GetNodesByState(connectivity, status uint8) ([]Node, error) {
 	var nodes []Node
-	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
-		Where("node_statuses.connectivity = ? AND node_statuses.state = ? AND node_statuses.deleted_at IS NULL", connectivity, status).
+	result := n.Db.GetGormDb().
+		Preload(clause.Associations).
+		Preload("Attached.Site").
+		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
+		Where("node_statuses.connectivity = ? AND node_statuses.state = ? AND"+
+			" node_statuses.deleted_at IS NULL",
+			connectivity, status).
 		Find(&nodes)
 
 	if result.Error != nil {
@@ -95,7 +100,8 @@ func (n *nodeRepo) GetNodesByState(connectivity, status uint8) ([]Node, error) {
 func (n *nodeRepo) GetAll() ([]Node, error) {
 	var nodes []Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").Find(&nodes)
+	result := n.Db.GetGormDb().
+		Preload(clause.Associations).Preload("Attached.Site").Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -104,7 +110,8 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 	return nodes, nil
 }
 
-func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
+func (n *nodeRepo) Delete(nodeId ukama.NodeID,
+	nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
 	node, err := n.Get(nodeId)
 	if err != nil {
 		return fmt.Errorf("fail to get node: %w", err)
@@ -150,7 +157,8 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 	return err
 }
 
-func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity, state *uint8) ([]Node, error) {
+func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity,
+	state *uint8) ([]Node, error) {
 	var nodes []Node
 
 	query := n.Db.GetGormDb().
@@ -196,7 +204,9 @@ func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity, s
 	return nodes, nil
 }
 
-// Update updated node with `id`. Only fields that are not nil are updated, eg name and state.
+// Update updated node with `id`. Only non-zero fields on `node` are written
+// (GORM's struct-based Updates semantics), eg an empty Name or Latitude is
+// left untouched rather than clearing the existing value.
 func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Clauses(clause.Returning{}).Updates(node)
@@ -252,17 +262,32 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			attachedNodeIds)
 	}
 
-	if parentNode.Attached == nil {
-		parentNode.Attached = make([]*Node, 0)
-	}
-
-	if len(attachedNodes)+len(parentNode.Attached) > MaxAttachedNodes {
-		return status.Errorf(codes.InvalidArgument,
-			"max number of attached nodes should not be more than %d", MaxAttachedNodes)
-	}
-
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		for _, an := range attachedNodes {
+		if lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&Node{}, "id = ?", parentNode.Id).Error; lockErr != nil {
+			return lockErr
+		}
+
+		var currentlyAttached int64
+		if countErr := tx.Model(&Node{}).
+			Where("parent_node_id = ?", parentNode.Id).
+			Count(&currentlyAttached).Error; countErr != nil {
+			return countErr
+		}
+
+		if currentlyAttached+int64(len(attachedNodes)) > MaxAttachedNodes {
+			return status.Errorf(codes.InvalidArgument,
+				"max number of attached nodes should not be more than %d", MaxAttachedNodes)
+		}
+
+		for _, id := range attachedNodeIds {
+			var an Node
+
+			if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+				Preload("Site").First(&an, "id = ?", id).Error; getErr != nil {
+				return getErr
+			}
+
 			if an.ParentNodeId != nil {
 				return status.Errorf(codes.InvalidArgument,
 					"node %v is already attached to a parent", an.Id)
@@ -321,7 +346,8 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	return err
 }
 
-func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, err error) {
+func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64,
+	err error) {
 	db := n.Db.GetGormDb()
 
 	if err := db.Model(&Node{}).Count(&nodeCount).Error; err != nil {
@@ -331,14 +357,16 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64, e
 	// Use GORM Joins to match the same relationship that GetNode() uses via Preload
 	// This ensures consistent behavior between single node lookups and node counts
 	if err := db.Model(&Node{}).
-		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND node_statuses.deleted_at IS NULL").
+		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND"+
+			" node_statuses.deleted_at IS NULL").
 		Where("node_statuses.connectivity = ?", ukama.NodeConnectivityOnline).
 		Count(&onlineCount).Error; err != nil {
 		return 0, 0, 0, err
 	}
 
 	if err := db.Model(&Node{}).
-		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND node_statuses.deleted_at IS NULL").
+		Joins("JOIN node_statuses ON LOWER(nodes.id) = LOWER(node_statuses.node_id) AND"+
+			" node_statuses.deleted_at IS NULL").
 		Where("node_statuses.connectivity = ?", ukama.NodeConnectivityOffline).
 		Count(&offlineCount).Error; err != nil {
 		return 0, 0, 0, err
