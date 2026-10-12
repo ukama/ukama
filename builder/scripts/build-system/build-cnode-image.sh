@@ -9,7 +9,10 @@
 
 set -e
 
-PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "${SCRIPT_DIR}"
+
+PKG_UTILS="${SCRIPT_DIR}/pkg-utils.sh"
 if [ ! -f "$PKG_UTILS" ]; then
     echo "ERROR: Missing $PKG_UTILS"
     exit 1
@@ -36,6 +39,16 @@ FIRMWARE_ZIP_URL="https://github.com/raspberrypi/firmware/archive/refs/heads/mas
 FIRMWARE_DIR="/tmp/rpi-firmware"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
+HIDDEN_CONFIGS=""
+
+case "${1:-}" in
+    "")           IMAGE_ONLY=0 ;;
+    --image-only) IMAGE_ONLY=1 ;;
+    *)
+        echo "Usage: $0 [--image-only]"
+        exit 1
+        ;;
+esac
 
 log() {
     local type="$1"
@@ -58,7 +71,16 @@ check_status() {
     log "SUCCESS" "$2"
 }
 
+restore_configs() {
+    if [ -n "${HIDDEN_CONFIGS}" ] && [ -d "${HIDDEN_CONFIGS}" ]; then
+        mv "${HIDDEN_CONFIGS}"/*.toml "${UKAMA_ROOT}/builder/configs/" 2>/dev/null || true
+        rmdir "${HIDDEN_CONFIGS}"
+        HIDDEN_CONFIGS=""
+    fi
+}
+
 cleanup() {
+    restore_configs
     if [ -z "$LOOPDISK" ]; then
         return
     fi
@@ -72,25 +94,56 @@ cleanup() {
 }
 trap cleanup EXIT
 
-check_prerequisites() {
-    STAGE="check_prerequisites"
+check_tools() {
     for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap e2label rsync wget unzip truncate; do
         command -v "$cmd" >/dev/null || { log "ERROR" "'$cmd' not found"; exit 1; }
     done
+}
+
+check_prerequisites() {
+    STAGE="check_prerequisites"
     [ -x "${ROOTFS_DIR}/sbin/starter.d" ] || {
-        log "ERROR" "No rootfs at ${ROOTFS_DIR}. Run rootfs-env-setup.sh -a aarch64 first"
+        log "ERROR" "No rootfs at ${ROOTFS_DIR}. Run $0 without --image-only to build it"
         exit 1
     }
     # x86 image builds (com, amplifier) use the same rootfs folder
     [ -e "${ROOTFS_DIR}/lib/ld-musl-aarch64.so.1" ] || {
-        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not aarch64. Run rootfs-env-setup.sh -a aarch64 first"
+        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not aarch64. Run $0 without --image-only to build it"
+        exit 1
+    }
+    [ -f "${ROOTFS_DIR}/ukama/mocksysfs/mfgdata/schema/cnode.json" ] || {
+        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not complete. Run $0 without --image-only to build it"
         exit 1
     }
     [ -d "${UKAMA_REPO_APP_PKG}" ] && [ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ] || {
-        log "ERROR" "No apps in ${UKAMA_ROOT}/build. Run build-env-setup.sh -a aarch64 first"
+        log "ERROR" "No apps in ${UKAMA_ROOT}/build. Run $0 without --image-only to build them"
         exit 1
     }
     log "SUCCESS" "Prerequisites OK"
+}
+
+build_apps() {
+    STAGE="build_apps"
+    local config
+    HIDDEN_CONFIGS=$(mktemp -d)
+    for config in "${UKAMA_ROOT}"/builder/configs/*.toml; do
+        if [[ " ${APPS[*]} " != *" $(basename "${config}" .toml) "* ]]; then
+            mv "${config}" "${HIDDEN_CONFIGS}/"
+        fi
+    done
+    log "INFO" "Building the apps the cnode uses: ${APPS[*]}"
+    ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
+    restore_configs
+    log "SUCCESS" "Apps built"
+}
+
+build_rootfs() {
+    STAGE="build_rootfs"
+    mkdir -p mocksysfs
+    [ -n "$(ls -A mocksysfs)" ] || touch mocksysfs/README
+    log "INFO" "Building the rootfs"
+    ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
+        log "INFO" "rootfs-env-setup.sh always exits 1 on aarch64, checking the rootfs instead"
 }
 
 download_firmware() {
@@ -318,8 +371,7 @@ deploy_to_rootfs() {
 }
 
 # Main
-check_prerequisites
-download_firmware
+check_tools
 
 get_enabled_apps "$COMMON_CONFIG_FILE" "$CNODE_CONFIG_FILE"
 if [[ ${#APPS[@]} -eq 0 ]]; then
@@ -327,6 +379,14 @@ if [[ ${#APPS[@]} -eq 0 ]]; then
     exit 1
 fi
 log "INFO" "Apps: ${APPS[*]}"
+
+if [ "${IMAGE_ONLY}" -eq 0 ]; then
+    build_apps
+    build_rootfs
+fi
+
+check_prerequisites
+download_firmware
 
 create_disk_image
 setup_loop_device
