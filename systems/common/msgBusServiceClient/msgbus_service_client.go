@@ -11,6 +11,7 @@ package msgBusServiceClient
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc/credentials/insecure"
@@ -23,6 +24,11 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
 	"google.golang.org/grpc"
+)
+
+var (
+	registerRetryInterval   = 2 * time.Second
+	fallbackRefreshInterval = 30 * time.Second
 )
 
 type MsgBusServiceClient interface {
@@ -49,6 +55,11 @@ type msgBusServiceClient struct {
 	host         string
 	retry        int8
 	routes       []string
+
+	refreshInterval time.Duration
+	refreshOnce     sync.Once
+	stopOnce        sync.Once
+	stop            chan struct{}
 }
 
 func NewMsgBusClient(timeout time.Duration, org string, system string,
@@ -77,11 +88,31 @@ func NewMsgBusClient(timeout time.Duration, org string, system string,
 		listQueue:    lq,
 		publQueue:    pq,
 		exchange:     exchange,
+		stop:         make(chan struct{}),
+
+		refreshInterval: fallbackRefreshInterval,
 	}
 
 }
 
+// Register blocks until msgclient accepts the registration.
 func (m *msgBusServiceClient) Register() error {
+	for {
+		resp, err := m.register()
+		if err == nil {
+			m.uuid = resp.ServiceUuid
+			m.refreshInterval = refreshInterval(resp)
+			log.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
+			return nil
+		}
+
+		log.Warnf("Failed to register %s service instance %s to MessageBusClient at %s. Error %s. Retrying in %s.",
+			m.service, m.instanceId, m.msgClientURI, err.Error(), registerRetryInterval)
+		time.Sleep(registerRetryInterval)
+	}
+}
+
+func (m *msgBusServiceClient) register() (*pb.RegisterServiceResp, error) {
 	log.Debugf("Registering %s service instance %s with routes %+v to MessageBusClient at %s.", m.service, m.instanceId, m.routes, m.msgClientURI)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
@@ -98,17 +129,40 @@ func (m *msgBusServiceClient) Register() error {
 		Exchange:    m.exchange,
 		GrpcTimeout: uint32(m.timeout.Seconds())})
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if resp.GetState() == pb.REGISTRAION_STATUS_REGISTERED {
-		m.uuid = resp.ServiceUuid
-	} else {
-		return fmt.Errorf("failed to register %s service instance %s: %s", m.service, m.instanceId, resp.State.String())
+	if resp.GetState() != pb.REGISTRAION_STATUS_REGISTERED {
+		return nil, fmt.Errorf("failed to register %s service instance %s: %s", m.service, m.instanceId, resp.State.String())
 	}
 
-	log.Infof("%s service instance %s to MessageBusClient at %s.", m.service, m.instanceId, resp.State.String())
-	return nil
+	return resp, nil
+}
+
+// keepRegistered re-registers on every interval; each registration is the service's heartbeat to msgclient.
+func (m *msgBusServiceClient) keepRegistered() {
+	interval := m.refreshInterval
+	for {
+		select {
+		case <-m.stop:
+			return
+		case <-time.After(interval):
+		}
+
+		resp, err := m.register()
+		if err != nil {
+			log.Warnf("Failed to refresh %s service registration to MessageBusClient at %s. Error %s", m.service, m.msgClientURI, err.Error())
+			continue
+		}
+		interval = refreshInterval(resp)
+	}
+}
+
+func refreshInterval(resp *pb.RegisterServiceResp) time.Duration {
+	if s := resp.GetRefreshInterval(); s > 0 {
+		return time.Duration(s) * time.Second
+	}
+	return fallbackRefreshInterval
 }
 
 func (m *msgBusServiceClient) Start() error {
@@ -121,6 +175,8 @@ func (m *msgBusServiceClient) Start() error {
 	if err != nil {
 		return err
 	}
+
+	m.refreshOnce.Do(func() { go m.keepRegistered() })
 
 	msg := &epb.PublishServiceStatusUp{
 		OrgName:  m.org,
@@ -140,6 +196,8 @@ func (m *msgBusServiceClient) Start() error {
 }
 
 func (m *msgBusServiceClient) Stop() error {
+	m.stopOnce.Do(func() { close(m.stop) })
+
 	log.Debugf("Stopping MessageClientRoutine for %s service instance %s Routine ID %s.", m.service, m.instanceId, m.uuid)
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
