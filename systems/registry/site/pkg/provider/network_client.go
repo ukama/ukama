@@ -9,6 +9,8 @@
 package providers
 
 import (
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/network/pb/gen"
 
@@ -21,6 +23,7 @@ type NetworkClientProvider interface {
 }
 
 type networkClientProvider struct {
+	mu             sync.Mutex
 	networkService pb.NetworkServiceClient
 	networkHost    string
 }
@@ -30,6 +33,9 @@ func NewNetworkClientProvider(networkHost string) NetworkClientProvider {
 }
 
 func (u *networkClientProvider) GetClient() (pb.NetworkServiceClient, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	if u.networkService == nil {
 		var conn *grpc.ClientConn
 

@@ -9,6 +9,8 @@
 package providers
 
 import (
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/nucleus/user/pb/gen"
 	"google.golang.org/grpc"
@@ -22,6 +24,7 @@ type UserClientProvider interface {
 }
 
 type userClientProvider struct {
+	mu          sync.Mutex
 	userService pb.UserServiceClient
 	userHost    string
 }
@@ -31,6 +34,9 @@ func NewUserClientProvider(userHost string) UserClientProvider {
 }
 
 func (u *userClientProvider) GetClient() (pb.UserServiceClient, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	if u.userService == nil {
 		var conn *grpc.ClientConn
 

@@ -18,6 +18,7 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/site/pkg"
+	"github.com/ukama/ukama/systems/registry/site/pkg/client"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
 
 	log "github.com/sirupsen/logrus"
@@ -37,7 +38,7 @@ const uuidParsingError = "Error parsing UUID"
 
 type SiteServer struct {
 	provisions      provisionStore
-	provisionClient provisionClient
+	provisionClient client.ProvisionClient
 	pb.UnimplementedSiteServiceServer
 	orgName              string
 	siteRepo             db.SiteRepo
