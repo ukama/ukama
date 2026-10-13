@@ -987,7 +987,7 @@ static int is_live_runtime_check(const check_spec_t *check) {
          check->type == CHECK_NODE_HEALTH_OK);
 }
 
-static int check_mode_includes(const check_spec_t *check,
+static int check_mode_includes(const check_ctx_t *ctx, const check_spec_t *check,
                                check_run_mode_t mode) {
     int live_runtime;
 
@@ -996,6 +996,10 @@ static int check_mode_includes(const check_spec_t *check,
     }
 
     live_runtime = is_live_runtime_check(check);
+    if (runtime_is_hardware(ctx->runtime) &&
+        (check->type == CHECK_UE_ATTACHED || check->type == CHECK_NODE_READY)) {
+        live_runtime = 1;
+    }
     if (mode == CHECK_RUN_LIVE_RUNTIME) {
         return live_runtime;
     }
@@ -1017,7 +1021,7 @@ static int run_checks_mode(check_ctx_t *ctx,
     failed = 0;
 
     for (i = 0; i < count; i++) {
-        if (!check_mode_includes(&checks[i], mode)) {
+        if (!check_mode_includes(ctx, &checks[i], mode)) {
             continue;
         }
 
@@ -1300,7 +1304,8 @@ static int cleanup_run(bff_client_t *bff,
 
     if (cleanup_runtime) {
         memset(&cleanup_err, 0, sizeof(cleanup_err));
-        ulab_status("CLEANUP", "stop media/nodes/network");
+        ulab_status("CLEANUP", "%s", runtime_is_hardware(runtime) ?
+                    "stop rack media and DUT power" : "stop media/nodes/network");
         if (runtime_cleanup_infra(runtime, world, &cleanup_err)) {
             failures++;
             if (report_cleanup_errors_suppressed()) {

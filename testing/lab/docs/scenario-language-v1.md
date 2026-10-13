@@ -348,6 +348,13 @@ policy block. Use `traffic_unavailable` for tests where any runtime failure is
 the expected outcome, such as disabled radio, disabled service, or deliberate
 non-admission.
 
+In hardware mode, `node_ready` and `ue_attached` observe backend/gadget state at
+phase boundaries before session teardown. `wait_nodes_ready` polls BFF for the
+configured physical IDs to become Online and Operational. `traffic_unavailable`
+requires an explicit unavailable result from each selected UE; SSH failures and
+local tool errors are execution errors. `traffic_blocked` remains unsupported
+without a real EPC policy-evidence interface. See [Hardware configuration](hardware.md).
+
 BFF lifecycle events:
 
 ```yaml

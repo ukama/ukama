@@ -201,7 +201,8 @@ static int selected_slots(const world_t *world, const selector_result_t *ues, un
 }
 
 static int run_ues(runtime_t *rt, const world_t *world, const selector_result_t *ues,
-                   const char *action, uint64_t amount_mb, uint64_t deadline, ulab_error_t *err) {
+                   const char *action, uint64_t amount_mb, uint64_t deadline,
+                   hardware_traffic_result_t *result, ulab_error_t *err) {
     struct hardware_runtime *h = rt->hardware;
     char ids[ULAB_HARDWARE_MAX_UES][65] = {{0}};
     unsigned int pending;
@@ -214,6 +215,10 @@ static int run_ues(runtime_t *rt, const world_t *world, const selector_result_t 
         return fail(err, "runtime is not open");
     if (selected_slots(world, ues, &mask, err))
         return ULAB_ERR;
+    if (result != NULL) {
+        memset(result, 0, sizeof(*result));
+        result->selected = ues->count;
+    }
     traffic = ulab_streq(action, "uplink");
     if (traffic && (amount_mb == 0 || amount_mb > UINT32_MAX))
         return fail(err, "traffic amount_mb must be in 1..4294967295");
@@ -291,12 +296,27 @@ static int run_ues(runtime_t *rt, const world_t *world, const selector_result_t 
                 failed = 1;
             } else if (traffic) {
                 json_t *report = json_object_get(json_object_get(entry, "state"), "test");
-                /* Observe the command's result, without re-counting bytes or
-                 * introducing new transfer/accounting assertions. */
+                const char *report_status = json_string_value(json_object_get(report, "status"));
+                const char *outcome = json_string_value(json_object_get(report, "outcome"));
                 if (!ulab_streq(json_string_value(json_object_get(report, "request_id")),
-                                ids[slot - 1]) ||
-                    !ulab_streq(json_string_value(json_object_get(report, "status")), "passed"))
+                                ids[slot - 1])) {
                     failed = 1;
+                } else if (ulab_streq(report_status, "passed")) {
+                    if (result != NULL)
+                        result->passed++;
+                } else if (result != NULL && ulab_streq(report_status, "failed") &&
+                           json_integer_value(json_object_get(report, "slot")) == slot &&
+                           ulab_streq(json_string_value(json_object_get(report, "kind")),
+                                      "uplink") &&
+                           json_integer_value(
+                               json_object_get(json_object_get(report, "settings"), "amount_mb")) ==
+                               (json_int_t)amount_mb &&
+                           ulab_streq(outcome, "unavailable")) {
+                    result->unavailable++;
+                } else if (!(result != NULL && ulab_streq(report_status, "failed") &&
+                             ulab_streq(outcome, "transferred"))) {
+                    failed = 1;
+                }
             }
             pending &= ~(1u << (slot - 1));
         }
@@ -315,7 +335,45 @@ int hardware_runtime_ues(runtime_t *rt, const world_t *world, const selector_res
         return fail(err, "runtime is not open");
     return run_ues(rt, world, ues, action, amount_mb,
                    now_ms() + (uint64_t)rt->hardware->config.operation_timeout_seconds * 1000u,
-                   err);
+                   NULL, err);
+}
+
+int hardware_runtime_traffic(runtime_t *rt, const world_t *world, const selector_result_t *ues,
+                             uint64_t amount_mb, hardware_traffic_result_t *result,
+                             ulab_error_t *err) {
+    if (rt->hardware == NULL)
+        return fail(err, "runtime is not open");
+    if (ues->count == 0)
+        return fail(err, "traffic check selected no UEs");
+    return run_ues(rt, world, ues, "uplink", amount_mb,
+                   now_ms() + (uint64_t)rt->hardware->config.operation_timeout_seconds * 1000u,
+                   result, err);
+}
+
+int hardware_runtime_attached(runtime_t *rt, world_t *world, const selector_result_t *ues,
+                              size_t *attached, ulab_error_t *err) {
+    json_t *reply = NULL;
+    unsigned int mask;
+    size_t i;
+    *attached = 0;
+    if (selected_slots(world, ues, &mask, err) || status(rt, &reply, err))
+        return ULAB_ERR;
+    for (i = 0; i < ues->count; i++) {
+        ue_t *ue = &world->ues[ues->idx[i]];
+        json_t *entry = slot_value(reply, ue->hardware_slot);
+        json_t *age = json_object_get(entry, "state_age_ms");
+        json_t *connected =
+            json_object_get(json_object_get(json_object_get(entry, "state"), "modem"), "connected");
+        if (!json_is_integer(age) || json_integer_value(age) < 0 ||
+            json_integer_value(age) > 5000 || !json_is_boolean(connected)) {
+            json_decref(reply);
+            return fail(err, "UE slot state is unavailable or stale");
+        }
+        ue->attached = json_is_true(connected);
+        *attached += ue->attached;
+    }
+    json_decref(reply);
+    return ULAB_OK;
 }
 
 static int observe(runtime_t *rt, const world_t *world, const selector_result_t *ues, int attached,
@@ -358,7 +416,7 @@ int hardware_runtime_wait(runtime_t *rt, world_t *world, const selector_result_t
                           unsigned int timeout, ulab_error_t *err) {
     uint64_t deadline = now_ms() + (uint64_t)timeout * 1000u;
     size_t i;
-    if (attached && run_ues(rt, world, ues, "connect", 0, deadline, err))
+    if (attached && run_ues(rt, world, ues, "connect", 0, deadline, NULL, err))
         return ULAB_ERR;
     while (observe(rt, world, ues, attached, err)) {
         if (now_ms() >= deadline || hardware_runtime_healthy(rt, err))

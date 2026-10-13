@@ -417,10 +417,10 @@ int hardware_bind_world(const hardware_config_t *config, world_t *world,
 static int supported_checks(const check_spec_t *checks, size_t count, ulab_error_t *err) {
     size_t i;
     for (i = 0; i < count; i++) {
-        if (checks[i].type == CHECK_TRAFFIC_BLOCKED || checks[i].type == CHECK_TRAFFIC_UNAVAILABLE ||
-            checks[i].type == CHECK_NODE_READY || checks[i].type == CHECK_UE_ATTACHED)
-            return fail(err, "node_ready/ue_attached/traffic_blocked/traffic_unavailable hardware observations are not available in this build");
-        if (checks[i].type == CHECK_TRAFFIC_ALLOWED && checks[i].expected_used_mb > UINT32_MAX)
+        if (checks[i].type == CHECK_TRAFFIC_BLOCKED)
+            return fail(err, "traffic_blocked requires real EPC policy evidence; hardware observation is not available");
+        if ((checks[i].type == CHECK_TRAFFIC_ALLOWED || checks[i].type == CHECK_TRAFFIC_UNAVAILABLE) &&
+            checks[i].expected_used_mb > UINT32_MAX)
             return fail(err, "traffic check amount_mb exceeds the UE-gadget limit");
     }
     return ULAB_OK;
@@ -445,7 +445,6 @@ int hardware_execution_supported(const scenario_t *scenario, ulab_error_t *err) 
             case EVT_MARK_NODE_OFFLINE:
             case EVT_RESTORE_NODE:
             case EVT_FAILURE_CONTROL:
-            case EVT_WAIT_NODES_READY:
                 snprintf(err->msg, sizeof(err->msg), "hardware: event %s is not supported by this runtime",
                          scenario_event_name(event->type));
                 return ULAB_ERR;

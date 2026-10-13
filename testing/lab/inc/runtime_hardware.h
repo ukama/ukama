@@ -5,6 +5,12 @@
 #include "runtime.h"
 #include "hardware.h"
 
+typedef struct {
+    size_t selected;
+    size_t passed;
+    size_t unavailable;
+} hardware_traffic_result_t;
+
 int runtime_is_hardware(const runtime_t *rt);
 int hardware_runtime_open(runtime_t *rt, const hardware_config_t *config, const world_t *world,
                           ulab_error_t *err);
@@ -17,6 +23,11 @@ int hardware_runtime_wait(runtime_t *rt, world_t *world, const selector_result_t
                           unsigned int timeout, ulab_error_t *err);
 int hardware_runtime_sessions(runtime_t *rt, const world_t *world, const selector_result_t *ues,
                               ulab_error_t *err);
+int hardware_runtime_attached(runtime_t *rt, world_t *world, const selector_result_t *ues,
+                              size_t *attached, ulab_error_t *err);
+int hardware_runtime_traffic(runtime_t *rt, const world_t *world, const selector_result_t *ues,
+                             uint64_t amount_mb, hardware_traffic_result_t *result,
+                             ulab_error_t *err);
 int hardware_runtime_cleanup_ues(runtime_t *rt, const world_t *world, const selector_result_t *ues,
                                  ulab_error_t *err);
 int hardware_runtime_cleanup(runtime_t *rt, ulab_error_t *err);
