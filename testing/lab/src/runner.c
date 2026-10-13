@@ -55,18 +55,11 @@ static int prepare_run(const runner_opts_t *opts,
                        ulab_error_t *err) {
 
     char run_id[ULAB_MAX_ID];
+    hardware_config_t hardware;
+    int rc;
 
-    if (scenario_load(opts->scenario_path, scenario, err)) {
-        return ULAB_ESCENARIO;
-    }
-
-    if (opts->has_seed_override) {
-        scenario->seed = opts->seed_override;
-    }
-
-    if (scenario_validate(scenario, err)) {
-        return ULAB_ESCENARIO;
-    }
+    rc = runner_load_scenario(opts, scenario, &hardware, err);
+    if (rc != ULAB_OK) return rc;
 
     /* Reject unsupported execution before any run directory or resource. */
     if (scenario_execution_supported(scenario, err)) {
@@ -74,6 +67,18 @@ static int prepare_run(const runner_opts_t *opts,
     }
 
     make_run_id(run_id, sizeof(run_id), scenario, opts);
+    if (ulab_streq(scenario->provider.type, "hardware")) {
+        if (world_generate(scenario, run_id, world, err)) return ULAB_EINTERNAL;
+        if (hardware_bind_world(&hardware, world, err)) return ULAB_ESCENARIO;
+        snprintf(err->msg, sizeof(err->msg),
+                 "hardware execution is not available in this build; "
+                 "use preflight to validate the rack configuration and mappings");
+        return ULAB_ERUNTIME;
+    }
+    if (opts->repo[0] == '\0' || strstr(opts->repo, "ukama") == NULL) {
+        snprintf(err->msg, sizeof(err->msg), "Missing --repo. Ukama repo root is MUST");
+        return ULAB_EUSAGE;
+    }
     if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
         if (!webapp_valid_run_id(run_id)) {
             snprintf(err->msg, sizeof(err->msg), "invalid web-app run ID: use 1..80 letters/digits/hyphens/underscores, starting with a letter/digit");
@@ -1324,9 +1329,18 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int no_cleanup;
     int failure_logs_attempted;
     int bff_opened;
+    int preparation_failed;
     node_monitor_t *monitor = NULL;
 
     if (workload_is_file(opts->scenario_path)) {
+        if (opts->provider[0] != '\0' || opts->hardware_config[0] != '\0') {
+            fprintf(stderr, "provider overrides and hardware config are not supported for workloads\n");
+            return ULAB_EUSAGE;
+        }
+        if (opts->repo[0] == '\0' || strstr(opts->repo, "ukama") == NULL) {
+            fprintf(stderr, "Missing --repo. Ukama repo root is MUST\n");
+            return ULAB_EUSAGE;
+        }
         return workload_run(opts, 0);
     }
 
@@ -1337,6 +1351,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
     no_cleanup = cleanup_disabled_by_env();
     failure_logs_attempted = 0;
     bff_opened = 0;
+    preparation_failed = 0;
     memset(&world,   0, sizeof(world));
     memset(&model,   0, sizeof(model));
     memset(&bff,     0, sizeof(bff));
@@ -1354,6 +1369,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
                      sizeof(runDir), &err);
     if (rc != ULAB_OK) {
         skip_cleanup = 1;
+        preparation_failed = 1;
         goto done;
     }
 
@@ -1536,9 +1552,9 @@ done:
         }
     }
 
-    /* An unsupported/invalid v2 contract is not an expected product failure. */
+    /* Preparation errors and unsupported v2 contracts are not product failures. */
     if (scenario != NULL && ulab_streq(scenario->status, "xfail") &&
-        rc != ULAB_OK &&
+        rc != ULAB_OK && !preparation_failed &&
         scenario->version != ULAB_WEBAPP_SCHEMA_VER) {
         ulab_status("XFAIL", "%s failed as expected", scenario->name);
         rc = ULAB_OK;
@@ -1649,6 +1665,16 @@ static int runner_run_file_if_match(const runner_opts_t *opts,
 
     if (workload_is_file(path)) {
         wl_config_t config;
+        if (opts->provider[0] != '\0' || opts->hardware_config[0] != '\0') {
+            fprintf(stderr, "%s: provider overrides and hardware config are not supported for workloads\n", path);
+            (*failed)++;
+            return ULAB_ERR;
+        }
+        if (opts->repo[0] == '\0' || strstr(opts->repo, "ukama") == NULL) {
+            fprintf(stderr, "Missing --repo. Ukama repo root is MUST\n");
+            (*failed)++;
+            return ULAB_ERR;
+        }
         memset(&err, 0, sizeof(err));
         if (wl_config_load(path, opts, &config, &err)) {
             fprintf(stderr, "%s: %s\n", path, err.msg);

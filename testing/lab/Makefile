@@ -91,6 +91,9 @@ src/workload_%.o: CFLAGS += -Wno-declaration-after-statement -O2
 
 all: version.h $(TARGET_EXEC)
 
+# Shared world/runner structs cross translation units; rebuild their consumers.
+$(TARGET_OBJFILES): $(wildcard ./inc/*.h) version.h
+
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
 	mkdir -p $(BIN_DIR)
 	$(CC) -o $(BIN) $(TARGET_OBJFILES) $(LDFLAGS) $(LIBS)

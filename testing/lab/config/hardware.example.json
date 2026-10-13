@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "rack": {
+    "host": "rf-rack.example.test",
+    "user": "rack",
+    "ssh_port": 22,
+    "identity_file": "/home/lab/.ssh/rf-rack",
+    "known_hosts_file": "/home/lab/.ssh/known_hosts"
+  },
+  "media": {
+    "host": "192.0.2.20",
+    "iperf_ports": [5201, 5202]
+  },
+  "sites": [
+    {
+      "ref": "site-001",
+      "tnode_id": "REPLACE-TNODE-ID",
+      "anode_id": "REPLACE-ANODE-ID",
+      "cnode_id": "REPLACE-CNODE-ID"
+    }
+  ],
+  "ues": [
+    {
+      "ref": "ue-000001",
+      "site_ref": "site-001",
+      "slot": 1,
+      "iccid": "8901000000000000001",
+      "imsi": "001010000000001"
+    },
+    {
+      "ref": "ue-000002",
+      "site_ref": "site-001",
+      "slot": 2,
+      "iccid": "8901000000000000002",
+      "imsi": "001010000000002"
+    }
+  ]
+}

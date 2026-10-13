@@ -30,7 +30,10 @@ provider:
   type: virtual
 ```
 
-Only `virtual` is supported in this build.
+`virtual` remains the execution default. `hardware` is accepted for physical
+inventory mapping and offline preflight; hardware runtime execution is not yet
+available. `--provider hardware --hardware <rack.json>` selects it without editing
+scenario events or checks. See [Hardware configuration](hardware.md).
 
 Backend-only SIM and payment scenarios can provision network-scoped SIM
 fixtures without creating sites, nodes, or UE processes:

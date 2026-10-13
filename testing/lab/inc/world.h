@@ -91,6 +91,7 @@ typedef struct {
     char pool_sim_id[ULAB_MAX_ID];
     char last_payment_id[ULAB_MAX_ID];
     char last_payment_status[ULAB_MAX_REF];
+    uint32_t hardware_slot; /* RF-rack slot; zero for virtual/backend-only SIMs. */
     int  started;
     int  attached;
 } ue_t;
