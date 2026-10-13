@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  * Copyright (c) 2026-present, Ukama Inc.
  */
-package server
+package client
 
 import (
 	"bytes"
@@ -19,7 +19,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type provisionNode struct {
+type ProvisionNode struct {
 	NodeID    string `json:"node_id"`
 	RequestID string `json:"request_id"`
 	SiteID    string `json:"site_id"`
@@ -27,7 +27,7 @@ type provisionNode struct {
 	Action    string `json:"action"`
 }
 
-type provisionResult struct {
+type ProvisionResult struct {
 	RequestID string `json:"request_id"`
 	Completed bool   `json:"completed"`
 	Cancelled bool   `json:"cancelled"`
@@ -37,8 +37,8 @@ type provisionResult struct {
 }
 
 // The gateway uses protobuf JSON (requestId); older responses used request_id.
-func (r *provisionResult) UnmarshalJSON(data []byte) error {
-	type result provisionResult
+func (r *ProvisionResult) UnmarshalJSON(data []byte) error {
+	type result ProvisionResult
 	var wire struct {
 		result
 		RequestID string `json:"requestId"`
@@ -52,14 +52,14 @@ func (r *provisionResult) UnmarshalJSON(data []byte) error {
 		}
 		wire.result.RequestID = wire.RequestID
 	}
-	*r = provisionResult(wire.result)
+	*r = ProvisionResult(wire.result)
 	return nil
 }
 
 const nodeStateOffboarded = "Offboarded"
 
-type provisionClient interface {
-	Reconcile(context.Context, provisionNode) (provisionResult, error)
+type ProvisionClient interface {
+	Reconcile(context.Context, ProvisionNode) (ProvisionResult, error)
 }
 
 type nodeProvisionClient struct {
@@ -67,10 +67,17 @@ type nodeProvisionClient struct {
 	http *http.Client
 }
 
+func NewNodeProvisionClient(url string, http *http.Client) ProvisionClient {
+	return &nodeProvisionClient{
+		url:  url,
+		http: http,
+	}
+}
+
 // Reconcile uses the existing controller command and latest-state endpoints.
 // A successful command response confirms dispatch only.
-func (c *nodeProvisionClient) Reconcile(ctx context.Context, node provisionNode) (provisionResult, error) {
-	var result provisionResult
+func (nc *nodeProvisionClient) Reconcile(ctx context.Context, node ProvisionNode) (ProvisionResult, error) {
+	var result ProvisionResult
 	switch node.Action {
 	case "configure", "cancel":
 		method := http.MethodPost
@@ -86,7 +93,7 @@ func (c *nodeProvisionClient) Reconcile(ctx context.Context, node provisionNode)
 			return result, err
 		}
 		path := "/v1/controller/nodes/" + url.PathEscape(node.NodeID) + "/config"
-		if err = c.request(ctx, method, path, data, nil); err != nil {
+		if err = nc.request(ctx, method, path, data, nil); err != nil {
 			return result, err
 		}
 		if node.Action == "configure" {
@@ -101,10 +108,10 @@ func (c *nodeProvisionClient) Reconcile(ctx context.Context, node provisionNode)
 		State *struct {
 			CurrentState string `json:"currentState"`
 		} `json:"State"`
-		Configuration *provisionResult `json:"configuration"`
+		Configuration *ProvisionResult `json:"configuration"`
 	}
 	path := "/v1/state/" + url.PathEscape(node.NodeID) + "/latest?request_id=" + url.QueryEscape(node.RequestID)
-	if err := c.request(ctx, http.MethodGet, path, nil, &response); err != nil {
+	if err := nc.request(ctx, http.MethodGet, path, nil, &response); err != nil {
 		return result, err
 	}
 	offboarded := response.State != nil && response.State.CurrentState == nodeStateOffboarded

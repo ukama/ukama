@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
@@ -24,6 +25,7 @@ type HealthClientProvider interface {
 }
 
 type healthClientProvider struct {
+	mu            sync.Mutex
 	healthService pb.HealthServiceClient
 	healthHost    string
 }
@@ -33,6 +35,9 @@ func NewHealthClientProvider(healthHost string) HealthClientProvider {
 }
 
 func (o *healthClientProvider) GetClient() (pb.HealthServiceClient, error) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	if o.healthService == nil {
 		var conn *grpc.ClientConn
 

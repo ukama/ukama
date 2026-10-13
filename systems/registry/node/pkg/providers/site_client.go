@@ -10,6 +10,7 @@ package providers
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
@@ -25,6 +26,7 @@ type SiteClientProvider interface {
 }
 
 type siteClientProvider struct {
+	mu          sync.Mutex
 	siteService pb.SiteServiceClient
 	siteHost    string
 }
@@ -34,6 +36,9 @@ func NewSiteClientProvider(siteHost string) SiteClientProvider {
 }
 
 func (o *siteClientProvider) GetClient() (pb.SiteServiceClient, error) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+
 	if o.siteService == nil {
 		var conn *grpc.ClientConn
 

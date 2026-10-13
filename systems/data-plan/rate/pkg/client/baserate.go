@@ -10,6 +10,7 @@ package client
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	bpb "github.com/ukama/ukama/systems/data-plan/base-rate/pb/gen"
@@ -24,6 +25,7 @@ type BaserateClientProvider interface {
 }
 
 type baserateClientProvider struct {
+	mu              sync.Mutex
 	baserateService bpb.BaseRatesServiceClient
 	baserateHost    string
 	timeout         time.Duration
@@ -34,6 +36,9 @@ func NewBaseRateClientProvider(baserateHost string, timeout time.Duration) Baser
 }
 
 func (bs *baserateClientProvider) GetClient() (bpb.BaseRatesServiceClient, error) {
+	bs.mu.Lock()
+	defer bs.mu.Unlock()
+
 	if bs.baserateService == nil {
 		var conn *grpc.ClientConn
 

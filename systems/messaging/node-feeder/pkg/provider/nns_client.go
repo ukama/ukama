@@ -9,6 +9,8 @@
 package providers
 
 import (
+	"sync"
+
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 
@@ -21,6 +23,7 @@ type NnsClientProvider interface {
 }
 
 type nnsClientProvider struct {
+	mu        sync.Mutex
 	nnsClient pb.NnsClient
 	nnsHost    string
 }
@@ -30,6 +33,9 @@ func NewNnsClientProvider(nnsHost string) NnsClientProvider {
 }
 
 func (u *nnsClientProvider) GetClient() (pb.NnsClient, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	if u.nnsClient == nil {
 		var conn *grpc.ClientConn
 

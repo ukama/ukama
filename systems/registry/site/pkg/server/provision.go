@@ -14,9 +14,12 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/registry/site/pkg/db"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/registry/site/pkg/client"
+	"github.com/ukama/ukama/systems/registry/site/pkg/db"
+
+	log "github.com/sirupsen/logrus"
 )
 
 const configAttempts = 3
@@ -45,7 +48,7 @@ type provisionStore interface {
 
 func (s *SiteServer) StartProvisioning(ctx context.Context, store *gorm.DB, nodeURL string) {
 	s.provisions = db.NewProvisionRepo(store)
-	s.provisionClient = &nodeProvisionClient{url: nodeURL, http: &http.Client{Timeout: 5 * time.Second}}
+	s.provisionClient = client.NewNodeProvisionClient(nodeURL, &http.Client{Timeout: 5 * time.Second})
 	go s.provisionWorker(ctx)
 }
 
@@ -78,8 +81,8 @@ func (s *SiteServer) provisionWorker(ctx context.Context) {
 	}
 }
 
-func attemptNode(op *db.SiteProvision, index int, action string) provisionNode {
-	return provisionNode{NodeID: op.Nodes[index], RequestID: fmt.Sprintf("%s-%d-%d", op.ID, op.Attempt, index),
+func attemptNode(op *db.SiteProvision, index int, action string) client.ProvisionNode {
+	return client.ProvisionNode{NodeID: op.Nodes[index], RequestID: fmt.Sprintf("%s-%d-%d", op.ID, op.Attempt, index),
 		SiteID: op.ID, NetworkID: op.Site.NetworkId.String(), Action: action}
 }
 
@@ -111,7 +114,7 @@ func (s *SiteServer) waitNodes(ctx context.Context, op *db.SiteProvision, action
 	return first
 }
 
-func (s *SiteServer) waitNode(ctx context.Context, node provisionNode) error {
+func (s *SiteServer) waitNode(ctx context.Context, node client.ProvisionNode) error {
 	ticker := time.NewTicker(configPoll)
 	defer ticker.Stop()
 	action := node.Action
