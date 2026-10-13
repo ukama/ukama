@@ -60,6 +60,7 @@ typedef struct {
     char id[ULAB_MAX_ID];
     char name[ULAB_MAX_NAME];
     char type[ULAB_MAX_REF];
+    int physical; /* Inventory node: release run assignment, never delete. */
     char site_ref[ULAB_MAX_REF];
     char network_ref[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];

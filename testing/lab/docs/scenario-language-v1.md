@@ -30,10 +30,10 @@ provider:
   type: virtual
 ```
 
-`virtual` remains the execution default. `hardware` is accepted for physical
-inventory mapping and offline preflight; hardware runtime execution is not yet
-available. `--provider hardware --hardware <rack.json>` selects it without editing
-scenario events or checks. See [Hardware configuration](hardware.md).
+`virtual` remains the execution default. `hardware` routes power, media and UE
+operations through RF-rack, using configured physical identities.
+`--provider hardware --hardware <rack.json>` selects it without editing scenario
+events or checks. Unsupported hardware capabilities fail during preflight. See [Hardware configuration](hardware.md).
 
 Backend-only SIM and payment scenarios can provision network-scoped SIM
 fixtures without creating sites, nodes, or UE processes:

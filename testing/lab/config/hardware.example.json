@@ -5,11 +5,16 @@
     "user": "rack",
     "ssh_port": 22,
     "identity_file": "/home/lab/.ssh/rf-rack",
-    "known_hosts_file": "/home/lab/.ssh/known_hosts"
+    "known_hosts_file": "/home/lab/.ssh/known_hosts",
+    "command_timeout_seconds": 20,
+    "operation_timeout_seconds": 1020
   },
   "media": {
     "host": "192.0.2.20",
-    "iperf_ports": [5201, 5202]
+    "iperf_ports": [
+      5201,
+      5202
+    ]
   },
   "sites": [
     {

@@ -26,7 +26,8 @@ int runner_load_scenario(const runner_opts_t *opts, scenario_t *scenario,
             return ULAB_ESCENARIO;
         }
         if (hardware_config_load(opts->hardware_config, hardware, err) ||
-            hardware_check_capacity(scenario, hardware, err))
+            hardware_check_capacity(scenario, hardware, err) ||
+            hardware_execution_supported(scenario, err))
             return ULAB_ESCENARIO;
     } else if (opts->hardware_config[0] != '\0') {
         snprintf(err->msg, sizeof(err->msg),
@@ -75,7 +76,7 @@ static json_t *preflight_json(const scenario_t *scenario, const world_t *world,
     }
     root = json_pack("{s:s,s:s,s:b,s:{s:I,s:I,s:I,s:I},s:O,s:O}",
         "scenario", scenario->name, "provider", scenario->provider.type,
-        "execution_available", !is_hardware,
+        "execution_available", 1,
         "world", "networks", (json_int_t)world->network_count,
         "sites", (json_int_t)world->site_count,
         "nodes", (json_int_t)world->node_count,

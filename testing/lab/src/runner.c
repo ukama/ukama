@@ -19,6 +19,7 @@
 #include "bff.h"
 #include "event.h"
 #include "runtime.h"
+#include "runtime_hardware.h"
 #include "log.h"
 #include "selector.h"
 #include "sim_factory.h"
@@ -38,6 +39,10 @@ static void make_run_id(char *out, size_t len, const scenario_t *scenario,
     }
 
     now = time(NULL);
+    if (ulab_streq(scenario->provider.type, "hardware")) {
+        snprintf(out, len, "hw-%ld-%ld-%u", (long)now, (long)getpid(), ++web_sequence);
+        return;
+    }
     if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
         snprintf(out, len, "web-%ld-%ld-%u", (long)now, (long)getpid(), ++web_sequence);
         return;
@@ -50,15 +55,15 @@ static int prepare_run(const runner_opts_t *opts,
                        scenario_t *scenario,
                        world_t *world,
                        model_t *model,
+                       hardware_config_t *hardware,
                        char *runDir,
                        size_t runDirLen,
                        ulab_error_t *err) {
 
     char run_id[ULAB_MAX_ID];
-    hardware_config_t hardware;
     int rc;
 
-    rc = runner_load_scenario(opts, scenario, &hardware, err);
+    rc = runner_load_scenario(opts, scenario, hardware, err);
     if (rc != ULAB_OK) return rc;
 
     /* Reject unsupported execution before any run directory or resource. */
@@ -69,24 +74,24 @@ static int prepare_run(const runner_opts_t *opts,
     make_run_id(run_id, sizeof(run_id), scenario, opts);
     if (ulab_streq(scenario->provider.type, "hardware")) {
         if (world_generate(scenario, run_id, world, err)) return ULAB_EINTERNAL;
-        if (hardware_bind_world(&hardware, world, err)) return ULAB_ESCENARIO;
-        snprintf(err->msg, sizeof(err->msg),
-                 "hardware execution is not available in this build; "
-                 "use preflight to validate the rack configuration and mappings");
-        return ULAB_ERUNTIME;
+        if (hardware_bind_world(hardware, world, err)) return ULAB_ESCENARIO;
     }
-    if (opts->repo[0] == '\0' || strstr(opts->repo, "ukama") == NULL) {
+    if (!ulab_streq(scenario->provider.type, "hardware") &&
+        (opts->repo[0] == '\0' || strstr(opts->repo, "ukama") == NULL)) {
         snprintf(err->msg, sizeof(err->msg), "Missing --repo. Ukama repo root is MUST");
         return ULAB_EUSAGE;
     }
-    if (scenario->version == ULAB_WEBAPP_SCHEMA_VER) {
+    if (scenario->version == ULAB_WEBAPP_SCHEMA_VER ||
+        ulab_streq(scenario->provider.type, "hardware")) {
         if (!webapp_valid_run_id(run_id)) {
-            snprintf(err->msg, sizeof(err->msg), "invalid web-app run ID: use 1..80 letters/digits/hyphens/underscores, starting with a letter/digit");
+            snprintf(err->msg, sizeof(err->msg), "invalid %srun ID: use 1..80 letters/digits/hyphens/underscores, starting with a letter/digit",
+                     scenario->version == ULAB_WEBAPP_SCHEMA_VER ? "web-app " : "hardware ");
             return ULAB_ESCENARIO;
         }
         if (webapp_path(runDir, runDirLen, opts->out_dir, run_id, err)) return ULAB_EINTERNAL;
         if (ulab_mkdir_p(opts->out_dir) || mkdir(runDir, 0700)) {
-            snprintf(err->msg, sizeof(err->msg), "cannot create new web-app run directory; use a unique --run-id");
+            snprintf(err->msg, sizeof(err->msg), "cannot create new %srun directory; use a unique --run-id",
+                     scenario->version == ULAB_WEBAPP_SCHEMA_VER ? "web-app " : "hardware ");
             return ULAB_EINTERNAL;
         }
     } else {
@@ -97,7 +102,8 @@ static int prepare_run(const runner_opts_t *opts,
         }
     }
 
-    if (world_generate(scenario, run_id, world, err)) {
+    if (!ulab_streq(scenario->provider.type, "hardware") &&
+        world_generate(scenario, run_id, world, err)) {
         return ULAB_EINTERNAL;
     }
 
@@ -317,6 +323,13 @@ static int created_write(const char *run_dir, const world_t *world) {
     }
     write_json_string_array(f, "nodes", ids, world->node_count, 1);
 
+    /* A virtual rerun must never adopt a physical run's cleanup ledger. */
+    memset(ids, 0, max * sizeof(*ids));
+    for (i = 0; i < world->node_count; i++) {
+        if (world->nodes[i].physical) ulab_copy(ids[i], ULAB_MAX_ID, world->nodes[i].bff_id);
+    }
+    write_json_string_array(f, "physical_nodes", ids, world->node_count, 1);
+
     memset(ids, 0, max * sizeof(*ids));
     for (i = 0; i < world->subscriber_count; i++) {
         ulab_copy(ids[i], ULAB_MAX_ID, world->subscribers[i].bff_id);
@@ -392,6 +405,12 @@ static int created_load(const char *run_dir, world_t *world) {
     if (root == NULL || !json_is_object(root)) {
         if (root != NULL) json_decref(root);
         return ULAB_ERR;
+    }
+
+    arr = json_object_get(root, "physical_nodes");
+    for (i = 0; i < json_array_size(arr); i++) {
+        const char *id = json_string_value(json_array_get(arr, i));
+        if (id && id[0]) { json_decref(root); return ULAB_ERR; }
     }
 
     for (i = 0; i < world->network_count; i++) {
@@ -631,21 +650,42 @@ static int setup_bff_sim_pool(bff_client_t *bff,
     size_t max_pool;
     size_t i;
     size_t j;
+    world_t fixtures;
+    size_t fixture_count;
+    int factory_rc;
 
     if (world->ue_count == 0) {
         return ULAB_OK;
     }
 
     memset(factory_csv, 0, sizeof(factory_csv));
-    if (sim_factory_prepare_world(opts, world, run_dir, factory_csv,
-                                  sizeof(factory_csv), err)) {
-        return ULAB_EBFF;
+    fixture_count = 0;
+    for (i = 0; i < world->ue_count; i++) {
+        if (world->ues[i].hardware_slot == 0) fixture_count++;
     }
-
-    ulab_status("SIMPOOL", "upload %s type=%s", factory_csv,
-                opts->sim_type);
-    if (bff_upload_sims_from_csv(bff, factory_csv, opts->sim_type, err)) {
-        return ULAB_EBFF;
+    if (fixture_count) {
+        fixtures = *world;
+        if (fixture_count != world->ue_count) {
+            fixtures.ues = calloc(fixture_count, sizeof(*fixtures.ues));
+            if (fixtures.ues == NULL) return ULAB_EINTERNAL;
+            fixtures.ue_count = fixture_count;
+            for (i = j = 0; i < world->ue_count; i++) {
+                if (world->ues[i].hardware_slot == 0) fixtures.ues[j++] = world->ues[i];
+            }
+        }
+        factory_rc = sim_factory_prepare_world(opts, &fixtures, run_dir, factory_csv,
+                                                sizeof(factory_csv), err);
+        if (fixture_count != world->ue_count) {
+            if (!factory_rc) {
+                for (i = j = 0; i < world->ue_count; i++) {
+                    if (world->ues[i].hardware_slot == 0) world->ues[i] = fixtures.ues[j++];
+                }
+            }
+            free(fixtures.ues);
+        }
+        if (factory_rc) return ULAB_EBFF;
+        ulab_status("SIMPOOL", "upload %s type=%s", factory_csv, opts->sim_type);
+        if (bff_upload_sims_from_csv(bff, factory_csv, opts->sim_type, err)) return ULAB_EBFF;
     }
 
     max_pool = world->ue_count * 32;
@@ -688,7 +728,7 @@ static int setup_bff_sim_pool(bff_client_t *bff,
 
         if (!found) {
             snprintf(err->msg, sizeof(err->msg),
-                     "prepared factory SIM iccid=%s for ue=%s is not "
+                     "SIM iccid=%s for ue=%s is not "
                      "available as UNASSIGNED in SIM pool",
                      world->ues[i].iccid, world->ues[i].ref);
             free(pool_iccids);
@@ -837,6 +877,9 @@ static int start_runtime_sites(const char *repo,
                                runtime_t *runtime,
                                ulab_error_t *err) {
 
+    if (runtime_is_hardware(runtime)) {
+        return world->site_count ? hardware_runtime_power(runtime, 1, err) : ULAB_OK;
+    }
     if (!scenario->runtime.start_nodes) {
         return ULAB_OK;
     }
@@ -854,6 +897,7 @@ static int wait_runtime_nodes(const scenario_t *scenario,
     selector_result_t nodes;
     int rc;
 
+    if (runtime_is_hardware(runtime)) return ULAB_OK;
     if (!scenario->runtime.wait_nodes_ready) {
         return ULAB_OK;
     }
@@ -1224,7 +1268,7 @@ static int cleanup_run(bff_client_t *bff,
         }
 
         memset(&cleanup_err, 0, sizeof(cleanup_err));
-        ulab_status("CLEANUP", "cleanup UE containers");
+        ulab_status("CLEANUP", "cleanup UE runtime");
         if (runtime_cleanup_ues(runtime, world, &cleanup_err)) {
             failures++;
             if (report_cleanup_errors_suppressed()) {
@@ -1330,6 +1374,9 @@ static int runner_validate_one(const runner_opts_t *opts) {
     int failure_logs_attempted;
     int bff_opened;
     int preparation_failed;
+    int backend_started = 0;
+    int hardware_session_failed = 0;
+    hardware_config_t hardware;
     node_monitor_t *monitor = NULL;
 
     if (workload_is_file(opts->scenario_path)) {
@@ -1365,7 +1412,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
         return ULAB_EINTERNAL;
     }
 
-    rc = prepare_run(opts, scenario, &world, &model, runDir,
+    rc = prepare_run(opts, scenario, &world, &model, &hardware, runDir,
                      sizeof(runDir), &err);
     if (rc != ULAB_OK) {
         skip_cleanup = 1;
@@ -1403,6 +1450,16 @@ static int runner_validate_one(const runner_opts_t *opts) {
         goto done;
     }
 
+    rc = runtime_init(&runtime, scenario->provider.type,
+                      opts->script_dir, runDir, opts->repo);
+    if (rc != ULAB_OK) { rc = ULAB_ERUNTIME; goto done; }
+    if (runtime_is_hardware(&runtime) &&
+        hardware_runtime_open(&runtime, &hardware, &world, &err)) {
+        preparation_failed = 1;
+        rc = ULAB_ERUNTIME;
+        goto done;
+    }
+
     rc = bff_init(&bff, opts->bff_url, runDir);
     bff_opened = 1;
     if (rc != ULAB_OK) {
@@ -1419,21 +1476,15 @@ static int runner_validate_one(const runner_opts_t *opts) {
         }
     }
 
-    rc = runtime_init(&runtime, scenario->provider.type,
-                      opts->script_dir, runDir, opts->repo);
-    if (rc != ULAB_OK) {
-        rc = ULAB_ERUNTIME;
-        goto done;
-    }
-
-    rc = preclean_existing_run(&bff, &runtime, &world, runDir,
-                               &failure_logs_attempted, &err);
+    rc = runtime_is_hardware(&runtime) ? ULAB_OK :
+        preclean_existing_run(&bff, &runtime, &world, runDir,
+                              &failure_logs_attempted, &err);
     if (rc != ULAB_OK) {
         rc = ULAB_EBFF;
         goto done;
     }
 
-    if (scenario_uses_virtual_network(scenario)) {
+    if (!runtime_is_hardware(&runtime) && scenario_uses_virtual_network(scenario)) {
         rc = runtime_ensure_network(&runtime, &err);
         if (rc != ULAB_OK) {
             rc = ULAB_ERUNTIME;
@@ -1452,6 +1503,7 @@ static int runner_validate_one(const runner_opts_t *opts) {
     }
 
     ulab_status("BACKEND", "creating backend world resources");
+    backend_started = 1;
     rc = setup_bff_world(&bff, scenario, &world, opts, runDir, &err);
     if (rc != ULAB_OK) {
         goto done;
@@ -1519,6 +1571,14 @@ static int runner_validate_one(const runner_opts_t *opts) {
     }
 
 done:
+    if (runtime_is_hardware(&runtime)) {
+        ulab_error_t health_err = {{0}};
+        hardware_session_failed = hardware_runtime_healthy(&runtime, &health_err);
+        if (hardware_session_failed && rc == ULAB_OK) {
+            err = health_err;
+            rc = ULAB_ERUNTIME;
+        }
+    }
     /* Join before deleting resources or closing the main BFF client. */
     if (monitor != NULL) {
         ulab_error_t monitor_err;
@@ -1541,10 +1601,16 @@ done:
     if (!skip_cleanup && no_cleanup) {
         ulab_status("CLEANUP", "skip cleanup (ULAB_NO_CLEANUP=%s)",
                     getenv("ULAB_NO_CLEANUP"));
+    } else if (runtime_is_hardware(&runtime) && (!backend_started || skip_cleanup)) {
+        ulab_error_t hardware_err = {{0}};
+        cleanup_rc = hardware_runtime_cleanup(&runtime, &hardware_err);
+        if (cleanup_rc) ulab_log_warn("%s", hardware_err.msg);
+        report_set_cleanup(&report, cleanup_rc != ULAB_OK);
+        if (cleanup_rc && rc == ULAB_OK) rc = ULAB_ERUNTIME;
     } else if (!skip_cleanup) {
         cleanup_rc = cleanup_run(
             &bff, &runtime, &world, runDir, &failure_logs_attempted,
-            scenario_uses_virtual_network(scenario));
+            runtime_is_hardware(&runtime) || scenario_uses_virtual_network(scenario));
         report_set_cleanup(&report, cleanup_rc != ULAB_OK);
         if (cleanup_rc != ULAB_OK && rc == ULAB_OK &&
             !report_cleanup_errors_suppressed()) {
@@ -1552,9 +1618,15 @@ done:
         }
     }
 
+    /* Rack cleanup failures, including lease loss during teardown, cannot turn
+     * an xfail scenario into a successful run. */
+    if (runtime_is_hardware(&runtime) && cleanup_rc != ULAB_OK) {
+        hardware_session_failed = 1;
+    }
+
     /* Preparation errors and unsupported v2 contracts are not product failures. */
     if (scenario != NULL && ulab_streq(scenario->status, "xfail") &&
-        rc != ULAB_OK && !preparation_failed &&
+        rc != ULAB_OK && !preparation_failed && !hardware_session_failed &&
         scenario->version != ULAB_WEBAPP_SCHEMA_VER) {
         ulab_status("XFAIL", "%s failed as expected", scenario->name);
         rc = ULAB_OK;

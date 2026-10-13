@@ -27,7 +27,10 @@ typedef struct {
 typedef struct {
     char host[ULAB_MAX_NAME];
     char user[ULAB_MAX_REF];
+    char ssh_path[ULAB_MAX_PATH];
     uint32_t ssh_port;
+    uint32_t command_timeout_seconds;
+    uint32_t operation_timeout_seconds;
     char identity_file[ULAB_MAX_PATH];
     char known_hosts_file[ULAB_MAX_PATH];
     char media_host[ULAB_MAX_NAME];
@@ -43,6 +46,7 @@ int hardware_config_load(const char *path, hardware_config_t *config,
 int hardware_check_capacity(const scenario_t *scenario,
                              const hardware_config_t *config,
                              ulab_error_t *err);
+int hardware_execution_supported(const scenario_t *scenario, ulab_error_t *err);
 /* Apply physical identities before any backend or runtime operation. */
 int hardware_bind_world(const hardware_config_t *config, world_t *world,
                          ulab_error_t *err);

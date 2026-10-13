@@ -119,7 +119,8 @@ static const hardware_ue_t *find_ue(const hardware_config_t *config,
 static int load_rack(json_t *root, hardware_config_t *config,
                       ulab_error_t *err) {
     static const char *const fields[] = {
-        "host", "user", "ssh_port", "identity_file", "known_hosts_file", NULL
+        "host", "user", "ssh_port", "identity_file", "known_hosts_file",
+        "command_timeout_seconds", "operation_timeout_seconds", "ssh_path", NULL
     };
     json_t *rack;
     json_t *port;
@@ -136,6 +137,20 @@ static int load_rack(json_t *root, hardware_config_t *config,
         return fail(err, "rack host/user must be plain names, not commands or URLs");
     if (config->identity_file[0] != '/' || config->known_hosts_file[0] != '/')
         return fail(err, "SSH identity_file and known_hosts_file must be absolute paths");
+    if (strpbrk(config->known_hosts_file, "\"\\") != NULL)
+        return fail(err, "known_hosts_file cannot contain quotes or backslashes");
+    ulab_copy(config->ssh_path, sizeof(config->ssh_path), "/usr/bin/ssh");
+    if (json_object_get(rack, "ssh_path") != NULL &&
+        string_field(rack, "ssh_path", config->ssh_path, sizeof(config->ssh_path), err)) return ULAB_ERR;
+    if (config->ssh_path[0] != '/') return fail(err, "ssh_path must be absolute");
+    config->command_timeout_seconds = 20;
+    config->operation_timeout_seconds = 1020;
+    port = json_object_get(rack, "command_timeout_seconds");
+    if (port != NULL && integer_field(port, 1, 120, &config->command_timeout_seconds,
+                                      "command_timeout_seconds", err)) return ULAB_ERR;
+    port = json_object_get(rack, "operation_timeout_seconds");
+    if (port != NULL && integer_field(port, 1, 3720, &config->operation_timeout_seconds,
+                                      "operation_timeout_seconds", err)) return ULAB_ERR;
     config->ssh_port = 22;
     port = json_object_get(rack, "ssh_port");
     if (port != NULL && integer_field(port, 1, 65535, &config->ssh_port,
@@ -381,6 +396,8 @@ int hardware_bind_world(const hardware_config_t *config, world_t *world,
             ulab_streq(node->type, ULAB_NODE_AMPLIFIER) ? binding->anode_id :
                                                         binding->cnode_id;
         ulab_copy(node->id, sizeof(node->id), id);
+        ulab_copy(node->bff_id, sizeof(node->bff_id), id);
+        node->physical = 1;
     }
     for (i = 0; i < world->ue_count; i++) {
         ue_t *ue;
@@ -393,6 +410,60 @@ int hardware_bind_world(const hardware_config_t *config, world_t *world,
         ulab_copy(ue->imsi, sizeof(ue->imsi), binding->imsi);
         ue->hardware_slot = binding->slot;
         ue->ip[0] = '\0'; /* Assigned by the real EPC, never by EPCEMU. */
+    }
+    return ULAB_OK;
+}
+
+static int supported_checks(const check_spec_t *checks, size_t count, ulab_error_t *err) {
+    size_t i;
+    for (i = 0; i < count; i++) {
+        if (checks[i].type == CHECK_TRAFFIC_BLOCKED || checks[i].type == CHECK_TRAFFIC_UNAVAILABLE ||
+            checks[i].type == CHECK_NODE_READY || checks[i].type == CHECK_UE_ATTACHED)
+            return fail(err, "node_ready/ue_attached/traffic_blocked/traffic_unavailable hardware observations are not available in this build");
+        if (checks[i].type == CHECK_TRAFFIC_ALLOWED && checks[i].expected_used_mb > UINT32_MAX)
+            return fail(err, "traffic check amount_mb exceeds the UE-gadget limit");
+    }
+    return ULAB_OK;
+}
+
+int hardware_execution_supported(const scenario_t *scenario, ulab_error_t *err) {
+    size_t p;
+    size_t i;
+    for (p = 0; p <= scenario->phase_count; p++) {
+        const check_spec_t *checks;
+        size_t count;
+        checks = p == scenario->phase_count ? scenario->final_checks : scenario->phases[p].checks;
+        count = p == scenario->phase_count ? scenario->final_check_count : scenario->phases[p].check_count;
+        if (supported_checks(checks, count, err)) return ULAB_ERR;
+        if (p == scenario->phase_count) break;
+        for (i = 0; i < scenario->phases[p].event_count; i++) {
+            const event_spec_t *event = &scenario->phases[p].events[i];
+            if (supported_checks(event->checks, event->check_count, err)) return ULAB_ERR;
+            switch (event->type) {
+            case EVT_DISCONNECT_NODES:
+            case EVT_RECONNECT_NODES:
+            case EVT_MARK_NODE_OFFLINE:
+            case EVT_RESTORE_NODE:
+            case EVT_FAILURE_CONTROL:
+            case EVT_WAIT_NODES_READY:
+                snprintf(err->msg, sizeof(err->msg), "hardware: event %s is not supported by this runtime",
+                         scenario_event_name(event->type));
+                return ULAB_ERR;
+            case EVT_CONFIGURE_SITES:
+                if (ulab_streq(event->status, "hold")) return fail(err, "configure_sites hold needs virtual node fault injection");
+                break;
+            case EVT_TRAFFIC:
+                if (event->amount_mb > UINT32_MAX) return fail(err, "traffic amount_mb exceeds the UE-gadget limit");
+                break;
+            default: break;
+            }
+        }
+    }
+    for (p = 0; p < scenario->profile_count; p++) {
+        for (i = 0; i < scenario->profiles[p].bucket_count; i++) {
+            if (scenario->profiles[p].buckets[i].amount_mb > UINT32_MAX)
+                return fail(err, "profile amount_mb exceeds the UE-gadget limit");
+        }
     }
     return ULAB_OK;
 }
