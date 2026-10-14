@@ -209,7 +209,7 @@ menuentry "ukama (linux)" {
     linux /boot/vmlinuz-lts \
         root=LABEL=primary rootfstype=ext4 rw \
         modules=part_msdos,mmc_block,ext4,usbcore,usbhid,usb_keyboard,fat \
-        console=tty1 earlyprintk=vga \
+        console=ttyS0,115200 console=tty1 earlyprintk=vga \
         init=/sbin/init
     initrd /boot/initramfs-lts
 }
@@ -313,6 +313,13 @@ FSTAB
     check_status $? "fstab written" "${STAGE}"
 }
 
+setup_serial_console() {
+    local rootfs="$1"
+    grep -q '^ttyS0:' "${rootfs}/etc/inittab" || \
+        echo 'ttyS0::respawn:/sbin/getty -L 115200 ttyS0 vt100' | sudo tee -a "${rootfs}/etc/inittab" > /dev/null
+    check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
+}
+
 deploy_to_rootfs() {
     local rootfs="$1"
 
@@ -357,6 +364,8 @@ copy_boot
 copy_rootfs
 update_fstab "${PRIMARY_MNT}"
 update_fstab "${PASSIVE_MNT}"
+setup_serial_console "${PRIMARY_MNT}"
+setup_serial_console "${PASSIVE_MNT}"
 
 # Gather the list of enabled apps
 get_enabled_apps "$COMMON_CONFIG_FILE" "$COM_CONFIG_FILE"
