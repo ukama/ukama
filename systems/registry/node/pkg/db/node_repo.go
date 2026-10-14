@@ -320,9 +320,12 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		node, err := n.Get(detachNodeId)
-		if err != nil {
-			return fmt.Errorf("fail to get node: %w", err)
+		var node Node
+
+		if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Preload(clause.Associations).Preload("Attached.Site").
+			First(&node, "id = ?", detachNodeId.StringLowercase()).Error; getErr != nil {
+			return fmt.Errorf("fail to get node: %w", getErr)
 		}
 
 		if node.ParentNodeId == nil {

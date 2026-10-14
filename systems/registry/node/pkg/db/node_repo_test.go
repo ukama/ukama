@@ -93,12 +93,12 @@ func TestNodeRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "nodes"`+
-			` ("id","name","type","parent_node_id","created_at","updated_at","deleted_`+
-			`at") VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING "latitude","longitude"`)).
-			WithArgs(node.Id, node.Name, node.Type, node.ParentNodeId, sqlmock.AnyArg(),
+			` ("id","name","type","created_at","updated_at","deleted_at")`+
+			` VALUES ($1,$2,$3,$4,$5,$6) RETURNING "parent_node_id","latitude","longitude"`)).
+			WithArgs(node.Id, node.Name, node.Type, sqlmock.AnyArg(),
 				sqlmock.AnyArg(), sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"latitude", "longitude"}).
-				AddRow(0.0, 0.0))
+			WillReturnRows(sqlmock.NewRows([]string{"parent_node_id", "latitude", "longitude"}).
+				AddRow(nil, 0.0, 0.0))
 		mock.ExpectCommit()
 
 		// Act
