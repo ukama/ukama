@@ -59,7 +59,7 @@ class InitAPI extends BaseRESTDataSource {
   baseURL = INIT_API_GW;
 
   getOrgs = async (): Promise<OrgsNameRes> => {
-    this.logger.info(`GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs`);
+    this.logger.debug(`GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs`);
     return this.get(`/${VERSION}/orgs`, {}).then(res =>
       dtoToOrgsNameResDto(res)
     );
@@ -69,7 +69,7 @@ class InitAPI extends BaseRESTDataSource {
     orgName: string,
     systemName: string
   ): Promise<InitSystemAPIResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSystem [GET]: ${this.baseURL}/${VERSION}/orgs/${orgName}/systems/${systemName}`
     );
     return this.get(
@@ -82,7 +82,7 @@ class InitAPI extends BaseRESTDataSource {
     store: RootDatabase,
     auth: { cookie?: string; token?: string }
   ): Promise<ValidateSessionRes> => {
-    this.logger.info(
+    this.logger.debug(
       `ValidateSession [GET]: ${this.baseURL}/${VERSION}/sessions`
     );
     // STEP 1 — Kratos session (cookie or API token) → identity (auth_id)

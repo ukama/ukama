@@ -175,7 +175,9 @@ class AnalyticsAPI extends BaseRESTDataSource {
 
   private callGet = async <T>(path: string, label?: string): Promise<T> => {
     const url = `/${VERSION}/${ANALYTICS}/${path}`;
-    this.logger.info(`Analytics ${label ?? path} [GET]: ${this.baseURL}${url}`);
+    this.logger.debug(
+      `Analytics ${label ?? path} [GET]: ${this.baseURL}${url}`
+    );
     return this.get(url)
       .then(res => mapAnalytics<T>(res))
       .catch(error => {

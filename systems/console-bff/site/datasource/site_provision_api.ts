@@ -18,7 +18,7 @@ class SiteProvisionApi extends TimedRESTDataSource {
   }
 
   addSite = async (baseURL: string, req: AddSiteInputDto): Promise<SiteDto> => {
-    this.logger.info(`AddSite [POST]: ${baseURL}/${VERSION}/${SITES}`);
+    this.logger.debug(`AddSite [POST]: ${baseURL}/${VERSION}/${SITES}`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${SITES}`, {
       body: {

@@ -19,8 +19,20 @@
  */
 import { AsyncLocalStorage } from "async_hooks";
 
+/** One upstream HTTP call made while serving the request. */
+export interface UpstreamCall {
+  method: string;
+  host: string;
+  path: string;
+  status: number;
+  durationMs: number;
+  /** Set when the call never got a response (timeout, connection error). */
+  failure?: string;
+}
+
 interface RequestContext {
   requestId: string;
+  upstream: UpstreamCall[];
 }
 
 const storage = new AsyncLocalStorage<RequestContext>();
@@ -31,7 +43,7 @@ export const getRequestId = (): string | undefined =>
 
 /** Runs `fn` within a request context (preferred — fully scoped). */
 export const runWithRequestId = <T>(requestId: string, fn: () => T): T =>
-  storage.run({ requestId }, fn);
+  storage.run({ requestId, upstream: [] }, fn);
 
 /**
  * Binds a request id to the current async execution without a wrapping
@@ -39,5 +51,14 @@ export const runWithRequestId = <T>(requestId: string, fn: () => T): T =>
  */
 export const setRequestId = (requestId: string): void => {
   if (!requestId) return;
-  storage.enterWith({ requestId });
+  storage.enterWith({ requestId, upstream: [] });
 };
+
+/** Records an upstream call against the current request (no-op outside one). */
+export const recordUpstreamCall = (call: UpstreamCall): void => {
+  storage.getStore()?.upstream.push(call);
+};
+
+/** Upstream calls made so far by the current request. */
+export const getUpstreamCalls = (): readonly UpstreamCall[] =>
+  storage.getStore()?.upstream ?? [];

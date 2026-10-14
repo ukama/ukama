@@ -19,7 +19,7 @@ class BillingAPI extends BaseRESTDataSource {
     baseURL: string,
     req: GetReportsInputDto
   ): Promise<GetReportsDto> => {
-    this.logger.info(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
+    this.logger.debug(`GetReports [GET] ${baseURL}/${VERSION}/reports`);
     this.baseURL = baseURL;
     const params = new URLSearchParams({ sort: "true" });
     if (req.networkId) {
@@ -46,14 +46,14 @@ class BillingAPI extends BaseRESTDataSource {
   };
 
   getReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
-    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/report/${id}`);
+    this.logger.debug(`GetReport [GET]: ${baseURL}/${VERSION}/report/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/reports/${id}`).then(res =>
       dtoToReportDto(res)
     );
   };
   getPDFReport = async (baseURL: string, id: string): Promise<GetReportDto> => {
-    this.logger.info(`GetReport [GET]: ${baseURL}/${VERSION}/reports/${id}`);
+    this.logger.debug(`GetReport [GET]: ${baseURL}/${VERSION}/reports/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/pdf/${id}?as_pdf=true`).then(res => res);
   };

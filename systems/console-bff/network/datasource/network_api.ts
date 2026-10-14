@@ -17,7 +17,7 @@ import { dtoToNetworkDto, dtoToNetworksDto } from "./mapper";
 
 class NetworkApi extends BaseRESTDataSource {
   getNetworks = async (baseURL: string): Promise<NetworksResDto> => {
-    this.logger.info(`GetNetworks [GET]: ${baseURL}/${VERSION}/networks`);
+    this.logger.debug(`GetNetworks [GET]: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/networks`).then(res => dtoToNetworksDto(res));
   };
@@ -26,7 +26,7 @@ class NetworkApi extends BaseRESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<NetworkDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetNetwork [GET] ${baseURL}/${VERSION}/networks/${networkId} networkId`
     );
     this.baseURL = baseURL;
@@ -39,7 +39,7 @@ class NetworkApi extends BaseRESTDataSource {
     baseURL: string,
     req: AddNetworkInputDto
   ): Promise<NetworkDto> => {
-    this.logger.info(`AddNetwork [POST]: ${baseURL}/${VERSION}/networks`);
+    this.logger.debug(`AddNetwork [POST]: ${baseURL}/${VERSION}/networks`);
     this.baseURL = baseURL;
     const res = await this.post(`/${VERSION}/networks`, {
       body: {
@@ -64,7 +64,7 @@ class NetworkApi extends BaseRESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DeleteNetwork [DELETE]: ${baseURL}/${VERSION}/networks/${networkId}`
     );
     this.baseURL = baseURL;
@@ -79,7 +79,7 @@ class NetworkApi extends BaseRESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<TBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `SetDefaultNetwork [PATCH] ${baseURL}/${VERSION}/networks/${networkId} networkId`
     );
     this.baseURL = baseURL;

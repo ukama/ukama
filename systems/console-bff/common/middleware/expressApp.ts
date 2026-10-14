@@ -11,13 +11,29 @@
  * headers, rate limiting and structured access logs. Used by the gateway
  * today and the consolidated API server (server/) going forward.
  */
-import express, { type Request } from "express";
+import express, { type Request, type Response } from "express";
 import expressWinston from "express-winston";
 
 import { runWithRequestId } from "../logger/requestContext";
 import { compression } from "./compression";
 import { REQUEST_ID_HEADER, requestId } from "./requestId";
 import { rateLimit, securityHeaders } from "./security";
+
+const PROBE_PATHS = new Set(["/healthz", "/readyz", "/ping"]);
+
+/** Kubelet probes hit these every few seconds; logging them buries real traffic. */
+export const isProbeRoute = (req: Request): boolean =>
+  PROBE_PATHS.has(req.path);
+
+/**
+ * Access-log level by outcome. A 2xx on /graphql drops to debug because the
+ * operation logger plugin already writes a richer line for it.
+ */
+export const accessLogLevel = (req: Request, res: Response): string => {
+  if (res.statusCode >= 500) return "error";
+  if (res.statusCode >= 400) return "warn";
+  return (req.originalUrl ?? req.url).startsWith("/graphql") ? "debug" : "info";
+};
 
 function configureExpress(logger: any) {
   const app = express();
@@ -38,8 +54,16 @@ function configureExpress(logger: any) {
   app.use(
     expressWinston.logger({
       winstonInstance: logger,
-      dynamicMeta: (req: Request) => ({
+      msg: "HTTP {{req.method}} {{req.originalUrl}} {{res.statusCode}} {{res.responseTime}}ms",
+      // Never log request headers: they carry the session token and cookies.
+      requestField: null,
+      responseField: null,
+      metaField: null,
+      ignoreRoute: isProbeRoute,
+      level: accessLogLevel,
+      dynamicMeta: (req: Request, res: Response) => ({
         requestId: req.headers[REQUEST_ID_HEADER],
+        status: res.statusCode,
       }),
     })
   );
