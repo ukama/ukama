@@ -219,7 +219,8 @@ create_starter_manifest() {
     local manifest_file="$1"
     shift
     local app_names=("$@")
-    local boot_order=("init-network" "noded" "bootstrap" "meshd")
+    # lifecycled opens starter.d's gate for the services space
+    local boot_order=("init-network" "noded" "bootstrap" "meshd" "lifecycled")
     local service_order=()
     local app
     local first
@@ -233,7 +234,7 @@ create_starter_manifest() {
 
     for app in "${app_names[@]}"; do
         case "$app" in
-            starterd|init-network|noded|bootstrap|meshd|rlog)
+            starterd|init-network|noded|bootstrap|meshd|lifecycled|rlog)
                 continue
                 ;;
         esac
@@ -305,7 +306,14 @@ function copy_all_apps() {
     mkdir -p "$dest_pkg"
 
     for app in "${APPS[@]}"; do
-        app_file="${repo_pkg}/${app}_latest.tar.gz"
+        # packages are named after capp-exec.name (switchd.toml builds switch)
+        local config_file name="$app"
+        config_file="$(_manifest_builder_root)/configs/${app}.toml"
+        if [[ -f "$config_file" ]]; then
+            name="$(_manifest_toml_value "$config_file" "capp-exec" "name")"
+            [[ -n "$name" ]] || name="$app"
+        fi
+        app_file="${repo_pkg}/${name}_latest.tar.gz"
         if [[ -f "$app_file" ]]; then
             log "INFO" "Copying $app_file"
             cp "$app_file" "$dest_pkg/"

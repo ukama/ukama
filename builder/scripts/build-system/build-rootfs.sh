@@ -99,14 +99,17 @@ check_command() {
 install_starter_app() {
     log "INFO" "Installing starter.d"
 
-    cd ${UKAMA_REPO_APP_PKG}
-    tar zxvf starterd_latest.tar.gz
+    # the folder inside the package is versioned, so strip it
+    local tmp=/tmp/starterd_pkg
+    rm -rf "$tmp" && mkdir -p "$tmp"
+    tar -zxf "${UKAMA_REPO_APP_PKG}/starterd_latest.tar.gz" \
+        --strip-components=1 -C "$tmp"
 
-    cp -rf starterd_latest/lib/*      /ukama/apps/lib
-    cp -rf starterd_latest/usr/lib/*  /ukama/apps/lib
-    cp starterd_latest/sbin/starter.d /sbin/
+    cp -rf "$tmp"/lib/*      /ukama/apps/lib
+    cp -rf "$tmp"/usr/lib/*  /ukama/apps/lib
+    cp "$tmp"/sbin/starter.d /sbin/
 
-    rm -rf starterd_latest/
+    rm -rf "$tmp"
 }
 
 install_rpi4_kernel_from_tarball() {
@@ -396,9 +399,6 @@ static routers=10.102.81.1
 static domain_name_servers=8.8.8.8 8.8.4.4
 EOF
 
-    # Enable agetty on /dev/tty1
-    ln -sf /etc/init.d/agetty /etc/init.d/agetty.tty1
-
     # sysinit: early, before any daemons
     rc-update add devfs           sysinit    # mounts /dev,/proc,/sys
     rc-update add modules         sysinit    # modprobe usbcore, ehci_hcd, usbhid, vfat, etc.
@@ -417,7 +417,6 @@ EOF
     rc-update add dhcpcd          default
     rc-update add sshd            default
     rc-update add acpid           default
-    rc-update add agetty.tty1     default
 
     # vfat support
     mkdir -p /etc/modules-load.d
@@ -439,10 +438,9 @@ EOF
     echo "ukama-linux" > /etc/hostname
 
     echo "root:root" | chpasswd
-    if ! id ukama &>/dev/null; then
-        adduser -D -s /bin/bash -G wheel ukama
-        echo "ukama:ukama" | chpasswd
-    fi
+    id ukama &>/dev/null || adduser -D -s /bin/bash -G wheel ukama
+    echo "ukama:ukama" | chpasswd
+    addgroup ukama wheel 2>/dev/null || true
     echo "%wheel ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/wheel
 
     cat > /etc/doas.d/doas.conf <<EOF
