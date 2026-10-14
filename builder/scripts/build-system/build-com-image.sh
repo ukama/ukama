@@ -313,6 +313,22 @@ FSTAB
     check_status $? "fstab written" "${STAGE}"
 }
 
+setup_network() {
+    local rootfs="$1"
+    sudo tee "${rootfs}/etc/dhcpcd.conf" > /dev/null <<EOF
+hostname
+clientid
+persistent
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+option interface_mtu
+require dhcp_server_identifier
+EOF
+    sudo ln -sfn /etc/init.d/loopback "${rootfs}/etc/runlevels/boot/loopback"
+    sudo ln -sfn /etc/init.d/ntpd "${rootfs}/etc/runlevels/default/ntpd"
+    check_status $? "DHCP, loopback and ntpd in ${rootfs}" "setup_network"
+}
+
 setup_serial_console() {
     local rootfs="$1"
     grep -q '^ttyS0:' "${rootfs}/etc/inittab" || \
@@ -366,6 +382,8 @@ update_fstab "${PRIMARY_MNT}"
 update_fstab "${PASSIVE_MNT}"
 setup_serial_console "${PRIMARY_MNT}"
 setup_serial_console "${PASSIVE_MNT}"
+setup_network "${PRIMARY_MNT}"
+setup_network "${PASSIVE_MNT}"
 
 # Gather the list of enabled apps
 get_enabled_apps "$COMMON_CONFIG_FILE" "$COM_CONFIG_FILE"
