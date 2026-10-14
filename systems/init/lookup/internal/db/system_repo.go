@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"gorm.io/gorm/clause"
 )
 
 type SystemRepo interface {
@@ -32,22 +33,22 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 	}
 }
 
+// Atomic upsert on (lower(name), org_id); Uuid is excluded from DoUpdates so a
+// system's original id survives repeated/concurrent registrations.
 func (s *systemRepo) Add(sys *System) error {
-	// result := s.Db.GetGormDb().Clauses(clause.OnConflict{
-	// 	Columns:   []clause.Column{{Name: "name"}, {Name: "org_id"}},
-	// 	UpdateAll: true,
-	// }).Create(sys)
-	t := s.Db.GetGormDb().Model(&System{}).Where("org_id = ? AND name = ?", sys.OrgID, sys.Name).Updates(sys)
-	if t.Error != nil {
-		return t.Error
-	} else {
-		if t.RowsAffected == 0 {
-			err := s.Db.GetGormDb().Create(sys).Error // create new record from newUser
-			return err
-		}
-	}
+	result := s.Db.GetGormDb().Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "lower(name)", Raw: true},
+			{Name: "org_id"},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{
+			"certificate", "api_gw_ip", "api_gw_url", "api_gw_port",
+			"node_gw_ip", "node_gw_port", "node_gw_health", "api_gw_health",
+			"updated_at",
+		}),
+	}).Create(sys)
 
-	return nil
+	return result.Error
 }
 
 func (s *systemRepo) Update(sys *System, id uint) error {
