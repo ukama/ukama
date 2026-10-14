@@ -9,6 +9,8 @@
 #include "check.h"
 #include "selector.h"
 #include "util.h"
+#include "runtime_hardware.h"
+#include "hardware_observe.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -348,6 +350,13 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
     selector_result_t sel;
     size_t i;
     size_t ok = 0;
+
+    if (runtime_is_hardware(ctx->runtime) &&
+        (check->type == CHECK_NODE_READY || check->type == CHECK_UE_ATTACHED ||
+         check->type == CHECK_TRAFFIC_ALLOWED || check->type == CHECK_TRAFFIC_BLOCKED ||
+         check->type == CHECK_TRAFFIC_UNAVAILABLE)) {
+        return hardware_check_runtime(ctx, check, res, err);
+    }
 
     if (check->type == CHECK_RELEASE_UNAVAILABLE) {
         return check_release_unavailable(ctx, check, res, err);

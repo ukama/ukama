@@ -30,6 +30,7 @@ typedef struct {
     char node_version[ULAB_MAX_REF];
     runtime_execute_fn execute;
     void *execute_ctx;
+    struct hardware_runtime *hardware;
 } runtime_t;
 
 int runtime_load_workload_sites(runtime_t *rt, world_t *w, ulab_error_t *err);

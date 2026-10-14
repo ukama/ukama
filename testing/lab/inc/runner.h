@@ -10,6 +10,7 @@
 #define ULAB_RUNNER_H_
 
 #include "report.h"
+#include "hardware.h"
 #include <signal.h>
 #include <stdatomic.h>
 
@@ -30,6 +31,8 @@ typedef struct {
     char tag_filter[ULAB_MAX_REF];
     char workload_assets[ULAB_MAX_PATH];
     char webapp_worker[ULAB_MAX_PATH];
+    char provider[ULAB_MAX_REF]; /* Empty means use scenario provider.type. */
+    char hardware_config[ULAB_MAX_PATH];
     _Atomic sig_atomic_t *workload_cancel; /* NULL for legacy scenarios */
 
     uint32_t seed_override;
@@ -41,5 +44,8 @@ typedef struct {
 } runner_opts_t;
 
 int runner_validate(const runner_opts_t *opts);
+int runner_load_scenario(const runner_opts_t *opts, scenario_t *scenario,
+                          hardware_config_t *hardware, ulab_error_t *err);
+int runner_preflight(const runner_opts_t *opts);
 
 #endif /* ULAB_RUNNER_H_ */

@@ -11,6 +11,7 @@
 
 #include "log.h"
 #include "event.h"
+#include "runtime_hardware.h"
 #include "util.h"
 
 int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
@@ -89,10 +90,14 @@ int event_run(event_ctx_t *ctx, const event_spec_t *event,
     int rc;
 
     memset(&actual_err, 0, sizeof(actual_err));
+    if (runtime_is_hardware(ctx->runtime) && hardware_runtime_healthy(ctx->runtime, err))
+        return ULAB_ERR;
     expect_failure = ulab_streq(event->expect_result, "failure") ||
                      ulab_streq(event->expect_result, "fail");
 
     rc = event_run_actual(ctx, event, &actual_err);
+    if (runtime_is_hardware(ctx->runtime) && hardware_runtime_healthy(ctx->runtime, err))
+        return ULAB_ERR;
 
     if (ulab_streq(event->expect_result, "any")) {
         return ULAB_OK;

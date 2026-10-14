@@ -60,6 +60,7 @@ typedef struct {
     char id[ULAB_MAX_ID];
     char name[ULAB_MAX_NAME];
     char type[ULAB_MAX_REF];
+    int physical; /* Inventory node: release run assignment, never delete. */
     char site_ref[ULAB_MAX_REF];
     char network_ref[ULAB_MAX_REF];
     char bff_id[ULAB_MAX_ID];
@@ -91,6 +92,7 @@ typedef struct {
     char pool_sim_id[ULAB_MAX_ID];
     char last_payment_id[ULAB_MAX_ID];
     char last_payment_status[ULAB_MAX_REF];
+    uint32_t hardware_slot; /* RF-rack slot; zero for virtual/backend-only SIMs. */
     int  started;
     int  attached;
 } ue_t;
