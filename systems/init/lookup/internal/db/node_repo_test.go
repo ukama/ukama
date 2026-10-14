@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"context"
 	extsql "database/sql"
 	"log"
 	"regexp"
@@ -92,7 +93,7 @@ func Test_nodeRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		node, err := r.Get(id)
+		node, err := r.Get(context.Background(), id)
 
 		// Assert
 		assert.NoError(t, err)
@@ -139,7 +140,7 @@ func Test_nodeRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(id)
+		err = r.Delete(context.Background(), id)
 
 		// Assert
 		assert.NoError(t, err)
@@ -194,7 +195,7 @@ func Test_nodeRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.AddOrUpdate(&node)
+		err = r.AddOrUpdate(context.Background(), &node)
 
 		// Assert
 		assert.NoError(t, err)
