@@ -327,7 +327,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 	}
 
 	if n.msgbus != nil {
-		route := n.baseRoutingKey.SetActionUpdate().SetObject("status").MustBuild()
+		route := n.baseRoutingKey.SetAction("state.update").SetObject("node").MustBuild()
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
