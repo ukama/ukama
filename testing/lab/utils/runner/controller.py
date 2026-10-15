@@ -21,6 +21,7 @@ from common import AWS, RunnerError, atomic_json, now, read_json, run, sha256
 from config import HERE, ROOT, environment, executable, load_config, portable_vpn
 from artifacts import image_archive, payload, relative_scenarios
 from batch_summary import format_summary, summarize
+import cluster_metrics
 
 
 def lifecycle(work, name, message):
@@ -301,7 +302,8 @@ def launch(args):
              "ami": ami, "created_at": now(), "started_epoch": time.time(),
              "max_hours": cfg["MAX_WORKER_HOURS"], "boot_minutes": cfg["BOOT_TIMEOUT_MINUTES"],
              "fail_fast": args.fail_fast, "scenarios": scenarios, "workers": {},
-             "bootstrap_sha256": sha256(bootstrap)}
+             "bootstrap_sha256": sha256(bootstrap),
+             "source_sha256": source_digest}
     safe_cfg = {k: v for k, v in cfg.items() if k not in {"ENV", "VPN_CONFIG_FILE", "VPN_CONFIG_FILES", "VPN_AUTH_FILE", "KUBECTL_FILE", "KUBECONFIG_FILE"}}
     safe_cfg["AWS_S3_CIDRS"] = aws_s3_cidrs
     for index, assigned in enumerate(assignments):
@@ -324,6 +326,15 @@ def launch(args):
     aws.sync(input_dir, f"s3://{infra['Bucket']}/inputs/{batch}")
     atomic_json(work / "state.json", state)  # Saved before the first EC2 launch.
     lifecycle(work, "AWS", f"region={cfg['REGION']} stack={cfg['STACK_NAME']} instance_type={cfg['INSTANCE_TYPE']} disk={cfg['DISK_GB']} GiB AMI={ami}")
+    if getattr(args, "metrics", False):
+        cluster_metrics.safe_begin(work, {
+            "mode": "aws", "suite": args.suite,
+            "workers_requested": args.workers,
+            "selected": scenarios, "source_sha256": source_digest,
+            "image_sha256": image_info["sha256"],
+            "instance_type": cfg["INSTANCE_TYPE"],
+            "network_mode": cfg["NETWORK_MODE"],
+        })
     lifecycle(work, "AWS", f"workers requested={args.workers}, launching={len(assignments)} for {len(scenarios)} selected scenarios; no SSH required")
     if len(assignments) > 1:
         print("Starting worker-001 first; remaining workers launch after its infrastructure is ready", flush=True)
@@ -722,6 +733,9 @@ def monitor(work, state):
     confirm_termination(aws, work, state)
     print_report(work / "batch-report.txt")
     print(f"Reports: {work / 'batch-report.json'}", flush=True)
+    cluster_metrics.safe_collect(
+        work, partial=bool(summary["infrastructure_errors"]
+                           or summary["unfinished"]))
     return 2 if summary["infrastructure_errors"] or (summary["unfinished"] and not state["fail_fast"]) else (1 if summary["failed"] or summary["unfinished"] else 0)
 
 
@@ -745,6 +759,7 @@ def cleanup(work, state):
                 lifecycle(work, name, f"EC2 {instance['InstanceId']} termination requested (explicit cleanup)")
         confirm_termination(aws, work, state)
     print(f"Requested termination of {len(active)} batch instances. Available results: {work}")
+    cluster_metrics.safe_collect(work, wait=False, partial=True)
     return 0
 
 
@@ -758,8 +773,11 @@ def main():
     start.add_argument("--workers", type=int, default=1)
     start.add_argument("--fail-fast", action="store_true")
     start.add_argument("--prepare-only", action="store_true")
+    start.add_argument("--metrics", action="store_true")
     for action in ("resume", "cleanup"):
-        sub.add_parser(action).add_argument("--batch-dir", required=True)
+        command = sub.add_parser(action)
+        command.add_argument("--batch-dir", required=True)
+        command.add_argument("--metrics", action="store_true")
     args = parser.parse_args()
     if args.action == "launch":
         return launch(args)
@@ -770,6 +788,11 @@ def main():
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise RunnerError("another controller is already attached to this batch") from None
+        if args.metrics:
+            cluster_metrics.safe_begin(work, {
+                "mode": "aws", "suite": state.get("suite"),
+                "selected": state.get("scenarios", []),
+            })
         return monitor(work, state) if args.action == "resume" else cleanup(work, state)
 
 

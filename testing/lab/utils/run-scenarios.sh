@@ -53,6 +53,7 @@ Options:
   --hardware FILE            Physical rack inventory JSON (hardware provider only)
   --preflight-only           Check the selected hardware batch offline, then exit
   --workers N                AWS worker count (default: 1; sequential scenarios per worker)
+  --metrics                  Save cluster KPI history and reports for this batch
   --aws-config FILE          AWS settings (default: utils/runner/aws.json)
   --resume BATCH_DIR         Reattach to an AWS batch; never reruns scenarios
   --cleanup BATCH_DIR        Collect available results and terminate that AWS batch
@@ -64,6 +65,19 @@ Options:
   --list                     List selected scenarios and exit
   --fail-fast                Stop after the first failed scenario
   -h, --help                 Show this help
+
+Metrics (with --metrics):
+  PROMETHEUS_URL              Server (default: https://prometheus.udev.ukama.com)
+  PROMETHEUS_TOKEN            Optional bearer token; never saved or sent to workers
+  ULAB_RUNNER_METRICS_NAMESPACE  Namespace regex (default: ukama-.*)
+  ULAB_RUNNER_METRICS_SERVICE    Workload name regex (default: .*)
+  ULAB_RUNNER_METRICS_BEFORE     Baseline seconds (default: 600)
+  ULAB_RUNNER_METRICS_AFTER      Recovery seconds to observe (default: 600)
+  ULAB_RUNNER_METRICS_STEP       Query step seconds (default: 30)
+  ULAB_RUNNER_METRICS_TIMEOUT    Per-query timeout seconds (default: 15)
+  Reports: BATCH_DIR/metrics/report.txt, report.html, report.json, timeline.csv.
+  Historical collection runs on the controller after scenarios finish.
+  Standalone refresh/compare: python3 utils/runner/cluster_metrics.py --help
 
 Environment overrides:
   UKAMA_REPO                 Ukama repository root (not required for hardware)
@@ -157,6 +171,7 @@ SCENARIO_LIST_FILE=""
 BATCH_ID_OVERRIDE=""
 STATUS_FILE="${P0_STATUS_FILE:-}"
 RUN_MODE=local
+COLLECT_METRICS=0
 AWS_WORKERS=1
 AWS_WORKERS_SET=0
 AWS_CONFIG="utils/runner/aws.json"
@@ -170,6 +185,10 @@ PREFLIGHT_ONLY=0
 requested_selectors=()
 while (($#)); do
     case "$1" in
+        --metrics)
+            COLLECT_METRICS=1
+            shift
+            ;;
         --provider|--hardware)
             if (($# < 2)) || [[ -z "$2" || "$2" == --* ]]; then
                 printf 'error: %s requires a value\n' "$1" >&2
@@ -355,6 +374,8 @@ if [[ "$suite" == webapp && "$RUN_MODE" != local ]]; then
     printf 'error: webapp batches currently support --mode local only\n' >&2
     exit 2
 fi
+metrics_args=()
+((COLLECT_METRICS)) && metrics_args+=(--metrics)
 if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
     if [[ -n "$AWS_RESUME" && -n "$AWS_CLEANUP" ]] || ((LIST_ONLY || PREPARE_ONLY)) ||
        ((${#requested_selectors[@]})) || [[ -n "$SCENARIO_LIST_FILE" ]]; then
@@ -362,9 +383,9 @@ if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
         exit 2
     fi
     if [[ -n "$AWS_RESUME" ]]; then
-        exec python3 "$AWS_HELPER" resume --batch-dir "$AWS_RESUME"
+        exec python3 "$AWS_HELPER" resume --batch-dir "$AWS_RESUME" "${metrics_args[@]}"
     else
-        exec python3 "$AWS_HELPER" cleanup --batch-dir "$AWS_CLEANUP"
+        exec python3 "$AWS_HELPER" cleanup --batch-dir "$AWS_CLEANUP" "${metrics_args[@]}"
     fi
 fi
 
@@ -576,6 +597,7 @@ if [[ "$RUN_MODE" == aws ]]; then
         --lab-dir "$(pwd)" --repo "$UKAMA_REPO" --lab-bin "$LAB_BIN"
         --scenario-root "$SCENARIO_ROOT" --out "$P0_RUNS_DIR"
         --factory-nodes "$FACTORY_NODE_TARGET" --batch-id "$BATCH_ID_OVERRIDE")
+    aws_args+=("${metrics_args[@]}")
     ((FAIL_FAST)) && aws_args+=(--fail-fast)
     ((PREPARE_ONLY)) && aws_args+=(--prepare-only)
     export UKAMA_LAB_BFF="$BFF_GRAPHQL_URL" UKAMA_LAB_WAREHOUSE_URL="$WAREHOUSE_URL"
@@ -1018,6 +1040,11 @@ failed_count=0
 skipped_count=0
 STATUS_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 write_status RUNNING - 'starting batch'
+if ((COLLECT_METRICS)); then
+    python3 "$(dirname -- "$AWS_HELPER")/cluster_metrics.py" start \
+        "$BATCH_DIR" --suite "$suite" --binary "$LAB_BIN" \
+        --scenarios "${selected_scenarios[@]}" || true
+fi
 
 runner_hook_failed=0
 for scenario in "${selected_scenarios[@]}"; do
@@ -1213,6 +1240,12 @@ sys.exit(1 if payload["failed"] else 0)
 PY
 report_rc=$?
 write_status DONE - "batch_report_exit_code=$report_rc"
+if ((COLLECT_METRICS)); then
+    metrics_finish=(collect "$BATCH_DIR" --wait)
+    ((runner_hook_failed)) && metrics_finish+=(--partial)
+    python3 "$(dirname -- "$AWS_HELPER")/cluster_metrics.py" \
+        "${metrics_finish[@]}" || true
+fi
 if ((runner_hook_failed)); then
     exit 70
 fi
