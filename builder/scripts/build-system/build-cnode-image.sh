@@ -35,6 +35,7 @@ RAW_IMG="cnode-image.img"
 IMG_SIZE="28800M"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
+BUILDENV_DIR=${UKAMA_ROOT}/builder/scripts/build-system/buildenv
 FIRMWARE_ZIP_URL="https://github.com/raspberrypi/firmware/archive/refs/heads/master.zip"
 FIRMWARE_DIR="/tmp/rpi-firmware"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
@@ -77,7 +78,7 @@ restore_configs() {
 
 remove_build_dirs() {
     local dir
-    for dir in "${SCRIPT_DIR}/buildenv" "${ROOTFS_DIR}"; do
+    for dir in "${BUILDENV_DIR}" "${ROOTFS_DIR}"; do
         if [ -x "${dir}/destroy" ]; then
             "${dir}/destroy" --remove || log "ERROR" "Could not remove ${dir}"
         elif [ -d "${dir}" ]; then
@@ -85,6 +86,14 @@ remove_build_dirs() {
         fi
     done
     rm -rf "${SCRIPT_DIR}/mocksysfs" || log "ERROR" "Could not remove ${SCRIPT_DIR}/mocksysfs"
+}
+
+give_files_back() {
+    local owner
+    owner=$(stat -c '%u:%g' "${UKAMA_ROOT}")
+    log "INFO" "Giving the build files back to ${owner}"
+    find "${UKAMA_ROOT}" -xdev \( -path "${BUILDENV_DIR}" -o -path "${ROOTFS_DIR}" \) -prune \
+        -o -uid 0 -exec chown -h "${owner}" {} + || log "ERROR" "Could not give all files back to ${owner}"
 }
 
 cleanup() {
@@ -99,6 +108,7 @@ cleanup() {
         LOOPDISK=""
     fi
     remove_build_dirs
+    give_files_back
 }
 trap cleanup EXIT
 
@@ -418,5 +428,6 @@ done
 
 sync
 cleanup
+trap - EXIT
 log "SUCCESS" "Image ${RAW_IMG} created (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
