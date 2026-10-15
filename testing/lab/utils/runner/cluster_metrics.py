@@ -390,6 +390,8 @@ def main():
                        help="wait for the configured recovery window")
     fetch.add_argument("--partial", action="store_true",
                        help="batch was interrupted or is still running")
+    render = sub.add_parser("render", help="rebuild HTML/text from saved JSON")
+    render.add_argument("batch", type=Path)
     diff = sub.add_parser("compare", help="compare saved metrics reports")
     diff.add_argument("batches", nargs="+", type=Path)
     diff.add_argument("--output", type=Path)
@@ -405,6 +407,12 @@ def main():
             begin(args.batch, metadata)
         elif args.action == "collect":
             collect(args.batch, args.wait, args.partial)
+        elif args.action == "render":
+            from cluster_dashboard import write_outputs
+            directory = args.batch / "metrics"
+            write_outputs(directory, read(directory / "report.json"))
+            print(f"Metrics: {directory / 'report.html'}")
+            print(f"Metrics: {directory / 'report.txt'}")
         else:
             result = compare(args.batches)
             if args.output:

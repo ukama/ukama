@@ -502,68 +502,8 @@ def svg_chart(series, windows, step, ceiling=None):
 
 
 def write_report(directory, report):
-    sections = report_sections(report)
-    text = "Ukama cluster KPI report\n\n" + "\n\n".join(
-        title + "\n" + table(headers, rows)
-        for title, headers, rows in sections)
-    text += "\n\nInterpretation\n" + "\n".join(report["notes"]) + "\n"
-    (directory / "report.txt").write_text(text)
-    escape = lambda value: html.escape(str(value))
-    body = ['<!doctype html><html lang="en"><meta charset="utf-8">',
-            '<meta name="viewport" '
-            'content="width=device-width,initial-scale=1">',
-            '<title>Ukama cluster KPI report</title><style>',
-            'body{font:14px system-ui;color:#182333;margin:32px}',
-            'table{border-collapse:collapse;width:100%;margin:16px 0 32px}',
-            'td,th{padding:8px;border:1px solid #d7dee7;text-align:left}',
-            'th{background:#edf2f8}td{overflow-wrap:anywhere}',
-            'svg{width:100%;max-width:900px;border-bottom:1px solid #ddd}',
-            'details{margin:20px 0}h1,h2{color:#22436d}</style><body>',
-            '<h1>Ukama cluster KPI report</h1>']
-    for title, headers, rows in sections:
-        body.append('<h2>' + escape(title) + '</h2><table><thead><tr>')
-        body.extend('<th>' + escape(h) + '</th>' for h in headers)
-        body.append('</tr></thead><tbody>')
-        for row in rows:
-            body.append('<tr>' + ''.join('<td>' + escape(v) + '</td>'
-                                        for v in row) + '</tr>')
-        body.append('</tbody></table>')
-    body.append('<h2>Metric history</h2><p>Shaded: scenario execution. '
-                'Left: baseline. Right: recovery. '
-                'Each plot has its own scale.</p>')
-    for service in report["services"]:
-        body.append('<details><summary>' + escape(service["service"])
-                    + '</summary>')
-        for metric in ("cpu_mcpu", "memory_mib", "grpc_rps", "db_rps",
-                       "rx_bps", "tx_bps", "replicas", "desired"):
-            series = service["series"].get(metric, [])
-            peak = max((v for _, v in series), default=None)
-            body.append('<p>' + escape(METRICS[metric]) + ' — plot peak '
-                        + escape(value(peak)) + '</p>')
-            body.append(svg_chart(series, report["windows"],
-                                  report["config"]["step"]))
-        body.append('</details>')
-    body.append('<h2>Container and node resource history</h2>')
-    for scope, items, labels, metrics in (
-            ("Container", report.get("containers", []), resources.LABELS,
-             ("cpu_limit_pct", "cpu_throttle_pct", "memory_limit_pct",
-              "cpu_psi_pct", "memory_psi_pct")),
-            ("Node", report.get("nodes", []), resources.NODE_LABELS,
-             ("cpu_busy_pct", "memory_used_pct", "cpu_psi_pct",
-              "memory_psi_pct"))):
-        for item in items:
-            body.append('<details><summary>' + scope + ' '
-                        + escape(item["identity"]) + '</summary>')
-            for metric in metrics:
-                body.append('<p>' + escape(labels[metric]) + '</p>')
-                body.append(svg_chart(item["series"].get(metric, []),
-                                      report["windows"],
-                                      report["config"]["step"], ceiling=100))
-            body.append('</details>')
-    body.append('<h2>Interpretation</h2><ul>')
-    body.extend('<li>' + escape(note) + '</li>' for note in report["notes"])
-    body.append('</ul></body></html>')
-    (directory / "report.html").write_text("\n".join(body))
+    from cluster_dashboard import write_outputs
+    write_outputs(directory, report)
     with (directory / "timeline.csv").open("w", newline="") as stream:
         writer = csv.writer(stream)
         writer.writerow(["utc", "epoch", "phase", "active_scenarios",
