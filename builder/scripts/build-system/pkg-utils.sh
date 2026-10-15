@@ -331,7 +331,7 @@ function copy_required_libs() {
     log "INFO" "Installing required libs from ${lib_pkg}"
     tmp_dir=$(mktemp -d)
     tar -zxf "${lib_pkg}/vendor_libs.tgz" -C "$tmp_dir"
-    cp -f "${tmp_dir}"/* "${dest}/"
+    cp -f "${tmp_dir}"/* "${dest}/" && rm -rf "${tmp_dir}"
 }
 
 get_enabled_apps() {
