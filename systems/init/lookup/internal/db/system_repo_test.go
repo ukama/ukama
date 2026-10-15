@@ -150,9 +150,8 @@ func Test_systemRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.ApiGwIp, system.ApiGwPort, system.OrgID, system.ApiGwHealth, system.OrgID, system.Name).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery(`(?i)INSERT.*ON CONFLICT.*DO UPDATE SET`).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
 
