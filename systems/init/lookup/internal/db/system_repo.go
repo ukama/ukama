@@ -51,13 +51,13 @@ func (s *systemRepo) Add(sys *System) error {
 }
 
 func (s *systemRepo) Update(sys *System, id uint) error {
-	d := s.Db.GetGormDb().Preload("Org").Where(&System{Name: sys.Name, OrgID: id}).Updates(sys)
+	d := s.Db.GetGormDb().Where(&System{Name: sys.Name, OrgID: id}).Updates(sys)
 	return d.Error
 }
 
 func (s *systemRepo) Delete(sys string, id uint) error {
 	var system System
-	result := s.Db.GetGormDb().Preload("Org").Unscoped().Delete(&system, "name = ? and org_id = ?", strings.ToLower(sys), id)
+	result := s.Db.GetGormDb().Unscoped().Delete(&system, "name = ? and org_id = ?", strings.ToLower(sys), id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -72,7 +72,7 @@ func (s *systemRepo) Delete(sys string, id uint) error {
 
 func (s *systemRepo) GetByName(sys string, id uint) (*System, error) {
 	system := &System{}
-	result := s.Db.GetGormDb().Preload("Org").First(system, "name = ? and org_id = ?", strings.ToLower(sys), id)
+	result := s.Db.GetGormDb().First(system, "name = ? and org_id = ?", strings.ToLower(sys), id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
