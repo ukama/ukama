@@ -49,7 +49,7 @@ func (r *nodeRepo) Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error) 
 
 func (r *nodeRepo) Delete(ctx context.Context, nodeId ukama.NodeID) error {
 	var node Node
-	result := r.Db.GetGormDb().WithContext(ctx).Unscoped().Preload(clause.Associations).Delete(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().WithContext(ctx).Unscoped().Delete(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return result.Error
 	}
