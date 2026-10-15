@@ -97,6 +97,7 @@ give_files_back() {
 }
 
 cleanup() {
+    local status=$?
     restore_configs
     if [ -n "$LOOPDISK" ]; then
         log "INFO" "Cleaning up resources..."
@@ -109,6 +110,9 @@ cleanup() {
     fi
     remove_build_dirs
     give_files_back
+    if [ "${status}" -ne 0 ]; then
+        log "ERROR" "Script failed at stage: ${STAGE}"
+    fi
 }
 trap cleanup EXIT
 
