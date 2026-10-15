@@ -41,14 +41,10 @@ BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
 HIDDEN_CONFIGS=""
 
-case "${1:-}" in
-    "")           IMAGE_ONLY=0 ;;
-    --image-only) IMAGE_ONLY=1 ;;
-    *)
-        echo "Usage: $0 [--image-only]"
-        exit 1
-        ;;
-esac
+if [ $# -ne 0 ]; then
+    echo "Usage: $0"
+    exit 1
+fi
 
 log() {
     local type="$1"
@@ -103,20 +99,20 @@ check_tools() {
 check_prerequisites() {
     STAGE="check_prerequisites"
     [ -x "${ROOTFS_DIR}/sbin/starter.d" ] || {
-        log "ERROR" "No rootfs at ${ROOTFS_DIR}. Run $0 without --image-only to build it"
+        log "ERROR" "Rootfs build failed: no starter.d in ${ROOTFS_DIR}"
         exit 1
     }
     # x86 image builds (com, amplifier) use the same rootfs folder
     [ -e "${ROOTFS_DIR}/lib/ld-musl-aarch64.so.1" ] || {
-        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not aarch64. Run $0 without --image-only to build it"
+        log "ERROR" "Rootfs build failed: ${ROOTFS_DIR} is not aarch64"
         exit 1
     }
     [ -f "${ROOTFS_DIR}/ukama/mocksysfs/mfgdata/schema/cnode.json" ] || {
-        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not complete. Run $0 without --image-only to build it"
+        log "ERROR" "Rootfs build failed: no cnode schema in ${ROOTFS_DIR}"
         exit 1
     }
     [ -d "${UKAMA_REPO_APP_PKG}" ] && [ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ] || {
-        log "ERROR" "No apps in ${UKAMA_ROOT}/build. Run $0 without --image-only to build them"
+        log "ERROR" "Apps build failed: no apps or libs in ${UKAMA_ROOT}/build"
         exit 1
     }
     log "SUCCESS" "Prerequisites OK"
@@ -380,10 +376,8 @@ if [[ ${#APPS[@]} -eq 0 ]]; then
 fi
 log "INFO" "Apps: ${APPS[*]}"
 
-if [ "${IMAGE_ONLY}" -eq 0 ]; then
-    build_apps
-    build_rootfs
-fi
+build_apps
+build_rootfs
 
 check_prerequisites
 download_firmware
