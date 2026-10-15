@@ -54,6 +54,7 @@ Options:
   --preflight-only           Check the selected hardware batch offline, then exit
   --workers N                AWS worker count (default: 1; sequential scenarios per worker)
   --metrics                  Save cluster KPI history and reports for this batch
+  --dashboard                Open the dashboard after reporting (implies --metrics)
   --aws-config FILE          AWS settings (default: utils/runner/aws.json)
   --resume BATCH_DIR         Reattach to an AWS batch; never reruns scenarios
   --cleanup BATCH_DIR        Collect available results and terminate that AWS batch
@@ -75,6 +76,7 @@ Metrics (with --metrics):
   ULAB_RUNNER_METRICS_AFTER      Recovery seconds to observe (default: 600)
   ULAB_RUNNER_METRICS_STEP       Query step seconds (default: 30)
   ULAB_RUNNER_METRICS_TIMEOUT    Per-query timeout seconds (default: 15)
+  ULAB_DASHBOARD_COMMAND      Browser command (default: xdg-open; arguments allowed)
   Reports: BATCH_DIR/metrics/report.txt, report.html, report.json, timeline.csv.
   Historical collection runs on the controller after scenarios finish.
   Standalone refresh/compare: python3 utils/runner/cluster_metrics.py --help
@@ -172,6 +174,7 @@ BATCH_ID_OVERRIDE=""
 STATUS_FILE="${P0_STATUS_FILE:-}"
 RUN_MODE=local
 COLLECT_METRICS=0
+OPEN_DASHBOARD=0
 AWS_WORKERS=1
 AWS_WORKERS_SET=0
 AWS_CONFIG="utils/runner/aws.json"
@@ -187,6 +190,11 @@ while (($#)); do
     case "$1" in
         --metrics)
             COLLECT_METRICS=1
+            shift
+            ;;
+        --dashboard)
+            COLLECT_METRICS=1
+            OPEN_DASHBOARD=1
             shift
             ;;
         --provider|--hardware)
@@ -376,6 +384,7 @@ if [[ "$suite" == webapp && "$RUN_MODE" != local ]]; then
 fi
 metrics_args=()
 ((COLLECT_METRICS)) && metrics_args+=(--metrics)
+((OPEN_DASHBOARD)) && metrics_args+=(--dashboard)
 if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
     if [[ -n "$AWS_RESUME" && -n "$AWS_CLEANUP" ]] || ((LIST_ONLY || PREPARE_ONLY)) ||
        ((${#requested_selectors[@]})) || [[ -n "$SCENARIO_LIST_FILE" ]]; then
@@ -1242,6 +1251,7 @@ report_rc=$?
 write_status DONE - "batch_report_exit_code=$report_rc"
 if ((COLLECT_METRICS)); then
     metrics_finish=(collect "$BATCH_DIR" --wait)
+    ((OPEN_DASHBOARD)) && metrics_finish+=(--dashboard)
     ((runner_hook_failed)) && metrics_finish+=(--partial)
     python3 "$(dirname -- "$AWS_HELPER")/cluster_metrics.py" \
         "${metrics_finish[@]}" || true

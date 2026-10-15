@@ -9,6 +9,8 @@ import math
 import os
 from pathlib import Path
 import re
+import shlex
+import subprocess
 import sys
 import time
 import urllib.error
@@ -343,11 +345,41 @@ def collect(batch, wait=False, partial=False):
     return report
 
 
-def safe_collect(batch, wait=True, partial=False):
+def open_dashboard(batch):
+    report = (Path(batch) / "metrics/report.html").resolve()
+    print(f"Dashboard: {report}", flush=True)
+    try:
+        if not report.is_file():
+            raise OSError("report.html was not generated")
+        command = shlex.split(
+            os.environ.get("ULAB_DASHBOARD_COMMAND") or "xdg-open")
+        if not command:
+            raise ValueError("ULAB_DASHBOARD_COMMAND must name a program")
+        log = report.with_name("dashboard-open.log")
+        with log.open("w") as output:
+            process = subprocess.Popen(
+                [*command, report.as_uri()], stdin=subprocess.DEVNULL,
+                stdout=output, stderr=subprocess.STDOUT,
+                start_new_session=True)
+        try:
+            status = process.wait(timeout=2)
+        except subprocess.TimeoutExpired:
+            # A browser may stay running until its window is closed.
+            return
+        if status:
+            raise OSError(f"browser command exited {status}; see {log}")
+    except (OSError, ValueError) as exc:
+        print(f"Dashboard warning: {exc}; open {report} manually.",
+              file=sys.stderr, flush=True)
+
+
+def safe_collect(batch, wait=True, partial=False, dashboard=False):
     if not (Path(batch) / "metrics/config.json").exists():
         return
     try:
         collect(batch, wait, partial)
+        if dashboard:
+            open_dashboard(batch)
     except Exception as exc:
         # Optional observation must never change the batch verdict.
         print(f"Metrics warning: {exc}", file=sys.stderr, flush=True)
@@ -390,6 +422,8 @@ def main():
                        help="wait for the configured recovery window")
     fetch.add_argument("--partial", action="store_true",
                        help="batch was interrupted or is still running")
+    fetch.add_argument("--dashboard", action="store_true",
+                       help="open the dashboard after collection")
     render = sub.add_parser("render", help="rebuild HTML/text from saved JSON")
     render.add_argument("batch", type=Path)
     diff = sub.add_parser("compare", help="compare saved metrics reports")
@@ -407,6 +441,8 @@ def main():
             begin(args.batch, metadata)
         elif args.action == "collect":
             collect(args.batch, args.wait, args.partial)
+            if args.dashboard:
+                open_dashboard(args.batch)
         elif args.action == "render":
             from cluster_dashboard import write_outputs
             directory = args.batch / "metrics"

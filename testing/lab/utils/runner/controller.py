@@ -326,7 +326,7 @@ def launch(args):
     aws.sync(input_dir, f"s3://{infra['Bucket']}/inputs/{batch}")
     atomic_json(work / "state.json", state)  # Saved before the first EC2 launch.
     lifecycle(work, "AWS", f"region={cfg['REGION']} stack={cfg['STACK_NAME']} instance_type={cfg['INSTANCE_TYPE']} disk={cfg['DISK_GB']} GiB AMI={ami}")
-    if getattr(args, "metrics", False):
+    if getattr(args, "metrics", False) or getattr(args, "dashboard", False):
         cluster_metrics.safe_begin(work, {
             "mode": "aws", "suite": args.suite,
             "workers_requested": args.workers,
@@ -386,7 +386,8 @@ def launch(args):
     # Runtime credentials need not remain in local staging after every worker has an input.
     shutil.rmtree(input_dir)
     try:
-        return monitor(work, state)
+        return monitor(work, state,
+                       dashboard=getattr(args, "dashboard", False))
     finally:
         batch_lock.close()
 
@@ -634,7 +635,7 @@ def console_diagnostics(aws, work, name, iid):
             "available": True}
 
 
-def monitor(work, state):
+def monitor(work, state, dashboard=False):
     aws = AWS(state["region"])
     verify_account(aws, state)
     print(f"Monitoring batch. Ctrl-C detaches; reattach with --mode aws --resume {work}", flush=True)
@@ -735,11 +736,11 @@ def monitor(work, state):
     print(f"Reports: {work / 'batch-report.json'}", flush=True)
     cluster_metrics.safe_collect(
         work, partial=bool(summary["infrastructure_errors"]
-                           or summary["unfinished"]))
+                           or summary["unfinished"]), dashboard=dashboard)
     return 2 if summary["infrastructure_errors"] or (summary["unfinished"] and not state["fail_fast"]) else (1 if summary["failed"] or summary["unfinished"] else 0)
 
 
-def cleanup(work, state):
+def cleanup(work, state, dashboard=False):
     aws = AWS(state["region"])
     verify_account(aws, state)
     # Preserve everything already uploaded before explicitly terminating active workers.
@@ -759,7 +760,8 @@ def cleanup(work, state):
                 lifecycle(work, name, f"EC2 {instance['InstanceId']} termination requested (explicit cleanup)")
         confirm_termination(aws, work, state)
     print(f"Requested termination of {len(active)} batch instances. Available results: {work}")
-    cluster_metrics.safe_collect(work, wait=False, partial=True)
+    cluster_metrics.safe_collect(work, wait=False, partial=True,
+                                 dashboard=dashboard)
     return 0
 
 
@@ -774,10 +776,12 @@ def main():
     start.add_argument("--fail-fast", action="store_true")
     start.add_argument("--prepare-only", action="store_true")
     start.add_argument("--metrics", action="store_true")
+    start.add_argument("--dashboard", action="store_true")
     for action in ("resume", "cleanup"):
         command = sub.add_parser(action)
         command.add_argument("--batch-dir", required=True)
         command.add_argument("--metrics", action="store_true")
+        command.add_argument("--dashboard", action="store_true")
     args = parser.parse_args()
     if args.action == "launch":
         return launch(args)
@@ -788,12 +792,13 @@ def main():
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise RunnerError("another controller is already attached to this batch") from None
-        if args.metrics:
+        if args.metrics or args.dashboard:
             cluster_metrics.safe_begin(work, {
                 "mode": "aws", "suite": state.get("suite"),
                 "selected": state.get("scenarios", []),
             })
-        return monitor(work, state) if args.action == "resume" else cleanup(work, state)
+        action = monitor if args.action == "resume" else cleanup
+        return action(work, state, dashboard=args.dashboard)
 
 
 if __name__ == "__main__":
