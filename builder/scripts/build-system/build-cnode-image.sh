@@ -117,7 +117,7 @@ cleanup() {
 trap cleanup EXIT
 
 check_tools() {
-    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap e2label rsync wget unzip truncate; do
+    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip truncate jq readelf; do
         command -v "$cmd" >/dev/null || { log "ERROR" "'$cmd' not found"; exit 1; }
     done
 }
@@ -135,10 +135,6 @@ check_prerequisites() {
     }
     [ -f "${ROOTFS_DIR}/ukama/mocksysfs/mfgdata/schema/cnode.json" ] || {
         log "ERROR" "Rootfs build failed: no cnode schema in ${ROOTFS_DIR}"
-        exit 1
-    }
-    [ -d "${UKAMA_REPO_APP_PKG}" ] && [ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ] || {
-        log "ERROR" "Apps build failed: no apps or libs in ${UKAMA_ROOT}/build"
         exit 1
     }
     log "SUCCESS" "Prerequisites OK"
@@ -231,10 +227,6 @@ format_partitions() {
     sudo mkfs.ext4 -F -L data     "${DISK}7"
     sudo mkswap -L swap "${DISK}8"
     check_status $? "Partitions formatted" ${STAGE}
-
-    [ "$(sudo e2label "${DISK}5")" = "primary" ] && \
-        [ "$(sudo e2label "${DISK}6")" = "passive" ]
-    check_status $? "Partition labels confirmed" ${STAGE}
 }
 
 mount_partition() {
@@ -433,5 +425,10 @@ done
 sync
 cleanup
 trap - EXIT
+
+./validate-cnode-image.sh "${RAW_IMG}" || {
+    log "ERROR" "Image ${RAW_IMG} failed validation"
+    exit 1
+}
 log "SUCCESS" "Image ${RAW_IMG} created (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0

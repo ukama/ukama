@@ -29,6 +29,8 @@ The apps are listed in `builder/boards/common.config` and `builder/boards/cnode.
 
 ## Check
 
+The build checks the image at the end with `validate-cnode-image.sh`. To check it again:
+
     sudo builder/scripts/build-system/validate-cnode-image.sh builder/scripts/build-system/cnode-image.img
 
 Two checks fail, `primary mock sysfs` and `passive mock sysfs`. This is expected because the sysfs is added when the board is flashed.
