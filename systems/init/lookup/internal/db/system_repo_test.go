@@ -125,63 +125,63 @@ func Test_systemRepo_Delete(t *testing.T) {
 
 }
 
-// func Test_systemRepo_Add(t *testing.T) {
-// 	t.Run("Add_WithExistingSystemNameandOrgID", func(t *testing.T) {
-// 		// Arrange
-// 		const ip = "0.0.0.0"
-// 		const orgId = uint(15)
+func Test_systemRepo_Add(t *testing.T) {
+	t.Run("Add_WithExistingSystemNameandOrgID", func(t *testing.T) {
+		// Arrange
+		const ip = "0.0.0.0"
+		const orgId = uint(15)
 
-// 		var dIp pgtype.Inet
-// 		err := dIp.Set(ip)
-// 		assert.NoError(t, err)
+		var dIp pgtype.Inet
+		err := dIp.Set(ip)
+		assert.NoError(t, err)
 
-// 		system := int_db.System{
-// 			Name:        "sys",
-// 			Certificate: "sys_certs",
-// 			ApiGwIp:     dIp,
-// 			ApiGwPort:   8080,
-// 			Uuid:        uuid.NewV4().String(),
-// 			OrgID:       orgId,
-// 			ApiGwHealth: 100,
-// 		}
+		system := int_db.System{
+			Name:        "sys",
+			Certificate: "sys_certs",
+			ApiGwIp:     dIp,
+			ApiGwPort:   8080,
+			Uuid:        uuid.NewV4().String(),
+			OrgID:       orgId,
+			ApiGwHealth: 100,
+		}
 
-// 		var db *extsql.DB
+		var db *extsql.DB
 
-// 		db, mock, err := sqlmock.New() // mock sql.DB
-// 		assert.NoError(t, err)
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
 
-// 		mock.ExpectBegin()
-// 		mock.ExpectQuery(`(?i)INSERT.*ON CONFLICT.*DO UPDATE SET`).
-// 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
+		mock.ExpectBegin()
+		mock.ExpectQuery(`(?i)INSERT.*ON CONFLICT.*DO UPDATE SET`).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
-// 		mock.ExpectCommit()
+		mock.ExpectCommit()
 
-// 		dialector := postgres.New(postgres.Config{
-// 			DSN:                  "sqlmock_db_0",
-// 			DriverName:           "postgres",
-// 			Conn:                 db,
-// 			PreferSimpleProtocol: true,
-// 		})
-// 		gdb, err := gorm.Open(dialector, &gorm.Config{})
-// 		assert.NoError(t, err)
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
 
-// 		r := int_db.NewSystemRepo(&UkamaDbMock{
-// 			GormDb: gdb,
-// 		})
+		r := int_db.NewSystemRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
 
-// 		assert.NoError(t, err)
+		assert.NoError(t, err)
 
-// 		// Act
-// 		err = r.Add(context.Background(), &system)
+		// Act
+		err = r.Add(context.Background(), &system)
 
-// 		// Assert
-// 		assert.NoError(t, err)
+		// Assert
+		assert.NoError(t, err)
 
-// 		err = mock.ExpectationsWereMet()
-// 		assert.NoError(t, err)
-// 	})
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
 
-// }
+}
 
 func Test_systemRepo_Update(t *testing.T) {
 
