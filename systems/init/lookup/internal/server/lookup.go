@@ -52,8 +52,8 @@ func NewLookupServer(nodeRepo db.NodeRepo, orgRepo db.OrgRepo, systemRepo db.Sys
 	}
 }
 
-func (l *LookupServer) getOrg(name string) (*db.Org, error) {
-	org, err := l.orgRepo.GetByName(name)
+func (l *LookupServer) getOrg(ctx context.Context, name string) (*db.Org, error) {
+	org, err := l.orgRepo.GetByName(ctx, name)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -84,7 +84,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 		Ip:          orgIp,
 	}
 
-	err = l.orgRepo.Add(org)
+	err = l.orgRepo.Add(ctx, org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -95,7 +95,7 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	dbOrg, err := l.getOrg(org.Name)
+	dbOrg, err := l.getOrg(ctx, org.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +115,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		Certificate: req.GetCertificate(),
 	}
 
-	_, err := l.orgRepo.GetByName(req.OrgName)
+	_, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -127,7 +127,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		}
 	}
 
-	err = l.orgRepo.Update(org)
+	err = l.orgRepo.Update(ctx, org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -138,7 +138,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	dbOrg, err := l.getOrg(org.Name)
+	dbOrg, err := l.getOrg(ctx, org.Name)
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) 
 func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.GetOrgResponse, error) {
 	log.Infof("Get Organization %s", req.OrgName)
 
-	dbOrg, err := l.getOrg(req.OrgName)
+	dbOrg, err := l.getOrg(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -170,7 +170,7 @@ func (l *LookupServer) GetOrg(ctx context.Context, req *pb.GetOrgRequest) (*pb.G
 func (l *LookupServer) GetOrgs(ctx context.Context, req *pb.GetOrgsRequest) (*pb.GetOrgsResponse, error) {
 	log.Info("Get Organizations")
 
-	dbOrgs, err := l.orgRepo.GetAll()
+	dbOrgs, err := l.orgRepo.GetAll(ctx)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -196,12 +196,12 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.GetNodeId(), err.Error())
 	}
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	err = l.nodeRepo.AddOrUpdate(&db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
+	err = l.nodeRepo.AddOrUpdate(ctx, &db.Node{NodeID: id.StringLowercase(), OrgID: org.ID})
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -212,7 +212,7 @@ func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	dbNode, err := l.nodeRepo.Get(id)
+	dbNode, err := l.nodeRepo.Get(ctx, id)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -231,7 +231,7 @@ func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb
 		return nil, invalidNodeIdError(req.NodeId, err)
 	}
 
-	node, err := l.nodeRepo.Get(nodeId)
+	node, err := l.nodeRepo.Get(ctx, nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -249,7 +249,7 @@ func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb
 func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Get node %s for org %s.", req.GetNodeId(), req.GetOrgName())
 
-	_, err := l.orgRepo.GetByName(req.OrgName)
+	_, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -259,7 +259,7 @@ func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgR
 		return nil, invalidNodeIdError(req.NodeId, err)
 	}
 
-	node, err := l.nodeRepo.Get(nodeId)
+	node, err := l.nodeRepo.Get(ctx, nodeId)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
@@ -280,12 +280,12 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 		return nil, invalidNodeIdError(req.NodeId, err)
 	}
 
-	_, err = l.orgRepo.GetByName(req.OrgName)
+	_, err = l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	err = l.nodeRepo.Delete(nodeId)
+	err = l.nodeRepo.Delete(ctx, nodeId)
 	if err != nil {
 		if strings.Contains(err.Error(), "node missing") {
 			return nil, status.Errorf(codes.NotFound, "Unable to Delete node %s for %s org. Error %s",
@@ -304,9 +304,9 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 	return &pb.DeleteNodeResponse{}, nil
 }
 
-func (l *LookupServer) getSystem(name string, org uint) (*db.System, error) {
+func (l *LookupServer) getSystem(ctx context.Context, name string, org uint) (*db.System, error) {
 
-	system, err := l.systemRepo.GetByName(name, org)
+	system, err := l.systemRepo.GetByName(ctx, name, org)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
@@ -314,7 +314,7 @@ func (l *LookupServer) getSystem(name string, org uint) (*db.System, error) {
 
 }
 
-func (l *LookupServer) getOrgDetails(orgId, orgName string) (*db.Org, error) {
+func (l *LookupServer) getOrgDetails(ctx context.Context, orgId, orgName string) (*db.Org, error) {
 	var err error
 	var org *db.Org
 	if orgName == "" {
@@ -323,12 +323,12 @@ func (l *LookupServer) getOrgDetails(orgId, orgName string) (*db.Org, error) {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		org, err = l.orgRepo.GetById(id)
+		org, err = l.orgRepo.GetById(ctx, id)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "org")
 		}
 	} else {
-		org, err = l.orgRepo.GetByName(orgName)
+		org, err = l.orgRepo.GetByName(ctx, orgName)
 		if err != nil {
 			return nil, grpc.SqlErrorToGrpc(err, "org")
 		}
@@ -339,14 +339,14 @@ func (l *LookupServer) getOrgDetails(orgId, orgName string) (*db.Org, error) {
 
 func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemRequest) (*pb.GetSystemResponse, error) {
 
-	org, err := l.getOrgDetails(req.OrgId, req.OrgName)
+	org, err := l.getOrgDetails(ctx, req.OrgId, req.OrgName)
 	if err != nil {
 		log.Errorf("error getting org %s: %v", req.OrgId, err)
 		return nil, err
 	}
 
 	log.Infof("Requesting System %s info for org  %s", req.GetSystemName(), req.GetOrgName())
-	system, err := l.getSystem(req.GetSystemName(), org.ID)
+	system, err := l.getSystem(ctx, req.GetSystemName(), org.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -371,7 +371,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	var sysIp pgtype.Inet
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
@@ -383,7 +383,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 	 * yet know about gets a new one. */
 	isNewSystem := false
 
-	existing, err := l.systemRepo.GetByName(systemName, org.ID)
+	existing, err := l.systemRepo.GetByName(ctx, systemName, org.ID)
 	if err != nil {
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, grpc.SqlErrorToGrpc(err, "system")
@@ -429,7 +429,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 
 	log.Debugf("System details: %+v", sys)
 
-	err = l.systemRepo.Add(sys)
+	err = l.systemRepo.Add(ctx, sys)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
@@ -444,7 +444,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 		}
 	}
 
-	resp, err := l.getSystem(sys.Name, org.ID)
+	resp, err := l.getSystem(ctx, sys.Name, org.ID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
@@ -470,12 +470,12 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
 	log.Infof("Updating system %s for org  %s", req.GetSystemName(), req.GetOrgName())
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	_, err = l.systemRepo.GetByName(req.SystemName, org.ID)
+	_, err = l.systemRepo.GetByName(ctx, req.SystemName, org.ID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
@@ -510,7 +510,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 
 	log.Debugf("System details: %+v", sys)
 
-	err = l.systemRepo.Update(sys, org.ID)
+	err = l.systemRepo.Update(ctx, sys, org.ID)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "Unable to add system %s to %s org. Error %s",
 			req.SystemName, req.OrgName, err.Error())
@@ -522,7 +522,7 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		log.Errorf("Failed to publish message %+v with key %+v. Errors %s", req, route, err.Error())
 	}
 
-	dbSystem, err := l.getSystem(sys.Name, org.ID)
+	dbSystem, err := l.getSystem(ctx, sys.Name, org.ID)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "system")
 	}
@@ -549,12 +549,12 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
 	log.Infof("Deleting System %s from org  %s", req.GetSystemName(), req.GetOrgName())
 
-	org, err := l.orgRepo.GetByName(req.OrgName)
+	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "org")
 	}
 
-	err = l.systemRepo.Delete(req.SystemName, org.ID)
+	err = l.systemRepo.Delete(ctx, req.SystemName, org.ID)
 	if err != nil {
 		if strings.Contains(err.Error(), "system missing") {
 			return nil, status.Errorf(codes.NotFound, "Unable to Delete system %s from %s org. Error %s",

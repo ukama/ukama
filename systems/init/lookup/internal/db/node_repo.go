@@ -9,6 +9,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -17,9 +18,9 @@ import (
 )
 
 type NodeRepo interface {
-	AddOrUpdate(node *Node) error
-	Get(nodeId ukama.NodeID) (*Node, error)
-	Delete(nodeId ukama.NodeID) error
+	AddOrUpdate(ctx context.Context, node *Node) error
+	Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error)
+	Delete(ctx context.Context, nodeId ukama.NodeID) error
 }
 
 type nodeRepo struct {
@@ -32,23 +33,23 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 	}
 }
 
-func (r *nodeRepo) AddOrUpdate(node *Node) error {
-	d := r.Db.GetGormDb().Create(node)
+func (r *nodeRepo) AddOrUpdate(ctx context.Context, node *Node) error {
+	d := r.Db.GetGormDb().WithContext(ctx).Create(node)
 	return d.Error
 }
 
-func (r *nodeRepo) Get(nodeId ukama.NodeID) (*Node, error) {
+func (r *nodeRepo) Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().WithContext(ctx).Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &node, nil
 }
 
-func (r *nodeRepo) Delete(nodeId ukama.NodeID) error {
+func (r *nodeRepo) Delete(ctx context.Context, nodeId ukama.NodeID) error {
 	var node Node
-	result := r.Db.GetGormDb().Unscoped().Delete(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().WithContext(ctx).Unscoped().Preload(clause.Associations).Delete(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return result.Error
 	}

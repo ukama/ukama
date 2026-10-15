@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/init/lookup/internal/db"
 
@@ -14,17 +16,17 @@ type OrgRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: org
-func (_m *OrgRepo) Add(org *db.Org) error {
-	ret := _m.Called(org)
+// Add provides a mock function with given fields: ctx, org
+func (_m *OrgRepo) Add(ctx context.Context, org *db.Org) error {
+	ret := _m.Called(ctx, org)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
-		r0 = rf(org)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Org) error); ok {
+		r0 = rf(ctx, org)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -32,9 +34,9 @@ func (_m *OrgRepo) Add(org *db.Org) error {
 	return r0
 }
 
-// GetAll provides a mock function with no fields
-func (_m *OrgRepo) GetAll() ([]db.Org, error) {
-	ret := _m.Called()
+// GetAll provides a mock function with given fields: ctx
+func (_m *OrgRepo) GetAll(ctx context.Context) ([]db.Org, error) {
+	ret := _m.Called(ctx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAll")
@@ -42,19 +44,19 @@ func (_m *OrgRepo) GetAll() ([]db.Org, error) {
 
 	var r0 []db.Org
 	var r1 error
-	if rf, ok := ret.Get(0).(func() ([]db.Org, error)); ok {
-		return rf()
+	if rf, ok := ret.Get(0).(func(context.Context) ([]db.Org, error)); ok {
+		return rf(ctx)
 	}
-	if rf, ok := ret.Get(0).(func() []db.Org); ok {
-		r0 = rf()
+	if rf, ok := ret.Get(0).(func(context.Context) []db.Org); ok {
+		r0 = rf(ctx)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Org)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func() error); ok {
-		r1 = rf()
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -62,9 +64,9 @@ func (_m *OrgRepo) GetAll() ([]db.Org, error) {
 	return r0, r1
 }
 
-// GetById provides a mock function with given fields: id
-func (_m *OrgRepo) GetById(id uuid.UUID) (*db.Org, error) {
-	ret := _m.Called(id)
+// GetById provides a mock function with given fields: ctx, id
+func (_m *OrgRepo) GetById(ctx context.Context, id uuid.UUID) (*db.Org, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetById")
@@ -72,19 +74,19 @@ func (_m *OrgRepo) GetById(id uuid.UUID) (*db.Org, error) {
 
 	var r0 *db.Org
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Org, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*db.Org, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Org); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *db.Org); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Org)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -92,9 +94,9 @@ func (_m *OrgRepo) GetById(id uuid.UUID) (*db.Org, error) {
 	return r0, r1
 }
 
-// GetByName provides a mock function with given fields: name
-func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
-	ret := _m.Called(name)
+// GetByName provides a mock function with given fields: ctx, name
+func (_m *OrgRepo) GetByName(ctx context.Context, name string) (*db.Org, error) {
+	ret := _m.Called(ctx, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByName")
@@ -102,19 +104,19 @@ func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 
 	var r0 *db.Org
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Org, error)); ok {
-		return rf(name)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.Org, error)); ok {
+		return rf(ctx, name)
 	}
-	if rf, ok := ret.Get(0).(func(string) *db.Org); ok {
-		r0 = rf(name)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Org); ok {
+		r0 = rf(ctx, name)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Org)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(name)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -122,17 +124,17 @@ func (_m *OrgRepo) GetByName(name string) (*db.Org, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: org
-func (_m *OrgRepo) Update(org *db.Org) error {
-	ret := _m.Called(org)
+// Update provides a mock function with given fields: ctx, org
+func (_m *OrgRepo) Update(ctx context.Context, org *db.Org) error {
+	ret := _m.Called(ctx, org)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Org) error); ok {
-		r0 = rf(org)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Org) error); ok {
+		r0 = rf(ctx, org)
 	} else {
 		r0 = ret.Error(0)
 	}

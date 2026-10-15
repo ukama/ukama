@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"context"
 	extsql "database/sql"
 	"regexp"
 	"testing"
@@ -64,7 +65,7 @@ func Test_orgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		org, err := r.GetByName(context.Background(), orgName)
 
 		// Assert
 		assert.NoError(t, err)
@@ -122,7 +123,7 @@ func Test_orgRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&org)
+		err = r.Add(context.Background(), &org)
 
 		// Assert
 		assert.NoError(t, err)
@@ -178,7 +179,7 @@ func Test_orgRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Update(&org)
+		err = r.Update(context.Background(), &org)
 
 		// Assert
 		assert.NoError(t, err)
