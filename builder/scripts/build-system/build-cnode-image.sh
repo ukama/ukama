@@ -41,6 +41,7 @@ FIRMWARE_DIR="/tmp/rpi-firmware"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
 HIDDEN_CONFIGS=""
+ALPINE_TMP=""
 
 if [ $# -ne 0 ]; then
     echo "Usage: $0"
@@ -108,6 +109,10 @@ cleanup() {
         sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
         LOOPDISK=""
     fi
+    if [ -n "$ALPINE_TMP" ]; then
+        rm -rf "${ALPINE_TMP}"
+        ALPINE_TMP=""
+    fi
     remove_build_dirs
     give_files_back
     if [ "${status}" -ne 0 ]; then
@@ -150,7 +155,7 @@ build_apps() {
         fi
     done
     log "INFO" "Building the apps the cnode uses: ${APPS[*]}"
-    ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
+    TEMP_DIR="${ALPINE_TMP}" ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
     restore_configs
     log "SUCCESS" "Apps built"
 }
@@ -160,7 +165,7 @@ build_rootfs() {
     mkdir -p mocksysfs
     [ -n "$(ls -A mocksysfs)" ] || touch mocksysfs/README
     log "INFO" "Building the rootfs"
-    ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
+    TEMP_DIR="${ALPINE_TMP}" ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
         log "INFO" "rootfs-env-setup.sh always exits 1 on aarch64, checking the rootfs instead"
 }
 
@@ -394,6 +399,7 @@ if [[ ${#APPS[@]} -eq 0 ]]; then
 fi
 log "INFO" "Apps: ${APPS[*]}"
 
+ALPINE_TMP=$(mktemp -d)
 build_apps
 build_rootfs
 
