@@ -75,18 +75,30 @@ restore_configs() {
     fi
 }
 
+remove_build_dirs() {
+    local dir
+    for dir in "${SCRIPT_DIR}/buildenv" "${ROOTFS_DIR}"; do
+        if [ -x "${dir}/destroy" ]; then
+            "${dir}/destroy" --remove || log "ERROR" "Could not remove ${dir}"
+        elif [ -d "${dir}" ]; then
+            rm -rf --one-file-system "${dir}" || log "ERROR" "Could not remove ${dir}"
+        fi
+    done
+    rm -rf "${SCRIPT_DIR}/mocksysfs" || log "ERROR" "Could not remove ${SCRIPT_DIR}/mocksysfs"
+}
+
 cleanup() {
     restore_configs
-    if [ -z "$LOOPDISK" ]; then
-        return
+    if [ -n "$LOOPDISK" ]; then
+        log "INFO" "Cleaning up resources..."
+        for mount in ${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT}; do
+            sudo umount "${mount}" 2>/dev/null || true
+        done
+        sudo kpartx -d "${LOOPDISK}" 2>/dev/null || true
+        sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
+        LOOPDISK=""
     fi
-    log "INFO" "Cleaning up resources..."
-    for mount in ${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT}; do
-        sudo umount "${mount}" 2>/dev/null || true
-    done
-    sudo kpartx -d "${LOOPDISK}" 2>/dev/null || true
-    sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
-    LOOPDISK=""
+    remove_build_dirs
 }
 trap cleanup EXIT
 
