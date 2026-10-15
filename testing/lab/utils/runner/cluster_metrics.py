@@ -15,6 +15,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+import cluster_resources
 from cluster_report import build_report, write_report, compare
 
 DEFAULT_URL = "https://prometheus.udev.ukama.com"
@@ -183,6 +184,7 @@ def queries(config, duration):
                              "owner_kind, owner_name) (kube_replicaset_owner{"
                              + ns + ',owner_is_controller="true"})'),
     }
+    values.update(cluster_resources.queries(ns))
     return values
 
 
@@ -204,9 +206,22 @@ class Prometheus:
         if token:
             headers["Authorization"] = "Bearer " + token
         request = urllib.request.Request(url + "?" + query, headers=headers)
-        with self.opener.open(request,
-                              timeout=self.config["timeout"]) as response:
-            result = json.load(response)
+        try:
+            with self.opener.open(request,
+                                  timeout=self.config["timeout"]) as response:
+                result = json.load(response)
+        except urllib.error.HTTPError as exc:
+            body = exc.read(4096).decode("utf-8", errors="replace")
+            try:
+                payload = json.loads(body)
+                detail = payload.get("error", body)
+            except (ValueError, AttributeError):
+                detail = re.sub(r"<[^>]*>", " ", body)
+            detail = " ".join(str(detail).split())
+            if token:
+                detail = detail.replace(token, "[redacted]")
+            raise ValueError(f"HTTP {exc.code} {exc.reason}: "
+                             + detail[:500]) from None
         if result.get("status") != "success":
             raise ValueError(result.get("error", "Prometheus query failed"))
         data = result.get("data", {})
@@ -314,6 +329,15 @@ def collect(batch, wait=False, partial=False):
     print(f"Metrics: {len(report['services'])} observed services; "
           f"{unavailable}/{len(planned)} queries unavailable or empty",
           flush=True)
+    for name, status in report["queries"].items():
+        if status["status"] != "OK":
+            detail = status["error"] or "no usable samples in this window"
+            print(f"Metrics warning: {name}: {detail}",
+                  file=sys.stderr, flush=True)
+    if not report["services"]:
+        print("Metrics warning: no service KPIs collected; see Query coverage "
+              "in the report. Scenario results are unchanged.",
+              file=sys.stderr, flush=True)
     print(f"Metrics: {directory / 'report.txt'}", flush=True)
     print(f"Metrics: {directory / 'report.html'}", flush=True)
     return report

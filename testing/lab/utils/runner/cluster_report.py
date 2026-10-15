@@ -5,10 +5,12 @@ import csv
 from datetime import datetime, timezone
 import html
 import json
-import math
 from pathlib import Path
 import re
 from collections import defaultdict
+
+import cluster_resources as resources
+from cluster_resources import points
 
 METRICS = {
     "available": "Deployment available (0/1)",
@@ -36,11 +38,11 @@ NOTES = [
     "before the first sample or in deleted, unsampled pods may be missed.",
     "Termination reasons are last-reason samples and can predate this run. "
     "Rolling 1h restart values are never summed over time.",
-    "Pod age is not container uptime. CPU limits/throttling, latency, database "
-    "connections, queue depth and worker/VPN health are not measured here.",
+    "Pod age is not container uptime. Latency, database connections, queue "
+    "depth and worker/VPN health are not measured here.",
     "Background traffic is included. Service grouping uses Kubernetes owner "
     "metrics; unresolved owners remain separate pods, without name guessing.",
-]
+] + resources.NOTES
 
 
 def utc(value):
@@ -48,21 +50,6 @@ def utc(value):
         return "N/A"
     return datetime.fromtimestamp(value, timezone.utc).isoformat(
         timespec="seconds").replace("+00:00", "Z")
-
-
-def points(series):
-    values = series.get("values", [])
-    if "value" in series:
-        values = [series["value"]]
-    result = []
-    for timestamp, value in values:
-        try:
-            timestamp, value = float(timestamp), float(value)
-            if math.isfinite(timestamp) and math.isfinite(value):
-                result.append((timestamp, value))
-        except (ValueError, TypeError):
-            continue
-    return sorted(result)
 
 
 def phase(timestamp, raw):
@@ -162,7 +149,8 @@ def build_report(batch, raw, batch_summary, scenarios):
         return service
 
     for name, series in responses.items():
-        if name == "replicaset_owner":
+        if name not in (*METRICS, "pod_owner", "restart_counter",
+                        "termination_reason"):
             continue
         for item in series:
             service = get_service(item["metric"])
@@ -202,6 +190,9 @@ def build_report(batch, raw, batch_summary, scenarios):
                     else:
                         target[timestamp] = target.get(timestamp, 0) + value
 
+    containers, nodes, resource_events = resources.build(
+        raw, responses, get_service)
+    events.extend(resource_events)
     for service in services.values():
         service["pods"] = sorted(service["pods"])
         service["termination_reasons"] = sorted(
@@ -246,7 +237,7 @@ def build_report(batch, raw, batch_summary, scenarios):
                "during": [raw["start"], raw["end"]],
                "after": [raw["end"], raw["observed_end"]]}
     return {
-        "version": 1, "batch": batch, "generated_at": raw["generated_at"],
+        "version": 2, "batch": batch, "generated_at": raw["generated_at"],
         "run": raw.get("run", {}), "config": raw["config"],
         "windows": windows, "requested_end": raw["requested_end"],
         "partial_batch": raw["partial_batch"],
@@ -265,6 +256,7 @@ def build_report(batch, raw, batch_summary, scenarios):
         "unfinished": batch_summary.get("unfinished", []),
         "infrastructure_errors": batch_summary.get("infrastructure_errors", []),
         "queries": query_status, "scenarios": scenarios,
+        "containers": containers, "nodes": nodes,
         "services": [services[k] for k in sorted(services)],
         "events": sorted(events, key=lambda e: e["time"]), "notes": NOTES,
     }
@@ -277,6 +269,111 @@ def value(number, digits=1):
 def statistic(service, metric, phase_name, key):
     return service.get("statistics", {}).get(metric, {}).get(
         phase_name, {}).get(key)
+
+
+def resource_total(item, metric, phase_name="during"):
+    return item.get("totals", {}).get(metric, {}).get(phase_name)
+
+
+def resource_range(item, metric):
+    low = statistic(item, metric, "during", "min")
+    high = statistic(item, metric, "during", "peak")
+    return value(low) if low == high else value(low) + ".." + value(high)
+
+
+def resource_phases(item, metric):
+    return " -> ".join(value(statistic(item, metric, phase, key))
+                       for phase, key in (("before", "mean"),
+                                          ("during", "peak"),
+                                          ("after", "last")))
+
+
+def resource_sections(report):
+    sections, cpu, memory = [], [], []
+    for service in report["services"]:
+        item = service.get("resources", {})
+        worst = item.get("worst", {})
+        cpu.append([
+            service["service"], len(item.get("containers", [])),
+            resource_phases(item, "cpu_limit_pct"),
+            resource_phases(item, "cpu_throttle_pct"),
+            value(resource_total(item, "throttled_seconds")),
+            worst.get("cpu_throttle_pct", {}).get("container", "N/A"),
+        ])
+        memory.append([
+            service["service"], resource_phases(item, "memory_limit_pct"),
+            value(statistic(item, "memory_headroom_mib", "during", "min")),
+            value(resource_total(item, "oom_events"), 0),
+            value(resource_total(item, "oom_kills"), 0),
+            worst.get("memory_limit_pct", {}).get("container", "N/A"),
+        ])
+    sections.append(("Service CPU limits (worst container percentages)",
+        ["Service", "Containers observed", "Limit % before->peak->after",
+         "Throttled periods % before->peak->after", "Throttled s >=",
+         "Worst throttled container"], cpu))
+    sections.append(("Service memory limits (worst container percentages)",
+        ["Service", "Limit % before->peak->after", "Min headroom MiB",
+         "OOM events >=", "OOMKilled >=", "Highest memory/limit container"],
+        memory))
+    cpu, memory = [], []
+    for item in report.get("containers", []):
+        cpu.append([
+            item["identity"], resource_range(item, "cpu_request_mcpu"),
+            resource_range(item, "cpu_limit_mcpu"),
+            resource_phases(item, "cpu_mcpu"),
+            value(statistic(item, "cpu_limit_pct", "during", "peak")),
+            value(statistic(item, "cpu_limit_pct", "during",
+                            "above_90_seconds")),
+            value(statistic(item, "cpu_throttle_pct", "during", "peak")),
+            value(resource_total(item, "throttled_seconds")),
+        ])
+        memory.append([
+            item["identity"], resource_range(item, "memory_request_mib"),
+            resource_range(item, "memory_limit_mib"),
+            value(statistic(item, "memory_working_mib", "during", "peak")),
+            value(statistic(item, "memory_usage_mib", "during", "peak")),
+            value(statistic(item, "memory_rss_mib", "during", "peak")),
+            value(statistic(item, "memory_headroom_mib", "during", "min")),
+            value(statistic(item, "memory_limit_pct", "during",
+                            "above_90_seconds")),
+            value(resource_total(item, "oom_events"), 0),
+            value(resource_total(item, "oom_kills"), 0),
+        ])
+    sections.append(("Container CPU", ["Container", "Request mCPU",
+        "Limit mCPU", "Usage mCPU before->peak->after", "Peak limit %",
+        "Sampled s >=90% limit", "Peak throttled periods %",
+        "Throttled s >="], cpu))
+    sections.append(("Container memory", ["Container", "Request MiB",
+        "Limit MiB", "Peak working MiB", "Peak total MiB", "Peak RSS MiB",
+        "Min headroom MiB", "Sampled s >=90% limit", "OOM events >=",
+        "OOMKilled >="], memory))
+    for scope, items, labels in (
+            ("Container", report.get("containers", []), resources.LABELS),
+            ("Node", report.get("nodes", []), resources.NODE_LABELS)):
+        for item in items:
+            rows = [[label, *[value(statistic(item, metric, phase, key))
+                             for phase, key in (("before", "mean"),
+                                                ("during", "mean"),
+                                                ("during", "peak"),
+                                                ("during", "min"),
+                                                ("after", "last"))]]
+                    for metric, label in labels.items()]
+            if scope == "Container":
+                for metric, label in resources.TOTAL_LABELS.items():
+                    rows.append([label,
+                        value(resource_total(item, metric, "before")),
+                        value(resource_total(item, metric)), "", "",
+                        value(resource_total(item, metric, "after"))])
+            suffix = (" (" + item["node"] + ")" if scope == "Node" else
+                      " (" + item["service"] + ")")
+            sections.append((scope + " " + item["identity"] + suffix,
+                ["Metric (counters are window totals)", "Before avg/total",
+                 "During avg/total", "During peak", "During min",
+                 "After last/total"], rows))
+    if not report.get("nodes"):
+        sections.append(("Node pressure", ["Status"],
+                         [["N/A; see node queries in Query coverage"]]))
+    return sections
 
 
 def table(headers, rows):
@@ -294,6 +391,9 @@ def report_sections(report):
     run = report["run"]
     details = [
         ["Batch", report["batch"]],
+        ["Service KPI collection", "observed services: "
+         + str(len(report["services"])) if report["services"] else
+         "NO SERVICE DATA; see Query coverage"],
         ["Suite / mode", f"{run.get('suite', 'N/A')} / "
          f"{run.get('mode', 'N/A')}"],
         ["Workers requested / launched",
@@ -319,6 +419,11 @@ def report_sections(report):
     for name, bounds in report["windows"].items():
         details.append([name.title() + " (UTC)", " to ".join(map(utc, bounds))])
     sections = [("Run", ["Field", "Value"], details)]
+    rows = [[name, q["status"], q["series"], q["samples"],
+             q["error"] or "; ".join(q["warnings"] + q["infos"])]
+            for name, q in report["queries"].items()]
+    sections.append(("Query coverage", ["Query", "Status", "Series", "Samples",
+                     "Detail"], rows))
     rows = []
     for service in report["services"]:
         cpu = [statistic(service, "cpu_mcpu", p, k)
@@ -336,6 +441,7 @@ def report_sections(report):
     sections.append(("All observed services", ["Service", "CPU base->peak mCPU",
                      "Memory base->peak->after MiB", "Restarts >=",
                      "Min avail/desired", "Degraded sampled s"], rows))
+    sections.extend(resource_sections(report))
     rows = [[utc(e["time"]), e["service"], e["event"],
              ", ".join(e["overlapping_runs"]) or "none"]
             for e in report["events"]]
@@ -348,11 +454,6 @@ def report_sections(report):
             for s in report["scenarios"]]
     sections.append(("Scenarios", ["Scenario", "Worker", "Outcome", "Start",
                      "End", "Cleanup", "Failure detail"], rows))
-    rows = [[name, q["status"], q["series"], q["samples"],
-             q["error"] or "; ".join(q["warnings"] + q["infos"])]
-            for name, q in report["queries"].items()]
-    sections.append(("Query coverage", ["Query", "Status", "Series", "Samples",
-                     "Detail"], rows))
     for service in report["services"]:
         rows = []
         for metric, label in METRICS.items():
@@ -369,12 +470,12 @@ def report_sections(report):
     return sections
 
 
-def svg_chart(series, windows, step):
+def svg_chart(series, windows, step, ceiling=None):
     if not series:
         return "<p>No samples.</p>"
     start, end = windows["before"][0], windows["after"][1]
     width, height = 720, 100
-    maximum = max(v for _, v in series) or 1
+    maximum = max(max(v for _, v in series), ceiling or 0) or 1
     x = lambda t: width * (t - start) / max(1, end - start)
     y = lambda v: height - 5 - (height - 10) * v / maximum
     segments, current, previous = [], [], None
@@ -392,6 +493,9 @@ def svg_chart(series, windows, step):
             'aria-label="Metric over the observation window">'
             f'<rect x="{left:.1f}" y="0" width="{right-left:.1f}" '
             f'height="{height}" fill="#e8eefc"/>'
+            + (f'<line x1="0" y1="{y(ceiling):.1f}" x2="{width}" '
+               f'y2="{y(ceiling):.1f}" stroke="#b43b32" '
+               'stroke-dasharray="4 3"/>' if ceiling else "")
             + "".join('<polyline fill="none" stroke="#2859a7" '
                       f'stroke-width="2" points="{" ".join(part)}"/>'
                       for part in segments if part) + '</svg>')
@@ -439,6 +543,23 @@ def write_report(directory, report):
             body.append(svg_chart(series, report["windows"],
                                   report["config"]["step"]))
         body.append('</details>')
+    body.append('<h2>Container and node resource history</h2>')
+    for scope, items, labels, metrics in (
+            ("Container", report.get("containers", []), resources.LABELS,
+             ("cpu_limit_pct", "cpu_throttle_pct", "memory_limit_pct",
+              "cpu_psi_pct", "memory_psi_pct")),
+            ("Node", report.get("nodes", []), resources.NODE_LABELS,
+             ("cpu_busy_pct", "memory_used_pct", "cpu_psi_pct",
+              "memory_psi_pct"))):
+        for item in items:
+            body.append('<details><summary>' + scope + ' '
+                        + escape(item["identity"]) + '</summary>')
+            for metric in metrics:
+                body.append('<p>' + escape(labels[metric]) + '</p>')
+                body.append(svg_chart(item["series"].get(metric, []),
+                                      report["windows"],
+                                      report["config"]["step"], ceiling=100))
+            body.append('</details>')
     body.append('<h2>Interpretation</h2><ul>')
     body.extend('<li>' + escape(note) + '</li>' for note in report["notes"])
     body.append('</ul></body></html>')
@@ -457,6 +578,29 @@ def write_report(directory, report):
                                      len(overlap(report["scenarios"],
                                                  timestamp)),
                                      service["service"], metric, sample])
+    write_resource_csv(directory, report)
+
+
+def write_resource_csv(directory, report):
+    with (directory / "resources.csv").open("w", newline="") as stream:
+        writer = csv.writer(stream)
+        writer.writerow(["utc", "epoch", "phase", "active_scenarios",
+                         "scope", "identity", "service", "metric", "value"])
+        groups = [("container", report.get("containers", [])),
+                  ("node", report.get("nodes", [])),
+                  ("service", [s["resources"] for s in report["services"]
+                               if "resources" in s])]
+        for scope, items in groups:
+            for item in items:
+                for metric, series in item["series"].items():
+                    for t, v in series:
+                        start, end = report["windows"]["during"]
+                        phase = ("before" if t < start else
+                                 "during" if t <= end else "after")
+                        writer.writerow([utc(t), t, phase,
+                            len(overlap(report["scenarios"], t)), scope,
+                            item["identity"], item.get("service", ""),
+                            metric, v])
 
 
 def compare(batches):
@@ -496,6 +640,17 @@ def compare(batches):
                          *[value(statistic(items.get(identity, {}), metric,
                                            "during", "peak"))
                            for items in lookup]])
+        for metric in ("cpu_limit_pct", "cpu_throttle_pct",
+                       "memory_limit_pct", "memory_psi_pct"):
+            rows.append([identity + " worst peak " + resources.LABELS[metric],
+                *[value(statistic(items.get(identity, {}).get("resources", {}),
+                                  metric, "during", "peak"))
+                  for items in lookup]])
+        for metric, label in resources.TOTAL_LABELS.items():
+            rows.append([identity + " " + label,
+                *[value(resource_total(
+                    items.get(identity, {}).get("resources", {}), metric))
+                  for items in lookup]])
     return ("Ukama cluster KPI comparison\n"
             "Runs may differ in scenario selection, timing, cluster state and "
             "background traffic. Check each report's coverage.\n\n"
