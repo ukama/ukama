@@ -23,6 +23,8 @@ import { AsyncLocalStorage } from "async_hooks";
 export interface UpstreamCall {
   method: string;
   host: string;
+  /** System name for `host`, when known (see upstreamNames). */
+  service?: string;
   path: string;
   status: number;
   durationMs: number;

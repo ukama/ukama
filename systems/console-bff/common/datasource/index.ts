@@ -19,13 +19,17 @@ import {
   getRequestId,
   recordUpstreamCall,
 } from "../logger/requestContext";
+import { upstreamName } from "../logger/upstreamNames";
 import { REQUEST_ID_HEADER } from "../middleware/requestId";
 
 /** Host and path for the log line; never throws, so fetch reports bad URLs as before. */
-const target = (url: string): { host: string; path: string } => {
+const target = (
+  url: string
+): { host: string; service?: string; path: string } => {
   try {
     const { host, pathname, search } = new URL(url);
-    return { host, path: pathname + search };
+    const service = upstreamName(host);
+    return { host, ...(service && { service }), path: pathname + search };
   } catch {
     return { host: "", path: url };
   }
@@ -51,7 +55,7 @@ const logUpstreamCall = (call: UpstreamCall): void => {
         : "debug";
   logger.log(
     level,
-    `upstream ${call.method} ${call.host}${call.path} ${call.failure ?? call.status} ${call.durationMs}ms`,
+    `upstream ${call.method} ${call.service ? `${call.service} ` : call.host}${call.path} ${call.failure ?? call.status} ${call.durationMs}ms`,
     { upstream: call }
   );
 };

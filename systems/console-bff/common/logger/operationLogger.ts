@@ -12,7 +12,7 @@
  * failures come back as HTTP 200, so the access log alone cannot show them.
  */
 import type { ApolloServerPlugin, BaseContext } from "@apollo/server";
-import type { GraphQLError } from "graphql";
+import { type GraphQLError, Kind, type OperationDefinitionNode } from "graphql";
 import type { Logger } from "winston";
 
 import { logger as defaultLogger } from ".";
@@ -35,6 +35,7 @@ export interface LoggedError {
 export interface UpstreamSummary {
   method: string;
   host: string;
+  service?: string;
   result: string;
   count: number;
   maxMs: number;
@@ -71,7 +72,7 @@ export const summariseUpstream = (
   const byKey = new Map<string, UpstreamSummary>();
   for (const call of calls) {
     const result = call.failure ?? String(call.status);
-    const key = `${call.method} ${call.host} ${result}`;
+    const key = `${call.method} ${call.service ?? call.host} ${result}`;
     const entry = byKey.get(key);
     if (entry) {
       entry.count += 1;
@@ -80,6 +81,7 @@ export const summariseUpstream = (
       byKey.set(key, {
         method: call.method,
         host: call.host,
+        ...(call.service && { service: call.service }),
         result,
         count: 1,
         maxMs: call.durationMs,
@@ -87,6 +89,27 @@ export const summariseUpstream = (
     }
   }
   return [...byKey.values()];
+};
+
+// Keeps the label short when a client batches many root fields.
+const MAX_LABEL_FIELDS = 3;
+
+/**
+ * The operation name, or for unnamed documents the operation type and its
+ * root fields (e.g. "mutation:removePackageForSim").
+ */
+export const operationLabel = (
+  operationName: string | null | undefined,
+  operation: OperationDefinitionNode | undefined
+): string => {
+  if (operationName) return operationName;
+  const fields = (operation?.selectionSet.selections ?? []).flatMap(s =>
+    s.kind === Kind.FIELD ? [s.name.value] : []
+  );
+  if (!operation || fields.length === 0) return "anonymous";
+  const shown = fields.slice(0, MAX_LABEL_FIELDS).join("+");
+  const more = fields.length > MAX_LABEL_FIELDS ? "+more" : "";
+  return `${operation.operation}:${shown}${more}`;
 };
 
 const isFailedUpstream = (u: UpstreamSummary) => !/^[23]\d\d$/.test(u.result);
@@ -100,8 +123,10 @@ export const operationLoggerPlugin = (
       async willSendResponse(ctx) {
         // Logging must never turn a good response into a failed one.
         try {
-          const op =
-            ctx.operationName ?? ctx.request.operationName ?? "anonymous";
+          const op = operationLabel(
+            ctx.operationName ?? ctx.request.operationName,
+            ctx.operation
+          );
           const durationMs = Date.now() - started;
           const status = ctx.response.http.status ?? 200;
           const errors = (ctx.errors ?? [])
@@ -115,7 +140,7 @@ export const operationLoggerPlugin = (
             message += ` errors=${[...new Set(errors.map(e => e.code))].join(",")}`;
           }
           if (failed.length) {
-            message += ` upstream=${failed.map(u => `${u.host} ${u.result}`).join(",")}`;
+            message += ` upstream=${failed.map(u => `${u.service ?? u.host} ${u.result}`).join(",")}`;
           }
 
           const level =
