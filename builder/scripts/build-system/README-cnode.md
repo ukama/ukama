@@ -9,15 +9,21 @@
 
       sudo apt install -y fdisk kpartx dosfstools rsync wget unzip
 
+- The repo with its submodules, because the apps are built from them:
+
+      git clone --recurse-submodules https://github.com/ukama/ukama.git
+
+  If you already have the repo, run `git submodule update --init --recursive`.
+
 ## Build the image
 
 From anywhere in the repo:
 
     sudo builder/scripts/build-system/build-cnode-image.sh
 
-It builds the apps the cnode uses, then the OS, then the image. The first run takes a while. You get `cnode-image.img` in `builder/scripts/build-system/`.
+It builds the apps the cnode uses, then the OS, then the image. It takes a while. You get `cnode-image.img` in `builder/scripts/build-system/`.
 
-To build only the image again after a change, add `--image-only`.
+It needs sudo because it builds inside an Alpine chroot and mounts the image to fill it.
 
 The apps in the image come from `builder/boards/common.config` and `builder/boards/cnode.config`.
 
