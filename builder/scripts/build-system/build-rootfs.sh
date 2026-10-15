@@ -498,8 +498,8 @@ copy_misc_files
 
 case "${ARCH}" in
     x86_64)
-        copy_x86_64_kernel
         copy_x86_64_boot
+        copy_x86_64_kernel
         ;;
     armv7|armv7l)
         build_armv7_boot "amplifier"
