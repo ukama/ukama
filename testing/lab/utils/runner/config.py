@@ -82,7 +82,8 @@ def environment(cfg):
         raise RunnerError("ENV supports scenario ULAB_*/UKAMA_LAB_* settings and Ukama authentication/image settings only")
     result = {k: v for k, v in os.environ.items() if accept(k)}
     result.update({k: str(v) for k, v in cfg["ENV"].items()})
-    for key in ("ULAB_KUBECTL", "ULAB_FACTORY_NODE_COUNT", "ULAB_RESILIENCE_NAME_SUFFIX"):
+    for key in ("ULAB_KUBECTL", "ULAB_FACTORY_NODE_COUNT",
+                "ULAB_RESILIENCE_NAME_SUFFIX", "ULAB_DASHBOARD_COMMAND"):
         result.pop(key, None)
     # payload() replaces the local kubectl path with the packaged worker path.
     # Each worker creates its own suffix. Never propagate host paths for tools.
