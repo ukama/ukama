@@ -362,6 +362,7 @@ start() {
 EOF
     sudo chmod 0755 "${target}/etc/init.d/ukama-sysfs"
     sudo ln -sfn /etc/init.d/ukama-sysfs "${target}/etc/runlevels/boot/ukama-sysfs"
+    sudo ln -sfn /sys "${target}/ukama/mocksysfs/sys"
 }
 
 deploy_to_rootfs() {

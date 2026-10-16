@@ -33,8 +33,6 @@ The build checks the image at the end with `validate-cnode-image.sh`. To check i
 
     sudo builder/scripts/build-system/validate-cnode-image.sh builder/scripts/build-system/cnode-image.img
 
-Two checks fail, `primary mock sysfs` and `passive mock sysfs`. This is expected because the sysfs is added when the board is flashed.
-
 ## Flash
 
 In the factory, use the flash tool in the manufacturing repo (`tools/flash/cnode`). It also gives the board its node ID.
@@ -56,4 +54,4 @@ Login is `ukama` / `ukama`.
 
 ## Node ID
 
-The image has no node ID. The flash tool writes one to `/ukama/mocksysfs/sys` on the board. Without it the node can't come online.
+The image has no node ID. In the image, `/ukama/mocksysfs/sys` is a link to the board's real `/sys`. The flash tool replaces it with files that hold the board's node ID. Without them the node can't come online.
