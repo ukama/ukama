@@ -34,6 +34,7 @@ var orgName = "test-org"
 
 var sysIp = pgtype.Inet{IPNet: &net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(32, 32)}}
 var sysPort = int32(100)
+
 func TestLookupServer_AddOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
@@ -433,7 +434,7 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 		Name:        "sys",
 		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
-		ApiGwIp:     	sysIp,
+		ApiGwIp:     sysIp,
 		ApiGwPort:   sysPort,
 	}
 

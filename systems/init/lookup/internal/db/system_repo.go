@@ -47,8 +47,7 @@ func (s *systemRepo) Add(ctx context.Context, sys *System) error {
 		},
 		DoUpdates: clause.AssignmentColumns([]string{
 			"certificate", "api_gw_ip", "api_gw_url", "api_gw_port",
-			"node_gw_ip", "node_gw_port", "node_gw_health", "api_gw_health",
-			"updated_at",
+			"node_gw_ip", "node_gw_port", "updated_at",
 		}),
 	}).Create(sys)
 

@@ -33,6 +33,7 @@ const (
 	PREFIX_NODE_GW = "-node-gw"
 	defaultIP      = "0.0.0.0"
 )
+
 type LookupServer struct {
 	systemRepo     db.SystemRepo
 	orgRepo        db.OrgRepo
@@ -189,11 +190,11 @@ func (l *LookupServer) GetOrgs(ctx context.Context, req *pb.GetOrgsRequest) (*pb
 }
 
 func (l *LookupServer) AddNodeForOrg(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
-	log.Infof("Updating node %s for org  %s", req.GetNodeId(), req.GetOrgName())
+	log.Infof("Updating node %s for org %s", req.GetNodeId(), req.GetOrgName())
 
 	id, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid node id  %s. Error %s", req.GetNodeId(), err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", req.GetNodeId(), err.Error())
 	}
 
 	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
@@ -236,14 +237,12 @@ func (l *LookupServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp, err := &pb.GetNodeResponse{
+	return &pb.GetNodeResponse{
 		NodeId:      node.NodeID,
 		OrgName:     node.Org.Name,
 		Certificate: node.Org.Certificate,
 		Ip:          node.Org.Ip.IPNet.String(),
 	}, nil
-
-	return resp, err
 }
 
 func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgRequest) (*pb.GetNodeResponse, error) {
@@ -273,7 +272,7 @@ func (l *LookupServer) GetNodeForOrg(ctx context.Context, req *pb.GetNodeForOrgR
 }
 
 func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
-	log.Infof("Removing node %s from org  %s", req.GetNodeId(), req.GetOrgName())
+	log.Infof("Removing node %s from org %s", req.GetNodeId(), req.GetOrgName())
 
 	nodeId, err := ukama.ValidateNodeId(req.NodeId)
 	if err != nil {
@@ -345,7 +344,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 		return nil, err
 	}
 
-	log.Infof("Requesting System %s info for org  %s", req.GetSystemName(), req.GetOrgName())
+	log.Infof("Requesting System %s info for org %s", req.GetSystemName(), req.GetOrgName())
 	system, err := l.getSystem(ctx, req.GetSystemName(), org.ID)
 	if err != nil {
 		return nil, err
@@ -367,7 +366,7 @@ func (l *LookupServer) GetSystemForOrg(ctx context.Context, req *pb.GetSystemReq
 }
 
 func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemRequest) (*pb.AddSystemResponse, error) {
-	log.Infof("Adding system %s for org  %s", req.GetSystemName(), req.GetOrgName())
+	log.Infof("Adding system %s for org %s", req.GetSystemName(), req.GetOrgName())
 
 	var sysIp pgtype.Inet
 
@@ -468,7 +467,7 @@ func (l *LookupServer) AddSystemForOrg(ctx context.Context, req *pb.AddSystemReq
 }
 
 func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSystemRequest) (*pb.UpdateSystemResponse, error) {
-	log.Infof("Updating system %s for org  %s", req.GetSystemName(), req.GetOrgName())
+	log.Infof("Updating system %s for org %s", req.GetSystemName(), req.GetOrgName())
 
 	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
@@ -542,12 +541,11 @@ func (l *LookupServer) UpdateSystemForOrg(ctx context.Context, req *pb.UpdateSys
 		ApiGwUrl:    dbSystem.ApiGwUrl,
 		NodeGwIp:    nodeGwIpStr,
 		NodeGwPort:  dbSystem.NodeGwPort,
-
 	}, nil
 }
 
 func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSystemRequest) (*pb.DeleteSystemResponse, error) {
-	log.Infof("Deleting System %s from org  %s", req.GetSystemName(), req.GetOrgName())
+	log.Infof("Deleting System %s from org %s", req.GetSystemName(), req.GetOrgName())
 
 	org, err := l.orgRepo.GetByName(ctx, req.OrgName)
 	if err != nil {
