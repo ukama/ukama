@@ -11,6 +11,8 @@ package main
 import (
 	"errors"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/jackc/pgtype"
 	"github.com/num30/config"
@@ -77,8 +79,10 @@ func initConfig() {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
+		} else {
+			log.Errorf("Failed to marshal config for debug logging: %v", err)
 		}
 	}
 
@@ -171,6 +175,8 @@ func initOrgDB(orgDB *gorm.DB) {
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	defer signal.Stop(sigs)
 	done := make(chan bool, 1)
 	go func() {
 

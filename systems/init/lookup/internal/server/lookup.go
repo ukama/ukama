@@ -110,7 +110,6 @@ func (l *LookupServer) AddOrg(ctx context.Context, req *pb.AddOrgRequest) (*pb.A
 
 func (l *LookupServer) UpdateOrg(ctx context.Context, req *pb.UpdateOrgRequest) (*pb.UpdateOrgResponse, error) {
 	log.Infof("Updating Organization %s", req.OrgName)
-	req.GetIp()
 	org := &db.Org{
 		Name:        req.GetOrgName(),
 		Certificate: req.GetCertificate(),
