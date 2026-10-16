@@ -9,6 +9,7 @@
 package db
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -16,10 +17,10 @@ import (
 )
 
 type SystemRepo interface {
-	Add(sys *System) error
-	Update(sys *System, org uint) error
-	Delete(sys string, org uint) error
-	GetByName(sys string, org uint) (*System, error)
+	Add(ctx context.Context, sys *System) error
+	Update(ctx context.Context, sys *System, org uint) error
+	Delete(ctx context.Context, sys string, org uint) error
+	GetByName(ctx context.Context, sys string, org uint) (*System, error)
 }
 
 type systemRepo struct {
@@ -32,17 +33,17 @@ func NewSystemRepo(db sql.Db) *systemRepo {
 	}
 }
 
-func (s *systemRepo) Add(sys *System) error {
+func (s *systemRepo) Add(ctx context.Context, sys *System) error {
 	// result := s.Db.GetGormDb().Clauses(clause.OnConflict{
 	// 	Columns:   []clause.Column{{Name: "name"}, {Name: "org_id"}},
 	// 	UpdateAll: true,
 	// }).Create(sys)
-	t := s.Db.GetGormDb().Model(&System{}).Where("org_id = ? AND name = ?", sys.OrgID, sys.Name).Updates(sys)
+	t := s.Db.GetGormDb().WithContext(ctx).Model(&System{}).Where("org_id = ? AND name = ?", sys.OrgID, sys.Name).Updates(sys)
 	if t.Error != nil {
 		return t.Error
 	} else {
 		if t.RowsAffected == 0 {
-			err := s.Db.GetGormDb().Create(sys).Error // create new record from newUser
+			err := s.Db.GetGormDb().WithContext(ctx).Create(sys).Error // create new record from newUser
 			return err
 		}
 	}
@@ -50,14 +51,14 @@ func (s *systemRepo) Add(sys *System) error {
 	return nil
 }
 
-func (s *systemRepo) Update(sys *System, id uint) error {
-	d := s.Db.GetGormDb().Preload("Org").Where(&System{Name: sys.Name, OrgID: id}).Updates(sys)
+func (s *systemRepo) Update(ctx context.Context, sys *System, id uint) error {
+	d := s.Db.GetGormDb().WithContext(ctx).Preload("Org").Where(&System{Name: sys.Name, OrgID: id}).Updates(sys)
 	return d.Error
 }
 
-func (s *systemRepo) Delete(sys string, id uint) error {
+func (s *systemRepo) Delete(ctx context.Context, sys string, id uint) error {
 	var system System
-	result := s.Db.GetGormDb().Preload("Org").Unscoped().Delete(&system, "name = ? and org_id = ?", strings.ToLower(sys), id)
+	result := s.Db.GetGormDb().WithContext(ctx).Preload("Org").Unscoped().Delete(&system, "name = ? and org_id = ?", strings.ToLower(sys), id)
 	if result.Error != nil {
 		return result.Error
 	}
@@ -70,9 +71,9 @@ func (s *systemRepo) Delete(sys string, id uint) error {
 
 }
 
-func (s *systemRepo) GetByName(sys string, id uint) (*System, error) {
+func (s *systemRepo) GetByName(ctx context.Context, sys string, id uint) (*System, error) {
 	system := &System{}
-	result := s.Db.GetGormDb().Preload("Org").First(system, "name = ? and org_id = ?", strings.ToLower(sys), id)
+	result := s.Db.GetGormDb().WithContext(ctx).Preload("Org").First(system, "name = ? and org_id = ?", strings.ToLower(sys), id)
 	if result.Error != nil {
 		return nil, result.Error
 	}
