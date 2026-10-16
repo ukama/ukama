@@ -35,20 +35,18 @@ RAW_IMG="cnode-image.img"
 IMG_SIZE="28800M"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
+BUILDENV_DIR=${UKAMA_ROOT}/builder/scripts/build-system/buildenv
 FIRMWARE_ZIP_URL="https://github.com/raspberrypi/firmware/archive/refs/heads/master.zip"
 FIRMWARE_DIR="/tmp/rpi-firmware"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
 HIDDEN_CONFIGS=""
+ALPINE_TMP=""
 
-case "${1:-}" in
-    "")           IMAGE_ONLY=0 ;;
-    --image-only) IMAGE_ONLY=1 ;;
-    *)
-        echo "Usage: $0 [--image-only]"
-        exit 1
-        ;;
-esac
+if [ $# -ne 0 ]; then
+    echo "Usage: $0"
+    exit 1
+fi
 
 log() {
     local type="$1"
@@ -79,23 +77,52 @@ restore_configs() {
     fi
 }
 
-cleanup() {
-    restore_configs
-    if [ -z "$LOOPDISK" ]; then
-        return
-    fi
-    log "INFO" "Cleaning up resources..."
-    for mount in ${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT}; do
-        sudo umount "${mount}" 2>/dev/null || true
+remove_build_dirs() {
+    local dir
+    for dir in "${BUILDENV_DIR}" "${ROOTFS_DIR}"; do
+        if [ -x "${dir}/destroy" ]; then
+            "${dir}/destroy" --remove || log "ERROR" "Could not remove ${dir}"
+        elif [ -d "${dir}" ]; then
+            rm -rf --one-file-system "${dir}" || log "ERROR" "Could not remove ${dir}"
+        fi
     done
-    sudo kpartx -d "${LOOPDISK}" 2>/dev/null || true
-    sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
-    LOOPDISK=""
+    rm -rf "${SCRIPT_DIR}/mocksysfs" || log "ERROR" "Could not remove ${SCRIPT_DIR}/mocksysfs"
+}
+
+give_files_back() {
+    local owner
+    owner=$(stat -c '%u:%g' "${UKAMA_ROOT}")
+    log "INFO" "Giving the build files back to ${owner}"
+    find "${UKAMA_ROOT}" -xdev \( -path "${BUILDENV_DIR}" -o -path "${ROOTFS_DIR}" \) -prune \
+        -o -uid 0 -exec chown -h "${owner}" {} + || log "ERROR" "Could not give all files back to ${owner}"
+}
+
+cleanup() {
+    local status=$?
+    restore_configs
+    if [ -n "$LOOPDISK" ]; then
+        log "INFO" "Cleaning up resources..."
+        for mount in ${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT}; do
+            sudo umount "${mount}" 2>/dev/null || true
+        done
+        sudo kpartx -d "${LOOPDISK}" 2>/dev/null || true
+        sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
+        LOOPDISK=""
+    fi
+    if [ -n "$ALPINE_TMP" ]; then
+        rm -rf "${ALPINE_TMP}"
+        ALPINE_TMP=""
+    fi
+    remove_build_dirs
+    give_files_back
+    if [ "${status}" -ne 0 ]; then
+        log "ERROR" "Script failed at stage: ${STAGE}"
+    fi
 }
 trap cleanup EXIT
 
 check_tools() {
-    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap e2label rsync wget unzip truncate; do
+    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip truncate jq readelf; do
         command -v "$cmd" >/dev/null || { log "ERROR" "'$cmd' not found"; exit 1; }
     done
 }
@@ -103,20 +130,16 @@ check_tools() {
 check_prerequisites() {
     STAGE="check_prerequisites"
     [ -x "${ROOTFS_DIR}/sbin/starter.d" ] || {
-        log "ERROR" "No rootfs at ${ROOTFS_DIR}. Run $0 without --image-only to build it"
+        log "ERROR" "Rootfs build failed: no starter.d in ${ROOTFS_DIR}"
         exit 1
     }
     # x86 image builds (com, amplifier) use the same rootfs folder
     [ -e "${ROOTFS_DIR}/lib/ld-musl-aarch64.so.1" ] || {
-        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not aarch64. Run $0 without --image-only to build it"
+        log "ERROR" "Rootfs build failed: ${ROOTFS_DIR} is not aarch64"
         exit 1
     }
     [ -f "${ROOTFS_DIR}/ukama/mocksysfs/mfgdata/schema/cnode.json" ] || {
-        log "ERROR" "Rootfs at ${ROOTFS_DIR} is not complete. Run $0 without --image-only to build it"
-        exit 1
-    }
-    [ -d "${UKAMA_REPO_APP_PKG}" ] && [ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ] || {
-        log "ERROR" "No apps in ${UKAMA_ROOT}/build. Run $0 without --image-only to build them"
+        log "ERROR" "Rootfs build failed: no cnode schema in ${ROOTFS_DIR}"
         exit 1
     }
     log "SUCCESS" "Prerequisites OK"
@@ -132,7 +155,7 @@ build_apps() {
         fi
     done
     log "INFO" "Building the apps the cnode uses: ${APPS[*]}"
-    ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
+    TEMP_DIR="${ALPINE_TMP}" ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
     restore_configs
     log "SUCCESS" "Apps built"
 }
@@ -142,7 +165,7 @@ build_rootfs() {
     mkdir -p mocksysfs
     [ -n "$(ls -A mocksysfs)" ] || touch mocksysfs/README
     log "INFO" "Building the rootfs"
-    ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
+    TEMP_DIR="${ALPINE_TMP}" ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
         log "INFO" "rootfs-env-setup.sh always exits 1 on aarch64, checking the rootfs instead"
 }
 
@@ -209,10 +232,6 @@ format_partitions() {
     sudo mkfs.ext4 -F -L data     "${DISK}7"
     sudo mkswap -L swap "${DISK}8"
     check_status $? "Partitions formatted" ${STAGE}
-
-    [ "$(sudo e2label "${DISK}5")" = "primary" ] && \
-        [ "$(sudo e2label "${DISK}6")" = "passive" ]
-    check_status $? "Partition labels confirmed" ${STAGE}
 }
 
 mount_partition() {
@@ -343,6 +362,7 @@ start() {
 EOF
     sudo chmod 0755 "${target}/etc/init.d/ukama-sysfs"
     sudo ln -sfn /etc/init.d/ukama-sysfs "${target}/etc/runlevels/boot/ukama-sysfs"
+    sudo ln -sfn /sys "${target}/ukama/mocksysfs/sys"
 }
 
 deploy_to_rootfs() {
@@ -380,10 +400,9 @@ if [[ ${#APPS[@]} -eq 0 ]]; then
 fi
 log "INFO" "Apps: ${APPS[*]}"
 
-if [ "${IMAGE_ONLY}" -eq 0 ]; then
-    build_apps
-    build_rootfs
-fi
+ALPINE_TMP=$(mktemp -d)
+build_apps
+build_rootfs
 
 check_prerequisites
 download_firmware
@@ -412,5 +431,11 @@ done
 
 sync
 cleanup
+trap - EXIT
+
+./validate-cnode-image.sh "${RAW_IMG}" || {
+    log "ERROR" "Image ${RAW_IMG} failed validation"
+    exit 1
+}
 log "SUCCESS" "Image ${RAW_IMG} created (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
