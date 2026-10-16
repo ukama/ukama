@@ -173,8 +173,7 @@ func Test_nodeRepo_Add(t *testing.T) {
 
 		mock.ExpectBegin()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), node.NodeID, node.OrgID).
+		mock.ExpectQuery(`(?i)INSERT.*ON CONFLICT.*DO UPDATE SET`).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()

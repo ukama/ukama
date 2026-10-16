@@ -33,9 +33,17 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 	}
 }
 
+// Atomic upsert on lower(node_id); a node re-registering under a different
+// org has its org_id moved instead of failing on the unique node_id index.
 func (r *nodeRepo) AddOrUpdate(ctx context.Context, node *Node) error {
-	d := r.Db.GetGormDb().WithContext(ctx).Create(node)
-	return d.Error
+	result := r.Db.GetGormDb().WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "lower(node_id)", Raw: true},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{"org_id", "updated_at"}),
+	}).Create(node)
+
+	return result.Error
 }
 
 func (r *nodeRepo) Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error) {
