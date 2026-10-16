@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	mocks "github.com/ukama/ukama/systems/init/lookup/mocks"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
@@ -271,6 +274,28 @@ func TestLookupServer_DeleteNodeForOrg(t *testing.T) {
 	orgRepo.AssertExpectations(t)
 }
 
+func TestLookupServer_DeleteNodeForOrg_NotFound(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	nodeRepo := &mocks.NodeRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	nodeStr := testNodeId.StringLowercase()
+
+	org := &db.Org{Name: "ukama"}
+	pnode := &pb.DeleteNodeRequest{NodeId: nodeStr, OrgName: "ukama"}
+
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	nodeRepo.On("Delete", mock.Anything, testNodeId).
+		Return(fmt.Errorf("%s %w", nodeStr, db.ErrNodeMissing)).Once()
+
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
+	_, err := s.DeleteNodeForOrg(context.TODO(), pnode)
+
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	orgRepo.AssertExpectations(t)
+	nodeRepo.AssertExpectations(t)
+}
+
 func TestLookupServer_GetSystemForOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	systemRepo := &mocks.SystemRepo{}
@@ -424,6 +449,33 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 	assert.NoError(t, err)
 	orgRepo.AssertExpectations(t)
 
+}
+
+func TestLookupServer_DeleteSystemForOrg_NotFound(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	systemRepo := &mocks.SystemRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	org := &db.Org{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Name: "ukama",
+	}
+
+	const sysName = "sys"
+	psys := &pb.DeleteSystemRequest{SystemName: sysName, OrgName: "ukama"}
+
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("Delete", mock.Anything, sysName, org.ID).
+		Return(fmt.Errorf("%s %w", sysName, db.ErrSystemMissing)).Once()
+
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
+	_, err := s.DeleteSystemForOrg(context.TODO(), psys)
+
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	orgRepo.AssertExpectations(t)
+	systemRepo.AssertExpectations(t)
 }
 
 func TestLookupServer_AddSystemForOrg_NewSystemIsCreatedAndAnnounced(t *testing.T) {

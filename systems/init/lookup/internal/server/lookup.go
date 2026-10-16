@@ -287,7 +287,7 @@ func (l *LookupServer) DeleteNodeForOrg(ctx context.Context, req *pb.DeleteNodeR
 
 	err = l.nodeRepo.Delete(ctx, nodeId)
 	if err != nil {
-		if strings.Contains(err.Error(), "node missing") {
+		if errors.Is(err, db.ErrNodeMissing) {
 			return nil, status.Errorf(codes.NotFound, "Unable to Delete node %s for %s org. Error %s",
 				req.NodeId, req.OrgName, err.Error())
 		} else {
@@ -556,7 +556,7 @@ func (l *LookupServer) DeleteSystemForOrg(ctx context.Context, req *pb.DeleteSys
 
 	err = l.systemRepo.Delete(ctx, req.SystemName, org.ID)
 	if err != nil {
-		if strings.Contains(err.Error(), "system missing") {
+		if errors.Is(err, db.ErrSystemMissing) {
 			return nil, status.Errorf(codes.NotFound, "Unable to Delete system %s from %s org. Error %s",
 				req.SystemName, req.OrgName, err.Error())
 		} else {

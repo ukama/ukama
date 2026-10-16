@@ -123,6 +123,48 @@ func Test_systemRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("SystemMissing", func(t *testing.T) {
+
+		const name = "sys"
+		const orgId = uint(15)
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(name, orgId).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewSystemRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(context.Background(), name, orgId)
+
+		// Assert
+		assert.ErrorIs(t, err, int_db.ErrSystemMissing)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
 }
 
 func Test_systemRepo_Add(t *testing.T) {

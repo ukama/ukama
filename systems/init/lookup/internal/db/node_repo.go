@@ -10,12 +10,15 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/gorm/clause"
 )
+
+var ErrNodeMissing = errors.New("node missing")
 
 type NodeRepo interface {
 	AddOrUpdate(ctx context.Context, node *Node) error
@@ -66,5 +69,5 @@ func (r *nodeRepo) Delete(ctx context.Context, nodeId ukama.NodeID) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s node missing", nodeId.String())
+	return fmt.Errorf("%s %w", nodeId.String(), ErrNodeMissing)
 }

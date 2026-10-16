@@ -10,12 +10,15 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm/clause"
 )
+
+var ErrSystemMissing = errors.New("system missing")
 
 type SystemRepo interface {
 	Add(ctx context.Context, sys *System) error
@@ -68,7 +71,7 @@ func (s *systemRepo) Delete(ctx context.Context, sys string, id uint) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s system missing", sys)
+	return fmt.Errorf("%s %w", sys, ErrSystemMissing)
 
 }
 

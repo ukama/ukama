@@ -149,6 +149,48 @@ func Test_nodeRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("NodeMissing", func(t *testing.T) {
+
+		id := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(id).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewNodeRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(context.Background(), id)
+
+		// Assert
+		assert.ErrorIs(t, err, int_db.ErrNodeMissing)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
 }
 
 func Test_nodeRepo_Add(t *testing.T) {
