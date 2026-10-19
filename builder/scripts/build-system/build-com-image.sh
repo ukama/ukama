@@ -33,6 +33,7 @@ UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
 COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 COM_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/com.config"
+APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 #UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
@@ -358,6 +359,17 @@ deploy_to_rootfs() {
     # create manifest
     create_manifest_file "${rootfs}/ukama/manifest.json" "${APPS[@]}"
     check_status $? "create_manifest_file in ${rootfs}" "deploy_to_rootfs"
+
+    sudo mkdir -p "${rootfs}/ukama/configs/metricsd" \
+                  "${rootfs}/ukama/configs/aggregator"
+    for app in bootstrap meshd notifyd init-network; do
+        sudo cp -r "${APP_CONFIGS_DIR}/${app}" "${rootfs}/ukama/configs/"
+    done
+    sudo cp "${APP_CONFIGS_DIR}/metricsd/com_config.toml" \
+            "${rootfs}/ukama/configs/metricsd/config.toml"
+    sudo cp "${APP_CONFIGS_DIR}/aggregator/tnode_config.toml" \
+            "${rootfs}/ukama/configs/aggregator/config.toml"
+    check_status $? "App configs copied to ${rootfs}" "deploy_to_rootfs"
 }
 
 # Main
