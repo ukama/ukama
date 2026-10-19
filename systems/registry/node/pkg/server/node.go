@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/goombaio/namegenerator"
@@ -58,33 +59,27 @@ type NodeServer struct {
 	pb.UnimplementedNodeServiceServer
 }
 
-func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo,
-	nodeStatusRepo db.NodeStatusRepo, pushGateway string, msgBus mb.MsgBusServiceClient,
-	siteService providers.SiteClientProvider, org uuid.UUID,
-	inventoryClientProvider cinvent.ComponentClient,
-	healthClient node.NodeHealthClient) *NodeServer {
+func NewNodeServer(orgName string, nodeRepo db.NodeRepo, siteRepo db.SiteRepo, nodeStatusRepo db.NodeStatusRepo,
+	pushGateway string, msgBus mb.MsgBusServiceClient, siteService providers.SiteClientProvider, org uuid.UUID, inventoryClientProvider cinvent.ComponentClient, healthClient node.NodeHealthClient) *NodeServer {
 	seed := time.Now().UTC().UnixNano()
 
 	return &NodeServer{
-		orgName:        orgName,
-		org:            org,
-		nodeRepo:       nodeRepo,
-		nodeStatusRepo: nodeStatusRepo,
-		siteRepo:       siteRepo,
-		siteService:    siteService,
-		nameGenerator:  namegenerator.NewNameGenerator(seed),
-		pushGateway:    pushGateway,
-		msgbus:         msgBus,
-		healthClient:   healthClient,
-		baseRoutingKey: msgbus.NewRoutingKeyBuilder().
-			SetCloudSource().
-			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		orgName:         orgName,
+		org:             org,
+		nodeRepo:        nodeRepo,
+		nodeStatusRepo:  nodeStatusRepo,
+		siteRepo:        siteRepo,
+		siteService:     siteService,
+		nameGenerator:   namegenerator.NewNameGenerator(seed),
+		pushGateway:     pushGateway,
+		msgbus:          msgBus,
+		healthClient:    healthClient,
+		baseRoutingKey:  msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 		inventoryClient: inventoryClientProvider,
 	}
 }
 
-func (n *NodeServer) AddNode(ctx context.Context,
-	req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
+func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.AddNodeResponse, error) {
 	log.Infof("Adding node  %v", req.NodeId)
 
 	nId, err := ukama.ValidateNodeId(req.NodeId)
@@ -124,8 +119,7 @@ func (n *NodeServer) AddNode(ctx context.Context,
 		log.Infof("Publishing event %+v with key %+v", evt, route)
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -134,8 +128,7 @@ func (n *NodeServer) AddNode(ctx context.Context,
 	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
 }
 
-func (n *NodeServer) GetNode(ctx context.Context,
-	req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Get node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
@@ -156,14 +149,12 @@ func (n *NodeServer) GetNode(ctx context.Context,
 	return resp, nil
 }
 
-func (n *NodeServer) GetNodesForSite(ctx context.Context,
-	req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
+func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteRequest) (*pb.GetBySiteResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetSiteId())
 
 	site, err := uuid.FromString(req.GetSiteId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of site uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
 	}
 
 	nodes, err := n.siteRepo.GetNodes(site)
@@ -181,14 +172,12 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context,
 	return resp, nil
 }
 
-func (n *NodeServer) GetNodesForNetwork(ctx context.Context,
-	req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
+func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetworkRequest) (*pb.GetByNetworkResponse, error) {
 	log.Infof("Getting all nodes on site %v", req.GetNetworkId())
 
 	network, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
 	nodes, err := n.siteRepo.GetByNetwork(network)
@@ -207,8 +196,7 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context,
 }
 
 /** Deprecated: Use List API instead */
-func (n *NodeServer) GetNodes(ctx context.Context,
-	req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
+func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb.GetNodesResponse, error) {
 	log.Infof("Getting all nodes.")
 
 	nodes, err := n.nodeRepo.GetAll()
@@ -227,13 +215,10 @@ func (n *NodeServer) GetNodes(ctx context.Context,
 }
 
 /** Deprecated: Use List API instead */
-func (n *NodeServer) GetNodesByState(ctx context.Context,
-	req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
-	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(),
-		req.GetState())
+func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStateRequest) (*pb.GetNodesResponse, error) {
+	log.Infof("Get nodes by state with connectivity: %v, state: %v", req.GetConnectivity(), req.GetState())
 
-	nodes, err := n.nodeRepo.GetNodesByState(uint8(req.GetConnectivity()),
-		uint8(req.GetState()))
+	nodes, err := n.nodeRepo.GetNodesByState(uint8(req.GetConnectivity()), uint8(req.GetState()))
 	if err != nil {
 		log.Error("error getting all nodes by state" + err.Error())
 
@@ -244,15 +229,12 @@ func (n *NodeServer) GetNodesByState(ctx context.Context,
 		Nodes: dbNodesToPbNodes(nodes),
 	}
 
+	fmt.Printf("Nodes Resp returning %v", resp)
 	return resp, nil
 }
 
-func (n *NodeServer) List(ctx context.Context,
-	req *pb.ListRequest) (*pb.ListResponse, error) {
-	log.Infof("List nodes by nodeId: %v, siteId: %v, networkId: %v, connectivity: %v,"+
-		" state: %v, type: %v",
-		req.GetNodeId(), req.GetSiteId(), req.GetNetworkId(), req.GetConnectivity().String(),
-		req.GetState().String(), req.GetType())
+func (n *NodeServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+	log.Infof("List nodes by nodeId: %v, siteId: %v, networkId: %v, connectivity: %v, state: %v, type: %v", req.GetNodeId(), req.GetSiteId(), req.GetNetworkId(), req.GetConnectivity().String(), req.GetState().String(), req.GetType())
 
 	var connectivity, state *uint8
 	if req.GetConnectivity().String() != Undefined {
@@ -263,8 +245,7 @@ func (n *NodeServer) List(ctx context.Context,
 		s := uint8(req.GetState())
 		state = &s
 	}
-	nodes, err := n.nodeRepo.List(req.GetNodeId(), req.GetSiteId(), req.GetNetworkId(),
-		req.GetType(), connectivity, state)
+	nodes, err := n.nodeRepo.List(req.GetNodeId(), req.GetSiteId(), req.GetNetworkId(), req.GetType(), connectivity, state)
 
 	if err != nil {
 		log.Error("error getting all nodes: " + err.Error())
@@ -278,8 +259,7 @@ func (n *NodeServer) List(ctx context.Context,
 	return resp, nil
 }
 
-func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
-	req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
+func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeStateRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node state  %v", req)
 
 	dbNodeState := ukama.ParseNodeState(req.State)
@@ -327,12 +307,11 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 	}
 
 	if n.msgbus != nil {
-		route := n.baseRoutingKey.SetAction("state.update").SetObject("node").MustBuild()
+		route := n.baseRoutingKey.SetActionUpdate().SetObject("status").MustBuild()
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -341,8 +320,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
 
-func (n *NodeServer) UpdateNode(ctx context.Context,
-	req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
@@ -392,15 +370,13 @@ func (n *NodeServer) UpdateNode(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
 }
 
-func (n *NodeServer) DeleteNode(ctx context.Context,
-	req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
+func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
 	log.Infof("Deleting node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
@@ -422,8 +398,7 @@ func (n *NodeServer) DeleteNode(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -432,10 +407,8 @@ func (n *NodeServer) DeleteNode(ctx context.Context,
 	return &pb.DeleteNodeResponse{}, nil
 }
 
-func (n *NodeServer) AttachNodes(ctx context.Context,
-	req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
-	log.Infof("Attaching nodes %v to parent node %s", req.GetAttachedNodes(),
-		req.GetNodeId())
+func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest) (*pb.AttachNodesResponse, error) {
+	log.Infof("Attaching nodes %v to parent node %s", req.GetAttachedNodes(), req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
@@ -461,8 +434,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -471,8 +443,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context,
 	return &pb.AttachNodesResponse{}, nil
 }
 
-func (n *NodeServer) DetachNode(ctx context.Context,
-	req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
+func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) (*pb.DetachNodeResponse, error) {
 	log.Infof("detaching node  %v", req.GetNodeId())
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
@@ -486,7 +457,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	attachednodes := make([]string, 0, len(node.Attached))
+	attachednodes := make([]string, len(node.Attached))
 	for _, an := range node.Attached {
 		attachednodes = append(attachednodes, an.Id)
 	}
@@ -506,8 +477,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -516,8 +486,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 	return &pb.DetachNodeResponse{}, nil
 }
 
-func (n *NodeServer) AddNodeToSite(ctx context.Context,
-	req *pb.AddNodeToSiteRequest) (*pb.AddNodeToSiteResponse, error) {
+func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteRequest) (*pb.AddNodeToSiteResponse, error) {
 	log.Infof("Add node req : %s", req)
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
@@ -526,14 +495,12 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context,
 
 	netID, err := uuid.FromString(req.GetNetworkId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of network uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
 	siteID, err := uuid.FromString(req.GetSiteId())
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"invalid format of site uuid. Error %s", err.Error())
+		return nil, status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
 
 	}
 
@@ -576,8 +543,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -608,8 +574,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -622,14 +587,12 @@ func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error
 
 	netID, err := uuid.FromString(networkId)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s",
-			err.Error())
+		return status.Errorf(codes.InvalidArgument, "invalid format of network uuid. Error %s", err.Error())
 	}
 
 	siteID, err := uuid.FromString(siteId)
 	if err != nil {
-		return status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s",
-			err.Error())
+		return status.Errorf(codes.InvalidArgument, "invalid format of site uuid. Error %s", err.Error())
 	}
 
 	site := &db.Site{
@@ -655,8 +618,7 @@ func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
-				err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
 
@@ -664,8 +626,7 @@ func (n *NodeServer) addNodeToSiteServer(nodeId, siteId, networkId string) error
 }
 
 func invalidNodeIDError(nodeId string, err error) error {
-	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId,
-		err.Error())
+	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }
 
 func processNodeDuplErrors(err error, nodeId string) error {
@@ -686,8 +647,7 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 		return
 	}
 
-	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount,
-		onlineCount, offlineCount)
+	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount, onlineCount, offlineCount)
 
 	for _, arg := range args {
 		switch arg {
@@ -696,12 +656,10 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 				pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOnlineNodes:
 			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOnlineNodes, float64(onlineCount), nil,
-				pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfOnlineNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOfflineNodes:
 			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOfflineNodes, float64(offlineCount), nil,
-				pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfOfflineNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}
 

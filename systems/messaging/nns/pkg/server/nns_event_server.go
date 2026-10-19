@@ -65,7 +65,7 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assign"):
+	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assigned"):
 		msg, err := l.unmarshalNodeAssignedEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -170,8 +170,8 @@ func (l *NnsEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOffline
 	return nil
 }
 
-func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
-	p := &epb.EventRegistryNodeAssign{}
+func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.NodeAssignedEvent, error) {
+	p := &epb.NodeAssignedEvent{}
 	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
@@ -190,7 +190,7 @@ func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeRel
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.EventRegistryNodeAssign) error {
+func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.NodeAssignedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())

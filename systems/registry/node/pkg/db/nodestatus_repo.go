@@ -13,6 +13,8 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type NodeStatusRepo interface {
@@ -33,23 +35,22 @@ func NewNodeStatusRepo(db sql.Db) NodeStatusRepo {
 	}
 }
 
-// Update updates the node's status row in place. Only non-zero fields on ns
-// are written (GORM's struct-based Updates semantics), so a caller that only
-// sets Connectivity leaves the existing State untouched, and vice versa.
 func (n *nodeStatusRepo) Update(ns *NodeStatus) error {
-	result := n.Db.GetGormDb().Model(&NodeStatus{}).
-		Where("node_id = ?", ns.NodeId).
-		Updates(ns)
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		t := tx.Where("node_id = ?", ns.NodeId).Delete(&NodeStatus{})
+		if t.RowsAffected > 0 {
+			log.Debugf("Marking old state.")
+		}
 
-	if result.Error != nil {
-		return result.Error
-	}
+		result := tx.Create(ns)
+		if result.Error != nil {
+			return result.Error
+		}
 
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
+		return nil
+	})
 
-	return nil
+	return err
 }
 
 func (n *nodeStatusRepo) Delete(id ukama.NodeID) error {
@@ -86,17 +87,14 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 	return ns, nil
 }
 
-func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64,
-	err error) {
+func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
 	db := n.Db.GetGormDb()
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
-		ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
-		ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 

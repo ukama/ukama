@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 )
 
@@ -72,6 +73,8 @@ func NewConfig(name string) *Config {
 			Host:    "msgclient-registry:9095",
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventOffline],
 				"event.cloud.local.{{ .Org}}.node.health.report.store",
 				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",

@@ -274,7 +274,7 @@ func nodeTypeSegmentFromLowerID(lid string) (string, bool) {
 }
 
 func ValidateNodeId(id string) (NodeID, error) {
-	/* TODO :: ADD more validation once we finalized this format, github issue; #1789 */
+	/* TODO :: ADD more validation once we finalized this format */
 	if len(id) != NodeIDLength {
 		return "", ErrInvalidNodeIDLength
 	}

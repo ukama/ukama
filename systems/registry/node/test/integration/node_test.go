@@ -14,6 +14,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
 
@@ -234,8 +235,7 @@ func Test_Listener(t *testing.T) {
 	assert.NoError(t, err)
 
 	if err != nil {
-		assert.Equal(t, ukama.NodeConnectivityOffline.String(),
-			nodeResp.Node.Status.Connectivity)
+		assert.Equal(t, ukama.NodeConnectivityOffline.String(), nodeResp.Node.Status.Connectivity)
 	}
 }
 
@@ -266,61 +266,43 @@ func handleResponse(t *testing.T, err error, r interface{}) {
 	}
 }
 
-// Test_NodeStateTransitionEvent_SetsConnectivity exercises registry/node's only
-// path to connectivity now that it no longer listens to the raw mesh online/offline
-// events directly: node/state's own NodeStateChangeEvent, carrying substate "on"/"off".
-func Test_NodeStateTransitionEvent_SetsConnectivity(t *testing.T) {
+func Test_NodeOnline_OfflineEvents(t *testing.T) {
 	// Arrange
 	nodeId := ukama.NewVirtualHomeNodeId()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
+	ip := fmt.Sprintf("%d.%d.%d.%d",
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256))
+	var port int32 = 1000
+	nIp := fmt.Sprintf("%d.%d.%d.%d",
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256),
+		rand.Intn(256))
 
-	conn, c, err := CreateRegistryClient()
-	assert.NoError(t, err)
-	if err != nil {
-		return
-	}
-	defer conn.Close()
+	var nPort int32 = 2000
 
-	_, err = c.AddNode(ctx, &pb.AddNodeRequest{NodeId: nodeId.String()})
-	assert.NoError(t, err)
-
-	// Act: node comes online.
-	err = sendNodeStateTransitionToQueue(t, nodeId.String(), "Operational", "on")
+	// Act
+	err := sendOnlineEventToQueue(t, nodeId.String(), ip, port, nIp, nPort)
 	assert.NoError(t, err)
 
 	// Assert
 	time.Sleep(2 * time.Second)
 
-	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
-	assert.NoError(t, err)
-	if err == nil {
-		assert.Equal(t, ukama.NodeConnectivityOnline.String(),
-			nodeResp.Node.Status.Connectivity)
-	}
-
-	// Act: node goes offline.
-	err = sendNodeStateTransitionToQueue(t, nodeId.String(), "Operational", "off")
+	err = sendOfflineEventToQueue(t, nodeId.String())
 	assert.NoError(t, err)
 
-	time.Sleep(2 * time.Second)
-
-	nodeResp, err = c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeId.String()})
-	assert.NoError(t, err)
-	if err == nil {
-		assert.Equal(t, ukama.NodeConnectivityOffline.String(),
-			nodeResp.Node.Status.Connectivity)
-	}
 }
 
-func sendNodeStateTransitionToQueue(t *testing.T, nodeId, state, substate string) error {
+func sendOnlineEventToQueue(t *testing.T, nodeId string, ip string, port int32, nIp string, nPort int32) error {
 	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	msg := &epb.NodeStateChangeEvent{NodeId: nodeId, State: state, Substate: substate}
+	msg := &epb.NodeOnlineEvent{NodeId: nodeId, MeshIp: ip, MeshPort: port, NodeIp: nIp, NodePort: nPort}
 
 	anyMsg, err := anypb.New(msg)
 	if err != nil {
@@ -332,10 +314,31 @@ func sendNodeStateTransitionToQueue(t *testing.T, nodeId, state, substate string
 		return err
 	}
 
-	route := msgbus.PrepareRoute(orgName,
-		"event.cloud.local.{{ .Org}}.node.state.node.transition")
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.online", "topic")
+	assert.NoError(t, err)
 
-	err = rabbit.Publish(payload, "", "amq.topic", msgbus.RoutingKey(route), "topic")
+	return err
+}
+
+func sendOfflineEventToQueue(t *testing.T, nodeId string) error {
+	rabbit, err := msgbus.NewPublisherClient(tConfig.Queue.Uri)
+	if err != nil {
+		assert.FailNow(t, err.Error())
+	}
+
+	msg := &epb.NodeOfflineEvent{NodeId: nodeId}
+
+	anyMsg, err := anypb.New(msg)
+	if err != nil {
+		return err
+	}
+
+	payload, err := proto.Marshal(anyMsg)
+	if err != nil {
+		return err
+	}
+
+	err = rabbit.Publish(payload, "", "amq.topic", "event.cloud.mesh.node.offline", "topic")
 	assert.NoError(t, err)
 
 	return err
