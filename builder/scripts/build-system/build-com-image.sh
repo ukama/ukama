@@ -338,6 +338,34 @@ setup_serial_console() {
     check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
 }
 
+setup_noded_sysfs() {
+    local rootfs="$1"
+    sudo tee "${rootfs}/etc/init.d/ukama-sysfs" > /dev/null <<'EOF'
+#!/sbin/openrc-run
+
+description="Link noded sysfs data into /tmp/sys"
+
+depend() {
+    need localmount
+    after bootmisc
+    before starterd
+}
+
+start() {
+    ebegin "Linking /tmp/sys to /ukama/mocksysfs/sys"
+    if [ -d /ukama/mocksysfs/sys ]; then
+        rm -rf /tmp/sys
+        ln -sfn /ukama/mocksysfs/sys /tmp/sys
+    fi
+    eend 0
+}
+EOF
+    sudo chmod 0755 "${rootfs}/etc/init.d/ukama-sysfs"
+    sudo ln -sfn /etc/init.d/ukama-sysfs "${rootfs}/etc/runlevels/boot/ukama-sysfs"
+    sudo ln -sfn /sys "${rootfs}/ukama/mocksysfs/sys"
+    check_status $? "ukama-sysfs boot service in ${rootfs}" "setup_noded_sysfs"
+}
+
 deploy_to_rootfs() {
     local rootfs="$1"
 
@@ -400,6 +428,8 @@ setup_serial_console "${PRIMARY_MNT}"
 setup_serial_console "${PASSIVE_MNT}"
 setup_network "${PRIMARY_MNT}"
 setup_network "${PASSIVE_MNT}"
+setup_noded_sysfs "${PRIMARY_MNT}"
+setup_noded_sysfs "${PASSIVE_MNT}"
 
 # Gather the list of enabled apps
 get_enabled_apps "$COMMON_CONFIG_FILE" "$COM_CONFIG_FILE"
