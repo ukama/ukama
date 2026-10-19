@@ -34,6 +34,7 @@ UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
 COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 COM_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/com.config"
 APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
+BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 #UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
@@ -370,6 +371,9 @@ deploy_to_rootfs() {
     sudo cp "${APP_CONFIGS_DIR}/aggregator/tnode_config.toml" \
             "${rootfs}/ukama/configs/aggregator/config.toml"
     check_status $? "App configs copied to ${rootfs}" "deploy_to_rootfs"
+
+    echo "${BOOTSTRAP_SERVER}" | sudo tee "${rootfs}/ukama/bootstrap" > /dev/null
+    check_status $? "Bootstrap server ${BOOTSTRAP_SERVER} set in ${rootfs}" "deploy_to_rootfs"
 }
 
 # Main
@@ -409,5 +413,5 @@ fi
 deploy_to_rootfs "${PRIMARY_MNT}"
 deploy_to_rootfs "${PASSIVE_MNT}"
 
-log "SUCCESS" "Disk image creation completed successfully!"
+log "SUCCESS" "Disk image creation completed successfully! (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
