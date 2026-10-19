@@ -10,32 +10,31 @@ package main
 
 import (
 	"os"
-
-	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
-	"github.com/ukama/ukama/systems/registry/node/pkg/server"
+	"os/signal"
+	"syscall"
 
 	"github.com/num30/config"
+	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	"github.com/ukama/ukama/systems/registry/node/pkg"
-
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/cmd/version"
-
+	"github.com/ukama/ukama/systems/registry/node/pkg"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
+	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	log "github.com/sirupsen/logrus"
 	ccmd "github.com/ukama/ukama/systems/common/cmd"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
 	node "github.com/ukama/ukama/systems/common/rest/client/node"
-	"github.com/ukama/ukama/systems/common/sql"
 	generated "github.com/ukama/ukama/systems/registry/node/pb/gen"
-	"google.golang.org/grpc"
 )
 
 var serviceConfig *pkg.Config
@@ -55,8 +54,10 @@ func initConfig() {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
+		} else {
+			log.Errorf("Failed to marshal config for debug logging: %v", err)
 		}
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
@@ -86,25 +87,29 @@ func runGrpcServer(gormdb sql.Db) {
 	}
 
 	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
-	nodeSystemUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
-		ic.CreateHostString(serviceConfig.OrgName, NodeSystemName), &serviceConfig.OrgName)
+	initClient := ic.NewInitClient(serviceConfig.Http.InitClient,
+		client.WithDebug(serviceConfig.DebugMode))
+	hostString := ic.CreateHostString(serviceConfig.OrgName, NodeSystemName)
+	nodeSystemUrl, err := ic.GetHostAddress(initClient, hostString, &serviceConfig.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve node system address from initClient: %v", err)
 	}
 
 	healthClient := node.NewNodeHealthClient(nodeSystemUrl.String())
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
-		serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host,
+		serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue,
+		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
-		serviceConfig.PushGateway, mbClient, providers.NewSiteClientProvider(serviceConfig.SiteHost), orgId, invClient, healthClient,
+	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb),
+		db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb), serviceConfig.PushGateway,
+		mbClient, providers.NewSiteClientProvider(serviceConfig.SiteHost), orgId,
+		invClient, healthClient,
 	)
 	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv, invClient)
 
@@ -114,7 +119,8 @@ func runGrpcServer(gormdb sql.Db) {
 	})
 
 	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormdb))
-	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+	grpcServer.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
 
 	go msgBusListener(mbClient)
 
@@ -124,21 +130,21 @@ func runGrpcServer(gormdb sql.Db) {
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {
-
 	if err := m.Register(); err != nil {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
+			pkg.ServiceName, err.Error())
 	}
 }
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan bool, 1)
 	go func() {
-
 		sig := <-sigs
 		log.Info(sig)
 		done <- true
