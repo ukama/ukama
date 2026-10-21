@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/init/lookup/internal/db"
 )
@@ -12,17 +14,17 @@ type SystemRepo struct {
 	mock.Mock
 }
 
-// Add provides a mock function with given fields: sys
-func (_m *SystemRepo) Add(sys *db.System) error {
-	ret := _m.Called(sys)
+// Add provides a mock function with given fields: ctx, sys
+func (_m *SystemRepo) Add(ctx context.Context, sys *db.System) error {
+	ret := _m.Called(ctx, sys)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.System) error); ok {
-		r0 = rf(sys)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.System) error); ok {
+		r0 = rf(ctx, sys)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -30,17 +32,17 @@ func (_m *SystemRepo) Add(sys *db.System) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: sys, org
-func (_m *SystemRepo) Delete(sys string, org uint) error {
-	ret := _m.Called(sys, org)
+// Delete provides a mock function with given fields: ctx, sys, org
+func (_m *SystemRepo) Delete(ctx context.Context, sys string, org uint) error {
+	ret := _m.Called(ctx, sys, org)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(string, uint) error); ok {
-		r0 = rf(sys, org)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint) error); ok {
+		r0 = rf(ctx, sys, org)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -48,9 +50,9 @@ func (_m *SystemRepo) Delete(sys string, org uint) error {
 	return r0
 }
 
-// GetByName provides a mock function with given fields: sys, org
-func (_m *SystemRepo) GetByName(sys string, org uint) (*db.System, error) {
-	ret := _m.Called(sys, org)
+// GetByName provides a mock function with given fields: ctx, sys, org
+func (_m *SystemRepo) GetByName(ctx context.Context, sys string, org uint) (*db.System, error) {
+	ret := _m.Called(ctx, sys, org)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByName")
@@ -58,19 +60,19 @@ func (_m *SystemRepo) GetByName(sys string, org uint) (*db.System, error) {
 
 	var r0 *db.System
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, uint) (*db.System, error)); ok {
-		return rf(sys, org)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint) (*db.System, error)); ok {
+		return rf(ctx, sys, org)
 	}
-	if rf, ok := ret.Get(0).(func(string, uint) *db.System); ok {
-		r0 = rf(sys, org)
+	if rf, ok := ret.Get(0).(func(context.Context, string, uint) *db.System); ok {
+		r0 = rf(ctx, sys, org)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.System)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, uint) error); ok {
-		r1 = rf(sys, org)
+	if rf, ok := ret.Get(1).(func(context.Context, string, uint) error); ok {
+		r1 = rf(ctx, sys, org)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -78,17 +80,17 @@ func (_m *SystemRepo) GetByName(sys string, org uint) (*db.System, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: sys, org
-func (_m *SystemRepo) Update(sys *db.System, org uint) error {
-	ret := _m.Called(sys, org)
+// Update provides a mock function with given fields: ctx, sys, org
+func (_m *SystemRepo) Update(ctx context.Context, sys *db.System, org uint) error {
+	ret := _m.Called(ctx, sys, org)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.System, uint) error); ok {
-		r0 = rf(sys, org)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.System, uint) error); ok {
+		r0 = rf(ctx, sys, org)
 	} else {
 		r0 = ret.Error(0)
 	}
