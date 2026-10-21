@@ -44,6 +44,8 @@ UBOOT_CONFIG="sama5d27_ukama_anode_emmc_defconfig"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
+APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
+BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 APP_NAMES=()
 
 # Alpine parameters
@@ -340,6 +342,58 @@ FSTAB
     check_status $? "fstab written" "${STAGE}"
 }
 
+setup_network() {
+    local rootfs="$1"
+    sudo tee "${rootfs}/etc/dhcpcd.conf" > /dev/null <<EOF
+hostname
+clientid
+persistent
+option domain_name_servers, domain_name, domain_search, host_name
+option classless_static_routes
+option interface_mtu
+require dhcp_server_identifier
+EOF
+    sudo ln -sfn /etc/init.d/loopback "${rootfs}/etc/runlevels/boot/loopback"
+    sudo ln -sfn /etc/init.d/ntpd "${rootfs}/etc/runlevels/default/ntpd"
+    check_status $? "DHCP, loopback and ntpd in ${rootfs}" "setup_network"
+}
+
+setup_serial_console() {
+    local rootfs="$1"
+    grep -q '^ttyS0:' "${rootfs}/etc/inittab" || \
+        echo 'ttyS0::respawn:/sbin/getty -L 115200 ttyS0 vt100' | sudo tee -a "${rootfs}/etc/inittab" > /dev/null
+    check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
+}
+
+setup_noded_sysfs() {
+    local rootfs="$1"
+    sudo tee "${rootfs}/etc/init.d/ukama-sysfs" > /dev/null <<'EOF'
+#!/sbin/openrc-run
+
+description="Link noded sysfs data into /tmp/sys"
+
+depend() {
+    need localmount
+    after bootmisc
+    before starterd
+}
+
+start() {
+    ebegin "Linking /tmp/sys to /ukama/mocksysfs/sys"
+    if [ -d /ukama/mocksysfs/sys ]; then
+        rm -rf /tmp/sys
+        ln -sfn /ukama/mocksysfs/sys /tmp/sys
+    fi
+    eend 0
+}
+EOF
+    sudo chmod 0755 "${rootfs}/etc/init.d/ukama-sysfs"
+    sudo ln -sfn /etc/init.d/ukama-sysfs "${rootfs}/etc/runlevels/boot/ukama-sysfs"
+    sudo mkdir -p "${rootfs}/ukama/mocksysfs"
+    sudo ln -sfn /sys "${rootfs}/ukama/mocksysfs/sys"
+    check_status $? "ukama-sysfs boot service in ${rootfs}" "setup_noded_sysfs"
+}
+
 deploy_to_rootfs() {
     local rootfs="$1"
 
@@ -362,6 +416,21 @@ deploy_to_rootfs() {
     # create manifest
     create_manifest_file "${rootfs}/ukama/manifest.json" "${APPS[@]}"
     check_status $? "create_manifest_file in ${rootfs}" "deploy_to_rootfs"
+
+    sudo mkdir -p "${rootfs}/ukama/configs/metricsd" \
+                  "${rootfs}/ukama/configs/aggregator"
+    for app in bootstrap meshd notifyd femd; do
+        sudo cp -r "${APP_CONFIGS_DIR}/${app}" "${rootfs}/ukama/configs/"
+    done
+    sudo cp "${APP_CONFIGS_DIR}/metricsd/amplifier_config.toml" \
+            "${rootfs}/ukama/configs/metricsd/config.toml"
+    sudo cp -r "${APP_CONFIGS_DIR}/metricsd/anode" "${rootfs}/ukama/configs/metricsd/"
+    sudo cp "${APP_CONFIGS_DIR}/aggregator/anode_config.toml" \
+            "${rootfs}/ukama/configs/aggregator/config.toml"
+    check_status $? "App configs copied to ${rootfs}" "deploy_to_rootfs"
+
+    echo "${BOOTSTRAP_SERVER}" | sudo tee "${rootfs}/ukama/bootstrap" > /dev/null
+    check_status $? "Bootstrap server ${BOOTSTRAP_SERVER} set in ${rootfs}" "deploy_to_rootfs"
 }
 
 copy_misc_files() {
@@ -401,6 +470,12 @@ install_kernel_modules "${PRIMARY_MNT}"
 install_kernel_modules "${PASSIVE_MNT}"
 update_fstab "${PRIMARY_MNT}"
 update_fstab "${PASSIVE_MNT}"
+setup_serial_console "${PRIMARY_MNT}"
+setup_serial_console "${PASSIVE_MNT}"
+setup_network "${PRIMARY_MNT}"
+setup_network "${PASSIVE_MNT}"
+setup_noded_sysfs "${PRIMARY_MNT}"
+setup_noded_sysfs "${PASSIVE_MNT}"
 
 # Gather the list of enabled apps
 get_enabled_apps "$COMMON_CONFIG_FILE" "$AMPLIFIER_CONFIG_FILE"
@@ -416,5 +491,5 @@ deploy_to_rootfs "${PASSIVE_MNT}"
 copy_misc_files  "${PRIMARY_MNT}"
 copy_misc_files  "${PASSIVE_MNT}"
 
-log "SUCCESS" "Disk image creation completed successfully!"
+log "SUCCESS" "Disk image creation completed successfully! (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
