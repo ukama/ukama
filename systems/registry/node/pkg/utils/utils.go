@@ -6,7 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
-package server
+package utils
 
 import (
 	"errors"
@@ -24,8 +24,8 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-// repoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL errors.
-func repoErrorToGrpc(err error, entity string) error {
+// RepoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL errors.
+func RepoErrorToGrpc(err error, entity string) error {
 	if st, ok := status.FromError(err); ok {
 		return st.Err()
 	}
@@ -33,8 +33,8 @@ func repoErrorToGrpc(err error, entity string) error {
 	return grpc.SqlErrorToGrpc(err, entity)
 }
 
-// isValidNodeConnectivity accepts the proto enum names in any case and rejects numbers and unknown strings.
-func isValidNodeConnectivity(value string) bool {
+// IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers and unknown strings.
+func IsValidNodeConnectivity(value string) bool {
 	for name := range cpb.NodeConnectivity_value {
 		if strings.EqualFold(name, value) {
 			return true
@@ -44,11 +44,11 @@ func isValidNodeConnectivity(value string) bool {
 	return false
 }
 
-func invalidNodeIDError(nodeId string, err error) error {
+func InvalidNodeIDError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
 }
 
-func processNodeDuplErrors(err error, nodeId string) error {
+func ProcessNodeDuplErrors(err error, nodeId string) error {
 	var pge *pgconn.PgError
 
 	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
@@ -58,17 +58,17 @@ func processNodeDuplErrors(err error, nodeId string) error {
 	return grpc.SqlErrorToGrpc(err, "node")
 }
 
-func dbNodesToPbNodes(nodes []db.Node) []*pb.Node {
+func DbNodesToPbNodes(nodes []db.Node) []*pb.Node {
 	pbNodes := []*pb.Node{}
 
 	for _, n := range nodes {
-		pbNodes = append(pbNodes, dbNodeToPbNode(&n))
+		pbNodes = append(pbNodes, DbNodeToPbNode(&n))
 	}
 
 	return pbNodes
 }
 
-func dbNodeToPbNode(dbn *db.Node) *pb.Node {
+func DbNodeToPbNode(dbn *db.Node) *pb.Node {
 	n := &pb.Node{
 		Id: dbn.Id,
 		Status: &pb.NodeStatus{
@@ -94,7 +94,7 @@ func dbNodeToPbNode(dbn *db.Node) *pb.Node {
 	}
 
 	for _, nd := range dbn.Attached {
-		n.Attached = append(n.Attached, dbNodeToPbNode(nd))
+		n.Attached = append(n.Attached, DbNodeToPbNode(nd))
 	}
 
 	return n

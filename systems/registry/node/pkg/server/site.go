@@ -12,6 +12,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
+	"github.com/ukama/ukama/systems/registry/node/pkg/utils"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
@@ -21,7 +22,7 @@ import (
 func (n *NodeServer) assignNodesToSite(siteId, networkId uuid.UUID, nodeIds []string) error {
 	assigned, err := n.siteRepo.AssignNodes(siteId, networkId, nodeIds)
 	if err != nil {
-		return repoErrorToGrpc(err, "node")
+		return utils.RepoErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus == nil {

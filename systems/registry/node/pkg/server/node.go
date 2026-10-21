@@ -20,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/node/pkg"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
+	"github.com/ukama/ukama/systems/registry/node/pkg/utils"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -120,7 +121,7 @@ func (n *NodeServer) AddNode(ctx context.Context, req *pb.AddNodeRequest) (*pb.A
 
 	n.requestMetricsPush()
 
-	return &pb.AddNodeResponse{Node: dbNodeToPbNode(node)}, nil
+	return &pb.AddNodeResponse{Node: utils.DbNodeToPbNode(node)}, nil
 }
 
 func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
@@ -139,7 +140,7 @@ func (n *NodeServer) GetNode(ctx context.Context, req *pb.GetNodeRequest) (*pb.G
 		return nil, grpc.SqlErrorToGrpc(err, "node")
 	}
 
-	resp := &pb.GetNodeResponse{Node: dbNodeToPbNode(node)}
+	resp := &pb.GetNodeResponse{Node: utils.DbNodeToPbNode(node)}
 
 	return resp, nil
 }
@@ -161,7 +162,7 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context, req *pb.GetBySiteReque
 
 	resp := &pb.GetBySiteResponse{
 		SiteId: req.GetSiteId(),
-		Nodes:  dbNodesToPbNodes(nodes),
+		Nodes:  utils.DbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -184,7 +185,7 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context, req *pb.GetByNetwor
 
 	resp := &pb.GetByNetworkResponse{
 		NetworkId: req.GetNetworkId(),
-		Nodes:     dbNodesToPbNodes(nodes),
+		Nodes:     utils.DbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -203,7 +204,7 @@ func (n *NodeServer) GetNodes(ctx context.Context, req *pb.GetNodesRequest) (*pb
 	}
 
 	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
+		Nodes: utils.DbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -221,7 +222,7 @@ func (n *NodeServer) GetNodesByState(ctx context.Context, req *pb.GetNodesByStat
 	}
 
 	resp := &pb.GetNodesResponse{
-		Nodes: dbNodesToPbNodes(nodes),
+		Nodes: utils.DbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -247,7 +248,7 @@ func (n *NodeServer) List(ctx context.Context, req *pb.ListRequest) (*pb.ListRes
 	}
 
 	resp := &pb.ListResponse{
-		Nodes: dbNodesToPbNodes(nodes),
+		Nodes: utils.DbNodesToPbNodes(nodes),
 	}
 
 	return resp, nil
@@ -270,7 +271,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node state %q", req.State)
 	}
 
-	if req.Connectivity != "" && !isValidNodeConnectivity(req.Connectivity) {
+	if req.Connectivity != "" && !utils.IsValidNodeConnectivity(req.Connectivity) {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node connectivity %q",
 			req.Connectivity)
 	}
@@ -329,7 +330,7 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 
 	n.requestMetricsPush()
 
-	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
+	return &pb.UpdateNodeResponse{Node: utils.DbNodeToPbNode(und)}, nil
 }
 
 func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
@@ -349,7 +350,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 
 	err = n.nodeRepo.Update(nodeUpdates, nil)
 	if err != nil {
-		duplErr := processNodeDuplErrors(err, req.NodeId)
+		duplErr := utils.ProcessNodeDuplErrors(err, req.NodeId)
 		if duplErr != nil {
 			return nil, duplErr
 		}
@@ -388,7 +389,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context, req *pb.UpdateNodeRequest) 
 			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
 		}
 	}
-	return &pb.UpdateNodeResponse{Node: dbNodeToPbNode(und)}, nil
+	return &pb.UpdateNodeResponse{Node: utils.DbNodeToPbNode(und)}, nil
 }
 
 func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) (*pb.DeleteNodeResponse, error) {
@@ -427,7 +428,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context, req *pb.AttachNodesRequest
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
 	nds := req.GetAttachedNodes()
@@ -463,7 +464,7 @@ func (n *NodeServer) DetachNode(ctx context.Context, req *pb.DetachNodeRequest) 
 
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
 	node, err := n.nodeRepo.Get(nodeId)
@@ -505,7 +506,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context, req *pb.AddNodeToSiteReq
 	log.Infof("Add node req : %s", req)
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
 	netID, err := uuid.FromString(req.GetNetworkId())
@@ -547,12 +548,12 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 	req *pb.ReleaseNodeFromSiteRequest) (*pb.ReleaseNodeFromSiteResponse, error) {
 	nodeId, err := ukama.ValidateNodeId(req.GetNodeId())
 	if err != nil {
-		return nil, invalidNodeIDError(req.GetNodeId(), err)
+		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
 	nd, err := n.siteRepo.RemoveNode(nodeId)
 	if err != nil {
-		return nil, repoErrorToGrpc(err, "node")
+		return nil, utils.RepoErrorToGrpc(err, "node")
 	}
 
 	released := *nd
