@@ -374,6 +374,36 @@ func (_m *NodeServiceServer) ReleaseNodeFromSite(_a0 context.Context, _a1 *gen.R
 	return r0, r1
 }
 
+// ReleaseSite provides a mock function with given fields: _a0, _a1
+func (_m *NodeServiceServer) ReleaseSite(_a0 context.Context, _a1 *gen.ReleaseSiteRequest) (*gen.ReleaseSiteResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseSite")
+	}
+
+	var r0 *gen.ReleaseSiteResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseSiteRequest) (*gen.ReleaseSiteResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ReleaseSiteRequest) *gen.ReleaseSiteResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ReleaseSiteResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ReleaseSiteRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // UpdateNode provides a mock function with given fields: _a0, _a1
 func (_m *NodeServiceServer) UpdateNode(_a0 context.Context, _a1 *gen.UpdateNodeRequest) (*gen.UpdateNodeResponse, error) {
 	ret := _m.Called(_a0, _a1)
