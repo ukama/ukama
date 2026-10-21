@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # all tools available?
-for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate; do
+for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc flex bison arm-linux-gnueabihf-gcc; do
     command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
 done
 
@@ -35,6 +35,12 @@ COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 AMPLIFIER_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/controller.config"
 BOOT1_BIN="${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin"
 BOOT2_BIN="${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin"
+FIRMWARE_DIR="${UKAMA_OS}/firmware"
+KERNEL_SRC="${UKAMA_OS}/kernel/linux"
+KERNEL_OUT=""
+CROSS_COMPILE="arm-linux-gnueabihf-"
+AT91_CONFIG="sama5d27_ukama_emmc_uboot_defconfig"
+UBOOT_CONFIG="sama5d27_ukama_anode_emmc_defconfig"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 MISC_FILES_DIR=${UKAMA_ROOT}/builder/scripts/build-system/amplifier
@@ -80,15 +86,37 @@ check_pre_requisite() {
         exit 1
     fi
 
-    if [ ! -f "${BOOT1_BIN}" ]; then
-        log "ERROR" "boot file ${BOOT1_BIN} does not exist"
+    if [ ! -f "${FIRMWARE_DIR}/Makefile" ] || [ ! -f "${KERNEL_SRC}/arch/arm/configs/ukama_anode_defconfig" ]; then
+        log "ERROR" "firmware or kernel source missing, run: git submodule update --init nodes/ukamaOS/firmware nodes/ukamaOS/kernel"
         exit 1
     fi
+}
 
-    if [ ! -f "${BOOT2_BIN}" ]; then
-        log "ERROR" "boot file ${BOOT2_BIN} does not exist"
-        exit 1
-    fi
+build_emmc_firmware() {
+    STAGE="build_emmc_firmware"
+    log INFO "Building at91bootstrap (${AT91_CONFIG}) and u-boot (${UBOOT_CONFIG})"
+
+    make -C "${FIRMWARE_DIR}" distclean TARGET=amplifier ROOTFSPATH="${FIRMWARE_DIR}/build" > /dev/null 2>&1 || true
+    make -C "${FIRMWARE_DIR}" TARGET=amplifier ROOTFSPATH="${FIRMWARE_DIR}/build" \
+         AT91CONFIG="${AT91_CONFIG}" UBOOTCONFIG="${UBOOT_CONFIG}"
+
+    for f in "${BOOT1_BIN}" "${BOOT2_BIN}" "${FIRMWARE_DIR}/u-boot/tools/mkenvimage"; do
+        [[ -f "$f" ]] || { log ERROR "Firmware build did not produce ${f}"; exit 1; }
+    done
+    log SUCCESS "eMMC boot firmware built"
+}
+
+build_kernel() {
+    STAGE="build_kernel"
+    KERNEL_OUT=$(mktemp -d)
+    local kmake=(make -C "${KERNEL_SRC}" O="${KERNEL_OUT}" ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}")
+
+    log INFO "Building the Ukama amplifier kernel in ${KERNEL_OUT}"
+    "${kmake[@]}" ukama_anode_defconfig
+    "${kmake[@]}" -j"$(nproc)" zImage modules dtbs
+    "${kmake[@]}" INSTALL_MOD_PATH="${KERNEL_OUT}/modroot" modules_install
+
+    log SUCCESS "Kernel $(ls "${KERNEL_OUT}/modroot/lib/modules") built"
 }
 
 # Cleanup function ensures mounts and loop are detached
@@ -100,6 +128,9 @@ cleanup() {
     if [[ -n "$LOOPDEV" ]]; then
         sudo kpartx -dv "$LOOPDEV" 2>/dev/null || true
         sudo losetup -d "$LOOPDEV"  2>/dev/null || true
+    fi
+    if [[ -n "$KERNEL_OUT" ]]; then
+        sudo rm -rf "$KERNEL_OUT"
     fi
 }
 trap cleanup EXIT
@@ -187,29 +218,32 @@ mount_partition() {
 
 copy_boot() {
     STAGE="copy_boot"
-    log INFO "Copying boot files from ${ROOTFS_DIR}/boot → ${BOOT_MNT} (which will become /boot)"
+    log INFO "Copying eMMC firmware, kernel and uboot.env → ${BOOT_MNT} (which will become /boot)"
 
-    local src="${ROOTFS_DIR}/boot"
-    local dst="${BOOT_MNT}/"
+    local dst="${BOOT_MNT}"
+    local env_txt
 
-    # 1) Sanity-check source
-    if [[ ! -d "${src}" ]]; then
-        log ERROR "Missing source boot dir: ${src}"
-        exit 1
-    fi
-
-    # 2) Clean out anything already on the boot partition
+    # 1) Clean out anything already on the boot partition
     sudo rm -rf "${dst:?}/"*
     check_status $? "Cleared old files on boot partition" "${STAGE}"
 
-    # 3) Copy everything from rootfs/boot into the partition mount (dst/)
-    #    We exclude the recursive 'boot → .' symlink so rsync won't loop
-    sudo rsync -aAX --delete \
-      --exclude='boot' \
-      "${src}/" "${dst}/boot"
-    check_status $? "Copied u-boot at91boot,  etc." "${STAGE}"
+    sudo cp "${BOOT1_BIN}" "${dst}/BOOT.BIN"
+    sudo cp "${BOOT2_BIN}" "${dst}/u-boot.bin"
+    sudo cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${dst}/zImage"
+    sudo cp "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${dst}/ukama_anode.dtb"
 
-    log SUCCESS "Boot partition populated under /boot"
+    env_txt=$(mktemp)
+    cat > "$env_txt" <<EOF
+baudrate=115200
+bootdelay=3
+bootargs=console=ttyS0,115200 earlyprintk root=/dev/mmcblk0p3 rootfstype=ext4 rw rootwait
+bootcmd=fatload mmc 0 0x22000000 ukama_anode.dtb; fatload mmc 0 0x23000000 zImage; bootz 0x23000000 - 0x22000000
+EOF
+    sudo "${FIRMWARE_DIR}/u-boot/tools/mkenvimage" -s 0x4000 -o "${dst}/uboot.env" "$env_txt"
+    rm -f "$env_txt"
+    check_status $? "Copied BOOT.BIN, u-boot.bin, uboot.env, zImage and ukama_anode.dtb" "${STAGE}"
+
+    log SUCCESS "Boot partition populated"
 }
 
 copy_rootfs() {
@@ -224,6 +258,7 @@ copy_rootfs() {
         --exclude=/run/*
         --exclude=/tmp/*
         --exclude=/boot
+        --exclude=/lib/modules
         --exclude=/efi
         --exclude=/ukamarepo
         --exclude=/passive
@@ -247,6 +282,7 @@ copy_rootfs() {
 
     # 3) Recreate mount-point dirs
     sudo mkdir -p \
+         "${PRIMARY_MNT}/boot" \
          "${PRIMARY_MNT}/dev" \
          "${PRIMARY_MNT}/proc" \
          "${PRIMARY_MNT}/sys" \
@@ -262,6 +298,7 @@ copy_rootfs() {
     check_status $? "Rootfs copied to ${PASSIVE_MNT}" "${STAGE}"
 
     sudo mkdir -p \
+         "${PASSIVE_MNT}/boot" \
          "${PASSIVE_MNT}/dev" \
          "${PASSIVE_MNT}/proc" \
          "${PASSIVE_MNT}/sys" \
@@ -270,6 +307,13 @@ copy_rootfs() {
 
     sync
     log SUCCESS "Rootfs deployed to primary & passive" "${STAGE}"
+}
+
+install_kernel_modules() {
+    local rootfs="$1"
+    sudo mkdir -p "${rootfs}/lib/modules"
+    sudo cp -a "${KERNEL_OUT}/modroot/lib/modules/." "${rootfs}/lib/modules/"
+    check_status $? "Kernel modules installed in ${rootfs}" "install_kernel_modules"
 }
 
 update_fstab() {
@@ -334,6 +378,8 @@ copy_misc_files() {
 
 # Main
 check_pre_requisite
+build_emmc_firmware
+build_kernel
 
 mkdir -p "$BOOT_MNT" "$PASSIVE_MNT" "$PRIMARY_MNT"
 
@@ -351,6 +397,8 @@ log SUCCESS "Disk image ${RAW_IMG} prepared successfully"
 
 copy_boot
 copy_rootfs
+install_kernel_modules "${PRIMARY_MNT}"
+install_kernel_modules "${PASSIVE_MNT}"
 update_fstab "${PRIMARY_MNT}"
 update_fstab "${PASSIVE_MNT}"
 
