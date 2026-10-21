@@ -49,7 +49,7 @@ func (l *LookupEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			return nil, err
 		}
 
-		err = l.handleEventCloudLookupOrgCreate(e.RoutingKey, msg)
+		err = l.handleEventCloudLookupOrgCreate(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -60,7 +60,7 @@ func (l *LookupEventServer) EventNotification(ctx context.Context, e *epb.Event)
 			return nil, err
 		}
 
-		err = l.handleEventOrgIPUpdateEvent(e.RoutingKey, msg)
+		err = l.handleEventOrgIPUpdateEvent(ctx, e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -82,7 +82,7 @@ func (l *LookupEventServer) unmarshalLookupOrganizationCreate(msg *anypb.Any) (*
 	return p, nil
 }
 
-func (l *LookupEventServer) handleEventCloudLookupOrgCreate(key string, msg *pb.AddOrgRequest) error {
+func (l *LookupEventServer) handleEventCloudLookupOrgCreate(ctx context.Context, key string, msg *pb.AddOrgRequest) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 	return nil
 }
@@ -97,11 +97,11 @@ func (l *LookupEventServer) unmarshalOrgIpUpdateEvent(msg *anypb.Any) (*epb.Mesh
 	return p, nil
 }
 
-func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.MeshRegisterEvent) error {
+func (l *LookupEventServer) handleEventOrgIPUpdateEvent(ctx context.Context, key string, msg *epb.MeshRegisterEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	/* Read the Org first */
-	org, err := l.orgRepo.GetByName(l.orgName)
+	org, err := l.orgRepo.GetByName(ctx, l.orgName)
 	if err != nil {
 		log.Errorf("Org %s not found", l.orgName)
 		return status.Error(codes.NotFound, "Org not found")
@@ -118,7 +118,7 @@ func (l *LookupEventServer) handleEventOrgIPUpdateEvent(key string, msg *epb.Mes
 	org.Ip = orgIp
 
 	/* Update Ip */
-	err = l.orgRepo.Update(org)
+	err = l.orgRepo.Update(ctx, org)
 	if err != nil {
 		log.Errorf("Error updating org %s", l.orgName)
 		return err

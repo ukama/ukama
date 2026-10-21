@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/init/lookup/internal/db"
 
@@ -14,17 +16,17 @@ type NodeRepo struct {
 	mock.Mock
 }
 
-// AddOrUpdate provides a mock function with given fields: node
-func (_m *NodeRepo) AddOrUpdate(node *db.Node) error {
-	ret := _m.Called(node)
+// AddOrUpdate provides a mock function with given fields: ctx, node
+func (_m *NodeRepo) AddOrUpdate(ctx context.Context, node *db.Node) error {
+	ret := _m.Called(ctx, node)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddOrUpdate")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.Node) error); ok {
-		r0 = rf(node)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Node) error); ok {
+		r0 = rf(ctx, node)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -32,17 +34,17 @@ func (_m *NodeRepo) AddOrUpdate(node *db.Node) error {
 	return r0
 }
 
-// Delete provides a mock function with given fields: nodeId
-func (_m *NodeRepo) Delete(nodeId ukama.NodeID) error {
-	ret := _m.Called(nodeId)
+// Delete provides a mock function with given fields: ctx, nodeId
+func (_m *NodeRepo) Delete(ctx context.Context, nodeId ukama.NodeID) error {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Delete")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) error); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, ukama.NodeID) error); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -50,9 +52,9 @@ func (_m *NodeRepo) Delete(nodeId ukama.NodeID) error {
 	return r0
 }
 
-// Get provides a mock function with given fields: nodeId
-func (_m *NodeRepo) Get(nodeId ukama.NodeID) (*db.Node, error) {
-	ret := _m.Called(nodeId)
+// Get provides a mock function with given fields: ctx, nodeId
+func (_m *NodeRepo) Get(ctx context.Context, nodeId ukama.NodeID) (*db.Node, error) {
+	ret := _m.Called(ctx, nodeId)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -60,19 +62,19 @@ func (_m *NodeRepo) Get(nodeId ukama.NodeID) (*db.Node, error) {
 
 	var r0 *db.Node
 	var r1 error
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) (*db.Node, error)); ok {
-		return rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, ukama.NodeID) (*db.Node, error)); ok {
+		return rf(ctx, nodeId)
 	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) *db.Node); ok {
-		r0 = rf(nodeId)
+	if rf, ok := ret.Get(0).(func(context.Context, ukama.NodeID) *db.Node); ok {
+		r0 = rf(ctx, nodeId)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Node)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(ukama.NodeID) error); ok {
-		r1 = rf(nodeId)
+	if rf, ok := ret.Get(1).(func(context.Context, ukama.NodeID) error); ok {
+		r1 = rf(ctx, nodeId)
 	} else {
 		r1 = ret.Error(1)
 	}

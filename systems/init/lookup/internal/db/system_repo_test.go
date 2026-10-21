@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"context"
 	extsql "database/sql"
 	"regexp"
 	"testing"
@@ -66,7 +67,7 @@ func Test_systemRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		node, err := r.GetByName(name, orgId)
+		node, err := r.GetByName(context.Background(), name, orgId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -113,10 +114,52 @@ func Test_systemRepo_Delete(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Delete(name, orgId)
+		err = r.Delete(context.Background(), name, orgId)
 
 		// Assert
 		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("SystemMissing", func(t *testing.T) {
+
+		const name = "sys"
+		const orgId = uint(15)
+		var db *extsql.DB
+		var err error
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		mock.ExpectBegin()
+
+		mock.ExpectExec(regexp.QuoteMeta("DELETE")).WithArgs(name, orgId).
+			WillReturnResult(sqlmock.NewResult(0, 0))
+		mock.ExpectCommit()
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewSystemRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		assert.NoError(t, err)
+
+		// Act
+		err = r.Delete(context.Background(), name, orgId)
+
+		// Assert
+		assert.ErrorIs(t, err, int_db.ErrSystemMissing)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -150,9 +193,8 @@ func Test_systemRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE`)).
-			WithArgs(sqlmock.AnyArg(), system.Name, system.Uuid, system.Certificate, system.ApiGwIp, system.ApiGwPort, system.OrgID, system.ApiGwHealth, system.OrgID, system.Name).
-			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectQuery(`(?i)INSERT.*ON CONFLICT.*DO UPDATE SET`).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(1))
 
 		mock.ExpectCommit()
 
@@ -172,7 +214,7 @@ func Test_systemRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&system)
+		err = r.Add(context.Background(), &system)
 
 		// Assert
 		assert.NoError(t, err)
@@ -233,7 +275,7 @@ func Test_systemRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Update(&system, orgId)
+		err = r.Update(context.Background(), &system, orgId)
 
 		// Assert
 		assert.NoError(t, err)

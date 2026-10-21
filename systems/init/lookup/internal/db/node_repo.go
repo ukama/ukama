@@ -9,6 +9,8 @@
 package db
 
 import (
+	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -16,10 +18,12 @@ import (
 	"gorm.io/gorm/clause"
 )
 
+var ErrNodeMissing = errors.New("node missing")
+
 type NodeRepo interface {
-	AddOrUpdate(node *Node) error
-	Get(nodeId ukama.NodeID) (*Node, error)
-	Delete(nodeId ukama.NodeID) error
+	AddOrUpdate(ctx context.Context, node *Node) error
+	Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error)
+	Delete(ctx context.Context, nodeId ukama.NodeID) error
 }
 
 type nodeRepo struct {
@@ -32,23 +36,31 @@ func NewNodeRepo(db sql.Db) *nodeRepo {
 	}
 }
 
-func (r *nodeRepo) AddOrUpdate(node *Node) error {
-	d := r.Db.GetGormDb().Create(node)
-	return d.Error
+// Atomic upsert on lower(node_id); a node re-registering under a different
+// org has its org_id moved instead of failing on the unique node_id index.
+func (r *nodeRepo) AddOrUpdate(ctx context.Context, node *Node) error {
+	result := r.Db.GetGormDb().WithContext(ctx).Clauses(clause.OnConflict{
+		Columns: []clause.Column{
+			{Name: "lower(node_id)", Raw: true},
+		},
+		DoUpdates: clause.AssignmentColumns([]string{"org_id", "updated_at"}),
+	}).Create(node)
+
+	return result.Error
 }
 
-func (r *nodeRepo) Get(nodeId ukama.NodeID) (*Node, error) {
+func (r *nodeRepo) Get(ctx context.Context, nodeId ukama.NodeID) (*Node, error) {
 	var node Node
-	result := r.Db.GetGormDb().Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().WithContext(ctx).Preload(clause.Associations).First(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return nil, result.Error
 	}
 	return &node, nil
 }
 
-func (r *nodeRepo) Delete(nodeId ukama.NodeID) error {
+func (r *nodeRepo) Delete(ctx context.Context, nodeId ukama.NodeID) error {
 	var node Node
-	result := r.Db.GetGormDb().Unscoped().Preload(clause.Associations).Delete(&node, "node_id = ?", nodeId.StringLowercase())
+	result := r.Db.GetGormDb().WithContext(ctx).Unscoped().Delete(&node, "node_id = ?", nodeId.StringLowercase())
 	if result.Error != nil {
 		return result.Error
 	}
@@ -57,5 +69,5 @@ func (r *nodeRepo) Delete(nodeId ukama.NodeID) error {
 		return nil
 	}
 
-	return fmt.Errorf("%s node missing", nodeId.String())
+	return fmt.Errorf("%s %w", nodeId.String(), ErrNodeMissing)
 }
