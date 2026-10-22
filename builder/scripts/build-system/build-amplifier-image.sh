@@ -108,6 +108,19 @@ build_emmc_firmware() {
     log SUCCESS "eMMC boot firmware built"
 }
 
+build_envtools() {
+    STAGE="build_envtools"
+    log INFO "Building static fw_printenv/fw_setenv from u-boot (${UBOOT_CONFIG})"
+
+    if [[ ! -f "$("${CROSS_COMPILE}gcc" -print-file-name=libc.a)" ]]; then
+        log ERROR "static armhf libc not found, install libc6-dev-armhf-cross"
+        exit 1
+    fi
+    make -C "${FIRMWARE_DIR}/u-boot" CROSS_COMPILE="${CROSS_COMPILE}" HOSTLDFLAGS=-static envtools
+    [[ -f "${FIRMWARE_DIR}/u-boot/tools/env/fw_printenv" ]] || { log ERROR "u-boot did not produce tools/env/fw_printenv"; exit 1; }
+    log SUCCESS "fw_printenv built"
+}
+
 build_kernel() {
     STAGE="build_kernel"
     KERNEL_OUT=$(mktemp -d)
@@ -317,6 +330,13 @@ install_kernel() {
     check_status $? "zImage, ukama_anode.dtb and modules installed in ${rootfs}" "install_kernel"
 }
 
+install_envtools() {
+    local rootfs="$1"
+    sudo install -m 0755 "${FIRMWARE_DIR}/u-boot/tools/env/fw_printenv" "${rootfs}/usr/sbin/fw_printenv"
+    sudo ln -sfn fw_printenv "${rootfs}/usr/sbin/fw_setenv"
+    check_status $? "fw_printenv and fw_setenv installed in ${rootfs}" "install_envtools"
+}
+
 update_fstab() {
     local rootfs_dir="$1"
     local root_part="$2"
@@ -465,6 +485,7 @@ copy_misc_files() {
 # Main
 check_pre_requisite
 build_emmc_firmware
+build_envtools
 build_kernel
 
 mkdir -p "$BOOT_MNT" "$PASSIVE_MNT" "$PRIMARY_MNT"
@@ -485,6 +506,8 @@ copy_boot
 copy_rootfs
 install_kernel "${PRIMARY_MNT}"
 install_kernel "${PASSIVE_MNT}"
+install_envtools "${PRIMARY_MNT}"
+install_envtools "${PASSIVE_MNT}"
 update_fstab "${PRIMARY_MNT}" 5
 update_fstab "${PASSIVE_MNT}" 6
 setup_serial_console "${PRIMARY_MNT}"
