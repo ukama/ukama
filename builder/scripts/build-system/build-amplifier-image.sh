@@ -138,11 +138,10 @@ cleanup() {
 trap cleanup EXIT
 
 create_disk_image() {
-    log INFO "Creating sparse image ${RAW_IMG} (16 GiB)"
+    log INFO "Creating sparse image ${RAW_IMG} (28 GiB)"
     rm -f "$RAW_IMG"
-    truncate -s 16G "$RAW_IMG"
-    # smaller image for testing
-    #    truncate -s 5G "$RAW_IMG"
+    sudo rm -f "${DIR}/boot.tgz" "${DIR}/rootfsA.tgz" "${DIR}/rootfsB.tgz"
+    truncate -s 28674MiB "$RAW_IMG"
     check_status $? "Raw image ready" "create_disk_image"
 }
 
@@ -157,27 +156,18 @@ attach_loop() {
 }
 
 partition_image() {
-    log INFO "Partitioning $LOOPDEV: boot, passive, primary, swap"
+    log INFO "Partitioning $LOOPDEV: boot, recovery, primary, passive, data, swap"
     sudo parted -s "$LOOPDEV" mklabel msdos \
-         mkpart primary fat32      1MiB    513MiB   \
-         mkpart primary ext4       513MiB  4609MiB  \
-         mkpart primary ext4       4609MiB 12289MiB \
-         mkpart primary linux-swap 12289MiB 100%     \
+         mkpart primary fat32      1MiB     1025MiB  \
+         mkpart primary ext4       1025MiB  5121MiB  \
+         mkpart extended           5121MiB  28673MiB \
+         mkpart logical ext4       5122MiB  11265MiB \
+         mkpart logical ext4       11266MiB 17409MiB \
+         mkpart logical ext4       17410MiB 27649MiB \
+         mkpart logical linux-swap 27650MiB 28673MiB \
          set 1 boot on
     check_status $? "Partitions created" "partition_image"
 }
-
-# smaller image for testing (5GB)
-#partition_image() {
-#    log INFO "Partitioning $LOOPDEV: boot (512 MiB), primary (2 GiB), passive (2 GiB), swap (rest)"
-#    sudo parted -s "$LOOPDEV" mklabel msdos \
-#         mkpart primary fat32      1MiB     513MiB   \
-#         mkpart primary ext4       513MiB   2561MiB  \
-#         mkpart primary ext4       2561MiB  4609MiB  \
-#         mkpart primary linux-swap 4609MiB  100%     \
-#         set 1 boot on
-#    check_status $? "Partitions created" partition_image
-#}
 
 map_partitions() {
     log INFO "Mapping partitions for $LOOPDEV"
@@ -189,24 +179,19 @@ map_partitions() {
 format_partitions() {
     log INFO "Formatting partitions"
     STAGE="format_partitions"
-    local b=$(basename "$LOOPDEV")
-    local p1="/dev/mapper/${b}p1" p2="/dev/mapper/${b}p2"
-    local p3="/dev/mapper/${b}p3" p4="/dev/mapper/${b}p4"
+    local part="/dev/mapper/$(basename "$LOOPDEV")p"
 
-    sudo mkfs.vfat -F32 -n boot    "$p1"
+    sudo mkfs.vfat -F32 -n boot "${part}1"
     check_status $? "boot formatted" "${STAGE}"
 
-    sudo mkfs.ext4 -L passive \
-         -O ^64bit,^metadata_csum \
-         "$p2"
-    check_status $? "passive formatted" "${STAGE}"
+    for p in 2:recovery 5:primary 6:passive 7:data; do
+        sudo mkfs.ext4 -L "${p#*:}" \
+             -O ^64bit,^metadata_csum \
+             "${part}${p%%:*}"
+        check_status $? "${p#*:} formatted" "${STAGE}"
+    done
 
-    sudo mkfs.ext4 -L primary \
-         -O ^64bit,^metadata_csum \
-         "$p3"
-    check_status $? "primary formatted" "${STAGE}"
-
-    sudo mkswap    -L swap         "$p4"
+    sudo mkswap -L swap "${part}8"
     check_status $? "swap created" "${STAGE}"
 }
 
@@ -218,12 +203,34 @@ mount_partition() {
     check_status $? "Mounted $part" "mount_partition"
 }
 
+write_uboot_env() {
+    local dst="$1"
+    local work env_txt
+    STAGE="write_uboot_env"
+
+    work=$(mktemp -d)
+    env_txt="${work}/uboot-env.txt"
+    (cd "$work" && CROSS_COMPILE="${CROSS_COMPILE}" \
+        "${FIRMWARE_DIR}/u-boot/scripts/get_default_envs.sh" "${FIRMWARE_DIR}/u-boot") |
+        awk -F= '!($1 in v) { k[++n] = $1 } { v[$1] = $0 } END { for (i = 1; i <= n; i++) print v[k[i]] }' \
+        > "$env_txt"
+
+    if ! grep -q '^bootcmd=run emmc_boot;' "$env_txt"; then
+        log ERROR "u-boot default env has no A/B bootcmd (run emmc_boot)"
+        rm -rf "$work"
+        exit 1
+    fi
+
+    sudo "${FIRMWARE_DIR}/u-boot/tools/mkenvimage" -s 0x4000 -o "${dst}/uboot.env" "$env_txt"
+    check_status $? "uboot.env written with $(grep '^bootcmd=' "$env_txt")" "${STAGE}"
+    rm -rf "$work"
+}
+
 copy_boot() {
     STAGE="copy_boot"
-    log INFO "Copying eMMC firmware, kernel and uboot.env → ${BOOT_MNT} (which will become /boot)"
+    log INFO "Copying eMMC firmware and uboot.env → ${BOOT_MNT}"
 
     local dst="${BOOT_MNT}"
-    local env_txt
 
     # 1) Clean out anything already on the boot partition
     sudo rm -rf "${dst:?}/"*
@@ -231,19 +238,9 @@ copy_boot() {
 
     sudo cp "${BOOT1_BIN}" "${dst}/BOOT.BIN"
     sudo cp "${BOOT2_BIN}" "${dst}/u-boot.bin"
-    sudo cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${dst}/zImage"
-    sudo cp "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${dst}/ukama_anode.dtb"
+    check_status $? "Copied BOOT.BIN and u-boot.bin" "${STAGE}"
 
-    env_txt=$(mktemp)
-    cat > "$env_txt" <<EOF
-baudrate=115200
-bootdelay=3
-bootargs=console=ttyS0,115200 earlyprintk root=/dev/mmcblk0p3 rootfstype=ext4 rw rootwait
-bootcmd=fatload mmc 0 0x22000000 ukama_anode.dtb; fatload mmc 0 0x23000000 zImage; bootz 0x23000000 - 0x22000000
-EOF
-    sudo "${FIRMWARE_DIR}/u-boot/tools/mkenvimage" -s 0x4000 -o "${dst}/uboot.env" "$env_txt"
-    rm -f "$env_txt"
-    check_status $? "Copied BOOT.BIN, u-boot.bin, uboot.env, zImage and ukama_anode.dtb" "${STAGE}"
+    write_uboot_env "${dst}"
 
     log SUCCESS "Boot partition populated"
 }
@@ -311,21 +308,25 @@ copy_rootfs() {
     log SUCCESS "Rootfs deployed to primary & passive" "${STAGE}"
 }
 
-install_kernel_modules() {
+install_kernel() {
     local rootfs="$1"
+    sudo cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${rootfs}/boot/zImage"
+    sudo cp "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${rootfs}/boot/ukama_anode.dtb"
     sudo mkdir -p "${rootfs}/lib/modules"
     sudo cp -a "${KERNEL_OUT}/modroot/lib/modules/." "${rootfs}/lib/modules/"
-    check_status $? "Kernel modules installed in ${rootfs}" "install_kernel_modules"
+    check_status $? "zImage, ukama_anode.dtb and modules installed in ${rootfs}" "install_kernel"
 }
 
 update_fstab() {
     local rootfs_dir="$1"
+    local root_part="$2"
     local fstab="${rootfs_dir}/etc/fstab"
     STAGE="update_fstab"
 
-    log INFO "Writing label-based fstab in ${fstab}"
+    log INFO "Writing fstab with root on mmcblk0p${root_part} in ${fstab}"
 
-    sudo tee "${fstab}" > /dev/null <<'FSTAB'
+    sudo mkdir -p "${rootfs_dir}/media/boot" "${rootfs_dir}/data"
+    sudo tee "${fstab}" > /dev/null <<FSTAB
 # pseudo-file systems
 devtmpfs        /dev        devtmpfs    defaults    0 0
 proc            /proc       proc        defaults    0 0
@@ -333,10 +334,11 @@ sysfs           /sys        sysfs       defaults    0 0
 devpts          /dev/pts    devpts      defaults    0 0
 tmpfs           /tmp        tmpfs       defaults    0 0
 
-# real partitions by LABEL
-LABEL=primary   /           ext4      defaults         0 1
-LABEL=boot      /boot       auto      rw,defaults      0 2
-LABEL=swap      none        swap      sw               0 0
+# eMMC partitions
+/dev/mmcblk0p${root_part}  /            ext4   defaults           0 1
+/dev/mmcblk0p1  /media/boot  vfat   defaults,nofail    0 0
+/dev/mmcblk0p7  /data        ext4   defaults,nofail    0 0
+/dev/mmcblk0p8  none         swap   sw,nofail          0 0
 FSTAB
 
     check_status $? "fstab written" "${STAGE}"
@@ -433,6 +435,21 @@ deploy_to_rootfs() {
     check_status $? "Bootstrap server ${BOOTSTRAP_SERVER} set in ${rootfs}" "deploy_to_rootfs"
 }
 
+pack_tarballs() {
+    STAGE="pack_tarballs"
+    log INFO "Packing boot.tgz, rootfsA.tgz and rootfsB.tgz into ${DIR}"
+    sync
+
+    sudo tar -czf "${DIR}/boot.tgz" -C "${BOOT_MNT}" .
+    check_status $? "boot.tgz packed" "${STAGE}"
+
+    sudo tar --xattrs --xattrs-include='*' --acls -czf "${DIR}/rootfsA.tgz" -C "${PRIMARY_MNT}" .
+    check_status $? "rootfsA.tgz packed" "${STAGE}"
+
+    sudo tar --xattrs --xattrs-include='*' --acls -czf "${DIR}/rootfsB.tgz" -C "${PASSIVE_MNT}" .
+    check_status $? "rootfsB.tgz packed" "${STAGE}"
+}
+
 copy_misc_files() {
 	DEST_DIR=$1
 	# MISC FILES Copy
@@ -458,18 +475,18 @@ partition_image
 map_partitions
 format_partitions
 mount_partition "/dev/mapper/$(basename ${LOOPDEV})p1" "$BOOT_MNT"
-mount_partition "/dev/mapper/$(basename ${LOOPDEV})p2" "$PASSIVE_MNT"
-mount_partition "/dev/mapper/$(basename ${LOOPDEV})p3" "$PRIMARY_MNT"
+mount_partition "/dev/mapper/$(basename ${LOOPDEV})p5" "$PRIMARY_MNT"
+mount_partition "/dev/mapper/$(basename ${LOOPDEV})p6" "$PASSIVE_MNT"
 
 # Signal success; cleanup trap will unmount and detach
 log SUCCESS "Disk image ${RAW_IMG} prepared successfully"
 
 copy_boot
 copy_rootfs
-install_kernel_modules "${PRIMARY_MNT}"
-install_kernel_modules "${PASSIVE_MNT}"
-update_fstab "${PRIMARY_MNT}"
-update_fstab "${PASSIVE_MNT}"
+install_kernel "${PRIMARY_MNT}"
+install_kernel "${PASSIVE_MNT}"
+update_fstab "${PRIMARY_MNT}" 5
+update_fstab "${PASSIVE_MNT}" 6
 setup_serial_console "${PRIMARY_MNT}"
 setup_serial_console "${PASSIVE_MNT}"
 setup_network "${PRIMARY_MNT}"
@@ -490,6 +507,7 @@ deploy_to_rootfs "${PRIMARY_MNT}"
 deploy_to_rootfs "${PASSIVE_MNT}"
 copy_misc_files  "${PRIMARY_MNT}"
 copy_misc_files  "${PASSIVE_MNT}"
+pack_tarballs
 
 log "SUCCESS" "Disk image creation completed successfully! (bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
