@@ -17,6 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -66,8 +67,7 @@ func (m *Manager) Ensure(ctx context.Context, nodeId string) error {
 	}
 
 	if pod == nil {
-		pod, err = m.createPod(ctx, nodeId)
-		if err != nil {
+		if err := m.ensureDeployment(ctx, nodeId); err != nil {
 			return err
 		}
 	}
@@ -76,6 +76,9 @@ func (m *Manager) Ensure(ctx context.Context, nodeId string) error {
 		return err
 	}
 
+	if pod == nil {
+		return status.Errorf(codes.Unavailable, "mesh pod for node %s is starting", nodeId)
+	}
 	if !isPodReady(pod) {
 		return status.Errorf(codes.Unavailable, "mesh pod %s is not ready (phase %s)", pod.Name, podPhase(pod))
 	}
@@ -104,28 +107,42 @@ func (m *Manager) findPod(ctx context.Context, nodeId string) (*corev1.Pod, erro
 	return best, nil
 }
 
-func (m *Manager) createPod(ctx context.Context, nodeId string) (*corev1.Pod, error) {
+// Kubernetes replaces a failed pod in a Deployment, and the fixed name stops concurrent requests creating two.
+func (m *Manager) ensureDeployment(ctx context.Context, nodeId string) error {
 	spec, err := m.templateSpec(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	pod := &corev1.Pod{
+	replicas := int32(1)
+	deployment := &appsv1.Deployment{
 		ObjectMeta: metav1.ObjectMeta{
-			GenerateName: m.objectName(nodeId) + "-",
-			Namespace:    m.config.Namespace,
-			Labels:       m.labels(nodeId),
+			Name:      m.objectName(nodeId),
+			Namespace: m.config.Namespace,
+			Labels:    m.labels(nodeId),
 		},
-		Spec: *spec,
+		Spec: appsv1.DeploymentSpec{
+			Replicas: &replicas,
+			Selector: &metav1.LabelSelector{MatchLabels: selector(nodeId)},
+			// Recreate keeps at most one mesh pod per node; the node holds a single websocket.
+			Strategy: appsv1.DeploymentStrategy{Type: appsv1.RecreateDeploymentStrategyType},
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{Labels: m.labels(nodeId)},
+				Spec:       *spec,
+			},
+		},
 	}
 
-	created, err := m.clientSet.CoreV1().Pods(m.config.Namespace).Create(ctx, pod, metav1.CreateOptions{})
+	_, err = m.clientSet.AppsV1().Deployments(m.config.Namespace).Create(ctx, deployment, metav1.CreateOptions{})
+	if apierrors.IsAlreadyExists(err) {
+		return nil
+	}
 	if err != nil {
-		return nil, apiError("create mesh pod", err)
+		return apiError("create mesh deployment", err)
 	}
 
-	log.Infof("Created mesh pod %s for node %s", created.Name, nodeId)
-	return created, nil
+	log.Infof("Created mesh deployment %s for node %s", deployment.Name, nodeId)
+	return nil
 }
 
 func (m *Manager) ensureService(ctx context.Context, nodeId string) error {
@@ -171,8 +188,9 @@ func (m *Manager) templateSpec(ctx context.Context) (*corev1.PodSpec, error) {
 	}
 	m.mu.Unlock()
 
+	// Per-node mesh Deployments carry the same name label, so exclude them to find the template.
 	deployments, err := m.clientSet.AppsV1().Deployments(m.config.Namespace).List(ctx, metav1.ListOptions{
-		LabelSelector: NameLabel + "=" + MeshName,
+		LabelSelector: fmt.Sprintf("%s=%s,%s!=%s", NameLabel, MeshName, ComponentLabel, Component),
 	})
 
 	m.mu.Lock()
@@ -190,7 +208,7 @@ func (m *Manager) templateSpec(ctx context.Context) (*corev1.PodSpec, error) {
 	}
 
 	spec := deployments.Items[0].Spec.Template.Spec.DeepCopy()
-	spec.RestartPolicy = corev1.RestartPolicyOnFailure
+	spec.RestartPolicy = corev1.RestartPolicyAlways
 	m.template = spec
 	m.templateAt = time.Now()
 	return spec.DeepCopy(), nil

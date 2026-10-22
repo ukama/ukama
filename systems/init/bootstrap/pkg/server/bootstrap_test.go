@@ -234,9 +234,8 @@ func TestGetNodeCredentials_NewNodeIsUnavailableUntilMeshIsReady(t *testing.T) {
 	st, ok := status.FromError(err)
 	require.True(t, ok)
 	assert.Equal(t, codes.Unavailable, st.Code())
-	assert.Contains(t, st.Message(), "is not ready (phase Pending)")
+	assert.Equal(t, "mesh pod for node "+testNodeID123+" is starting", st.Message())
 
-	pods, err := cs.CoreV1().Pods(testMeshNs).List(context.Background(), metav1.ListOptions{})
-	require.NoError(t, err)
-	assert.Len(t, pods.Items, 1, "the first request creates the mesh pod")
+	_, err = cs.AppsV1().Deployments(testMeshNs).Get(context.Background(), testOrgName+"-"+mesh.Component+"-"+testNodeID123, metav1.GetOptions{})
+	assert.NoError(t, err, "the first request creates the node's mesh Deployment")
 }
