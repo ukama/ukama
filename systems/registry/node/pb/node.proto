@@ -35,7 +35,6 @@ service NodeService {
     rpc DetachNode(DetachNodeRequest) returns (DetachNodeResponse);
     rpc AddNodeToSite(AddNodeToSiteRequest)returns (AddNodeToSiteResponse);
     rpc ReleaseNodeFromSite(ReleaseNodeFromSiteRequest)returns (ReleaseNodeFromSiteResponse);
-    rpc ReleaseSite(ReleaseSiteRequest) returns (ReleaseSiteResponse);
 }
 
 message AddNodeRequest{
@@ -154,14 +153,6 @@ message ReleaseNodeFromSiteRequest {
 }
 
 message ReleaseNodeFromSiteResponse {
-}
-
-message ReleaseSiteRequest {
-    string siteId = 1 [(validator.field) = {string_not_empty: true}, json_name = "site_id"];
-}
-
-message ReleaseSiteResponse {
-    repeated string nodeIds = 1 [json_name = "node_ids"];
 }
 
 message NodeStatus {
