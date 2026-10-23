@@ -25,7 +25,7 @@ elif [ "$TARGET" = "arm64" ]; then
     TARGETPLATFORM="ubuntu:22.04"
     DOCKER_IMG="apps-builder-arm64"
 else
-    TARGETPLATFORM="ubuntu:latest"
+    TARGETPLATFORM="${UBUNTU_IMAGE:-ubuntu:latest}"
     DOCKER_IMG="apps-builder-ubuntu"
 fi
 

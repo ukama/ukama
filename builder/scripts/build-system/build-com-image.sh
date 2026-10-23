@@ -8,7 +8,7 @@
 set -euo pipefail
 
 # all tools available?
-for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate; do
+for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate debootstrap rsync docker; do
     command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
 done
 
@@ -35,15 +35,13 @@ COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 COM_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/com.config"
 APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
-
-ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
-#UKAMA_APP_PKG="${ROOTFS_DIR}/ukama/apps/pkgs"
+PLATFORM_LIB="${UKAMA_OS}/distro/platform/build/libusys.so"
 APP_NAMES=()
 
-# Alpine parameters
-ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
-ALPINE_VERSION="3.21"
-ALPINE_ARCH="x86_64"
+# Ubuntu parameters
+UBUNTU_IMAGE="${UBUNTU_IMAGE:-ubuntu:24.04}"
+UBUNTU_RELEASE="${UBUNTU_RELEASE:-}"
+UBUNTU_MIRROR="${UBUNTU_MIRROR:-http://archive.ubuntu.com/ubuntu}"
 
 # Loop device handle
 LOOPDEV=""
@@ -73,6 +71,7 @@ check_status() {
 # Cleanup function ensures mounts and loop are detached
 cleanup() {
     log INFO "Cleaning up mounts and loop device"
+    release_chroot "$PRIMARY_MNT"
     sudo umount "$BOOT_MNT"     2>/dev/null || true
     sudo umount "$PASSIVE_MNT"  2>/dev/null || true
     sudo umount "$PRIMARY_MNT"  2>/dev/null || true
@@ -82,6 +81,34 @@ cleanup() {
     fi
 }
 trap cleanup EXIT
+
+release_chroot() {
+    local rootfs="$1"
+    for fs in dev/pts dev proc sys; do
+        sudo umount "${rootfs}/${fs}" 2>/dev/null || true
+    done
+}
+
+resolve_ubuntu_release() {
+    if [[ -z "${UBUNTU_RELEASE}" ]]; then
+        UBUNTU_RELEASE=$(docker run --rm "${UBUNTU_IMAGE}" sh -c '. /etc/os-release && echo "$VERSION_CODENAME"')
+    fi
+    [[ -n "${UBUNTU_RELEASE}" ]] || { log ERROR "Could not read the release of ${UBUNTU_IMAGE}"; exit 1; }
+    log INFO "Ubuntu release: ${UBUNTU_RELEASE} (same as ${UBUNTU_IMAGE}, which builds the apps)"
+}
+
+build_apps() {
+    STAGE="build_apps"
+    local apps
+    apps=$(IFS=,; echo "${APPS[*]}")
+    log INFO "Building ${apps} on ${UBUNTU_IMAGE} with builder/docker/apps_setup.sh"
+
+    (cd "${UKAMA_ROOT}/builder/docker" && UBUNTU_IMAGE="${UBUNTU_IMAGE}" ./apps_setup.sh com ubuntu "${UKAMA_ROOT}" "${apps}") || {
+        log ERROR "App build failed, see ${UKAMA_ROOT}/apps_build.log"
+        exit 1
+    }
+    check_status 0 "Apps built into ${UKAMA_REPO_APP_PKG}" "${STAGE}"
+}
 
 create_disk_image() {
     log INFO "Creating sparse image ${RAW_IMG} (16 GiB)"
@@ -163,44 +190,146 @@ mount_partition() {
     check_status $? "Mounted $part" mount_partition
 }
 
+install_ubuntu() {
+    local rootfs="$1"
+    STAGE="install_ubuntu"
+    log INFO "Installing Ubuntu ${UBUNTU_RELEASE} into ${rootfs}"
+
+    sudo debootstrap --arch amd64 "${UBUNTU_RELEASE}" "${rootfs}" "${UBUNTU_MIRROR}" \
+         /usr/share/debootstrap/scripts/gutsy
+    check_status $? "Ubuntu ${UBUNTU_RELEASE} installed in ${rootfs}" "${STAGE}"
+
+    sudo mount --bind /dev "${rootfs}/dev"
+    sudo mount --bind /dev/pts "${rootfs}/dev/pts"
+    sudo mount -t proc proc "${rootfs}/proc"
+    sudo mount -t sysfs sysfs "${rootfs}/sys"
+    sudo cp -L /etc/resolv.conf "${rootfs}/etc/resolv.conf"
+    printf '#!/bin/sh\nexit 101\n' | sudo tee "${rootfs}/usr/sbin/policy-rc.d" > /dev/null
+    sudo chmod 0755 "${rootfs}/usr/sbin/policy-rc.d"
+
+    sudo chroot "${rootfs}" /usr/bin/env -i \
+        PATH=/usr/sbin:/usr/bin:/sbin:/bin DEBIAN_FRONTEND=noninteractive \
+        RELEASE="${UBUNTU_RELEASE}" MIRROR="${UBUNTU_MIRROR}" \
+        /bin/bash -e <<'EOF'
+cat > /etc/apt/sources.list <<APT
+deb ${MIRROR} ${RELEASE} main universe
+deb ${MIRROR} ${RELEASE}-updates main universe
+deb ${MIRROR} ${RELEASE}-security main universe
+APT
+apt-get update
+apt-get install -y --no-install-recommends \
+    linux-image-generic initramfs-tools grub-efi-amd64-bin \
+    systemd-sysv systemd-resolved systemd-timesyncd udev kmod dbus \
+    openssh-server sudo locales tzdata ca-certificates curl \
+    iproute2 iputils-ping ethtool tcpdump i2c-tools libjansson4 libulfius2.7t64 \
+    openvswitch-switch openvpn iptables
+apt-get clean
+
+locale-gen en_US.UTF-8
+ln -sf /usr/share/zoneinfo/UTC /etc/localtime
+echo "ukama-linux" > /etc/hostname
+printf '127.0.0.1 localhost\n127.0.1.1 ukama-linux\n' > /etc/hosts
+echo "root:root" | chpasswd
+id ukama > /dev/null 2>&1 || useradd -m -s /bin/bash -G sudo ukama
+echo "ukama:ukama" | chpasswd
+echo "ukama ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/ukama
+chmod 0440 /etc/sudoers.d/ukama
+
+cat > /etc/systemd/network/20-wired.network <<NET
+[Match]
+Name=en* eth*
+
+[Network]
+DHCP=yes
+NET
+systemctl enable systemd-networkd systemd-resolved systemd-timesyncd ssh serial-getty@ttyS0.service
+EOF
+    check_status $? "Kernel, systemd, SSH, Open vSwitch, OpenVPN and iptables in ${rootfs}" "${STAGE}"
+
+    sudo rm -f "${rootfs}/usr/sbin/policy-rc.d"
+    sudo ln -sf /run/systemd/resolve/stub-resolv.conf "${rootfs}/etc/resolv.conf"
+}
+
+setup_ukama() {
+    local rootfs="$1"
+    STAGE="setup_ukama"
+    log INFO "Installing starter.d, the noded sysfs link and Ukama files in ${rootfs}"
+
+    sudo mkdir -p "${rootfs}/ukama/configs" \
+                  "${rootfs}/ukama/apps/pkgs" \
+                  "${rootfs}/ukama/apps/rootfs" \
+                  "${rootfs}/ukama/apps/registry" \
+                  "${rootfs}/ukama/mocksysfs" \
+                  "${rootfs}/ukama/logs" \
+                  "${rootfs}/ukama/state/starterd/log-spool"
+
+    tar -zxOf "${UKAMA_REPO_APP_PKG}/starterd_latest.tar.gz" --wildcards '*/sbin/starter.d' \
+        | sudo tee "${rootfs}/sbin/starter.d" > /dev/null
+    sudo chmod 0755 "${rootfs}/sbin/starter.d"
+
+    sudo tee "${rootfs}/etc/systemd/system/starterd.service" > /dev/null <<'EOF'
+[Unit]
+Description=Ukama's capp starter.d
+After=network.target ukama-sysfs.service
+
+[Service]
+Environment=STARTERD_MANIFEST=/ukama/manifest.json
+Environment=STARTERD_RLOG_SOCKET=/run/ukama/rlog-ingest.sock
+Environment=STARTERD_LOG_SPOOL_DIR=/ukama/state/starterd/log-spool
+ExecStart=/sbin/starter.d
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    sudo tee "${rootfs}/etc/systemd/system/ukama-sysfs.service" > /dev/null <<'EOF'
+[Unit]
+Description=Link noded sysfs data into /tmp/sys
+After=local-fs.target
+Before=starterd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'if [ -d /ukama/mocksysfs/sys ]; then rm -rf /tmp/sys; ln -sfn /ukama/mocksysfs/sys /tmp/sys; fi'
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    sudo chroot "${rootfs}" systemctl enable starterd.service ukama-sysfs.service
+
+    sudo cp -r "${UKAMA_OS}/distro/system/noded/mfgdata" "${rootfs}/ukama/mocksysfs/"
+    sudo ln -sfn /sys "${rootfs}/ukama/mocksysfs/sys"
+    sudo cp "${UKAMA_OS}/distro/scripts/files/services" "${rootfs}/etc/services"
+    check_status $? "starter.d, ukama-sysfs and Ukama files in ${rootfs}" "${STAGE}"
+}
+
 copy_boot() {
     STAGE="copy_boot_partition"
-    log INFO "Copying boot files from ${ROOTFS_DIR}/boot → ${BOOT_MNT} (which will become /boot)"
+    log INFO "Copying the Ubuntu kernel, initrd and GRUB → ${BOOT_MNT}"
 
-    local src="${ROOTFS_DIR}/boot"
-    local dst="${BOOT_MNT}/"
+    local src="${PRIMARY_MNT}/boot"
+    local dst="${BOOT_MNT}"
+    local kernel initrd
 
-    # 1) Sanity-check source
-    if [[ ! -d "${src}" ]]; then
-        log ERROR "Missing source boot dir: ${src}"
+    # 1) Clean out anything already on the boot partition
+    sudo rm -rf "${dst:?}/"*
+    check_status $? "Cleared old files on boot partition" "${STAGE}"
+
+    kernel=$(ls "${src}"/vmlinuz-* | sort -V | tail -n 1)
+    initrd="${src}/initrd.img-${kernel##*/vmlinuz-}"
+    if [[ ! -f "${kernel}" || ! -f "${initrd}" ]]; then
+        log ERROR "Missing kernel or initrd in ${src}"
         exit 1
     fi
 
-    # 2) Clean out anything already on the boot partition
-    sudo rm -rf "${dst:?}/"* 
-    check_status $? "Cleared old files on boot partition" "${STAGE}"
+    sudo mkdir -p "${dst}/boot/grub" "${dst}/EFI/BOOT"
+    sudo cp "${kernel}" "${dst}/boot/vmlinuz"
+    sudo cp "${initrd}" "${dst}/boot/initrd.img"
+    check_status $? "Copied $(basename "${kernel}") and its initrd" "${STAGE}"
 
-    # 3) Copy everything from rootfs/boot into the partition mount (dst/)
-    #    We exclude the recursive 'boot → .' symlink so rsync won't loop
-    sudo rsync -aAX --delete \
-      --exclude='boot' \
-      "${src}/" "${dst}/boot"
-    check_status $? "Copied kernel, initramfs, dtbs, grub, syslinux, etc." "${STAGE}"
-
-    # 4) Verify the essential files are present under /boot on the target
-    for f in vmlinuz-lts initramfs-lts; do
-      if [[ ! -f "${dst}/boot/${f}" ]]; then
-        log ERROR "Missing ${f} in ${dst}/boot"
-        exit 1
-      fi
-    done
-
-    # 5) Rewrite grub.cfg to point at /boot/<files>
-    local grubdir="${dst}/boot/grub"
-    local grubcfg="${grubdir}/grub.cfg"
-    sudo cp "${grubcfg}" "${grubcfg}.bak" 2>/dev/null || true
-    log INFO "Overwriting ${grubcfg} with new menu"
-    sudo tee "${grubcfg}" > /dev/null <<EOF
+    sudo tee "${dst}/boot/grub/grub.cfg" > /dev/null <<EOF
 insmod part_msdos
 insmod fat
 
@@ -208,87 +337,36 @@ set default=0
 set timeout=3
 
 menuentry "ukama (linux)" {
-    linux /boot/vmlinuz-lts \
-        root=LABEL=primary rootfstype=ext4 rw \
-        modules=part_msdos,mmc_block,ext4,usbcore,usbhid,usb_keyboard,fat \
-        console=ttyS0,115200 console=tty1 earlyprintk=vga \
-        init=/sbin/init
-    initrd /boot/initramfs-lts
+    linux /boot/vmlinuz root=LABEL=primary rootfstype=ext4 rw \\
+        console=ttyS0,115200 console=tty1
+    initrd /boot/initrd.img
 }
 EOF
-    check_status $? "grub.cfg updated" "${STAGE}"
+    check_status $? "grub.cfg written" "${STAGE}"
 
-    # 6) Copy UEFI stub if it exists in the rootfs
-    if [[ -f "${src}/efi/boot/bootx64.efi" ]]; then
-      log INFO "Installing UEFI bootx64.efi"
-      sudo mkdir -p "${dst}/EFI/BOOT"
-      sudo cp "${src}/efi/boot/bootx64.efi" "${dst}/EFI/BOOT/BOOTX64.EFI"
-      check_status $? "UEFI stub copied" "${STAGE}"
-    else
-      log INFO "No EFI stub found (${src}/efi/boot/bootx64.efi), skipping UEFI install"
-    fi
+    printf 'insmod part_msdos\ninsmod fat\nsearch --no-floppy --label boot --set=root\nconfigfile ($root)/boot/grub/grub.cfg\n' \
+        | sudo tee "${PRIMARY_MNT}/tmp/grub-embed.cfg" > /dev/null
+    sudo chroot "${PRIMARY_MNT}" grub-mkstandalone -O x86_64-efi -o /tmp/BOOTX64.EFI \
+        "boot/grub/grub.cfg=/tmp/grub-embed.cfg"
+    sudo cp "${PRIMARY_MNT}/tmp/BOOTX64.EFI" "${dst}/EFI/BOOT/BOOTX64.EFI"
+    sudo rm -f "${PRIMARY_MNT}/tmp/BOOTX64.EFI" "${PRIMARY_MNT}/tmp/grub-embed.cfg"
+    check_status $? "UEFI BOOTX64.EFI installed" "${STAGE}"
 
     log SUCCESS "Boot partition populated under /boot" "${STAGE}"
 }
 
 copy_rootfs() {
     STAGE="copy_rootfs"
-    log INFO "Copying rootfs → primary (${PRIMARY_MNT}) and passive (${PASSIVE_MNT}) partitions"
+    log INFO "Copying primary (${PRIMARY_MNT}) → passive (${PASSIVE_MNT})"
 
-    # Common rsync exclude list
-    local excludes=(
-        --exclude=/dev/*
-        --exclude=/proc/*
-        --exclude=/sys/* 
-        --exclude=/run/*
-        --exclude=/tmp/*
-        --exclude=/boot
-        --exclude=/efi
-        --exclude=/ukamarepo
-        --exclude=/passive
-        --exclude=/recovery
-        --exclude=/data
-        --exclude=/destroy
-        --exclude=/enter-chroot
-        --exclude=env.sh
-        --exclude=setup.log
-    )
-
-    # ---- Primary partition ----
-    # 1) Clear old data
-    sudo rm -rf "${PRIMARY_MNT:?}/"*
-    check_status $? "Cleared ${PRIMARY_MNT}" "${STAGE}"
-
-    # 2) Copy rootfs into PRIMARY
-    sudo rsync -aAX --delete "${excludes[@]}" \
-         "${ROOTFS_DIR}/" "${PRIMARY_MNT}/"
-    check_status $? "Rootfs copied to ${PRIMARY_MNT}" "${STAGE}"
-
-    # 3) Recreate mount-point dirs
-    sudo mkdir -p \
-         "${PRIMARY_MNT}/dev" \
-         "${PRIMARY_MNT}/proc" \
-         "${PRIMARY_MNT}/sys" \
-         "${PRIMARY_MNT}/run" \
-         "${PRIMARY_MNT}/tmp"
-
-    # ---- Passive partition ----
-    sudo rm -rf "${PASSIVE_MNT:?}/"*
-    check_status $? "Cleared ${PASSIVE_MNT}" "${STAGE}"
-
-    sudo rsync -aAX --delete "${excludes[@]}" \
-         "${ROOTFS_DIR}/" "${PASSIVE_MNT}/"
+    sudo rsync -aAXH --delete \
+         --exclude=/dev/* \
+         --exclude=/proc/* \
+         --exclude=/sys/* \
+         --exclude=/run/* \
+         --exclude=/tmp/* \
+         "${PRIMARY_MNT}/" "${PASSIVE_MNT}/"
     check_status $? "Rootfs copied to ${PASSIVE_MNT}" "${STAGE}"
-
-    sudo mkdir -p \
-         "${PASSIVE_MNT}/dev" \
-         "${PASSIVE_MNT}/proc" \
-         "${PASSIVE_MNT}/sys" \
-         "${PASSIVE_MNT}/run" \
-         "${PASSIVE_MNT}/tmp"
-
-    sync
-    log SUCCESS "Rootfs deployed to primary & passive" "${STAGE}"
 }
 
 update_fstab() {
@@ -315,57 +393,6 @@ FSTAB
     check_status $? "fstab written" "${STAGE}"
 }
 
-setup_network() {
-    local rootfs="$1"
-    sudo tee "${rootfs}/etc/dhcpcd.conf" > /dev/null <<EOF
-hostname
-clientid
-persistent
-option domain_name_servers, domain_name, domain_search, host_name
-option classless_static_routes
-option interface_mtu
-require dhcp_server_identifier
-EOF
-    sudo ln -sfn /etc/init.d/loopback "${rootfs}/etc/runlevels/boot/loopback"
-    sudo ln -sfn /etc/init.d/ntpd "${rootfs}/etc/runlevels/default/ntpd"
-    check_status $? "DHCP, loopback and ntpd in ${rootfs}" "setup_network"
-}
-
-setup_serial_console() {
-    local rootfs="$1"
-    grep -q '^ttyS0:' "${rootfs}/etc/inittab" || \
-        echo 'ttyS0::respawn:/sbin/getty -L 115200 ttyS0 vt100' | sudo tee -a "${rootfs}/etc/inittab" > /dev/null
-    check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
-}
-
-setup_noded_sysfs() {
-    local rootfs="$1"
-    sudo tee "${rootfs}/etc/init.d/ukama-sysfs" > /dev/null <<'EOF'
-#!/sbin/openrc-run
-
-description="Link noded sysfs data into /tmp/sys"
-
-depend() {
-    need localmount
-    after bootmisc
-    before starterd
-}
-
-start() {
-    ebegin "Linking /tmp/sys to /ukama/mocksysfs/sys"
-    if [ -d /ukama/mocksysfs/sys ]; then
-        rm -rf /tmp/sys
-        ln -sfn /ukama/mocksysfs/sys /tmp/sys
-    fi
-    eend 0
-}
-EOF
-    sudo chmod 0755 "${rootfs}/etc/init.d/ukama-sysfs"
-    sudo ln -sfn /etc/init.d/ukama-sysfs "${rootfs}/etc/runlevels/boot/ukama-sysfs"
-    sudo ln -sfn /sys "${rootfs}/ukama/mocksysfs/sys"
-    check_status $? "ukama-sysfs boot service in ${rootfs}" "setup_noded_sysfs"
-}
-
 deploy_to_rootfs() {
     local rootfs="$1"
 
@@ -382,8 +409,12 @@ deploy_to_rootfs() {
     check_status $? "copy_all_apps to ${rootfs}" "deploy_to_rootfs"
 
     # copy libs
-    copy_required_libs "$UKAMA_REPO_LIB_PKG" "${rootfs}/lib"
-    check_status $? "copy_required_libs to ${rootfs}" "deploy_to_rootfs"
+    sudo cp "${PLATFORM_LIB}" "${rootfs}/lib/x86_64-linux-gnu/"
+    check_status $? "libusys.so copied to ${rootfs}" "deploy_to_rootfs"
+    if sudo chroot "${rootfs}" ldd /sbin/starter.d | grep "not found"; then
+        log ERROR "starter.d is missing libraries in ${rootfs}"
+        exit 1
+    fi
 
     # create manifest
     create_manifest_file "${rootfs}/ukama/manifest.json" "${APPS[@]}"
@@ -406,6 +437,18 @@ deploy_to_rootfs() {
 
 # Main
 
+# Gather the list of enabled apps
+get_enabled_apps "$COMMON_CONFIG_FILE" "$COM_CONFIG_FILE"
+if (( ${#APPS[@]} > 0 )); then
+    log INFO "Enabled apps: ${APPS[*]}"
+else
+    log ERROR "No apps enabled. Aborting."
+    exit 1
+fi
+
+resolve_ubuntu_release
+build_apps
+
 mkdir -p "$BOOT_MNT" "$PASSIVE_MNT" "$PRIMARY_MNT"
 
 create_disk_image
@@ -420,28 +463,13 @@ mount_partition "/dev/mapper/$(basename ${LOOPDEV})p3" "$PRIMARY_MNT"
 # Signal success; cleanup trap will unmount and detach
 log SUCCESS "Disk image ${RAW_IMG} prepared successfully"
 
-copy_boot
-copy_rootfs
-update_fstab "${PRIMARY_MNT}"
-update_fstab "${PASSIVE_MNT}"
-setup_serial_console "${PRIMARY_MNT}"
-setup_serial_console "${PASSIVE_MNT}"
-setup_network "${PRIMARY_MNT}"
-setup_network "${PASSIVE_MNT}"
-setup_noded_sysfs "${PRIMARY_MNT}"
-setup_noded_sysfs "${PASSIVE_MNT}"
-
-# Gather the list of enabled apps
-get_enabled_apps "$COMMON_CONFIG_FILE" "$COM_CONFIG_FILE"
-if (( ${#APPS[@]} > 0 )); then
-    log INFO "Enabled apps: ${APPS[*]}"
-else
-    log ERROR "No apps enabled. Aborting."
-    exit 1
-fi
-
+install_ubuntu "${PRIMARY_MNT}"
+setup_ukama "${PRIMARY_MNT}"
 deploy_to_rootfs "${PRIMARY_MNT}"
-deploy_to_rootfs "${PASSIVE_MNT}"
+copy_boot
+release_chroot "${PRIMARY_MNT}"
+update_fstab "${PRIMARY_MNT}"
+copy_rootfs
 
-log "SUCCESS" "Disk image creation completed successfully! (bootstrap: ${BOOTSTRAP_SERVER})"
+log "SUCCESS" "Disk image creation completed successfully! (Ubuntu ${UBUNTU_RELEASE}, bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
