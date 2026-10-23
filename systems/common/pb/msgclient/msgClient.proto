@@ -84,7 +84,6 @@ message RegisterServiceReq {
 message RegisterServiceResp {
     REGISTRAION_STATUS state =1;
     string serviceUuid = 2; 
-    uint32 refreshInterval = 3; /// Seconds between registration refreshes
 }
 
 message UnregisterServiceReq {
