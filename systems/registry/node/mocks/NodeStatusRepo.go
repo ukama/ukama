@@ -127,24 +127,17 @@ func (_m *NodeStatusRepo) GetNodeCount() (int64, int64, error) {
 	return r0, r1, r2
 }
 
-// Update provides a mock function with given fields: ns, columns
-func (_m *NodeStatusRepo) Update(ns *db.NodeStatus, columns ...string) error {
-	_va := make([]interface{}, len(columns))
-	for _i := range columns {
-		_va[_i] = columns[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ns)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
+// Update provides a mock function with given fields: _a0
+func (_m *NodeStatusRepo) Update(_a0 *db.NodeStatus) error {
+	ret := _m.Called(_a0)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*db.NodeStatus, ...string) error); ok {
-		r0 = rf(ns, columns...)
+	if rf, ok := ret.Get(0).(func(*db.NodeStatus) error); ok {
+		r0 = rf(_a0)
 	} else {
 		r0 = ret.Error(0)
 	}

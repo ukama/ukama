@@ -176,15 +176,6 @@ func (this *ReleaseNodeFromSiteRequest) Validate() error {
 func (this *ReleaseNodeFromSiteResponse) Validate() error {
 	return nil
 }
-func (this *ReleaseSiteRequest) Validate() error {
-	if this.SiteId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("SiteId", fmt.Errorf(`value '%v' must not be an empty string`, this.SiteId))
-	}
-	return nil
-}
-func (this *ReleaseSiteResponse) Validate() error {
-	return nil
-}
 func (this *NodeStatus) Validate() error {
 	return nil
 }

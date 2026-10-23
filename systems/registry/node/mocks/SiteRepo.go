@@ -3,8 +3,10 @@
 package mocks
 
 import (
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/registry/node/pkg/db"
+	gorm "gorm.io/gorm"
+
+	mock "github.com/stretchr/testify/mock"
 
 	ukama "github.com/ukama/ukama/systems/common/ukama"
 
@@ -16,34 +18,22 @@ type SiteRepo struct {
 	mock.Mock
 }
 
-// AssignNodes provides a mock function with given fields: siteId, networkId, nodeIds
-func (_m *SiteRepo) AssignNodes(siteId uuid.UUID, networkId uuid.UUID, nodeIds []string) ([]db.Site, error) {
-	ret := _m.Called(siteId, networkId, nodeIds)
+// AddNode provides a mock function with given fields: _a0, _a1
+func (_m *SiteRepo) AddNode(_a0 *db.Site, _a1 func(*db.Site, *gorm.DB) error) error {
+	ret := _m.Called(_a0, _a1)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AssignNodes")
+		panic("no return value specified for AddNode")
 	}
 
-	var r0 []db.Site
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID, []string) ([]db.Site, error)); ok {
-		return rf(siteId, networkId, nodeIds)
-	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uuid.UUID, []string) []db.Site); ok {
-		r0 = rf(siteId, networkId, nodeIds)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*db.Site, func(*db.Site, *gorm.DB) error) error); ok {
+		r0 = rf(_a0, _a1)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Site)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID, uuid.UUID, []string) error); ok {
-		r1 = rf(siteId, networkId, nodeIds)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // GetByNetwork provides a mock function with given fields: _a0
@@ -106,6 +96,36 @@ func (_m *SiteRepo) GetFreeNodes() ([]db.Node, error) {
 	return r0, r1
 }
 
+// GetFreeNodesForOrg provides a mock function with given fields: _a0
+func (_m *SiteRepo) GetFreeNodesForOrg(_a0 uuid.UUID) ([]db.Node, error) {
+	ret := _m.Called(_a0)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetFreeNodesForOrg")
+	}
+
+	var r0 []db.Node
+	var r1 error
+	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Node, error)); ok {
+		return rf(_a0)
+	}
+	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Node); ok {
+		r0 = rf(_a0)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]db.Node)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
+		r1 = rf(_a0)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetNodes provides a mock function with given fields: _a0
 func (_m *SiteRepo) GetNodes(_a0 uuid.UUID) ([]db.Node, error) {
 	ret := _m.Called(_a0)
@@ -161,36 +181,6 @@ func (_m *SiteRepo) IsAllocated(_a0 ukama.NodeID) (bool, *db.Site) {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*db.Site)
 		}
-	}
-
-	return r0, r1
-}
-
-// ReleaseSite provides a mock function with given fields: siteId
-func (_m *SiteRepo) ReleaseSite(siteId uuid.UUID) ([]db.Site, error) {
-	ret := _m.Called(siteId)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ReleaseSite")
-	}
-
-	var r0 []db.Site
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) ([]db.Site, error)); ok {
-		return rf(siteId)
-	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) []db.Site); ok {
-		r0 = rf(siteId)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Site)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(siteId)
-	} else {
-		r1 = ret.Error(1)
 	}
 
 	return r0, r1

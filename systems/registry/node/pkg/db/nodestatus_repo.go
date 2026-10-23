@@ -13,10 +13,12 @@ import (
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/ukama"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type NodeStatusRepo interface {
-	Update(ns *NodeStatus, columns ...string) error
+	Update(*NodeStatus) error
 	Get(ukama.NodeID) (*NodeStatus, error)
 	Delete(ukama.NodeID) error
 	GetAll() ([]NodeStatus, error)
@@ -33,27 +35,22 @@ func NewNodeStatusRepo(db sql.Db) NodeStatusRepo {
 	}
 }
 
-// Update writes the named columns of ns in place. Naming them lets zero values such as Unknown be stored.
-func (n *nodeStatusRepo) Update(ns *NodeStatus, columns ...string) error {
-	if len(columns) == 0 {
+func (n *nodeStatusRepo) Update(ns *NodeStatus) error {
+	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		t := tx.Where("node_id = ?", ns.NodeId).Delete(&NodeStatus{})
+		if t.RowsAffected > 0 {
+			log.Debugf("Marking old state.")
+		}
+
+		result := tx.Create(ns)
+		if result.Error != nil {
+			return result.Error
+		}
+
 		return nil
-	}
+	})
 
-	selected := append([]string{"updated_at"}, columns...)
-
-	result := n.Db.GetGormDb().Model(&NodeStatus{}).
-		Where("node_id = ?", ns.NodeId).
-		Select(selected).
-		Updates(ns)
-	if result.Error != nil {
-		return result.Error
-	}
-
-	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
-	}
-
-	return nil
+	return err
 }
 
 func (n *nodeStatusRepo) Delete(id ukama.NodeID) error {
