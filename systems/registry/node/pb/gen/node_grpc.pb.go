@@ -40,6 +40,7 @@ const (
 	NodeService_DetachNode_FullMethodName          = "/ukama.registry.node.v1.NodeService/DetachNode"
 	NodeService_AddNodeToSite_FullMethodName       = "/ukama.registry.node.v1.NodeService/AddNodeToSite"
 	NodeService_ReleaseNodeFromSite_FullMethodName = "/ukama.registry.node.v1.NodeService/ReleaseNodeFromSite"
+	NodeService_ReleaseSite_FullMethodName         = "/ukama.registry.node.v1.NodeService/ReleaseSite"
 )
 
 // NodeServiceClient is the client API for NodeService service.
@@ -62,6 +63,7 @@ type NodeServiceClient interface {
 	DetachNode(ctx context.Context, in *DetachNodeRequest, opts ...grpc.CallOption) (*DetachNodeResponse, error)
 	AddNodeToSite(ctx context.Context, in *AddNodeToSiteRequest, opts ...grpc.CallOption) (*AddNodeToSiteResponse, error)
 	ReleaseNodeFromSite(ctx context.Context, in *ReleaseNodeFromSiteRequest, opts ...grpc.CallOption) (*ReleaseNodeFromSiteResponse, error)
+	ReleaseSite(ctx context.Context, in *ReleaseSiteRequest, opts ...grpc.CallOption) (*ReleaseSiteResponse, error)
 }
 
 type nodeServiceClient struct {
@@ -212,6 +214,16 @@ func (c *nodeServiceClient) ReleaseNodeFromSite(ctx context.Context, in *Release
 	return out, nil
 }
 
+func (c *nodeServiceClient) ReleaseSite(ctx context.Context, in *ReleaseSiteRequest, opts ...grpc.CallOption) (*ReleaseSiteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ReleaseSiteResponse)
+	err := c.cc.Invoke(ctx, NodeService_ReleaseSite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // NodeServiceServer is the server API for NodeService service.
 // All implementations must embed UnimplementedNodeServiceServer
 // for forward compatibility.
@@ -232,6 +244,7 @@ type NodeServiceServer interface {
 	DetachNode(context.Context, *DetachNodeRequest) (*DetachNodeResponse, error)
 	AddNodeToSite(context.Context, *AddNodeToSiteRequest) (*AddNodeToSiteResponse, error)
 	ReleaseNodeFromSite(context.Context, *ReleaseNodeFromSiteRequest) (*ReleaseNodeFromSiteResponse, error)
+	ReleaseSite(context.Context, *ReleaseSiteRequest) (*ReleaseSiteResponse, error)
 	mustEmbedUnimplementedNodeServiceServer()
 }
 
@@ -283,6 +296,9 @@ func (UnimplementedNodeServiceServer) AddNodeToSite(context.Context, *AddNodeToS
 }
 func (UnimplementedNodeServiceServer) ReleaseNodeFromSite(context.Context, *ReleaseNodeFromSiteRequest) (*ReleaseNodeFromSiteResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReleaseNodeFromSite not implemented")
+}
+func (UnimplementedNodeServiceServer) ReleaseSite(context.Context, *ReleaseSiteRequest) (*ReleaseSiteResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ReleaseSite not implemented")
 }
 func (UnimplementedNodeServiceServer) mustEmbedUnimplementedNodeServiceServer() {}
 func (UnimplementedNodeServiceServer) testEmbeddedByValue()                     {}
@@ -557,6 +573,24 @@ func _NodeService_ReleaseNodeFromSite_Handler(srv interface{}, ctx context.Conte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _NodeService_ReleaseSite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ReleaseSiteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(NodeServiceServer).ReleaseSite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: NodeService_ReleaseSite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(NodeServiceServer).ReleaseSite(ctx, req.(*ReleaseSiteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // NodeService_ServiceDesc is the grpc.ServiceDesc for NodeService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -619,6 +653,10 @@ var NodeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReleaseNodeFromSite",
 			Handler:    _NodeService_ReleaseNodeFromSite_Handler,
+		},
+		{
+			MethodName: "ReleaseSite",
+			Handler:    _NodeService_ReleaseSite_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

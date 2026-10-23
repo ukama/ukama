@@ -21,6 +21,7 @@ import (
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"github.com/ukama/ukama/systems/node/state/pkg/db"
 	"github.com/ukama/ukama/systems/node/state/pkg/lifecycle"
 	"gorm.io/driver/postgres"
@@ -49,6 +50,81 @@ func lifecycleDatabase(t *testing.T) *gorm.DB {
 	})
 	require.NoError(t, connection.AutoMigrate(&db.NodeConfig{}, &db.State{}, &db.LifecycleRecord{}, &db.LifecyclePublication{}))
 	return connection
+}
+
+func TestReleaseFreesNodeForReassignment(t *testing.T) {
+	connection := lifecycleDatabase(t)
+	ctx := context.Background()
+	nodeID := ukama.NewVirtualHomeNodeId().String()
+	stateServer := NewStateServer("org", "", nil, nil)
+	server := NewStateEventServer("org", "", stateServer, nodeStateConfigPath, nil)
+	server.SetLifecycleRepo(db.NewLifecycleRepo(connection))
+	read := func() (db.LifecycleRecord, db.State) {
+		var record db.LifecycleRecord
+		var state db.State
+		require.NoError(t, connection.First(&record, "node_id = ?", nodeID).Error)
+		require.NoError(t, connection.Where("node_id = ?", nodeID).Order("created_at DESC").First(&state).Error)
+		return record, state
+	}
+	observe := func(value string, seq uint64, request string) error {
+		return server.processStoredEvent(ctx, value, nodeID, &lifecycle.Event{
+			BootID: "a", State: value, Sequence: seq, Time: 100, RequestID: request, ConfigMode: "NOCONFIG", Generation: 1,
+		})
+	}
+	provision := func(request, site string) error {
+		_, err := stateServer.RecordConfiguration(ctx, &pb.RecordConfigurationRequest{
+			NodeId: nodeID, RequestId: request, SiteId: site, NetworkId: "network",
+		})
+		return err
+	}
+	release := func(site string) error {
+		return server.ProcessEvent(ctx, "release", nodeID,
+			&epb.NodeReleasedEvent{NodeId: nodeID, Network: "network", Site: site})
+	}
+
+	require.NoError(t, observe("INIT", 1, ""))
+	require.NoError(t, observe("READY", 2, ""))
+	require.NoError(t, provision("request-1", "site-1"))
+	require.NoError(t, server.ProcessEvent(ctx, "assign", nodeID,
+		&epb.EventRegistryNodeAssign{NodeId: nodeID, Network: "network", Site: "site-1"}))
+	require.NoError(t, observe("CONFIGURING", 3, "request-1"))
+	require.NoError(t, observe("OPERATIONAL", 4, "request-1"))
+	_, state := read()
+	require.Equal(t, npb.NodeState_Operational, state.CurrentState)
+
+	require.NoError(t, release("site-1"))
+	record, state := read()
+	require.Equal(t, npb.NodeState_Ready, state.CurrentState)
+	require.Empty(t, record.RequestID)
+	require.Empty(t, record.Site)
+	require.Empty(t, record.Network)
+	require.False(t, record.AwaitingOperational)
+
+	// The node keeps stamping its old request on lifecycle reports until it is configured again.
+	require.NoError(t, observe("FAULTY", 5, "request-1"))
+	_, state = read()
+	require.Equal(t, npb.NodeState_Faulty, state.CurrentState)
+	require.NoError(t, observe("READY", 6, "request-1"))
+	_, state = read()
+	require.Equal(t, npb.NodeState_Ready, state.CurrentState)
+
+	require.Error(t, provision("request-1", "site-1"), "a released request cannot be dispatched again")
+	require.NoError(t, provision("request-2", "site-2"))
+	require.NoError(t, server.ProcessEvent(ctx, "assign", nodeID,
+		&epb.EventRegistryNodeAssign{NodeId: nodeID, Network: "network", Site: "site-2"}))
+	require.NoError(t, observe("CONFIGURING", 7, "request-2"))
+	require.NoError(t, observe("OPERATIONAL", 8, "request-2"))
+	record, state = read()
+	require.Equal(t, npb.NodeState_Operational, state.CurrentState)
+	require.Equal(t, "site-2", record.Site)
+	require.True(t, record.Completed)
+
+	// A late release for the old site must not drop the new assignment.
+	require.NoError(t, release("site-1"))
+	record, state = read()
+	require.Equal(t, npb.NodeState_Operational, state.CurrentState)
+	require.Equal(t, "request-2", record.RequestID)
+	require.Equal(t, "site-2", record.Site)
 }
 
 func TestLifecyclePersistenceAndRecovery(t *testing.T) {

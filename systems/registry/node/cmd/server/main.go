@@ -9,7 +9,10 @@
 package main
 
 import (
+	"context"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
@@ -55,8 +58,10 @@ func initConfig() {
 		log.Fatal("Error reading config ", err)
 	} else if serviceConfig.DebugMode {
 		b, err := yaml.Marshal(serviceConfig)
-		if err != nil {
+		if err == nil {
 			log.Infof("Config:\n%s", string(b))
+		} else {
+			log.Errorf("Failed to marshal config for debug logging: %v", err)
 		}
 	}
 	pkg.IsDebugMode = serviceConfig.DebugMode
@@ -106,6 +111,8 @@ func runGrpcServer(gormdb sql.Db) {
 	srv := server.NewNodeServer(serviceConfig.OrgName, db.NewNodeRepo(gormdb), db.NewSiteRepo(gormdb), db.NewNodeStatusRepo(gormdb),
 		serviceConfig.PushGateway, mbClient, providers.NewSiteClientProvider(serviceConfig.SiteHost), orgId, invClient, healthClient,
 	)
+	srv.StartMetricsPusher(context.Background())
+
 	nSrv := server.NewNodeEventServer(serviceConfig.OrgName, srv, invClient)
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
@@ -136,6 +143,7 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 
 func waitForExit() {
 	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	done := make(chan bool, 1)
 	go func() {
 

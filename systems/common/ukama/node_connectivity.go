@@ -48,6 +48,11 @@ func (s NodeConnectivity) String() string {
 func ParseNodeConnectivity(value string) NodeConnectivity {
 	i, err := strconv.Atoi(value)
 	if err == nil {
+		// A number outside the enum falls back to Undefined, the same as an unrecognised name.
+		if i < int(NodeConnectivityUndefined) || i > int(NodeConnectivityOffline) {
+			return NodeConnectivityUndefined
+		}
+
 		return NodeConnectivity(i)
 	}
 
