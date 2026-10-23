@@ -292,17 +292,13 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context, req *pb.UpdateNodeSta
 	if req.Connectivity != "" {
 		nodeUpdates.Connectivity = dbConnState
 		columns = append(columns, "connectivity")
-		evt.Status = &epb.EventRegistryNodeStatusUpdate_Connectivity{
-			Connectivity: dbConnState.String(),
-		}
+		evt.Connectivity = dbConnState.String()
 	}
 
 	if req.State != "" {
 		nodeUpdates.State = dbNodeState
 		columns = append(columns, "state")
-		evt.Status = &epb.EventRegistryNodeStatusUpdate_State{
-			State: dbNodeState.String(),
-		}
+		evt.State = dbNodeState.String()
 	}
 
 	err = n.nodeStatusRepo.Update(nodeUpdates, columns...)

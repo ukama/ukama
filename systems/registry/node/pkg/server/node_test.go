@@ -569,9 +569,13 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 		nodeStatusRepo.On("Update", mock.Anything, "connectivity", "state").Return(nil).Once()
 		nodeRepo.On("Get", nodeId).
 			Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
+		// The event must carry both fields when a request changes both (#1784).
 		msgbusClient.On("PublishRequest",
-			"event.cloud.local.testorg.registry.node.node.state.update", mock.Anything).
-			Return(nil).Once()
+			"event.cloud.local.testorg.registry.node.node.state.update",
+			mock.MatchedBy(func(e *epb.EventRegistryNodeStatusUpdate) bool {
+				return e.Connectivity == ukama.NodeConnectivityOnline.String() &&
+					e.State == ukama.NodeStateConfiguring.String()
+			})).Return(nil).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "",
 			msgbusClient, nil, orgId, nil, nil)
@@ -586,6 +590,33 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 		assert.NotNil(t, resp)
 		nodeStatusRepo.AssertExpectations(t)
 		nodeRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("ConnectivityOnlyEventLeavesStateEmpty", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		nodeStatusRepo.On("Update", mock.Anything, "connectivity").Return(nil).Once()
+		nodeRepo.On("Get", nodeId).
+			Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything,
+			mock.MatchedBy(func(e *epb.EventRegistryNodeStatusUpdate) bool {
+				return e.Connectivity == ukama.NodeConnectivityOffline.String() && e.State == ""
+			})).Return(nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "",
+			msgbusClient, nil, orgId, nil, nil)
+
+		_, err := s.UpdateNodeStatus(context.TODO(), &pb.UpdateNodeStateRequest{
+			NodeId:       nodeId.StringLowercase(),
+			Connectivity: ukama.NodeConnectivityOffline.String(),
+		})
+
+		assert.NoError(t, err)
 		msgbusClient.AssertExpectations(t)
 	})
 
