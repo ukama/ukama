@@ -11,9 +11,12 @@ package server_test
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/tj/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -23,12 +26,17 @@ import (
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
+	sitepb "github.com/ukama/ukama/systems/registry/site/pb/gen"
+	sitemocks "github.com/ukama/ukama/systems/registry/site/pb/gen/mocks"
 )
 
-var testNode = ukama.NewVirtualNodeId("HomeNode")
-var orgId = uuid.NewV4()
+var (
+	testNode = ukama.NewVirtualNodeId("HomeNode")
+	orgId    = uuid.NewV4()
+)
 
 const OrgName = "testorg"
 
@@ -43,7 +51,8 @@ func TestNodeServer_Add(t *testing.T) {
 	const nodeName = "node-A"
 	const nodeType = ukama.NODE_TYPE_HOMENODE
 
-	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", msgbusClient, siteService, orgId, nil, nil)
+	s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "",
+		msgbusClient, siteService, orgId, nil, nil)
 
 	node := &db.Node{
 		Id:   nodeId,
@@ -57,8 +66,8 @@ func TestNodeServer_Add(t *testing.T) {
 	}
 
 	nodeRepo.On("Add", node, mock.Anything).Return(nil).Once()
-	nodeRepo.On("GetNodeCount").Return(int64(1), int64(1), int64(0), nil).Once()
-	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
+	msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+		Return(nil).Once()
 
 	t.Run("NodeStateValid", func(t *testing.T) {
 		// Act
@@ -79,8 +88,11 @@ func TestNodeServer_Add(t *testing.T) {
 
 func TestNodeServer_Get(t *testing.T) {
 	t.Run("NodeFound", func(t *testing.T) {
-		const nodeName = "node-A"
-		const nodeType = ukama.NODE_TYPE_HOMENODE
+		const (
+			nodeName = "node-A"
+			nodeType = ukama.NODE_TYPE_HOMENODE
+		)
+
 		var nodeId = ukama.NewVirtualNodeId(nodeType)
 
 		nodeRepo := &mocks.NodeRepo{}
@@ -92,7 +104,8 @@ func TestNodeServer_Get(t *testing.T) {
 				Type: ukama.NODE_TYPE_HOMENODE,
 			}, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -112,7 +125,8 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
@@ -127,7 +141,8 @@ func TestNodeServer_Get(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.String()})
@@ -171,10 +186,12 @@ func TestNodeServer_List(t *testing.T) {
 
 		connectivityVal := uint8(connectivity)
 		stateVal := uint8(state)
-		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
+		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(),
+			networkId.String(), ntype, &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -193,7 +210,8 @@ func TestNodeServer_List(t *testing.T) {
 		assert.Equal(t, nodeId.String(), resp.Nodes[0].Id)
 		assert.Equal(t, "node-1", resp.Nodes[0].Name)
 		assert.Equal(t, ntype, resp.Nodes[0].Type)
-		assert.Equal(t, cpb.NodeConnectivity(connectivity), resp.Nodes[0].Status.Connectivity)
+		assert.Equal(t, cpb.NodeConnectivity(connectivity),
+			resp.Nodes[0].Status.Connectivity)
 		assert.Equal(t, cpb.NodeState(state), resp.Nodes[0].Status.State)
 		assert.Equal(t, siteId.String(), resp.Nodes[0].Site.SiteId)
 		assert.Equal(t, networkId.String(), resp.Nodes[0].Site.NetworkId)
@@ -232,10 +250,12 @@ func TestNodeServer_List(t *testing.T) {
 
 		connectivityVal := uint8(ukama.NodeConnectivityOnline)
 		stateVal := uint8(ukama.NodeStateUnknown)
-		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(), networkId.String(), ntype, &connectivityVal, &stateVal).
+		nodeRepo.On("List", nodeId.StringLowercase(), siteId.String(),
+			networkId.String(), ntype, &connectivityVal, &stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -278,10 +298,12 @@ func TestNodeServer_List(t *testing.T) {
 
 		connectivityVal := uint8(ukama.NodeConnectivityOnline)
 		stateVal := uint8(ukama.NodeStateUnknown)
-		nodeRepo.On("List", nodeId.StringLowercase(), "", "", "", &connectivityVal, &stateVal).
+		nodeRepo.On("List", nodeId.StringLowercase(), "", "", "", &connectivityVal,
+			&stateVal).
 			Return(nodes, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{
@@ -310,7 +332,8 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
 			Return([]db.Node{}, nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{})
@@ -333,7 +356,8 @@ func TestNodeServer_List(t *testing.T) {
 		nodeRepo.On("List", "", "", "", "", &connectivityVal, &stateVal).
 			Return(nil, gorm.ErrInvalidDB).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
 
 		// Act
 		resp, err := s.List(context.TODO(), &pb.ListRequest{})
