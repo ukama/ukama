@@ -42,6 +42,8 @@ func (n *StateEventServer) processStoredEvent(ctx context.Context, event, nodeID
 		switch msg := message.(type) {
 		case *epb.EventRegistryNodeAssign:
 			return n.assignNode(record, state, msg)
+		case *epb.NodeReleasedEvent:
+			return n.releaseNode(record, state, msg)
 		case *lifecycle.Event:
 			return n.observeLifecycle(record, state, msg)
 		case *epb.NodeOnlineEvent:
@@ -86,6 +88,21 @@ func (n *StateEventServer) assignNode(record *db.LifecycleRecord, state *db.Stat
 	return n.transitionStoredState(state, "assign")
 }
 
+// releaseNode clears the assignment in any state. The FSM moves only Configuring and Operational to Ready;
+// any other state reaches Ready on the node's next READY.
+func (n *StateEventServer) releaseNode(record *db.LifecycleRecord, state *db.State, msg *epb.NodeReleasedEvent) error {
+	if record.Site != "" && record.Site != msg.Site {
+		log.Warnf("Ignoring release of node %s from site %s: it is assigned to site %s",
+			record.NodeID, msg.Site, record.Site)
+		return nil
+	}
+	record.RequestID, record.Network, record.Site = "", "", ""
+	record.ProvisionManaged = false
+	record.Completed = false
+	record.AwaitingOperational = false
+	return n.transitionStoredState(state, "release")
+}
+
 func routingPart(value string) bool {
 	return value != "" && !strings.ContainsAny(value, ".*# /\\\t\r\n")
 }
@@ -112,7 +129,12 @@ func (n *StateEventServer) observeLifecycle(record *db.LifecycleRecord, state *d
 			return nil
 		}
 		if record.RequestID != event.RequestID {
-			return nil
+			// A released node stamps its old request on every report until it is configured again.
+			released := record.RequestID == "" &&
+				(event.State == "INIT" || event.State == "READY" || event.State == "FAULTY")
+			if !released {
+				return nil
+			}
 		}
 	}
 	switch event.State {
