@@ -10,160 +10,116 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"strings"
+	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/wagslane/go-rabbitmq"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/common/pb/gen/msgclient"
-	"github.com/ukama/ukama/systems/services/msgClient/internal/db"
-	"github.com/ukama/ukama/systems/services/msgClient/internal/queue"
 )
 
+type Registry interface {
+	Register(name, system, instance, uri string, routes []string) (string, error)
+	Resume(uuid string) error
+	Pause(uuid string) error
+	Unregister(uuid string) error
+	Lookup(uuid string) (name, instance string, ok bool)
+}
+
+type Publisher interface {
+	Publish(key string, body []byte, headers rabbitmq.Table) error
+}
+
 type MsgClientServer struct {
-	sys string
-	s   db.ServiceRepo
-	r   db.RouteRepo
-	h   queue.MsgBusHandlerInterface
-	p   msgbus.MsgBusShovelProvider
+	sys             string
+	refreshInterval time.Duration
+	r               Registry
+	pub             Publisher
+	p               msgbus.MsgBusShovelProvider
 	pb.UnimplementedMsgClientServiceServer
 }
 
-func NewMsgClientServer(serviceRepo db.ServiceRepo, keyRepo db.RouteRepo, p msgbus.MsgBusShovelProvider, h queue.MsgBusHandlerInterface, sys string) *MsgClientServer {
+func NewMsgClientServer(r Registry, pub Publisher, p msgbus.MsgBusShovelProvider, sys string, refreshInterval time.Duration) *MsgClientServer {
 	return &MsgClientServer{
-		sys: sys,
-		s:   serviceRepo,
-		r:   keyRepo,
-		h:   h,
-		p:   p,
+		sys:             sys,
+		refreshInterval: refreshInterval,
+		r:               r,
+		pub:             pub,
+		p:               p,
 	}
 }
 
 func (m *MsgClientServer) RegisterService(ctx context.Context, req *pb.RegisterServiceReq) (*pb.RegisterServiceResp, error) {
-	log.Debugf("Register new listener request for %s", req.ServiceName)
-	/* This sholuld be handled as db tx but for now we have two seperate commits one for route
-	other for service */
-	resp := &pb.RegisterServiceResp{
-		State: pb.REGISTRAION_STATUS_NOT_REGISTERED,
-	}
-
 	if !strings.EqualFold(m.sys, req.SystemName) {
-		return nil, fmt.Errorf("invalid system name %s in request", req.SystemName)
-	}
-	/* Register service */
-	svc := db.Service{
-		Name:        req.ServiceName,
-		InstanceId:  req.InstanceId,
-		ServiceUri:  req.ServiceURI,
-		MsgBusUri:   req.MsgBusURI,
-		ListQueue:   req.ListQueue,
-		PublQueue:   req.PublQueue,
-		Exchange:    req.Exchange,
-		GrpcTimeout: req.GrpcTimeout,
+		return nil, status.Errorf(codes.InvalidArgument, "invalid system name %s in request", req.SystemName)
 	}
 
-	service, err := m.s.Register(&svc)
+	if _, err := msgbus.ParseRouteList(req.Routes); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid routes for %s: %v", req.ServiceName, err)
+	}
+
+	id, err := m.r.Register(req.ServiceName, req.SystemName, req.InstanceId, req.ServiceURI, req.Routes)
 	if err != nil {
-		log.Errorf("Failed to register service %s", req.ServiceName)
-		return resp, err
+		log.Errorf("Failed to register service %s. Error %s", req.ServiceName, err.Error())
+		return nil, status.Errorf(codes.Unavailable, "failed to register %s: %v", req.ServiceName, err)
 	}
 
-	log.Debugf("Removing old route for %s service", service.Name)
-	err = m.s.RemoveRoutes(service)
-	if err != nil {
-		log.Errorf("Failed to remove old routes for service %s. Error %s", req.ServiceName, err.Error())
-		return resp, err
-	}
-
-	/* Add Routes */
-	routes := make([]db.Route, len(req.Routes))
-	for i, r := range req.Routes {
-		routes[i].Key = r
-		rt, err := m.r.Add(r)
-		if err != nil {
-			/* No need to rollback the already added routes.*/
-			log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
-			return resp, err
-		}
-
-		log.Debugf("Adding route %s for %s service", r, service.Name)
-		err = m.s.AddRoute(service, rt)
-		if err != nil {
-			/* No need to rollback the already added routes.*/
-			log.Errorf("Failed to add route %s for service %s. Error %s", r, req.ServiceName, err.Error())
-			return resp, err
-		}
-	}
-
-	resp.State = pb.REGISTRAION_STATUS_REGISTERED
-	resp.ServiceUuid = service.ServiceUuid
-	return resp, nil
+	return &pb.RegisterServiceResp{
+		State:           pb.REGISTRAION_STATUS_REGISTERED,
+		ServiceUuid:     id,
+		RefreshInterval: uint32(max(m.refreshInterval/time.Second, 1)),
+	}, nil
 }
 
 func (m *MsgClientServer) StartMsgBusHandler(ctx context.Context, req *pb.StartMsgBusHandlerReq) (*pb.StartMsgBusHandlerResp, error) {
-	log.Debugf("Start handler request for %s", req.ServiceUuid)
-
-	svc, err := m.s.Get(req.ServiceUuid)
-	if err != nil {
-		log.Errorf("Failed to get listener config for %s", req.ServiceUuid)
-		return nil, err
-	}
-
-	/* Update Service handler for message queue */
-	err = m.h.UpdateServiceQueueHandler(svc)
-	if err != nil {
-		log.Errorf("Failed to start listener for service %s. Error %s", svc.Name, err.Error())
-		return nil, err
+	if err := m.r.Resume(req.ServiceUuid); err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	return &pb.StartMsgBusHandlerResp{}, nil
 }
 
 func (m *MsgClientServer) StopMsgBusHandler(ctx context.Context, req *pb.StopMsgBusHandlerReq) (*pb.StopMsgBusHandlerResp, error) {
-
-	log.Debugf("Stop handler request for %s", req.ServiceUuid)
-	/* start listening */
-	err := m.h.StopServiceQueueHandler(req.ServiceUuid)
-	if err != nil {
-		log.Errorf("Failed to stop listener for service %s. Error %s", req.ServiceUuid, err.Error())
-		return nil, err
+	if err := m.r.Pause(req.ServiceUuid); err != nil {
+		return nil, status.Error(codes.NotFound, err.Error())
 	}
 
 	return &pb.StopMsgBusHandlerResp{}, nil
 }
 
 func (m *MsgClientServer) UnregisterService(ctx context.Context, req *pb.UnregisterServiceReq) (*pb.UnregisterServiceResp, error) {
-
-	log.Debugf("Remove handler request for %s", req.ServiceUuid)
-
-	/* Listener */
-	err := m.h.RemoveServiceQueueListening(req.ServiceUuid)
-	if err != nil {
+	if err := m.r.Unregister(req.ServiceUuid); err != nil {
 		return nil, err
 	}
-
-	/* Publisher */
-	err = m.h.RemoveServiceQueuePublisher(req.ServiceUuid)
-	if err != nil {
-		return nil, err
-	}
-
-	err = m.s.UnRegister(req.ServiceUuid)
-	if err != nil {
-		return nil, err
-	}
-	log.Debugf("listener and publisher removed for service %s", req.ServiceUuid)
 
 	return &pb.UnregisterServiceResp{}, nil
 }
 
 func (m *MsgClientServer) PublishMsg(ctx context.Context, req *pb.PublishMsgRequest) (*pb.PublishMsgResponse, error) {
-	log.Debugf("Publish request for %s service", req.ServiceUuid)
-
-	err := m.h.Publish(req.ServiceUuid, req.RoutingKey, req.Msg)
+	body, err := proto.Marshal(req.Msg)
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.InvalidArgument, "invalid message: %v", err)
 	}
+
+	name, instance, ok := m.r.Lookup(req.ServiceUuid)
+	if !ok {
+		name = "unknown"
+	}
+
+	err = m.pub.Publish(req.RoutingKey, body, rabbitmq.Table{
+		"source-service": name,
+		"instance-id":    instance,
+	})
+	if err != nil {
+		log.Errorf("Failed to publish %s from %s. Error %s", req.RoutingKey, name, err.Error())
+		return nil, status.Errorf(codes.Unavailable, "event %s not accepted: %v", req.RoutingKey, err)
+	}
+
 	return &pb.PublishMsgResponse{}, nil
 }
 
