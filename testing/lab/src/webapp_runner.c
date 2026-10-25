@@ -510,15 +510,19 @@ done:
     if (stopped && rc == ULAB_OK)
         rc = webapp_error(err, "web-app scenario cancelled during cleanup");
     if (journal.root) {
-        json_object_set_new(journal.root, "run_result", json_string(rc || cleanup_failed ? "failed" : "passed"));
+        json_object_set_new(journal.root, "run_result", json_string(rc || (cleanup_failed && !report_cleanup_errors_suppressed()) ? "failed" : "passed"));
         json_object_set_new(journal.root, "worker_cleanup", json_string(worker_cleanup_failed ? "unconfirmed" : browser_started ? "complete" : "not_started"));
         json_object_set_new(journal.root, "runtime_cleanup", json_string(runtime_cleanup_failed ? "failed" : hooks && hooks->cleanup_runtime ? "complete" : "not_requested"));
         if (webapp_journal_save(&journal, &cleanup_error)) cleanup_failed = 1;
     }
     if (cleanup_failed) {
         report_set_cleanup(report, 1);
-        if (rc == ULAB_OK) { *err = cleanup_error; rc = ULAB_ERR; }
-        ulab_log_error("web-app cleanup: %s", cleanup_error.msg);
+        if (report_cleanup_errors_suppressed()) {
+            ulab_log_warn("web-app cleanup: %s", cleanup_error.msg);
+        } else {
+            if (rc == ULAB_OK) { *err = cleanup_error; rc = ULAB_ERR; }
+            ulab_log_error("web-app cleanup: %s", cleanup_error.msg);
+        }
     }
     if (rc) ulab_copy(report->error, sizeof(report->error), err->msg);
     webapp_journal_close(&journal);

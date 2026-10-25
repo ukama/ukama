@@ -3,7 +3,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  *
- * Copyright (c) 2023-present, Ukama Inc.
+ * Copyright (c) 2026-present, Ukama Inc.
  */
 
 package db_test
@@ -11,6 +11,7 @@ package db_test
 import (
 	extsql "database/sql"
 	"errors"
+	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -54,24 +55,24 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 	t.Run("UpdateSuccess", func(t *testing.T) {
 		mock.ExpectBegin()
 
-		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
+		// State is Unknown (0) and still written, because the column is named.
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "node_statuses" SET "updated_at"=$1,"connectivity"=$2,"state"=$3 WHERE node_id = $4 AND "node_statuses"."deleted_at" IS NULL`)).
+			WithArgs(sqlmock.AnyArg(), ukama.NodeConnectivityOnline, ukama.NodeStateUnknown,
+				nodeId.StringLowercase()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
-		// Act
-		err = r.Update(ns)
+		err = r.Update(ns, "connectivity", "state")
 
-		// Assert
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 
-	// No row matched node_id: the status row should already exist (created
-	// alongside the Node), so zero rows affected means it's missing, not a
-	// no-op update.
+	// The status row is created with the node, so zero rows affected means the
+	// node is missing or soft deleted.
 	t.Run("NodeNotFound", func(t *testing.T) {
 		mock.ExpectBegin()
 
@@ -80,10 +81,8 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 
 		mock.ExpectCommit()
 
-		// Act
-		err = r.Update(ns)
+		err = r.Update(ns, "connectivity", "state")
 
-		// Assert
 		assert.Error(t, err)
 		assert.Equal(t, gorm.ErrRecordNotFound, err)
 
@@ -99,35 +98,38 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 
 		mock.ExpectRollback()
 
-		// Act
-		err = r.Update(ns)
+		err = r.Update(ns, "connectivity", "state")
 
-		// Assert
 		assert.Error(t, err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
 
-	t.Run("PartialUpdateOmitsZeroFields", func(t *testing.T) {
+	t.Run("PartialUpdateWritesOnlyNamedColumns", func(t *testing.T) {
 		mock.ExpectBegin()
 
-		// Exactly 4 args (updated_at, node_id, connectivity, then the WHERE
-		// node_id) proves State was NOT included in the SET clause.
-		mock.ExpectExec(`^UPDATE "node_statuses" SET`).
-			WithArgs(sqlmock.AnyArg(), nodeId.StringLowercase(), ukama.NodeConnectivityOffline,
-				nodeId.StringLowercase()).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "node_statuses" SET "updated_at"=$1,"connectivity"=$2 WHERE node_id = $3 AND "node_statuses"."deleted_at" IS NULL`)).
+			WithArgs(sqlmock.AnyArg(), ukama.NodeConnectivityOffline, nodeId.StringLowercase()).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 
 		mock.ExpectCommit()
 
-		// Act
 		err = r.Update(&nodedb.NodeStatus{
 			NodeId:       nodeId.StringLowercase(),
 			Connectivity: ukama.NodeConnectivityOffline,
-		})
+			State:        ukama.NodeStateReady,
+		}, "connectivity")
 
-		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+	})
+
+	t.Run("NoColumnsIsNoop", func(t *testing.T) {
+		err = r.Update(ns)
+
 		assert.NoError(t, err)
 
 		err = mock.ExpectationsWereMet()

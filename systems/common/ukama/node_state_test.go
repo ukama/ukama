@@ -52,10 +52,14 @@ func TestNodeState(t *testing.T) {
 	})
 
 	t.Run("NodeStateNonValidStrNumber", func(tt *testing.T) {
-		unknownState := ukama.ParseNodeState("10")
+		for _, value := range []string{"10", "-1", "300"} {
+			unknownState := ukama.ParseNodeState(value)
 
-		assert.NotNil(t, unknownState)
-		assert.Equal(t, unknownState.String(), ukama.NodeStateUnknown.String())
-		assert.Equal(t, uint8(unknownState), uint8(10))
+			assert.Equal(t, ukama.NodeStateUnknown, unknownState, value)
+		}
+	})
+
+	t.Run("NodeStateLastValidNumber", func(tt *testing.T) {
+		assert.Equal(t, ukama.NodeStateOffboarded, ukama.ParseNodeState("7"))
 	})
 }

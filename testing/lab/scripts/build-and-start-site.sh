@@ -39,10 +39,10 @@ safe_name() {
     printf "%s" "$1" | tr -c 'A-Za-z0-9_.-' '-'
 }
 
-pick_site_bundle() {
+list_site_bundles() {
     json="$1"
 
-    jq -r '
+    jq -r --arg mode "${2:-complete}" '
       def nid:
         ((.nodeId // .nodeID // .node_id // .id // "") | tostring);
 
@@ -73,101 +73,48 @@ pick_site_bundle() {
       [
         .. | objects
         | select((nid | length) > 0)
+        | select(((.isProvisioned // .is_provisioned //
+                   .provisioned // false) | tostring |
+                   ascii_downcase) != "true")
         | {id: nid, type: ntype, associated_tnode_id: assoc_tnode}
+        | .kind = kind
       ]
       | unique_by(.id)
       as $nodes
-      |
-      [
+      | (reduce $nodes[] as $node (
+          {by_id: {}, by_parent: {}};
+          .by_id[$node.id] = $node
+          | if $node.associated_tnode_id != "" then
+              .by_parent[$node.associated_tnode_id][$node.kind]
+                //= $node.id
+            else . end
+        )) as $index
+
+      | def child($tnode; $kind):
+          [
+            ($index.by_id[derived($tnode; $kind)]
+             | select(.kind == $kind) | .id),
+            ($index.by_parent[$tnode][$kind] // empty)
+          ] | min // "";
+
         $nodes[]
-        | select(kind == "tnode")
+        | select(.kind == "tnode")
         | .id as $tnode
-        | (derived($tnode; "cnode")) as $derived_cnode
-        | (derived($tnode; "anode")) as $derived_anode
-        | (
-            $nodes
-            | map(select((kind == "cnode") and
-                         ((.id == $derived_cnode) or
-                          (.associated_tnode_id == $tnode))))
-            | .[0].id // ""
-          ) as $cnode
-        | (
-            $nodes
-            | map(select((kind == "anode") and
-                         ((.id == $derived_anode) or
-                          (.associated_tnode_id == $tnode))))
-            | .[0].id // ""
-          ) as $anode
-        | select(($cnode | length) > 0 and ($anode | length) > 0)
-        | [$tnode, $cnode, $anode]
-        | @tsv
-      ]
-      | first // empty
+        | child($tnode; "cnode") as $cnode
+        | child($tnode; "anode") as $anode
+        | if $mode == "incomplete" then
+            select($cnode == "" or $anode == "")
+            | "skip incomplete bundle tnode=\($tnode)" +
+              " cnode=\($cnode != "") anode=\($anode != "")"
+          else
+            select($cnode != "" and $anode != "")
+            | [$tnode, $cnode, $anode] | @tsv
+          end
     ' "$json"
 }
 
 print_incomplete_bundles() {
-    json="$1"
-
-    jq -r '
-      def nid:
-        ((.nodeId // .nodeID // .node_id // .id // "") | tostring);
-
-      def ntype:
-        ((.nodeType // .node_type // .type // .kind // "") |
-         tostring | ascii_downcase);
-
-      def assoc_tnode:
-        ((.associatedTNodeId // .associated_tnode_id //
-          .associatedTnodeId // .associated_tnode //
-          .tnodeId // .tnode_id //
-          .parentTNodeId // .parent_tnode_id // "") | tostring);
-
-      def kind:
-        if (.type == "tnode" or (.id | ascii_downcase | test("-tnode-"))) then
-          "tnode"
-        elif (.type == "cnode" or (.id | ascii_downcase | test("-cnode-"))) then
-          "cnode"
-        elif (.type == "anode" or (.id | ascii_downcase | test("-anode-"))) then
-          "anode"
-        else
-          .type
-        end;
-
-      def derived($id; $kind):
-        ($id | gsub("-tnode-"; "-" + $kind + "-"));
-
-      [
-        .. | objects
-        | select((nid | length) > 0)
-        | {id: nid, type: ntype, associated_tnode_id: assoc_tnode}
-      ]
-      | unique_by(.id)
-      as $nodes
-      |
-      [
-        $nodes[]
-        | select(kind == "tnode")
-        | .id as $tnode
-        | (derived($tnode; "cnode")) as $derived_cnode
-        | (derived($tnode; "anode")) as $derived_anode
-        | (
-            $nodes
-            | any((kind == "cnode") and
-                  ((.id == $derived_cnode) or
-                   (.associated_tnode_id == $tnode)))
-          ) as $has_cnode
-        | (
-            $nodes
-            | any((kind == "anode") and
-                  ((.id == $derived_anode) or
-                   (.associated_tnode_id == $tnode)))
-          ) as $has_anode
-        | select(($has_cnode and $has_anode) | not)
-        | "skip incomplete bundle tnode=\($tnode) cnode=\($has_cnode) anode=\($has_anode)"
-      ]
-      | .[0:20][]?
-    ' "$json" >&2 || true
+    list_site_bundles "$1" incomplete | head -n 20 >&2 || true
 }
 
 reserve_node() {
@@ -175,9 +122,15 @@ reserve_node() {
     body="$(mktemp "${TMPDIR:-/tmp}/ukama-reserve-node.XXXXXX")"
 
     echo "factory: reserving node $node_id"
-    code="$(curl -sS -o "$body" -w "%{http_code}" -X PATCH \
+    if ! code="$(curl -sS --connect-timeout 10 --max-time 30 \
+        -o "$body" -w "%{http_code}" -X PATCH \
         "$FACTORY_URL/v1/nodefactory/node/$node_id" \
-        -H "accept: application/json")"
+        -H "accept: application/json")"; then
+        echo "factory: reserve request failed node=$node_id;" \
+            "reservation state unknown" >&2
+        rm -f "$body"
+        exit 1
+    fi
 
     case "$code" in
         2??)
@@ -188,6 +141,9 @@ reserve_node() {
             return 0
             ;;
         409)
+            echo "factory: reservation conflict node=$node_id status=409" >&2
+            cat "$body" >&2 || true
+            printf '\n' >&2
             rm -f "$body"
             return 1
             ;;
@@ -205,9 +161,14 @@ assign_org() {
     body="$(mktemp "${TMPDIR:-/tmp}/ukama-assign-org.XXXXXX")"
 
     echo "factory: assigning node $node_id to org $FACTORY_ORG"
-    code="$(curl -sS -o "$body" -w "%{http_code}" -X PATCH \
+    if ! code="$(curl -sS --connect-timeout 10 --max-time 30 \
+        -o "$body" -w "%{http_code}" -X PATCH \
         "$FACTORY_URL/v1/nodefactory/node/$node_id/org/$FACTORY_ORG" \
-        -H "accept: application/json")"
+        -H "accept: application/json")"; then
+        echo "factory: assign request failed node=$node_id" >&2
+        rm -f "$body"
+        exit 1
+    fi
 
     case "$code" in
         2??)
@@ -301,40 +262,43 @@ if [ -z "${LAB_NET:-}" ]; then
 fi
 
 FACTORY_JSON="$(mktemp "${TMPDIR:-/tmp}/ukama-factory-sites.XXXXXX")"
+FACTORY_BUNDLES=""
 cleanup() {
-    rm -f "$FACTORY_JSON"
+    rm -f "$FACTORY_JSON" "$FACTORY_BUNDLES"
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+FACTORY_BUNDLES="$(mktemp "${TMPDIR:-/tmp}/ukama-factory-bundles.XXXXXX")"
 
-while :; do
-    echo "factory: fetching unprovisioned factory nodes for site=$SITE_REF"
+echo "factory: fetching unprovisioned factory nodes for site=$SITE_REF"
 
-    curl -fsS -X GET \
-        "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
-        -H "accept: application/json" \
-        > "$FACTORY_JSON"
+curl -fsS --connect-timeout 10 --max-time 30 -X GET \
+    "$FACTORY_URL/v1/nodefactory/nodes?isProvisioned=false" \
+    -H "accept: application/json" > "$FACTORY_JSON"
 
-    BUNDLE="$(pick_site_bundle "$FACTORY_JSON")"
+echo "factory: finding complete unprovisioned bundles for site=$SITE_REF"
+list_site_bundles "$FACTORY_JSON" > "$FACTORY_BUNDLES"
 
-    if [ -z "$BUNDLE" ]; then
-        echo "no complete unprovisioned factory bundle for site=$SITE_REF" >&2
-        print_incomplete_bundles "$FACTORY_JSON"
-        exit 1
-    fi
+if [ ! -s "$FACTORY_BUNDLES" ]; then
+    echo "no complete unprovisioned factory bundle for site=$SITE_REF" >&2
+    print_incomplete_bundles "$FACTORY_JSON"
+    exit 1
+fi
 
-    # shellcheck disable=SC2086
-    set -- $BUNDLE
-    TNODE_ID="$1"
-    CNODE_ID="$2"
-    ANODE_ID="$3"
+BUNDLE_COUNT="$(wc -l < "$FACTORY_BUNDLES" | tr -d '[:space:]')"
+echo "factory: found $BUNDLE_COUNT candidate bundles for site=$SITE_REF"
+BUNDLE_RESERVED=0
 
+while IFS="$(printf '\t')" read -r TNODE_ID CNODE_ID ANODE_ID; do
     echo "factory: selected bundle site=$SITE_REF tnode=$TNODE_ID" \
         "cnode=$CNODE_ID anode=$ANODE_ID"
 
     # The tower node is the bundle claim. Factory updates this flag
     # atomically, so only one lab runner can receive a successful response.
     if ! reserve_node "$TNODE_ID"; then
-        echo "factory: bundle already reserved tnode=$TNODE_ID; retrying"
+        echo "factory: bundle already reserved tnode=$TNODE_ID;" \
+            "trying next candidate"
         continue
     fi
 
@@ -353,8 +317,15 @@ while :; do
 
     echo "factory: reserved bundle site=$SITE_REF tnode=$TNODE_ID" \
         "cnode=$CNODE_ID anode=$ANODE_ID"
+    BUNDLE_RESERVED=1
     break
-done
+done < "$FACTORY_BUNDLES"
+
+if [ "$BUNDLE_RESERVED" != 1 ]; then
+    echo "factory: all $BUNDLE_COUNT candidate bundles conflicted;" \
+        "no bundle reserved for site=$SITE_REF" >&2
+    exit 1
+fi
 
 TNODE_CONTAINER="$(container_name "$TNODE_ID")"
 CNODE_CONTAINER="$(container_name "$CNODE_ID")"

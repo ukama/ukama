@@ -17,6 +17,17 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+int report_cleanup_errors_suppressed(void) {
+    const char *value = getenv("ULAB_SUPPRESS_CLEANUP_ERRORS");
+
+    return value == NULL || strcmp(value, "0") != 0;
+}
+
+static const char *cleanup_status(const report_t *r) {
+    return r->cleanup_failed ?
+        (report_cleanup_errors_suppressed() ? "warning" : "failed") : "ok";
+}
+
 static void json_str(FILE *f, const char *key, const char *value,
                      int comma) {
     char *encoded;
@@ -110,7 +121,7 @@ void report_close(report_t *r) {
 
     r->ended_at = time(NULL);
     passed = r->final_rc == ULAB_OK && r->failed == 0 &&
-        r->event_failed == 0 && r->cleanup_failed == 0 && !r->scenario_skipped;
+        r->event_failed == 0 && (!r->cleanup_failed || report_cleanup_errors_suppressed()) && !r->scenario_skipped;
 
     if (r->json != NULL) {
         fprintf(r->json, "\n  ],\n");
@@ -122,7 +133,7 @@ void report_close(report_t *r) {
         fprintf(r->json, "  \"checks\": {\"total\": %zu, \"passed\": %zu, \"failed\": %zu},\n",
                 r->checks, r->checks - r->failed, r->failed);
         fprintf(r->json, "  \"cleanup\": \"%s\",\n",
-                r->cleanup_failed ? "failed" : "ok");
+                cleanup_status(r));
         value = json_string(r->run_dir);
         directory = value ? json_dumps(value, JSON_ENCODE_ANY) : NULL;
         fprintf(r->json, "  \"artifacts\": {\"run_dir\": %s", directory ? directory : "null");
@@ -160,7 +171,7 @@ void report_close(report_t *r) {
                 r->events - r->event_failed, r->event_failed, r->events);
         fprintf(r->txt, "  checks: %zu passed, %zu failed, %zu total\n",
                 r->checks - r->failed, r->failed, r->checks);
-        fprintf(r->txt, "  cleanup: %s\n", r->cleanup_failed ? "failed" : "ok");
+        fprintf(r->txt, "  cleanup: %s\n", cleanup_status(r));
         if (r->error[0]) fprintf(r->txt, "  error: %s\n", r->error);
         fprintf(r->txt, "  result: %s\n", r->scenario_skipped ? "SKIP" : passed ? "PASS" : "FAIL");
         fclose(r->txt);
@@ -314,7 +325,8 @@ void report_result(report_t *r) {
         return;
     }
 
-    if (r->failed || r->event_failed || r->cleanup_failed ||
+    if (r->failed || r->event_failed ||
+        (r->cleanup_failed && !report_cleanup_errors_suppressed()) ||
         r->final_rc != ULAB_OK) {
         ulab_status("FAIL", "events=%zu failed=%zu checks=%zu failed=%zu artifacts=%s",
                     r->events, r->event_failed, r->checks, r->failed,

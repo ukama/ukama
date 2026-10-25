@@ -39,7 +39,7 @@ class ControllerApi extends BaseRESTDataSource {
     baseURL: string,
     req: RestartNodeInputDto
   ): Promise<TBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `RestartNode [POST]: ${baseURL}/${VERSION}/nodes/${req.nodeId}/restart`
     );
     this.baseURL = baseURL;
@@ -58,7 +58,7 @@ class ControllerApi extends BaseRESTDataSource {
     baseURL: string,
     req: RestartSiteInputDto
   ): Promise<TBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `RestartSite [POST]: ${baseURL}/${VERSION}/${SITES}/${req.siteId}/restart`
     );
     this.baseURL = baseURL;
@@ -77,7 +77,7 @@ class ControllerApi extends BaseRESTDataSource {
     baseURL: string,
     req: ToggleInternetSwitchInputDto
   ): Promise<TBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `ToggleInternetSwitch [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/internet-port`
     );
 
@@ -102,7 +102,7 @@ class ControllerApi extends BaseRESTDataSource {
     req: ToggleSiteStatusInputDto
   ): Promise<TBooleanResponse> => {
     const state = req.status ? "on" : "off";
-    this.logger.info(
+    this.logger.debug(
       `ToggleRFStatus [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/radio/${state}`
     );
 
@@ -122,7 +122,7 @@ class ControllerApi extends BaseRESTDataSource {
     req: ToggleSiteStatusInputDto
   ): Promise<TBooleanResponse> => {
     const state = req.status ? "on" : "off";
-    this.logger.info(
+    this.logger.debug(
       `ToggleServiceStatus [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/service/${state}`
     );
 
@@ -142,7 +142,7 @@ class ControllerApi extends BaseRESTDataSource {
     req: SetSiteInputDto
   ): Promise<TBooleanResponse> => {
     const state = req.status ? "on" : "off";
-    this.logger.info(
+    this.logger.debug(
       `SetSite [POST]: ${baseURL}/${VERSION}/sites/${req.siteId}/${state}`
     );
 

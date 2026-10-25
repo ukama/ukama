@@ -32,7 +32,7 @@ class PackageApi extends BaseRESTDataSource {
     baseURL: string,
     packageId: string
   ): Promise<PackageDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetPackage [GET]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
     );
     this.baseURL = baseURL;
@@ -46,7 +46,7 @@ class PackageApi extends BaseRESTDataSource {
     name: string
   ): Promise<PackageNameAvailabilityResDto> => {
     const params = new URLSearchParams({ name });
-    this.logger.info(
+    this.logger.debug(
       `IsPackageNameAvailable [GET]: ${baseURL}/${VERSION}/${PACKAGES}/name-availability?${params.toString()}`
     );
     this.baseURL = baseURL;
@@ -59,7 +59,7 @@ class PackageApi extends BaseRESTDataSource {
     baseURL: string,
     networkId?: string
   ): Promise<PackagesResDto> => {
-    this.logger.info(`GetPackages [GET]: ${baseURL}/${VERSION}/${PACKAGES}`);
+    this.logger.debug(`GetPackages [GET]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
     const res = await this.get(`/${VERSION}/${PACKAGES}`).then(r =>
       dtoToPackagesDto(r)
@@ -79,7 +79,7 @@ class PackageApi extends BaseRESTDataSource {
     req: AddPackageInputDto,
     headers: THeaders
   ): Promise<PackageDto> => {
-    this.logger.info(`AddPackage [POST]: ${baseURL}/${VERSION}/${PACKAGES}`);
+    this.logger.debug(`AddPackage [POST]: ${baseURL}/${VERSION}/${PACKAGES}`);
     this.baseURL = baseURL;
     const baserate = await this.get(
       `/${VERSION}/baserates?sim_type=${SIM_TYPE}`
@@ -124,7 +124,7 @@ class PackageApi extends BaseRESTDataSource {
     baseURL: string,
     packageId: string
   ): Promise<IdResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DeletePackage [DELETE]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
     );
     this.baseURL = baseURL;
@@ -140,7 +140,7 @@ class PackageApi extends BaseRESTDataSource {
     packageId: string,
     req: UpdatePackageInputDto
   ): Promise<PackageDto> => {
-    this.logger.info(
+    this.logger.debug(
       `UpdatePackage [PATCH]: ${baseURL}/${VERSION}/${PACKAGES}/${packageId}`
     );
     this.baseURL = baseURL;

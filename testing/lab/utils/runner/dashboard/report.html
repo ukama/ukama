@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ukama cluster KPI report</title>
+<style>@@STYLE@@</style>
+</head>
+<body>
+<header>
+  <div class="eyebrow">UKAMA LAB / CLUSTER OBSERVATIONS</div>
+  <h1>What changed during the run?</h1>
+  <p id="batch-label"></p>
+  <div id="summary" class="stats"></div>
+  <p id="coverage-banner" class="notice"></p>
+</header>
+<nav aria-label="Report views">
+  <button data-tab="overview" aria-pressed="true">Overview</button>
+  <button data-tab="services" aria-pressed="false">Services</button>
+  <button data-tab="mesh" aria-pressed="false">Mesh nodes</button>
+  <button data-tab="nodes" aria-pressed="false">Cluster nodes</button>
+  <button data-tab="scenarios" aria-pressed="false">Scenarios &amp; events</button>
+  <button data-tab="compare" aria-pressed="false">Compare runs</button>
+  <button data-tab="coverage" aria-pressed="false">Coverage &amp; notes</button>
+</nav>
+<main>
+  <div class="toolbar" id="time-toolbar">
+    <label>Time window
+      <select id="time-window">
+        <option value="all">Before + during + after</option>
+        <option value="during">During execution</option>
+        <option value="before">Before execution</option>
+        <option value="after">After execution</option>
+      </select>
+    </label>
+    <span class="muted">Times: UTC · hover or tap charts to align the cursor</span>
+  </div>
+  <div id="cursor-info" class="cursor-info" aria-live="polite"></div>
+  <section id="overview" class="view">
+    <h2>Start here</h2>
+    <div id="findings" class="findings"></div>
+    <p class="muted">Markers flag observations: throttled periods ≥10%,
+      CPU / limit or total memory / limit ≥90%, replica deficits and restarts.
+      They do not change scenario verdicts or establish a cause.</p>
+    <h2>Load and cluster response</h2>
+    <p>Execution is shaded. Red ticks mark failed scenario completions,
+      not the exact time of failure. CPU rates use a 5-minute lookback.</p>
+    <div id="overview-charts" class="charts"></div>
+  </section>
+  <section id="services" class="view" hidden>
+    <h2>Find the workload that needs attention</h2>
+    <div class="toolbar">
+      <label>Search namespace or workload
+        <input id="service-search" type="search" placeholder="e.g. subscriber, postgres">
+      </label>
+      <label>Sort by
+        <select id="service-sort">
+          <option value="attention">Findings first</option>
+          <option value="cpu">Peak CPU</option>
+          <option value="memory">Peak memory</option>
+          <option value="throttle">Peak throttled periods</option>
+          <option value="memoryLimit">Peak memory / limit</option>
+          <option value="name">Name</option>
+        </select>
+      </label>
+      <label class="check"><input id="include-mesh" type="checkbox"> Include mesh nodes</label>
+    </div>
+    <p class="muted">Cell values are execution peaks, except restarts and
+      replica-deficit seconds. N/A is unknown. Percentages use the worst
+      observed container; total memory includes cache.</p>
+    <div id="service-table"></div>
+    <div id="service-detail" hidden>
+      <h2 id="service-title"></h2>
+      <p id="service-description"></p>
+      <label>Detail level <select id="container-select"></select></label>
+      <div id="service-charts" class="charts"></div>
+    </div>
+  </section>
+  <section id="mesh" class="view" hidden>
+    <h2>Mesh-node footprint</h2>
+    <p id="mesh-summary"></p>
+    <p>Counts are pods with memory samples, not a Kubernetes lifecycle
+      inventory. Continued samples after execution are a reason to inspect
+      cleanup; they do not establish ownership by this batch. Missing samples
+      do not confirm deletion.</p>
+    <div id="mesh-charts" class="charts"></div>
+    <button id="browse-mesh">Browse individual mesh workloads</button>
+  </section>
+  <section id="nodes" class="view" hidden>
+    <h2>Pressure on Kubernetes cluster nodes</h2>
+    <p>These are cluster nodes, not AWS scenario workers. Other workloads
+      at the selected Prometheus endpoint contribute to these measurements.</p>
+    <div id="node-table"></div>
+    <label>Node <select id="node-select"></select></label>
+    <div id="node-charts" class="charts"></div>
+    <details><summary>Kubernetes MemoryPressure observations</summary>
+      <div id="pressure-table"></div>
+    </details>
+  </section>
+  <section id="scenarios" class="view" hidden>
+    <h2>Scenario execution and observed events</h2>
+    <div class="toolbar">
+      <label>Search <input id="scenario-search" type="search" placeholder="Scenario, worker or error"></label>
+      <label>Outcome <select id="scenario-outcome">
+        <option value="">All outcomes</option><option>FAIL</option>
+        <option>PASS</option><option>SKIP</option>
+      </select></label>
+    </div>
+    <div id="scenario-charts" class="charts"></div>
+    <div id="scenario-table"></div>
+    <h3>Service events</h3>
+    <p class="muted">Overlapping scenarios are context, not causal attribution.</p>
+    <label>Search events <input id="event-search" type="search" placeholder="Service or event"></label>
+    <div id="event-table"></div>
+  </section>
+  <section id="compare" class="view" hidden>
+    <h2>Compare saved runs</h2>
+    <label class="file-label">Add metrics/report.json files
+      <input id="compare-files" type="file" accept=".json,application/json" multiple>
+    </label>
+    <p>Files stay in this browser. Compare at most six runs. Curves align to
+      execution start; baseline has negative elapsed time. Check scenario
+      selection, namespace filters, sampling and source versions before
+      attributing differences to worker count.</p>
+    <p id="compare-error" role="alert"></p>
+    <div id="compare-list" class="toolbar"></div>
+    <div id="compare-table"></div>
+    <div class="toolbar">
+      <label>Workload <select id="compare-focus"></select></label>
+      <label>Metric <select id="compare-metric">
+        <option value="cpu_mcpu">CPU (mCPU)</option>
+        <option value="memory_mib">Memory working set (MiB)</option>
+        <option value="cpu_throttle_pct">Worst container throttled periods (%)</option>
+        <option value="memory_limit_pct">Worst container memory / limit (%)</option>
+      </select></label>
+    </div>
+    <div id="compare-charts" class="charts"></div>
+  </section>
+  <section id="coverage" class="view" hidden>
+    <h2>What was actually measured?</h2>
+    <p id="coverage-detail"></p>
+    <p>Query success means some series returned data. It does not imply
+      coverage of every service or container. Missing limits cannot be
+      interpreted as unlimited resources or zero utilization.</p>
+    <div id="coverage-table"></div>
+    <h3>Interpretation</h3><ul id="notes"></ul>
+    <h3>Exports</h3>
+    <p><a href="report.json">Full report JSON</a> ·
+      <a href="report.txt">Concise text summary</a> ·
+      <a href="timeline.csv">Service timeline CSV</a> ·
+      <a href="resources.csv">Container and node CSV</a></p>
+  </section>
+</main>
+<noscript><h2>Text summary</h2><pre>@@SUMMARY@@</pre></noscript>
+<script id="report-data" type="application/json">@@DATA@@</script>
+<script type="text/javascript">@@SCRIPT@@</script>
+</body>
+</html>

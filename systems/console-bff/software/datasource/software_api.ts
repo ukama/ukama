@@ -42,7 +42,7 @@ class SoftwareAPI extends BaseRESTDataSource {
     if (status) {
       queryParams.append("status", status);
     }
-    this.logger.info(
+    this.logger.debug(
       `GetSoftwares [GET]: ${baseURL}/${VERSION}/${SOFTWARE}?${queryParams.toString()}`
     );
     this.baseURL = baseURL;
@@ -61,7 +61,7 @@ class SoftwareAPI extends BaseRESTDataSource {
     data: UpdateSoftwareInputDto
   ): Promise<StringResponse> => {
     const { name, nodeId, tag } = data;
-    this.logger.info(
+    this.logger.debug(
       `UpdateSoftware [POST]: ${baseURL}/${VERSION}/${SOFTWARE}/update/${data.name}/${data.tag}/${data.nodeId}`
     );
     this.baseURL = baseURL;
@@ -81,7 +81,7 @@ class SoftwareAPI extends BaseRESTDataSource {
   ): Promise<PromoteReleaseResponse> => {
     const { name, version, type } = data;
     const query = type ? `?type=${encodeURIComponent(type)}` : "";
-    this.logger.info(
+    this.logger.debug(
       `PromoteRelease [POST]: ${baseURL}/${VERSION}/${SOFTWARE}/promote/${name}/${version}${query}`
     );
     this.baseURL = baseURL;
@@ -109,7 +109,7 @@ class SoftwareAPI extends BaseRESTDataSource {
       queryParams.append("type", data.type);
     }
     const qs = queryParams.toString();
-    this.logger.info(
+    this.logger.debug(
       `GetReleaseCatalog [GET]: ${baseURL}/${VERSION}/${SOFTWARE}/releases${
         qs ? `?${qs}` : ""
       }`

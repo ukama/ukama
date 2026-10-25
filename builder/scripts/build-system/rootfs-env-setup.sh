@@ -58,7 +58,8 @@ fi
 
 # Bootstrap the base chroot with bash and OpenRC
 echo "Bootstrapping Alpine ${VERSION} (${ARCH}) into ${INSTALL_DIR}..."
-alpine-chroot-install \
+# keep the build user (SUDO_USER) out of the image
+env -u SUDO_USER alpine-chroot-install \
     -d "${INSTALL_DIR}" \
     -a "${ARCH}" \
     -m "${MIRROR}" \

@@ -21,6 +21,9 @@ export const INTROSPECTION_ENABLED =
 
 // Hard timeout for every upstream HTTP call made by the BFF.
 export const HTTP_TIMEOUT_MS = parseInt(process.env.HTTP_TIMEOUT_MS ?? "15000");
+export const HTTP_KEEP_ALIVE_TIMEOUT_MS = parseInt(
+  process.env.HTTP_KEEP_ALIVE_TIMEOUT_MS ?? "65000"
+);
 
 // Max requests per client IP per minute before the BFF answers 429.
 export const RATE_LIMIT_MAX = parseInt(process.env.RATE_LIMIT_MAX ?? "300");

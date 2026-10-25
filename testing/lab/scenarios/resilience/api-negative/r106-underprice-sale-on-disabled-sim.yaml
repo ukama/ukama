@@ -1,6 +1,6 @@
 version: 1
 name: r106-underprice-sale-on-disabled-sim
-description: Reject underprice sale on a disabled SIM without delayed ledger effects; corrected retry must create one paid entitlement and preserve SIM status.
+description: Reject a below-minimum sale on a disabled SIM without delayed ledger effects; corrected retry must create one paid entitlement and preserve SIM status.
 seed: 6206
 suite: resilience
 priority: p1
@@ -58,6 +58,7 @@ phases:
         amount: 0.01
         expect:
           result: failure
+          error_contains: "Amount can not be less than 1"
     checks:
       - type: package_assignment_count
         ues: all

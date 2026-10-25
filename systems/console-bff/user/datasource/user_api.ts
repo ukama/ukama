@@ -14,7 +14,7 @@ class UserApi extends BaseRESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getUser = async (userId: string): Promise<UserResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetUser [GET]: ${this.baseURL}/${VERSION}/users/${userId}`
     );
     return this.get(`/${VERSION}/users/${userId}`, {}).then(res =>
@@ -23,7 +23,7 @@ class UserApi extends BaseRESTDataSource {
   };
 
   whoami = async (userId: string): Promise<WhoamiDto> => {
-    this.logger.info(
+    this.logger.debug(
       `Whoami [GET]: ${this.baseURL}/${VERSION}/users/whoami/${userId}`
     );
     return this.get(`/${VERSION}/users/whoami/${userId}`).then(res =>
@@ -32,7 +32,7 @@ class UserApi extends BaseRESTDataSource {
   };
 
   auth = async (authId: string): Promise<UserResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `Auth [GET]: ${this.baseURL}/${VERSION}/users/auth/${authId}`
     );
     return this.get(`/${VERSION}/users/auth/${authId}`).then(res =>

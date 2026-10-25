@@ -35,7 +35,7 @@ class HealthApi extends BaseRESTDataSource {
     const query = queryParams.toString();
     const path = `${nodePath(nodeId)}/apps${query ? `?${query}` : ""}`;
     this.baseURL = baseURL;
-    this.logger.info(`GetApps [GET]: ${baseURL}${path}`);
+    this.logger.debug(`GetApps [GET]: ${baseURL}${path}`);
     return this.get(path)
       .then(apps => mapApps(apps))
       .catch(error => {
@@ -50,7 +50,7 @@ class HealthApi extends BaseRESTDataSource {
   ): Promise<NodeInterfaces> => {
     const path = `${nodePath(data.nodeId)}/interfaces`;
     this.baseURL = baseURL;
-    this.logger.info(`GetNodeInterfaces [GET]: ${baseURL}${path}`);
+    this.logger.debug(`GetNodeInterfaces [GET]: ${baseURL}${path}`);
     return this.get(path)
       .then(res => mapNodeInterfaces(data.nodeId, res))
       .catch(error => {
@@ -74,7 +74,7 @@ class HealthApi extends BaseRESTDataSource {
     if (req.id) query.set("reportId", req.id);
     if (req.timestamp) query.set("reportedAt", req.timestamp);
     const path = `${nodePath(req.nodeId)}/reports?${query.toString()}`;
-    this.logger.info(`GetHealthReport [GET]: ${baseURL}${path}`);
+    this.logger.debug(`GetHealthReport [GET]: ${baseURL}${path}`);
     return this.get(path).then(res => mapReportsToHealthInfo(res));
   };
 }

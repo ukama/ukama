@@ -76,7 +76,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: UploadSimsInputDto
   ): Promise<UploadSimsResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `UploadSims [PUT]: ${baseURL}/${VERSION}/${SIMPOOL}/upload`
     );
     this.baseURL = baseURL;
@@ -92,7 +92,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: ToggleSimServiceStatusInputDto
   ): Promise<SimStatusResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `ToggleSimServiceStatus [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}`
     );
     this.baseURL = baseURL;
@@ -112,7 +112,7 @@ class SimApi extends BaseRESTDataSource {
 
   getTokenByIccid = async (baseURL: string, iccid: string): Promise<string> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `GetTokenByIccid [GET]: ${this.baseURL}/${VERSION}/tokens/${iccid}`
     );
     const res = await this.get(`/${VERSION}/tokens/${iccid}`);
@@ -124,7 +124,7 @@ class SimApi extends BaseRESTDataSource {
     req: AllocateSimInputDto,
     simToken?: string
   ): Promise<AllocateSimAPIDto> => {
-    this.logger.info(`AllocateSim [POST]: ${baseURL}/${VERSION}/${SIM}`);
+    this.logger.debug(`AllocateSim [POST]: ${baseURL}/${VERSION}/${SIM}`);
     this.baseURL = baseURL;
     const requestBody = {
       ...req,
@@ -143,7 +143,9 @@ class SimApi extends BaseRESTDataSource {
   };
 
   getSim = async (baseURL: string, req: GetSimInputDto): Promise<SimDto> => {
-    this.logger.info(`GetSim [GET]: ${baseURL}/${VERSION}/${SIM}/${req.simId}`);
+    this.logger.debug(
+      `GetSim [GET]: ${baseURL}/${VERSION}/${SIM}/${req.simId}`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SIM}/${req.simId}`, {
       params: {
@@ -156,7 +158,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     data: GetSimsInput
   ): Promise<SimsPoolResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSims [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sims/${data.type}`
     );
     this.baseURL = baseURL;
@@ -170,7 +172,7 @@ class SimApi extends BaseRESTDataSource {
     iccid: string
   ): Promise<SimPoolResDto> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `GetSimByIccid [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${iccid}`
     );
     return this.get(`/${VERSION}/${SIMPOOL}/sim/${iccid}`).then(res =>
@@ -187,7 +189,7 @@ class SimApi extends BaseRESTDataSource {
       sim_id: data.simId,
       cdr_type: data.type,
     }).toString();
-    this.logger.info(
+    this.logger.debug(
       `GetDataUsage [GET]: ${baseURL}/${VERSION}/usages?${params}`
     );
     return this.get(`/${VERSION}/usages?${params}`).then(res =>
@@ -200,7 +202,7 @@ class SimApi extends BaseRESTDataSource {
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `UnsetPackageInUseForSim [PATCH]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}/inuse`
     );
     return this.patch(
@@ -220,7 +222,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     simId: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DeleteSimFromPool [DELETE]: ${baseURL}/${VERSION}/${SIMPOOL}/sim/${simId}`
     );
     this.baseURL = baseURL;
@@ -237,7 +239,7 @@ class SimApi extends BaseRESTDataSource {
     startDate: string
   ): Promise<void> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `AddPackagesToSim [POST]: ${baseURL}/${VERSION}/${SIM}/${simId}/packages`
     );
     return await this.post(`/${VERSION}/${SIM}/package`, {
@@ -253,7 +255,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: RemovePackageFormSimInputDto
   ): Promise<RemovePackageFromSimResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `RemovePackageFromSim [PUT]: ${baseURL}/${VERSION}/${SIM}/${req.simId}/package/${req.packageId}`
     );
     this.baseURL = baseURL;
@@ -266,7 +268,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: GetPackagesForSimInputDto
   ): Promise<GetSimPackagesDtoAPI> => {
-    this.logger.info(
+    this.logger.debug(
       `GetPackageForSim [GET]: ${baseURL}/${VERSION}/${SIM}/${req.sim_id}/packages`
     );
     this.baseURL = baseURL;
@@ -279,7 +281,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     req: GetSimBySubscriberIdInputDto
   ): Promise<SubscriberToSimsDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSimsBySubscriberId [GET]: ${baseURL}/${VERSION}/sim/subscriber/${req.subscriberId}`
     );
     this.baseURL = baseURL;
@@ -292,7 +294,7 @@ class SimApi extends BaseRESTDataSource {
     baseURL: string,
     type: string
   ): Promise<SimPoolStatsDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSimPoolStats [GET]: ${baseURL}/${VERSION}/${SIMPOOL}/stats/${type}`
     );
     this.baseURL = baseURL;
@@ -300,7 +302,7 @@ class SimApi extends BaseRESTDataSource {
   };
 
   list = async (baseURL: string, req: ListSimsInput): Promise<SimsResDto> => {
-    this.logger.info(`List [GET]: ${baseURL}/${VERSION}/sim`);
+    this.logger.debug(`List [GET]: ${baseURL}/${VERSION}/sim`);
     this.baseURL = baseURL;
     const params = new URLSearchParams({
       sim_status: req.status,

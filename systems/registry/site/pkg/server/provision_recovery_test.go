@@ -19,6 +19,7 @@ import (
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/registry/site/mocks"
+	"github.com/ukama/ukama/systems/registry/site/pkg/client"
 	"github.com/ukama/ukama/systems/registry/site/pkg/db"
 )
 
@@ -51,8 +52,8 @@ func (s *recoveryStore) Run(ctx context.Context, id string, run func(context.Con
 
 func TestProvisionSuccessfulGroupAndCancellation(t *testing.T) {
 	store := &memoryProvisions{}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(context.Context, provisionNode) (provisionResult, error) {
-		return provisionResult{Completed: true}, nil
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(context.Context, client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{Completed: true}, nil
 	}}}
 	op := testProvision()
 	require.NoError(t, server.runProvision(context.Background(), op))
@@ -62,22 +63,22 @@ func TestProvisionSuccessfulGroupAndCancellation(t *testing.T) {
 	op = testProvision()
 	require.ErrorIs(t, server.runProvision(ctx, op), context.Canceled)
 	require.Equal(t, "configuring", op.Phase)
-	server.provisionClient = fakeProvisionClient{call: func(context.Context, provisionNode) (provisionResult, error) {
-		return provisionResult{Cancelled: true}, nil
+	server.provisionClient = fakeProvisionClient{call: func(context.Context, client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{Cancelled: true}, nil
 	}}
 	require.ErrorContains(t, server.waitNode(context.Background(), attemptNode(op, 0, "configure")), "cancelled")
 }
 
 func TestProvisionWaitPollsAfterDispatch(t *testing.T) {
 	calls := 0
-	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(_ context.Context, node provisionNode) (provisionResult, error) {
+	server := &SiteServer{provisionClient: fakeProvisionClient{call: func(_ context.Context, node client.ProvisionNode) (client.ProvisionResult, error) {
 		calls++
 		if calls == 1 {
 			require.Equal(t, "configure", node.Action)
-			return provisionResult{}, nil
+			return client.ProvisionResult{}, nil
 		}
 		require.Equal(t, "status", node.Action)
-		return provisionResult{Completed: true}, nil
+		return client.ProvisionResult{Completed: true}, nil
 	}}}
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -208,8 +209,8 @@ func TestProvisionWorkerProcessesRecoveredOperation(t *testing.T) {
 		once.Do(func() { close(completed) })
 		return err
 	}
-	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(context.Context, provisionNode) (provisionResult, error) {
-		return provisionResult{Completed: true}, nil
+	server := &SiteServer{provisions: store, provisionClient: fakeProvisionClient{call: func(context.Context, client.ProvisionNode) (client.ProvisionResult, error) {
+		return client.ProvisionResult{Completed: true}, nil
 	}}}
 	done := make(chan struct{})
 	go func() { server.provisionWorker(ctx); close(done) }()

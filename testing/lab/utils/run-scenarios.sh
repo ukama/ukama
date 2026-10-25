@@ -32,10 +32,11 @@ export ULAB_CDR_DIAG_DISABLE="${ULAB_CDR_DIAG_DISABLE:-1}"
 
 usage() {
     cat <<EOF_USAGE
-usage: $0 <p0|resilience|resilience-hooks>[/selector] [options] [selector ...]
+usage: $0 <smoke|p0|resilience|resilience-hooks|webapp>[/selector] [options] [selector ...]
 
 Select a suite first, optionally with a category or YAML path after a slash.
-Examples: resilience/allocation, p0/billing, or resilience billing sim.
+Examples: resilience/allocation, p0/billing, webapp/p0/session,
+or resilience billing sim. Webapp batches support --mode local.
 With no selectors, every scenario below SCENARIO_ROOT is run.
 Selectors are paths relative to SCENARIO_ROOT and may name a top-level
 category, a nested directory, or one scenario YAML file. Examples:
@@ -48,7 +49,12 @@ Use "all" to select the complete selected suite.
 
 Options:
   --mode local|aws           Execution mode (default: local)
+  --provider virtual|hardware Override scenario provider (local functional batches)
+  --hardware FILE            Physical rack inventory JSON (hardware provider only)
+  --preflight-only           Check the selected hardware batch offline, then exit
   --workers N                AWS worker count (default: 1; sequential scenarios per worker)
+  --metrics                  Save cluster KPI history and reports for this batch
+  --dashboard                Open the dashboard after reporting (implies --metrics)
   --aws-config FILE          AWS settings (default: utils/runner/aws.json)
   --resume BATCH_DIR         Reattach to an AWS batch; never reruns scenarios
   --cleanup BATCH_DIR        Collect available results and terminate that AWS batch
@@ -61,8 +67,24 @@ Options:
   --fail-fast                Stop after the first failed scenario
   -h, --help                 Show this help
 
+Metrics (with --metrics):
+  PROMETHEUS_URL              Server (default: https://prometheus.udev.ukama.com)
+  PROMETHEUS_TOKEN            Optional bearer token; never saved or sent to workers
+  ULAB_RUNNER_METRICS_NAMESPACE  Namespace regex (default: ukama-.*)
+  ULAB_RUNNER_METRICS_SERVICE    Workload name regex (default: .*)
+  ULAB_RUNNER_METRICS_BEFORE     Baseline seconds (default: 600)
+  ULAB_RUNNER_METRICS_AFTER      Recovery seconds to observe (default: 600)
+  ULAB_RUNNER_METRICS_STEP       Query step seconds (default: 30)
+  ULAB_RUNNER_METRICS_TIMEOUT    Per-query timeout seconds (default: 15)
+  ULAB_DASHBOARD_COMMAND      Browser command (default: xdg-open; arguments allowed)
+  Reports: BATCH_DIR/metrics/report.txt, report.html, report.json, timeline.csv.
+  Historical collection runs on the controller after scenarios finish.
+  Standalone refresh/compare: python3 utils/runner/cluster_metrics.py --help
+
 Environment overrides:
-  UKAMA_REPO                 Ukama repository root
+  UKAMA_REPO                 Ukama repository root (not required for hardware)
+  UKAMA_IDENTIFIER           Account login (also used for automatic webapp login)
+  UKAMA_PASSWORD             Account password
   UKAMA_LAB_BFF              BFF GraphQL URL
   UKAMA_LAB_WAREHOUSE_URL    Warehouse API URL
   UKAMA_LAB_FACTORY_URL      Factory API URL used by ukama-lab
@@ -72,9 +94,14 @@ Environment overrides:
                              Auto-mode safety margin (default: 10)
   ULAB_FACTORY_SEED_URL      Factory URL used to generate node sets
   P0_RUNS_DIR                Parent directory for batch results
-  SCENARIO_ROOT              Scenario root (default: scenarios/<suite>)
+  SCENARIO_ROOT              Scenario root (webapp: scenarios/webapp/p0;
+                             other suites: scenarios/<suite>)
   LAB_BIN                    ukama-lab executable (default: ./bin/ukama-lab)
   P0_STATUS_FILE             Optional live worker status TSV
+  ULAB_WEBAPP_BASE_URL        Console URL (default: https://app.udev.ukama.com)
+  ULAB_WEBAPP_BROWSER         chromium (default), firefox or webkit
+  ULAB_WEBAPP_HEADLESS        true (default) or false
+  ULAB_WEBAPP_AUTH_ORIGIN     Explicit password-app origin, if outside the deployment
 EOF_USAGE
 }
 
@@ -96,15 +123,19 @@ case "${1:-}" in
         exit 0
         ;;
 
-    p0|resilience|resilience-hooks)
+    smoke|p0|resilience|resilience-hooks|webapp)
         suite="$1"
         shift
         ;;
 
-    p0/*|resilience/*|resilience-hooks/*)
+    smoke/*|p0/*|resilience/*|resilience-hooks/*|webapp/*)
         selection="$1"
         suite="${selection%%/*}"
         selector="${selection#*/}"
+        if [[ "$suite" == webapp ]]; then
+            [[ "$selector" == p0 ]] && selector=""
+            selector="${selector#p0/}"
+        fi
         shift
 
         if [[ -n "$selector" ]]; then
@@ -118,14 +149,13 @@ case "${1:-}" in
         ;;
 esac
 
-# Catalog rename scenarios need a unique suffix for each invocation.
-if [[ "$suite" == resilience* && -z "${ULAB_RESILIENCE_NAME_SUFFIX:-}" ]]; then
-    name_timestamp="$(date -u +%Y%m%dt%H%M%Sz)"
-    export ULAB_RESILIENCE_NAME_SUFFIX="${name_timestamp}-$$-$RANDOM"
-fi
-
 LAB_BIN="${LAB_BIN:-./bin/ukama-lab}"
-SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/$suite}"
+if [[ "$suite" == webapp ]]; then
+    umask 077
+    SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/webapp/p0}"
+else
+    SCENARIO_ROOT="${SCENARIO_ROOT:-scenarios/$suite}"
+fi
 UKAMA_REPO="${UKAMA_REPO:-}"
 BFF_GRAPHQL_URL="${UKAMA_LAB_BFF:-${BFF_BASE_URL%/}/gateway/graphql}"
 WAREHOUSE_URL="${UKAMA_LAB_WAREHOUSE_URL:-http://warehouse-ukama.udev.ukama.com}"
@@ -134,6 +164,7 @@ FACTORY_SEED_URL="${ULAB_FACTORY_SEED_URL:-https://factory-ukama.udev.ukama.com}
 SIM_TYPE="${UKAMA_LAB_SIM_TYPE:-ukama_data}"
 P0_RUNS_DIR="${P0_RUNS_DIR:-runs/$suite-batches}"
 FACTORY_NODE_TARGET="${ULAB_FACTORY_NODE_COUNT:-0}"
+FACTORY_NODE_TARGET_SET=0
 FACTORY_HEADROOM_PERCENT="${ULAB_FACTORY_HEADROOM_PERCENT:-10}"
 LIST_ONLY=0
 FAIL_FAST=0
@@ -142,15 +173,55 @@ SCENARIO_LIST_FILE=""
 BATCH_ID_OVERRIDE=""
 STATUS_FILE="${P0_STATUS_FILE:-}"
 RUN_MODE=local
+COLLECT_METRICS=0
+OPEN_DASHBOARD=0
 AWS_WORKERS=1
 AWS_WORKERS_SET=0
 AWS_CONFIG="utils/runner/aws.json"
 AWS_RESUME=""
 AWS_CLEANUP=""
+PROVIDER=""
+HARDWARE_CONFIG=""
+HARDWARE_BATCH=0
+PREFLIGHT_ONLY=0
 
 requested_selectors=()
 while (($#)); do
     case "$1" in
+        --metrics)
+            COLLECT_METRICS=1
+            shift
+            ;;
+        --dashboard)
+            COLLECT_METRICS=1
+            OPEN_DASHBOARD=1
+            shift
+            ;;
+        --provider|--hardware)
+            if (($# < 2)) || [[ -z "$2" || "$2" == --* ]]; then
+                printf 'error: %s requires a value\n' "$1" >&2
+                exit 2
+            fi
+            case "$1" in
+                --provider) PROVIDER="$2" ;;
+                --hardware) HARDWARE_CONFIG="$2" ;;
+            esac
+            shift 2
+            ;;
+        --provider=*|--hardware=*)
+            option="${1%%=*}"
+            value="${1#*=}"
+            [[ -n "$value" ]] || { printf 'error: %s requires a value\n' "$option" >&2; exit 2; }
+            case "$option" in
+                --provider) PROVIDER="$value" ;;
+                --hardware) HARDWARE_CONFIG="$value" ;;
+            esac
+            shift
+            ;;
+        --preflight-only)
+            PREFLIGHT_ONLY=1
+            shift
+            ;;
         --mode|--workers|--aws-config|--resume|--cleanup)
             if (($# < 2)) || [[ -z "$2" ]]; then
                 printf 'error: %s requires a value\n' "$1" >&2
@@ -184,10 +255,12 @@ while (($#)); do
                 exit 2
             fi
             FACTORY_NODE_TARGET="$2"
+            FACTORY_NODE_TARGET_SET=1
             shift 2
             ;;
         --factory-nodes=*)
             FACTORY_NODE_TARGET="${1#*=}"
+            FACTORY_NODE_TARGET_SET=1
             shift
             ;;
         --scenario-list)
@@ -247,6 +320,50 @@ while (($#)); do
     esac
 done
 
+if [[ -n "$PROVIDER" && "$PROVIDER" != virtual && "$PROVIDER" != hardware ]]; then
+    printf 'error: --provider must be virtual or hardware\n' >&2
+    exit 2
+fi
+if [[ -n "$PROVIDER$HARDWARE_CONFIG" ]] || ((PREFLIGHT_ONLY)); then
+    if [[ "$RUN_MODE" != local || "$suite" == webapp ]]; then
+        printf 'error: --provider, --hardware and --preflight-only require a local functional batch\n' >&2
+        exit 2
+    fi
+fi
+if [[ "$PROVIDER" == hardware || -n "$HARDWARE_CONFIG" ]]; then
+    if [[ "$PROVIDER" == virtual ]]; then
+        printf 'error: --hardware cannot be combined with --provider virtual\n' >&2
+        exit 2
+    fi
+    if [[ -z "$HARDWARE_CONFIG" ]]; then
+        printf 'error: hardware provider requires --hardware <rack.json>\n' >&2
+        exit 2
+    fi
+    HARDWARE_BATCH=1
+    umask 077
+    if ((PREPARE_ONLY)) || { ((FACTORY_NODE_TARGET_SET)) && [[ "$FACTORY_NODE_TARGET" != 0 ]]; }; then
+        printf 'error: hardware batches use configured physical nodes; factory preparation is not supported\n' >&2
+        exit 2
+    fi
+    # A virtual-runner environment default must never generate hardware nodes.
+    FACTORY_NODE_TARGET=0
+fi
+if ((PREFLIGHT_ONLY && (! HARDWARE_BATCH || LIST_ONLY))); then
+    printf 'error: --preflight-only requires a hardware batch and cannot be combined with --list\n' >&2
+    exit 2
+fi
+provider_args=()
+[[ -n "$PROVIDER" ]] && provider_args+=(--provider "$PROVIDER")
+[[ -n "$HARDWARE_CONFIG" ]] && provider_args+=(--hardware "$HARDWARE_CONFIG")
+
+# Catalog rename scenarios need one suffix across preflight and execution.
+# A hardware scenario list can include resilience files under any suite label.
+if [[ ( "$suite" == resilience* || "$HARDWARE_BATCH" == 1 ) &&
+      -z "${ULAB_RESILIENCE_NAME_SUFFIX:-}" ]]; then
+    name_timestamp="$(date -u +%Y%m%dt%H%M%Sz)"
+    export ULAB_RESILIENCE_NAME_SUFFIX="${name_timestamp}-$$-$RANDOM"
+fi
+
 if [[ "$RUN_MODE" != local && "$RUN_MODE" != aws ]]; then
     printf 'error: --mode must be local or aws\n' >&2
     exit 2
@@ -261,6 +378,13 @@ if [[ "$RUN_MODE" == local ]] && ((AWS_WORKERS_SET)) ||
     exit 2
 fi
 AWS_HELPER="$(CDPATH= cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/runner/controller.py"
+if [[ "$suite" == webapp && "$RUN_MODE" != local ]]; then
+    printf 'error: webapp batches currently support --mode local only\n' >&2
+    exit 2
+fi
+metrics_args=()
+((COLLECT_METRICS)) && metrics_args+=(--metrics)
+((OPEN_DASHBOARD)) && metrics_args+=(--dashboard)
 if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
     if [[ -n "$AWS_RESUME" && -n "$AWS_CLEANUP" ]] || ((LIST_ONLY || PREPARE_ONLY)) ||
        ((${#requested_selectors[@]})) || [[ -n "$SCENARIO_LIST_FILE" ]]; then
@@ -268,9 +392,9 @@ if [[ -n "$AWS_RESUME$AWS_CLEANUP" ]]; then
         exit 2
     fi
     if [[ -n "$AWS_RESUME" ]]; then
-        exec python3 "$AWS_HELPER" resume --batch-dir "$AWS_RESUME"
+        exec python3 "$AWS_HELPER" resume --batch-dir "$AWS_RESUME" "${metrics_args[@]}"
     else
-        exec python3 "$AWS_HELPER" cleanup --batch-dir "$AWS_CLEANUP"
+        exec python3 "$AWS_HELPER" cleanup --batch-dir "$AWS_CLEANUP" "${metrics_args[@]}"
     fi
 fi
 
@@ -279,7 +403,7 @@ if [[ "$FACTORY_NODE_TARGET" != "auto" &&
     printf 'error: --factory-nodes must be auto or a non-negative integer\n' >&2
     exit 2
 fi
-if [[ ! "$FACTORY_HEADROOM_PERCENT" =~ ^[0-9]+$ ]]; then
+if (( ! HARDWARE_BATCH )) && [[ ! "$FACTORY_HEADROOM_PERCENT" =~ ^[0-9]+$ ]]; then
     printf 'error: ULAB_FACTORY_HEADROOM_PERCENT must be a non-negative integer\n' >&2
     exit 2
 fi
@@ -288,18 +412,6 @@ if [[ ! -d "$SCENARIO_ROOT" ]]; then
     exit 2
 fi
 SCENARIO_ROOT_ABS="$(CDPATH= cd -- "$SCENARIO_ROOT" && pwd)"
-
-# Discover every top-level P0 category dynamically.
-mapfile -d '' available_categories < <(
-    find "$SCENARIO_ROOT" -mindepth 1 -maxdepth 1 -type d \
-        -printf '%f\0' | sort -z
-)
-
-if ((${#available_categories[@]} == 0)); then
-    printf 'error: no P0 category directories found under %s\n' \
-        "$SCENARIO_ROOT" >&2
-    exit 2
-fi
 
 categories=()
 selected_scenarios=()
@@ -321,6 +433,7 @@ add_category_for_scenario() {
     scenario_abs="$(readlink -f -- "$scenario")"
     relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
     category="${relative%%/*}"
+    [[ "$relative" == */* ]] || category="_root"
     if [[ -n "$category" && -z "${seen_categories[$category]+x}" ]]; then
         categories+=("$category")
         seen_categories[$category]=1
@@ -478,9 +591,9 @@ PY
 }
 
 if ((LIST_ONLY)); then
-    printf 'P0 selectors:'
+    printf '%s selectors:' "${suite^^}"
     printf ' %s' "${selected_selectors[@]}"
-    printf '\nP0 categories:'
+    printf '\n%s categories:' "${suite^^}"
     printf ' %s' "${categories[@]}"
     printf '\n\n'
     list_scenarios
@@ -493,12 +606,41 @@ if [[ "$RUN_MODE" == aws ]]; then
         --lab-dir "$(pwd)" --repo "$UKAMA_REPO" --lab-bin "$LAB_BIN"
         --scenario-root "$SCENARIO_ROOT" --out "$P0_RUNS_DIR"
         --factory-nodes "$FACTORY_NODE_TARGET" --batch-id "$BATCH_ID_OVERRIDE")
+    aws_args+=("${metrics_args[@]}")
     ((FAIL_FAST)) && aws_args+=(--fail-fast)
     ((PREPARE_ONLY)) && aws_args+=(--prepare-only)
     export UKAMA_LAB_BFF="$BFF_GRAPHQL_URL" UKAMA_LAB_WAREHOUSE_URL="$WAREHOUSE_URL"
     export UKAMA_LAB_FACTORY_URL="$FACTORY_URL_FOR_LAB" UKAMA_LAB_SIM_TYPE="$SIM_TYPE"
     printf '%s\0' "${selected_scenarios[@]}" | python3 "$AWS_HELPER" "${aws_args[@]}"
     exit "${PIPESTATUS[1]}"
+fi
+
+if ((HARDWARE_BATCH)); then
+    if [[ ! -x "$LAB_BIN" ]]; then
+        printf 'error: ukama-lab is not executable: %s\n' "$LAB_BIN" >&2
+        exit 2
+    fi
+    if [[ ! -f "$HARDWARE_CONFIG" || ! -r "$HARDWARE_CONFIG" ]]; then
+        printf 'error: hardware inventory is not readable: %s\n' "$HARDWARE_CONFIG" >&2
+        exit 2
+    fi
+    printf '\n== Hardware preflight (offline) ==\n'
+    preflight_failed=0
+    for scenario in "${selected_scenarios[@]}"; do
+        printf 'checking: %s\n' "$scenario"
+        # Use the native parser/capability checks. Do not print SIM inventory,
+        # create run directories, generate factory nodes, or contact the rack.
+        if ! "$LAB_BIN" preflight "$scenario" "${provider_args[@]}" >/dev/null; then
+            printf 'error: hardware preflight failed: %s\n' "$scenario" >&2
+            preflight_failed=1
+        fi
+    done
+    if ((preflight_failed)); then
+        printf 'error: no scenarios executed; fix the selected batch or inventory\n' >&2
+        exit 2
+    fi
+    printf 'hardware preflight passed: %s scenario(s)\n' "${#selected_scenarios[@]}"
+    ((PREFLIGHT_ONLY)) && exit 0
 fi
 
 require_env UKAMA_IDENTIFIER || exit 2
@@ -510,7 +652,7 @@ if [[ ! -x "$LAB_BIN" ]]; then
     printf 'error: ukama-lab is not executable: %s\n' "$LAB_BIN" >&2
     exit 2
 fi
-if [[ ! -d "$UKAMA_REPO" ]]; then
+if (( ! HARDWARE_BATCH )) && [[ ! -d "$UKAMA_REPO" ]]; then
     printf 'error: Ukama repository does not exist: %s\n' "$UKAMA_REPO" >&2
     exit 2
 fi
@@ -529,6 +671,16 @@ RUNS_DIR="${BATCH_DIR}/runs"
 LOGS_DIR="${BATCH_DIR}/logs"
 SUMMARY_TSV="${BATCH_DIR}/scenarios.tsv"
 
+if ((HARDWARE_BATCH)); then
+    mkdir -p -- "$P0_RUNS_DIR" || exit 2
+    if ! mkdir -- "$BATCH_DIR"; then
+        printf 'error: hardware batch requires a new directory: %s\n' "$BATCH_DIR" >&2
+        exit 2
+    fi
+elif [[ "$suite" == webapp && -e "$BATCH_DIR" ]]; then
+    printf 'error: webapp batch directory already exists: %s\n' "$BATCH_DIR" >&2
+    exit 2
+fi
 mkdir -p "$RUNS_DIR" "$LOGS_DIR"
 printf 'category\tscenario\trun_id\texit_code\treport\tlog\n' \
     >"$SUMMARY_TSV"
@@ -790,6 +942,30 @@ if ((PREPARE_ONLY)); then
     exit 0
 fi
 
+if [[ "$suite" == webapp ]]; then
+    WEBAPP_UTILS="$(dirname -- "$AWS_HELPER")/../webapp"
+    source "$WEBAPP_UTILS/setup.sh"
+    webapp_setup || exit 2
+    export ULAB_WEBAPP_BASE_URL="${ULAB_WEBAPP_BASE_URL:-https://app.udev.ukama.com}"
+    export ULAB_WEBAPP_BROWSER="${ULAB_WEBAPP_BROWSER:-chromium}"
+    export ULAB_WEBAPP_HEADLESS="${ULAB_WEBAPP_HEADLESS:-true}"
+    WEBAPP_AUTH_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ukama-lab-webapp-auth.XXXXXX")" || exit 2
+    trap 'rm -rf -- "$WEBAPP_AUTH_DIR"' EXIT
+    export ULAB_WEBAPP_BATCH_AUTH_STATE="$WEBAPP_AUTH_DIR/owner.json"
+    "$WEBAPP_NODE" adapters/webapp/dist/cli.js auth --automatic \
+        --base-url "$ULAB_WEBAPP_BASE_URL" --browser "$ULAB_WEBAPP_BROWSER" \
+        --out "$ULAB_WEBAPP_BATCH_AUTH_STATE" \
+        --metadata "$WEBAPP_AUTH_DIR/profile.json" || exit 2
+    export ULAB_AUTH_OWNER_STATE="${ULAB_AUTH_OWNER_STATE:-$ULAB_WEBAPP_BATCH_AUTH_STATE}"
+    if [[ -z "${ULAB_WEBAPP_AUTH_ORIGIN:-}" ]]; then
+        ULAB_WEBAPP_AUTH_ORIGIN="$(python3 -c \
+            'import json,sys; print(json.load(open(sys.argv[1]))["auth_origin"])' \
+            "$WEBAPP_AUTH_DIR/profile.json")" || exit 2
+        export ULAB_WEBAPP_AUTH_ORIGIN
+    fi
+    mkdir -p "$BATCH_DIR/scenarios"
+fi
+
 common_args=(
     --sim-type "$SIM_TYPE"
     --warehouse-url "$WAREHOUSE_URL"
@@ -797,8 +973,11 @@ common_args=(
     --bff "$BFF_GRAPHQL_URL"
     --out "$RUNS_DIR"
     --verbose
-    --repo "$UKAMA_REPO"
 )
+if (( ! HARDWARE_BATCH )); then
+    common_args+=(--repo "$UKAMA_REPO")
+fi
+common_args+=("${provider_args[@]}")
 
 if [[ -n "${UKAMA_LAB_ASR_URL:-}" ]]; then
     common_args+=(--asr-url "$UKAMA_LAB_ASR_URL")
@@ -854,12 +1033,13 @@ PY_STATUS
 }
 
 printf '\n============================================================\n'
-printf 'P0 batch: %s\n' "$BATCH_STAMP"
+printf '%s batch: %s\n' "${suite^^}" "$BATCH_STAMP"
 printf 'Selectors (%s):' "${#selected_selectors[@]}"
 printf ' %s' "${selected_selectors[@]}"
 printf '\nCategories (%s):' "${#categories[@]}"
 printf ' %s' "${categories[@]}"
 printf '\nScenarios selected: %s\n' "${#selected_scenarios[@]}"
+((HARDWARE_BATCH)) && printf 'Provider: hardware (one rack, sequential scenarios)\n'
 printf '============================================================\n'
 
 batch_failed=0
@@ -869,6 +1049,11 @@ failed_count=0
 skipped_count=0
 STATUS_STARTED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 write_status RUNNING - 'starting batch'
+if ((COLLECT_METRICS)); then
+    python3 "$(dirname -- "$AWS_HELPER")/cluster_metrics.py" start \
+        "$BATCH_DIR" --suite "$suite" --binary "$LAB_BIN" \
+        --scenarios "${selected_scenarios[@]}" || true
+fi
 
 runner_hook_failed=0
 for scenario in "${selected_scenarios[@]}"; do
@@ -886,21 +1071,43 @@ for scenario in "${selected_scenarios[@]}"; do
     scenario_abs="$(readlink -f -- "$scenario")"
     relative="${scenario_abs#${SCENARIO_ROOT_ABS%/}/}"
     category="${relative%%/*}"
+    [[ "$relative" == */* ]] || category="_root"
     slug="${relative%.yaml}"
     slug="${slug%.yml}"
     slug="${slug//\//-}"
     slug="${slug,,}"
     slug="${slug//[^a-z0-9-]/-}"
     run_id="p0-${BATCH_STAMP}-${slug}"
+    scenario_input="$scenario"
+    if ((HARDWARE_BATCH)); then
+        # Long or equivalent sanitized scenario paths must not reuse a run ID.
+        hardware_batch_hash="$(printf '%s' "$BATCH_STAMP" | sha256sum)"
+        run_id="hw-${hardware_batch_hash:0:16}-${completed_count}"
+    fi
+    if [[ "$suite" == webapp ]]; then
+        webapp_batch_hash="$(printf '%s' "$BATCH_STAMP" | sha256sum)"
+        run_id="web-${webapp_batch_hash:0:16}-${completed_count}"
+        scenario_input="$BATCH_DIR/scenarios/$run_id.yaml"
+        python3 "$WEBAPP_UTILS/profile.py" "$scenario" "$scenario_input"
+        profile_rc=$?
+    else
+        profile_rc=0
+    fi
     report_path="${RUNS_DIR}/${run_id}/report.json"
     log_path="${LOGS_DIR}/${slug}.log"
+    ((HARDWARE_BATCH)) && log_path="${LOGS_DIR}/${run_id}.log"
 
     write_status RUNNING "$relative" 'scenario started'
     printf '\n-- Running: %s --\n' "$relative"
-    "$LAB_BIN" validate "$scenario" \
-        "${common_args[@]}" \
-        --run-id "$run_id" 2>&1 | tee "$log_path"
-    rc=${PIPESTATUS[0]}
+    if ((profile_rc == 0)); then
+        "$LAB_BIN" validate "$scenario_input" \
+            "${common_args[@]}" \
+            --run-id "$run_id" 2>&1 | tee "$log_path"
+        rc=${PIPESTATUS[0]}
+    else
+        printf 'error: cannot prepare webapp profile for %s\n' "$relative" | tee "$log_path"
+        rc=2
+    fi
 
     printf '%s\t%s\t%s\t%s\t%s\t%s\n' \
         "$category" "$relative" "$run_id" "$rc" \
@@ -935,7 +1142,7 @@ done
 
 write_status FINALIZING - 'building batch report'
 
-python3 - "$SUMMARY_TSV" "$BATCH_DIR" <<'PY'
+python3 - "$SUMMARY_TSV" "$BATCH_DIR" "$(dirname -- "$AWS_HELPER")" "$suite" "$HARDWARE_BATCH" <<'PY'
 import csv
 import json
 import sys
@@ -944,6 +1151,9 @@ from pathlib import Path
 
 summary_path = Path(sys.argv[1])
 batch_dir = Path(sys.argv[2])
+sys.path.insert(0, sys.argv[3])
+from batch_summary import format_summary, summarize
+
 results = []
 
 with summary_path.open(newline="", encoding="utf-8") as stream:
@@ -994,13 +1204,17 @@ payload = {
     "duration_sec": sum(item["duration_sec"] for item in results),
     "results": results,
 }
+payload.update(summarize(results))
+if sys.argv[5] == "1":
+    payload["provider"] = "hardware"
+category_summary = format_summary(payload, sys.argv[4])
 
 json_path = batch_dir / "batch-report.json"
 text_path = batch_dir / "batch-report.txt"
 json_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 lines = [
-    "P0 scenario batch report",
+    f"{sys.argv[4].upper()} scenario batch report",
     "",
     f"total={payload['total']} pass={payload['passed']} "
     f"fail={payload['failed']} skip={payload['skipped']} "
@@ -1012,10 +1226,11 @@ for item in results:
         f"{item['outcome']:<4}  {item['category']:<18}  "
         f"{item['scenario']}  ({item['duration_sec']}s)"
     )
+lines += ["", category_summary]
 text_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 print("\n============================================================")
-print("P0 batch summary")
+print(f"{sys.argv[4].upper()} batch summary")
 print("============================================================")
 print(f"{'RESULT':<7} {'CATEGORY':<19} SCENARIO")
 for item in results:
@@ -1028,11 +1243,19 @@ print(
 )
 print(f"text report: {text_path}")
 print(f"json report: {json_path}")
+print("\n" + category_summary)
 
 sys.exit(1 if payload["failed"] else 0)
 PY
 report_rc=$?
 write_status DONE - "batch_report_exit_code=$report_rc"
+if ((COLLECT_METRICS)); then
+    metrics_finish=(collect "$BATCH_DIR" --wait)
+    ((OPEN_DASHBOARD)) && metrics_finish+=(--dashboard)
+    ((runner_hook_failed)) && metrics_finish+=(--partial)
+    python3 "$(dirname -- "$AWS_HELPER")/cluster_metrics.py" \
+        "${metrics_finish[@]}" || true
+fi
 if ((runner_hook_failed)); then
     exit 70
 fi

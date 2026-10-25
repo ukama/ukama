@@ -1,6 +1,6 @@
 version: 1
 name: r015-5-small-topups-preserve-every-sale
-description: 5 intentional one-cent top-ups must produce 5 separate receipts and a non-overlapping queue without rounding loss.
+description: 5 intentional $1.01 top-ups must produce 5 separate receipts and a non-overlapping queue without rounding loss.
 seed: 6115
 suite: resilience
 priority: p1
@@ -28,7 +28,7 @@ packages:
     name: Resilience Next
     data_mb: 100
     duration_days: 1
-    amount: 0.01
+    amount: 1.01
     currency: USD
     country: USA
     assign_percent: 0
@@ -92,7 +92,7 @@ final_checks:
     span: daily
     op: SUM
     networks: net-001
-    expected_value: 1.05
+    expected_value: 6.05
     tolerance: 0.001
     timeout_seconds: 600
     poll_seconds: 5
@@ -102,7 +102,7 @@ final_checks:
     networks: net-001
     package: next
     column: revenue
-    expected_value: 0.05
+    expected_value: 5.05
     tolerance: 0.001
     timeout_seconds: 600
     poll_seconds: 5

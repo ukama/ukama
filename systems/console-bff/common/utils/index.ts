@@ -24,6 +24,7 @@ import {
 import { Messages, UnauthenticatedError } from "../errors";
 import { logger } from "../logger";
 import { setRequestId } from "../logger/requestContext";
+import { nameUpstream } from "../logger/upstreamNames";
 import { Meta, ResponseObj, THeaders } from "../types";
 import { RoleToNotificationScopes } from "../utils/roleToNotificationScope";
 
@@ -486,6 +487,7 @@ const getBaseURL = async (
       logger.error(message);
       return { status: 500, message };
     }
+    nameUpstream(baseURL, sysName);
     return { status: 200, message: baseURL };
   } catch (e) {
     const errCause = (e as { cause?: unknown })?.cause;

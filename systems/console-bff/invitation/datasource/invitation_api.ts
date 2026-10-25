@@ -30,7 +30,7 @@ class InvitationApi extends BaseRESTDataSource {
     baseURL: string,
     req: CreateInvitationInputDto
   ): Promise<InvitationDto> => {
-    this.logger.info(
+    this.logger.debug(
       `SendInvitation [POST]: ${baseURL}/${VERSION}/${INVITATIONS}`
     );
     this.baseURL = baseURL;
@@ -43,7 +43,7 @@ class InvitationApi extends BaseRESTDataSource {
     baseURL: string,
     id: string
   ): Promise<InvitationDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetInvitation [GET]: ${baseURL}/${VERSION}/${INVITATIONS}/${id}`
     );
     this.baseURL = baseURL;
@@ -58,7 +58,7 @@ class InvitationApi extends BaseRESTDataSource {
     const store = openStore();
     const baseURL = await getFromStore(store, `${req.email}/${req.id}`);
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `UpdateInvitation [PATCH]: ${baseURL}/${VERSION}/${INVITATIONS}/${req.id}`
     );
     return this.patch(`/${VERSION}/${INVITATIONS}/${req.id}`, {
@@ -70,7 +70,7 @@ class InvitationApi extends BaseRESTDataSource {
     baseURL: string,
     id: string
   ): Promise<DeleteInvitationResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `DeleteInvitation [DELETE]: ${baseURL}/${VERSION}/${INVITATIONS}/${id}`
     );
     this.baseURL = baseURL;
@@ -78,7 +78,7 @@ class InvitationApi extends BaseRESTDataSource {
   };
 
   getInvitations = async (baseURL: string): Promise<InvitationsResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetInvitationByOrg [GET]: ${baseURL}/${VERSION}/${INVITATIONS}`
     );
     this.baseURL = baseURL;
@@ -130,7 +130,7 @@ class InvitationApi extends BaseRESTDataSource {
       }
     }
 
-    this.logger.info(`Invitations: ${JSON.stringify(invitations)}`);
+    this.logger.debug(`Invitations: ${JSON.stringify(invitations)}`);
 
     return invitations;
   };
@@ -139,7 +139,7 @@ class InvitationApi extends BaseRESTDataSource {
     baseURL: string,
     email: string
   ): Promise<InvitationDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetInvitationByEmail [GET]: ${baseURL}/${VERSION}/${INVITATIONS}/user/${email}`
     );
     this.baseURL = baseURL;

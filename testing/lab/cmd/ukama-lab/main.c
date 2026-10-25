@@ -23,6 +23,7 @@ static void usage(void) {
     printf("usage:\n");
     printf("  ukama-lab validate <scenario.yaml|dir> [options]\n");
     printf("  ukama-lab run <scenario.yaml|dir> [options]\n");
+    printf("  ukama-lab preflight <scenario.yaml> [options] (offline; no resources created)\n");
     printf("  ukama-lab lint <scenario.yaml|dir> [...] (offline; no resources created)\n");
     printf("  ukama-lab plan <workload.yaml> [options] (offline; no resources created)\n");
     printf("  ukama-lab cleanup-workload <run-dir> [options] (recorded resources only)\n");
@@ -31,7 +32,9 @@ static void usage(void) {
     printf("  ukama-lab list-events\n");
     printf("  ukama-lab version\n");
     printf("options:\n");
-    printf("  --repo <dir>          ukama repo root path (MUST)\n");
+    printf("  --repo <dir>          ukama repo root path (required for virtual execution)\n");
+    printf("  --provider <type>     override scenario provider: virtual or hardware\n");
+    printf("  --hardware <json>     physical rack configuration (hardware provider only)\n");
     printf("  --seed <n>            override scenario seed\n");
     printf("  --bff <url>           BFF GraphQL endpoint\n");
     printf("  --hub-url <url>       Hub API base URL\n");
@@ -93,6 +96,17 @@ static int parse_opts(int argc, char **argv, int start, runner_opts_t *o) {
                 return ULAB_EUSAGE;
             }
             o->has_seed_override = 1;
+        } else if (ulab_streq(argv[i], "--provider") && i + 1 < argc) {
+            if (ulab_copy(o->provider, sizeof(o->provider), argv[++i]) ||
+                (!ulab_streq(o->provider, "virtual") &&
+                 !ulab_streq(o->provider, "hardware"))) {
+                fprintf(stderr, "--provider must be virtual or hardware\n");
+                return ULAB_EUSAGE;
+            }
+        } else if (ulab_streq(argv[i], "--hardware") && i + 1 < argc) {
+            if (argv[i + 1][0] == '\0' ||
+                ulab_copy(o->hardware_config, sizeof(o->hardware_config), argv[++i]))
+                return ULAB_EUSAGE;
         } else if (ulab_streq(argv[i], "--bff") && i + 1 < argc) {
             ulab_copy(o->bff_url, sizeof(o->bff_url), argv[++i]);
         } else if (ulab_streq(argv[i], "--hub-url") && i + 1 < argc) {
@@ -185,12 +199,21 @@ int main(int argc, char **argv) {
         return rc;
     }
 
+    if (ulab_streq(argv[1], "preflight")) return runner_preflight(&opts);
+
+    if ((ulab_streq(argv[1], "plan") || ulab_streq(argv[1], "cleanup-workload")) &&
+        (opts.provider[0] != '\0' || opts.hardware_config[0] != '\0')) {
+        fprintf(stderr, "provider overrides and hardware config are not supported for workloads\n");
+        return ULAB_EUSAGE;
+    }
+
     if (ulab_streq(argv[1], "plan")) {
         return workload_run(&opts, 1);
     }
 
-    /* repo path is must else we wont know how to build virtual node/ue */
-    if (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL) {
+    /* Scenario execution checks the repo after resolving the provider. */
+    if (!ulab_streq(argv[1], "validate") && !ulab_streq(argv[1], "run") &&
+        (opts.repo[0] == '\0' || strstr(opts.repo, "ukama") == NULL)) {
         printf("Missing --repo. Ukama repo root is MUST\n");
         usage();
         return ULAB_EUSAGE;

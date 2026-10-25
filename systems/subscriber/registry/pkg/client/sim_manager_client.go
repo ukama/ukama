@@ -10,6 +10,7 @@ package client
 
 import (
 	"fmt"
+	"sync"
 
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/subscriber/sim-manager/pb/gen"
@@ -25,6 +26,7 @@ type SimManagerClientProvider interface {
 }
 
 type simManagerClientProvider struct {
+	mu                sync.Mutex
 	simManagerService pb.SimManagerServiceClient
 	simManagerHost    string
 }
@@ -34,6 +36,9 @@ func NewSimManagerClientProvider(simManagerHost string) SimManagerClientProvider
 }
 
 func (u *simManagerClientProvider) GetSimManagerService() (pb.SimManagerServiceClient, error) {
+	u.mu.Lock()
+	defer u.mu.Unlock()
+
 	if u.simManagerService == nil {
 		var conn *grpc.ClientConn
 

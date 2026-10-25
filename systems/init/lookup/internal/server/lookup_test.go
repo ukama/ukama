@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
 	"testing"
 
@@ -20,6 +21,8 @@ import (
 	"github.com/ukama/ukama/systems/init/lookup/internal/db"
 	mocks "github.com/ukama/ukama/systems/init/lookup/mocks"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
 	"github.com/stretchr/testify/assert"
@@ -31,6 +34,7 @@ var orgName = "test-org"
 
 var sysIp = pgtype.Inet{IPNet: &net.IPNet{IP: net.ParseIP("127.0.0.1"), Mask: net.CIDRMask(32, 32)}}
 var sysPort = int32(100)
+
 func TestLookupServer_AddOrg(t *testing.T) {
 	orgRepo := &mocks.OrgRepo{}
 	msgbusClient := &mbmocks.MsgBusServiceClient{}
@@ -49,8 +53,8 @@ func TestLookupServer_AddOrg(t *testing.T) {
 
 	porg := &pb.AddOrgRequest{OrgName: "ukama", Certificate: "ukama_certs", Ip: "0.0.0.0", OrgId: id.String()}
 
-	orgRepo.On("Add", org).Return(nil).Once()
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
+	orgRepo.On("Add", mock.Anything, org).Return(nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
@@ -77,9 +81,9 @@ func TestLookupServer_UpdateOrg(t *testing.T) {
 
 	porg := &pb.UpdateOrgRequest{OrgName: "ukama", Certificate: "ukama_certs", Ip: "0.0.0.0"}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	orgRepo.On("Update", org).Return(nil).Once()
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	orgRepo.On("Update", mock.Anything, org).Return(nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, porg).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
@@ -104,7 +108,7 @@ func TestLookupServer_GetOrg(t *testing.T) {
 		Ip:          orgIp,
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetOrg(context.TODO(), &pb.GetOrgRequest{OrgName: "ukama"})
@@ -127,7 +131,7 @@ func TestLookupServer_GetOrgsName(t *testing.T) {
 		Name: "ukama",
 	}}
 
-	orgRepo.On("GetAll").Return(org, nil).Once()
+	orgRepo.On("GetAll", mock.Anything).Return(org, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetOrgs(context.TODO(), &pb.GetOrgsRequest{})
@@ -161,9 +165,9 @@ func TestLookupServer_AddNodeForOrg(t *testing.T) {
 	}
 
 	pnode := &pb.AddNodeRequest{NodeId: nodeStr, OrgName: "ukama"}
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	nodeRepo.On("AddOrUpdate", node).Return(nil).Once()
-	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	nodeRepo.On("AddOrUpdate", mock.Anything, node).Return(nil).Once()
+	nodeRepo.On("Get", mock.Anything, testNodeId).Return(node, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
@@ -196,7 +200,7 @@ func TestLookupServer_GetNode(t *testing.T) {
 		OrgID:  org.ID,
 	}
 
-	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
+	nodeRepo.On("Get", mock.Anything, testNodeId).Return(node, nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{NodeId: nodeStr})
@@ -229,8 +233,8 @@ func TestLookupServer_GetNodeForOrg(t *testing.T) {
 		OrgID:  org.ID,
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	nodeRepo.On("Get", testNodeId).Return(node, nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	nodeRepo.On("Get", mock.Anything, testNodeId).Return(node, nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
 	resp, err := s.GetNodeForOrg(context.TODO(), &pb.GetNodeForOrgRequest{NodeId: nodeStr, OrgName: "ukama"})
@@ -260,8 +264,8 @@ func TestLookupServer_DeleteNodeForOrg(t *testing.T) {
 
 	pnode := &pb.DeleteNodeRequest{NodeId: nodeStr, OrgName: "ukama"}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	nodeRepo.On("Delete", testNodeId).Return(nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	nodeRepo.On("Delete", mock.Anything, testNodeId).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, pnode).Return(nil).Once()
 
 	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
@@ -269,6 +273,28 @@ func TestLookupServer_DeleteNodeForOrg(t *testing.T) {
 
 	assert.NoError(t, err)
 	orgRepo.AssertExpectations(t)
+}
+
+func TestLookupServer_DeleteNodeForOrg_NotFound(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	nodeRepo := &mocks.NodeRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	nodeStr := testNodeId.StringLowercase()
+
+	org := &db.Org{Name: "ukama"}
+	pnode := &pb.DeleteNodeRequest{NodeId: nodeStr, OrgName: "ukama"}
+
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	nodeRepo.On("Delete", mock.Anything, testNodeId).
+		Return(fmt.Errorf("%s %w", nodeStr, db.ErrNodeMissing)).Once()
+
+	s := NewLookupServer(nodeRepo, orgRepo, nil, msgbusClient, orgName)
+	_, err := s.DeleteNodeForOrg(context.TODO(), pnode)
+
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	orgRepo.AssertExpectations(t)
+	nodeRepo.AssertExpectations(t)
 }
 
 func TestLookupServer_GetSystemForOrg(t *testing.T) {
@@ -306,8 +332,8 @@ func TestLookupServer_GetSystemForOrg(t *testing.T) {
 		NodeGwPort:  8080,
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, system.Name, org.ID).Return(system, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	resp, err := s.GetSystemForOrg(context.TODO(), &pb.GetSystemRequest{SystemName: system.Name, OrgName: "ukama"})
@@ -360,9 +386,9 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 		NodeGwPort:  8080,
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
-	systemRepo.On("Update", mock.MatchedBy(func(s *db.System) bool {
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, system.Name, org.ID).Return(system, nil).Once()
+	systemRepo.On("Update", mock.Anything, mock.MatchedBy(func(s *db.System) bool {
 		return s.Name == "sys" &&
 			s.Certificate == "ukama_certs" &&
 			s.ApiGwPort == sysPort &&
@@ -372,7 +398,7 @@ func TestLookupServer_UpdateSystemForOrg(t *testing.T) {
 			s.ApiGwIp.IPNet.IP.String() == sysIp.IPNet.IP.String() &&
 			s.NodeGwIp.IPNet.IP.String() == "0.0.0.0"
 	}), org.ID).Return(nil).Once()
-	systemRepo.On("GetByName", system.Name, org.ID).Return(system, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, system.Name, org.ID).Return(system, nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
@@ -408,14 +434,14 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 		Name:        "sys",
 		Uuid:        uuid.NewV4().String(),
 		Certificate: "ukama_certs",
-		ApiGwIp:     	sysIp,
+		ApiGwIp:     sysIp,
 		ApiGwPort:   sysPort,
 	}
 
 	psys := &pb.DeleteSystemRequest{SystemName: system.Name, OrgName: "ukama"}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("Delete", system.Name, org.ID).Return(nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("Delete", mock.Anything, system.Name, org.ID).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, psys).Return(nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
@@ -424,6 +450,33 @@ func TestLookupServer_DeleteSystemForOrg(t *testing.T) {
 	assert.NoError(t, err)
 	orgRepo.AssertExpectations(t)
 
+}
+
+func TestLookupServer_DeleteSystemForOrg_NotFound(t *testing.T) {
+	orgRepo := &mocks.OrgRepo{}
+	systemRepo := &mocks.SystemRepo{}
+	msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+	org := &db.Org{
+		Model: gorm.Model{
+			ID: 1,
+		},
+		Name: "ukama",
+	}
+
+	const sysName = "sys"
+	psys := &pb.DeleteSystemRequest{SystemName: sysName, OrgName: "ukama"}
+
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("Delete", mock.Anything, sysName, org.ID).
+		Return(fmt.Errorf("%s %w", sysName, db.ErrSystemMissing)).Once()
+
+	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
+	_, err := s.DeleteSystemForOrg(context.TODO(), psys)
+
+	assert.Equal(t, codes.NotFound, status.Code(err))
+	orgRepo.AssertExpectations(t)
+	systemRepo.AssertExpectations(t)
 }
 
 func TestLookupServer_AddSystemForOrg_NewSystemIsCreatedAndAnnounced(t *testing.T) {
@@ -467,11 +520,11 @@ func TestLookupServer_AddSystemForOrg_NewSystemIsCreatedAndAnnounced(t *testing.
 		NodeGwPort:  8080,
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("GetByName", "sys", org.ID).Return(nil, gorm.ErrRecordNotFound).Once()
-	systemRepo.On("Add", mock.AnythingOfType("*db.System")).Return(nil).Once()
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, "sys", org.ID).Return(nil, gorm.ErrRecordNotFound).Once()
+	systemRepo.On("Add", mock.Anything, mock.AnythingOfType("*db.System")).Return(nil).Once()
 	msgbusClient.On("PublishRequest", mock.Anything, req).Return(nil).Once()
-	systemRepo.On("GetByName", "sys", org.ID).Return(stored, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, "sys", org.ID).Return(stored, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	resp, err := s.AddSystemForOrg(context.TODO(), req)
@@ -526,12 +579,12 @@ func TestLookupServer_AddSystemForOrg_ExistingSystemKeepsItsId(t *testing.T) {
 		ApiGwUrl:    "http://localhost:100",
 	}
 
-	orgRepo.On("GetByName", org.Name).Return(org, nil).Once()
-	systemRepo.On("GetByName", "sys", org.ID).Return(existing, nil).Once()
-	systemRepo.On("Add", mock.MatchedBy(func(sys *db.System) bool {
+	orgRepo.On("GetByName", mock.Anything, org.Name).Return(org, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, "sys", org.ID).Return(existing, nil).Once()
+	systemRepo.On("Add", mock.Anything, mock.MatchedBy(func(sys *db.System) bool {
 		return sys.Uuid == existingId
 	})).Return(nil).Once()
-	systemRepo.On("GetByName", "sys", org.ID).Return(existing, nil).Once()
+	systemRepo.On("GetByName", mock.Anything, "sys", org.ID).Return(existing, nil).Once()
 
 	s := NewLookupServer(nil, orgRepo, systemRepo, msgbusClient, orgName)
 	resp, err := s.AddSystemForOrg(context.TODO(), req)

@@ -31,10 +31,8 @@
  /* updated a node state*/
  message EventRegistryNodeStatusUpdate{
      string nodeId = 1;
-     oneof  status { 
-        string connectivity = 2;
-        string state = 3; 
-     }
+     string connectivity = 2;
+     string state = 3;
  }
  
  /* removed a node */

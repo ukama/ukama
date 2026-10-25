@@ -22,7 +22,7 @@ class RateApi extends BaseRESTDataSource {
     baseURL: string,
     req: DefaultMarkupInputDto
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DefaultMarkup [POST]: ${baseURL}/${VERSION}/${MARKUP}/${req.markup}/default`
     );
     this.baseURL = baseURL;
@@ -37,7 +37,7 @@ class RateApi extends BaseRESTDataSource {
     baseURL: string,
     userId: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DeleteMarkup [DELETE]: ${baseURL}/${VERSION}/${MARKUP}/users/${userId}`
     );
     this.baseURL = baseURL;
@@ -49,7 +49,7 @@ class RateApi extends BaseRESTDataSource {
   };
 
   getDefaultMarkup = async (baseURL: string): Promise<DefaultMarkupResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetDefaultMarkup [GET]: ${baseURL}/${VERSION}/${MARKUP}/default`
     );
     this.baseURL = baseURL;
@@ -61,7 +61,7 @@ class RateApi extends BaseRESTDataSource {
   getDefaultMarkupHistory = async (
     baseURL: string
   ): Promise<DefaultMarkupHistoryResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetDefaultMarkupHistory [GET]: ${baseURL}/${VERSION}/${MARKUP}/default/history`
     );
     this.baseURL = baseURL;

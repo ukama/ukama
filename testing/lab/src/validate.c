@@ -57,8 +57,9 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         return fail(err, "scenario status must be active/wip/skip/xfail");
     }
 
-    if (!ulab_streq(s->provider.type, "virtual")) {
-        return fail(err, "unsupported provider type");
+    if (!ulab_streq(s->provider.type, "virtual") &&
+        !ulab_streq(s->provider.type, "hardware")) {
+        return fail(err, "provider type must be virtual or hardware");
     }
 
     if (s->world.networks == 0) {

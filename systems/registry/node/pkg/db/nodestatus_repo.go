@@ -16,7 +16,7 @@ import (
 )
 
 type NodeStatusRepo interface {
-	Update(*NodeStatus) error
+	Update(ns *NodeStatus, columns ...string) error
 	Get(ukama.NodeID) (*NodeStatus, error)
 	Delete(ukama.NodeID) error
 	GetAll() ([]NodeStatus, error)
@@ -33,14 +33,18 @@ func NewNodeStatusRepo(db sql.Db) NodeStatusRepo {
 	}
 }
 
-// Update updates the node's status row in place. Only non-zero fields on ns
-// are written (GORM's struct-based Updates semantics), so a caller that only
-// sets Connectivity leaves the existing State untouched, and vice versa.
-func (n *nodeStatusRepo) Update(ns *NodeStatus) error {
+// Update writes the named columns of ns in place. Naming them lets zero values such as Unknown be stored.
+func (n *nodeStatusRepo) Update(ns *NodeStatus, columns ...string) error {
+	if len(columns) == 0 {
+		return nil
+	}
+
+	selected := append([]string{"updated_at"}, columns...)
+
 	result := n.Db.GetGormDb().Model(&NodeStatus{}).
 		Where("node_id = ?", ns.NodeId).
+		Select(selected).
 		Updates(ns)
-
 	if result.Error != nil {
 		return result.Error
 	}
@@ -86,17 +90,14 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 	return ns, nil
 }
 
-func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64,
-	err error) {
+func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
 	db := n.Db.GetGormDb()
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
-		ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
-		ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 

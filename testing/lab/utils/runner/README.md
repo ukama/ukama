@@ -1,4 +1,41 @@
-# Local and AWS scenario execution
+# Local, hardware and AWS scenario execution
+
+## Physical RF-rack batches
+
+The local runner accepts `--provider virtual|hardware` and `--hardware FILE`.
+Hardware batches run sequentially on one configured rack and do not need
+`UKAMA_REPO` or virtual factory-node preparation. The `smoke` suite is selectable
+alongside P0 and resilience, including its top-level YAML files.
+
+```sh
+./utils/run-scenarios.sh smoke/tc-106-usage-accumulation.yaml \
+    --provider hardware --hardware /home/lab/rack.json
+./utils/run-scenarios.sh p0/data-package/allocation \
+    --provider hardware --hardware /home/lab/rack.json --preflight-only
+```
+
+Every selected hardware scenario is checked with the native offline preflight
+before any scenario starts. Any capacity/configuration/capability error stops the
+whole batch with exit 2 and no run directory. `--preflight-only` needs no account
+credentials and executes nothing. `--list` only lists selection; it does not
+validate hardware support. Scenario YAML files, backend commands and report
+verdicts keep their existing meaning. Inventory alone does not select hardware:
+omit `--provider hardware` only if the selected YAML files already declare it.
+
+Inherited `ULAB_FACTORY_NODE_COUNT` is ignored for hardware. Explicit nonzero
+`--factory-nodes` and `--prepare-only` are rejected. Hardware requires a new batch
+directory; short run IDs keep long scenario names distinct, and reports/logs use
+private permissions. Batch JSON adds `provider: hardware`. `--fail-fast` and exact
+scenario-list ordering still apply to execution after the whole selection passes
+preflight. Provider/config flags are local functional options and are rejected
+with AWS or browser execution; AWS behavior without them is unchanged.
+
+See [hardware configuration and limits](../../docs/hardware.md) for inventory,
+supported operations, mixed-suite lists and qualification. Unsupported real-EPC
+policy checks and virtual fault injection are rejected, not skipped. Workload,
+browser and multi-rack hardware execution are not implemented.
+
+## Virtual local and AWS execution
 
 This replacement is based on the clean `ukama-lab.tar(20261003-163604).gz`
 baseline. It changes `utils/run-scenarios.sh` and adds the files in this

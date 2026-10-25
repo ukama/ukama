@@ -58,6 +58,7 @@ void report_event(report_t *r,
 void report_check(report_t *r, const check_result_t *res);
 int report_web_check(report_t *r, const char *phase, const check_spec_t *check,
                       json_t *response, int passed, const char *error);
+int report_cleanup_errors_suppressed(void);
 void report_set_cleanup(report_t *r, int failed);
 void report_set_final_rc(report_t *r, int rc);
 void report_result(report_t *r);

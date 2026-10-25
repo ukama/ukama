@@ -4558,6 +4558,62 @@ int bff_get_list_count(bff_client_t *c,
     return ULAB_OK;
 }
 
+int bff_get_package_list_count(bff_client_t *c,
+                               const world_t *w,
+                               const network_t *network,
+                               size_t *count,
+                               ulab_error_t *err) {
+    json_t *root;
+    json_t *obj;
+    json_t *arr;
+    const char *envelope;
+    const char *list_key;
+    size_t i;
+
+    if (w == NULL || count == NULL) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "package list count requires world and output storage");
+        return ULAB_ERR;
+    }
+    *count = 0;
+    for (i = 0; i < w->package_count; i++) {
+        if (w->packages[i].bff_id[0] == '\0') {
+            snprintf(err->msg, sizeof(err->msg),
+                     "package list count requires id for package %s",
+                     w->packages[i].ref);
+            return ULAB_ERR;
+        }
+    }
+
+    root = NULL;
+    envelope = NULL;
+    list_key = NULL;
+    if (direct_network_list_call(c, "packages", network, &root,
+                                 &envelope, &list_key, err)) {
+        return ULAB_ERR;
+    }
+    obj = dig(root, "data", envelope);
+    arr = obj ? json_object_get(obj, list_key) : NULL;
+    if (arr == NULL || !json_is_array(arr)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "%s missing %s list", envelope, list_key);
+        json_decref(root);
+        return ULAB_ERR;
+    }
+
+    /* The catalog includes other runs' organization-wide packages. Count
+     * only this scenario's IDs, including its organization-wide packages.
+     * Keep all world IDs eligible so a leak from another network in this
+     * scenario can still make the count fail. */
+    for (i = 0; i < w->package_count; i++) {
+        if (json_array_has_id(arr, w->packages[i].bff_id)) {
+            (*count)++;
+        }
+    }
+    json_decref(root);
+    return ULAB_OK;
+}
+
 int bff_get_site_list_count(bff_client_t *c,
                             const network_t *network,
                             const char *view,
@@ -6011,7 +6067,7 @@ int bff_cleanup_world(bff_client_t *c,
             failures++;
         }
 
-        if (ue->pool_sim_id[0] != '\0' && cleanup_should_delete_pool_sim()) {
+        if (ue->hardware_slot == 0 && ue->pool_sim_id[0] != '\0' && cleanup_should_delete_pool_sim()) {
             n = snprintf(query, sizeof(query),
                          "mutation { deleteSimFromPool(simId: \"%s\") { success } }",
                          ue->pool_sim_id);
@@ -6048,6 +6104,14 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
+        if (w->nodes[i].physical) {
+            size_t site;
+            for (site = 0; site < w->site_count; site++) {
+                if (ulab_streq(w->nodes[i].site_ref, w->sites[site].ref) &&
+                    w->sites[site].bff_id[0] != '\0') break;
+            }
+            if (site == w->site_count) continue;
+        }
         n = snprintf(
             query,
             sizeof(query),
@@ -6062,7 +6126,7 @@ int bff_cleanup_world(bff_client_t *c,
     }
 
     for (i = 0; i < w->node_count; i++) {
-        if (w->nodes[i].bff_id[0] == '\0') {
+        if (w->nodes[i].physical || w->nodes[i].bff_id[0] == '\0') {
             continue;
         }
 

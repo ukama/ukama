@@ -5,6 +5,7 @@ import { buildSchema } from "type-graphql";
 
 import { SUBSCRIPTIONS_PORT } from "../common/configs";
 import { logger } from "../common/logger";
+import { applyKeepAliveTimeouts } from "../common/utils/httpServer";
 import resolvers from "./resolvers";
 import { pubSub } from "./resolvers/pubsub";
 
@@ -18,18 +19,20 @@ async function bootstrap() {
 
   // Health endpoints for k8s probes and the api server's /ping check;
   // everything else goes to yoga (/graphql).
-  const server = createServer((req, res) => {
-    if (
-      req.url === "/ping" ||
-      req.url === "/healthz" ||
-      req.url === "/readyz"
-    ) {
-      res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ status: "ok" }));
-      return;
-    }
-    yoga(req, res);
-  });
+  const server = applyKeepAliveTimeouts(
+    createServer((req, res) => {
+      if (
+        req.url === "/ping" ||
+        req.url === "/healthz" ||
+        req.url === "/readyz"
+      ) {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ status: "ok" }));
+        return;
+      }
+      yoga(req, res);
+    })
+  );
 
   server.listen(SUBSCRIPTIONS_PORT, () => {
     logger.info(

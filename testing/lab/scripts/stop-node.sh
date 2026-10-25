@@ -48,7 +48,7 @@ fi
 
 if [ -n "${ULAB_KUBECTL:-}" ] && [ -n "${FACTORY_NODE_ID:-}" ]; then
     MESH_NAMESPACE="${ULAB_MESH_NAMESPACE:-ukama-messaging}"
-    MESH_POD_PREFIX="ukama-mesh-node-${FACTORY_NODE_ID}-"
+    MESH_NODE_NAME="ukama-mesh-node-${FACTORY_NODE_ID}"
 
     if [ ! -x "$ULAB_KUBECTL" ] &&
        ! command -v "$ULAB_KUBECTL" >/dev/null 2>&1; then
@@ -56,24 +56,27 @@ if [ -n "${ULAB_KUBECTL:-}" ] && [ -n "${FACTORY_NODE_ID:-}" ]; then
         exit 1
     fi
 
-    if ! MESH_PODS="$("$ULAB_KUBECTL" get pods \
-        -n "$MESH_NAMESPACE" \
-        -o custom-columns=NAME:.metadata.name --no-headers)"; then
-        echo "stop-node: failed to list mesh pods for $FACTORY_NODE_ID" >&2
+    if ! MESH_RESOURCES="$("$ULAB_KUBECTL" get pods,services \
+        -n "$MESH_NAMESPACE" -o name)"; then
+        echo "stop-node: failed to list mesh pods/services for $FACTORY_NODE_ID" >&2
         exit 1
     fi
 
-    MESH_POD="$(printf '%s\n' "$MESH_PODS" |
-        awk -v prefix="$MESH_POD_PREFIX" \
-            'index($0, prefix) == 1 { print; exit }')"
+    MESH_RESOURCES="$(printf '%s\n' "$MESH_RESOURCES" |
+        awk -F/ -v node="$MESH_NODE_NAME" \
+            '$2 == node || index($2, node "-") == 1 { print }')"
 
-    if [ -n "$MESH_POD" ]; then
-        echo "stop-node: delete mesh pod $MESH_POD"
-        if ! "$ULAB_KUBECTL" delete pod "$MESH_POD" \
+    MESH_DELETE_FAILED=0
+    for MESH_RESOURCE in $MESH_RESOURCES; do
+        echo "stop-node: delete mesh resource $MESH_RESOURCE"
+        if ! "$ULAB_KUBECTL" delete "$MESH_RESOURCE" \
             -n "$MESH_NAMESPACE" --ignore-not-found=true; then
-            echo "stop-node: failed to delete mesh pod $MESH_POD" >&2
-            exit 1
+            echo "stop-node: failed to delete mesh resource $MESH_RESOURCE" >&2
+            MESH_DELETE_FAILED=1
         fi
+    done
+    if [ "$MESH_DELETE_FAILED" -ne 0 ]; then
+        exit 1
     fi
 fi
 

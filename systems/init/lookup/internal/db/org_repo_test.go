@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"context"
 	extsql "database/sql"
 	"regexp"
 	"testing"
@@ -64,7 +65,108 @@ func Test_orgRepo_Get(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		org, err := r.GetByName(orgName)
+		org, err := r.GetByName(context.Background(), orgName)
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.NotNil(t, org)
+	})
+
+}
+
+func Test_orgRepo_GetAll(t *testing.T) {
+
+	t.Run("OrgsExist", func(t *testing.T) {
+		// Arrange
+		const orgName = "ukama"
+		const orgCert = "ukamacert"
+		const ip = "0.0.0.0"
+
+		var dIp pgtype.Inet
+		err := dIp.Set(ip)
+		assert.NoError(t, err)
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"name", "certificate", "ip"}).
+			AddRow(orgName, orgCert, dIp).
+			AddRow("other-org", orgCert, dIp)
+
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewOrgRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		orgs, err := r.GetAll(context.Background())
+
+		// Assert
+		assert.NoError(t, err)
+
+		err = mock.ExpectationsWereMet()
+		assert.NoError(t, err)
+		assert.Len(t, orgs, 2)
+	})
+
+}
+
+func Test_orgRepo_GetById(t *testing.T) {
+
+	t.Run("OrgExist", func(t *testing.T) {
+		// Arrange
+		const orgName = "ukama"
+		const orgCert = "ukamacert"
+		const ip = "0.0.0.0"
+		orgId := uuid.NewV4()
+
+		var dIp pgtype.Inet
+		err := dIp.Set(ip)
+		assert.NoError(t, err)
+
+		var db *extsql.DB
+
+		db, mock, err := sqlmock.New() // mock sql.DB
+		assert.NoError(t, err)
+
+		rows := sqlmock.NewRows([]string{"name", "certificate", "ip", "org_id"}).
+			AddRow(orgName, orgCert, dIp, orgId)
+
+		mock.ExpectQuery(`^SELECT.*orgs.*`).
+			WithArgs(orgId, sqlmock.AnyArg()).
+			WillReturnRows(rows)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		r := int_db.NewOrgRepo(&UkamaDbMock{
+			GormDb: gdb,
+		})
+
+		// Act
+		org, err := r.GetById(context.Background(), orgId)
 
 		// Assert
 		assert.NoError(t, err)
@@ -122,7 +224,7 @@ func Test_orgRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Add(&org)
+		err = r.Add(context.Background(), &org)
 
 		// Assert
 		assert.NoError(t, err)
@@ -178,7 +280,7 @@ func Test_orgRepo_Update(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		err = r.Update(&org)
+		err = r.Update(context.Background(), &org)
 
 		// Assert
 		assert.NoError(t, err)

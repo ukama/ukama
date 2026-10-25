@@ -20,7 +20,11 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, "node", config.DB.DbName)
 	assert.Equal(t, "site:9090", config.SiteHost)
 	assert.Equal(t, "msgclient-registry:9095", config.MsgClient.Host)
-	assert.Len(t, config.MsgClient.ListenerRoutes, 4)
+	assert.Len(t, config.MsgClient.ListenerRoutes, 6)
 	assert.Contains(t, config.MsgClient.ListenerRoutes,
 		"event.cloud.local.{{ .Org}}.node.state.node.transition")
+	assert.Contains(t, config.MsgClient.ListenerRoutes,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.online")
+	assert.Contains(t, config.MsgClient.ListenerRoutes,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline")
 }

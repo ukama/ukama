@@ -10,6 +10,7 @@ package client
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"google.golang.org/grpc"
@@ -18,22 +19,26 @@ import (
 	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/init/lookup/pb/gen"
 )
- 
+
  type LookupClientProvider interface {
 	 GetClient() (pb.LookupServiceClient, error)
  }
- 
+
  type lookupClientProvider struct {
+	 mu            sync.Mutex
 	 lookupService pb.LookupServiceClient
 	 lookupHost    string
 	 timeout       time.Duration
  }
- 
+
  func NewLookupClientProvider(lookupHost string, timeout time.Duration) LookupClientProvider {
 	 return &lookupClientProvider{lookupHost: lookupHost, timeout: timeout}
  }
- 
+
  func (rt *lookupClientProvider) GetClient() (pb.LookupServiceClient, error) {
+	 rt.mu.Lock()
+	 defer rt.mu.Unlock()
+
 	 if rt.lookupService == nil {
 		 var conn *grpc.ClientConn
  
