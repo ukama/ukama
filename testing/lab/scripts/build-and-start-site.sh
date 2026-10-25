@@ -331,14 +331,12 @@ TNODE_CONTAINER="$(container_name "$TNODE_ID")"
 CNODE_CONTAINER="$(container_name "$CNODE_ID")"
 ANODE_CONTAINER="$(container_name "$ANODE_ID")"
 
-# Persist the exclusively reserved, assigned bundle before any build/start can
-# fail. The webapp parent reloads this state for bounded teardown on failure.
-if [ "${ULAB_WEBAPP_RUN:-0}" = 1 ]; then
-    write_site_state early
-    write_node_state "$SITE_REF-tnode" "$TNODE_ID" "tnode" "$TNODE_CONTAINER"
-    write_node_state "$SITE_REF-cnode" "$CNODE_ID" "cnode" "$CNODE_CONTAINER"
-    write_node_state "$SITE_REF-anode" "$ANODE_ID" "anode" "$ANODE_CONTAINER"
-fi
+# Persist the claimed bundle before any build/start can fail. Final cleanup
+# reads these records even if the C runner never maps the logical node IDs.
+write_site_state early
+write_node_state "$SITE_REF-tnode" "$TNODE_ID" "tnode" "$TNODE_CONTAINER"
+write_node_state "$SITE_REF-cnode" "$CNODE_ID" "cnode" "$CNODE_CONTAINER"
+write_node_state "$SITE_REF-anode" "$ANODE_ID" "anode" "$ANODE_CONTAINER"
 
 # Build only after the complete Factory bundle has been reserved.
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$TNODE_ID" "$NODE_RUNTIME"
