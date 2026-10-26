@@ -1,0 +1,14 @@
+#!/sbin/openrc-run
+
+description="Reset the u-boot bootcount after a good boot"
+
+depend() {
+    need localmount
+    after starterd
+}
+
+start() {
+    ebegin "Resetting u-boot bootcount"
+    fw_setenv bootcount 0
+    eend $?
+}

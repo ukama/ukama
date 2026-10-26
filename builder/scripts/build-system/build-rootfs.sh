@@ -381,7 +381,7 @@ EOF
             git tcpdump ethtool iperf3 htop vim doas
             kbd bison flex"
 
-    ARM_PACKAGES="dtc coreutils"
+    ARM_PACKAGES="dtc coreutils i2c-tools"
 
     # Install base
     apk update && apk upgrade
