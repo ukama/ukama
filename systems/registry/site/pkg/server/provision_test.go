@@ -82,8 +82,8 @@ func TestProvisionWaitsForAllThree(t *testing.T) {
 		}
 	}
 	select {
-	case <-done:
-		t.Fatal("continued before all nodes completed")
+	case err := <-done:
+		t.Fatalf("continued before all nodes completed: %v", err)
 	default:
 	}
 	close(release)
