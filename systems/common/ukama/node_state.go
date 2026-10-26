@@ -10,6 +10,7 @@ package ukama
 
 import (
 	"database/sql/driver"
+	"math"
 	"strconv"
 	"strings"
 )
@@ -71,6 +72,15 @@ func (s NodeState) String() string {
 func ParseNodeState(value string) NodeState {
 	i, err := strconv.Atoi(value)
 	if err == nil {
+		// A number outside the enum falls back to Unknown, the same as an unrecognised name.
+		if i < 0 || i > math.MaxUint8 {
+			return NodeStateUnknown
+		}
+
+		if _, ok := nodeStateNames[NodeState(i)]; !ok {
+			return NodeStateUnknown
+		}
+
 		return NodeState(i)
 	}
 

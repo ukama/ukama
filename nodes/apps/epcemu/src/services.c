@@ -64,12 +64,6 @@ int services_resolve(EpcemuConfig *config, EpcemuStatus *status) {
     snprintf(config->initNetworkUrl, sizeof(config->initNetworkUrl),
              "http://localhost:%d", config->initNetworkPort);
 
-    snprintf(config->tunName, sizeof(config->tunName), "%s",
-             EPCEMU_TUN_NAME);
-
-    snprintf(config->tunAddr, sizeof(config->tunAddr), "%s",
-             EPCEMU_TUN_ADDR);
-
     usys_log_debug("resolved services epcemu=%d epcemu-data=%d pcrf=%d init-network=%d",
                    config->servicePort,
                    config->dataPort,

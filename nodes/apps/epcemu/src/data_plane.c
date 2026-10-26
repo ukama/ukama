@@ -256,11 +256,6 @@ int data_plane_start(DataPlane *dp,
     status_set(status, EpcemuStateStartingDataPlane,
                "starting data plane");
 
-    if (!tun_configure(config->tunName, config->tunAddr)) {
-        status_fail(status, "failed to configure EPC tun interface");
-        return USYS_FALSE;
-    }
-
     dp->tunFd = tun_create(config->tunName);
     if (dp->tunFd < 0) {
         status_fail(status, "failed to open EPC tun interface");

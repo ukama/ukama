@@ -27,7 +27,6 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	factory "github.com/ukama/ukama/systems/common/rest/client/factory"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
-	messaging "github.com/ukama/ukama/systems/common/rest/client/messaging"
 	provider "github.com/ukama/ukama/systems/init/bootstrap/client"
 	pb "github.com/ukama/ukama/systems/init/bootstrap/pb/gen"
 )
@@ -87,13 +86,8 @@ func runGrpcServer() {
 	if err != nil {
 		log.Fatalf("Failed to get messaging system from initClient: %v", err)
 	}
-	messagingUrl, err := ic.GetHostAddress(icl, ic.CreateHostString(svcConf.OrgName, messagingSys.SystemName), &svcConf.OrgName)
-	if err != nil {
-		log.Fatalf("Failed to get messaging url from initClient: %v", err)
-	}
 
 	factoryClient := factory.NewNodeFactoryClient(factoryUrl.String(), client.WithDebug(svcConf.DebugMode))
-	nnsClient := messaging.NewNnsClient(messagingUrl.String(), client.WithDebug(svcConf.DebugMode))
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName,
 		pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host,
@@ -103,7 +97,7 @@ func runGrpcServer() {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	bootstrapServer := server.NewBootstrapServer(mbClient, svcConf.DebugMode,
-		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, nnsClient, svcConf, messagingSys.Certificate)
+		provider.NewLookupClientProvider(svcConf.Lookup, svcConf.Timeout), factoryClient, svcConf, messagingSys.Certificate)
 
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterBootstrapServiceServer(s, bootstrapServer)

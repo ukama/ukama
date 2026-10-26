@@ -47,4 +47,12 @@ func TestNodeConnectivity(t *testing.T) {
 		assert.Equal(t, undefinedConnectivity.String(), ukama.NodeConnectivityUndefined.String())
 		assert.Equal(t, uint8(undefinedConnectivity), uint8(10))
 	})
+
+	t.Run("NodeConnectivityNonValidStrNumber", func(tt *testing.T) {
+		for _, value := range []string{"3", "10", "-1", "300"} {
+			undefinedConnectivity := ukama.ParseNodeConnectivity(value)
+
+			assert.Equal(t, ukama.NodeConnectivityUndefined, undefinedConnectivity, value)
+		}
+	})
 }

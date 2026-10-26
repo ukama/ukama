@@ -22,6 +22,7 @@ from config import HERE, ROOT, environment, executable, load_config, portable_vp
 from artifacts import image_archive, payload, relative_scenarios
 from batch_summary import format_summary, summarize
 import cluster_metrics
+import software_version
 
 
 def lifecycle(work, name, message):
@@ -274,6 +275,10 @@ def launch(args):
     with (cache / ".export.lock").open("w") as cache_lock:
         fcntl.flock(cache_lock, fcntl.LOCK_EX)
         images_path, image_info = image_archive(args.lab_dir, args.repo, cache, env)
+        software_version.prepare(
+            args.lab_dir, args.repo, [args.lab_dir / p for p in scenarios],
+            env, work / "software-version.json",
+            expected_images=image_info["images"])
     input_dir = work / "input"
     input_dir.mkdir(mode=0o700)
     private_paths = [Path(cfg[key]) for key in ("VPN_AUTH_FILE",) if cfg[key]]

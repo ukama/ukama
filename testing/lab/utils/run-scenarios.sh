@@ -1032,6 +1032,28 @@ else:
 PY_STATUS
 }
 
+# Resolve before validate parses ${ULAB_SOFTWARE_CURRENT_VERSION}. A child
+# build script cannot export a value back into this runner's environment.
+if (( ! HARDWARE_BATCH )); then
+    software_version_file="$BATCH_DIR/software-version.json"
+    version_helper_dir="$(dirname -- "$AWS_HELPER")"
+    version_lab_dir="$(CDPATH= cd -- "$version_helper_dir/../.." && pwd)"
+    python3 "$version_helper_dir/software_version.py" \
+        --lab-dir "$version_lab_dir" \
+        --repo "$UKAMA_REPO" --output "$software_version_file" \
+        "${selected_scenarios[@]}" || exit 2
+    if [[ -f "$software_version_file" ]]; then
+        software_current="$(python3 - "$software_version_file" <<'PY_VERSION'
+import json
+import sys
+with open(sys.argv[1]) as stream:
+    print(json.load(stream)["version"])
+PY_VERSION
+        )" || exit 2
+        export ULAB_SOFTWARE_CURRENT_VERSION="$software_current"
+    fi
+fi
+
 printf '\n============================================================\n'
 printf '%s batch: %s\n' "${suite^^}" "$BATCH_STAMP"
 printf 'Selectors (%s):' "${#selected_selectors[@]}"
