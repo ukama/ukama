@@ -32,7 +32,8 @@ func TestRepoErrorToGrpc(t *testing.T) {
 		err  error
 		code codes.Code
 	}{
-		{"StatusErrorKeepsCode", status.Error(codes.FailedPrecondition, "not assigned"), codes.FailedPrecondition},
+		{"StatusErrorKeepsCode", status.Error(codes.FailedPrecondition, "not assigned"),
+			codes.FailedPrecondition},
 		{"RecordNotFound", gorm.ErrRecordNotFound, codes.NotFound},
 		{"DuplicateKey", &pgconn.PgError{Code: "23505"}, codes.AlreadyExists},
 		{"OtherError", errors.New("boom"), codes.Internal},
@@ -59,7 +60,8 @@ func TestProcessNodeDuplErrors(t *testing.T) {
 	err := utils.ProcessNodeDuplErrors(&pgconn.PgError{Code: "23505"}, "uk-node")
 
 	assert.Equal(t, codes.AlreadyExists, status.Code(err))
-	assert.Equal(t, codes.Internal, status.Code(utils.ProcessNodeDuplErrors(errors.New("boom"), "uk-node")))
+	assert.Equal(t, codes.Internal,
+		status.Code(utils.ProcessNodeDuplErrors(errors.New("boom"), "uk-node")))
 }
 
 func TestDbNodeToPbNode(t *testing.T) {
@@ -69,10 +71,11 @@ func TestDbNodeToPbNode(t *testing.T) {
 
 	t.Run("WithoutSite", func(t *testing.T) {
 		n := utils.DbNodeToPbNode(&db.Node{
-			Id:     towerId,
-			Name:   "tower-1",
-			Type:   ukama.NODE_ID_TYPE_TOWERNODE,
-			Status: db.NodeStatus{Connectivity: ukama.NodeConnectivityOnline, State: ukama.NodeStateReady},
+			Id:   towerId,
+			Name: "tower-1",
+			Type: ukama.NODE_ID_TYPE_TOWERNODE,
+			Status: db.NodeStatus{Connectivity: ukama.NodeConnectivityOnline,
+				State: ukama.NodeStateReady},
 		})
 
 		assert.Equal(t, towerId, n.Id)

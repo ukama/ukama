@@ -24,7 +24,8 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-// RepoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL errors.
+// RepoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL
+// errors.
 func RepoErrorToGrpc(err error, entity string) error {
 	if st, ok := status.FromError(err); ok {
 		return st.Err()
@@ -33,7 +34,8 @@ func RepoErrorToGrpc(err error, entity string) error {
 	return grpc.SqlErrorToGrpc(err, entity)
 }
 
-// IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers and unknown strings.
+// IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers
+// and unknown strings.
 func IsValidNodeConnectivity(value string) bool {
 	for name := range cpb.NodeConnectivity_value {
 		if strings.EqualFold(name, value) {
@@ -45,7 +47,8 @@ func IsValidNodeConnectivity(value string) bool {
 }
 
 func InvalidNodeIDError(nodeId string, err error) error {
-	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
+	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId,
+		err.Error())
 }
 
 func ProcessNodeDuplErrors(err error, nodeId string) error {

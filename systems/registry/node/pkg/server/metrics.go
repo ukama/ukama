@@ -26,19 +26,23 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 		return
 	}
 
-	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount, onlineCount, offlineCount)
+	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount,
+		onlineCount, offlineCount)
 
 	for _, arg := range args {
 		switch arg {
 		case pkg.NumberOfNodes:
 			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfNodes, float64(nodesCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfNodes, float64(nodesCount), nil,
+				pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOnlineNodes:
 			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOnlineNodes, float64(onlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfOnlineNodes, float64(onlineCount), nil,
+				pkg.SystemName+"-"+pkg.ServiceName)
 		case pkg.NumberOfOfflineNodes:
 			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOfflineNodes, float64(offlineCount), nil, pkg.SystemName+"-"+pkg.ServiceName)
+				pkg.NumberOfOfflineNodes, float64(offlineCount), nil,
+				pkg.SystemName+"-"+pkg.ServiceName)
 		}
 	}
 
@@ -51,8 +55,8 @@ func (n *NodeServer) PushMetrics() {
 	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
 }
 
-// requestMetricsPush asks the background pusher for fresh node counts without waiting on the pushgateway.
-// A request already pending covers this one.
+// requestMetricsPush asks the background pusher for fresh node counts without waiting on
+// the pushgateway. A request already pending covers this one.
 func (n *NodeServer) requestMetricsPush() {
 	select {
 	case n.metricsPush <- struct{}{}:
@@ -60,7 +64,8 @@ func (n *NodeServer) requestMetricsPush() {
 	}
 }
 
-// StartMetricsPusher pushes node counts after writes, off the request path, until ctx is done.
+// StartMetricsPusher pushes node counts after writes, off the request path, until ctx is
+// done.
 func (n *NodeServer) StartMetricsPusher(ctx context.Context) {
 	go func() {
 		for {

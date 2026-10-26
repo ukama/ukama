@@ -18,8 +18,10 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
-// assignNodesToSite assigns the nodes in one transaction and publishes node.assign for each new assignment.
-func (n *NodeServer) assignNodesToSite(siteId, networkId uuid.UUID, nodeIds []string) error {
+// assignNodesToSite assigns the nodes in one transaction and publishes node.assign for
+// each new assignment.
+func (n *NodeServer) assignNodesToSite(siteId, networkId uuid.UUID,
+	nodeIds []string) error {
 	assigned, err := n.siteRepo.AssignNodes(siteId, networkId, nodeIds)
 	if err != nil {
 		return utils.RepoErrorToGrpc(err, "node")
@@ -41,7 +43,8 @@ func (n *NodeServer) assignNodesToSite(siteId, networkId uuid.UUID, nodeIds []st
 
 		err = n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
+				err.Error())
 		}
 	}
 
@@ -66,7 +69,8 @@ func (n *NodeServer) publishNodeReleased(released ...db.Site) {
 
 		err := n.msgbus.PublishRequest(route, evt)
 		if err != nil {
-			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route, err.Error())
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
+				err.Error())
 		}
 	}
 }

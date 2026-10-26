@@ -42,9 +42,11 @@ func NewSiteRepo(db sql.Db) SiteRepo {
 	}
 }
 
-// AssignNodes assigns the nodes to the site in one transaction and returns only the new assignments.
-// A node already on this site is skipped, and a node on another site fails the whole call.
-func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID, nodeIds []string) ([]Site, error) {
+// AssignNodes assigns the nodes to the site in one transaction and returns only the new
+// assignments. A node already on this site is skipped, and a node on another site fails
+// the whole call.
+func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID,
+	nodeIds []string) ([]Site, error) {
 	ids := make([]string, 0, len(nodeIds))
 	for _, id := range nodeIds {
 		ids = append(ids, strings.ToLower(id))
@@ -114,10 +116,12 @@ func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 
 	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
+			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
-		Where("sites.site_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
+		Where("sites.site_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS"+
+			" NULL",
 			siteId.String()).Find(&nodes)
 
 	if result.Error != nil {
@@ -136,10 +140,12 @@ func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 
 	result := s.Db.GetGormDb().
 		Preload(clause.Associations).Preload("Attached.Site").
-		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id, sites.network_id").
+		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
+			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		Joins("JOIN sites ON sites.node_id = nodes.id AND sites.deleted_at IS NULL").
-		Where("sites.network_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at IS NULL",
+		Where("sites.network_id=? AND sites.deleted_at IS NULL AND node_statuses.deleted_at"+
+			" IS NULL",
 			networkId.String()).Find(&nodes)
 
 	if result.Error != nil {
@@ -176,7 +182,8 @@ func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 	}
 
 	res := s.Db.GetGormDb().
-		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is NOT NULL)",
+		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is"+
+			" NOT NULL)",
 			nodeId.StringLowercase(), nodeId.StringLowercase())
 
 	if res.Error != nil {

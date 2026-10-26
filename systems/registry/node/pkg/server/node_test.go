@@ -676,7 +676,8 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			assert.Nil(t, resp)
 			nodeStatusRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
-			nodeStatusRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything, mock.Anything)
+			nodeStatusRepo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything,
+				mock.Anything)
 			msgbusClient.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 		})
 	}
@@ -727,7 +728,8 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
 
-		nodeStatusRepo.On("Update", mock.Anything, "connectivity").Return(gorm.ErrInvalidDB).Once()
+		nodeStatusRepo.On("Update", mock.Anything, "connectivity").
+			Return(gorm.ErrInvalidDB).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
 			nil, orgId, nil, nil)
@@ -1080,7 +1082,8 @@ func TestNodeServer_AddNodeToSite(t *testing.T) {
 				Site: &sitepb.Site{NetworkId: networkId.String()},
 			}, nil).Once()
 		siteRepo.On("AssignNodes", siteId, networkId, []string{nodeId.StringLowercase()}).
-			Return([]db.Site{{NodeId: nodeId.StringLowercase(), SiteId: siteId, NetworkId: networkId}}, nil).Once()
+			Return([]db.Site{{NodeId: nodeId.StringLowercase(), SiteId: siteId,
+				NetworkId: networkId}}, nil).Once()
 		msgbusClient.On("PublishRequest", "event.cloud.local.testorg.registry.node.node.assign",
 			mock.MatchedBy(func(e *epb.EventRegistryNodeAssign) bool {
 				return e.NodeId == nodeId.StringLowercase() && e.Site == siteId.String()
@@ -1108,8 +1111,11 @@ func TestNodeServer_AddNodeToSite(t *testing.T) {
 		code     codes.Code
 	}{
 		{"AlreadyOnSameSiteIsSuccess", []db.Site{}, nil, codes.OK},
-		{"OnOtherSiteIsAlreadyExists", nil, status.Error(codes.AlreadyExists, "node already belongs to site"), codes.AlreadyExists},
-		{"MissingNodeIsNotFound", nil, status.Error(codes.NotFound, "node not found"), codes.NotFound},
+		{"OnOtherSiteIsAlreadyExists", nil,
+			status.Error(codes.AlreadyExists, "node already belongs to site"),
+			codes.AlreadyExists},
+		{"MissingNodeIsNotFound", nil, status.Error(codes.NotFound, "node not found"),
+			codes.NotFound},
 	}
 
 	for _, tc := range assignCases {
@@ -1229,7 +1235,8 @@ func TestNodeServer_ReleaseNodeFromSite(t *testing.T) {
 
 		siteRepo.On("RemoveNode", nodeId).
 			Return(&db.Site{SiteId: siteId, NetworkId: networkId}, nil).Once()
-		msgbusClient.On("PublishRequest", "event.cloud.local.testorg.registry.node.node.release",
+		msgbusClient.On("PublishRequest",
+			"event.cloud.local.testorg.registry.node.node.release",
 			mock.MatchedBy(func(e *epb.NodeReleasedEvent) bool {
 				return e.NodeId == nodeId.StringLowercase() && e.Site == siteId.String() &&
 					e.Network == networkId.String()
