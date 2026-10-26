@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -35,6 +36,7 @@ import (
 	"github.com/ukama/ukama/systems/node/software/providers"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 )
 
 const DefaultUpdateWatchInterval = 32 * time.Second
@@ -139,27 +141,14 @@ func (s *SoftwareServer) reconcileCatalogOnce() {
 // recomputeDesiredForApp copies the fleet-wide desired version onto every node's
 // software row for this app and flags UpdateAvailable where the node lags.
 func (s *SoftwareServer) recomputeDesiredForApp(name, desired string) {
-	rows, err := s.sRepo.List("", ukama.Unknown, name)
+	// In-flight rows keep their target for the watcher, including after a restart.
+	// Completion picks up the latest promotion from the release catalog.
+	n, err := s.sRepo.SetDesiredForApp(name, desired)
 	if err != nil {
-		log.Errorf("recompute: list software %s: %v", name, err)
+		log.Errorf("recompute: set desired %s=%s: %v", name, desired, err)
 		return
 	}
-	for _, sw := range rows {
-		// Keep the in-flight target for its watcher, including after a restart.
-		// Completion picks up the latest promotion from the release catalog.
-		if sw.Status == ukama.UpdateInProgress {
-			continue
-		}
-		sw.DesiredVersion = desired
-		if validation.IsVersionMismatch(sw.CurrentVersion, desired) {
-			sw.Status = ukama.SoftwareStatusType(ukama.UpdateAvailable)
-		} else {
-			sw.Status = ukama.SoftwareStatusType(ukama.UpToDate)
-		}
-		if err := s.sRepo.Update(sw); err != nil {
-			log.Errorf("recompute: update %s: %v", sw.Id, err)
-		}
-	}
+	log.Infof("recompute: set desired %s=%s on %d rows", name, desired, n)
 }
 
 // ResumeInProgressUpdates re-attaches watchers for updates that were mid-flight when
@@ -545,6 +534,12 @@ watch:
 // status and a changelog entry directly, avoiding an extra List query.
 func (s *SoftwareServer) persistSoftwareStatus(recordID uuid.UUID, nodeID, appName, confirmedVersion string, newStatus ukama.SoftwareStatusType, changeLog string) bool {
 	sw, err := s.sRepo.Get(recordID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		// The node was deleted mid-update; retrying would never succeed.
+		log.Warnf("persistSoftwareStatus: record %s for node=%s app=%s no longer exists, stopping watch",
+			recordID, nodeID, appName)
+		return true
+	}
 	if err != nil {
 		log.Errorf("persistSoftwareStatus: failed to get record %s for node=%s app=%s: %v",
 			recordID, nodeID, appName, err)

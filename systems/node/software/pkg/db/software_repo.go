@@ -20,6 +20,7 @@ type SoftwareRepo interface {
 	Get(id uuid.UUID) (Software, error)
 	List(nodeId string, status ukama.SoftwareStatusType, appName string) ([]*Software, error)
 	Update(Software *Software) error
+	SetDesiredForApp(appName, desired string) (int64, error)
 }
 
 type softwareRepo struct {
@@ -40,7 +41,7 @@ func (r *softwareRepo) Get(id uuid.UUID) (Software, error) {
 	var software Software
 	err := r.Db.GetGormDb().Where("id = ?", id).Preload("App").First(&software).Error
 	if err != nil {
-		return Software{}, gorm.ErrRecordNotFound
+		return Software{}, err
 	}
 	return software, nil
 }
@@ -69,4 +70,17 @@ func (r *softwareRepo) List(nodeId string, status ukama.SoftwareStatusType, appN
 
 func (r *softwareRepo) Update(Software *Software) error {
 	return r.Db.GetGormDb().Save(Software).Error
+}
+
+// SetDesiredForApp sets the desired version on every idle row of the app in one
+// statement. Rows in UpdateInProgress keep their target for the update watcher.
+func (r *softwareRepo) SetDesiredForApp(appName, desired string) (int64, error) {
+	res := r.Db.GetGormDb().Model(&Software{}).
+		Where("app_name = ? AND status <> ?", appName, uint8(ukama.UpdateInProgress)).
+		Updates(map[string]interface{}{
+			"desired_version": desired,
+			"status": gorm.Expr("CASE WHEN current_version <> ? THEN ? ELSE ? END",
+				desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate)),
+		})
+	return res.RowsAffected, res.Error
 }
