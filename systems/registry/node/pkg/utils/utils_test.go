@@ -64,6 +64,14 @@ func TestProcessNodeDuplErrors(t *testing.T) {
 		status.Code(utils.ProcessNodeDuplErrors(errors.New("boom"), "uk-node")))
 }
 
+func TestInvalidNodeIDError(t *testing.T) {
+	err := utils.InvalidNodeIDError("bad-id", errors.New("too short"))
+
+	assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	assert.Contains(t, status.Convert(err).Message(), "bad-id")
+	assert.Contains(t, status.Convert(err).Message(), "too short")
+}
+
 func TestDbNodeToPbNode(t *testing.T) {
 	towerId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE).StringLowercase()
 	ampId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE).StringLowercase()

@@ -11,14 +11,13 @@ package server
 import (
 	"context"
 
-	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/registry/node/pkg"
 
 	log "github.com/sirupsen/logrus"
 	metric "github.com/ukama/ukama/systems/common/metrics"
 )
 
-func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
+func (n *NodeServer) pushNodeMeterics(args ...string) {
 	nodesCount, onlineCount, offlineCount, err := n.nodeRepo.GetNodeCount()
 	if err != nil {
 		log.Errorf("Error while getting node count %s", err.Error())
@@ -29,25 +28,24 @@ func (n *NodeServer) pushNodeMeterics(id ukama.NodeID, args ...string) {
 	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount,
 		onlineCount, offlineCount)
 
-	for _, arg := range args {
-		switch arg {
-		case pkg.NumberOfNodes:
-			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfNodes, float64(nodesCount), nil,
-				pkg.SystemName+"-"+pkg.ServiceName)
-		case pkg.NumberOfOnlineNodes:
-			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOnlineNodes, float64(onlineCount), nil,
-				pkg.SystemName+"-"+pkg.ServiceName)
-		case pkg.NumberOfOfflineNodes:
-			err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric,
-				pkg.NumberOfOfflineNodes, float64(offlineCount), nil,
-				pkg.SystemName+"-"+pkg.ServiceName)
-		}
+	counts := map[string]int64{
+		pkg.NumberOfNodes:        nodesCount,
+		pkg.NumberOfOnlineNodes:  onlineCount,
+		pkg.NumberOfOfflineNodes: offlineCount,
 	}
 
-	if err != nil {
-		log.Errorf("Error while pushing node metric to pushgateway %s", err.Error())
+	for _, arg := range args {
+		count, ok := counts[arg]
+		if !ok {
+			continue
+		}
+
+		err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric, arg,
+			float64(count), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		if err != nil {
+			log.Errorf("Error while pushing node metric %s to pushgateway %s", arg,
+				err.Error())
+		}
 	}
 }
 

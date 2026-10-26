@@ -10,6 +10,7 @@ package db_test
 
 import (
 	extsql "database/sql"
+	"database/sql/driver"
 	"errors"
 	"log"
 	"regexp"
@@ -1051,6 +1052,74 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+
+	txErr := errors.New("tx query failed")
+
+	txQueries := []struct {
+		sql  string
+		args []driver.Value
+		rows func() *sqlmock.Rows
+	}{
+		{`^SELECT.*nodes.*FOR UPDATE`,
+			[]driver.Value{parentId.StringLowercase(), sqlmock.AnyArg()},
+			func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{"id"}).AddRow(parentId.StringLowercase())
+			}},
+		{`^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id`,
+			[]driver.Value{parentId.StringLowercase()},
+			func() *sqlmock.Rows {
+				return sqlmock.NewRows([]string{"count"}).AddRow(0)
+			}},
+		{`^SELECT.*nodes.*FOR UPDATE`,
+			[]driver.Value{ampId.StringLowercase(), sqlmock.AnyArg()},
+			nil},
+	}
+
+	for _, tc := range []struct {
+		name   string
+		failAt int
+	}{
+		{"LockParentFails", 0},
+		{"CountAttachedFails", 1},
+		{"LockAttachedFails", 2},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
+
+			mock.ExpectQuery(`^SELECT.*nodes.*`).
+				WithArgs(ampId.StringLowercase()).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
+					AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId))
+
+			mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+				WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+
+			mock.ExpectQuery(`^SELECT.*sites.*`).
+				WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
+					AddRow(ampId.StringLowercase(), siteId))
+
+			mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+				WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+
+			mock.ExpectBegin()
+
+			for i, q := range txQueries[:tc.failAt+1] {
+				e := mock.ExpectQuery(q.sql).WithArgs(q.args...)
+				if i == tc.failAt {
+					e.WillReturnError(txErr)
+				} else {
+					e.WillReturnRows(q.rows())
+				}
+			}
+
+			mock.ExpectRollback()
+
+			err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
+
+			assert.True(t, errors.Is(err, txErr), err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
 func TestNodeRepo_DetachNode(t *testing.T) {

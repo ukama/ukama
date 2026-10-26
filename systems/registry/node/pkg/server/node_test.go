@@ -10,6 +10,7 @@ package server_test
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -22,6 +23,7 @@ import (
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/mocks"
+	"github.com/ukama/ukama/systems/registry/node/pkg"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
@@ -1315,6 +1317,28 @@ func TestNodeServer_PushMetrics(t *testing.T) {
 	nodeRepo.AssertExpectations(t)
 }
 
+func TestNodeServer_PushMetricsPushesAllCounts(t *testing.T) {
+	nodeRepo := &mocks.NodeRepo{}
+	nodeRepo.On("GetNodeCount").Return(int64(5), int64(3), int64(2), nil).Once()
+
+	s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "http://%zz", nil, nil,
+		orgId, nil, nil)
+
+	s.PushMetrics()
+
+	pushed := map[string]float64{}
+	for _, m := range pkg.NodeMetric {
+		pushed[m.Name] = m.Value
+	}
+
+	assert.Equal(t, map[string]float64{
+		pkg.NumberOfNodes:        5,
+		pkg.NumberOfOnlineNodes:  3,
+		pkg.NumberOfOfflineNodes: 2,
+	}, pushed)
+	nodeRepo.AssertExpectations(t)
+}
+
 func TestNodeServer_ReleaseSite(t *testing.T) {
 	releaseRoute := "event.cloud.local.testorg.registry.node.node.release"
 
@@ -1409,7 +1433,8 @@ func TestNodeServer_StartMetricsPusher(t *testing.T) {
 		nodeRepo.On("GetNodeCount").Return(int64(3), int64(0), int64(0), nil).
 			Run(func(mock.Arguments) { pushed <- struct{}{} })
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "http://%zz", nil, nil,
+			orgId, nil, nil)
 
 		// No pusher is running yet, so these writes must not block on metrics.
 		for i := 0; i < 3; i++ {
@@ -1444,7 +1469,8 @@ func TestNodeServer_StartMetricsPusher(t *testing.T) {
 		nodeRepo.On("GetNodeCount").Return(int64(1), int64(0), int64(0), nil).
 			Run(func(mock.Arguments) { pushed <- struct{}{} }).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId, nil, nil)
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "http://%zz", nil, nil,
+			orgId, nil, nil)
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -1461,4 +1487,140 @@ func TestNodeServer_StartMetricsPusher(t *testing.T) {
 			t.Fatal("pusher did not push node counts after a write")
 		}
 	})
+}
+
+type publishFixture struct {
+	nodeRepo       *mocks.NodeRepo
+	nodeStatusRepo *mocks.NodeStatusRepo
+	siteRepo       *mocks.SiteRepo
+	siteService    *mocks.SiteClientProvider
+}
+
+func TestNodeServer_PublishFailureKeepsSuccess(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		call func(f publishFixture, s *server.NodeServer) error
+	}{
+		{"AddNode", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+			f.nodeRepo.On("Add", mock.Anything, mock.Anything).Return(nil).Once()
+
+			_, err := s.AddNode(context.TODO(), &pb.AddNodeRequest{
+				NodeId: nodeId.StringLowercase(),
+				Name:   "node-A",
+			})
+			return err
+		}},
+		{"UpdateNodeStatus", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+			f.nodeStatusRepo.On("Update", mock.Anything, "connectivity").Return(nil).Once()
+			f.nodeRepo.On("Get", nodeId).
+				Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
+
+			_, err := s.UpdateNodeStatus(context.TODO(), &pb.UpdateNodeStateRequest{
+				NodeId:       nodeId.StringLowercase(),
+				Connectivity: ukama.NodeConnectivityOffline.String(),
+			})
+			return err
+		}},
+		{"UpdateNode", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+			f.nodeRepo.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+			f.nodeRepo.On("Get", nodeId).
+				Return(&db.Node{Id: nodeId.StringLowercase(), Name: "node-new"}, nil).Once()
+
+			_, err := s.UpdateNode(context.TODO(), &pb.UpdateNodeRequest{
+				NodeId: nodeId.StringLowercase(),
+				Name:   "node-new",
+			})
+			return err
+		}},
+		{"DeleteNode", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+			f.nodeRepo.On("Delete", nodeId, mock.Anything).Return(nil).Once()
+
+			_, err := s.DeleteNode(context.TODO(),
+				&pb.DeleteNodeRequest{NodeId: nodeId.StringLowercase()})
+			return err
+		}},
+		{"AttachNodes", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+			ampId := ukama.NewVirtualAmplifierNodeId()
+			f.nodeRepo.On("AttachNodes", nodeId, []string{ampId.StringLowercase()}).
+				Return(nil).Once()
+
+			_, err := s.AttachNodes(context.TODO(), &pb.AttachNodesRequest{
+				NodeId:        nodeId.StringLowercase(),
+				AttachedNodes: []string{ampId.StringLowercase()},
+			})
+			return err
+		}},
+		{"DetachNode", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualAmplifierNodeId()
+			f.nodeRepo.On("Get", nodeId).
+				Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
+			f.nodeRepo.On("DetachNode", nodeId).Return(nil).Once()
+
+			_, err := s.DetachNode(context.TODO(),
+				&pb.DetachNodeRequest{NodeId: nodeId.StringLowercase()})
+			return err
+		}},
+		{"AddNodeToSite", func(f publishFixture, s *server.NodeServer) error {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+			siteId := uuid.NewV4()
+			networkId := uuid.NewV4()
+			siteClient := &sitemocks.SiteServiceClient{}
+			f.siteService.On("GetClient").Return(siteClient, nil).Once()
+			siteClient.On("Get", mock.Anything,
+				&sitepb.GetRequest{SiteId: siteId.String()}, mock.Anything).
+				Return(&sitepb.GetResponse{
+					Site: &sitepb.Site{NetworkId: networkId.String()},
+				}, nil).Once()
+			f.siteRepo.On("AssignNodes", siteId, networkId,
+				[]string{nodeId.StringLowercase()}).
+				Return([]db.Site{{NodeId: nodeId.StringLowercase(), SiteId: siteId,
+					NetworkId: networkId}}, nil).Once()
+
+			_, err := s.AddNodeToSite(context.TODO(), &pb.AddNodeToSiteRequest{
+				NodeId:    nodeId.StringLowercase(),
+				SiteId:    siteId.String(),
+				NetworkId: networkId.String(),
+			})
+			return err
+		}},
+		{"ReleaseSite", func(f publishFixture, s *server.NodeServer) error {
+			siteId := uuid.NewV4()
+			f.siteRepo.On("ReleaseSite", siteId).Return([]db.Site{{
+				NodeId:    ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE).StringLowercase(),
+				SiteId:    siteId,
+				NetworkId: uuid.NewV4(),
+			}}, nil).Once()
+
+			_, err := s.ReleaseSite(context.TODO(),
+				&pb.ReleaseSiteRequest{SiteId: siteId.String()})
+			return err
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := publishFixture{
+				nodeRepo:       &mocks.NodeRepo{},
+				nodeStatusRepo: &mocks.NodeStatusRepo{},
+				siteRepo:       &mocks.SiteRepo{},
+				siteService:    &mocks.SiteClientProvider{},
+			}
+			msgbusClient := &mbmocks.MsgBusServiceClient{}
+			msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
+				Return(errors.New("msgbus unavailable")).Once()
+
+			s := server.NewNodeServer(OrgName, f.nodeRepo, f.siteRepo, f.nodeStatusRepo,
+				"", msgbusClient, f.siteService, orgId, nil, nil)
+
+			assert.NoError(t, tc.call(f, s))
+			msgbusClient.AssertExpectations(t)
+			f.nodeRepo.AssertExpectations(t)
+			f.nodeStatusRepo.AssertExpectations(t)
+			f.siteRepo.AssertExpectations(t)
+			f.siteService.AssertExpectations(t)
+		})
+	}
 }
