@@ -46,7 +46,6 @@ CFLAGS += -Werror
 CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -O0
 CFLAGS += -std=gnu11
-CFLAGS += -D_POSIX_C_SOURCE=200809L
 CFLAGS += -D_REENTRANT
 
 # Local app headers first.

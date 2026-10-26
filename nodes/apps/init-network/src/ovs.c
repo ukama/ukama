@@ -10,6 +10,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -23,6 +24,12 @@
 
 #define OVS_MAX_STR             1024
 #define SHELL_CMD_TIMEOUT_EXTRA 5
+#define BASE_FLOW_COOKIE        "0x554b414d00000000"
+#define BASE_FLOW_MASK          "0xffffffff00000000"
+#define TUN_RULE_PRIORITY       20000
+#define BRIDGE_RULE_PRIORITY    20001
+
+static pthread_mutex_t networkMutex = PTHREAD_MUTEX_INITIALIZER;
 
 static bool path_exists(const char *path) {
 
@@ -144,7 +151,7 @@ static bool ensure_mgmt_dir(Config *config, AppStatus *status) {
     return true;
 }
 
-static bool check_tools(Config *config, AppStatus *status) {
+static bool check_tools(AppStatus *status) {
 
     const char *baseTools[] = {
         "ovs-vsctl",
@@ -173,11 +180,6 @@ static bool check_tools(Config *config, AppStatus *status) {
         }
     }
 
-    if (config->tunEnable && !exec_tool_exists("openvpn")) {
-        status_fail(status, "required tool missing: openvpn");
-        return false;
-    }
-
     mark_bool(status, &status->toolsOk, true);
     return true;
 }
@@ -188,44 +190,6 @@ static bool ovs_is_running(Config *config) {
 
     return shell_ok(config, NULL,
                     "ovs-vsctl show >/dev/null 2>&1");
-}
-
-bool ovs_check(Config *config, char *reason, size_t reasonSize) {
-
-    if (config == NULL || reason == NULL || reasonSize == 0) return false;
-
-    if (!ovs_is_running(config)) {
-        snprintf(reason, reasonSize, "ovs is not running");
-        return false;
-    }
-
-    if (!iface_exists(config, config->bridge)) {
-        snprintf(reason, reasonSize, "ovs bridge is unavailable");
-        return false;
-    }
-
-    if (!shell_ok(config, "failed to query OVS flows",
-                  "ovs-ofctl -O %s dump-flows %s >/dev/null 2>&1",
-                  config->openflow, config->bridge)) {
-        snprintf(reason, reasonSize, "ovs flows are unavailable");
-        return false;
-    }
-
-    if (config->tunEnable && !iface_exists(config, config->tunIf)) {
-        snprintf(reason, reasonSize, "tun interface is unavailable");
-        return false;
-    }
-
-    if (config->enableIpForward &&
-        !shell_ok(config, "ip forwarding is disabled",
-                  "test \"$(sysctl -n net.ipv4.ip_forward "
-                  "2>/dev/null)\" = \"1\"")) {
-        snprintf(reason, reasonSize, "ip forwarding is disabled");
-        return false;
-    }
-
-    snprintf(reason, reasonSize, "ready");
-    return true;
 }
 
 static bool start_ovs(Config *config, AppStatus *status) {
@@ -365,30 +329,41 @@ static bool setup_epc_aliases(Config *config, AppStatus *status) {
     return true;
 }
 
+static bool tun_exists(Config *config) {
+
+    return shell_ok(config, "persistent TUN is unavailable",
+                    "ip tuntap show dev %s | grep -F '%s: tun' | "
+                    "grep -qw persist",
+                    config->tunIf, config->tunIf);
+}
+
 static bool setup_tun(Config *config, AppStatus *status) {
 
     int i;
 
+    mark_bool(status, &status->tunReady, false);
     if (!config->tunEnable) {
-        mark_bool(status, &status->tunReady, true);
+        if (config->enablePolicyRouting && !tun_exists(config)) {
+            status_fail(status, "policy routing requires a persistent TUN");
+            return false;
+        }
+        mark_bool(status, &status->tunReady,
+                  iface_exists(config, config->tunIf));
         return true;
     }
 
     status_set(status, InitStateSetupTun, "setting up tun interface");
 
-    exec_cmd(config->cmdTimeoutSec, "ip", "link", "delete", config->tunIf,
-             NULL);
-
-    if (exec_cmd(config->cmdTimeoutSec,
-                 "openvpn", "--mktun", "--dev", config->tunIf,
-                 NULL) != 0) {
+    if (!iface_exists(config, config->tunIf) &&
+        exec_cmd(config->cmdTimeoutSec,
+                 "ip", "tuntap", "add", "dev", config->tunIf,
+                 "mode", "tun", NULL) != 0) {
         status_fail(status, "failed to create tun interface");
         return false;
     }
 
-    if (exec_cmd(config->cmdTimeoutSec,
-                 "ip", "link", "set", config->tunIf, "up", NULL) != 0) {
-        status_fail(status, "failed to bring tun interface up");
+    if (!tun_exists(config)) {
+        status_fail(status, "configured interface is not a persistent TUN");
         return false;
     }
 
@@ -400,9 +375,18 @@ static bool setup_tun(Config *config, AppStatus *status) {
     }
 
     for (i = 0; i < config->tunExtraCount; i++) {
-        exec_cmd(config->cmdTimeoutSec,
-                 "ip", "addr", "replace", config->tunExtraCidrs[i],
-                 "dev", config->tunIf, NULL);
+        if (exec_cmd(config->cmdTimeoutSec,
+                     "ip", "addr", "replace", config->tunExtraCidrs[i],
+                     "dev", config->tunIf, NULL) != 0) {
+            status_fail(status, "failed to assign extra tun address");
+            return false;
+        }
+    }
+
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ip", "link", "set", config->tunIf, "up", NULL) != 0) {
+        status_fail(status, "failed to bring tun interface up");
+        return false;
     }
 
     mark_bool(status, &status->tunReady, true);
@@ -412,6 +396,7 @@ static bool setup_tun(Config *config, AppStatus *status) {
 static bool setup_bridge(Config *config, AppStatus *status) {
 
     char controller[OVS_MAX_STR];
+    char protocols[INIT_NETWORK_MAX_STR + 16];
 
     status_set(status, InitStateSetupBridge, "setting up OVS bridge");
 
@@ -425,9 +410,10 @@ static bool setup_bridge(Config *config, AppStatus *status) {
         return false;
     }
 
+    snprintf(protocols, sizeof(protocols), "protocols=%s", config->openflow);
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl", "set", "bridge", config->bridge,
-                 "protocols=OpenFlow15", NULL) != 0) {
+                 protocols, NULL) != 0) {
         status_fail(status, "failed to set bridge OpenFlow version");
         return false;
     }
@@ -503,6 +489,15 @@ static bool setup_forwarding(Config *config, AppStatus *status) {
                  ">/dev/null 2>&1 || true",
                  config->bridge,
                  config->externalIf);
+
+        /* The TUN is now created before default.rp_filter is disabled. */
+        if ((config->tunEnable || config->enablePolicyRouting) &&
+            !shell_ok(config, "failed to disable tun rp_filter",
+                      "sysctl -w net.ipv4.conf.%s.rp_filter=0",
+                      config->tunIf)) {
+            status_fail(status, "failed to disable tun rp_filter");
+            return false;
+        }
     }
 
     if (config->enableNat) {
@@ -540,24 +535,81 @@ static bool setup_forwarding(Config *config, AppStatus *status) {
     return true;
 }
 
+static bool ensure_gateway_link(Config *config, AppStatus *status,
+                                 bool netns) {
+
+    bool bridgeExists;
+    bool peerExists;
+
+    bridgeExists = iface_exists(config, config->gatewayBridgeIf);
+    if (netns) {
+        peerExists = shell_ok(config, NULL,
+                              "ip -n %s link show dev %s >/dev/null 2>&1",
+                              config->gatewayName,
+                              config->gatewayNamespaceIf);
+    } else {
+        peerExists = iface_exists(config, config->gatewayNamespaceIf);
+    }
+
+    if (bridgeExists && peerExists) {
+        /* Refuse unrelated interfaces instead of replacing live links. */
+        if (!shell_ok(config, "gateway bridge port is not a veth",
+                      "ip -d link show dev %s | grep -qw veth",
+                      config->gatewayBridgeIf)) {
+            status_fail(status, "gateway bridge port is not a veth");
+            return false;
+        }
+        if (netns) {
+            peerExists = shell_ok(config, "gateway peer is not a veth",
+                                  "ip -n %s -d link show dev %s | "
+                                  "grep -qw veth",
+                                  config->gatewayName,
+                                  config->gatewayNamespaceIf);
+        } else {
+            peerExists = shell_ok(config, "gateway veth peers differ",
+                                  "test \"$(cat /sys/class/net/%s/iflink)\" "
+                                  "= \"$(cat /sys/class/net/%s/ifindex)\" && "
+                                  "test \"$(cat /sys/class/net/%s/iflink)\" "
+                                  "= \"$(cat /sys/class/net/%s/ifindex)\"",
+                                  config->gatewayBridgeIf,
+                                  config->gatewayNamespaceIf,
+                                  config->gatewayNamespaceIf,
+                                  config->gatewayBridgeIf);
+        }
+        if (!peerExists) status_fail(status, "gateway veth peers differ");
+        return peerExists;
+    }
+
+    if (bridgeExists || peerExists) {
+        status_fail(status, "gateway veth pair is incomplete");
+        return false;
+    }
+
+    if (exec_cmd(config->cmdTimeoutSec,
+                 "ip", "link", "add", config->gatewayBridgeIf,
+                 "type", "veth", "peer", "name",
+                 config->gatewayNamespaceIf, NULL) != 0) {
+        status_fail(status, "failed to create gateway veth");
+        return false;
+    }
+
+    if (netns && exec_cmd(config->cmdTimeoutSec,
+                         "ip", "link", "set", config->gatewayNamespaceIf,
+                         "netns", config->gatewayName, NULL) != 0) {
+        status_fail(status, "failed to move gateway peer to namespace");
+        return false;
+    }
+
+    return true;
+}
+
 static bool setup_gateway_root(Config *config, AppStatus *status) {
 
     char rule[OVS_MAX_STR];
 
     status_set(status, InitStateSetupGateway, "setting up root gateway");
 
-    if (!shell_ok(config, "failed to recreate gateway veth",
-                  "ovs-vsctl --if-exists del-port %s %s; "
-                  "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
-                  "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
-                  "ip link add %s type veth peer name %s",
-                  config->bridge, config->gatewayBridgeIf,
-                  config->gatewayBridgeIf, config->gatewayBridgeIf,
-                  config->gatewayNamespaceIf, config->gatewayNamespaceIf,
-                  config->gatewayBridgeIf, config->gatewayNamespaceIf)) {
-        status_fail(status, "failed to create gateway veth");
-        return false;
-    }
+    if (!ensure_gateway_link(config, status, false)) return false;
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl", "--may-exist", "add-port", config->bridge,
@@ -569,14 +621,12 @@ static bool setup_gateway_root(Config *config, AppStatus *status) {
     if (!shell_ok(config, "failed to configure root gateway interface",
                   "ip link set %s up && "
                   "ip link set %s up && "
-                  "ip addr flush dev %s && "
                   "ip addr replace %s/32 dev %s && "
                   "ip route replace %s/32 dev %s && "
                   "ip route replace %s via %s dev %s && "
                   "(sysctl -w net.ipv4.conf.%s.rp_filter=0 "
                   ">/dev/null 2>&1 || true)",
                   config->gatewayBridgeIf,
-                  config->gatewayNamespaceIf,
                   config->gatewayNamespaceIf,
                   config->gatewayIp, config->gatewayNamespaceIf,
                   config->bridgeAddr, config->gatewayNamespaceIf,
@@ -632,20 +682,7 @@ static bool setup_gateway_netns(Config *config, AppStatus *status) {
         return false;
     }
 
-    if (!shell_ok(config, "failed to recreate gateway veth",
-                  "ovs-vsctl --if-exists del-port %s %s; "
-                  "ip link show %s >/dev/null 2>&1 && ip link del %s || true; "
-                  "ip netns exec %s ip link show %s >/dev/null 2>&1 && "
-                  "ip netns exec %s ip link del %s || true; "
-                  "ip link add %s type veth peer name %s",
-                  config->bridge, config->gatewayBridgeIf,
-                  config->gatewayBridgeIf, config->gatewayBridgeIf,
-                  config->gatewayName, config->gatewayNamespaceIf,
-                  config->gatewayName, config->gatewayNamespaceIf,
-                  config->gatewayBridgeIf, config->gatewayNamespaceIf)) {
-        status_fail(status, "failed to create gateway veth");
-        return false;
-    }
+    if (!ensure_gateway_link(config, status, true)) return false;
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl", "--may-exist", "add-port", config->bridge,
@@ -656,14 +693,12 @@ static bool setup_gateway_netns(Config *config, AppStatus *status) {
 
     if (!shell_ok(config, "failed to configure gateway namespace",
                   "ip link set %s up && "
-                  "ip link set %s netns %s && "
                   "ip netns exec %s ip link set lo up && "
                   "ip netns exec %s ip link set %s up && "
                   "ip netns exec %s ip addr replace %s dev %s && "
                   "ip netns exec %s ip route replace default via %s dev %s && "
                   "ip netns exec %s sysctl -w net.ipv4.ip_forward=1",
                   config->gatewayBridgeIf,
-                  config->gatewayNamespaceIf, config->gatewayName,
                   config->gatewayName,
                   config->gatewayName, config->gatewayNamespaceIf,
                   config->gatewayName, config->gatewayAddr,
@@ -698,51 +733,74 @@ static bool setup_gateway(Config *config, AppStatus *status) {
     return true;
 }
 
-static bool add_flow(Config *config, const char *flow) {
-
-    return exec_cmd(config->cmdTimeoutSec,
-                    "ovs-ofctl", "-O", config->openflow, "add-flow",
-                    config->bridge, flow, NULL) == 0;
-}
-
 static bool setup_flows(Config *config, AppStatus *status) {
 
-    char srcDrop[OVS_MAX_STR];
-    char dstDrop[OVS_MAX_STR];
+    char path[] = "/tmp/init-network-flows.XXXXXX";
+    FILE *file;
+    int fd;
+    bool ok;
 
     status_set(status, InitStateSetupFlows, "setting up default OVS flows");
+    mark_bool(status, &status->flowsReady, false);
 
-    if (exec_cmd(config->cmdTimeoutSec,
-                 "ovs-ofctl", "-O", config->openflow, "del-flows",
-                 config->bridge, NULL) != 0) {
-        status_fail(status, "failed to clear default OVS flows");
+    fd = mkstemp(path);
+    if (fd < 0) {
+        status_fail(status, "failed to create baseline flow file");
+        return false;
+    }
+    file = fdopen(fd, "w");
+    if (file == NULL) {
+        close(fd);
+        unlink(path);
+        status_fail(status, "failed to open baseline flow file");
         return false;
     }
 
-    if (!add_flow(config, "priority=0,actions=NORMAL")) {
-        status_fail(status, "failed to add default NORMAL flow");
-        return false;
-    }
-
+    /* Replace only our baseline, atomically. PCRF uses 32-bit cookies. */
+    fprintf(file, "delete cookie=%s/%s,table=0\n",
+            BASE_FLOW_COOKIE, BASE_FLOW_MASK);
     if (config->defaultDrop) {
-        snprintf(srcDrop, sizeof(srcDrop),
-                 "priority=10,ip,nw_src=%s,actions=drop", config->ueCidr);
-        snprintf(dstDrop, sizeof(dstDrop),
-                 "priority=10,ip,nw_dst=%s,actions=drop", config->ueCidr);
+        fprintf(file, "add cookie=0x554b414d00000001,table=0,"
+                "priority=10,ip,nw_src=%s,actions=drop\n", config->ueCidr);
+        fprintf(file, "add cookie=0x554b414d00000002,table=0,"
+                "priority=10,ip,nw_dst=%s,actions=drop\n", config->ueCidr);
+    }
+    fprintf(file, "add cookie=%s,table=0,priority=0,actions=NORMAL\n",
+            BASE_FLOW_COOKIE);
 
-        if (!add_flow(config, srcDrop)) {
-            status_fail(status, "failed to add UE source drop flow");
-            return false;
-        }
-
-        if (!add_flow(config, dstDrop)) {
-            status_fail(status, "failed to add UE destination drop flow");
-            return false;
-        }
+    ok = !ferror(file);
+    if (fclose(file) != 0) ok = false;
+    if (ok) {
+        ok = exec_cmd(config->cmdTimeoutSec,
+                      "ovs-ofctl", "-O", config->openflow, "--bundle",
+                      "add-flows", config->bridge, path, NULL) == 0;
+    }
+    unlink(path);
+    if (!ok) {
+        status_fail(status, "failed to install baseline OVS flows");
+        return false;
     }
 
     mark_bool(status, &status->flowsReady, true);
     return true;
+}
+
+static bool ensure_policy_rule(Config *config, const char *iface,
+                                int table, int priority) {
+
+    /* A different owner at our priority is an error, not a deletion. */
+    return shell_ok(config, "failed to ensure policy rule",
+                    "rules=\"$(ip -N -4 rule show priority %d)\" && "
+                    "if [ -z \"$rules\" ]; then "
+                    "ip -4 rule add priority %d iif %s table %d; "
+                    "else printf '%%s\n' \"$rules\" | "
+                    "awk 'NF {n++; if ($1 != \"%d:\" || "
+                    "$2 != \"from\" || $3 != \"all\" || "
+                    "$4 != \"iif\" || $5 != \"%s\" || "
+                    "$6 != \"lookup\" || $7 != \"%d\" || NF != 7) "
+                    "bad=1} END {exit n != 1 || bad}'; fi",
+                    priority, priority, iface, table,
+                    priority, iface, table);
 }
 
 static bool setup_policy_routing(Config *config, AppStatus *status) {
@@ -756,10 +814,9 @@ static bool setup_policy_routing(Config *config, AppStatus *status) {
     }
 
     if (!iface_exists(config, config->tunIf)) {
-        status_set(status, InitStateSetupPolicyRouting,
-                   "tun interface not ready; policy routing deferred");
-        mark_bool(status, &status->policyRoutingReady, true);
-        return true;
+        mark_bool(status, &status->policyRoutingReady, false);
+        status_fail(status, "tun interface is not ready for policy routing");
+        return false;
     }
 
     if (!iface_exists(config, config->bridge)) {
@@ -784,27 +841,172 @@ static bool setup_policy_routing(Config *config, AppStatus *status) {
         return false;
     }
 
-    if (!shell_ok(config, "failed to add tun policy rule",
-                  "ip rule del iif %s table %d 2>/dev/null || true; "
-                  "ip rule add iif %s table %d",
-                  config->tunIf, config->tunTable,
-                  config->tunIf, config->tunTable)) {
-        status_fail(status, "failed to add tun policy rule");
-        mark_bool(status, &status->policyRoutingReady, false);
-        return false;
-    }
-
-    if (!shell_ok(config, "failed to add bridge policy rule",
-                  "ip rule del iif %s table %d 2>/dev/null || true; "
-                  "ip rule add iif %s table %d",
-                  config->bridge, config->bridgeTable,
-                  config->bridge, config->bridgeTable)) {
-        status_fail(status, "failed to add bridge policy rule");
+    if (!ensure_policy_rule(config, config->tunIf, config->tunTable,
+                             TUN_RULE_PRIORITY) ||
+        !ensure_policy_rule(config, config->bridge, config->bridgeTable,
+                             BRIDGE_RULE_PRIORITY)) {
+        status_fail(status, "failed to configure policy rules");
         mark_bool(status, &status->policyRoutingReady, false);
         return false;
     }
 
     mark_bool(status, &status->policyRoutingReady, true);
+    return true;
+}
+
+static bool interface_up(Config *config, const char *iface) {
+
+    return shell_ok(config, "interface is not up",
+                    "ip -o link show dev %s | "
+                    "grep -Eq '<([^>]*,)?UP[,>]'", iface);
+}
+
+static bool check_policy_rule(Config *config, const char *iface,
+                              int table, int priority) {
+
+    return shell_ok(config, "policy rule is unavailable",
+                    "ip -N -4 rule show priority %d | "
+                    "awk 'NF {n++; if ($1 != \"%d:\" || "
+                    "$2 != \"from\" || $3 != \"all\" || "
+                    "$4 != \"iif\" || $5 != \"%s\" || "
+                    "$6 != \"lookup\" || $7 != \"%d\" || NF != 7) "
+                    "bad=1} END {exit n != 1 || bad}'",
+                    priority, priority, iface, table);
+}
+
+static bool check_policy_routing(Config *config) {
+
+    if (!config->enablePolicyRouting) return true;
+
+    if (!check_policy_rule(config, config->tunIf, config->tunTable,
+                            TUN_RULE_PRIORITY) ||
+        !check_policy_rule(config, config->bridge, config->bridgeTable,
+                            BRIDGE_RULE_PRIORITY)) return false;
+
+    return shell_ok(config, "policy routes are unavailable",
+                    "ip -4 route show table %d exact default | "
+                    "awk '$1 == \"default\" && $2 == \"via\" && "
+                    "$3 == \"%s\" && $4 == \"dev\" && $5 == \"%s\" "
+                    "{found=1} END {exit !found}' && "
+                    "ip -4 route show table %d exact %s | "
+                    "awk '$1 == \"%s\" && $2 == \"dev\" && $3 == \"%s\" "
+                    "{found=1} END {exit !found}'",
+                    config->tunTable, config->gatewayIp, config->bridge,
+                    config->bridgeTable, config->ueCidr,
+                    config->ueCidr, config->tunIf);
+}
+
+static bool check_baseline(Config *config) {
+
+    if (!shell_ok(config, "baseline NORMAL rule is unavailable",
+                  "ovs-ofctl -O %s dump-flows %s "
+                  "'table=0,cookie=%s/-1' | grep -q 'actions=NORMAL'",
+                  config->openflow, config->bridge, BASE_FLOW_COOKIE)) {
+        return false;
+    }
+    if (!config->defaultDrop) return true;
+
+    return shell_ok(config, "baseline UE drop rules are unavailable",
+                    "ovs-ofctl -O %s dump-flows %s "
+                    "'table=0,cookie=0x554b414d00000001/-1,ip,nw_src=%s' "
+                    "| grep -q 'actions=drop' && "
+                    "ovs-ofctl -O %s dump-flows %s "
+                    "'table=0,cookie=0x554b414d00000002/-1,ip,nw_dst=%s' "
+                    "| grep -q 'actions=drop'",
+                    config->openflow, config->bridge, config->ueCidr,
+                    config->openflow, config->bridge, config->ueCidr);
+}
+
+static bool check_gateway(Config *config) {
+
+    if (!config->gatewayEnable) return true;
+    if (!interface_up(config, config->gatewayBridgeIf)) return false;
+
+    if (!shell_ok(config, "gateway port is not on the configured bridge",
+                  "test \"$(ovs-vsctl port-to-br %s)\" = \"%s\"",
+                  config->gatewayBridgeIf, config->bridge)) return false;
+
+    if (strcmp(config->gatewayMode, "netns") == 0) {
+        return shell_ok(config, "gateway namespace interface is down",
+                        "ip -n %s -o link show dev %s | "
+                        "grep -Eq '<([^>]*,)?UP[,>]'",
+                        config->gatewayName, config->gatewayNamespaceIf);
+    }
+
+    if (!interface_up(config, config->gatewayNamespaceIf)) return false;
+    return shell_ok(config, "gateway return route is unavailable",
+                    "ip -4 route show table main exact %s | "
+                    "awk '$1 == \"%s\" && $2 == \"via\" && $3 == \"%s\" && "
+                    "$4 == \"dev\" && $5 == \"%s\" "
+                    "{found=1} END {exit !found}'",
+                    config->ueCidr, config->ueCidr, config->bridgeAddr,
+                    config->gatewayNamespaceIf);
+}
+
+static bool check_network(Config *config, char *reason, size_t reasonSize) {
+
+    const char *error = NULL;
+
+    if (!ovs_is_running(config)) {
+        error = "ovs is not running";
+    } else if (!interface_up(config, config->bridge)) {
+        error = "ovs bridge is unavailable or down";
+    } else if ((config->tunEnable || config->enablePolicyRouting) &&
+               (!tun_exists(config) ||
+                !interface_up(config, config->tunIf))) {
+        error = "persistent tun interface is unavailable or down";
+    } else if (!check_baseline(config)) {
+        error = "baseline OVS flows are unavailable";
+    } else if (!check_gateway(config)) {
+        error = "gateway path is unavailable";
+    } else if (!check_policy_routing(config)) {
+        error = "tun/bridge policy routing is unavailable";
+    } else if (config->enableIpForward &&
+               !shell_ok(config, "ip forwarding is disabled",
+                         "test \"$(sysctl -n net.ipv4.ip_forward)\" = 1")) {
+        error = "ip forwarding is disabled";
+    } else if (config->enableNat &&
+               !shell_ok(config, "UE NAT rule is unavailable",
+                         "iptables -t nat -C POSTROUTING "
+                         "-s %s -o %s -j MASQUERADE",
+                         config->ueCidr, config->externalIf)) {
+        error = "UE NAT rule is unavailable";
+    }
+
+    snprintf(reason, reasonSize, "%s", error ? error : "ready");
+    return error == NULL;
+}
+
+bool ovs_check(Config *config, char *reason, size_t reasonSize) {
+
+    bool ok;
+
+    if (config == NULL || reason == NULL || reasonSize == 0) return false;
+
+    pthread_mutex_lock(&networkMutex);
+    ok = check_network(config, reason, reasonSize);
+    pthread_mutex_unlock(&networkMutex);
+    return ok;
+}
+
+static bool configure_network(Config *config, AppStatus *status) {
+
+    char reason[STATUS_REASON_LEN];
+
+    if (!setup_epc_aliases(config, status)) return false;
+    if (!setup_tun(config, status))         return false;
+    if (!setup_bridge(config, status))      return false;
+    if (!setup_flows(config, status))       return false;
+    if (!setup_forwarding(config, status))  return false;
+    if (!setup_gateway(config, status))     return false;
+    if (!setup_policy_routing(config, status)) return false;
+
+    if (!check_network(config, reason, sizeof(reason))) {
+        status_fail(status, reason);
+        return false;
+    }
+
+    status_set(status, InitStateReady, "ready");
     return true;
 }
 
@@ -814,37 +1016,21 @@ bool ovs_reconcile(Config *config, AppStatus *status) {
 
     if (config == NULL || status == NULL) return false;
 
-    ok = true;
-
-    if (!setup_forwarding(config, status)) ok = false;
-    if (ok && !setup_gateway(config, status)) ok = false;
-    if (ok && !setup_flows(config, status)) ok = false;
-    if (ok && !setup_policy_routing(config, status)) ok = false;
-
-    if (ok) {
-        status_set(status, InitStateReady, "ready");
-    }
-
+    pthread_mutex_lock(&networkMutex);
+    ok = configure_network(config, status);
+    pthread_mutex_unlock(&networkMutex);
     return ok;
 }
 
 bool ovs_setup(Config *config, AppStatus *status) {
 
+    bool ok;
+
     if (config == NULL || status == NULL) return false;
 
-    if (!check_tools(config, status))       return false;
-    if (!start_ovs(config, status))         return false;
-    if (!setup_epc_aliases(config, status)) return false;
-    if (!setup_tun(config, status))         return false;
-    if (!setup_bridge(config, status))      return false;
-    if (!setup_forwarding(config, status))  return false;
-    if (!setup_gateway(config, status))     return false;
-    if (!setup_flows(config, status))       return false;
-
-    if (config->enablePolicyRouting && iface_exists(config, config->tunIf)) {
-        if (!setup_policy_routing(config, status)) return false;
-    }
-
-    status_set(status, InitStateReady, "ready");
-    return true;
+    pthread_mutex_lock(&networkMutex);
+    ok = check_tools(status) && start_ovs(config, status);
+    if (ok) ok = configure_network(config, status);
+    pthread_mutex_unlock(&networkMutex);
+    return ok;
 }
