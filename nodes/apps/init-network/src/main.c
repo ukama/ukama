@@ -161,7 +161,11 @@ int main(int argc, char **argv) {
 
     while (!gTerminate) {
         sleep(OVS_HEALTH_INTERVAL_SEC);
-        if (!initialized || gTerminate) continue;
+        if (gTerminate) continue;
+        if (!initialized) {
+            if (!status_is_ready(&status)) continue;
+            initialized = true;
+        }
 
         if (ovs_check(&config, healthReason, sizeof(healthReason))) {
             if (healthFailures > 0) {

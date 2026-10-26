@@ -10,7 +10,6 @@
 #define TUN_H_
 
 int tun_create(const char *name);
-int tun_configure(const char *name, const char *addr);
 void tun_close(int fd);
 
 #endif /* TUN_H_ */
