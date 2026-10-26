@@ -208,11 +208,6 @@ int main(int argc, char **argv) {
             pthread_mutex_unlock(&ctx.serviceMutex);
         }
 
-        if (!init_network_reconcile(&config, &status)) {
-            wait_before_startup_retry();
-            continue;
-        }
-
         status_set(&status, EpcemuStateReady, "none");
         break;
     }

@@ -41,21 +41,42 @@ static int json_bool_path(JsonObj *root,
 
 static int reconcile_response_ok(JsonObj *root) {
 
-    int value;
+    int tunReady;
+    int routingReady;
 
-    if (root == NULL) return USYS_FALSE;
+    tunReady = USYS_FALSE;
+    routingReady = USYS_FALSE;
 
-    value = USYS_FALSE;
-    if (json_bool_path(root, "steps", "policyRoutingReady", &value)) {
-        return value;
-    }
+    return root != NULL &&
+           json_is_true(json_object_get(root, "ready")) &&
+           json_bool_path(root, "steps", "tunReady", &tunReady) &&
+           json_bool_path(root, "steps", "policyRoutingReady",
+                           &routingReady) && tunReady && routingReady;
+}
 
-    value = USYS_FALSE;
-    if (json_bool_path(root, "routing", "policyRouting", &value)) {
-        return value;
-    }
+static int read_tun_config(JsonObj *root, EpcemuConfig *config) {
 
-    return json_is_true(json_object_get(root, "ready"));
+    JsonObj *tun;
+    JsonObj *enabled;
+    const char *name;
+    const char *addr;
+
+    tun = json_object_get(root, "tun");
+    if (!json_is_object(tun)) return USYS_FALSE;
+
+    name = json_string_value(json_object_get(tun, "interface"));
+    addr = json_string_value(json_object_get(tun, "primaryCidr"));
+    enabled = json_object_get(tun, "enabled");
+    if (name == NULL || addr == NULL || !json_is_boolean(enabled) ||
+        name[0] == '\0' || addr[0] == '\0' ||
+        strlen(name) >= sizeof(config->tunName) ||
+        strlen(addr) >= sizeof(config->tunAddr)) return USYS_FALSE;
+
+    snprintf(config->tunName, sizeof(config->tunName), "%s", name);
+    snprintf(config->tunAddr, sizeof(config->tunAddr), "%s", addr);
+    config->initNetworkRouted = reconcile_response_ok(root);
+
+    return json_is_true(enabled) && config->initNetworkRouted;
 }
 
 int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
@@ -73,6 +94,7 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
     root = NULL;
     code = 0;
     config->initNetworkReady = false;
+    config->initNetworkRouted = false;
 
     status_set(status, EpcemuStateCheckingInitNetwork,
                "checking init-network");
@@ -140,6 +162,13 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
         status_set(status,
                    EpcemuStateCheckingInitNetwork,
                    "waiting for init-network UE CIDR");
+        return USYS_FALSE;
+    }
+
+    if (!read_tun_config(root, config)) {
+        json_decref(root);
+        status_set(status, EpcemuStateCheckingInitNetwork,
+                   "waiting for init-network TUN configuration");
         return USYS_FALSE;
     }
 
