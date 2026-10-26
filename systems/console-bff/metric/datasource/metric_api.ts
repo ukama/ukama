@@ -17,7 +17,7 @@ class MetricAPI extends BaseRESTDataSource {
     baseURL: string,
     args: GetNodeLatestMetricInput
   ): Promise<NodeLatestMetric> => {
-    this.logger.info(
+    this.logger.debug(
       `GetNodeLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${args.type}`
     );
     this.baseURL = baseURL;
@@ -39,7 +39,7 @@ class MetricAPI extends BaseRESTDataSource {
     baseURL: string,
     type: string
   ): Promise<{ type: string; value: [number, number]; success: boolean }> => {
-    this.logger.info(
+    this.logger.debug(
       `GetLatestMetric [GET]: ${baseURL}/${VERSION}/${METRICS}/${type}`
     );
     this.baseURL = baseURL;
@@ -68,7 +68,7 @@ class MetricAPI extends BaseRESTDataSource {
     nodeId: string
   ): Promise<{ type: string; value: [number, number]; success: boolean }> => {
     const path = `/${VERSION}/last/${METRICS}/${type}?node=${nodeId}&fn=last&lookback=${MetricAPI.LAST_LOOKBACK}`;
-    this.logger.info(`GetNodeLast [GET]: ${baseURL}${path}`);
+    this.logger.debug(`GetNodeLast [GET]: ${baseURL}${path}`);
     this.baseURL = baseURL;
     return this.get(path).then(raw => {
       const res = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -104,7 +104,7 @@ class MetricAPI extends BaseRESTDataSource {
     const to = Math.floor(Date.now() / 1000);
     const from = to - MetricAPI.LATEST_LOOKBACK;
     const path = `/${VERSION}/nodes/${nodeId}/${METRICS}/${type}?from=${from}&to=${to}&step=${MetricAPI.LATEST_STEP}`;
-    this.logger.info(`GetNodeLatest [GET]: ${baseURL}${path}`);
+    this.logger.debug(`GetNodeLatest [GET]: ${baseURL}${path}`);
     this.baseURL = baseURL;
     return this.get(path).then(res => {
       const values = res?.data?.result?.[0]?.values as

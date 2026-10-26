@@ -9,21 +9,33 @@
 package grpc
 
 import (
+	"context"
 	"fmt"
 	"net"
+	"runtime/debug"
 
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
+	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	grpc_validator "github.com/grpc-ecosystem/go-grpc-middleware/validator"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 	"github.com/ukama/ukama/systems/common/metrics"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
+
+// logPanic logs a recovered handler panic and its stack trace via logrus,
+// instead of relying on raw stderr capture, before returning a clean error.
+func logPanic(ctx context.Context, p interface{}) error {
+	log.Errorf("panic recovered in gRPC handler: %v\n%s", p, debug.Stack())
+	return status.Errorf(codes.Internal, "internal error")
+}
 
 // Basic GrpcServer with the set of middlewares
 type UkamaGrpcServer struct {
@@ -64,7 +76,10 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	if g.config.MaxMsgSize == 0 {
 		g.config.MaxMsgSize = 4194304
 	}
+	recoveryOpt := grpc_recovery.WithRecoveryHandlerContext(logPanic)
+
 	sInterc := []grpc.StreamServerInterceptor{
+		grpc_recovery.StreamServerInterceptor(recoveryOpt),
 		grpc_logrus.StreamServerInterceptor(logrusEntry),
 		grpc_prometheus.StreamServerInterceptor,
 		grpc_validator.StreamServerInterceptor(),
@@ -72,6 +87,7 @@ func (g *UkamaGrpcServer) startServerInternal(listener net.Listener) {
 	sInterc = append(sInterc, g.ExtraStreamInterceptors...)
 
 	uInterc := []grpc.UnaryServerInterceptor{
+		grpc_recovery.UnaryServerInterceptor(recoveryOpt),
 		grpc_logrus.UnaryServerInterceptor(logrusEntry),
 		grpc_prometheus.UnaryServerInterceptor,
 		grpc_validator.UnaryServerInterceptor(),

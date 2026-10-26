@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 
 #include "runtime.h"
+#include "runtime_hardware.h"
 #include "node_provider.h"
 #include "log.h"
 #include "util.h"
@@ -31,6 +32,11 @@ static int run_script(runtime_t *rt,
     int rc;
     int n;
     unsigned long invocation;
+
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg), "virtual script %s is unavailable on hardware", name);
+        return ULAB_ERR;
+    }
 
     if (rt->execute != NULL) {
         return rt->execute(rt->execute_ctx, name, args, err);
@@ -425,6 +431,7 @@ int runtime_init(runtime_t *rt,
 }
 
 void runtime_close(runtime_t *rt) {
+    if (rt) hardware_runtime_close(rt);
     if (rt && rt->logf) {
         fclose(rt->logf);
         rt->logf = NULL;
@@ -436,6 +443,8 @@ int runtime_ensure_network(runtime_t *rt, ulab_error_t *err) {
 
     char args[ULAB_MAX_ARGS];
     int rc;
+
+    if (runtime_is_hardware(rt)) return ULAB_OK;
 
     rc = snprintf(args, sizeof(args), "%s", rt->run_dir);
     if (rc < 0 || (size_t)rc >= sizeof(args)) {
@@ -565,6 +574,7 @@ int runtime_build_and_start_sites(const char *repo,
                                   runtime_t *rt,
                                   world_t *w,
                                   ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return hardware_runtime_power(rt, 1, err);
     (void)repo;
 
     if (node_provider_build(rt, w, err)) {
@@ -577,6 +587,10 @@ int runtime_build_and_start_sites(const char *repo,
 int runtime_wait_nodes_ready(runtime_t *rt, const world_t *w,
                              const selector_result_t *nodes,
                              ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg), "hardware node readiness requires backend observation");
+        return ULAB_ERR;
+    }
     return node_provider_wait_ready(rt, w, nodes, err);
 }
 
@@ -635,6 +649,8 @@ int runtime_wait_service_state(runtime_t *rt, const world_t *w,
                                int enabled, ulab_error_t *err) {
     size_t i;
 
+    if (runtime_is_hardware(rt)) return hardware_runtime_healthy(rt, err);
+
     if (rt == NULL || w == NULL || sites == NULL) {
         return ULAB_OK;
     }
@@ -672,6 +688,8 @@ int runtime_ensure_media(runtime_t *rt, ulab_error_t *err) {
 
     char args[ULAB_MAX_ARGS];
     int rc;
+
+    if (runtime_is_hardware(rt)) return hardware_runtime_media(rt, 1, err);
 
     if (rt->repo[0] == '\0') {
         snprintf(err->msg, sizeof(err->msg),
@@ -714,6 +732,9 @@ int runtime_build_and_start_ues(const char *repo,
                                 ulab_error_t *err) {
     size_t i;
     const char *repo_path;
+
+    if (runtime_is_hardware(rt))
+        return hardware_runtime_ues(rt, w, ues, "start", 0, err);
 
     repo_path = (repo != NULL && repo[0] != '\0') ? repo : rt->repo;
     if (repo_path == NULL || repo_path[0] == '\0') {
@@ -778,6 +799,16 @@ int runtime_wait_ues_attached(runtime_t *rt,
                               ulab_error_t *err) {
     size_t i;
 
+    if (runtime_is_hardware(rt)) {
+        uint32_t timeout = 90;
+        const char *value = getenv("ULAB_UE_ATTACH_TIMEOUT");
+        if (value && (ulab_parse_u32(value, &timeout) || timeout == 0 || timeout > 300)) {
+            snprintf(err->msg, sizeof(err->msg), "invalid hardware UE wait timeout");
+            return ULAB_ERR;
+        }
+        return hardware_runtime_wait(rt, w, ues, 1, timeout, err);
+    }
+
     for (i = 0; i < ues->count; i++) {
         ue_t *ue = &w->ues[ues->idx[i]];
         char args[4096];
@@ -805,6 +836,16 @@ int runtime_wait_ues_detached(runtime_t *rt,
                               const selector_result_t *ues,
                               ulab_error_t *err) {
     size_t i;
+
+    if (runtime_is_hardware(rt)) {
+        uint32_t timeout = 90;
+        const char *value = getenv("ULAB_UE_DETACH_TIMEOUT");
+        if (value && (ulab_parse_u32(value, &timeout) || timeout == 0 || timeout > 300)) {
+            snprintf(err->msg, sizeof(err->msg), "invalid hardware UE wait timeout");
+            return ULAB_ERR;
+        }
+        return hardware_runtime_wait(rt, w, ues, 0, timeout, err);
+    }
 
     for (i = 0; i < ues->count; i++) {
         ue_t *ue;
@@ -835,6 +876,8 @@ int runtime_verify_ue_sessions(runtime_t *rt,
                                ulab_error_t *err) {
     size_t i;
 
+    if (runtime_is_hardware(rt)) return hardware_runtime_sessions(rt, w, ues, err);
+
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue;
         char args[ULAB_MAX_ARGS];
@@ -861,6 +904,11 @@ int runtime_verify_ue_policy_blocks(runtime_t *rt,
                                     const selector_result_t *ues,
                                     ulab_error_t *err) {
     size_t i;
+
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg), "hardware policy-block observation is not available in this build");
+        return ULAB_ERR;
+    }
 
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue;
@@ -890,6 +938,8 @@ int runtime_generate_traffic(runtime_t *rt,
                              uint64_t amount_mb,
                              ulab_error_t *err) {
     size_t i;
+
+    if (runtime_is_hardware(rt)) return hardware_runtime_ues(rt, w, ues, "uplink", amount_mb, err);
 
     for (i = 0; i < ues->count; i++) {
         const ue_t *ue = &w->ues[ues->idx[i]];
@@ -1101,6 +1151,7 @@ int runtime_detach_selected_ues(runtime_t *rt,
                                 world_t *w,
                                 const selector_result_t *ues,
                                 ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return hardware_runtime_cleanup_ues(rt, w, ues, err);
     return runtime_selected_ue_script(rt, w, ues, "detach-ue.sh",
                                       "UE detach", 1, err);
 }
@@ -1109,15 +1160,18 @@ int runtime_cleanup_selected_ues(runtime_t *rt,
                                  world_t *w,
                                  const selector_result_t *ues,
                                  ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return ULAB_OK; /* No UE containers to remove. */
     return runtime_selected_ue_script(rt, w, ues, "cleanup-ue.sh",
                                       "UE cleanup", 1, err);
 }
 
 int runtime_detach_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return hardware_runtime_cleanup_ues(rt, w, NULL, err);
     return runtime_all_ue_script(rt, w, "detach-ue.sh", "UE detach", err);
 }
 
 int runtime_cleanup_ues(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return ULAB_OK; /* No UE containers to remove. */
     return runtime_all_ue_script(rt, w, "cleanup-ue.sh", "UE cleanup", err);
 }
 
@@ -1157,6 +1211,7 @@ static int runtime_collect_diagnostics(runtime_t *rt,
 int runtime_collect_cdr_diagnostics(runtime_t *rt,
                                     const world_t *w,
                                     ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return ULAB_OK;
     if (!env_enabled("ULAB_CDR_DIAG_ENABLE")) {
         return ULAB_OK;
     }
@@ -1170,6 +1225,7 @@ int runtime_collect_cdr_diagnostics(runtime_t *rt,
 int runtime_collect_failure_logs(runtime_t *rt,
                                  const world_t *w,
                                  ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return ULAB_OK; /* rack.log and rack-ssh.log are retained. */
     return runtime_collect_diagnostics(rt, w,
                                        "collect-failure-logs.sh",
                                        "failure-diagnostics", "DIAG",
@@ -1251,6 +1307,7 @@ int runtime_virtual_cleanup_infra(runtime_t *rt, const world_t *w,
 }
 
 int runtime_cleanup_infra(runtime_t *rt, const world_t *w, ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) return hardware_runtime_cleanup(rt, err);
     return node_provider_cleanup(rt, w, err);
 }
 
@@ -1301,6 +1358,10 @@ int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err) {
 }
 
 int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg), "simulated node state is unavailable on hardware");
+        return ULAB_ERR;
+    }
     (void)err;
     rt->node_offline = 1;
     ulab_status("NODE", "marked offline");
@@ -1308,6 +1369,10 @@ int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err) {
 }
 
 int runtime_restore_nodes(runtime_t *rt, ulab_error_t *err) {
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg), "simulated node state is unavailable on hardware");
+        return ULAB_ERR;
+    }
     (void)err;
     rt->node_offline = 0;
     rt->service_enabled = 1;

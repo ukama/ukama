@@ -23,8 +23,8 @@ class ComponentApi extends BaseRESTDataSource {
     headers: THeaders,
     category: string
   ): Promise<ComponentsResDto> => {
-    this.logger.info(
-      `GetComponentByUserId [GET]: ${this.baseURL}/${VERSION}/user/${headers.userId}?category=${category}`
+    this.logger.debug(
+      `GetComponentsByUserId [GET]: ${this.baseURL}/${VERSION}/components/user/${headers.userId}?category=${category}`
     );
     const response = await this.get<ComponentsAPIResDto>(
       `/${VERSION}/components/user/${headers.userId}?category=${category}`
@@ -33,7 +33,7 @@ class ComponentApi extends BaseRESTDataSource {
   };
 
   getComponentById = async (componentId: string): Promise<ComponentDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetComponentById [GET]: ${this.baseURL}/${VERSION}/components/${componentId}`
     );
     const response = await this.get<ComponentAPIDto>(

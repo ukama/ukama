@@ -14,7 +14,7 @@ class OrgApi extends BaseRESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getOrgs = async (userId: string): Promise<OrgsResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetOrgs [GET]: ${this.baseURL}/${VERSION}/orgs?user_uuid=${userId}`
     );
     return this.get(`/${VERSION}/orgs?user_uuid=${userId}`).then(res =>
@@ -23,7 +23,7 @@ class OrgApi extends BaseRESTDataSource {
   };
 
   getOrg = async (orgName: string): Promise<OrgDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetOrg [GET]: ${this.baseURL}/${VERSION}/orgs/${orgName}`
     );
     return this.get(`/${VERSION}/orgs/${orgName}`).then(res =>

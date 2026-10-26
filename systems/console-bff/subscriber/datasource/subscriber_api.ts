@@ -33,7 +33,7 @@ class SubscriberApi extends BaseRESTDataSource {
     req: SubscriberInputDto
   ): Promise<SubscriberDto> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `AddSubscriber [PUT]: ${this.baseURL}/${VERSION}/${SUBSCRIBER}`
     );
     return this.put(`/${VERSION}/${SUBSCRIBER}`, {
@@ -57,7 +57,7 @@ class SubscriberApi extends BaseRESTDataSource {
     req: UpdateSubscriberInputDto
   ): Promise<CBooleanResponse> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `UpdateSubscriber [PATCH]: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.patch(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`, {
@@ -72,7 +72,7 @@ class SubscriberApi extends BaseRESTDataSource {
     subscriberId: string
   ): Promise<CBooleanResponse> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `DeleteSubscriber [DELETE]: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.delete(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(() => {
@@ -87,7 +87,7 @@ class SubscriberApi extends BaseRESTDataSource {
     subscriberId: string
   ): Promise<SubscriberDto> => {
     this.baseURL = baseURL;
-    this.logger.info(
+    this.logger.debug(
       `GetSubscriber [GET]: ${this.baseURL}/${VERSION}/${SUBSCRIBER}/${subscriberId}`
     );
     return this.get(`/${VERSION}/${SUBSCRIBER}/${subscriberId}`).then(res =>
@@ -111,7 +111,7 @@ class SubscriberApi extends BaseRESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<SubscribersResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSubscribersByNetwork [GET]: ${baseURL}/${VERSION}/${SUBSCRIBER}s/networks/${networkId}`
     );
     this.baseURL = baseURL;
@@ -124,7 +124,7 @@ class SubscriberApi extends BaseRESTDataSource {
     baseURL: string,
     networkId: string
   ): Promise<SubscriberSimsResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetSimsByNetwork [GET]: ${baseURL}/${VERSION}/sims/networks/${networkId}`
     );
     this.baseURL = baseURL;

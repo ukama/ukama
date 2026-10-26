@@ -46,7 +46,6 @@ CFLAGS += -Werror
 CFLAGS += -Wdeclaration-after-statement
 CFLAGS += -O0
 CFLAGS += -std=gnu11
-CFLAGS += -D_POSIX_C_SOURCE=200809L
 CFLAGS += -D_REENTRANT
 
 # Local app headers first.
@@ -90,6 +89,9 @@ src/workload_%.o: CFLAGS += -Wno-declaration-after-statement -O2
 .PHONY: all clean check fmt $(TARGET_EXEC) $(PLATFORM)
 
 all: version.h $(TARGET_EXEC)
+
+# Shared world/runner structs cross translation units; rebuild their consumers.
+$(TARGET_OBJFILES): $(wildcard ./inc/*.h) version.h
 
 $(TARGET_EXEC): $(VENDOR_PKG) $(PLATFORM) $(TARGET_OBJFILES)
 	mkdir -p $(BIN_DIR)

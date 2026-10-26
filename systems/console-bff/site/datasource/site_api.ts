@@ -28,7 +28,7 @@ class SiteApi extends BaseRESTDataSource {
     if (args.networkId) {
       params = params.concat(`network_id=${args.networkId}`);
     }
-    this.logger.info(
+    this.logger.debug(
       `GetSites [GET]: ${baseURL}/${VERSION}/${SITES}?${params}`
     );
     this.baseURL = baseURL;
@@ -39,7 +39,9 @@ class SiteApi extends BaseRESTDataSource {
   };
 
   getSite = async (baseURL: string, siteId: string): Promise<SiteDto> => {
-    this.logger.info(`GetSite [GET]: ${baseURL}/${VERSION}/${SITES}/${siteId}`);
+    this.logger.debug(
+      `GetSite [GET]: ${baseURL}/${VERSION}/${SITES}/${siteId}`
+    );
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/${SITES}/${siteId}`).then(res =>
       dtoToSiteDto(res)
@@ -47,7 +49,7 @@ class SiteApi extends BaseRESTDataSource {
   };
 
   addSite = async (baseURL: string, req: AddSiteInputDto): Promise<SiteDto> => {
-    this.logger.info(`AddSite [POST]: ${baseURL}/${VERSION}/${SITES}`);
+    this.logger.debug(`AddSite [POST]: ${baseURL}/${VERSION}/${SITES}`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/${SITES}`, {
       body: {
@@ -71,7 +73,7 @@ class SiteApi extends BaseRESTDataSource {
     baseURL: string,
     siteId: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `DeleteSite [DELETE]: ${baseURL}/${VERSION}/${SITES}/${siteId}`
     );
     this.baseURL = baseURL;
@@ -87,7 +89,7 @@ class SiteApi extends BaseRESTDataSource {
     siteId: string,
     req: UpdateSiteInputDto
   ): Promise<SiteDto> => {
-    this.logger.info(
+    this.logger.debug(
       `UpdateSite [PATCH]: ${baseURL}/${VERSION}/${SITES}/${siteId}`
     );
     this.baseURL = baseURL;

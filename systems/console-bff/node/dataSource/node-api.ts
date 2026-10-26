@@ -42,7 +42,7 @@ class NodeAPI extends BaseRESTDataSource {
     if (args.state) query.set("state", args.state.toLowerCase());
     if (args.connectivity)
       query.set("connectivity", args.connectivity.toLowerCase());
-    this.logger.info(
+    this.logger.debug(
       `Getting nodes with args: ${baseURL}/${VERSION}/${NODES}/list?${query.toString()}}`
     );
     return this.get(`/${VERSION}/${NODES}/list?${query.toString()}`).then(res =>

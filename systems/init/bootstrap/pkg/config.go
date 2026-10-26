@@ -27,8 +27,15 @@ type Config struct {
 	Lookup           string           `default:"lookup:9090"`
 	DNSMap           []OrgDNS         `mapstructure:"-"`
 	MeshNamespace    string           `default:"messaging"`
+	Mesh             MeshConfig
 	Http             HttpServices
 	Service          *uconf.Service
+}
+
+type MeshConfig struct {
+	KubeQps         int           `default:"20"`
+	KubeBurst       int           `default:"50"`
+	TemplateRefresh time.Duration `default:"5m"`
 }
 
 type OrgDNS struct {

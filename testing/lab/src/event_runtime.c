@@ -10,6 +10,8 @@
 #include "log.h"
 #include "selector.h"
 #include "util.h"
+#include "runtime_hardware.h"
+#include "hardware_observe.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -283,7 +285,8 @@ static int event_finalize_ue_sessions(event_ctx_t *ctx,
 
     rc = runtime_collect_cdr_diagnostics(ctx->runtime, ctx->world, err);
     if (rc == ULAB_OK) {
-        ulab_status("UE", "stop %zu finalized UE container(s)", res.count);
+        if (!runtime_is_hardware(ctx->runtime))
+            ulab_status("UE", "stop %zu finalized UE container(s)", res.count);
         rc = runtime_cleanup_selected_ues(ctx->runtime, ctx->world,
                                           &res, err);
     }
@@ -1100,7 +1103,18 @@ int event_runtime(event_ctx_t *ctx,
 
     case EVT_WAIT_NODES_READY:
         rc = selector_resolve_nodes(ctx->world, &event->nodes, &res, err);
-        if (rc == ULAB_OK) {
+        if (rc == ULAB_OK && runtime_is_hardware(ctx->runtime)) {
+            uint32_t timeout = 300;
+            const char *value = getenv("ULAB_NODE_READY_TIMEOUT_SEC");
+            if (event->amount_mb > 900 ||
+                (event->amount_mb == 0 && value && ulab_parse_u32(value, &timeout))) {
+                snprintf(err->msg, sizeof(err->msg), "invalid hardware node readiness timeout");
+                rc = ULAB_ERR;
+            } else {
+                if (event->amount_mb) timeout = (uint32_t)event->amount_mb;
+                rc = hardware_wait_nodes(ctx->bff, ctx->runtime, ctx->world, &res, timeout, err);
+            }
+        } else if (rc == ULAB_OK) {
             rc = runtime_wait_nodes_ready(ctx->runtime,
                                           ctx->world,
                                           &res,

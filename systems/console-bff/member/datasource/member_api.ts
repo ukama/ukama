@@ -19,13 +19,13 @@ import { dtoToMemberResDto, dtoToMembersResDto } from "./mapper";
 
 class MemberApi extends BaseRESTDataSource {
   getMembers = async (baseURL: string): Promise<MembersResDto> => {
-    this.logger.info(`GetMembers [GET]: ${baseURL}/${VERSION}/members`);
+    this.logger.debug(`GetMembers [GET]: ${baseURL}/${VERSION}/members`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/members`).then(res => dtoToMembersResDto(res));
   };
 
   getMember = async (baseURL: string, id: string): Promise<MemberDto> => {
-    this.logger.info(`GetMember [GET]: ${baseURL}/${VERSION}/members/${id}`);
+    this.logger.debug(`GetMember [GET]: ${baseURL}/${VERSION}/members/${id}`);
     this.baseURL = baseURL;
     return this.get(`/${VERSION}/members/${id}`).then(res =>
       dtoToMemberResDto(res)
@@ -36,7 +36,7 @@ class MemberApi extends BaseRESTDataSource {
     baseURL: string,
     userId: string
   ): Promise<MemberDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetMemberByUserId [GET]: ${baseURL}/${VERSION}/members/user/${userId}`
     );
     this.baseURL = baseURL;
@@ -52,7 +52,7 @@ class MemberApi extends BaseRESTDataSource {
     baseURL: string,
     id: string
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `RemoveMember [DELETE]: ${baseURL}/${VERSION}/members/${id}`
     );
     this.baseURL = baseURL;
@@ -67,7 +67,7 @@ class MemberApi extends BaseRESTDataSource {
     baseURL: string,
     data: AddMemberInputDto
   ): Promise<MemberDto> => {
-    this.logger.info(`AddMember [POST]: ${baseURL}/${VERSION}/members`);
+    this.logger.debug(`AddMember [POST]: ${baseURL}/${VERSION}/members`);
     this.baseURL = baseURL;
     return this.post(`/${VERSION}/members`, {
       body: { user_uuid: data.userId, role: data.role },
@@ -79,7 +79,7 @@ class MemberApi extends BaseRESTDataSource {
     memberId: string,
     req: UpdateMemberInputDto
   ): Promise<CBooleanResponse> => {
-    this.logger.info(
+    this.logger.debug(
       `UpdateMember [PATCH]: ${baseURL}/${VERSION}/members/${memberId}`
     );
     this.baseURL = baseURL;

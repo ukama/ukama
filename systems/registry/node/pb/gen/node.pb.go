@@ -1263,6 +1263,94 @@ func (*ReleaseNodeFromSiteResponse) Descriptor() ([]byte, []int) {
 	return file_node_proto_rawDescGZIP(), []int{25}
 }
 
+type ReleaseSiteRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SiteId        string                 `protobuf:"bytes,1,opt,name=siteId,json=site_id,proto3" json:"siteId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseSiteRequest) Reset() {
+	*x = ReleaseSiteRequest{}
+	mi := &file_node_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseSiteRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseSiteRequest) ProtoMessage() {}
+
+func (x *ReleaseSiteRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseSiteRequest.ProtoReflect.Descriptor instead.
+func (*ReleaseSiteRequest) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *ReleaseSiteRequest) GetSiteId() string {
+	if x != nil {
+		return x.SiteId
+	}
+	return ""
+}
+
+type ReleaseSiteResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeIds       []string               `protobuf:"bytes,1,rep,name=nodeIds,json=node_ids,proto3" json:"nodeIds,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ReleaseSiteResponse) Reset() {
+	*x = ReleaseSiteResponse{}
+	mi := &file_node_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ReleaseSiteResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ReleaseSiteResponse) ProtoMessage() {}
+
+func (x *ReleaseSiteResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_node_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ReleaseSiteResponse.ProtoReflect.Descriptor instead.
+func (*ReleaseSiteResponse) Descriptor() ([]byte, []int) {
+	return file_node_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *ReleaseSiteResponse) GetNodeIds() []string {
+	if x != nil {
+		return x.NodeIds
+	}
+	return nil
+}
+
 type NodeStatus struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Connectivity  ukama.NodeConnectivity `protobuf:"varint,1,opt,name=connectivity,proto3,enum=ukama.common.v1.NodeConnectivity" json:"connectivity,omitempty"`
@@ -1273,7 +1361,7 @@ type NodeStatus struct {
 
 func (x *NodeStatus) Reset() {
 	*x = NodeStatus{}
-	mi := &file_node_proto_msgTypes[26]
+	mi := &file_node_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1285,7 +1373,7 @@ func (x *NodeStatus) String() string {
 func (*NodeStatus) ProtoMessage() {}
 
 func (x *NodeStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[26]
+	mi := &file_node_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1298,7 +1386,7 @@ func (x *NodeStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeStatus.ProtoReflect.Descriptor instead.
 func (*NodeStatus) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{26}
+	return file_node_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *NodeStatus) GetConnectivity() ukama.NodeConnectivity {
@@ -1327,7 +1415,7 @@ type Site struct {
 
 func (x *Site) Reset() {
 	*x = Site{}
-	mi := &file_node_proto_msgTypes[27]
+	mi := &file_node_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1339,7 +1427,7 @@ func (x *Site) String() string {
 func (*Site) ProtoMessage() {}
 
 func (x *Site) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[27]
+	mi := &file_node_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1352,7 +1440,7 @@ func (x *Site) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Site.ProtoReflect.Descriptor instead.
 func (*Site) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{27}
+	return file_node_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *Site) GetNodeId() string {
@@ -1399,7 +1487,7 @@ type Node struct {
 
 func (x *Node) Reset() {
 	*x = Node{}
-	mi := &file_node_proto_msgTypes[28]
+	mi := &file_node_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1411,7 +1499,7 @@ func (x *Node) String() string {
 func (*Node) ProtoMessage() {}
 
 func (x *Node) ProtoReflect() protoreflect.Message {
-	mi := &file_node_proto_msgTypes[28]
+	mi := &file_node_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1424,7 +1512,7 @@ func (x *Node) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Node.ProtoReflect.Descriptor instead.
 func (*Node) Descriptor() ([]byte, []int) {
-	return file_node_proto_rawDescGZIP(), []int{28}
+	return file_node_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *Node) GetId() string {
@@ -1554,7 +1642,11 @@ const file_node_proto_rawDesc = "" +
 	"\x15AddNodeToSiteResponse\"=\n" +
 	"\x1aReleaseNodeFromSiteRequest\x12\x1f\n" +
 	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\"\x1d\n" +
-	"\x1bReleaseNodeFromSiteResponse\"\x85\x01\n" +
+	"\x1bReleaseNodeFromSiteResponse\"5\n" +
+	"\x12ReleaseSiteRequest\x12\x1f\n" +
+	"\x06siteId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\asite_id\"0\n" +
+	"\x13ReleaseSiteResponse\x12\x19\n" +
+	"\anodeIds\x18\x01 \x03(\tR\bnode_ids\"\x85\x01\n" +
 	"\n" +
 	"NodeStatus\x12E\n" +
 	"\fconnectivity\x18\x01 \x01(\x0e2!.ukama.common.v1.NodeConnectivityR\fconnectivity\x120\n" +
@@ -1573,7 +1665,7 @@ const file_node_proto_rawDesc = "" +
 	"\x04site\x18\x06 \x01(\v2\x1c.ukama.registry.node.v1.SiteR\x04site\x128\n" +
 	"\battached\x18\a \x03(\v2\x1c.ukama.registry.node.v1.NodeR\battached\x12\x1a\n" +
 	"\blatitude\x18\b \x01(\tR\blatitude\x12\x1c\n" +
-	"\tlongitude\x18\t \x01(\tR\tlongitude2\xb1\v\n" +
+	"\tlongitude\x18\t \x01(\tR\tlongitude2\x99\f\n" +
 	"\vNodeService\x12]\n" +
 	"\bGetNodes\x12'.ukama.registry.node.v1.GetNodesRequest\x1a(.ukama.registry.node.v1.GetNodesResponse\x12Z\n" +
 	"\aGetNode\x12&.ukama.registry.node.v1.GetNodeRequest\x1a'.ukama.registry.node.v1.GetNodeResponse\x12f\n" +
@@ -1591,7 +1683,8 @@ const file_node_proto_rawDesc = "" +
 	"\n" +
 	"DetachNode\x12).ukama.registry.node.v1.DetachNodeRequest\x1a*.ukama.registry.node.v1.DetachNodeResponse\x12l\n" +
 	"\rAddNodeToSite\x12,.ukama.registry.node.v1.AddNodeToSiteRequest\x1a-.ukama.registry.node.v1.AddNodeToSiteResponse\x12~\n" +
-	"\x13ReleaseNodeFromSite\x122.ukama.registry.node.v1.ReleaseNodeFromSiteRequest\x1a3.ukama.registry.node.v1.ReleaseNodeFromSiteResponseB5Z3github.com/ukama/ukama/systems/registry/node/pb/genb\x06proto3"
+	"\x13ReleaseNodeFromSite\x122.ukama.registry.node.v1.ReleaseNodeFromSiteRequest\x1a3.ukama.registry.node.v1.ReleaseNodeFromSiteResponse\x12f\n" +
+	"\vReleaseSite\x12*.ukama.registry.node.v1.ReleaseSiteRequest\x1a+.ukama.registry.node.v1.ReleaseSiteResponseB5Z3github.com/ukama/ukama/systems/registry/node/pb/genb\x06proto3"
 
 var (
 	file_node_proto_rawDescOnce sync.Once
@@ -1605,7 +1698,7 @@ func file_node_proto_rawDescGZIP() []byte {
 	return file_node_proto_rawDescData
 }
 
-var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
+var file_node_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_node_proto_goTypes = []any{
 	(*AddNodeRequest)(nil),              // 0: ukama.registry.node.v1.AddNodeRequest
 	(*AddNodeResponse)(nil),             // 1: ukama.registry.node.v1.AddNodeResponse
@@ -1633,31 +1726,33 @@ var file_node_proto_goTypes = []any{
 	(*AddNodeToSiteResponse)(nil),       // 23: ukama.registry.node.v1.AddNodeToSiteResponse
 	(*ReleaseNodeFromSiteRequest)(nil),  // 24: ukama.registry.node.v1.ReleaseNodeFromSiteRequest
 	(*ReleaseNodeFromSiteResponse)(nil), // 25: ukama.registry.node.v1.ReleaseNodeFromSiteResponse
-	(*NodeStatus)(nil),                  // 26: ukama.registry.node.v1.NodeStatus
-	(*Site)(nil),                        // 27: ukama.registry.node.v1.Site
-	(*Node)(nil),                        // 28: ukama.registry.node.v1.Node
-	(ukama.NodeConnectivity)(0),         // 29: ukama.common.v1.NodeConnectivity
-	(ukama.NodeState)(0),                // 30: ukama.common.v1.NodeState
-	(*timestamppb.Timestamp)(nil),       // 31: google.protobuf.Timestamp
+	(*ReleaseSiteRequest)(nil),          // 26: ukama.registry.node.v1.ReleaseSiteRequest
+	(*ReleaseSiteResponse)(nil),         // 27: ukama.registry.node.v1.ReleaseSiteResponse
+	(*NodeStatus)(nil),                  // 28: ukama.registry.node.v1.NodeStatus
+	(*Site)(nil),                        // 29: ukama.registry.node.v1.Site
+	(*Node)(nil),                        // 30: ukama.registry.node.v1.Node
+	(ukama.NodeConnectivity)(0),         // 31: ukama.common.v1.NodeConnectivity
+	(ukama.NodeState)(0),                // 32: ukama.common.v1.NodeState
+	(*timestamppb.Timestamp)(nil),       // 33: google.protobuf.Timestamp
 }
 var file_node_proto_depIdxs = []int32{
-	28, // 0: ukama.registry.node.v1.AddNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	29, // 1: ukama.registry.node.v1.ListRequest.connectivity:type_name -> ukama.common.v1.NodeConnectivity
-	30, // 2: ukama.registry.node.v1.ListRequest.state:type_name -> ukama.common.v1.NodeState
-	28, // 3: ukama.registry.node.v1.ListResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	28, // 4: ukama.registry.node.v1.GetNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	28, // 5: ukama.registry.node.v1.GetBySiteResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	28, // 6: ukama.registry.node.v1.GetByNetworkResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	29, // 7: ukama.registry.node.v1.GetNodesByStateRequest.connectivity:type_name -> ukama.common.v1.NodeConnectivity
-	30, // 8: ukama.registry.node.v1.GetNodesByStateRequest.state:type_name -> ukama.common.v1.NodeState
-	28, // 9: ukama.registry.node.v1.GetNodesResponse.nodes:type_name -> ukama.registry.node.v1.Node
-	28, // 10: ukama.registry.node.v1.UpdateNodeResponse.node:type_name -> ukama.registry.node.v1.Node
-	29, // 11: ukama.registry.node.v1.NodeStatus.connectivity:type_name -> ukama.common.v1.NodeConnectivity
-	30, // 12: ukama.registry.node.v1.NodeStatus.state:type_name -> ukama.common.v1.NodeState
-	31, // 13: ukama.registry.node.v1.Site.addedAt:type_name -> google.protobuf.Timestamp
-	26, // 14: ukama.registry.node.v1.Node.status:type_name -> ukama.registry.node.v1.NodeStatus
-	27, // 15: ukama.registry.node.v1.Node.site:type_name -> ukama.registry.node.v1.Site
-	28, // 16: ukama.registry.node.v1.Node.attached:type_name -> ukama.registry.node.v1.Node
+	30, // 0: ukama.registry.node.v1.AddNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	31, // 1: ukama.registry.node.v1.ListRequest.connectivity:type_name -> ukama.common.v1.NodeConnectivity
+	32, // 2: ukama.registry.node.v1.ListRequest.state:type_name -> ukama.common.v1.NodeState
+	30, // 3: ukama.registry.node.v1.ListResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	30, // 4: ukama.registry.node.v1.GetNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	30, // 5: ukama.registry.node.v1.GetBySiteResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	30, // 6: ukama.registry.node.v1.GetByNetworkResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	31, // 7: ukama.registry.node.v1.GetNodesByStateRequest.connectivity:type_name -> ukama.common.v1.NodeConnectivity
+	32, // 8: ukama.registry.node.v1.GetNodesByStateRequest.state:type_name -> ukama.common.v1.NodeState
+	30, // 9: ukama.registry.node.v1.GetNodesResponse.nodes:type_name -> ukama.registry.node.v1.Node
+	30, // 10: ukama.registry.node.v1.UpdateNodeResponse.node:type_name -> ukama.registry.node.v1.Node
+	31, // 11: ukama.registry.node.v1.NodeStatus.connectivity:type_name -> ukama.common.v1.NodeConnectivity
+	32, // 12: ukama.registry.node.v1.NodeStatus.state:type_name -> ukama.common.v1.NodeState
+	33, // 13: ukama.registry.node.v1.Site.addedAt:type_name -> google.protobuf.Timestamp
+	28, // 14: ukama.registry.node.v1.Node.status:type_name -> ukama.registry.node.v1.NodeStatus
+	29, // 15: ukama.registry.node.v1.Node.site:type_name -> ukama.registry.node.v1.Site
+	30, // 16: ukama.registry.node.v1.Node.attached:type_name -> ukama.registry.node.v1.Node
 	5,  // 17: ukama.registry.node.v1.NodeService.GetNodes:input_type -> ukama.registry.node.v1.GetNodesRequest
 	4,  // 18: ukama.registry.node.v1.NodeService.GetNode:input_type -> ukama.registry.node.v1.GetNodeRequest
 	7,  // 19: ukama.registry.node.v1.NodeService.GetNodesForSite:input_type -> ukama.registry.node.v1.GetBySiteRequest
@@ -1672,22 +1767,24 @@ var file_node_proto_depIdxs = []int32{
 	20, // 28: ukama.registry.node.v1.NodeService.DetachNode:input_type -> ukama.registry.node.v1.DetachNodeRequest
 	22, // 29: ukama.registry.node.v1.NodeService.AddNodeToSite:input_type -> ukama.registry.node.v1.AddNodeToSiteRequest
 	24, // 30: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:input_type -> ukama.registry.node.v1.ReleaseNodeFromSiteRequest
-	12, // 31: ukama.registry.node.v1.NodeService.GetNodes:output_type -> ukama.registry.node.v1.GetNodesResponse
-	6,  // 32: ukama.registry.node.v1.NodeService.GetNode:output_type -> ukama.registry.node.v1.GetNodeResponse
-	8,  // 33: ukama.registry.node.v1.NodeService.GetNodesForSite:output_type -> ukama.registry.node.v1.GetBySiteResponse
-	10, // 34: ukama.registry.node.v1.NodeService.GetNodesForNetwork:output_type -> ukama.registry.node.v1.GetByNetworkResponse
-	12, // 35: ukama.registry.node.v1.NodeService.GetNodesByState:output_type -> ukama.registry.node.v1.GetNodesResponse
-	3,  // 36: ukama.registry.node.v1.NodeService.List:output_type -> ukama.registry.node.v1.ListResponse
-	1,  // 37: ukama.registry.node.v1.NodeService.AddNode:output_type -> ukama.registry.node.v1.AddNodeResponse
-	15, // 38: ukama.registry.node.v1.NodeService.UpdateNodeState:output_type -> ukama.registry.node.v1.UpdateNodeResponse
-	15, // 39: ukama.registry.node.v1.NodeService.UpdateNode:output_type -> ukama.registry.node.v1.UpdateNodeResponse
-	17, // 40: ukama.registry.node.v1.NodeService.DeleteNode:output_type -> ukama.registry.node.v1.DeleteNodeResponse
-	19, // 41: ukama.registry.node.v1.NodeService.AttachNodes:output_type -> ukama.registry.node.v1.AttachNodesResponse
-	21, // 42: ukama.registry.node.v1.NodeService.DetachNode:output_type -> ukama.registry.node.v1.DetachNodeResponse
-	23, // 43: ukama.registry.node.v1.NodeService.AddNodeToSite:output_type -> ukama.registry.node.v1.AddNodeToSiteResponse
-	25, // 44: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:output_type -> ukama.registry.node.v1.ReleaseNodeFromSiteResponse
-	31, // [31:45] is the sub-list for method output_type
-	17, // [17:31] is the sub-list for method input_type
+	26, // 31: ukama.registry.node.v1.NodeService.ReleaseSite:input_type -> ukama.registry.node.v1.ReleaseSiteRequest
+	12, // 32: ukama.registry.node.v1.NodeService.GetNodes:output_type -> ukama.registry.node.v1.GetNodesResponse
+	6,  // 33: ukama.registry.node.v1.NodeService.GetNode:output_type -> ukama.registry.node.v1.GetNodeResponse
+	8,  // 34: ukama.registry.node.v1.NodeService.GetNodesForSite:output_type -> ukama.registry.node.v1.GetBySiteResponse
+	10, // 35: ukama.registry.node.v1.NodeService.GetNodesForNetwork:output_type -> ukama.registry.node.v1.GetByNetworkResponse
+	12, // 36: ukama.registry.node.v1.NodeService.GetNodesByState:output_type -> ukama.registry.node.v1.GetNodesResponse
+	3,  // 37: ukama.registry.node.v1.NodeService.List:output_type -> ukama.registry.node.v1.ListResponse
+	1,  // 38: ukama.registry.node.v1.NodeService.AddNode:output_type -> ukama.registry.node.v1.AddNodeResponse
+	15, // 39: ukama.registry.node.v1.NodeService.UpdateNodeState:output_type -> ukama.registry.node.v1.UpdateNodeResponse
+	15, // 40: ukama.registry.node.v1.NodeService.UpdateNode:output_type -> ukama.registry.node.v1.UpdateNodeResponse
+	17, // 41: ukama.registry.node.v1.NodeService.DeleteNode:output_type -> ukama.registry.node.v1.DeleteNodeResponse
+	19, // 42: ukama.registry.node.v1.NodeService.AttachNodes:output_type -> ukama.registry.node.v1.AttachNodesResponse
+	21, // 43: ukama.registry.node.v1.NodeService.DetachNode:output_type -> ukama.registry.node.v1.DetachNodeResponse
+	23, // 44: ukama.registry.node.v1.NodeService.AddNodeToSite:output_type -> ukama.registry.node.v1.AddNodeToSiteResponse
+	25, // 45: ukama.registry.node.v1.NodeService.ReleaseNodeFromSite:output_type -> ukama.registry.node.v1.ReleaseNodeFromSiteResponse
+	27, // 46: ukama.registry.node.v1.NodeService.ReleaseSite:output_type -> ukama.registry.node.v1.ReleaseSiteResponse
+	32, // [32:47] is the sub-list for method output_type
+	17, // [17:32] is the sub-list for method input_type
 	17, // [17:17] is the sub-list for extension type_name
 	17, // [17:17] is the sub-list for extension extendee
 	0,  // [0:17] is the sub-list for field type_name
@@ -1704,7 +1801,7 @@ func file_node_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_node_proto_rawDesc), len(file_node_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   29,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

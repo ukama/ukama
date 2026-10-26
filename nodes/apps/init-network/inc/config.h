@@ -39,7 +39,7 @@
 
 #define DEF_UE_CIDR                     "192.168.8.0/22"
 
-#define DEF_TUN_ENABLE                  false
+#define DEF_TUN_ENABLE                  true
 #define DEF_TUN_IF                      "tun3"
 #define DEF_TUN_PRIMARY_CIDR            "192.168.8.1/22"
 

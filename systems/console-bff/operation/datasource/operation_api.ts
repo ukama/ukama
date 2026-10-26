@@ -17,7 +17,7 @@ class OperationAPI extends BaseRESTDataSource {
     baseURL: string,
     id: string
   ): Promise<OperationDto | undefined> => {
-    this.logger.info(
+    this.logger.debug(
       `GetOperation [GET]: ${baseURL}/${VERSION}/${OPERATIONS}/${id}`
     );
     this.baseURL = baseURL;
@@ -35,7 +35,7 @@ class OperationAPI extends BaseRESTDataSource {
   ): Promise<ResourceLockDto> => {
     const queryParams = new URLSearchParams();
     queryParams.append("resource_key", resourceKey);
-    this.logger.info(
+    this.logger.debug(
       `GetResourceLock [GET]: ${baseURL}/${VERSION}/${OPERATIONS}?${queryParams.toString()}`
     );
     this.baseURL = baseURL;

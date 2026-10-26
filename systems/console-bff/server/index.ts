@@ -37,11 +37,13 @@ import {
 import { validateEnv } from "../common/configs/validateEnv";
 import { HTTP401Error, HTTP500Error, Messages } from "../common/errors";
 import { logger } from "../common/logger";
+import { operationLoggerPlugin } from "../common/logger/operationLogger";
 import { configureExpress } from "../common/middleware/expressApp";
 import { persistedOperations } from "../common/middleware/persistedOperations";
 import { addInStore, closeStore, openStore } from "../common/storage";
 import { THeaders } from "../common/types";
 import { parseExpressHeaders, parseToken } from "../common/utils";
+import { applyKeepAliveTimeouts } from "../common/utils/httpServer";
 import { ServiceUrlResolver } from "../dashboard/baseUrls";
 import InitAPI, {
   SessionValidationError,
@@ -78,7 +80,7 @@ const isIntrospectionRequest = (body: unknown): boolean => {
 };
 
 const app = configureExpress(logger);
-const httpServer = createServer(app);
+const httpServer = applyKeepAliveTimeouts(createServer(app));
 
 const registerShutdown = (
   server: ApolloServer<AppContext>,
@@ -131,6 +133,7 @@ const startServer = async () => {
     plugins: [
       landingPagePlugin,
       ApolloServerPluginDrainHttpServer({ httpServer }),
+      operationLoggerPlugin(),
     ],
   });
   await server.start();

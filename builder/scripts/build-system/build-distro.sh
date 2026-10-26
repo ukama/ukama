@@ -39,6 +39,17 @@ apk add readline bash autoconf automake libmicrohttpd-dev gnutls-dev \
     zstd zstd-dev \
     patchelf
 
+GO_VERSION=1.25.14
+case "$(uname -m)" in
+    x86_64)  GO_ARCH=amd64 ;;
+    aarch64) GO_ARCH=arm64 ;;
+    *)       GO_ARCH=armv6l ;;
+esac
+rm -rf /usr/local/go
+wget -qO- "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" | tar -C /usr/local -xzf -
+export PATH="/usr/local/go/bin:${PATH}"
+go version
+
 # build apps
 ${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
 if [ $? -eq 0 ]; then

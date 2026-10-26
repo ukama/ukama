@@ -14,7 +14,9 @@ class UserApi extends BaseRESTDataSource {
   baseURL = NUCLEUS_API_GW;
 
   getUser = async (userId: string): Promise<UserResDto> => {
-    this.logger.info(`Request Url: ${this.baseURL}/${VERSION}/users/${userId}`);
+    this.logger.debug(
+      `Request Url: ${this.baseURL}/${VERSION}/users/${userId}`
+    );
     return this.get(`/${VERSION}/users/${userId}`, {}).then(res =>
       dtoToUserResDto(res)
     );

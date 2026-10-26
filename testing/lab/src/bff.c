@@ -6067,7 +6067,7 @@ int bff_cleanup_world(bff_client_t *c,
             failures++;
         }
 
-        if (ue->pool_sim_id[0] != '\0' && cleanup_should_delete_pool_sim()) {
+        if (ue->hardware_slot == 0 && ue->pool_sim_id[0] != '\0' && cleanup_should_delete_pool_sim()) {
             n = snprintf(query, sizeof(query),
                          "mutation { deleteSimFromPool(simId: \"%s\") { success } }",
                          ue->pool_sim_id);
@@ -6104,6 +6104,14 @@ int bff_cleanup_world(bff_client_t *c,
             continue;
         }
 
+        if (w->nodes[i].physical) {
+            size_t site;
+            for (site = 0; site < w->site_count; site++) {
+                if (ulab_streq(w->nodes[i].site_ref, w->sites[site].ref) &&
+                    w->sites[site].bff_id[0] != '\0') break;
+            }
+            if (site == w->site_count) continue;
+        }
         n = snprintf(
             query,
             sizeof(query),
@@ -6118,7 +6126,7 @@ int bff_cleanup_world(bff_client_t *c,
     }
 
     for (i = 0; i < w->node_count; i++) {
-        if (w->nodes[i].bff_id[0] == '\0') {
+        if (w->nodes[i].physical || w->nodes[i].bff_id[0] == '\0') {
             continue;
         }
 

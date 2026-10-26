@@ -34,7 +34,7 @@ class NotificationApi extends BaseRESTDataSource {
 
     if (params.length > 0) params = params.substring(1);
 
-    this.logger.info(
+    this.logger.debug(
       `GetNotifications [GET]: ${baseURL}/${VERSION}/event-notification?${params}`
     );
     this.baseURL = baseURL;
@@ -46,7 +46,7 @@ class NotificationApi extends BaseRESTDataSource {
     baseURL: string,
     id: string
   ): Promise<NotificationResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `GetNotification [GET]: ${baseURL}/${VERSION}/event-notification/${id}`
     );
     this.baseURL = baseURL;
@@ -59,7 +59,7 @@ class NotificationApi extends BaseRESTDataSource {
     id: string,
     isRead: boolean
   ): Promise<UpdateNotificationResDto> => {
-    this.logger.info(
+    this.logger.debug(
       `UpdateNotification [POST]: ${baseURL}/${VERSION}/event-notification/${id}?is_read=${isRead}`
     );
     this.baseURL = baseURL;

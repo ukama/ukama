@@ -25,7 +25,7 @@ default_drop = true
 
 # EPCEMU owns tun3. init-network only routes around tun3 after it exists.
 [tun]
-enable = false
+enable = true
 interface = "tun3"
 primary_cidr = "192.168.8.1/22"
 extra_cidrs = []
