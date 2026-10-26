@@ -107,7 +107,7 @@ func (n *NodeServer) AddNode(ctx context.Context,
 
 	err = n.nodeRepo.Add(node, nil)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {
@@ -145,7 +145,7 @@ func (n *NodeServer) GetNode(ctx context.Context,
 	if err != nil {
 		log.Error("error getting the node" + err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.GetNodeResponse{Node: utils.DbNodeToPbNode(node)}
@@ -167,7 +167,7 @@ func (n *NodeServer) GetNodesForSite(ctx context.Context,
 	if err != nil {
 		log.Errorf("error getting all nodes for site: %s", err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+		return nil, grpc.StoreErrorToGrpc(err, "nodes")
 	}
 
 	resp := &pb.GetBySiteResponse{
@@ -192,7 +192,7 @@ func (n *NodeServer) GetNodesForNetwork(ctx context.Context,
 	if err != nil {
 		log.Errorf("error getting all nodes for network: %s", err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "nodes")
+		return nil, grpc.StoreErrorToGrpc(err, "nodes")
 	}
 
 	resp := &pb.GetByNetworkResponse{
@@ -213,7 +213,7 @@ func (n *NodeServer) GetNodes(ctx context.Context,
 	if err != nil {
 		log.Error("error getting all nodes" + err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.GetNodesResponse{
@@ -234,7 +234,7 @@ func (n *NodeServer) GetNodesByState(ctx context.Context,
 	if err != nil {
 		log.Error("error getting all nodes by state" + err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.GetNodesResponse{
@@ -265,7 +265,7 @@ func (n *NodeServer) List(ctx context.Context,
 
 	if err != nil {
 		log.Error("error getting all nodes: " + err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.ListResponse{
@@ -327,14 +327,14 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 	if err != nil {
 		log.Error("error updating the node state, ", err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		log.Error("error updating the node state, ", err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {
@@ -375,7 +375,7 @@ func (n *NodeServer) UpdateNode(ctx context.Context,
 			return nil, duplErr
 		}
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	resp := &pb.UpdateNodeResponse{
@@ -424,7 +424,7 @@ func (n *NodeServer) DeleteNode(ctx context.Context,
 
 	err = n.nodeRepo.Delete(nodeId, nil)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {
@@ -462,7 +462,7 @@ func (n *NodeServer) AttachNodes(ctx context.Context,
 	if err != nil {
 		log.Errorf("fail to attach nodes. Errors %s", err.Error())
 
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {
@@ -497,7 +497,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 	node, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
 		log.Error("error getting the node, ", err.Error())
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	attachednodes := make([]string, 0, len(node.Attached))
@@ -507,7 +507,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 
 	err = n.nodeRepo.DetachNode(nodeId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {
@@ -584,7 +584,7 @@ func (n *NodeServer) ReleaseNodeFromSite(ctx context.Context,
 
 	nd, err := n.siteRepo.RemoveNode(nodeId)
 	if err != nil {
-		return nil, utils.RepoErrorToGrpc(err, "node")
+		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
 	released := *nd
@@ -607,7 +607,7 @@ func (n *NodeServer) ReleaseSite(ctx context.Context,
 
 	released, err := n.siteRepo.ReleaseSite(siteId)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "site")
+		return nil, grpc.StoreErrorToGrpc(err, "site")
 	}
 
 	resp := &pb.ReleaseSiteResponse{NodeIds: make([]string, 0, len(released))}

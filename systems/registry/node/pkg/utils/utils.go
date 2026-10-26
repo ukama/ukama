@@ -24,16 +24,6 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-// RepoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL
-// errors.
-func RepoErrorToGrpc(err error, entity string) error {
-	if st, ok := status.FromError(err); ok {
-		return st.Err()
-	}
-
-	return grpc.SqlErrorToGrpc(err, entity)
-}
-
 // IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers
 // and unknown strings.
 func IsValidNodeConnectivity(value string) bool {
@@ -58,7 +48,7 @@ func ProcessNodeDuplErrors(err error, nodeId string) error {
 		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
 	}
 
-	return grpc.SqlErrorToGrpc(err, "node")
+	return grpc.StoreErrorToGrpc(err, "node")
 }
 
 func DbNodesToPbNodes(nodes []db.Node) []*pb.Node {

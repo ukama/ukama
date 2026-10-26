@@ -18,6 +18,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
@@ -760,8 +761,7 @@ func TestNodeRepo_Update(t *testing.T) {
 		err = r.Update(node, nil)
 
 		// Assert
-		assert.Error(t, err)
-		assert.Equal(t, gorm.ErrRecordNotFound, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -865,7 +865,7 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err := r.AttachNodes(parentId, []string{})
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrInvalid), err)
 	})
 
 	t.Run("ParentNotFound", func(t *testing.T) {
@@ -890,7 +890,7 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrInvalid), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -903,7 +903,7 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -937,7 +937,7 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrInvalid), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -1047,7 +1047,7 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -1194,7 +1194,7 @@ func TestNodeRepo_DetachNode(t *testing.T) {
 		err := r.DetachNode(nodeId)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

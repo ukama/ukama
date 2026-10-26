@@ -16,10 +16,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -78,13 +77,13 @@ func TestSiteRepo_GetNodes(t *testing.T) {
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
 			WithArgs(siteID).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
 
 		// Act
 		nodes, err := r.GetNodes(siteID)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -180,7 +179,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode, aNode})
 
-		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrAlreadyExists), err)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -199,7 +198,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode})
 
-		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrAlreadyExists), err)
 		assert.Contains(t, err.Error(), tNode)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -215,7 +214,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode})
 
-		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 		assert.Contains(t, err.Error(), tNode)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -270,13 +269,13 @@ func TestSiteRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*sites.*`).
 			WithArgs(networkID).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
 
 		// Act
 		nodes, err := r.GetByNetwork(networkID)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -441,7 +440,7 @@ func TestSiteRepo_RemoveNode(t *testing.T) {
 		site, err := r.RemoveNode(nodeId)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 		assert.Nil(t, site)
 
 		err = mock.ExpectationsWereMet()
@@ -464,7 +463,7 @@ func TestSiteRepo_RemoveNode(t *testing.T) {
 		site, err := r.RemoveNode(nodeId)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 		assert.Nil(t, site)
 
 		err = mock.ExpectationsWereMet()

@@ -10,14 +10,14 @@ package db
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -64,7 +64,7 @@ func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID,
 			result := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").
 				First(&node, "id = ?", id)
 			if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				return status.Errorf(codes.NotFound, "node %s not found", id)
+				return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
 			}
 			if result.Error != nil {
 				return result.Error
@@ -83,8 +83,8 @@ func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID,
 					continue
 				}
 
-				return status.Errorf(codes.AlreadyExists,
-					"node %s already belongs to site %s", id, current.SiteId)
+				return fmt.Errorf("node %s already belongs to site %s: %w", id,
+					current.SiteId, store.ErrAlreadyExists)
 			}
 
 			site := Site{NodeId: id, SiteId: siteId, NetworkId: networkId}
@@ -96,7 +96,8 @@ func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID,
 			}
 
 			if result.RowsAffected == 0 {
-				return status.Errorf(codes.AlreadyExists, "node %s already has a site assignment", id)
+				return fmt.Errorf("node %s already has a site assignment: %w", id,
+					store.ErrAlreadyExists)
 			}
 
 			assigned = append(assigned, site)
@@ -129,7 +130,7 @@ func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 	}
 
 	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, fmt.Errorf("nodes for site %s: %w", siteId, store.ErrNotFound)
 	}
 
 	return nodes, nil
@@ -153,7 +154,7 @@ func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 	}
 
 	if result.RowsAffected == 0 {
-		return nil, gorm.ErrRecordNotFound
+		return nil, fmt.Errorf("nodes for network %s: %w", networkId, store.ErrNotFound)
 	}
 
 	return nodes, nil
@@ -177,8 +178,8 @@ func (s *siteRepo) GetFreeNodes() ([]Node, error) {
 func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 	ok, nd := s.IsAllocated(nodeId)
 	if !ok {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"node is not yet assigned to site/network")
+		return nil, fmt.Errorf("node %s is not yet assigned to site/network: %w",
+			nodeId.StringLowercase(), store.ErrPrecondition)
 	}
 
 	res := s.Db.GetGormDb().
@@ -187,13 +188,12 @@ func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
 			nodeId.StringLowercase(), nodeId.StringLowercase())
 
 	if res.Error != nil {
-		return nil, status.Errorf(codes.Internal,
-			"failed to get node grouping result. error %s", res.Error.Error())
+		return nil, fmt.Errorf("failed to get node grouping result: %w", res.Error)
 	}
 
 	if res.RowsAffected > 0 {
-		return nil, status.Errorf(codes.FailedPrecondition,
-			"node is still grouped with other nodes.")
+		return nil, fmt.Errorf("node %s is still grouped with other nodes: %w",
+			nodeId.StringLowercase(), store.ErrPrecondition)
 	}
 
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {

@@ -12,11 +12,10 @@ import (
 	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -118,11 +117,13 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID,
 	}
 
 	if len(node.Attached) > 0 {
-		return fmt.Errorf("node %s still have child nodes", node.Id)
+		return fmt.Errorf("node %s still have child nodes: %w", node.Id,
+			store.ErrPrecondition)
 	}
 
 	if node.ParentNodeId != nil {
-		return fmt.Errorf("node %s is still attached to a parent node", node.Id)
+		return fmt.Errorf("node %s is still attached to a parent node: %w", node.Id,
+			store.ErrPrecondition)
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
@@ -141,7 +142,7 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID,
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
+			return fmt.Errorf("node %s: %w", nodeId.StringLowercase(), store.ErrNotFound)
 		}
 
 		if nestedFunc != nil {
@@ -216,7 +217,7 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 		}
 
 		if result.RowsAffected == 0 {
-			return gorm.ErrRecordNotFound
+			return fmt.Errorf("node %s: %w", node.Id, store.ErrNotFound)
 		}
 
 		if nestedFunc != nil {
@@ -234,7 +235,8 @@ func (n *nodeRepo) Update(node *Node, nestedFunc func(*Node, *gorm.DB) error) er
 
 func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) error {
 	if len(attachedNodeIds) == 0 || len(attachedNodeIds) > MaxAttachedNodes {
-		return fmt.Errorf("number of nodes (%d) to attach is not valid", len(attachedNodeIds))
+		return fmt.Errorf("number of nodes (%d) to attach is not valid: %w",
+			len(attachedNodeIds), store.ErrInvalid)
 	}
 
 	parentNode, err := n.Get(nodeId)
@@ -243,13 +245,13 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 	}
 
 	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
-		return status.Errorf(codes.InvalidArgument,
-			"parent node (%v) type must be a towernode", parentNode.Id)
+		return fmt.Errorf("parent node (%v) type must be a towernode: %w", parentNode.Id,
+			store.ErrInvalid)
 	}
 
 	if parentNode.Site.SiteId == uuid.Nil {
-		return status.Errorf(codes.FailedPrecondition,
-			"parent node (%v)  must belong to a site", parentNode.Id)
+		return fmt.Errorf("parent node (%v) must belong to a site: %w", parentNode.Id,
+			store.ErrPrecondition)
 	}
 
 	attachedNodes, err := n.batchGet(attachedNodeIds)
@@ -258,8 +260,8 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 	}
 
 	if len(attachedNodes) == 0 || len(attachedNodes) != len(attachedNodeIds) {
-		return fmt.Errorf("some of the nodes from %v were not found or were duplicated",
-			attachedNodeIds)
+		return fmt.Errorf("some of the nodes from %v were not found or were duplicated: %w",
+			attachedNodeIds, store.ErrInvalid)
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
@@ -276,8 +278,8 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 		}
 
 		if currentlyAttached+int64(len(attachedNodes)) > MaxAttachedNodes {
-			return status.Errorf(codes.InvalidArgument,
-				"max number of attached nodes should not be more than %d", MaxAttachedNodes)
+			return fmt.Errorf("max number of attached nodes should not be more than %d: %w",
+				MaxAttachedNodes, store.ErrPrecondition)
 		}
 
 		for _, id := range attachedNodeIds {
@@ -289,26 +291,25 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			}
 
 			if an.ParentNodeId != nil {
-				return status.Errorf(codes.InvalidArgument,
-					"node %v is already attached to a parent", an.Id)
+				return fmt.Errorf("node %v is already attached to a parent: %w", an.Id,
+					store.ErrPrecondition)
 			}
 
 			if an.Type != ukama.NODE_ID_TYPE_AMPNODE {
-				return status.Errorf(codes.InvalidArgument,
-					"cannot attach non amplifier node: %v", an.Id)
+				return fmt.Errorf("cannot attach non amplifier node %v: %w", an.Id,
+					store.ErrInvalid)
 			}
 
 			if parentNode.Site.SiteId != an.Site.SiteId {
-				return status.Errorf(codes.InvalidArgument,
-					"cannot attach nodes from different sites")
+				return fmt.Errorf("cannot attach nodes from different sites: %w",
+					store.ErrInvalid)
 			}
 
 			an.ParentNodeId = &parentNode.Id
 
 			d := tx.Save(&an)
 			if d.Error != nil {
-				return status.Errorf(codes.Internal,
-					"failed to attach node: %s . Error %s", an.Id, d.Error.Error())
+				return fmt.Errorf("failed to attach node %s: %w", an.Id, d.Error)
 			}
 		}
 
@@ -329,18 +330,20 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 		}
 
 		if node.ParentNodeId == nil {
-			return fmt.Errorf("node %s is not attached to a parent node", node.Id)
+			return fmt.Errorf("node %s is not attached to a parent node: %w", node.Id,
+				store.ErrPrecondition)
 		}
 
 		if len(node.Attached) > 0 {
-			return fmt.Errorf("node %s still have child nodes", node.Id)
+			return fmt.Errorf("node %s still have child nodes: %w", node.Id,
+				store.ErrPrecondition)
 		}
 
 		node.ParentNodeId = nil
 
 		d := tx.Save(&node)
 		if d.Error != nil {
-			return fmt.Errorf("failed to detach node: %s . Error %s", node.Id, d.Error.Error())
+			return fmt.Errorf("failed to detach node %s: %w", node.Id, d.Error)
 		}
 
 		return nil

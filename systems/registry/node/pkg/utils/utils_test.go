@@ -16,7 +16,6 @@ import (
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -25,26 +24,6 @@ import (
 
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
-
-func TestRepoErrorToGrpc(t *testing.T) {
-	cases := []struct {
-		name string
-		err  error
-		code codes.Code
-	}{
-		{"StatusErrorKeepsCode", status.Error(codes.FailedPrecondition, "not assigned"),
-			codes.FailedPrecondition},
-		{"RecordNotFound", gorm.ErrRecordNotFound, codes.NotFound},
-		{"DuplicateKey", &pgconn.PgError{Code: "23505"}, codes.AlreadyExists},
-		{"OtherError", errors.New("boom"), codes.Internal},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			assert.Equal(t, tc.code, status.Code(utils.RepoErrorToGrpc(tc.err, "node")))
-		})
-	}
-}
 
 func TestIsValidNodeConnectivity(t *testing.T) {
 	for _, v := range []string{"Online", "offline", "UNDEFINED"} {

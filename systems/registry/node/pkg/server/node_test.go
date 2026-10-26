@@ -11,6 +11,7 @@ package server_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/mocks"
@@ -1114,9 +1116,9 @@ func TestNodeServer_AddNodeToSite(t *testing.T) {
 	}{
 		{"AlreadyOnSameSiteIsSuccess", []db.Site{}, nil, codes.OK},
 		{"OnOtherSiteIsAlreadyExists", nil,
-			status.Error(codes.AlreadyExists, "node already belongs to site"),
+			fmt.Errorf("node already belongs to site: %w", store.ErrAlreadyExists),
 			codes.AlreadyExists},
-		{"MissingNodeIsNotFound", nil, status.Error(codes.NotFound, "node not found"),
+		{"MissingNodeIsNotFound", nil, fmt.Errorf("node: %w", store.ErrNotFound),
 			codes.NotFound},
 	}
 
@@ -1271,8 +1273,8 @@ func TestNodeServer_ReleaseNodeFromSite(t *testing.T) {
 		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
 		siteRepo := &mocks.SiteRepo{}
-		siteRepo.On("RemoveNode", nodeId).Return(nil, status.Errorf(codes.FailedPrecondition,
-			"node is not yet assigned to site/network")).Once()
+		siteRepo.On("RemoveNode", nodeId).Return(nil,
+			fmt.Errorf("node is not yet assigned: %w", store.ErrPrecondition)).Once()
 
 		s := server.NewNodeServer(OrgName, nil, siteRepo, nil, "", nil, nil, orgId,
 			nil, nil)
@@ -1622,5 +1624,68 @@ func TestNodeServer_PublishFailureKeepsSuccess(t *testing.T) {
 			f.siteRepo.AssertExpectations(t)
 			f.siteService.AssertExpectations(t)
 		})
+	}
+}
+
+func TestNodeServer_RepoErrorsMapToGrpcCodes(t *testing.T) {
+	towerId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+	ampId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_AMPNODE).StringLowercase()
+
+	errCases := []struct {
+		name string
+		err  error
+		code codes.Code
+	}{
+		{"Invalid", fmt.Errorf("not an amplifier: %w", store.ErrInvalid),
+			codes.InvalidArgument},
+		{"Precondition", fmt.Errorf("not attached: %w", store.ErrPrecondition),
+			codes.FailedPrecondition},
+		{"NotFound", fmt.Errorf("node: %w", store.ErrNotFound), codes.NotFound},
+		{"Other", errors.New("boom"), codes.Internal},
+	}
+
+	rpcs := []struct {
+		name string
+		call func(s *server.NodeServer, r *mocks.NodeRepo, repoErr error) error
+	}{
+		{"AttachNodes", func(s *server.NodeServer, r *mocks.NodeRepo, repoErr error) error {
+			r.On("AttachNodes", towerId, []string{ampId}).Return(repoErr).Once()
+			_, err := s.AttachNodes(context.TODO(), &pb.AttachNodesRequest{
+				NodeId:        towerId.StringLowercase(),
+				AttachedNodes: []string{ampId},
+			})
+
+			return err
+		}},
+		{"DetachNode", func(s *server.NodeServer, r *mocks.NodeRepo, repoErr error) error {
+			r.On("Get", towerId).Return(&db.Node{Id: towerId.StringLowercase()}, nil).Once()
+			r.On("DetachNode", towerId).Return(repoErr).Once()
+			_, err := s.DetachNode(context.TODO(),
+				&pb.DetachNodeRequest{NodeId: towerId.StringLowercase()})
+
+			return err
+		}},
+		{"DeleteNode", func(s *server.NodeServer, r *mocks.NodeRepo, repoErr error) error {
+			r.On("Delete", towerId, mock.Anything).Return(repoErr).Once()
+			_, err := s.DeleteNode(context.TODO(),
+				&pb.DeleteNodeRequest{NodeId: towerId.StringLowercase()})
+
+			return err
+		}},
+	}
+
+	for _, rpc := range rpcs {
+		for _, tc := range errCases {
+			t.Run(rpc.name+"/"+tc.name, func(t *testing.T) {
+				nodeRepo := &mocks.NodeRepo{}
+				s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil,
+					orgId, nil, nil)
+
+				err := rpc.call(s, nodeRepo, tc.err)
+
+				assert.Equal(t, tc.code, status.Code(err))
+				nodeRepo.AssertExpectations(t)
+			})
+		}
 	}
 }

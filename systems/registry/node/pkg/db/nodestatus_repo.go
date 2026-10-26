@@ -9,9 +9,10 @@
 package db
 
 import (
-	"gorm.io/gorm"
+	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 )
 
@@ -51,7 +52,7 @@ func (n *nodeStatusRepo) Update(ns *NodeStatus, columns ...string) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return fmt.Errorf("node status %s: %w", ns.NodeId, store.ErrNotFound)
 	}
 
 	return nil
