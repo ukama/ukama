@@ -24,6 +24,7 @@ import (
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/grpc"
+	"gorm.io/gorm"
 )
 
 type softwareStatusHealth struct {
@@ -52,7 +53,8 @@ func TestSoftwarePromotionDuringUpdate(t *testing.T) {
 	sw.Status = ukama.UpdateInProgress
 
 	sRepo := mocks.NewSoftwareRepo(t)
-	sRepo.On("List", "", ukama.Unknown, sw.AppName).Return([]*db.Software{sw}, nil).Once()
+	// SetDesiredForApp skips UpdateInProgress rows in SQL, so this row is not touched.
+	sRepo.On("SetDesiredForApp", sw.AppName, next).Return(int64(0), nil).Once()
 	sRepo.On("Get", sw.Id).Return(*sw, nil).Once()
 	var saved db.Software
 	sRepo.On("Update", mock.Anything).Run(func(args mock.Arguments) {
@@ -185,10 +187,19 @@ func TestWatchSoftwareUpdateRetriesPersistence(t *testing.T) {
 func TestPromotionStillUpdatesIdleSoftware(t *testing.T) {
 	sw := dbSoftwareFixture()
 	sRepo := mocks.NewSoftwareRepo(t)
-	sRepo.On("List", "", ukama.Unknown, sw.AppName).Return([]*db.Software{sw}, nil).Once()
-	sRepo.On("Update", mock.MatchedBy(func(row *db.Software) bool {
-		return row.CurrentVersion == testCurrentVersion && row.DesiredVersion == "1.2.4-accdefgh" && row.Status == ukama.UpdateAvailable
-	})).Return(nil).Once()
+	sRepo.On("SetDesiredForApp", sw.AppName, "1.2.4-accdefgh").Return(int64(1), nil).Once()
 	s := &SoftwareServer{sRepo: sRepo}
 	s.recomputeDesiredForApp(sw.AppName, "1.2.4-accdefgh")
+	sRepo.AssertNotCalled(t, "List", mock.Anything, mock.Anything, mock.Anything)
+	sRepo.AssertNotCalled(t, "Update", mock.Anything)
+}
+
+func TestPersistSoftwareStatusStopsWhenRecordDeleted(t *testing.T) {
+	sw := dbSoftwareFixture()
+	sRepo := mocks.NewSoftwareRepo(t)
+	sRepo.On("Get", sw.Id).Return(db.Software{}, gorm.ErrRecordNotFound).Once()
+	s := &SoftwareServer{sRepo: sRepo}
+
+	assert.True(t, s.persistSoftwareStatus(sw.Id, sw.NodeId, sw.AppName, "", ukama.UpdateFailed, "update result"))
+	sRepo.AssertNotCalled(t, "Update", mock.Anything)
 }

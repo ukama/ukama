@@ -58,6 +58,7 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline],
+				evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete],
 				"event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready",
 				"event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded",
 				"event.cloud.local.{{ .Org}}.node.health.apps.changed",
