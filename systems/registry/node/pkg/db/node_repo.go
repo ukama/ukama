@@ -41,6 +41,11 @@ type nodeRepo struct {
 	Db sql.Db
 }
 
+func withNodeAssociations(db *gorm.DB) *gorm.DB {
+	return db.Preload(clause.Associations).Preload("Attached.Site").
+		Preload("Attached.Status")
+}
+
 func NewNodeRepo(db sql.Db) NodeRepo {
 	return &nodeRepo{
 		Db: db,
@@ -70,7 +75,7 @@ func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) erro
 func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 	var node Node
 
-	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
+	result := withNodeAssociations(n.Db.GetGormDb()).
 		First(&node, "id=?", id.StringLowercase())
 
 	if result.Error != nil {
@@ -82,9 +87,7 @@ func (n *nodeRepo) Get(id ukama.NodeID) (*Node, error) {
 
 func (n *nodeRepo) GetNodesByState(connectivity, status uint8) ([]Node, error) {
 	var nodes []Node
-	result := n.Db.GetGormDb().
-		Preload(clause.Associations).
-		Preload("Attached.Site").
+	result := withNodeAssociations(n.Db.GetGormDb()).
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		Where("node_statuses.connectivity = ? AND node_statuses.state = ? AND"+
 			" node_statuses.deleted_at IS NULL",
@@ -101,8 +104,7 @@ func (n *nodeRepo) GetNodesByState(connectivity, status uint8) ([]Node, error) {
 func (n *nodeRepo) GetAll() ([]Node, error) {
 	var nodes []Node
 
-	result := n.Db.GetGormDb().
-		Preload(clause.Associations).Preload("Attached.Site").Find(&nodes)
+	result := withNodeAssociations(n.Db.GetGormDb()).Find(&nodes)
 
 	if result.Error != nil {
 		return nil, result.Error
@@ -176,9 +178,7 @@ func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity,
 	state *uint8) ([]Node, error) {
 	var nodes []Node
 
-	query := n.Db.GetGormDb().
-		Preload(clause.Associations).
-		Preload("Attached.Site").
+	query := withNodeAssociations(n.Db.GetGormDb()).
 		Select("nodes.*").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
 		// Sites are soft deleted on release/reassign: without this predicate a
@@ -253,40 +253,45 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			len(attachedNodeIds), store.ErrInvalid)
 	}
 
-	parentNode, err := n.Get(nodeId)
-	if err != nil {
-		return fmt.Errorf("fail to get parent node: %w", err)
-	}
-
-	if parentNode.Type != ukama.NODE_ID_TYPE_TOWERNODE {
-		return fmt.Errorf("parent node (%v) type must be a towernode: %w", parentNode.Id,
-			store.ErrInvalid)
-	}
+	parentId := nodeId.StringLowercase()
 
 	ids := slices.Clone(attachedNodeIds)
 	sort.Strings(ids)
 
-	lockIds := append([]string{parentNode.Id}, ids...)
+	lockIds := append([]string{parentId}, ids...)
 	sort.Strings(lockIds)
 
-	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	return n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		var parentType ukama.NodeType
+
 		for _, id := range lockIds {
-			lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").
-				First(&Node{}, "id = ?", id).Error
+			var locked Node
+
+			lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id", "type").
+				First(&locked, "id = ?", id).Error
 			if errors.Is(lockErr, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
 			}
 			if lockErr != nil {
 				return lockErr
 			}
+
+			if id == parentId {
+				parentType = locked.Type
+			}
+		}
+
+		if parentType != ukama.NODE_ID_TYPE_TOWERNODE {
+			return fmt.Errorf("parent node (%v) type must be a towernode: %w", parentId,
+				store.ErrInvalid)
 		}
 
 		var parentSite Site
-		if siteErr := tx.Where("node_id = ?", parentNode.Id).First(&parentSite).
+		if siteErr := tx.Where("node_id = ?", parentId).First(&parentSite).
 			Error; siteErr != nil {
 			if errors.Is(siteErr, gorm.ErrRecordNotFound) {
 				return fmt.Errorf("parent node (%v) must belong to a site: %w",
-					parentNode.Id, store.ErrPrecondition)
+					parentId, store.ErrPrecondition)
 			}
 
 			return siteErr
@@ -294,7 +299,7 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 		var currentlyAttached int64
 		if countErr := tx.Model(&Node{}).
-			Where("parent_node_id = ?", parentNode.Id).
+			Where("parent_node_id = ?", parentId).
 			Count(&currentlyAttached).Error; countErr != nil {
 			return countErr
 		}
@@ -327,7 +332,7 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			}
 
 			updErr := tx.Model(&Node{}).Where("id = ?", an.Id).
-				Update("parent_node_id", parentNode.Id).Error
+				Update("parent_node_id", parentId).Error
 			if updErr != nil {
 				return fmt.Errorf("failed to attach node %s: %w", an.Id, updErr)
 			}
@@ -335,45 +340,47 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 		return nil
 	})
-
-	return err
 }
 
 func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
-	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	id := detachNodeId.StringLowercase()
+
+	return n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		var node Node
 
-		if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			Preload(clause.Associations).Preload("Attached.Site").
-			First(&node, "id = ?", detachNodeId.StringLowercase()).Error; getErr != nil {
-			if errors.Is(getErr, gorm.ErrRecordNotFound) {
-				return fmt.Errorf("node %s: %w", detachNodeId.StringLowercase(),
-					store.ErrNotFound)
-			}
-
+		getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("id", "parent_node_id").First(&node, "id = ?", id).Error
+		if errors.Is(getErr, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
+		}
+		if getErr != nil {
 			return getErr
 		}
 
 		if node.ParentNodeId == nil {
-			return fmt.Errorf("node %s is not attached to a parent node: %w", node.Id,
+			return fmt.Errorf("node %s is not attached to a parent node: %w", id,
 				store.ErrPrecondition)
 		}
 
-		if len(node.Attached) > 0 {
-			return fmt.Errorf("node %s still have child nodes: %w", node.Id,
+		var children int64
+		if countErr := tx.Model(&Node{}).Where("parent_node_id = ?", id).
+			Count(&children).Error; countErr != nil {
+			return countErr
+		}
+
+		if children > 0 {
+			return fmt.Errorf("node %s still have child nodes: %w", id,
 				store.ErrPrecondition)
 		}
 
-		updErr := tx.Model(&Node{}).Where("id = ?", node.Id).
+		updErr := tx.Model(&Node{}).Where("id = ?", id).
 			Update("parent_node_id", nil).Error
 		if updErr != nil {
-			return fmt.Errorf("failed to detach node %s: %w", node.Id, updErr)
+			return fmt.Errorf("failed to detach node %s: %w", id, updErr)
 		}
 
 		return nil
 	})
-
-	return err
 }
 
 func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64,

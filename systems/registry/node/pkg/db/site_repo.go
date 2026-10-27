@@ -114,8 +114,7 @@ func (s *siteRepo) AssignNodes(siteId, networkId uuid.UUID,
 func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().
-		Preload(clause.Associations).Preload("Attached.Site").
+	result := withNodeAssociations(s.Db.GetGormDb()).
 		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
 			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
@@ -138,8 +137,7 @@ func (s *siteRepo) GetNodes(siteId uuid.UUID) ([]Node, error) {
 func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().
-		Preload(clause.Associations).Preload("Attached.Site").
+	result := withNodeAssociations(s.Db.GetGormDb()).
 		Select("nodes.*, node_statuses.connectivity, node_statuses.state, sites.site_id,"+
 			" sites.network_id").
 		Joins("INNER JOIN node_statuses ON nodes.id = node_statuses.node_id").
@@ -162,8 +160,7 @@ func (s *siteRepo) GetByNetwork(networkId uuid.UUID) ([]Node, error) {
 func (s *siteRepo) GetFreeNodes() ([]Node, error) {
 	var nodes []Node
 
-	result := s.Db.GetGormDb().
-		Preload(clause.Associations).Preload("Attached.Site").Where("id NOT IN (?)",
+	result := withNodeAssociations(s.Db.GetGormDb()).Where("id NOT IN (?)",
 		s.Db.GetGormDb().Table("sites").Select("node_id").Where("deleted_at IS NULL")).
 		Find(&nodes)
 
