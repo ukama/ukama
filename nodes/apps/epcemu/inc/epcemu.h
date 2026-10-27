@@ -36,6 +36,9 @@ typedef json_t JsonObj;
 #define EPCEMU_DEF_APN             "internet"
 #define EPCEMU_DEF_LOG_LEVEL       "TRACE"
 
+#define EPCEMU_ID_LEN              37
+#define EPCEMU_APN_LEN             100
+
 #define EPCEMU_MAX_UES             128
 #define EPCEMU_MAX_STR             256
 #define EPCEMU_MAX_REASON          256
@@ -66,6 +69,8 @@ typedef struct {
     int pcrfPort;
     int initNetworkPort;
 
+    char apn[EPCEMU_APN_LEN];
+
     char pcrfUrl[EPCEMU_MAX_STR];
     char initNetworkUrl[EPCEMU_MAX_STR];
 
@@ -94,6 +99,15 @@ typedef struct {
     EpcemuStatus *status;
     bool serviceOn;
     bool dataPlaneStarted;
+    /* Lifecycle fields are protected by serviceMutex. */
+    char instanceId[EPCEMU_ID_LEN];
+    char expectedInstanceId[EPCEMU_ID_LEN];
+    bool expectedSet;
+    bool pcrfRegistered;
+    bool recovering;
+    bool ownerLost;
+    bool stopping;
+    size_t pollOffset;
     pthread_mutex_t serviceMutex;
 } ServiceContext;
 
