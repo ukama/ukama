@@ -372,6 +372,45 @@ func TestNodeServer_List(t *testing.T) {
 		assert.Nil(t, resp)
 		nodeRepo.AssertExpectations(t)
 	})
+
+	t.Run("NodeIdIsLowercased", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).StringLowercase()
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeRepo.On("List", nodeId, "", "", "", mock.Anything, mock.Anything).
+			Return([]db.Node{}, nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
+			nil, nil)
+
+		_, err := s.List(context.TODO(), &pb.ListRequest{NodeId: strings.ToUpper(nodeId)})
+
+		assert.NoError(t, err)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	invalidCases := []struct {
+		name string
+		req  *pb.ListRequest
+	}{
+		{"InvalidNodeId", &pb.ListRequest{NodeId: "bad-id"}},
+		{"InvalidSiteId", &pb.ListRequest{SiteId: "not-a-uuid"}},
+		{"InvalidNetworkId", &pb.ListRequest{NetworkId: "not-a-uuid"}},
+	}
+
+	for _, tc := range invalidCases {
+		t.Run(tc.name, func(t *testing.T) {
+			nodeRepo := &mocks.NodeRepo{}
+			s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
+				nil, nil)
+
+			_, err := s.List(context.TODO(), tc.req)
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			nodeRepo.AssertNotCalled(t, "List", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		})
+	}
 }
 
 func TestNodeServer_GetNodesForSite(t *testing.T) {

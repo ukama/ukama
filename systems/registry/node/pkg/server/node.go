@@ -260,7 +260,32 @@ func (n *NodeServer) List(ctx context.Context,
 		s := uint8(req.GetState())
 		state = &s
 	}
-	nodes, err := n.nodeRepo.List(req.GetNodeId(), req.GetSiteId(), req.GetNetworkId(),
+
+	nodeId := req.GetNodeId()
+	if nodeId != "" {
+		nId, err := ukama.ValidateNodeId(nodeId)
+		if err != nil {
+			return nil, utils.InvalidNodeIDError(nodeId, err)
+		}
+
+		nodeId = nId.StringLowercase()
+	}
+
+	for _, f := range []struct{ name, value string }{
+		{"site", req.GetSiteId()},
+		{"network", req.GetNetworkId()},
+	} {
+		if f.value == "" {
+			continue
+		}
+
+		if _, err := uuid.FromString(f.value); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of %s uuid. Error %s", f.name, err.Error())
+		}
+	}
+
+	nodes, err := n.nodeRepo.List(nodeId, req.GetSiteId(), req.GetNetworkId(),
 		req.GetType(), connectivity, state)
 
 	if err != nil {
