@@ -10,14 +10,18 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
@@ -99,8 +103,10 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.node.health.report.store"):
 		cfg := evt.EventToEventConfig[evt.EventHealthReportStore]
-		msg, err := epb.UnmarshalHealthReportEvent(e.Msg, cfg.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.HealthReportEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", cfg.Name, err)
+
 			return nil, err
 		}
 
@@ -114,8 +120,10 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
 		cfg := evt.EventToEventConfig[evt.EventNodeOnline]
-		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, cfg.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", cfg.Name, err)
+
 			return nil, err
 		}
 
@@ -128,12 +136,30 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.create"):
 		cfg := evt.EventToEventConfig[evt.EventSiteCreate]
-		msg, err := epb.UnmarshalEventAddSite(e.Msg, cfg.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventAddSite](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", cfg.Name, err)
+
 			return nil, err
 		}
 
 		err = c.handleAddSite(ctx, msg)
+		if err != nil {
+			return nil, err
+		}
+
+		return &epb.EventResponse{}, nil
+
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.registry.site.site.delete"):
+		cfg := evt.EventToEventConfig[evt.EventSiteDelete]
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventDeleteSite](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", cfg.Name, err)
+
+			return nil, err
+		}
+
+		err = c.handleDeleteSite(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -306,6 +332,47 @@ func (c *SiteControllerEventServer) handleAddSite(ctx context.Context, msg *epb.
 
 	c.scheduleSetSiteComponents(msg.SiteId)
 	return nil
+}
+
+func (c *SiteControllerEventServer) handleDeleteSite(msg *epb.EventDeleteSite) error {
+	log.Infof("Deleting site %s from network %s", msg.SiteId, msg.NetworkId)
+
+	if err := c.sites.Delete(msg.SiteId); err != nil {
+		return fmt.Errorf("failed to delete site %s: %w", msg.SiteId, err)
+	}
+	return nil
+}
+
+// PruneDeletedSites drops local sites that registry no longer has, covering deletes missed while unsubscribed or offline.
+func (c *SiteControllerEventServer) PruneDeletedSites() {
+	if c.s == nil || c.s.siteRegistry == nil {
+		return
+	}
+	sites, err := c.sites.List()
+	if err != nil {
+		log.Errorf("site-controller: list sites for prune: %v", err)
+		return
+	}
+
+	pruned := 0
+	for _, site := range sites {
+		_, err := c.s.siteRegistry.Get(site.SiteID)
+		if err == nil {
+			continue
+		}
+		// Only a 404 proves the site is gone; any other error may be a registry outage.
+		var es *client.ErrorStatus
+		if !errors.As(err, &es) || es.StatusCode != http.StatusNotFound {
+			log.Warnf("site-controller: check site %s in registry: %v", site.SiteID, err)
+			continue
+		}
+		if err := c.sites.Delete(site.SiteID); err != nil {
+			log.Errorf("site-controller: prune deleted site %s: %v", site.SiteID, err)
+			continue
+		}
+		pruned++
+	}
+	log.Infof("site-controller: pruned %d of %d sites missing from registry", pruned, len(sites))
 }
 
 func (c *SiteControllerEventServer) scheduleSetSiteComponents(siteID string) {
