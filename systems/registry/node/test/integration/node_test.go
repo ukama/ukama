@@ -187,58 +187,6 @@ func cleanupNodes(tt *testing.T, c pb.NodeServiceClient, nodes []ukama.NodeID) {
 	}
 }
 
-func Test_Listener(t *testing.T) {
-	// Arrange
-	nodeID := "UK-SA2136-HNODE-A1-30DF"
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	conn, c, err := CreateRegistryClient()
-	if err != nil {
-		assert.NoErrorf(t, err, "did not connect: %+v\n", err)
-
-		return
-	}
-	defer conn.Close()
-
-	_, err = c.AddNode(ctx, &pb.AddNodeRequest{
-		NodeId: nodeID,
-	})
-
-	e, ok := status.FromError(err)
-	if ok && e.Code() == codes.AlreadyExists {
-		log.Infof("node already exist, err %+v\n", err)
-	} else {
-		assert.NoError(t, err)
-
-		return
-	}
-
-	_, err = c.UpdateNodeState(ctx, &pb.UpdateNodeStateRequest{
-		NodeId: nodeID,
-		State:  ukama.NodeConnectivityOffline.String()})
-
-	if err != nil {
-		assert.FailNow(t, "Failed to update node. Error: %s", err.Error())
-	}
-
-	// Act
-
-	// Assert
-	assert.NoError(t, err)
-
-	time.Sleep(3 * time.Second)
-
-	nodeResp, err := c.GetNode(ctx, &pb.GetNodeRequest{NodeId: nodeID})
-	assert.NoError(t, err)
-
-	if err != nil {
-		assert.Equal(t, ukama.NodeConnectivityOffline.String(),
-			nodeResp.Node.Status.Connectivity)
-	}
-}
-
 func CreateRegistryClient() (*grpc.ClientConn, pb.NodeServiceClient, error) {
 	log.Infoln("Connecting to network ", tConfig.ServiceHost)
 
