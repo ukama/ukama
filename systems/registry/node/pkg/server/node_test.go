@@ -1319,6 +1319,48 @@ func TestNodeServer_AddNodeToSite(t *testing.T) {
 		assert.Nil(t, resp)
 		siteClient.AssertExpectations(t)
 	})
+
+	siteCases := []struct {
+		name  string
+		setup func(svc *mocks.SiteClientProvider, client *sitemocks.SiteServiceClient)
+		code  codes.Code
+	}{
+		{"SiteClientFails", func(svc *mocks.SiteClientProvider,
+			_ *sitemocks.SiteServiceClient) {
+			svc.On("GetClient").Return(nil, errors.New("bad target")).Once()
+		}, codes.Internal},
+		{"SiteResponseWithoutSite", func(svc *mocks.SiteClientProvider,
+			client *sitemocks.SiteServiceClient) {
+			svc.On("GetClient").Return(client, nil).Once()
+			client.On("Get", mock.Anything, mock.Anything, mock.Anything).
+				Return(&sitepb.GetResponse{}, nil).Once()
+		}, codes.FailedPrecondition},
+	}
+
+	for _, tc := range siteCases {
+		t.Run(tc.name, func(t *testing.T) {
+			siteRepo := &mocks.SiteRepo{}
+			siteService := &mocks.SiteClientProvider{}
+			siteClient := &sitemocks.SiteServiceClient{}
+			tc.setup(siteService, siteClient)
+
+			s := server.NewNodeServer(OrgName, nil, siteRepo, nil, "", nil, siteService,
+				orgId, nil, nil)
+
+			_, err := s.AddNodeToSite(context.TODO(), &pb.AddNodeToSiteRequest{
+				NodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).
+					StringLowercase(),
+				SiteId:    uuid.NewV4().String(),
+				NetworkId: uuid.NewV4().String(),
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+			siteRepo.AssertNotCalled(t, "AssignNodes", mock.Anything, mock.Anything,
+				mock.Anything)
+			siteService.AssertExpectations(t)
+			siteClient.AssertExpectations(t)
+		})
+	}
 }
 
 func TestNodeServer_ReleaseNodeFromSite(t *testing.T) {

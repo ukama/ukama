@@ -590,7 +590,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context,
 
 	svc, err := n.siteService.GetClient()
 	if err != nil {
-		return nil, err
+		return nil, status.Errorf(codes.Internal, "failed to get site client: %v", err)
 	}
 
 	remoteSite, err := svc.Get(ctx, &sitepb.GetRequest{SiteId: siteID.String()})
@@ -599,7 +599,7 @@ func (n *NodeServer) AddNodeToSite(ctx context.Context,
 		return nil, err
 	}
 
-	if remoteSite.Site.NetworkId != netID.String() {
+	if remoteSite.GetSite().GetNetworkId() != netID.String() {
 		return nil, status.Errorf(codes.FailedPrecondition,
 			"provided networkId and site's networkId mismatch")
 	}
