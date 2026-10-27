@@ -113,38 +113,52 @@ func (n *nodeRepo) GetAll() ([]Node, error) {
 
 func (n *nodeRepo) Delete(nodeId ukama.NodeID,
 	nestedFunc func(ukama.NodeID, *gorm.DB) error) error {
-	node, err := n.Get(nodeId)
-	if err != nil {
-		return fmt.Errorf("fail to get node: %w", err)
-	}
+	id := nodeId.StringLowercase()
 
-	if len(node.Attached) > 0 {
-		return fmt.Errorf("node %s still have child nodes: %w", node.Id,
-			store.ErrPrecondition)
-	}
+	return n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		var node Node
 
-	if node.ParentNodeId != nil {
-		return fmt.Errorf("node %s is still attached to a parent node: %w", node.Id,
-			store.ErrPrecondition)
-	}
+		lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			Select("id", "parent_node_id").First(&node, "id = ?", id).Error
+		if errors.Is(lockErr, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
+		}
+		if lockErr != nil {
+			return lockErr
+		}
 
-	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("node_id = ?", nodeId.StringLowercase()).Delete(&Site{})
+		if node.ParentNodeId != nil {
+			return fmt.Errorf("node %s is still attached to a parent node: %w", id,
+				store.ErrPrecondition)
+		}
+
+		var children int64
+		if countErr := tx.Model(&Node{}).Where("parent_node_id = ?", id).
+			Count(&children).Error; countErr != nil {
+			return countErr
+		}
+
+		if children > 0 {
+			return fmt.Errorf("node %s still have child nodes: %w", id,
+				store.ErrPrecondition)
+		}
+
+		result := tx.Where("node_id = ?", id).Delete(&Site{})
 		if result.Error != nil {
 			return result.Error
 		}
 
-		result = tx.Where("node_id = ?", nodeId.StringLowercase()).Delete(&NodeStatus{})
+		result = tx.Where("node_id = ?", id).Delete(&NodeStatus{})
 		if result.Error != nil {
 			return result.Error
 		}
 
-		result = tx.Delete(&Node{Id: nodeId.StringLowercase()})
+		result = tx.Delete(&Node{Id: id})
 		if result.Error != nil {
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			return fmt.Errorf("node %s: %w", nodeId.StringLowercase(), store.ErrNotFound)
+			return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
 		}
 
 		if nestedFunc != nil {
@@ -156,8 +170,6 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID,
 
 		return nil
 	})
-
-	return err
 }
 
 func (n *nodeRepo) List(nodeId, siteId, networkId, ntype string, connectivity,
