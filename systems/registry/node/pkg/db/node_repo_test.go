@@ -909,35 +909,27 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("BatchGetFails", func(t *testing.T) {
-		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
-
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(ampId.StringLowercase()).
-			WillReturnError(errors.New("internal"))
-
-		// Act
-		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
-
-		// Assert
-		assert.Error(t, err)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
 	t.Run("AttachedNodeNotFound", func(t *testing.T) {
 		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
 
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(ampId.StringLowercase()).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(parentId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(parentId.StringLowercase()))
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id`).
+			WithArgs(parentId.StringLowercase()).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(ampId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		mock.ExpectRollback()
 
 		// Act
 		err := r.AttachNodes(parentId, []string{ampId.StringLowercase()})
 
 		// Assert
-		assert.True(t, errors.Is(err, store.ErrInvalid), err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
+		assert.Contains(t, err.Error(), ampId.StringLowercase())
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -945,23 +937,6 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 
 	t.Run("AttachSuccess", func(t *testing.T) {
 		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
-
-		ampRows := sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
-			AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId)
-
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(ampId.StringLowercase()).
-			WillReturnRows(ampRows)
-
-		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
-				AddRow(ampId.StringLowercase(), siteId))
-
-		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
 
 		mock.ExpectBegin()
 
@@ -1017,18 +992,6 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 
 		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
 
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(hi, lo).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
-				AddRow(hi, "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId).
-				AddRow(lo, "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId))
-		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
-		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
-
 		mock.ExpectBegin()
 		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
 			WithArgs(parentId.StringLowercase(), sqlmock.AnyArg()).
@@ -1052,23 +1015,6 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 	// Regression test for the TOCTOU race
 	t.Run("ConcurrentAttachRejectedInsideTx", func(t *testing.T) {
 		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
-
-		ampRows := sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
-			AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId)
-
-		mock.ExpectQuery(`^SELECT.*nodes.*`).
-			WithArgs(ampId.StringLowercase()).
-			WillReturnRows(ampRows)
-
-		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
-				AddRow(ampId.StringLowercase(), siteId))
-
-		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
 
 		mock.ExpectBegin()
 
@@ -1126,21 +1072,6 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
-
-			mock.ExpectQuery(`^SELECT.*nodes.*`).
-				WithArgs(ampId.StringLowercase()).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
-					AddRow(ampId.StringLowercase(), "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId))
-
-			mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
-				WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
-
-			mock.ExpectQuery(`^SELECT.*sites.*`).
-				WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
-					AddRow(ampId.StringLowercase(), siteId))
-
-			mock.ExpectQuery(`^SELECT.*node_statuses.*`).
-				WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
 
 			mock.ExpectBegin()
 

@@ -9,6 +9,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sort"
@@ -256,16 +257,6 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			store.ErrPrecondition)
 	}
 
-	attachedNodes, err := n.batchGet(attachedNodeIds)
-	if err != nil {
-		return fmt.Errorf("fail to get list of nodes to attach: %w", err)
-	}
-
-	if len(attachedNodes) == 0 || len(attachedNodes) != len(attachedNodeIds) {
-		return fmt.Errorf("some of the nodes from %v were not found: %w", attachedNodeIds,
-			store.ErrInvalid)
-	}
-
 	ids := slices.Clone(attachedNodeIds)
 	sort.Strings(ids)
 
@@ -282,7 +273,7 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			return countErr
 		}
 
-		if currentlyAttached+int64(len(attachedNodes)) > MaxAttachedNodes {
+		if currentlyAttached+int64(len(ids)) > MaxAttachedNodes {
 			return fmt.Errorf("max number of attached nodes should not be more than %d: %w",
 				MaxAttachedNodes, store.ErrPrecondition)
 		}
@@ -292,6 +283,10 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 
 			if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 				Preload("Site").First(&an, "id = ?", id).Error; getErr != nil {
+				if errors.Is(getErr, gorm.ErrRecordNotFound) {
+					return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
+				}
+
 				return getErr
 			}
 
@@ -384,17 +379,4 @@ func (n *nodeRepo) GetNodeCount() (nodeCount, onlineCount, offlineCount int64,
 	}
 
 	return nodeCount, onlineCount, offlineCount, nil
-}
-
-func (n *nodeRepo) batchGet(nodeIds []string) ([]Node, error) {
-	var nodes []Node
-
-	result := n.Db.GetGormDb().Preload(clause.Associations).Preload("Attached.Site").
-		Where("id IN ?", nodeIds).Find(&nodes)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return nodes, nil
 }
