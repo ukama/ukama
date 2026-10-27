@@ -12,7 +12,6 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/jackc/pgconn"
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -33,14 +32,6 @@ func TestIsValidNodeConnectivity(t *testing.T) {
 	for _, v := range []string{"", "bogus", "1", "high"} {
 		assert.False(t, utils.IsValidNodeConnectivity(v), v)
 	}
-}
-
-func TestProcessNodeDuplErrors(t *testing.T) {
-	err := utils.ProcessNodeDuplErrors(&pgconn.PgError{Code: "23505"}, "uk-node")
-
-	assert.Equal(t, codes.AlreadyExists, status.Code(err))
-	assert.Equal(t, codes.Internal,
-		status.Code(utils.ProcessNodeDuplErrors(errors.New("boom"), "uk-node")))
 }
 
 func TestInvalidNodeIDError(t *testing.T) {

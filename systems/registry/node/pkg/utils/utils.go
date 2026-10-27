@@ -9,12 +9,8 @@
 package utils
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/jackc/pgconn"
-	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -39,16 +35,6 @@ func IsValidNodeConnectivity(value string) bool {
 func InvalidNodeIDError(nodeId string, err error) error {
 	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId,
 		err.Error())
-}
-
-func ProcessNodeDuplErrors(err error, nodeId string) error {
-	var pge *pgconn.PgError
-
-	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
-	}
-
-	return grpc.StoreErrorToGrpc(err, "node")
 }
 
 func DbNodesToPbNodes(nodes []db.Node) []*pb.Node {

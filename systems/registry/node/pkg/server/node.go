@@ -395,11 +395,6 @@ func (n *NodeServer) UpdateNode(ctx context.Context,
 
 	err = n.nodeRepo.Update(nodeUpdates, nil)
 	if err != nil {
-		duplErr := utils.ProcessNodeDuplErrors(err, req.NodeId)
-		if duplErr != nil {
-			return nil, duplErr
-		}
-
 		return nil, grpc.StoreErrorToGrpc(err, "node")
 	}
 
