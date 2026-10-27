@@ -29,7 +29,6 @@ type SiteRepo interface {
 	RemoveNode(ukama.NodeID) (*Site, error)
 	ReleaseSite(siteId uuid.UUID) ([]Site, error)
 	GetFreeNodes() ([]Node, error)
-	IsAllocated(ukama.NodeID) (bool, *Site)
 }
 
 type siteRepo struct {
@@ -176,36 +175,48 @@ func (s *siteRepo) GetFreeNodes() ([]Node, error) {
 }
 
 func (s *siteRepo) RemoveNode(nodeId ukama.NodeID) (*Site, error) {
-	ok, nd := s.IsAllocated(nodeId)
-	if !ok {
-		return nil, fmt.Errorf("node %s is not yet assigned to site/network: %w",
-			nodeId.StringLowercase(), store.ErrPrecondition)
-	}
+	id := nodeId.StringLowercase()
 
-	res := s.Db.GetGormDb().
-		Exec("select * from nodes where parent_node_id= ?  OR (id= ? AND parent_node_id is"+
-			" NOT NULL)",
-			nodeId.StringLowercase(), nodeId.StringLowercase())
-
-	if res.Error != nil {
-		return nil, fmt.Errorf("failed to get node grouping result: %w", res.Error)
-	}
-
-	if res.RowsAffected > 0 {
-		return nil, fmt.Errorf("node %s is still grouped with other nodes: %w",
-			nodeId.StringLowercase(), store.ErrPrecondition)
-	}
+	var removed Site
 
 	err := s.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		result := tx.Where("node_id= ?", nodeId.StringLowercase()).Delete(&Site{})
-		if result.Error != nil {
-			return result.Error
+		lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").
+			First(&Node{}, "id = ?", id).Error
+		if errors.Is(lockErr, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
+		}
+		if lockErr != nil {
+			return lockErr
 		}
 
-		return nil
-	})
+		siteErr := tx.Where("node_id = ?", id).First(&removed).Error
+		if errors.Is(siteErr, gorm.ErrRecordNotFound) {
+			return fmt.Errorf("node %s is not yet assigned to site/network: %w", id,
+				store.ErrPrecondition)
+		}
+		if siteErr != nil {
+			return siteErr
+		}
 
-	return nd, err
+		var grouped int64
+		if countErr := tx.Model(&Node{}).
+			Where("parent_node_id = ? OR (id = ? AND parent_node_id IS NOT NULL)", id, id).
+			Count(&grouped).Error; countErr != nil {
+			return countErr
+		}
+
+		if grouped > 0 {
+			return fmt.Errorf("node %s is still grouped with other nodes: %w", id,
+				store.ErrPrecondition)
+		}
+
+		return tx.Where("node_id = ?", id).Delete(&Site{}).Error
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &removed, nil
 }
 
 // ReleaseSite releases every node assigned to the site and returns their assignments.
@@ -231,15 +242,4 @@ func (s *siteRepo) ReleaseSite(siteId uuid.UUID) ([]Site, error) {
 	}
 
 	return released, nil
-}
-
-func (s *siteRepo) IsAllocated(nodeId ukama.NodeID) (bool, *Site) {
-	return isAllocated(s.Db.GetGormDb(), nodeId)
-}
-
-func isAllocated(db *gorm.DB, nodeId ukama.NodeID) (bool, *Site) {
-	var nd Site
-
-	result := db.Where(&Site{NodeId: nodeId.StringLowercase()}).First(&nd)
-	return result.Error == nil, &nd
 }

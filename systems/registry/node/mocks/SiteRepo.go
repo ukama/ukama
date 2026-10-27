@@ -136,36 +136,6 @@ func (_m *SiteRepo) GetNodes(_a0 uuid.UUID) ([]db.Node, error) {
 	return r0, r1
 }
 
-// IsAllocated provides a mock function with given fields: _a0
-func (_m *SiteRepo) IsAllocated(_a0 ukama.NodeID) (bool, *db.Site) {
-	ret := _m.Called(_a0)
-
-	if len(ret) == 0 {
-		panic("no return value specified for IsAllocated")
-	}
-
-	var r0 bool
-	var r1 *db.Site
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) (bool, *db.Site)); ok {
-		return rf(_a0)
-	}
-	if rf, ok := ret.Get(0).(func(ukama.NodeID) bool); ok {
-		r0 = rf(_a0)
-	} else {
-		r0 = ret.Get(0).(bool)
-	}
-
-	if rf, ok := ret.Get(1).(func(ukama.NodeID) *db.Site); ok {
-		r1 = rf(_a0)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(*db.Site)
-		}
-	}
-
-	return r0, r1
-}
-
 // ReleaseSite provides a mock function with given fields: siteId
 func (_m *SiteRepo) ReleaseSite(siteId uuid.UUID) ([]db.Site, error) {
 	ret := _m.Called(siteId)

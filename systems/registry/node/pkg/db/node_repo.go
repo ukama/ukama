@@ -17,7 +17,6 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -252,18 +251,33 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			store.ErrInvalid)
 	}
 
-	if parentNode.Site.SiteId == uuid.Nil {
-		return fmt.Errorf("parent node (%v) must belong to a site: %w", parentNode.Id,
-			store.ErrPrecondition)
-	}
-
 	ids := slices.Clone(attachedNodeIds)
 	sort.Strings(ids)
 
+	lockIds := append([]string{parentNode.Id}, ids...)
+	sort.Strings(lockIds)
+
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-			First(&Node{}, "id = ?", parentNode.Id).Error; lockErr != nil {
-			return lockErr
+		for _, id := range lockIds {
+			lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Select("id").
+				First(&Node{}, "id = ?", id).Error
+			if errors.Is(lockErr, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
+			}
+			if lockErr != nil {
+				return lockErr
+			}
+		}
+
+		var parentSite Site
+		if siteErr := tx.Where("node_id = ?", parentNode.Id).First(&parentSite).
+			Error; siteErr != nil {
+			if errors.Is(siteErr, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("parent node (%v) must belong to a site: %w",
+					parentNode.Id, store.ErrPrecondition)
+			}
+
+			return siteErr
 		}
 
 		var currentlyAttached int64
@@ -281,12 +295,7 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 		for _, id := range ids {
 			var an Node
 
-			if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
-				Preload("Site").First(&an, "id = ?", id).Error; getErr != nil {
-				if errors.Is(getErr, gorm.ErrRecordNotFound) {
-					return fmt.Errorf("node %s: %w", id, store.ErrNotFound)
-				}
-
+			if getErr := tx.Preload("Site").First(&an, "id = ?", id).Error; getErr != nil {
 				return getErr
 			}
 
@@ -300,16 +309,15 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 					store.ErrInvalid)
 			}
 
-			if parentNode.Site.SiteId != an.Site.SiteId {
+			if parentSite.SiteId != an.Site.SiteId {
 				return fmt.Errorf("cannot attach nodes from different sites: %w",
 					store.ErrInvalid)
 			}
 
-			an.ParentNodeId = &parentNode.Id
-
-			d := tx.Save(&an)
-			if d.Error != nil {
-				return fmt.Errorf("failed to attach node %s: %w", an.Id, d.Error)
+			updErr := tx.Model(&Node{}).Where("id = ?", an.Id).
+				Update("parent_node_id", parentNode.Id).Error
+			if updErr != nil {
+				return fmt.Errorf("failed to attach node %s: %w", an.Id, updErr)
 			}
 		}
 
@@ -339,11 +347,10 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 				store.ErrPrecondition)
 		}
 
-		node.ParentNodeId = nil
-
-		d := tx.Save(&node)
-		if d.Error != nil {
-			return fmt.Errorf("failed to detach node %s: %w", node.Id, d.Error)
+		updErr := tx.Model(&Node{}).Where("id = ?", node.Id).
+			Update("parent_node_id", nil).Error
+		if updErr != nil {
+			return fmt.Errorf("failed to detach node %s: %w", node.Id, updErr)
 		}
 
 		return nil
