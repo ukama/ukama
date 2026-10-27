@@ -215,3 +215,101 @@ func TestSoftwareRepoUpdate(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
+
+func TestSoftwareRepoGetPassesThroughDbError(t *testing.T) {
+	res := setupSoftwareTestDB(t)
+	id := uuid.NewV4()
+	dbErr := errors.New("connection reset")
+
+	res.Mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE id = $1`)).
+		WithArgs(id, 1).
+		WillReturnError(dbErr)
+
+	_, err := res.Repo.Get(id)
+	assert.ErrorIs(t, err, dbErr)
+	assert.False(t, errors.Is(err, gorm.ErrRecordNotFound))
+	assert.NoError(t, res.Mock.ExpectationsWereMet())
+}
+
+func TestSoftwareRepoSetDesiredForApp(t *testing.T) {
+	const desired = "1.2.4-accdefgh"
+
+	t.Run("updates idle rows in one statement", func(t *testing.T) {
+		res := setupSoftwareTestDB(t)
+
+		res.Mock.ExpectBegin()
+		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "desired_version"=$1,"status"=CASE WHEN current_version <> $2 THEN $3 ELSE $4 END,"updated_at"=$5 WHERE app_name = $6 AND status <> $7`)).
+			WithArgs(desired, desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate), sqlmock.AnyArg(),
+				defaultAppName, uint8(ukama.UpdateInProgress)).
+			WillReturnResult(sqlmock.NewResult(0, 4721))
+		res.Mock.ExpectCommit()
+
+		n, err := res.Repo.SetDesiredForApp(defaultAppName, desired)
+		assert.NoError(t, err)
+		assert.Equal(t, int64(4721), n)
+		assert.NoError(t, res.Mock.ExpectationsWereMet())
+	})
+
+	t.Run("returns error when update fails", func(t *testing.T) {
+		res := setupSoftwareTestDB(t)
+
+		res.Mock.ExpectBegin()
+		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares"`)).
+			WillReturnError(errors.New("update failed"))
+		res.Mock.ExpectRollback()
+
+		_, err := res.Repo.SetDesiredForApp(defaultAppName, desired)
+		assert.Error(t, err)
+		assert.NoError(t, res.Mock.ExpectationsWereMet())
+	})
+}
+
+func TestNodeRepoDelete(t *testing.T) {
+	const nodeID = "uk-sa2643-tnode-v0-a60f"
+
+	setup := func(t *testing.T) (sqlmock.Sqlmock, softwaredb.NodeRepo) {
+		t.Helper()
+		db, mock, err := sqlmock.New()
+		require.NoError(t, err)
+		gdb, err := gorm.Open(postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		}), &gorm.Config{})
+		require.NoError(t, err)
+		return mock, softwaredb.NewNodeRepo(ukamaDbMock{gormDb: gdb})
+	}
+
+	t.Run("deletes software rows then the node in one transaction", func(t *testing.T) {
+		mock, repo := setup(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "softwares" WHERE node_id = $1`)).
+			WithArgs(nodeID).
+			WillReturnResult(sqlmock.NewResult(0, 18))
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "nodes" WHERE node_id = $1`)).
+			WithArgs(nodeID).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+
+		assert.NoError(t, repo.Delete(nodeID))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back when the node delete fails", func(t *testing.T) {
+		mock, repo := setup(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "softwares" WHERE node_id = $1`)).
+			WithArgs(nodeID).
+			WillReturnResult(sqlmock.NewResult(0, 18))
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "nodes" WHERE node_id = $1`)).
+			WithArgs(nodeID).
+			WillReturnError(errors.New("delete failed"))
+		mock.ExpectRollback()
+
+		assert.Error(t, repo.Delete(nodeID))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

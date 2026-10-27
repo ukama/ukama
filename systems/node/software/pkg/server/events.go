@@ -51,6 +51,8 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 		return n.handleNodeAppChunkReadyEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
 		return n.handleNodeOnlineEvent(ctx, e)
+	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
+		return n.handleNodeDeleteEvent(ctx, e)
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.apps.changed"):
 		return n.handleHealthAppsChangedEvent(ctx, e)
 
@@ -106,6 +108,20 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 	if err := n.applyDesiredToNode(msg.NodeId); err != nil {
 		log.Errorf("failed to apply desired to node %s: %v", msg.NodeId, err)
 	}
+
+	return &epb.EventResponse{}, nil
+}
+
+func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+	msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
+	}
+
+	if err := n.s.nodeRepo.Delete(msg.NodeId); err != nil {
+		return nil, fmt.Errorf("failed to delete node %s: %w", msg.NodeId, err)
+	}
+	log.Infof("Deleted node %s and its software records", msg.NodeId)
 
 	return &epb.EventResponse{}, nil
 }
