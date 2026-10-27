@@ -10,6 +10,8 @@ package db
 
 import (
 	"fmt"
+	"slices"
+	"sort"
 
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
@@ -264,6 +266,9 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 			store.ErrInvalid)
 	}
 
+	ids := slices.Clone(attachedNodeIds)
+	sort.Strings(ids)
+
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if lockErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			First(&Node{}, "id = ?", parentNode.Id).Error; lockErr != nil {
@@ -282,7 +287,7 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 				MaxAttachedNodes, store.ErrPrecondition)
 		}
 
-		for _, id := range attachedNodeIds {
+		for _, id := range ids {
 			var an Node
 
 			if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).

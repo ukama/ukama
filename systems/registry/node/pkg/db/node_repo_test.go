@@ -1008,6 +1008,47 @@ func TestNodeRepo_AttachNodes(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("LocksAttachedInSortedOrder", func(t *testing.T) {
+		lo := ukama.NewVirtualAmplifierNodeId().StringLowercase()
+		hi := ukama.NewVirtualAmplifierNodeId().StringLowercase()
+		if hi < lo {
+			lo, hi = hi, lo
+		}
+
+		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
+
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(hi, lo).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "type", "site_id"}).
+				AddRow(hi, "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId).
+				AddRow(lo, "amp", ukama.NODE_ID_TYPE_AMPNODE, siteId))
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}))
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(parentId.StringLowercase(), sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(parentId.StringLowercase()))
+		mock.ExpectQuery(`^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id`).
+			WithArgs(parentId.StringLowercase()).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(0))
+
+		lockErr := errors.New("lock failed")
+		mock.ExpectQuery(`^SELECT.*nodes.*FOR UPDATE`).
+			WithArgs(lo, sqlmock.AnyArg()).
+			WillReturnError(lockErr)
+		mock.ExpectRollback()
+
+		err := r.AttachNodes(parentId, []string{hi, lo})
+
+		assert.True(t, errors.Is(err, lockErr), err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	// Regression test for the TOCTOU race
 	t.Run("ConcurrentAttachRejectedInsideTx", func(t *testing.T) {
 		expectParentGet(ukama.NODE_ID_TYPE_TOWERNODE, true)
