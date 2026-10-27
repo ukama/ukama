@@ -180,6 +180,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_TRAFFIC_UNAVAILABLE: return "traffic_unavailable";
     case CHECK_NODE_READY: return "node_ready";
     case CHECK_UE_ATTACHED: return "ue_attached";
+    case CHECK_UE_PDN: return "ue_pdn";
     case CHECK_USAGE_PER_SIM: return "usage_per_sim";
     case CHECK_USAGE_SAMPLE: return "usage_sample";
     case CHECK_PACKAGE_ACTIVE: return "package_active";
@@ -373,6 +374,7 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_TRAFFIC_UNAVAILABLE;
     } else if (ulab_streq(name, "node_ready")) *out = CHECK_NODE_READY;
     else if (ulab_streq(name, "ue_attached")) *out = CHECK_UE_ATTACHED;
+    else if (ulab_streq(name, "ue_pdn")) *out = CHECK_UE_PDN;
     else if (ulab_streq(name, "usage_per_sim")) {
         *out = CHECK_USAGE_PER_SIM;
     } else if (ulab_streq(name, "usage_sample")) {
@@ -847,7 +849,9 @@ static check_spec_t *new_check(check_spec_t *arr, size_t *cnt,
      * should not hold a P0 run for five minutes by default. Scenario YAML
      * may still override both values explicitly.
      */
-    if (c->type == CHECK_PACKAGE_STATE) {
+    if (c->type == CHECK_UE_PDN) {
+        c->timeout_seconds = 60;
+    } else if (c->type == CHECK_PACKAGE_STATE) {
         c->timeout_seconds = 30;
     } else if (c->type == CHECK_USAGE_PER_SIM) {
         c->timeout_seconds = 120;
@@ -879,6 +883,17 @@ static int apply_check_field(check_spec_t *c, const char *key,
                              const char *val) {
     if (scenario_is_web_check(c->type))
         return apply_web_check_field(c, key, val);
+    if (c->type == CHECK_UE_PDN && ulab_streq(key, "apn")) {
+        if (!val[0]) return ULAB_ERR;
+        return ulab_copy(c->apn, sizeof(c->apn), val);
+    }
+    if (c->type == CHECK_UE_PDN && ulab_streq(key, "same_pdn")) {
+        if (!ulab_streq(val, "true") && !ulab_streq(val, "false")) {
+            return ULAB_ERR;
+        }
+        c->same_pdn = ulab_streq(val, "true");
+        return ULAB_OK;
+    }
     if (ulab_streq(key, "target")) return ulab_copy(c->target,
         sizeof(c->target), val);
     if (ulab_streq(key, "expected")) return ulab_copy(c->expected,
@@ -1126,6 +1141,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
         return web_u32(val, &e->timeout_seconds);
     if (scenario_is_web_event(e->type))
         return apply_web_event_field(e, key, val);
+    if (e->type == EVT_START_UES && ulab_streq(key, "apn")) {
+        if (!val[0]) return ULAB_ERR;
+        return ulab_copy(e->apn, sizeof(e->apn), val);
+    }
     if (ulab_streq(key, "name")) return ulab_copy(e->name,
         sizeof(e->name), val);
     if (ulab_streq(key, "amount_mb") ||

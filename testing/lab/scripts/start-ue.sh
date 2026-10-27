@@ -7,8 +7,9 @@
 
 set -eu
 
-if [ "$#" -ne 8 ]; then
-    echo "usage: $0 <repo> <ue-ref> <ue-id> <imsi> <iccid> <ue-ip> <site-ref> <run-dir>" >&2
+if [ "$#" -ne 8 ] && [ "$#" -ne 9 ]; then
+    echo "usage: $0 <repo> <ue-ref> <ue-id> <imsi> <iccid> <ue-ip>" \
+         "<site-ref> <run-dir> [apn]" >&2
     exit 2
 fi
 
@@ -20,6 +21,18 @@ ICCID="$5"
 UE_IP="$6"
 SITE_REF="$7"
 RUN_DIR="$8"
+UE_APN="${9-internet}"
+case "$UE_APN" in
+    ''|*[!A-Za-z0-9.-]*)
+        echo "APN must contain only ASCII letters, digits, dots or hyphens" >&2
+        exit 2
+        ;;
+esac
+if [ "${#UE_APN}" -gt 99 ]; then
+    echo "APN exceeds 99 characters" >&2
+    exit 2
+fi
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 
 UE_DIR="$REPO/testing/ue"
 NET_STATE="$RUN_DIR/runtime-net/net.env"
@@ -147,6 +160,7 @@ need_cmd podman
 need_cmd awk
 need_cmd curl
 need_cmd grep
+need_cmd python3
 need_char_device /dev/net/tun
 
 need_file "$UE_DIR/ue/Containerfile"
@@ -253,9 +267,9 @@ wait_container_http "$TNODE_CONTAINER" epcemu     "http://127.0.0.1:18028/v1/pin
 wait_container_http "$TNODE_CONTAINER" pcrf     "http://127.0.0.1:18030/v1/ping"
 
 # Starting a UE and waiting for it to attach are separate operations.  The UE
-# must be able to start while service admission is off so negative service
-# scenarios can verify that the phone cannot camp.  wait-ues-attached.sh owns
-# the attach expectation and timeout.
+# must be able to start while service admission is off so service-off
+# scenarios can verify a live but blocked PDN. wait-ues-attached.sh checks
+# PDN existence independently of data permission.
 if [ "${ULAB_UE_WAIT_SERVICE_ON:-0}" = "1" ]; then
     wait_pcrf_service_on "$TNODE_CONTAINER"         "http://127.0.0.1:18030/v1/service"
 fi
@@ -271,13 +285,22 @@ fi
 CSV="$UE_STATE_DIR/$UE_ID.csv"
 cat > "$CSV" <<CSVEOF
 IMSI,ICCID,MSISDN,SmDpAddress,ActivationCode,IsPhysical,QrCode,UE_IP,APN,Enabled
-$IMSI,$ICCID,10000000000,lab,lab,TRUE,lab,$UE_IP_ADDR,internet,TRUE
+$IMSI,$ICCID,10000000000,lab,lab,TRUE,lab,$UE_IP_ADDR,$UE_APN,TRUE
 CSVEOF
 
 UE_DATA_PORT="$(ue_data_port)"
 
 echo "ue: start $UE_CONTAINER network=$LAB_NET tower=$TOWER_IP media=$MEDIA_IP ip=$UE_IP_ADDR"
-podman rm -f "$UE_CONTAINER" >/dev/null 2>&1 || true
+if podman container exists "$UE_CONTAINER"; then
+    # Do not replace an agent until its old PDN has been closed.
+    if [ ! -f "$UE_STATE_DIR/$UE_ID.env" ]; then
+        echo "existing UE has no owned state: $UE_CONTAINER" >&2
+        exit 1
+    fi
+    "$SCRIPT_DIR/detach-ue.sh" "$UE_ID" "$RUN_DIR"
+    podman rm -f "$UE_CONTAINER" >/dev/null
+fi
+rm -f "$UE_STATE_DIR/$UE_ID.pdn.json"
 
 if ! podman run -d \
     --name "$UE_CONTAINER" \
@@ -287,7 +310,7 @@ if ! podman run -d \
     -e UE_IMSI="$IMSI" \
     -e UE_ICCID="$ICCID" \
     -e UE_IP="$UE_IP_ADDR/22" \
-    -e UE_APN="internet" \
+    -e UE_APN="$UE_APN" \
     -e UE_TUN="tun0" \
     -e EPCEMU_URL="http://$TOWER_IP:18028" \
     -e EPCEMU_DATA_HOST="$TOWER_IP" \
@@ -299,17 +322,7 @@ if ! podman run -d \
     -e HTTP_PORT="$HTTP_PORT" \
     -e IPERF_PORT="$IPERF_PORT" \
     -e UE_DETACH_ON_EXIT="1" \
-    -e UE_ATTACH_RETRY_SEC="${ULAB_UE_ATTACH_RETRY_SEC:-3}" \
     "$UE_IMAGE" \
-    /bin/sh -c '
-        trap "exit 0" TERM INT
-        while :; do
-            /opt/ukama/ue-agent/ue-agent
-            rc=$?
-            echo "ue-agent exited rc=$rc; retry attach in ${UE_ATTACH_RETRY_SEC}s" >&2
-            sleep "${UE_ATTACH_RETRY_SEC}"
-        done
-    ' \
     > "$UE_STATE_DIR/$UE_ID.start.out" 2>&1; then
     echo "failed to start UE container: $UE_CONTAINER" >&2
     cat "$UE_STATE_DIR/$UE_ID.start.out" >&2 || true
@@ -334,6 +347,7 @@ UE_CONTAINER=$UE_CONTAINER
 IMSI=$IMSI
 ICCID=$ICCID
 UE_IP=$UE_IP_ADDR
+UE_APN=$UE_APN
 UE_DATA_PORT=$UE_DATA_PORT
 UE_CONTAINER_IP=$UE_CONTAINER_IP
 SITE_REF=$SITE_REF

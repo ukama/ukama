@@ -60,6 +60,12 @@ int runtime_build_and_start_ues(const char *repo,
                                 const world_t *w,
                                 const selector_result_t *ues,
                                 ulab_error_t *err);
+int runtime_start_ues_apn(const char *repo, runtime_t *rt,
+                           const world_t *w, const selector_result_t *ues,
+                           const char *apn, ulab_error_t *err);
+int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
+                            const selector_result_t *ues,
+                            const check_spec_t *check, ulab_error_t *err);
 int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
