@@ -346,7 +346,12 @@ func (n *nodeRepo) DetachNode(detachNodeId ukama.NodeID) error {
 		if getErr := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
 			Preload(clause.Associations).Preload("Attached.Site").
 			First(&node, "id = ?", detachNodeId.StringLowercase()).Error; getErr != nil {
-			return fmt.Errorf("fail to get node: %w", getErr)
+			if errors.Is(getErr, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("node %s: %w", detachNodeId.StringLowercase(),
+					store.ErrNotFound)
+			}
+
+			return getErr
 		}
 
 		if node.ParentNodeId == nil {

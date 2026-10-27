@@ -531,17 +531,6 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	node, err := n.nodeRepo.Get(nodeId)
-	if err != nil {
-		log.Error("error getting the node, ", err.Error())
-		return nil, grpc.StoreErrorToGrpc(err, "node")
-	}
-
-	attachednodes := make([]string, 0, len(node.Attached))
-	for _, an := range node.Attached {
-		attachednodes = append(attachednodes, an.Id)
-	}
-
 	err = n.nodeRepo.DetachNode(nodeId)
 	if err != nil {
 		return nil, grpc.StoreErrorToGrpc(err, "node")
@@ -551,8 +540,7 @@ func (n *NodeServer) DetachNode(ctx context.Context,
 		route := n.baseRoutingKey.SetAction("dettach").SetObject("node").MustBuild()
 
 		evt := &epb.EventRegistryNodeAttach{
-			NodeId:    nodeId.StringLowercase(),
-			Nodegroup: attachednodes,
+			NodeId: nodeId.StringLowercase(),
 		}
 
 		err = n.msgbus.PublishRequest(route, evt)

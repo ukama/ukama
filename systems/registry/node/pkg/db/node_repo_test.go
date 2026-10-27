@@ -1100,7 +1100,7 @@ func TestNodeRepo_DetachNode(t *testing.T) {
 
 		mock.ExpectQuery(`^SELECT.*nodes.*`).
 			WithArgs(nodeId.StringLowercase(), sqlmock.AnyArg()).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
 
 		mock.ExpectRollback()
 
@@ -1108,7 +1108,7 @@ func TestNodeRepo_DetachNode(t *testing.T) {
 		err := r.DetachNode(nodeId)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

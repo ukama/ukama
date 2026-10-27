@@ -1095,8 +1095,6 @@ func TestNodeServer_DetachNode(t *testing.T) {
 		nodeRepo := &mocks.NodeRepo{}
 		msgbusClient := &mbmocks.MsgBusServiceClient{}
 
-		nodeRepo.On("Get", nodeId).
-			Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
 		nodeRepo.On("DetachNode", nodeId).Return(nil).Once()
 		msgbusClient.On("PublishRequest", mock.Anything, mock.Anything).
 			Return(nil).Once()
@@ -1124,11 +1122,13 @@ func TestNodeServer_DetachNode(t *testing.T) {
 		assert.Nil(t, resp)
 	})
 
-	t.Run("GetNodeError", func(t *testing.T) {
+	t.Run("NotFound", func(t *testing.T) {
 		nodeId := ukama.NewVirtualAmplifierNodeId()
 
 		nodeRepo := &mocks.NodeRepo{}
-		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrRecordNotFound).Once()
+		nodeRepo.On("DetachNode", nodeId).
+			Return(fmt.Errorf("node %s: %w", nodeId.StringLowercase(), store.ErrNotFound)).
+			Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
 			nil, nil)
@@ -1136,7 +1136,7 @@ func TestNodeServer_DetachNode(t *testing.T) {
 		resp, err := s.DetachNode(context.TODO(),
 			&pb.DetachNodeRequest{NodeId: nodeId.StringLowercase()})
 
-		assert.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
 		assert.Nil(t, resp)
 		nodeRepo.AssertExpectations(t)
 	})
@@ -1145,8 +1145,6 @@ func TestNodeServer_DetachNode(t *testing.T) {
 		nodeId := ukama.NewVirtualAmplifierNodeId()
 
 		nodeRepo := &mocks.NodeRepo{}
-		nodeRepo.On("Get", nodeId).
-			Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
 		nodeRepo.On("DetachNode", nodeId).Return(gorm.ErrInvalidDB).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
@@ -1694,8 +1692,6 @@ func TestNodeServer_PublishFailureKeepsSuccess(t *testing.T) {
 		}},
 		{"DetachNode", func(f publishFixture, s *server.NodeServer) error {
 			nodeId := ukama.NewVirtualAmplifierNodeId()
-			f.nodeRepo.On("Get", nodeId).
-				Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
 			f.nodeRepo.On("DetachNode", nodeId).Return(nil).Once()
 
 			_, err := s.DetachNode(context.TODO(),
@@ -1793,7 +1789,6 @@ func TestNodeServer_RepoErrorsMapToGrpcCodes(t *testing.T) {
 			return err
 		}},
 		{"DetachNode", func(s *server.NodeServer, r *mocks.NodeRepo, repoErr error) error {
-			r.On("Get", towerId).Return(&db.Node{Id: towerId.StringLowercase()}, nil).Once()
 			r.On("DetachNode", towerId).Return(repoErr).Once()
 			_, err := s.DetachNode(context.TODO(),
 				&pb.DetachNodeRequest{NodeId: towerId.StringLowercase()})
