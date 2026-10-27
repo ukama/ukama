@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -993,6 +994,59 @@ func TestNodeServer_AttachNodes(t *testing.T) {
 		assert.Nil(t, resp)
 		nodeRepo.AssertExpectations(t)
 	})
+
+	t.Run("AttachedIdsAreLowercased", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+		ampId := ukama.NewVirtualAmplifierNodeId().StringLowercase()
+
+		nodeRepo := &mocks.NodeRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		nodeRepo.On("AttachNodes", nodeId, []string{ampId}).Return(nil).Once()
+		msgbusClient.On("PublishRequest", mock.Anything,
+			mock.MatchedBy(func(e *epb.EventRegistryNodeAttach) bool {
+				return len(e.Nodegroup) == 1 && e.Nodegroup[0] == ampId
+			})).Return(nil).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", msgbusClient, nil,
+			orgId, nil, nil)
+
+		_, err := s.AttachNodes(context.TODO(), &pb.AttachNodesRequest{
+			NodeId:        nodeId.StringLowercase(),
+			AttachedNodes: []string{strings.ToUpper(ampId)},
+		})
+
+		assert.NoError(t, err)
+		nodeRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	ampId := ukama.NewVirtualAmplifierNodeId().StringLowercase()
+
+	rejectCases := []struct {
+		name     string
+		attached []string
+	}{
+		{"InvalidAttachedId", []string{ampId, "bad-id"}},
+		{"DuplicateAttachedId", []string{ampId, strings.ToUpper(ampId)}},
+	}
+
+	for _, tc := range rejectCases {
+		t.Run(tc.name, func(t *testing.T) {
+			nodeRepo := &mocks.NodeRepo{}
+			s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
+				nil, nil)
+
+			_, err := s.AttachNodes(context.TODO(), &pb.AttachNodesRequest{
+				NodeId: ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE).
+					StringLowercase(),
+				AttachedNodes: tc.attached,
+			})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			nodeRepo.AssertNotCalled(t, "AttachNodes", mock.Anything, mock.Anything)
+		})
+	}
 }
 
 func TestNodeServer_DetachNode(t *testing.T) {

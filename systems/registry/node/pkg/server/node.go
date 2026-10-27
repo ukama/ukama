@@ -456,7 +456,24 @@ func (n *NodeServer) AttachNodes(ctx context.Context,
 		return nil, utils.InvalidNodeIDError(req.GetNodeId(), err)
 	}
 
-	nds := req.GetAttachedNodes()
+	nds := make([]string, 0, len(req.GetAttachedNodes()))
+	seen := make(map[string]bool, len(req.GetAttachedNodes()))
+
+	for _, id := range req.GetAttachedNodes() {
+		aId, err := ukama.ValidateNodeId(id)
+		if err != nil {
+			return nil, utils.InvalidNodeIDError(id, err)
+		}
+
+		lid := aId.StringLowercase()
+		if seen[lid] {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"node %s is listed more than once", lid)
+		}
+
+		seen[lid] = true
+		nds = append(nds, lid)
+	}
 
 	err = n.nodeRepo.AttachNodes(nodeId, nds)
 	if err != nil {

@@ -260,8 +260,8 @@ func (n *nodeRepo) AttachNodes(nodeId ukama.NodeID, attachedNodeIds []string) er
 	}
 
 	if len(attachedNodes) == 0 || len(attachedNodes) != len(attachedNodeIds) {
-		return fmt.Errorf("some of the nodes from %v were not found or were duplicated: %w",
-			attachedNodeIds, store.ErrInvalid)
+		return fmt.Errorf("some of the nodes from %v were not found: %w", attachedNodeIds,
+			store.ErrInvalid)
 	}
 
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
