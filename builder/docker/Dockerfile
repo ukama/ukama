@@ -77,6 +77,7 @@ RUN if echo "${TARGETPLATFORM}" | grep -q "alpine"; then \
         g++-aarch64-linux-gnu \
         uuid-dev \
         libsqlite3-dev \
+        libyder-dev \
         && rm -rf /var/lib/apt/lists/*; \
     else \
         echo "Unsupported platform: ${TARGETPLATFORM}" && exit 1; \
@@ -127,6 +128,16 @@ RUN git clone https://github.com/ukama/prometheus-client.git && \
     make install DESTDIR=/usr && \
     cd ../../.. && \
     rm -rf prometheus-client
+
+ARG GO_VERSION=1.25.14
+RUN case "$(uname -m)" in \
+        x86_64)  GO_ARCH=amd64 ;; \
+        aarch64) GO_ARCH=arm64 ;; \
+        *)       GO_ARCH=armv6l ;; \
+    esac && \
+    wget -qO- "https://go.dev/dl/go${GO_VERSION}.linux-${GO_ARCH}.tar.gz" | tar -C /usr/local -xzf - && \
+    /usr/local/go/bin/go version
+ENV PATH="/usr/local/go/bin:${PATH}"
 
 # Final stage
 FROM builder as final

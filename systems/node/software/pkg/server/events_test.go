@@ -195,3 +195,43 @@ func TestApplyDesiredToNode_LeavesInFlightAndFailedRowsAlone(t *testing.T) {
 		})
 	}
 }
+
+func TestHandleNodeDeleteEvent(t *testing.T) {
+	const nodeID = "uk-sa2643-tnode-v0-a60f"
+	routeNodeDelete := msgbus.PrepareRoute(testOrgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete])
+
+	newServer := func(t *testing.T, nodeRepo *mocks.NodeRepo) *SoftwareUpdateEventServer {
+		swServer := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), nodeRepo,
+			mocks.NewReleaseRepo(t), nil, fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false,
+			[]string{testNodeGwIP}, nil, nil, 0, 0, nil)
+		return NewSoftwareEventServer(testOrgName, swServer)
+	}
+	deleteEvent := func(t *testing.T) *epb.Event {
+		msg, err := anypb.New(&epb.EventRegistryNodeDelete{NodeId: nodeID})
+		require.NoError(t, err)
+		return &epb.Event{RoutingKey: routeNodeDelete, Msg: msg}
+	}
+
+	t.Run("deletes node and its software rows", func(t *testing.T) {
+		nodeRepo := mocks.NewNodeRepo(t)
+		nodeRepo.On("Delete", nodeID).Return(nil).Once()
+
+		resp, err := newServer(t, nodeRepo).EventNotification(context.Background(), deleteEvent(t))
+		require.NoError(t, err)
+		assert.NotNil(t, resp)
+	})
+
+	t.Run("returns repo error", func(t *testing.T) {
+		nodeRepo := mocks.NewNodeRepo(t)
+		nodeRepo.On("Delete", nodeID).Return(errors.New("db down")).Once()
+
+		_, err := newServer(t, nodeRepo).EventNotification(context.Background(), deleteEvent(t))
+		require.Error(t, err)
+	})
+
+	t.Run("invalid payload", func(t *testing.T) {
+		_, err := newServer(t, mocks.NewNodeRepo(t)).EventNotification(context.Background(),
+			&epb.Event{RoutingKey: routeNodeDelete, Msg: nil})
+		require.Error(t, err)
+	})
+}
