@@ -61,11 +61,13 @@ phases:
       - type: toggle_service
         sites: all
         state: off
-      - type: wait_ues_detached
-        ues: ue-000001
-        seconds: 30
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: ue-000001
+        expected: blocked
+        timeout_seconds: 60
+        same_pdn: true
+      - type: traffic_blocked
         ues: ue-000001
         amount_mb: 1
 
@@ -74,7 +76,7 @@ phases:
       - type: wait
         seconds: 10
     checks:
-      - type: traffic_unavailable
+      - type: traffic_blocked
         ues: ue-000001
         amount_mb: 1
 
@@ -86,6 +88,10 @@ phases:
       - type: wait_ues_attached
         ues: ue-000001
     checks:
+      - type: ue_pdn
+        ues: ue-000001
+        expected: allowed
+        same_pdn: true
       - type: traffic_allowed
         ues: ue-000001
         amount_mb: 1
