@@ -8,8 +8,6 @@
 
 set -euo pipefail
 
-TOWER_IP="${TOWER_IP:-127.0.0.1}"
-EPCEMU_PORT="${EPCEMU_PORT:-18028}"
 IMSI=""
 
 while [[ $# -gt 0 ]]; do
@@ -31,22 +29,31 @@ done
 
 : "${IMSI:?--imsi required}"
 
-curl -fsS -X DELETE "http://${TOWER_IP}:${EPCEMU_PORT}/v1/ue/detach" \
-    -H 'Content-Type: application/json' \
-    -d "{\"imsi\":\"${IMSI}\"}"
+UE_CONTAINER="ue-${IMSI}"
+status="$(podman exec "$UE_CONTAINER" cat /run/ukama-ue/status.json)"
+if ! printf '%s' "$status" | jq -e --arg imsi "$IMSI" \
+    '.source == "ue-agent" and .imsi == $imsi' >/dev/null; then
+    echo "UE status does not match the requested IMSI" >&2
+    exit 1
+fi
 
-for i in $(seq 1 20); do
-    epcAttached="$(curl -fsS "http://${TOWER_IP}:${EPCEMU_PORT}/v1/status" |
-        jq -r '.ues.attached')"
-
-    pcrfActive="$(curl -fsS "http://${TOWER_IP}:${PCRF_PORT:-18030}/v1/status" |
-        jq -r '.sessions.active')"
-
-    if [[ "$epcAttached" == "0" && "$pcrfActive" == "0" ]]; then
-        break
+podman kill --signal USR1 "$UE_CONTAINER" >/dev/null
+for ((i=0; i<60; i++)); do
+    status="$(podman exec "$UE_CONTAINER" \
+        cat /run/ukama-ue/status.json)"
+    epc="$(podman exec "$UE_CONTAINER" sh -c '
+        curl -sS --max-time 5 -o /dev/null -w "%{http_code}" \
+            "${EPCEMU_URL}/v1/ue/${UE_IMSI}"' || true)"
+    pcrf="$(podman exec "$UE_CONTAINER" sh -c '
+        curl -sS --max-time 5 -o /dev/null -w "%{http_code}" \
+            "${PCRF_URL}/v1/pdn/imsi/${UE_IMSI}"' || true)"
+    if printf '%s' "$status" | jq -e '.state == "detached"' >/dev/null &&
+       [[ "$epc" == "404" && "$pcrf" == "404" ]]; then
+        podman rm -f "$UE_CONTAINER" >/dev/null
+        exit 0
     fi
-
     sleep 1
 done
 
-podman rm -f "ue-${IMSI}" >/dev/null 2>&1 || true
+echo "PDN cleanup is pending; leaving $UE_CONTAINER for retry" >&2
+exit 1
