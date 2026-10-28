@@ -13,6 +13,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/config"
 
+	evt "github.com/ukama/ukama/systems/common/events"
 	pmetric "github.com/ukama/ukama/systems/common/metrics"
 )
 
@@ -78,8 +79,9 @@ func NewConfig(name string) *Config {
 		MsgClient: &config.MsgClient{
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
-				"event.cloud.local.{{ .Org}}.registry.node.node.assign",
-				"event.cloud.local.{{ .Org}}.registry.node.node.release",
+				evt.EventRoutingKey[evt.EventNodeAssign],
+				evt.EventRoutingKey[evt.EventNodeRelease],
+				evt.EventRoutingKey[evt.EventNodeDelete],
 			},
 		},
 	}

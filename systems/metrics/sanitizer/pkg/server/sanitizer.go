@@ -237,11 +237,32 @@ func metricAndNodeId(labels []prompb.Label) (metricName string, nodeId string) {
 	return metricName, nodeId
 }
 
-func (s *SanitizerServer) updateNodeCache(n map[string]NodeMetaData) {
+func (s *SanitizerServer) updateNodeCache(n map[string]NodeMetaData) []string {
 	s.m.Lock()
 	defer s.m.Unlock()
 
+	stale := staleNodes(s.nodeCache, n)
 	s.nodeCache = n
+
+	for _, nodeId := range stale {
+		for _, metric := range pkg.SanitizedMetrics {
+			delete(s.nodeMetricCache, metricCacheKey(metric.Name, nodeId))
+		}
+	}
+
+	return stale
+}
+
+func staleNodes(prev, next map[string]NodeMetaData) []string {
+	stale := []string{}
+
+	for nodeId, old := range prev {
+		if cur, ok := next[nodeId]; !ok || cur != old {
+			stale = append(stale, nodeId)
+		}
+	}
+
+	return stale
 }
 
 func (s *SanitizerServer) getNodeFromCache(nodeId string) (NodeMetaData, bool) {
@@ -301,10 +322,29 @@ func (s *SanitizerServer) syncNodeCache() error {
 		}
 	}
 
-	s.updateNodeCache(nCache)
+	stale := s.updateNodeCache(nCache)
 	log.Infof("Cached %d node(s)", len(nCache))
 
+	for _, nodeId := range stale {
+		s.removeNodeSeries(nodeId)
+	}
+
 	return nil
+}
+
+func (s *SanitizerServer) removeNodeSeries(nodeId string) {
+	s.pushMutex.Lock()
+	defer s.pushMutex.Unlock()
+
+	removed, err := pmetric.RemoveSeries(s.pushGatewayHost,
+		map[string]string{nodeLabel: nodeId}, pkg.SystemName)
+	if err != nil {
+		log.Errorf("Error while removing series of node %s from push gateway: %v", nodeId, err)
+
+		return
+	}
+
+	log.Infof("Removed %d series of node %s", removed, nodeId)
 }
 
 func (s *SanitizerServer) pushSanitizedNodeMetric(m NodeMetricMetaData) {
