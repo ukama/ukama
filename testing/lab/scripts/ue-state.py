@@ -103,7 +103,23 @@ def ovs_permissions(state):
     return found
 
 
-def observe(state, expected, apn="-", snapshot=None, same=False):
+def previous_binding(state, snapshot):
+    previous = snapshot.with_suffix(".previous.json") if snapshot else None
+    if not previous or not previous.exists():
+        raise Pending("no previous PDN snapshot; attach before restarting UE")
+    body = json.loads(previous.read_text())
+    if (not isinstance(body, dict) or body.get("state") != "attached" or
+            any(body.get(key) != state[name] for key, name in
+                (("imsi", "IMSI"), ("iccid", "ICCID"), ("ip", "UE_IP"))) or
+            body.get("apn") != state["UE_APN"].lower()):
+        raise Pending("previous PDN snapshot belongs to another binding")
+    return identity(body)
+
+
+def observe(state, expected, apn="-", snapshot=None, same=False, new=False):
+    if (same and new) or ((same or new) and
+                          expected in ("detached", "rejected")):
+        raise Pending("invalid PDN identity expectation")
     agent = agent_status(state)
     epc_code, epc = api(state, 18028, "/v1/ue/" + state["IMSI"])
     pcrf_code, pcrf = api(state, 18030,
@@ -147,6 +163,8 @@ def observe(state, expected, apn="-", snapshot=None, same=False):
             raise Pending("no initial PDN snapshot; wait for attach first")
         if identity(json.loads(snapshot.read_text())) != binding:
             raise Pending("PDN identity changed")
+    if new and previous_binding(state, snapshot)[1] == binding[1]:
+        raise Pending("reattachment reused the previous PDN identity")
     if expected in ("allowed", "blocked"):
         if any(body.get("data_state") != expected
                for body in (agent, epc, pcrf)):
@@ -161,11 +179,11 @@ def observe(state, expected, apn="-", snapshot=None, same=False):
 
 
 def wait(state, expected, seconds, apn, snapshot, same=False,
-         remember=False):
+         remember=False, new=False):
     deadline = time.monotonic() + seconds
     while True:
         try:
-            result = observe(state, expected, apn, snapshot, same)
+            result = observe(state, expected, apn, snapshot, same, new)
             if remember and not snapshot.exists():
                 temporary = snapshot.with_suffix(".tmp")
                 temporary.write_text(json.dumps(result) + "\n")
@@ -188,6 +206,7 @@ def main():
     parser.add_argument("seconds", type=int, nargs="?", default=0)
     parser.add_argument("apn", nargs="?", default="-")
     parser.add_argument("same", type=int, choices=(0, 1), nargs="?", default=0)
+    parser.add_argument("new", type=int, choices=(0, 1), nargs="?", default=0)
     parser.add_argument("--remember", action="store_true")
     args = parser.parse_args()
     try:
@@ -203,7 +222,7 @@ def main():
                         state["UE_CONTAINER"])
             args.expected = "detached"
         wait(state, args.expected, args.seconds, args.apn, snapshot,
-             bool(args.same), args.remember)
+             bool(args.same), args.remember, bool(args.new))
     except (Pending, OSError, ValueError) as error:
         print(f"ue-state: {error}", file=sys.stderr)
         return 1

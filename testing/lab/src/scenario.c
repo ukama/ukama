@@ -887,11 +887,16 @@ static int apply_check_field(check_spec_t *c, const char *key,
         if (!val[0]) return ULAB_ERR;
         return ulab_copy(c->apn, sizeof(c->apn), val);
     }
-    if (c->type == CHECK_UE_PDN && ulab_streq(key, "same_pdn")) {
+    if (c->type == CHECK_UE_PDN &&
+        (ulab_streq(key, "same_pdn") || ulab_streq(key, "new_pdn"))) {
         if (!ulab_streq(val, "true") && !ulab_streq(val, "false")) {
             return ULAB_ERR;
         }
-        c->same_pdn = ulab_streq(val, "true");
+        if (ulab_streq(key, "same_pdn")) {
+            c->same_pdn = ulab_streq(val, "true");
+        } else {
+            c->new_pdn = ulab_streq(val, "true");
+        }
         return ULAB_OK;
     }
     if (ulab_streq(key, "target")) return ulab_copy(c->target,

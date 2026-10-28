@@ -300,7 +300,14 @@ if podman container exists "$UE_CONTAINER"; then
     "$SCRIPT_DIR/detach-ue.sh" "$UE_ID" "$RUN_DIR"
     podman rm -f "$UE_CONTAINER" >/dev/null
 fi
-rm -f "$UE_STATE_DIR/$UE_ID.pdn.json"
+# Keep the last observed binding for an explicit fresh-PDN assertion.
+# A missing current snapshot must not leave an older comparison behind.
+if [ -f "$UE_STATE_DIR/$UE_ID.pdn.json" ]; then
+    mv "$UE_STATE_DIR/$UE_ID.pdn.json" \
+        "$UE_STATE_DIR/$UE_ID.pdn.previous.json"
+else
+    rm -f "$UE_STATE_DIR/$UE_ID.pdn.previous.json"
+fi
 
 if ! podman run -d \
     --name "$UE_CONTAINER" \

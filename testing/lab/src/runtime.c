@@ -826,6 +826,9 @@ int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
          !ulab_streq(expected, "allowed") &&
          !ulab_streq(expected, "blocked") &&
          !ulab_streq(expected, "rejected")) ||
+        (check->same_pdn && check->new_pdn) ||
+        ((check->same_pdn || check->new_pdn) &&
+         ulab_streq(expected, "rejected")) ||
         strspn(apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(apn) || check->timeout_seconds > 300) {
@@ -836,9 +839,10 @@ int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
         char args[4096];
         int rc;
 
-        rc = snprintf(args, sizeof(args), "%s %s %s %u %s %d",
+        rc = snprintf(args, sizeof(args), "%s %s %s %u %s %d %d",
                       w->ues[ues->idx[i]].id, rt->run_dir, expected,
-                      check->timeout_seconds, apn, check->same_pdn);
+                      check->timeout_seconds, apn, check->same_pdn,
+                      check->new_pdn);
         if (rc < 0 || (size_t)rc >= sizeof(args)) {
             snprintf(err->msg, sizeof(err->msg), "ue_pdn args too long");
             return ULAB_ERR;

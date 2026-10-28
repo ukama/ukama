@@ -192,6 +192,7 @@ typedef struct {
     check_type_t type;
     char         apn[100];
     int          same_pdn;
+    int          new_pdn;
     char         target[ULAB_MAX_REF];
     selector_t   ues;
     selector_t   nodes;
