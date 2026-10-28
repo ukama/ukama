@@ -20,6 +20,7 @@ type SiteRepo interface {
 	Get(siteID string) (*Site, error)
 	Ensure(siteID string) error
 	List() ([]Site, error)
+	Delete(siteID string) error
 }
 
 type siteRepo struct{ db sql.Db }
@@ -46,6 +47,24 @@ func (r *siteRepo) List() ([]Site, error) {
 	var sites []Site
 	err := r.db.GetGormDb().Find(&sites).Error
 	return sites, err
+}
+
+func (r *siteRepo) Delete(siteID string) error {
+	if siteID == "" {
+		return errors.New("site_id is required")
+	}
+	return r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		intentIDs := tx.Model(&SiteIntent{}).Select("id").Where("site_id = ?", siteID)
+		if err := tx.Where("site_intent_id IN (?)", intentIDs).Delete(&SiteIntentFlight{}).Error; err != nil {
+			return err
+		}
+		for _, m := range []interface{}{&SiteIntent{}, &SiteState{}, &SiteComponent{}, &SitePortMap{}, &Site{}} {
+			if err := tx.Where("site_id = ?", siteID).Delete(m).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 // ensureSite ensures a registry row exists for siteID before inserting child rows.

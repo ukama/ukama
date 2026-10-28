@@ -119,7 +119,8 @@ func runGrpcServer(gormdb sql.Db) {
 		srv, siteRepo, intentRepo, flightRepo, stateRepo, componentRepo,
 		svcConf,
 	)
-	
+	go eventServer.PruneDeletedSites()
+
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterSiteControllerServiceServer(s, srv)
 		epb.RegisterEventNotificationServiceServer(s, eventServer)

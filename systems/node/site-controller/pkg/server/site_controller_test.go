@@ -10,12 +10,17 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -25,6 +30,7 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
@@ -239,4 +245,81 @@ func TestHandleNodeOnline_RejectsUnparseableNodeId(t *testing.T) {
 
 	assert.Error(t, err)
 	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func TestEventNotification_SiteDeleteRemovesSite(t *testing.T) {
+	siteID := "77777777-7777-7777-7777-777777777777"
+
+	sites := &scmocks.SiteRepo{}
+	sites.On("Delete", siteID).Return(nil).Once()
+
+	c := &SiteControllerEventServer{sites: sites, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventDeleteSite{SiteId: siteID, NetworkId: "net"})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.site.site.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.NoError(t, err)
+	sites.AssertExpectations(t)
+}
+
+func TestEventNotification_RejectsMismatchedPayload(t *testing.T) {
+	sites := &scmocks.SiteRepo{}
+	c := &SiteControllerEventServer{sites: sites, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventAddSite{SiteId: "99999999-9999-9999-9999-999999999999"})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.site.site.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.Error(t, err)
+	sites.AssertNotCalled(t, "Delete", mock.Anything)
+}
+
+func TestHandleDeleteSite_ReportsStoreFailure(t *testing.T) {
+	sites := &scmocks.SiteRepo{}
+	sites.On("Delete", mock.Anything).Return(assert.AnError).Once()
+
+	c := &SiteControllerEventServer{sites: sites}
+
+	err := c.handleDeleteSite(&epb.EventDeleteSite{SiteId: "88888888-8888-8888-8888-888888888888"})
+
+	assert.Error(t, err, "a failed delete must surface so the event is retried")
+}
+
+func registryErr(code int) error {
+	return fmt.Errorf("GetSite failure: %w", fmt.Errorf("rest api GET failure with error: %w",
+		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))
+}
+
+func TestPruneDeletedSites_DeletesOnlySitesRegistryReportsMissing(t *testing.T) {
+	live := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	gone := "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	unknown := "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+	sites := &scmocks.SiteRepo{}
+	sites.On("List").Return([]db.Site{{SiteID: live}, {SiteID: gone}, {SiteID: unknown}}, nil).Once()
+	sites.On("Delete", gone).Return(nil).Once()
+
+	siteClient := &mbmocks.SiteClient{}
+	siteClient.On("Get", live).Return(&registry.SiteInfo{Id: live}, nil).Once()
+	siteClient.On("Get", gone).Return(nil, registryErr(http.StatusNotFound)).Once()
+	siteClient.On("Get", unknown).Return(nil, registryErr(http.StatusInternalServerError)).Once()
+
+	srv := NewSiteControllerServer(testOrgName, nil, nil, nil, siteClient, nil, nil, nil)
+	c := &SiteControllerEventServer{s: srv, sites: sites}
+
+	c.PruneDeletedSites()
+
+	sites.AssertExpectations(t)
+	siteClient.AssertExpectations(t)
+	sites.AssertNotCalled(t, "Delete", live)
+	sites.AssertNotCalled(t, "Delete", unknown)
 }
