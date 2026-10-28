@@ -730,11 +730,31 @@ int runtime_build_and_start_ues(const char *repo,
                                 const world_t *w,
                                 const selector_result_t *ues,
                                 ulab_error_t *err) {
+    return runtime_start_ues_apn(repo, rt, w, ues, NULL, err);
+}
+
+int runtime_start_ues_apn(const char *repo, runtime_t *rt,
+                           const world_t *w, const selector_result_t *ues,
+                           const char *apn, ulab_error_t *err) {
     size_t i;
     const char *repo_path;
 
-    if (runtime_is_hardware(rt))
+    if (runtime_is_hardware(rt)) {
+        if (apn && apn[0]) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "start_ues APN override requires a virtual UE");
+            return ULAB_ERR;
+        }
         return hardware_runtime_ues(rt, w, ues, "start", 0, err);
+    }
+    if (!apn || !apn[0]) apn = "internet";
+    if (strlen(apn) > 99 || strspn(apn,
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
+        != strlen(apn)) {
+        snprintf(err->msg, sizeof(err->msg), "invalid APN argument");
+        return ULAB_ERR;
+    }
+
 
     repo_path = (repo != NULL && repo[0] != '\0') ? repo : rt->repo;
     if (repo_path == NULL || repo_path[0] == '\0') {
@@ -769,7 +789,7 @@ int runtime_build_and_start_ues(const char *repo,
         ulab_status("UE", "start %s imsi=%s iccid=%s ip=%s site=%s",
                     ue->ref, ue->imsi, ue->iccid, ue->ip, ue->site_ref);
 
-        rc = snprintf(args, sizeof(args), "%s %s %s %s %s %s %s %s",
+        rc = snprintf(args, sizeof(args), "%s %s %s %s %s %s %s %s %s",
                       repo_path,
                       ue->ref,
                       ue->id,
@@ -777,7 +797,7 @@ int runtime_build_and_start_ues(const char *repo,
                       ue->iccid,
                       ue->ip,
                       ue->site_ref,
-                      rt->run_dir);
+                      rt->run_dir, apn);
 
         if (rc < 0 || (size_t)rc >= sizeof(args)) {
             snprintf(err->msg, sizeof(err->msg),
@@ -790,6 +810,45 @@ int runtime_build_and_start_ues(const char *repo,
         }
     }
 
+    return ULAB_OK;
+}
+
+int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
+                            const selector_result_t *ues,
+                            const check_spec_t *check, ulab_error_t *err) {
+    size_t i;
+    const char *apn;
+    const char *expected;
+
+    apn = check->apn[0] ? check->apn : "-";
+    expected = check->expected;
+    if ((!ulab_streq(expected, "attached") &&
+         !ulab_streq(expected, "allowed") &&
+         !ulab_streq(expected, "blocked") &&
+         !ulab_streq(expected, "rejected")) ||
+        (check->same_pdn && check->new_pdn) ||
+        ((check->same_pdn || check->new_pdn) &&
+         ulab_streq(expected, "rejected")) ||
+        strspn(apn,
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
+        != strlen(apn) || check->timeout_seconds > 300) {
+        snprintf(err->msg, sizeof(err->msg), "invalid ue_pdn check");
+        return ULAB_ERR;
+    }
+    for (i = 0; i < ues->count; i++) {
+        char args[4096];
+        int rc;
+
+        rc = snprintf(args, sizeof(args), "%s %s %s %u %s %d %d",
+                      w->ues[ues->idx[i]].id, rt->run_dir, expected,
+                      check->timeout_seconds, apn, check->same_pdn,
+                      check->new_pdn);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg), "ue_pdn args too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "ue-state.py", args, err)) return ULAB_ERR;
+    }
     return ULAB_OK;
 }
 

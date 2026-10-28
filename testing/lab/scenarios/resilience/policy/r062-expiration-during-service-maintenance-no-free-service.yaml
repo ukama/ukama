@@ -1,6 +1,6 @@
 version: 1
 name: r062-expiration-during-service-maintenance-no-free-service
-description: Expire the only plan during service maintenance; restoring availability must not resurrect the old entitlement or allow a fresh attach.
+description: Expire the only plan during service maintenance; restoring availability must not resurrect the old entitlement or allow data on a fresh PDN.
 seed: 6162
 suite: resilience
 priority: p1
@@ -89,11 +89,12 @@ phases:
         ues: all
       - type: wait_ues_attached
         ues: all
-        seconds: 20
-        expect:
-          result: failure
-          error_contains: script failed
+        seconds: 60
     checks:
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        timeout_seconds: 60
       - type: package_state
         ues: all
         package: base

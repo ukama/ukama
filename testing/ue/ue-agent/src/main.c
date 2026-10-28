@@ -28,6 +28,8 @@
 #include <time.h>
 #include <unistd.h>
 
+#include "session.h"
+
 #define UE_AGENT_MAX_STR        256
 #define UE_AGENT_PKT_MAX        4096
 #define UE_AGENT_DEF_APN        "internet"
@@ -36,7 +38,8 @@
 #define UE_AGENT_ATTACH_RETRY   3
 #define UE_AGENT_ATTACH_CHECK   2
 
-static volatile bool gRun = true;
+static volatile sig_atomic_t gRun = 1;
+static volatile sig_atomic_t gDetach = 0;
 
 typedef struct {
     char imsi[UE_AGENT_MAX_STR];
@@ -55,15 +58,15 @@ typedef struct {
 } Config;
 
 typedef struct {
-    Config *cfg;
+    UeSession *session;
     atomic_bool running;
     atomic_bool attached;
 } AttachMonitor;
 
 static void on_signal(int sig) {
 
-    (void)sig;
-    gRun = false;
+    if (sig == SIGUSR1) gDetach = 1;
+    else gRun = 0;
 }
 
 static const char *env_or(const char *name, const char *defv) {
@@ -171,124 +174,6 @@ static int configure_tun(Config *cfg) {
     return fd;
 }
 
-static size_t discard_body(void *ptr, size_t size, size_t nmemb, void *data) {
-
-    (void)ptr;
-    (void)data;
-
-    return size * nmemb;
-}
-
-static long http_request(const char *method,
-                         const char *url,
-                         const char *json) {
-
-    CURL *curl;
-    CURLcode res;
-    struct curl_slist *headers;
-    char error[CURL_ERROR_SIZE];
-    long code;
-
-    curl = curl_easy_init();
-    if (curl == NULL) {
-        fprintf(stderr, "HTTP request failed method=%s url=%s: curl init failed\n",
-                method, url);
-        return 0;
-    }
-
-    headers = NULL;
-    code = 0;
-    error[0] = '\0';
-
-    curl_easy_setopt(curl, CURLOPT_URL, url);
-    curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error);
-    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 10L);
-    curl_easy_setopt(curl, CURLOPT_NOSIGNAL, 1L);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, discard_body);
-
-    if (json != NULL) {
-        headers = curl_slist_append(headers, "Content-Type: application/json");
-        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, json);
-    }
-
-    res = curl_easy_perform(curl);
-    if (res == CURLE_OK) {
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &code);
-    } else {
-        long responseCode = 0;
-        long osError = 0;
-
-        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &responseCode);
-        curl_easy_getinfo(curl, CURLINFO_OS_ERRNO, &osError);
-        fprintf(stderr,
-                "HTTP request failed method=%s url=%s curl=%d http=%ld "
-                "os_errno=%ld error=%s\n",
-                method, url, (int)res, responseCode, osError,
-                error[0] != '\0' ? error : curl_easy_strerror(res));
-    }
-
-    curl_slist_free_all(headers);
-    curl_easy_cleanup(curl);
-
-    return code;
-}
-
-static long attach_ue(Config *cfg) {
-
-    char url[UE_AGENT_MAX_STR * 3];
-    char body[UE_AGENT_MAX_STR * 6];
-
-    snprintf(url, sizeof(url), "%s/v1/ue/attach", cfg->epcemuUrl);
-    snprintf(body, sizeof(body),
-             "{\"imsi\":\"%s\",\"iccid\":\"%s\","
-             "\"ip\":\"%s\",\"apn\":\"%s\","
-             "\"userPlaneHost\":\"%s\",\"userPlanePort\":%d}",
-             cfg->imsi, cfg->iccid, cfg->ip, cfg->apn,
-             cfg->localDataHost, cfg->localDataPort);
-
-    return http_request("POST", url, body);
-}
-
-static long detach_ue(Config *cfg) {
-
-    char url[UE_AGENT_MAX_STR * 3];
-    char body[UE_AGENT_MAX_STR * 2];
-
-    snprintf(url, sizeof(url), "%s/v1/ue/detach", cfg->epcemuUrl);
-    snprintf(body, sizeof(body), "{\"imsi\":\"%s\"}", cfg->imsi);
-
-    return http_request("DELETE", url, body);
-}
-
-static bool ue_is_attached(Config *cfg) {
-
-    char url[UE_AGENT_MAX_STR * 3];
-    long code;
-
-    snprintf(url, sizeof(url), "%s/v1/ue/%s", cfg->epcemuUrl, cfg->imsi);
-    code = http_request("GET", url, NULL);
-
-    return code >= 200 && code < 300;
-}
-
-static bool wait_for_attach(Config *cfg) {
-
-    long code;
-
-    while (gRun) {
-        code = attach_ue(cfg);
-        if (code >= 200 && code < 300) return true;
-
-        fprintf(stderr, "attach pending imsi=%s ip=%s http=%ld\n",
-                cfg->imsi, cfg->ip, code);
-        sleep(UE_AGENT_ATTACH_RETRY);
-    }
-
-    return false;
-}
-
 static void *monitor_attachment(void *data) {
 
     AttachMonitor *monitor = data;
@@ -297,7 +182,7 @@ static void *monitor_attachment(void *data) {
         sleep(UE_AGENT_ATTACH_CHECK);
         if (!atomic_load(&monitor->running)) break;
 
-        if (!ue_is_attached(monitor->cfg)) {
+        if (!session_poll(monitor->session)) {
             atomic_store(&monitor->attached, false);
             break;
         }
@@ -341,7 +226,7 @@ static int udp_setup(Config *cfg, struct sockaddr_in *remote) {
     return fd;
 }
 
-static void packet_loop(Config *cfg,
+static void packet_loop(UeSession *session,
                         int tunFd,
                         int udpFd,
                         struct sockaddr_in *remote) {
@@ -355,7 +240,7 @@ static void packet_loop(Config *cfg,
     int rc;
     ssize_t n;
 
-    monitor.cfg = cfg;
+    monitor.session = session;
     atomic_init(&monitor.running, true);
     atomic_init(&monitor.attached, true);
 
@@ -365,7 +250,7 @@ static void packet_loop(Config *cfg,
         return;
     }
 
-    while (gRun && atomic_load(&monitor.attached)) {
+    while (gRun && !gDetach && atomic_load(&monitor.attached)) {
         FD_ZERO(&rfds);
         FD_SET(tunFd, &rfds);
         FD_SET(udpFd, &rfds);
@@ -398,17 +283,23 @@ static void packet_loop(Config *cfg,
     pthread_join(monitorThread, NULL);
 }
 
-static void config_load(Config *cfg) {
+static int config_load(Config *cfg) {
 
     char *slash;
+    const char *apn;
 
     memset(cfg, 0, sizeof(*cfg));
 
     snprintf(cfg->imsi, sizeof(cfg->imsi), "%s", env_or("UE_IMSI", ""));
     snprintf(cfg->iccid, sizeof(cfg->iccid), "%s", env_or("UE_ICCID", ""));
     snprintf(cfg->ip, sizeof(cfg->ip), "%s", env_or("UE_IP", ""));
-    snprintf(cfg->apn, sizeof(cfg->apn), "%s",
-             env_or("UE_APN", UE_AGENT_DEF_APN));
+    apn = getenv("UE_APN");
+    if (apn == NULL) apn = UE_AGENT_DEF_APN;
+    if (strlen(apn) >= sizeof(cfg->apn)) {
+        fprintf(stderr, "UE_APN is too long\n");
+        return -1;
+    }
+    snprintf(cfg->apn, sizeof(cfg->apn), "%s", apn);
 
     snprintf(cfg->epcemuUrl, sizeof(cfg->epcemuUrl), "%s",
              env_or("EPCEMU_URL", "http://127.0.0.1:18092"));
@@ -433,13 +324,17 @@ static void config_load(Config *cfg) {
         snprintf(cfg->cidr, sizeof(cfg->cidr), "%s/%s", cfg->ip,
                  UE_AGENT_DEF_PREFIX);
     }
+
+    return 0;
 }
 
 int main(int argc, char **argv) {
 
     Config cfg;
     struct sockaddr_in remote;
-    bool attached;
+    UeSession session;
+    int attempts;
+    int result;
     int tunFd;
     int udpFd;
 
@@ -448,12 +343,30 @@ int main(int argc, char **argv) {
 
     signal(SIGINT, on_signal);
     signal(SIGTERM, on_signal);
+    signal(SIGUSR1, on_signal);
     curl_global_init(CURL_GLOBAL_DEFAULT);
 
-    config_load(&cfg);
+    if (config_load(&cfg) != 0) {
+        curl_global_cleanup();
+        return 1;
+    }
 
     if (cfg.imsi[0] == '\0' || cfg.ip[0] == '\0') {
         fprintf(stderr, "UE_IMSI and UE_IP are required\n");
+        curl_global_cleanup();
+        return 1;
+    }
+
+    memset(&session, 0, sizeof(session));
+    session.url = cfg.epcemuUrl;
+    session.imsi = cfg.imsi;
+    session.iccid = cfg.iccid;
+    session.ip = cfg.ip;
+    session.requestedApn = cfg.apn;
+    session.dataHost = cfg.localDataHost;
+    session.dataPort = cfg.localDataPort;
+    if (session_init(&session) != 0) {
+        fprintf(stderr, "failed to initialize UE status\n");
         curl_global_cleanup();
         return 1;
     }
@@ -471,36 +384,34 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    attached = false;
-
+    result = 0;
     while (gRun) {
-        if (!wait_for_attach(&cfg)) break;
-
-        attached = true;
-        fprintf(stdout, "UE attached imsi=%s iccid=%s ip=%s data=%s:%d\n",
-                cfg.imsi,
-                cfg.iccid,
-                cfg.ip,
-                cfg.epcemuDataHost,
-                cfg.epcemuDataPort);
-        fflush(stdout);
-
-        packet_loop(&cfg, tunFd, udpFd, &remote);
-        if (!gRun) break;
-
-        attached = false;
-        fprintf(stdout, "UE detached imsi=%s ip=%s; retrying attach\n",
-                cfg.imsi, cfg.ip);
-        fflush(stdout);
+        if (gDetach) {
+            (void)session_detach(&session);
+        } else if (session_attach(&session)) {
+            fprintf(stdout, "UE attached imsi=%s apn=%s pdn=%s "
+                    "data_state=%s\n", cfg.imsi, session.apn,
+                    session.pdnId, session.dataState);
+            fflush(stdout);
+            packet_loop(&session, tunFd, udpFd, &remote);
+        }
+        if (gRun) sleep(UE_AGENT_ATTACH_RETRY);
     }
 
-    if (attached && cfg.detachOnExit) {
-        (void)detach_ue(&cfg);
+    if (cfg.detachOnExit || gDetach) {
+        result = 1;
+        for (attempts = 0; attempts < 3; attempts++) {
+            if (session_detach(&session)) {
+                result = 0;
+                break;
+            }
+        }
+        if (result) fprintf(stderr, "UE cleanup remains pending\n");
     }
 
     close(udpFd);
     close(tunFd);
     curl_global_cleanup();
 
-    return 0;
+    return result;
 }

@@ -10,6 +10,7 @@ package session
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -32,6 +33,8 @@ type sessionCache struct {
 	InitUsage   uint64
 	cancel      context.CancelFunc
 	ctx         context.Context
+	statsDirty  bool
+	ending      bool
 	paused      bool
 	baseRxBytes uint64 // sc.s.RxBytes at the moment flows were last removed
 	baseTxBytes uint64 // sc.s.TxBytes at the moment flows were last removed
@@ -59,12 +62,6 @@ type SessionManager interface {
 }
 
 func NewSessionManager(store *store.Store, br pkg.BrdigeConfig) (*sessionManager, error) {
-	// The datapath and in-memory cache do not survive a process restart.
-	// Account for persisted counters before admitting another session.
-	if err := store.RecoverActiveSessions(); err != nil {
-		return nil, fmt.Errorf("failed to recover interrupted sessions: %w", err)
-	}
-
 	d, err := datapath.InitDataPath(br.Name, br.Ip, br.NetType, br.Management)
 	if err != nil {
 		log.Errorf("Error initializing session manager. Error: %v", err)
@@ -81,157 +78,64 @@ func NewSessionManager(store *store.Store, br pkg.BrdigeConfig) (*sessionManager
 		cache:           make(map[string]*sessionCache),
 	}
 
+	if err := s.recoverSessions(); err != nil {
+		return nil, err
+	}
 	return s, nil
 }
 
 func (s *sessionManager) Status() Status {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	return Status{
 		DataPath: s.d.Status(),
 	}
 }
 
 func (s *sessionManager) storeStats(imsi string, lastStats bool) error {
-	var err error
 	sc, ok := s.cache[imsi]
-	if ok {
-		if sc.paused {
-			if lastStats {
-				sc.s.UpdatedAt = uint64(time.Now().Unix())
-
-				return s.store.EndSession(sc.s)
-			}
-
-			tNow := time.Now().Unix()
-			temp := int64(sc.s.UpdatedAt + uint64(s.idle.Seconds()))
-
-			if tNow > temp {
-				log.Infof("[SessionId %d ] Subscriber %s has been paused/idle for more than %s since %d. Ending session.",
-					sc.s.ID, imsi, s.idle, sc.s.UpdatedAt)
-
-				_ = s.endSessionLocked(sc.ctx, &store.Subscriber{Imsi: imsi})
-
-				return fmt.Errorf("session idle timeout exceeded while paused")
-			}
-
-			return nil
-		}
-
-		var rx, tx uint64
-		rx, _, tx, _, err = s.d.DataPathStats(sc.rxCookie, sc.txCookie)
-		if err != nil {
-			log.Errorf("[SessionId %d ] Failed to read final stats for data path of Imsi %s. Error: %v",
-				sc.s.ID, sc.s.SubscriberID.Imsi, err)
-
-			if !lastStats {
-				return fmt.Errorf("failed to read final stats for data path of Imsi %s. Error: %w",
-					sc.s.SubscriberID.Imsi, err)
-			}
-
-			// The bridge may already be gone during shutdown. Finalize the
-			// last recorded counters so this session cannot remain active.
-			log.Warnf("Finalizing Imsi %s with last recorded counters", imsi)
-		} else {
-			sc.s.RxBytes = sc.baseRxBytes + rx
-			sc.s.TxBytes = sc.baseTxBytes + tx
-		}
-
-		log.Infof("Rx Cookie 0x%x Rx Bytes %d Tx Cookie 0x%x TxBytes %d for imsi %s",
-			sc.rxCookie, sc.s.RxBytes, sc.txCookie, sc.s.TxBytes, imsi)
-
-		tNow := time.Now().Unix()
-		lastUpdate := sc.s.UpdatedAt
-
-		totalBytes := sc.s.TxBytes + sc.s.RxBytes
-
-		if lastStats {
-			sc.s.UpdatedAt = uint64(tNow)
-			sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
-
-			err = s.store.EndSession(sc.s)
-			if err != nil {
-				log.Warnf("[SessionId %d ] Failed to update last session usage to db store for Imsi %s. Error: %s",
-					sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-			}
-		} else {
-			if totalBytes != sc.s.TotalBytes {
-				sc.s.UpdatedAt = uint64(tNow)
-				sc.s.TotalBytes = sc.s.TxBytes + sc.s.RxBytes
-
-				err = s.store.UpdateSessionUsage(sc.s)
-				if err != nil {
-					log.Warnf("[SessionId %d ] Failed to update session usage to db store for Imsi %s. Error: %s",
-						sc.s.ID, sc.s.SubscriberID.Imsi, err.Error())
-				}
-
-				p, err := s.store.GetApplicablePolicyByImsi(imsi)
-				if err != nil {
-					log.Errorf("[SessionId %d ] failed to get policy by Imsi for subscriber %s. Error %v",
-						sc.s.ID, imsi, err)
-
-					return fmt.Errorf("failed to get policy by Imsi for subscriber %s. Error %w",
-						imsi, err)
-				}
-
-				totalUsage := sc.InitUsage + sc.s.TotalBytes
-				availableData := p.Data - p.Consumed
-				if totalUsage >= availableData {
-					log.Errorf("[SessionId %d ] Subscriber %s hit max data limit available=%d totalUsage=%d",
-						sc.s.ID, imsi, availableData, totalUsage)
-
-					_ = s.endSessionLocked(sc.ctx, &store.Subscriber{Imsi: imsi})
-
-					return fmt.Errorf("max data cap limit exceeded")
-				}
-			}
-
-			threshold := s.idle
-			if tNow-int64(sc.s.StartTime) < int64(s.newSessionGrace.Seconds()) {
-				threshold = s.newSessionGrace
-			}
-
-			temp := int64(lastUpdate + uint64(threshold.Seconds()))
-			log.Debugf("[SessionId %d ] Subscriber %s time now %d timeout %d",
-				sc.s.ID, imsi, tNow, temp)
-
-			if tNow > temp {
-				log.Infof("[SessionId %d ] Subscriber %s is idle for more than %s since %d. Ending session.",
-					sc.s.ID, imsi, threshold, lastUpdate)
-
-				_ = s.endSessionLocked(sc.ctx, &store.Subscriber{Imsi: imsi})
-
-				return fmt.Errorf("session idle timeout exceeded")
-			}
-		}
-
-		log.Debugf("[SessionId %d ] Updated stats for %s are %+v", sc.s.ID, imsi, sc.s)
-	} else {
-		log.Errorf("Session for Imsi %s not found.", imsi)
-
+	if !ok {
 		return fmt.Errorf("session for imsi not found: %s", imsi)
 	}
-
-	return err
+	if sc.paused {
+		return nil
+	}
+	rx, _, tx, _, err := s.d.DataPathStats(sc.rxCookie, sc.txCookie)
+	if err != nil {
+		return err
+	}
+	// A reset switch must not erase counters already recorded locally.
+	if sc.baseRxBytes+rx < sc.s.RxBytes ||
+		sc.baseTxBytes+tx < sc.s.TxBytes {
+		return fmt.Errorf("flow counters decreased for imsi %s", imsi)
+	}
+	if !sc.statsDirty && sc.s.RxBytes == sc.baseRxBytes+rx &&
+		sc.s.TxBytes == sc.baseTxBytes+tx {
+		return nil
+	}
+	sc.s.RxBytes = sc.baseRxBytes + rx
+	sc.s.TxBytes = sc.baseTxBytes + tx
+	sc.s.TotalBytes = sc.s.RxBytes + sc.s.TxBytes
+	sc.s.UpdatedAt = uint64(time.Now().Unix())
+	sc.statsDirty = true
+	if err := s.store.UpdateSessionUsage(sc.s); err != nil {
+		return err
+	}
+	sc.statsDirty = false
+	return nil
 }
 
-func (s *sessionManager) IfSessionExist(ctx context.Context, imsi, ip string) bool {
+func (s *sessionManager) IfSessionExist(ctx context.Context,
+	imsi, ip string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
 	sc, ok := s.cache[imsi]
-	if ok {
-		if sc.s.UeIpAddr == ip {
-			return true
-		}
-
-		log.Errorf("Old session exists for subscriber %s with IP addr %s. Ending it.", imsi, sc.s.UeIpAddr)
-		_ = s.endSessionLocked(ctx, &store.Subscriber{Imsi: imsi})
-	}
-
-	return false
+	return ok && sc.s.UeIpAddr == ip
 }
 
 // A zero bandwidth is unspecified, not an OpenFlow meter with rate zero.
 // Cookie-based flow counters still enforce the package byte allowance.
+
 func datapathMeterID(m store.Meter) uint32 {
 	if m.Rate == 0 {
 		return 0
@@ -257,6 +161,15 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 	}
 	sc.InitUsage = u.Data
 
+	if _, exists := s.cache[sub.Imsi]; exists {
+		return fmt.Errorf("session already exists for imsi %s", sub.Imsi)
+	}
+	s.cache[sub.Imsi] = &sc
+	sc.ending = true
+	// Also retain failed installations so cleanup can be retried.
+	if err := s.StartSessionMonitor(ctx, sub.Imsi); err != nil {
+		return err
+	}
 	if ns.FlowState == store.FlowsPaused {
 		sc.paused = true
 
@@ -287,14 +200,7 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 		}
 	}
 
-	s.cache[sub.Imsi] = &sc
-
-	err = s.StartSessionMonitor(ctx, sub.Imsi)
-	if err != nil {
-		log.Errorf("Failed to start monitor for Imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to start monitor for Imsi %s. Error: %w", sub.Imsi, err)
-	}
+	sc.ending = false
 
 	return nil
 }
@@ -302,61 +208,73 @@ func (s *sessionManager) CreateSesssion(ctx context.Context, sub *store.Subscrib
 func (s *sessionManager) EndAllSessions() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-
-	for imsi, session := range s.cache {
-		err := s.endSessionLocked(context.Background(), &store.Subscriber{Imsi: imsi})
-		if err != nil {
-			log.Errorf("Failed to end session for Imsi %s. Error %v", imsi, err)
+	var first error
+	for imsi := range s.cache {
+		if err := s.endSessionLocked(context.Background(),
+			&store.Subscriber{Imsi: imsi}); err != nil && first == nil {
+			first = err
 		}
-		log.Infof("Ending session %+v for Imsi %s.", session, imsi)
 	}
-
-	return nil
+	return first
 }
 
-func (s *sessionManager) EndSession(ctx context.Context, sub *store.Subscriber) error {
+func (s *sessionManager) EndSession(ctx context.Context,
+	sub *store.Subscriber) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	return s.endSessionLocked(ctx, sub)
 }
 
-func (s *sessionManager) endSessionLocked(ctx context.Context, sub *store.Subscriber) error {
+func (s *sessionManager) endSessionLocked(ctx context.Context,
+	sub *store.Subscriber) error {
 	sc, ok := s.cache[sub.Imsi]
 	if !ok {
-		log.Errorf("failed to find session for Imsi %s", sub.Imsi)
-		return nil
+		// Creation may have persisted a session before caching it failed.
+		se, err := s.store.GetActiveSessionByImsi(sub.Imsi)
+		if errors.Is(err, store.ErrSessionNotFound) {
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		if err := s.d.DeleteDataPath(se.UeIpAddr,
+			datapathMeterID(se.RxMeterID),
+			datapathMeterID(se.TxMeterID)); err != nil {
+			return err
+		}
+		return s.store.EndSession(se)
 	}
-
-	err := s.storeStats(sc.s.SubscriberID.Imsi, true)
-	if err != nil {
-		return fmt.Errorf("failed to store final stats for Imsi %s: %w", sub.Imsi, err)
+	sc.ending = true
+	if !sc.paused {
+		if err := s.storeStats(sub.Imsi, false); err != nil {
+			log.Warnf("Finalizing %s with recorded counters: %v", sub.Imsi, err)
+		}
 	}
-
-	defer delete(s.cache, sub.Imsi)
-
-	err = s.StopSessionMonitor(ctx, sub.Imsi)
-	if err != nil {
-		log.Errorf("Failed to stop monitor for Imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to stop monitor for Imsi %s. Error: %w", sub.Imsi, err)
+	if err := s.store.UpdateSessionFlowState(sc.s.ID,
+		store.FlowStateUnknown); err != nil {
+		log.Warnf("Pending flow state for %s: %v", sub.Imsi, err)
 	}
-
-	time.Sleep(1000 * time.Millisecond)
-
+	sc.s.FlowState = store.FlowStateUnknown
+	var err error
 	if sc.paused {
-		err = s.d.DeleteMetersOnly(datapathMeterID(sc.s.RxMeterID), datapathMeterID(sc.s.TxMeterID))
+		err = s.d.DeleteMetersOnly(datapathMeterID(sc.s.RxMeterID),
+			datapathMeterID(sc.s.TxMeterID))
 	} else {
-		err = s.d.DeleteDataPath(sc.s.UeIpAddr, datapathMeterID(sc.s.RxMeterID), datapathMeterID(sc.s.TxMeterID))
+		err = s.d.DeleteDataPath(sc.s.UeIpAddr,
+			datapathMeterID(sc.s.RxMeterID), datapathMeterID(sc.s.TxMeterID))
 	}
 	if err != nil {
-		log.Errorf("Failed to delete data path for Imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to delete data path for Imsi %s. Error: %w", sub.Imsi, err)
+		return err
 	}
-
-	_ = s.SendCDR(sub.Imsi)
-
+	sc.paused = true
+	if err := s.store.EndSession(sc.s); err != nil {
+		return err
+	}
+	if sc.cancel != nil {
+		sc.cancel()
+	}
+	delete(s.cache, sub.Imsi)
 	return nil
 }
 
@@ -364,11 +282,12 @@ func (s *sessionManager) HasActiveSession(imsi string) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	_, ok := s.cache[imsi]
-	return ok
+	sc, ok := s.cache[imsi]
+	return ok && !sc.ending
 }
 
-func (s *sessionManager) PauseSession(ctx context.Context, sub *store.Subscriber) error {
+func (s *sessionManager) PauseSession(ctx context.Context,
+	sub *store.Subscriber) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -378,12 +297,16 @@ func (s *sessionManager) PauseSession(ctx context.Context, sub *store.Subscriber
 		return nil
 	}
 
+	if sc.ending {
+		return fmt.Errorf("session cleanup pending")
+	}
 	if sc.paused {
-		return nil
+		return s.store.UpdateSessionFlowState(sc.s.ID, store.FlowsPaused)
 	}
 
 	if err := s.storeStats(sub.Imsi, false); err != nil {
-		log.Warnf("Failed to flush stats before pausing session for Imsi %s. Error: %v", sub.Imsi, err)
+		log.Warnf("Failed to flush stats before pausing %s: %v",
+			sub.Imsi, err)
 	}
 
 	sc, ok = s.cache[sub.Imsi]
@@ -391,23 +314,31 @@ func (s *sessionManager) PauseSession(ctx context.Context, sub *store.Subscriber
 		return nil
 	}
 
-	sc.baseRxBytes = sc.s.RxBytes
-	sc.baseTxBytes = sc.s.TxBytes
-
+	if err := s.store.UpdateSessionFlowState(sc.s.ID,
+		store.FlowStateUnknown); err != nil {
+		log.Warnf("Pending flow state for %s: %v", sub.Imsi, err)
+	}
+	sc.s.FlowState = store.FlowStateUnknown
 	err := s.d.DeleteFlowOnly(sc.s.UeIpAddr)
 	if err != nil {
-		log.Errorf("Failed to delete flow for Imsi %s. Error: %v", sub.Imsi, err)
+		sc.ending = true
+		log.Errorf("Failed to delete flow for Imsi %s: %v", sub.Imsi, err)
 
-		return fmt.Errorf("failed to delete flow for Imsi %s. Error: %w", sub.Imsi, err)
+		return fmt.Errorf("failed to delete flow for Imsi %s: %w",
+			sub.Imsi, err)
 	}
 
+	sc.baseRxBytes = sc.s.RxBytes
+	sc.baseTxBytes = sc.s.TxBytes
 	sc.paused = true
 	sc.s.FlowState = store.FlowsPaused
 
-	if err := s.store.UpdateSessionFlowState(sc.s.ID, store.FlowsPaused); err != nil {
-		log.Errorf("Failed to persist paused flow state for Imsi %s. Error: %v", sub.Imsi, err)
+	if err := s.store.UpdateSessionFlowState(sc.s.ID,
+		store.FlowsPaused); err != nil {
+		log.Errorf("Failed to persist paused flow for %s: %v", sub.Imsi, err)
 
-		return fmt.Errorf("failed to persist paused flow state for Imsi %s. Error: %w", sub.Imsi, err)
+		return fmt.Errorf("failed to persist paused flow for %s: %w",
+			sub.Imsi, err)
 	}
 
 	log.Infof("[SessionId %d ] Paused session for Imsi %s", sc.s.ID, sub.Imsi)
@@ -415,7 +346,8 @@ func (s *sessionManager) PauseSession(ctx context.Context, sub *store.Subscriber
 	return nil
 }
 
-func (s *sessionManager) ResumeSession(ctx context.Context, sub *store.Subscriber) error {
+func (s *sessionManager) ResumeSession(ctx context.Context,
+	sub *store.Subscriber) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -425,10 +357,18 @@ func (s *sessionManager) ResumeSession(ctx context.Context, sub *store.Subscribe
 		return nil
 	}
 
+	if sc.ending {
+		return fmt.Errorf("session cleanup pending")
+	}
 	if !sc.paused {
 		return nil
 	}
 
+	if err := s.store.UpdateSessionFlowState(sc.s.ID,
+		store.FlowStateUnknown); err != nil {
+		return err
+	}
+	sc.s.FlowState = store.FlowStateUnknown
 	err := s.d.AddFlowOnly(sc.s.UeIpAddr,
 		datapathMeterID(sc.s.RxMeterID),
 		datapathMeterID(sc.s.TxMeterID),
@@ -437,7 +377,9 @@ func (s *sessionManager) ResumeSession(ctx context.Context, sub *store.Subscribe
 	if err != nil {
 		log.Errorf("Failed to add flow for Imsi %s. Error: %v", sub.Imsi, err)
 
-		return fmt.Errorf("failed to add flow for Imsi %s. Error: %w", sub.Imsi, err)
+		sc.ending = true
+		sc.paused = false
+		return fmt.Errorf("failed to add flow for Imsi %s: %w", sub.Imsi, err)
 	}
 
 	sc.paused = false
@@ -448,13 +390,17 @@ func (s *sessionManager) ResumeSession(ctx context.Context, sub *store.Subscribe
 	if err := s.store.UpdateSessionUsage(sc.s); err != nil {
 		log.Errorf("Failed to persist resumed session state for Imsi %s. Error: %v", sub.Imsi, err)
 
-		return fmt.Errorf("failed to persist resumed session state for Imsi %s. Error: %w", sub.Imsi, err)
+		sc.ending = true
+		return fmt.Errorf("failed to persist resumed session for %s: %w",
+			sub.Imsi, err)
 	}
 
 	if err := s.store.UpdateSessionFlowState(sc.s.ID, store.FlowsActive); err != nil {
 		log.Errorf("Failed to persist active flow state for Imsi %s. Error: %v", sub.Imsi, err)
 
-		return fmt.Errorf("failed to persist active flow state for Imsi %s. Error: %w", sub.Imsi, err)
+		sc.ending = true
+		return fmt.Errorf("failed to persist active flow state for %s: %w",
+			sub.Imsi, err)
 	}
 
 	log.Infof("[SessionId %d ] Resumed session for Imsi %s", sc.s.ID, sub.Imsi)
@@ -516,7 +462,14 @@ func (s *sessionManager) sessionMonitorRoutine(ctx context.Context, interval tim
 		case <-ticker.C:
 			log.Infof("[SessionId %d ] Stat Collection", sc.s.ID)
 			s.mu.Lock()
-			_ = s.storeStats(sc.s.SubscriberID.Imsi, false)
+			// A canceled ticker must not touch a replacement session.
+			if s.cache[sc.s.SubscriberID.Imsi] == sc {
+				if sc.ending {
+					_ = s.endSessionLocked(ctx, &sc.s.SubscriberID)
+				} else {
+					_ = s.storeStats(sc.s.SubscriberID.Imsi, false)
+				}
+			}
 			s.mu.Unlock()
 
 		case <-ctx.Done():
@@ -526,4 +479,24 @@ func (s *sessionManager) sessionMonitorRoutine(ctx context.Context, interval tim
 			return
 		}
 	}
+}
+
+// recoverSessions is called only during startup, before admitting PDNs.
+func (s *sessionManager) recoverSessions() error {
+	old, err := s.store.GetAllActiveSessions()
+	if err != nil {
+		return err
+	}
+	for i := range old {
+		se := &old[i]
+		if err := s.d.DeleteDataPath(se.UeIpAddr,
+			datapathMeterID(se.RxMeterID),
+			datapathMeterID(se.TxMeterID)); err != nil {
+			return err
+		}
+		if err := s.store.EndSession(se); err != nil {
+			return err
+		}
+	}
+	return nil
 }

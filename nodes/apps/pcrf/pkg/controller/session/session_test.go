@@ -284,75 +284,45 @@ func TestSessionManager_StoreStats_AddsBaselineAfterResume(t *testing.T) {
 	assert.Equal(t, uint64(2075), sc.s.TxBytes)
 }
 
-func TestSessionManager_StoreStats_IdleTimeoutEndsActiveSession(t *testing.T) {
+func TestSessionManager_IdleRetainsActiveSession(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}
-
 	sm, sub := newSubscriberWithSession(t, s, d, "999990000000007", true)
-
 	sc := sm.cache[sub.Imsi]
-
-	sc.s.UpdatedAt = uint64(time.Now().Add(-2 * sm.idle).Unix())
-
-	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Twice()
-	d.On("DeleteDataPath", sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(nil).Once()
-
-	err := sm.storeStats(sub.Imsi, false)
-	assert.Error(t, err, "an idle timeout must be surfaced as an error so the caller knows the session is gone")
-
-	_, ok := sm.cache[sub.Imsi]
-	assert.False(t, ok, "an idle-timed-out session must be removed from the cache")
-
+	sc.s.UpdatedAt = uint64(time.Now().Add(-24 * time.Hour).Unix())
+	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(
+		uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
+	assert.NoError(t, sm.storeStats(sub.Imsi, false))
+	assert.True(t, sm.HasActiveSession(sub.Imsi))
+	se, err := s.GetActiveSessionByImsi(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, store.FlowsActive, se.FlowState)
 	d.AssertExpectations(t)
 }
 
-func TestSessionManager_StoreStats_IdleTimeoutEndsPausedSession(t *testing.T) {
+func TestSessionManager_IdleRetainsPausedSession(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}
-
-	sm, sub := newSubscriberWithSession(t, s, d, "999990000000008", true)
-
+	sm, sub := newSubscriberWithSession(t, s, d, "999990000000008", false)
 	sc := sm.cache[sub.Imsi]
+	sc.s.UpdatedAt = uint64(time.Now().Add(-24 * time.Hour).Unix())
+	assert.NoError(t, sm.storeStats(sub.Imsi, false))
+	assert.True(t, sm.HasActiveSession(sub.Imsi))
+	d.AssertExpectations(t)
+}
 
-	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
+func TestSessionManager_PauseRetainsIdleSession(t *testing.T) {
+	s := newTestStore(t)
+	d := &fakeDataPath{}
+	sm, sub := newSubscriberWithSession(t, s, d, "999990000000009", true)
+	sc := sm.cache[sub.Imsi]
+	sc.s.UpdatedAt = uint64(time.Now().Add(-24 * time.Hour).Unix())
+	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(
+		uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
 	d.On("DeleteFlowOnly", sc.s.UeIpAddr).Return(nil).Once()
 	assert.NoError(t, sm.PauseSession(context.Background(), sub))
-
-	sc.s.UpdatedAt = uint64(time.Now().Add(-2 * sm.idle).Unix())
-
-	d.On("DeleteMetersOnly", uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(nil).Once()
-
-	err := sm.storeStats(sub.Imsi, false)
-	assert.Error(t, err, "an idle timeout must be surfaced as an error so the caller knows the session is gone")
-
-	_, ok := sm.cache[sub.Imsi]
-	assert.False(t, ok, "an idle-timed-out paused session must be removed from the cache")
-
-	d.AssertNotCalled(t, "DeleteDataPath", mock.Anything, mock.Anything, mock.Anything)
-	d.AssertExpectations(t)
-}
-
-func TestSessionManager_PauseSession_SessionEndedDuringFlush(t *testing.T) {
-	s := newTestStore(t)
-	d := &fakeDataPath{}
-
-	sm, sub := newSubscriberWithSession(t, s, d, "999990000000009", true)
-
-	sc := sm.cache[sub.Imsi]
-
-	sc.s.UpdatedAt = uint64(time.Now().Add(-2 * sm.idle).Unix())
-
-	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Twice()
-	d.On("DeleteDataPath", sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(nil).Once()
-
-	err := sm.PauseSession(context.Background(), sub)
-	assert.NoError(t, err, "PauseSession must not error just because the session ended during its own flush")
-
-	_, ok := sm.cache[sub.Imsi]
-	assert.False(t, ok, "the session ended during flush must stay gone, not be resurrected")
-
-	// Must not have tried to pause a session that's already gone.
-	d.AssertNotCalled(t, "DeleteFlowOnly", mock.Anything)
+	assert.True(t, sm.HasActiveSession(sub.Imsi))
+	assert.True(t, sc.paused)
 	d.AssertExpectations(t)
 }
 
@@ -380,47 +350,47 @@ func TestSessionManager_EndSession_PausedDeletesMetersOnly(t *testing.T) {
 	assert.False(t, ok)
 }
 
-func TestSessionManager_EndSession_ClearsCacheEvenWhenDatapathCleanupFails(t *testing.T) {
+func TestSessionManager_CleanupFailureRetainsOwnership(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}
-
 	sm, sub := newSubscriberWithSession(t, s, d, "999990000000010", true)
-
 	sc := sm.cache[sub.Imsi]
-
-	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
-	d.On("DeleteDataPath", sc.s.UeIpAddr, uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(assert.AnError).Once()
-
-	err := sm.EndSession(context.Background(), sub)
-	assert.Error(t, err)
-
-	_, ok := sm.cache[sub.Imsi]
-	assert.False(t, ok, "the cache entry must be cleared even when datapath cleanup fails, or HasActiveSession keeps reporting a session that no longer exists in the store")
+	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(
+		uint64(20), uint64(0), uint64(80), uint64(0), nil).Twice()
+	d.On("DeleteDataPath", sc.s.UeIpAddr, mock.Anything,
+		mock.Anything).Return(assert.AnError).Once()
+	assert.Error(t, sm.EndSession(context.Background(), sub))
+	assert.Contains(t, sm.cache, sub.Imsi)
+	assert.False(t, sm.HasActiveSession(sub.Imsi))
+	se, err := s.GetActiveSessionByImsi(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, store.FlowStateUnknown, se.FlowState)
+	assert.Error(t, sm.ResumeSession(context.Background(), sub))
+	d.On("DeleteDataPath", sc.s.UeIpAddr, mock.Anything,
+		mock.Anything).Return(nil).Once()
+	assert.NoError(t, sm.EndSession(context.Background(), sub))
+	assert.False(t, sm.HasActiveSession(sub.Imsi))
+	u, err := s.GetUsageByImsi(sub.Imsi)
+	assert.NoError(t, err)
+	assert.Equal(t, uint64(100), u.Data)
+	d.AssertExpectations(t)
 }
 
-func TestSessionManager_StoreStats_IdleTimeoutClearsCacheEvenWhenMeterCleanupFails(t *testing.T) {
+func TestSessionManager_MeterCleanupFailureRemainsRetryable(t *testing.T) {
 	s := newTestStore(t)
 	d := &fakeDataPath{}
-
-	sm, sub := newSubscriberWithSession(t, s, d, "999990000000011", true)
-
+	sm, sub := newSubscriberWithSession(t, s, d, "999990000000011", false)
 	sc := sm.cache[sub.Imsi]
-
-	d.On("DataPathStats", sc.rxCookie, sc.txCookie).Return(uint64(0), uint64(0), uint64(0), uint64(0), nil).Once()
-	d.On("DeleteFlowOnly", sc.s.UeIpAddr).Return(nil).Once()
-	assert.NoError(t, sm.PauseSession(context.Background(), sub))
-
-	sc.s.UpdatedAt = uint64(time.Now().Add(-2 * sm.idle).Unix())
-
-	d.On("DeleteMetersOnly", uint32(sc.s.RxMeterID.ID), uint32(sc.s.TxMeterID.ID)).Return(assert.AnError).Once()
-
-	err := sm.storeStats(sub.Imsi, false)
-	assert.Error(t, err)
-
-	_, ok := sm.cache[sub.Imsi]
-	assert.False(t, ok, "the cache entry must be cleared even when meter cleanup fails during an idle-timeout-while-paused end, or HasActiveSession keeps reporting a session already gone from the store")
-
-	d.AssertNotCalled(t, "DeleteDataPath", mock.Anything, mock.Anything, mock.Anything)
+	d.On("DeleteMetersOnly", uint32(sc.s.RxMeterID.ID),
+		uint32(sc.s.TxMeterID.ID)).Return(assert.AnError).Once()
+	assert.Error(t, sm.EndSession(context.Background(), sub))
+	assert.Contains(t, sm.cache, sub.Imsi)
+	assert.False(t, sm.HasActiveSession(sub.Imsi))
+	d.On("DeleteMetersOnly", uint32(sc.s.RxMeterID.ID),
+		uint32(sc.s.TxMeterID.ID)).Return(nil).Once()
+	assert.NoError(t, sm.EndSession(context.Background(), sub))
+	assert.False(t, sm.HasActiveSession(sub.Imsi))
+	d.AssertExpectations(t)
 }
 
 func TestSessionManager_ConcurrentTickerAndRequests_NoRace(t *testing.T) {

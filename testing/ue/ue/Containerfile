@@ -20,6 +20,7 @@ RUN apk add --no-cache \
     ca-certificates \
     curl \
     curl-dev \
+    jansson-dev \
     libcrypto3 \
     iproute2 \
     iputils \

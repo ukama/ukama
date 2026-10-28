@@ -113,6 +113,8 @@ phases:
       - type: toggle_service
         sites: all
         state: on
+      - type: start_ues
+        ues: all
       - type: wait_ues_attached
         ues: all
         seconds: 300
@@ -124,8 +126,17 @@ phases:
         seconds: 60
       - type: start_ues
         ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        new_pdn: true
+      - type: traffic_blocked
         ues: all
         amount_mb: 1
       - type: package_state

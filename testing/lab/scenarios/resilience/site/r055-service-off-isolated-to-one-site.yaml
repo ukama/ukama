@@ -60,14 +60,15 @@ phases:
         ues: ue-000001
       - type: wait_ues_attached
         ues: ue-000001
-        seconds: 20
-        expect:
-          result: failure
-          error_contains: script failed
+        seconds: 60
       - type: traffic
         ues: ue-000002
         amount_mb: 3
     checks:
+      - type: ue_pdn
+        ues: ue-000001
+        expected: blocked
+        timeout_seconds: 60
       - type: site_node_counts_equals
         sites: site-002
         total: 3

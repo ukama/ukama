@@ -370,16 +370,25 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         return check_node_health(ctx, check, res, err);
     }
 
-    if (check->type == CHECK_UE_ATTACHED) {
+    if (check->type == CHECK_UE_PDN || check->type == CHECK_UE_ATTACHED) {
+        check_spec_t pdn;
+        ulab_error_t detail;
+
+        pdn = *check;
+        memset(&detail, 0, sizeof(detail));
+        if (check->type == CHECK_UE_ATTACHED) {
+            snprintf(pdn.expected, sizeof(pdn.expected), "attached");
+            pdn.timeout_seconds = 0;
+        }
         if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) {
             return ULAB_ERR;
         }
-        for (i = 0; i < sel.count; i++) {
-            if (ctx->world->ues[sel.idx[i]].attached) ok++;
-        }
-        res->passed = ok == sel.count;
-        snprintf(res->detail, sizeof(res->detail), "attached=%zu/%zu", ok,
-                 sel.count);
+        res->passed = sel.count > 0 &&
+            runtime_verify_ue_pdns(ctx->runtime, ctx->world, &sel,
+                                   &pdn, &detail) == ULAB_OK;
+        snprintf(res->detail, sizeof(res->detail),
+                 "pdn=%s ues=%zu %.768s", pdn.expected,
+                 sel.count, detail.msg);
         selector_result_free(&sel);
         return ULAB_OK;
     }

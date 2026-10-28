@@ -122,7 +122,9 @@ idx="${IMSI: -3}"
 UE_DATA_PORT=$((UE_BASE_PORT + 10#$idx))
 NAME="ue-${IMSI}"
 
-podman rm -f "$NAME" >/dev/null 2>&1 || true
+if podman container exists "$NAME"; then
+    "$SCRIPT_DIR/detach-ue.sh" --imsi "$IMSI"
+fi
 
 if [[ "$UE_NETWORK_MODE" == "container" ]]; then
     podman run -d \

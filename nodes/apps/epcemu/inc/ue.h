@@ -23,7 +23,7 @@ typedef json_t JsonObj;
 #define UE_IMSI_LEN   32
 #define UE_ICCID_LEN  32
 #define UE_IP_LEN     64
-#define UE_APN_LEN    64
+#define UE_APN_LEN    EPCEMU_APN_LEN
 #define UE_STATE_LEN  32
 
 typedef enum {
@@ -39,6 +39,13 @@ typedef struct {
     char iccid[UE_ICCID_LEN];
     char ip[UE_IP_LEN];
     char apn[UE_APN_LEN];
+
+    char instanceId[EPCEMU_ID_LEN];
+    char pdnId[EPCEMU_ID_LEN];
+    char dataState[16];
+    char reason[EPCEMU_MAX_REASON];
+    uint64_t policyCheckedAt;
+    uint64_t startedAt;
 
     UeState state;
 
@@ -60,16 +67,10 @@ void ue_store_init(void);
 void ue_store_destroy(void);
 void ue_clear_all(void);
 
-int ue_attach_start(const char *imsi,
-                    const char *iccid,
-                    const char *ip,
-                    const char *apn,
-                    char *reason,
-                    size_t reasonLen);
-
+int ue_attach_start(const UeEntry *ue, char *reason, size_t reasonLen);
 void ue_attach_complete(const char *imsi);
-void ue_attach_fail(const char *imsi, const char *reason);
-
+void ue_set_policy(const char *imsi, const char *state, const char *reason,
+                   bool checked);
 int ue_detach_start(const char *imsi, UeEntry *copy);
 void ue_detach_complete(const char *imsi);
 
@@ -91,7 +92,9 @@ JsonObj *ue_summary_json(void);
 int ue_count_attached(void);
 int ue_count_total(void);
 
-void ue_for_each_attached(int (*cb)(const UeEntry *ue, void *arg),
+size_t ue_snapshot(UeEntry *entries, size_t capacity);
+
+void ue_for_each(int (*cb)(const UeEntry *ue, void *arg),
                           void *arg);
 
 const char *ue_state_str(UeState state);

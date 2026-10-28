@@ -1,6 +1,6 @@
 version: 1
 name: p0-console-sim-deactivate-reactivate
-description: Deactivate a customer's SIM through BFF, verify attachment and traffic are blocked while package history remains, then reactivate it and restore service.
+description: Disable SIM traffic, preserve its PDN, then restore data.
 seed: 4811
 suite: p0
 priority: p0
@@ -39,6 +39,12 @@ phases:
       - type: wait_ues_attached
         ues: all
     checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
       - type: traffic_allowed
         ues: all
         amount_mb: 1
@@ -57,7 +63,13 @@ phases:
         status: service_off
         seconds: 120
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
+      - type: traffic_blocked
         ues: all
         amount_mb: 1
       - type: package_assignment_count
@@ -77,6 +89,12 @@ phases:
       - type: wait_ues_attached
         ues: all
     checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
       - type: traffic_allowed
         ues: all
         amount_mb: 1

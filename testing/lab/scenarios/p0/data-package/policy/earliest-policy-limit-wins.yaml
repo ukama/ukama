@@ -82,7 +82,13 @@ phases:
         package: time_first_plan
         offset_seconds: 2
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
+      - type: traffic_blocked
         ues: all
         amount_mb: 1
       - type: package_state

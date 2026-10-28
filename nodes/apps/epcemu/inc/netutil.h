@@ -16,6 +16,9 @@
 
 typedef json_t JsonObj;
 
+int apn_normalize(const char *input, size_t len, char *output);
+int identity_create(char *id);
+int identity_valid(const char *id);
 int imsi_valid(const char *imsi);
 int ip_to_uint32(const char *ip, uint32_t *out);
 int ip_in_cidr(const char *ip, const char *cidr);
