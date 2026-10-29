@@ -398,7 +398,7 @@ func (n *NodeServer) DeleteNode(ctx context.Context, req *pb.DeleteNodeRequest) 
 
 	err = n.nodeRepo.Delete(nodeId, nil)
 	if err != nil {
-		return nil, grpc.SqlErrorToGrpc(err, "node")
+		return nil, utils.RepoErrorToGrpc(err, "node")
 	}
 
 	if n.msgbus != nil {

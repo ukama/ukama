@@ -12,6 +12,7 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
+	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -33,6 +34,9 @@ func NewConfig(name string) *Config {
 		Service: uconf.LoadServiceHostConfig(name),
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
+			ListenerRoutes: []string{
+				evt.EventRoutingKey[evt.EventNodeDelete],
+			},
 		},
 	}
 
