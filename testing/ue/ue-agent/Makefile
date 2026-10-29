@@ -7,7 +7,7 @@
 TARGET_EXEC = ue-agent
 
 CFLAGS = -g -Wall -Wextra -O0 -I./inc -D_REENTRANT
-LIBS = -lpthread -lcurl
+LIBS = -lpthread -lcurl -ljansson
 
 CFILES = $(wildcard src/*.c)
 OBJFILES = $(CFILES:.c=.o)

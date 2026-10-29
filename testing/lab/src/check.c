@@ -56,6 +56,7 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
         return check_status(ctx, check, res, err);
     case CHECK_NODE_READY:
     case CHECK_UE_ATTACHED:
+    case CHECK_UE_PDN:
     case CHECK_NODE_STATE:
     case CHECK_TRAFFIC_ALLOWED:
     case CHECK_TRAFFIC_BLOCKED:

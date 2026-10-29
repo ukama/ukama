@@ -125,7 +125,8 @@ func main() {
 		ukamaAgentClient,
 		svcConf.SyncPeriod,
 		nodeId,
-		svcConf.DebugMode)
+		svcConf.DebugMode,
+		svcConf.APN)
 	if err != nil {
 		log.Fatalf("Failed to create controller: %v", err)
 	}

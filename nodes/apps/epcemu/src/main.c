@@ -17,7 +17,7 @@
 #include "data_plane.h"
 #include "epcemu.h"
 #include "init_network.h"
-#include "pcrf.h"
+#include "pdn.h"
 #include "services.h"
 #include "ue.h"
 #include "web_service.h"
@@ -71,33 +71,6 @@ static void usage(void) {
     printf("-h, --help                    Help menu\n");
     printf("-l, --logs <TRACE|DEBUG|INFO> Log level for the process\n");
     printf("-v, --version                 Software version\n");
-}
-
-static int detach_cb(const UeEntry *ue, void *arg) {
-
-    EpcemuConfig *config;
-
-    config = (EpcemuConfig *)arg;
-    if (ue == NULL || config == NULL) return USYS_FALSE;
-
-    usys_log_debug("detaching UE on shutdown imsi=%s ip=%s",
-                   ue->imsi,
-                   ue->ip);
-
-    if (!pcrf_delete_session(config, ue->imsi)) {
-        usys_log_error("PCRF session delete failed during shutdown imsi=%s",
-                       ue->imsi);
-    }
-
-    ue_detach_complete(ue->imsi);
-    return USYS_TRUE;
-}
-
-static void detach_all_ues(EpcemuConfig *config) {
-
-    if (config == NULL) return;
-
-    ue_for_each_attached(detach_cb, config);
 }
 
 static void wait_before_startup_retry(void) {
@@ -178,6 +151,11 @@ int main(int argc, char **argv) {
 
     usys_log_debug("Starting %s", EPCEMU_SERVICE_NAME);
 
+    if (!pdn_init(&ctx)) {
+        status_fail(&status, "failed to initialize PDN lifecycle");
+        goto failed;
+    }
+
     if (!services_resolve(&config, &status)) {
         goto failed;
     }
@@ -189,26 +167,26 @@ int main(int argc, char **argv) {
     webStarted = true;
 
     while (!gTerminate) {
+        pthread_mutex_lock(&ctx.serviceMutex);
         if (!init_network_probe(&config, &status)) {
+            pthread_mutex_unlock(&ctx.serviceMutex);
             wait_before_startup_retry();
             continue;
         }
 
-        (void)pcrf_probe(&config, &status);
-
         if (!dataPlaneStarted) {
             if (!data_plane_start(&gDataPlane, &config, &status)) {
                 startupFailed = true;
+                pthread_mutex_unlock(&ctx.serviceMutex);
                 break;
             }
 
             dataPlaneStarted = true;
-            pthread_mutex_lock(&ctx.serviceMutex);
             ctx.dataPlaneStarted = true;
-            pthread_mutex_unlock(&ctx.serviceMutex);
         }
 
         status_set(&status, EpcemuStateReady, "none");
+        pthread_mutex_unlock(&ctx.serviceMutex);
         break;
     }
 
@@ -217,15 +195,19 @@ int main(int argc, char **argv) {
     }
 
     while (!gTerminate) {
-        pause();
+        if (!startupFailed) pdn_poll(&ctx);
+        wait_before_startup_retry();
     }
 
-    detach_all_ues(&config);
+    pthread_mutex_lock(&ctx.serviceMutex);
+    ctx.stopping = true;
+    pthread_mutex_unlock(&ctx.serviceMutex);
 
     if (webStarted) {
         ulfius_stop_framework(&serviceInst);
         ulfius_clean_instance(&serviceInst);
     }
+    pdn_shutdown(&ctx);
     if (dataPlaneStarted) {
         data_plane_stop(&gDataPlane);
     }

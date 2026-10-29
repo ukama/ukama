@@ -62,19 +62,8 @@ if ! podman exec "$UE_CONTAINER" test -d /sys/class/net/tun0; then
     exit 1
 fi
 
-if ! podman exec "$TNODE_CONTAINER" \
-    curl -fsS --max-time 3 "http://127.0.0.1:18028/v1/ue/$IMSI" 2>/dev/null | \
-    grep -qi '"state"[[:space:]]*:[[:space:]]*"attached"'; then
-    echo "EPC session is not attached for imsi=$IMSI tower=$TNODE_CONTAINER" >&2
-    exit 1
-fi
-
-if ! podman exec "$TNODE_CONTAINER" \
-    curl -fsS --max-time 3 "http://127.0.0.1:18030/v1/subscriber/imsi/$IMSI" \
-    >/dev/null 2>&1; then
-    echo "PCRF subscriber is unavailable for imsi=$IMSI tower=$TNODE_CONTAINER" >&2
-    exit 1
-fi
+SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+"$SCRIPT_DIR/ue-state.py" "$UE_KEY" "$RUN_DIR" attached
 
 if ! podman exec "$TNODE_CONTAINER" \
     curl -fsS --max-time 3 "http://$MEDIA_IP:$HTTP_PORT/" >/dev/null 2>&1; then

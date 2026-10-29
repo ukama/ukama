@@ -980,6 +980,8 @@ typedef enum {
 static int is_live_runtime_check(const check_spec_t *check) {
     return check != NULL &&
         (check->immediate ||
+         check->type == CHECK_UE_PDN ||
+         check->type == CHECK_UE_ATTACHED ||
          check->type == CHECK_TRAFFIC_ALLOWED ||
          check->type == CHECK_TRAFFIC_BLOCKED ||
          check->type == CHECK_TRAFFIC_UNAVAILABLE ||

@@ -36,14 +36,20 @@ const (
 )
 
 type Controller struct {
-	store         *store.Store
-	sm            session.SessionManager
-	rc            client.RemoteController
-	publisher     *Publisher
-	nodeId        string
-	serviceMu     sync.RWMutex
-	serviceOn     bool
-	serviceReason string
+	pdnMu           sync.Mutex
+	apn             string
+	pdnCancel       context.CancelFunc
+	pdnDone         chan struct{}
+	restartRequired bool
+	stopping        bool
+	store           *store.Store
+	sm              session.SessionManager
+	rc              client.RemoteController
+	publisher       *Publisher
+	nodeId          string
+	serviceMu       sync.RWMutex
+	serviceOn       bool
+	serviceReason   string
 }
 
 type ControllerStatus struct {
@@ -71,8 +77,14 @@ func newPublisher(t time.Duration) *Publisher {
 	return p
 }
 
-func NewController(db string, br pkg.BrdigeConfig, rc client.RemoteController, period time.Duration, nodeId string, debug bool) (*Controller, error) {
-	c := &Controller{}
+func NewController(db string, br pkg.BrdigeConfig, rc client.RemoteController,
+	period time.Duration, nodeId string, debug bool, apn string) (
+	*Controller, error) {
+	selectedAPN, err := api.NormalizeAPN(apn)
+	if err != nil {
+		return nil, fmt.Errorf("configured APN: %w", err)
+	}
+	c := &Controller{apn: selectedAPN}
 
 	store, err := store.NewStore(db)
 	if err != nil {
@@ -81,6 +93,9 @@ func NewController(db string, br pkg.BrdigeConfig, rc client.RemoteController, p
 		return nil, fmt.Errorf("failed to create db: %w", err)
 	}
 
+	if err := store.RetireEPCs(); err != nil {
+		return nil, err
+	}
 	sm, err := session.NewSessionManager(store, br)
 	if err != nil {
 		log.Errorf("Failed to create session manager: %v", err)
@@ -96,12 +111,18 @@ func NewController(db string, br pkg.BrdigeConfig, rc client.RemoteController, p
 	c.store = store
 	c.publisher = newPublisher(period)
 
+	if err := c.cleanupPDNsLocked(context.Background()); err != nil {
+		return nil, err
+	}
+	c.startPDNMonitor(br.Period)
 	c.startPublisher()
 
 	return c, nil
 }
 
 func (c *Controller) Status() ControllerStatus {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
 	smStatus := c.sm.Status()
 
 	status := ControllerStatus{
@@ -119,6 +140,12 @@ func (c *Controller) Status() ControllerStatus {
 		status.Reason = "datapath_not_connected"
 	}
 
+	if c.restartRequired || c.stopping ||
+		smStatus.DataPath.ConnectedCount > 1 {
+		status.Ready = false
+		status.State = "failed"
+		status.Reason = "restart_required"
+	}
 	status.Sessions.Active = smStatus.DataPath.UECount
 
 	return status
@@ -194,37 +221,21 @@ func subscriberResponse(s *store.Subscriber) *api.SubscriberResponse {
 }
 
 func (c *Controller) ExitController() error {
-	err := c.sm.EndAllSessions()
-	if err != nil {
-		log.Errorf("Failed to end all sessions.Error: %v", err)
+	if c.pdnCancel != nil {
+		c.pdnCancel()
+		<-c.pdnDone
 	}
-
-	return c.stopPublisher()
-}
-
-func (c *Controller) validateSubscriber(imsi string) (*store.Subscriber, error) {
-	s, err := c.store.GetSubscriber(imsi)
-	if err != nil {
-		log.Errorf("Failed to get subscriber for imsi %s. Error: %v", imsi, err)
-
-		return nil, fmt.Errorf("failed to get subscriber for imsi %s. Error: %w", imsi, err)
+	c.pdnMu.Lock()
+	c.stopping = true
+	err := c.store.RetireEPCs()
+	if err == nil {
+		err = c.cleanupPDNsLocked(context.Background())
 	}
-
-	now := time.Now().Unix()
-	if s.PolicyID.StartTime > now || s.PolicyID.EndTime <= now {
-		log.Errorf("Failed to get valid policy for imsi %s", s.Imsi)
-
-		return nil, fmt.Errorf("%w: imsi %s", store.ErrPolicyInvalid, s.Imsi)
+	c.pdnMu.Unlock()
+	if c.publisher != nil {
+		_ = c.stopPublisher()
 	}
-
-	err = c.store.ValidateDataCapLimits(imsi, &s.PolicyID)
-	if err != nil {
-		log.Errorf("Failed to validate data cap limits: %v", err)
-
-		return nil, fmt.Errorf("%w: %v", store.ErrDataCapExceeded, err)
-	}
-
-	return s, nil
+	return err
 }
 
 func (c *Controller) ServiceStatus() api.ServiceResponse {
@@ -249,175 +260,29 @@ func (c *Controller) ServiceStatus() api.ServiceResponse {
 	}
 }
 
-func (c *Controller) SetService(ctx context.Context, req *api.ServiceRequest) error {
+func (c *Controller) SetService(ctx context.Context,
+	req *api.ServiceRequest) error {
 	state := strings.ToLower(strings.TrimSpace(req.State))
-	switch state {
-	case "on":
-		c.serviceMu.Lock()
-		c.serviceOn = true
-		c.serviceReason = "ok"
-		c.serviceMu.Unlock()
-		return nil
-	case "off":
-		c.serviceMu.Lock()
-		c.serviceOn = false
-		c.serviceReason = "operator_disabled"
-		c.serviceMu.Unlock()
-		if err := c.sm.EndAllSessions(); err != nil {
-			log.Errorf("Failed to turn off service: %v ", err)
-
-			return fmt.Errorf("failed to turn off service: %w ", err)
-		}
-		return nil
-	default:
-		log.Errorf("Invalid service state %q", req.State)
-
-		return rest.HttpError{HttpCode: http.StatusBadRequest, Message: fmt.Sprintf("invalid service state %q", req.State)}
+	if state != "on" && state != "off" {
+		return rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "invalid service state"}
 	}
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
+	c.serviceMu.Lock()
+	c.serviceOn = state == "on"
+	c.serviceReason = "ok"
+	if !c.serviceOn {
+		c.serviceReason = "operator_disabled"
+	}
+	c.serviceMu.Unlock()
+	return c.reconcilePDNsLocked(ctx)
 }
 
 func (c *Controller) serviceEnabled() bool {
 	c.serviceMu.RLock()
 	defer c.serviceMu.RUnlock()
 	return c.serviceOn
-}
-
-func remoteLookupHttpError(imsi string, rerr error) error {
-	if errors.Is(rerr, client.ErrRemoteSubscriberNotFound) {
-		return rest.HttpError{HttpCode: http.StatusNotFound,
-			Message: fmt.Sprintf("subscriber %s not found", imsi)}
-	}
-
-	return rest.HttpError{HttpCode: http.StatusServiceUnavailable,
-		Message: fmt.Sprintf("subscriber %s: remote asr lookup failed", imsi)}
-}
-
-func (c *Controller) CreateSession(ctx *gin.Context, req *api.CreateSession) error {
-	var sub *store.Subscriber
-	var err error
-
-	log.Infof("New session request received for subscriber %s and Ip address %s",
-		req.ImsiStr, req.IpStr)
-
-	if !c.serviceEnabled() {
-		log.Errorf("service_disabled")
-
-		return fmt.Errorf("service_disabled")
-	}
-
-	sub, err = c.validateSubscriber(req.ImsiStr)
-	if err != nil {
-		switch {
-		case errors.Is(err, store.ErrSubscriberNotFound):
-			log.Warnf("Subscriber %s not found on local node: %v", req.ImsiStr, err)
-			log.Infof("Fetching subscriber %s from remote asr", req.ImsiStr)
-
-			remoteSub, rerr := c.rc.GetSubscriberProfile(req.ImsiStr)
-			if rerr != nil {
-				log.Errorf("Subscriber %s not found in remote asr either: %v", req.ImsiStr, rerr)
-
-				return remoteLookupHttpError(req.ImsiStr, rerr)
-			}
-
-			log.Infof("Subscriber %s found in remote asr", req.ImsiStr)
-			log.Infof("Registering subscriber %s in local node", req.ImsiStr)
-
-			sub, err = c.store.CreateSubscriber(remoteSub.Imsi, &remoteSub.Policy, &remoteSub.ReRoute, nil)
-			if err != nil {
-				log.Errorf("Failed to create missing subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-				return rest.HttpError{HttpCode: http.StatusInternalServerError,
-					Message: fmt.Sprintf("failed to create missing subscriber with imsi %s", req.Imsi)}
-			}
-
-		case errors.Is(err, store.ErrPolicyInvalid), errors.Is(err, store.ErrDataCapExceeded):
-			log.Warnf("Subscriber %s has stale/invalid policy locally: %v", req.ImsiStr, err)
-			log.Infof("Reverse-looking up current policy for subscriber %s from remote asr", req.ImsiStr)
-
-			remoteSub, rerr := c.rc.GetSubscriberProfile(req.ImsiStr)
-			if rerr != nil {
-				log.Errorf("Reverse lookup failed for subscriber %s: %v", req.ImsiStr, rerr)
-
-				return remoteLookupHttpError(req.ImsiStr, rerr)
-			}
-
-			if _, rerr := c.store.UpdateSubscriber(remoteSub.Imsi, &remoteSub.Policy); rerr != nil {
-				log.Errorf("Failed to apply reverse-looked-up policy for subscriber %s: %v", req.ImsiStr, rerr)
-
-				return rest.HttpError{HttpCode: http.StatusInternalServerError,
-					Message: fmt.Sprintf("failed to refresh policy for subscriber %s from remote asr", req.ImsiStr)}
-			}
-
-			sub, err = c.validateSubscriber(req.ImsiStr)
-			if err != nil {
-				log.Errorf("Subscriber %s still has no valid policy after reverse lookup: %v", req.ImsiStr, err)
-
-				return rest.HttpError{HttpCode: http.StatusForbidden,
-					Message: fmt.Sprintf("subscriber %s has no valid policy even after reverse lookup", req.ImsiStr)}
-			}
-
-		default:
-			log.Errorf("Failed to validate subscriber %s: %v", req.ImsiStr, err)
-
-			return rest.HttpError{HttpCode: http.StatusInternalServerError,
-				Message: fmt.Sprintf("failed to validate subscriber %s", req.ImsiStr)}
-		}
-	}
-
-	state := c.sm.IfSessionExist(ctx, sub.Imsi, req.IpStr)
-	if state {
-		log.Errorf("Session already exists for %s user with ip %s terminating it.",
-			sub.Imsi, req.IpStr)
-
-		err = c.sm.EndSession(ctx, sub)
-		if err != nil {
-			log.Errorf("Failed to end session on bridge for subscriber %s. Error: %v",
-				req.ImsiStr, err)
-
-			return fmt.Errorf("failed to end session on bridge for subscriber %s. Error: %w",
-				req.ImsiStr, err)
-		}
-	}
-
-	s, rxF, txF, err := c.store.CreateSession(sub, req.IpStr, c.nodeId)
-	if err != nil {
-		log.Errorf("Failed to create a session for subscriber %s. Error: %v",
-			req.ImsiStr, err)
-
-		return fmt.Errorf("failed to create a session for subscriber %s. Error: %w",
-			req.ImsiStr, err)
-	}
-
-	err = c.sm.CreateSesssion(ctx, sub, s, rxF, txF)
-	if err != nil {
-		log.Errorf("Failed to monitor session on bridge for subscriber %s. Error: %v",
-			req.ImsiStr, err)
-
-		return fmt.Errorf("failed to monitor session on bridge for subscriber %s. Error: %w",
-			req.ImsiStr, err)
-	}
-
-	return nil
-}
-
-func (c *Controller) EndSession(ctx *gin.Context, req *api.EndSession) error {
-	sub, err := c.store.GetSubscriber(req.ImsiStr)
-	if err != nil {
-		log.Errorf("Failed to get subscriber for imsi %s. Error: %v", req.ImsiStr, err)
-
-		return fmt.Errorf("failed to get subscriber for imsi %s. Error: %w", req.ImsiStr, err)
-	}
-
-	err = c.sm.EndSession(ctx, sub)
-	if err != nil {
-		log.Errorf("Failed to end session on bridge for subscriber %s. Error: %v",
-			req.ImsiStr, err)
-
-		return fmt.Errorf("failed to end session on bridge for subscriber %s. Error: %w",
-			req.ImsiStr, err)
-	}
-
-	return nil
 }
 
 func (c *Controller) GetSessionByID(ctx *gin.Context, req *api.GetSessionByID) (*api.SessionResponse, error) {
@@ -500,6 +365,8 @@ func (c *Controller) GetPolicyByID(ctx *gin.Context, req *api.GetPolicyByID) (*a
 }
 
 func (c *Controller) AddPolicy(ctx *gin.Context, req *api.Policy) error {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
 	_, err := c.store.CreatePolicy(req)
 	if err != nil {
 		log.Errorf("Failed to add policy %s. Error: %v", req.Uuid.String(), err)
@@ -511,9 +378,19 @@ func (c *Controller) AddPolicy(ctx *gin.Context, req *api.Policy) error {
 }
 
 func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi) ([]*api.FlowResponse, error) {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
+	p, err := c.store.GetLivePDN(req.Imsi)
+	if err != nil || p.State != store.PDNLive {
+		if err != nil && !errors.Is(err, store.ErrPDNNotFound) {
+			return nil, err
+		}
+		return nil, rest.HttpError{HttpCode: http.StatusNotFound,
+			Message: "live PDN not found"}
+	}
 	var flows []*store.Flow
 
-	_, err := c.store.GetSubscriber(req.Imsi)
+	_, err = c.store.GetSubscriber(req.Imsi)
 	if err != nil {
 		if errors.Is(err, store.ErrSubscriberNotFound) {
 			log.Infof("No subscriber for Imsi %s; reporting flow as withdrawn", req.Imsi)
@@ -545,6 +422,10 @@ func (c *Controller) GetFlowsForImsi(ctx *gin.Context, req *api.GetFlowsForImsi)
 		return nil, rest.HttpError{HttpCode: http.StatusNotFound, Message: "flow withdrawn (service paused)"}
 	}
 
+	if s.FlowState != store.FlowsActive {
+		return nil, rest.HttpError{HttpCode: http.StatusServiceUnavailable,
+			Message: "flow_update_pending"}
+	}
 	fRx, err := c.store.GetFlowForMeter(s.RxMeterID.ID)
 	if err != nil {
 		log.Errorf("Failed to get RX flow for Imsi %s. Error: %v", req.Imsi, err)
@@ -619,153 +500,57 @@ func (c *Controller) GetSubscriber(ctx *gin.Context, req *api.RequestSubscriber)
 	return subscriberResponse(s), nil
 }
 
-func (c *Controller) DeleteSubscriber(ctx *gin.Context, req *api.RequestSubscriber) error {
-	s, err := c.store.GetSubscriber(req.Imsi)
-	if err != nil {
-		log.Errorf("failed to get subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", req.Imsi, err)
-	}
-
-	err = c.store.DeleteSubscriber(s)
-	if err != nil {
-		log.Errorf("Failed to delete subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to delete subscriber with imsi %s. Error: %w", req.Imsi, err)
-	}
-	return nil
-}
-
-func (c *Controller) AddSubscriber(ctx *gin.Context, req *api.CreateSubscriber) error {
-	sub, err := c.store.CreateSubscriber(req.Imsi, &req.Policy, &req.ReRoute, nil)
-	if err != nil {
-		log.Errorf("Failed to create subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to create subscriber with imsi %s. Error: %w", req.Imsi, err)
-	}
-
-	// New subscribers already default to service-on; only act if the request
-	// explicitly asks for something else.
-	if req.IsServiceOn == nil || *req.IsServiceOn == sub.ServiceOn {
-		return nil
-	}
-
-	if c.sm.HasActiveSession(sub.Imsi) {
-		if *req.IsServiceOn {
-			if err := c.sm.ResumeSession(ctx, sub); err != nil {
-				return err
-			}
-		} else {
-			if err := c.sm.PauseSession(ctx, sub); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
-		log.Errorf("Failed to set initial service status for imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to set initial service status for imsi %s. Error: %w", req.Imsi, err)
-	}
-
-	return nil
-}
-
-func (c *Controller) UpdateSubscriber(ctx *gin.Context, req *api.UpdateSubscriber) error {
-	oldServiceOn := true
-
+func (c *Controller) DeleteSubscriber(ctx *gin.Context,
+	req *api.RequestSubscriber) error {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
 	sub, err := c.store.GetSubscriber(req.Imsi)
-	switch {
-	case err == nil:
-		oldServiceOn = sub.ServiceOn
-	case errors.Is(err, store.ErrSubscriberNotFound):
-		// fall through with the default above
-	default:
-		log.Errorf("Failed to get subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to get subscriber with imsi %s. Error: %w", req.Imsi, err)
-	}
-
-	sub, err = c.store.UpdateSubscriber(req.Imsi, &req.Policy)
 	if err != nil {
-		log.Errorf("Failed to update subscriber with imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to update subscriber with imsi %s. Error: %w", req.Imsi, err)
+		return err
 	}
-
-	if req.IsServiceOn == nil || *req.IsServiceOn == oldServiceOn {
-		return nil
+	// Persist the block before cleanup so a failed removal remains retryable.
+	if err := c.store.UpdateSubscriberServiceStatus(sub, false); err != nil {
+		return err
 	}
+	if err := c.sm.EndSession(ctx, sub); err != nil {
+		return err
+	}
+	return c.store.DeleteSubscriber(sub)
+}
 
-	if c.sm.HasActiveSession(sub.Imsi) {
-		if *req.IsServiceOn {
-			if err := c.sm.ResumeSession(ctx, sub); err != nil {
-				return err
-			}
-		} else {
-			if err := c.sm.PauseSession(ctx, sub); err != nil {
-				return err
-			}
-		}
-	} else if *req.IsServiceOn {
-		if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
-			log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
-
-			return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
-		}
-		sub.ServiceOn = *req.IsServiceOn
-
-		if err := c.recreateSessionFromHistory(ctx, sub); err != nil {
+func (c *Controller) AddSubscriber(ctx *gin.Context,
+	req *api.CreateSubscriber) error {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
+	sub, err := c.store.CreateSubscriber(req.Imsi, &req.Policy,
+		&req.ReRoute, nil)
+	if err != nil {
+		return err
+	}
+	if req.IsServiceOn != nil {
+		if err := c.store.UpdateSubscriberServiceStatus(sub,
+			*req.IsServiceOn); err != nil {
 			return err
 		}
-
-		return nil
 	}
-
-	if err := c.store.UpdateSubscriberServiceStatus(sub, *req.IsServiceOn); err != nil {
-		log.Errorf("Failed to update service status for imsi %s. Error: %v", req.Imsi, err)
-
-		return fmt.Errorf("failed to update service status for imsi %s. Error: %w", req.Imsi, err)
-	}
-
-	return nil
+	return c.reconcileImsiLocked(ctx, req.Imsi)
 }
 
-func (c *Controller) recreateSessionFromHistory(ctx *gin.Context, sub *store.Subscriber) error {
-	sessions, err := c.store.GetSessionsByImsi(sub.Imsi)
+func (c *Controller) UpdateSubscriber(ctx *gin.Context,
+	req *api.UpdateSubscriber) error {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
+	sub, err := c.store.UpdateSubscriber(req.Imsi, &req.Policy)
 	if err != nil {
-		log.Errorf("Failed to get session history for imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to get session history for imsi %s. Error: %w", sub.Imsi, err)
+		return err
 	}
-
-	if len(sessions) == 0 {
-		log.Infof("No session history for imsi %s; nothing to recreate until next UE attach", sub.Imsi)
-
-		return nil
-	}
-
-	last := sessions[0]
-	for _, se := range sessions[1:] {
-		if se.ID > last.ID {
-			last = se
+	if req.IsServiceOn != nil {
+		if err := c.store.UpdateSubscriberServiceStatus(sub,
+			*req.IsServiceOn); err != nil {
+			return err
 		}
 	}
-
-	s, rxF, txF, err := c.store.CreateSession(sub, last.UeIpAddr, c.nodeId)
-	if err != nil {
-		log.Errorf("Failed to recreate session for imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to recreate session for imsi %s. Error: %w", sub.Imsi, err)
-	}
-
-	if err := c.sm.CreateSesssion(ctx, sub, s, rxF, txF); err != nil {
-		log.Errorf("Failed to wire up recreated session for imsi %s. Error: %v", sub.Imsi, err)
-
-		return fmt.Errorf("failed to wire up recreated session for imsi %s. Error: %w", sub.Imsi, err)
-	}
-
-	return nil
+	return c.reconcileImsiLocked(ctx, req.Imsi)
 }
 
 func handlePendingSyncSession(c *Controller) {

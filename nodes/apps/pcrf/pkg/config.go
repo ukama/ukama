@@ -20,6 +20,7 @@ import (
 type Config struct {
 	config.BaseConfig `mapstructure:",squash"`
 
+	APN        string `default:"internet"`
 	DB         string
 	Bridge     BrdigeConfig
 	Server     rest.HttpConfig
@@ -47,7 +48,8 @@ func NewConfig(name string) *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: true,
 		},
-		DB: DefaultDBPath,
+		APN: "internet",
+		DB:  DefaultDBPath,
 		Bridge: BrdigeConfig{
 			Period:          2 * time.Second,
 			SessionIdleTime: 60 * time.Second,

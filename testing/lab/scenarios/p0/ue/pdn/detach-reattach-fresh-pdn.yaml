@@ -1,0 +1,96 @@
+version: 1
+name: p0-detach-reattach-fresh-pdn
+description: Clean up a detached binding and require a fresh PDN on retry.
+seed: 4851
+suite: p0
+priority: p0
+tags: [virtual, runtime, pdn]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: base
+    name: PDN Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: establish_first_pdn
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+
+  - name: detach_and_verify_cleanup
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 1
+      - type: finalize_ue_sessions
+        ues: all
+        seconds: 60
+    checks: []
+
+  - name: establish_fresh_pdn
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+        new_pdn: true
+  - name: transfer_on_fresh_pdn
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks: []
+
+final_checks:
+  - type: usage_per_sim
+    ues: all
+    expected: from_model

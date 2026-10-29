@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-set -u
+set -eu
 
 if [ "$#" -ne 2 ]; then
     echo "usage: $0 <ue-id-or-ref> <run-dir>" >&2

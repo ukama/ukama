@@ -309,7 +309,7 @@ func (s *Store) CreateTables() error { // Enable the UUID extension
 		return err
 	}
 
-	return nil
+	return s.createPDNTables()
 }
 
 /* Create a policy */
@@ -513,13 +513,13 @@ func (s *Store) GetFlow(id int) (*Flow, error) {
 	}
 	f.MeterID = *m
 
-	r, err := s.GetReRouteByID(f.ReRouting.ID)
-	if err != nil {
-		log.Errorf("Failed to get reeoute %d for flow %d. Error: %v", f.ReRouting.ID, f.ID, err)
-
-		return nil, fmt.Errorf("failed to get reeoute %d for flow %d. Error: %w", f.ReRouting.ID, f.ID, err)
+	if f.ReRouting.ID != 0 {
+		r, err := s.GetReRouteByID(f.ReRouting.ID)
+		if err != nil {
+			return nil, err
+		}
+		f.ReRouting = *r
 	}
-	f.ReRouting = *r
 
 	return &f, nil
 }
@@ -784,7 +784,20 @@ func (s *Store) ValidateDataCapLimits(imsi string, p *Policy) error {
 	return nil
 }
 
-func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId string) (*Session, *Flow, *Flow, error) {
+func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string,
+	nodeId string) (*Session, *Flow, *Flow, error) {
+	return s.createSession(subscriber, ueIpAddr, nodeId, "", false)
+}
+
+// CreatePDNSession starts paused. The controller enables forwarding only
+// after evaluating the registered PDN and current policy together.
+func (s *Store) CreatePDNSession(subscriber *Subscriber, ip, node, apn string) (
+	*Session, *Flow, *Flow, error) {
+	return s.createSession(subscriber, ip, node, apn, true)
+}
+
+func (s *Store) createSession(subscriber *Subscriber, ueIpAddr, nodeId,
+	apn string, paused bool) (*Session, *Flow, *Flow, error) {
 	s.policyMu.Lock()
 	defer s.policyMu.Unlock()
 
@@ -827,13 +840,14 @@ func (s *Store) CreateSession(subscriber *Subscriber, ueIpAddr string, nodeId st
 	}
 
 	flowState := FlowsActive
-	if !subscriber.ServiceOn || capExceeded {
+	if paused || !subscriber.ServiceOn || capExceeded {
 		flowState = FlowsPaused
 	}
 
 	t := uint64(time.Now().Unix())
 	session := Session{
 		NodeId:       nodeId,
+		ApnName:      apn,
 		SubscriberID: *subscriber,
 		UeIpAddr:     ueIpAddr,
 		StartTime:    t, // Current epoch time
@@ -1267,12 +1281,14 @@ func (s *Store) GetFlowForMeter(id int) (*Flow, error) {
 		return nil, err
 	}
 
-	// Fetch associated Reroute
-	route, err := s.GetReRouteByID(f.ReRouting.ID)
-	if err != nil {
-		return nil, err
+	// Reroute is optional for a policy delivered after PDN registration.
+	if f.ReRouting.ID != 0 {
+		route, err := s.GetReRouteByID(f.ReRouting.ID)
+		if err != nil {
+			return nil, err
+		}
+		f.ReRouting = *route
 	}
-	f.ReRouting = *route
 	// Fetch associated Meters
 	m, err := s.GetMeter(uint32(f.MeterID.ID))
 	if err != nil {

@@ -9,11 +9,18 @@
 package server
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
+	"github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 )
 
@@ -116,4 +123,94 @@ func TestSanitizedMetricNames(t *testing.T) {
 		assert.Equal(t, want, uptime.Name)
 		assert.Equal(t, false, uptime.SkipUnchanged)
 	}
+}
+
+func TestStaleNodes(t *testing.T) {
+	nodeA := NodeMetaData{NodeId: "node-a", NetworkId: "net-1", SiteId: "site-1"}
+	nodeB := NodeMetaData{NodeId: "node-b", NetworkId: "net-1", SiteId: "site-1"}
+
+	t.Run("Deleted", func(t *testing.T) {
+		stale := staleNodes(map[string]NodeMetaData{"node-a": nodeA, "node-b": nodeB},
+			map[string]NodeMetaData{"node-b": nodeB})
+
+		assert.Equal(t, []string{"node-a"}, stale)
+	})
+
+	t.Run("MovedSite", func(t *testing.T) {
+		moved := nodeA
+		moved.SiteId = "site-2"
+
+		stale := staleNodes(map[string]NodeMetaData{"node-a": nodeA},
+			map[string]NodeMetaData{"node-a": moved})
+
+		assert.Equal(t, []string{"node-a"}, stale)
+	})
+
+	t.Run("Unchanged", func(t *testing.T) {
+		stale := staleNodes(map[string]NodeMetaData{"node-a": nodeA},
+			map[string]NodeMetaData{"node-a": nodeA, "node-b": nodeB})
+
+		assert.Empty(t, stale)
+	})
+
+	t.Run("FirstSync", func(t *testing.T) {
+		assert.Empty(t, staleNodes(nil, map[string]NodeMetaData{"node-a": nodeA}))
+	})
+}
+
+func TestSyncNodeCacheRemovesSeriesOfDeletedNodes(t *testing.T) {
+	var mu sync.Mutex
+	nodes := []*registry.NodeInfo{
+		{Id: "node-a", Site: registry.NodeSiteInfo{SiteId: "site-1", NetworkId: "net-1"}},
+		{Id: "node-b", Site: registry.NodeSiteInfo{SiteId: "site-1", NetworkId: "net-1"}},
+	}
+
+	registrySrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mu.Lock()
+		defer mu.Unlock()
+
+		_ = json.NewEncoder(w).Encode(registry.Nodes{Nodes: nodes})
+	}))
+	defer registrySrv.Close()
+
+	var lastPush string
+	pushSrv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		body, _ := io.ReadAll(r.Body)
+
+		mu.Lock()
+		lastPush = string(body)
+		mu.Unlock()
+	}))
+	defer pushSrv.Close()
+
+	s, err := NewSanitizerServer(registrySrv.URL, pushSrv.URL, "testorg", "testorg-id", nil)
+	require.NoError(t, err)
+
+	for _, nodeId := range []string{"node-a", "node-b"} {
+		s.updateNodeMetricCache(pkg.NodeActiveSubscribers, nodeId, 3)
+		s.pushSanitizedNodeMetric(NodeMetricMetaData{
+			MetricName: pkg.ComNodeUptime,
+			NodeId:     nodeId,
+			Value:      100,
+			Labels:     map[string]string{nodeLabel: nodeId, siteLabel: "site-1", networkLabel: "net-1"},
+		})
+	}
+
+	mu.Lock()
+	require.Contains(t, lastPush, "node-a")
+	nodes = nodes[1:]
+	mu.Unlock()
+
+	require.NoError(t, s.syncNodeCache())
+
+	mu.Lock()
+	assert.NotContains(t, lastPush, "node-a")
+	assert.Contains(t, lastPush, "node-b")
+	mu.Unlock()
+
+	_, ok := s.getNodeMetricFromCache(pkg.NodeActiveSubscribers, "node-a")
+	assert.False(t, ok)
+
+	_, ok = s.getNodeMetricFromCache(pkg.NodeActiveSubscribers, "node-b")
+	assert.True(t, ok)
 }

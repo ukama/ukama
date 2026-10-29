@@ -82,14 +82,15 @@ phases:
         ues: ue-000001
       - type: wait_ues_attached
         ues: ue-000001
-        seconds: 20
-        expect:
-          result: failure
-          error_contains: script failed
+        seconds: 60
       - type: traffic
         ues: ue-000002
         amount_mb: 1
     checks:
+      - type: ue_pdn
+        ues: ue-000001
+        expected: blocked
+        timeout_seconds: 60
       - type: package_state
         ues: ue-000002
         package: base

@@ -9,6 +9,7 @@
 #include "event.h"
 #include "selector.h"
 #include "util.h"
+#include "runtime_hardware.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -47,6 +48,19 @@ int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
 
     if (selector_resolve_ues(ctx->world, &event->ues, &ues, err)) {
         return ULAB_ERR;
+    }
+    if (!runtime_is_hardware(ctx->runtime) &&
+        !ulab_streq(event->expect_result, "failure")) {
+        check_spec_t check;
+
+        memset(&check, 0, sizeof(check));
+        snprintf(check.expected, sizeof(check.expected), "allowed");
+        check.timeout_seconds = 60;
+        if (runtime_verify_ue_pdns(ctx->runtime, ctx->world, &ues,
+                                   &check, err)) {
+            selector_result_free(&ues);
+            return ULAB_ERR;
+        }
     }
     if (event->type == EVT_TRAFFIC) {
         if (runtime_generate_traffic(ctx->runtime, ctx->world, &ues,

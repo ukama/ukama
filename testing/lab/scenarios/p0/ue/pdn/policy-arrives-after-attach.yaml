@@ -1,0 +1,115 @@
+version: 1
+name: p0-policy-arrives-after-attach
+description: Attach without entitlement; a later purchase enables the PDN.
+seed: 4850
+suite: p0
+priority: p0
+tags: [virtual, runtime, pdn]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: base
+    name: PDN Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+  - ref: next
+    name: PDN Late Policy
+    data_mb: 100
+    duration_days: 1
+    amount: 2.00
+    assign_percent: 0
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: remove_entitlement_before_attach
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: remove_package_from_sim
+        ues: all
+    checks:
+      - type: package_assignment_count
+        ues: all
+        expected_count: 0
+        timeout_seconds: 120
+        immediate: true
+
+  - name: attach_without_entitlement
+    events:
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
+      - type: traffic_blocked
+        ues: all
+        amount_mb: 1
+
+  - name: deliver_policy_to_existing_pdn
+    events:
+      - type: purchase_package
+        ues: all
+        package: next
+    checks:
+      - type: package_state
+        ues: all
+        package: next
+        expected: active
+        timeout_seconds: 120
+        immediate: true
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+        same_pdn: true
+  - name: transfer_after_policy_arrives
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks: []
+
+final_checks:
+  - type: usage_per_sim
+    ues: all
+    expected: from_model
+  - type: payment_count
+    ues: all
+    package: next
+    expected_count: 1

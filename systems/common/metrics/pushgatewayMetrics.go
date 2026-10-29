@@ -180,6 +180,44 @@ func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName st
 	}
 }
 
+func RemoveSeries(pushMetricHost string, labels map[string]string, metricJobName string) (int, error) {
+	if len(labels) == 0 {
+		return 0, fmt.Errorf("no labels given to match the series to remove")
+	}
+
+	removed := 0
+	pusher := push.New(pushMetricHost, metricJobName)
+
+	for _, metrics := range metricCollectors {
+		for _, m := range metrics {
+			switch met := m.collector.(type) {
+			case *prometheus.GaugeVec:
+				removed += met.DeletePartialMatch(labels)
+			case *prometheus.CounterVec:
+				removed += met.DeletePartialMatch(labels)
+			case *prometheus.SummaryVec:
+				removed += met.DeletePartialMatch(labels)
+			case *prometheus.HistogramVec:
+				removed += met.DeletePartialMatch(labels)
+			}
+
+			pusher.Collector(m.collector)
+		}
+	}
+
+	if removed == 0 {
+		return 0, nil
+	}
+
+	log.Infof("Removed %d series matching %v from metric job %s", removed, labels, metricJobName)
+
+	if err := pusher.Push(); err != nil {
+		return removed, fmt.Errorf("could not push metrics to Pushgateway: %w", err)
+	}
+
+	return removed, nil
+}
+
 func CollectAndPushSystemMetrics(pushGateway string, configMetrics []MetricConfig, selectedMetric string, Value float64, Labels map[string]string, systemName string) error {
 	log.Infof("Collecting and pushing metric %q on behalf of system %q", selectedMetric, systemName)
 

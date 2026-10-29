@@ -46,10 +46,16 @@ phases:
         seconds: 60
       - type: start_ues
         ues: all
-      - type: wait_ue_sessions
+      - type: wait_ues_attached
         ues: all
         seconds: 90
     checks:
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        new_pdn: true
       - type: traffic_blocked
         ues: all
         amount_mb: 1

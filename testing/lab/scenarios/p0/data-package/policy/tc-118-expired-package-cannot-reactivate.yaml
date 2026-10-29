@@ -1,6 +1,6 @@
 version: 1
 name: p0-expired-package-cannot-reactivate
-description: Re-enable service after node restart and verify an expired entitlement remains inactive, cannot establish service, and accrues no additional usage.
+description: Restart cannot restore exhausted credit or permit more data.
 seed: 4312
 suite: p0
 priority: p0
@@ -118,8 +118,17 @@ phases:
         state: on
       - type: start_ues
         ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: all
+        expected: blocked
+        apn: internet
+        timeout_seconds: 90
+        new_pdn: true
+      - type: traffic_blocked
         ues: all
         amount_mb: 1
       - type: package_state
