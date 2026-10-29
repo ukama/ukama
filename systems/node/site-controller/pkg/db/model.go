@@ -61,7 +61,7 @@ const (
 
 type SiteIntentFlight struct {
 	ID           uuid.UUID `gorm:"type:uuid;primaryKey;column:id" json:"id"`
-	SiteIntentID uuid.UUID `gorm:"column:site_intent_id;not null;uniqueIndex" json:"site_intent_id"`
+	SiteIntentID uuid.UUID `gorm:"type:uuid;column:site_intent_id;not null;uniqueIndex" json:"site_intent_id"`
 	Status       string    `gorm:"column:status;index:idx_site_intent_flight_status" json:"status" default:"pending"`
 	RetryCount   int       `gorm:"column:retry_count" json:"retry_count" default:"0"`
 	ExpiresAt    time.Time `gorm:"column:expires_at" json:"expires_at"`
