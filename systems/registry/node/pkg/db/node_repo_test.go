@@ -19,6 +19,8 @@ import (
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -369,6 +371,34 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+
+	t.Run("NodeAssignedToSite", func(t *testing.T) {
+		siteId := uuid.NewV4()
+
+		mock.ExpectQuery(`^SELECT.*nodes.*`).
+			WithArgs(nodeId, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "name"}).AddRow(nodeId, name))
+
+		mock.ExpectQuery(`^SELECT.*parent_node_id.*`).
+			WithArgs(nodeId).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
+
+		mock.ExpectQuery(`^SELECT.*sites.*`).
+			WithArgs(nodeId).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id", "network_id"}).
+				AddRow(nodeId, siteId, uuid.NewV4()))
+
+		mock.ExpectQuery(`^SELECT.*node_statuses.*`).
+			WithArgs(nodeId).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id"}).AddRow(nodeId))
+
+		err = r.Delete(nodeId, nil)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assert.Contains(t, status.Convert(err).Message(), siteId.String())
+
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("NodeErrorGrouped", func(t *testing.T) {
