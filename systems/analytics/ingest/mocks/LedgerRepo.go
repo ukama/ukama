@@ -111,6 +111,34 @@ func (_m *LedgerRepo) Mark(orgID string, kind string, key string, windowID int64
 	return r0
 }
 
+// PruneBefore provides a mock function with given fields: orgID, kind, key, beforeWindow, batch
+func (_m *LedgerRepo) PruneBefore(orgID string, kind string, key string, beforeWindow int64, batch int) (int64, error) {
+	ret := _m.Called(orgID, kind, key, beforeWindow, batch)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PruneBefore")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, string, int64, int) (int64, error)); ok {
+		return rf(orgID, kind, key, beforeWindow, batch)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, string, int64, int) int64); ok {
+		r0 = rf(orgID, kind, key, beforeWindow, batch)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, string, int64, int) error); ok {
+		r1 = rf(orgID, kind, key, beforeWindow, batch)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Status provides a mock function with given fields: orgID, kind, key, windowID
 func (_m *LedgerRepo) Status(orgID string, kind string, key string, windowID int64) (string, error) {
 	ret := _m.Called(orgID, kind, key, windowID)

@@ -122,7 +122,7 @@ func (r *Runner) sweepOnce() {
 				continue
 			}
 
-			if status == schema.StatusComputed || status == schema.StatusInFlight {
+			if status == schema.StatusComputed {
 				continue
 			}
 
