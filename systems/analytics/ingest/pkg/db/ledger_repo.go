@@ -42,6 +42,7 @@ type LedgerRepo interface {
 	// CountWithStatus counts entries for (kind, key) with the given status
 	// within [from, to].
 	CountWithStatus(orgID, kind, key, status string, from, to int64) (int64, error)
+	PruneBefore(orgID, kind, key string, beforeWindow int64, batch int) (int64, error)
 }
 
 type ledgerRepo struct {
@@ -169,6 +170,17 @@ func (l *ledgerRepo) WindowsWithStatus(orgID, kind, key, status string, from, to
 	}
 
 	return ids, nil
+}
+
+func (l *ledgerRepo) PruneBefore(orgID, kind, key string, beforeWindow int64, batch int) (int64, error) {
+	res := l.db.GetGormDb().Exec(`
+		DELETE FROM window_ledgers WHERE id IN (
+			SELECT id FROM window_ledgers
+			WHERE org_id = ? AND kind = ? AND key = ? AND window_id < ?
+			LIMIT ?)`,
+		orgID, kind, key, beforeWindow, batch)
+
+	return res.RowsAffected, res.Error
 }
 
 func (l *ledgerRepo) CountWithStatus(orgID, kind, key, status string, from, to int64) (int64, error) {
