@@ -18,6 +18,7 @@ import (
 	evt "github.com/ukama/ukama/systems/common/events"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	npb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	stm "github.com/ukama/ukama/systems/common/stateMachine"
@@ -28,8 +29,6 @@ import (
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
@@ -227,7 +226,7 @@ func (n *StateEventServer) EventNotification(ctx context.Context, e *epb.Event) 
 }
 
 func (n *StateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
 	}
@@ -239,7 +238,7 @@ func (n *StateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Eve
 }
 
 func (n *StateEventServer) handleNodeOfflineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.NodeOfflineEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node offline event: %w", err)
 	}
@@ -251,7 +250,7 @@ func (n *StateEventServer) handleNodeOfflineEvent(ctx context.Context, e *epb.Ev
 }
 
 func (n *StateEventServer) handleNodeAssignEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalEventRegistryNodeAssign(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeAssign](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node assign event: %w", err)
 	}
@@ -263,7 +262,7 @@ func (n *StateEventServer) handleNodeAssignEvent(ctx context.Context, e *epb.Eve
 }
 
 func (n *StateEventServer) handleNodeReleaseEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalNodeReleasedEvent(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.NodeReleasedEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node release event: %w", err)
 	}
@@ -275,7 +274,7 @@ func (n *StateEventServer) handleNodeReleaseEvent(ctx context.Context, e *epb.Ev
 }
 
 func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
 	}
@@ -287,7 +286,7 @@ func (n *StateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Eve
 }
 
 func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := n.UnmarshalTransitionEvent(e.Msg)
+	msg, err := cpb.UnmarshalProtoEvent[epb.EnforceNodeStateEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal force transition event: %w", err)
 	}
@@ -300,7 +299,7 @@ func (n *StateEventServer) handleForceTransitionEvent(ctx context.Context, e *ep
 }
 
 func (n *StateEventServer) handleNodeNotifyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := n.unmarshalNotifyEvent(e.Msg)
+	msg, err := cpb.UnmarshalProtoEvent[epb.Notification](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal notify event: %w", err)
 	}
@@ -310,34 +309,6 @@ func (n *StateEventServer) handleNodeNotifyEvent(ctx context.Context, e *epb.Eve
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-func (n *StateEventServer) unmarshalNotifyEvent(msg *anypb.Any) (*epb.Notification, error) {
-	if msg == nil {
-		return nil, fmt.Errorf("notification message cannot be nil")
-	}
-
-	p := &epb.Notification{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to unmarshal node notify message with: %+v. Error: %s", msg, err.Error())
-		return nil, fmt.Errorf("failed to unmarshal notification: %w", err)
-	}
-	return p, nil
-}
-
-func (n *StateEventServer) UnmarshalTransitionEvent(msg *anypb.Any) (*epb.EnforceNodeStateEvent, error) {
-	if msg == nil {
-		return nil, fmt.Errorf("transition event message cannot be nil")
-	}
-
-	p := &epb.EnforceNodeStateEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to unmarshal node transition message with: %+v. Error: %s", msg, err.Error())
-		return nil, fmt.Errorf("failed to unmarshal transition event: %w", err)
-	}
-	return p, nil
 }
 
 func (n *StateEventServer) handleNotifyEvent(ctx context.Context, _ string, msg *epb.Notification) error {

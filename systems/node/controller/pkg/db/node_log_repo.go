@@ -17,6 +17,7 @@ import (
 type NodeLogRepo interface {
 	Get(nodeId string) (*NodeLog, error)
 	Add(nodeLog string) error
+	Delete(nodeId string) error
 }
 
 type nodeLogRepo struct {
@@ -47,4 +48,8 @@ func (r *nodeLogRepo) Get(nodeId string) (*NodeLog, error) {
 		return nil, err
 	}
 	return &nodeLog, nil
+}
+
+func (r *nodeLogRepo) Delete(nodeId string) error {
+	return r.Db.GetGormDb().Where("node_id = ?", nodeId).Delete(&NodeLog{}).Error
 }

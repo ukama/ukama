@@ -118,6 +118,11 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID, nestedFunc func(ukama.NodeID, *go
 		return fmt.Errorf("node %s is still attached to a parent node", node.Id)
 	}
 
+	if node.Site.SiteId != uuid.Nil {
+		return status.Errorf(codes.FailedPrecondition,
+			"node %s is still assigned to site %s. Release it from the site before deleting", node.Id, node.Site.SiteId)
+	}
+
 	err = n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		result := tx.Where("node_id = ?", nodeId.StringLowercase()).Delete(&Site{})
 		if result.Error != nil {

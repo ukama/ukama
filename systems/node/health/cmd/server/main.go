@@ -22,6 +22,7 @@ import (
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/node/health/cmd/version"
 
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
 
@@ -80,8 +81,11 @@ func runGrpcServer(gormdb sql.Db) {
 	log.Debugf("MessageBus Client is %+v", mbClient)
 	regServer := server.NewHealthServer(svcConf.OrgName, db.NewHealthRepo(gormdb), svcConf.DebugMode, mbClient)
 
+	healthEventServer := server.NewHealthEventServer(svcConf.OrgName, regServer)
+
 	grpcServer := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterHealthServiceServer(s, regServer)
+		epb.RegisterEventNotificationServiceServer(s, healthEventServer)
 	})
 
 	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormdb))
