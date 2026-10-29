@@ -247,6 +247,80 @@ func TestHandleNodeOnline_RejectsUnparseableNodeId(t *testing.T) {
 	states.AssertNotCalled(t, "Upsert", mock.Anything)
 }
 
+func registryError(code int) error {
+	return fmt.Errorf("GetNode failure: %w", fmt.Errorf("rest api GET failure with error: %w",
+		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))
+}
+
+// The event server has no health client here, so reaching ListInterfaces would panic.
+func TestHandleHealthReport_IgnoresNodeWithoutSite(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(&registry.NodeInfo{Id: testAmpID}, nil).Once()
+	nodeClient.On("List", registry.ListNodesRequest{NodeId: testAmpID}).
+		Return(&registry.ListNodesResponse{Nodes: []*registry.NodeInfo{{Id: testAmpID}}}, nil).Once()
+	states := &scmocks.StateRepo{}
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.NoError(t, err)
+	nodeClient.AssertExpectations(t)
+	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func TestHandleHealthReport_IgnoresNodeMissingFromRegistry(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(nil, registryError(http.StatusNotFound)).Once()
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil)}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.NoError(t, err)
+	nodeClient.AssertNotCalled(t, "List", mock.Anything)
+}
+
+func TestHandleHealthReport_ReturnsRegistryOutage(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(nil, registryError(http.StatusInternalServerError)).Once()
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil)}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.Error(t, err)
+}
+
+func TestHandleNodeOnline_IgnoresTowerWithoutSite(t *testing.T) {
+	for name, resp := range map[string]*registry.ListNodesResponse{
+		"no nodes":  {},
+		"no site":   {Nodes: []*registry.NodeInfo{{Id: testTowerID}}},
+		"nil entry": {Nodes: []*registry.NodeInfo{nil}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			nodeClient := &mbmocks.NodeClient{}
+			nodeClient.On("List", registry.ListNodesRequest{NodeId: testTowerID}).Return(resp, nil).Once()
+			states := &scmocks.StateRepo{}
+			c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+			err := c.handleNodeOnline(context.Background(), &epb.NodeOnlineEvent{NodeId: testTowerID})
+
+			assert.NoError(t, err)
+			states.AssertNotCalled(t, "Upsert", mock.Anything)
+		})
+	}
+}
+
+func TestHandleNodeOnline_ReturnsRegistryOutage(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("List", registry.ListNodesRequest{NodeId: testTowerID}).Return(nil, registryError(http.StatusServiceUnavailable)).Once()
+	states := &scmocks.StateRepo{}
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+	err := c.handleNodeOnline(context.Background(), &epb.NodeOnlineEvent{NodeId: testTowerID})
+
+	assert.Error(t, err)
+	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
 func TestEventNotification_SiteDeleteRemovesSite(t *testing.T) {
 	siteID := "77777777-7777-7777-7777-777777777777"
 

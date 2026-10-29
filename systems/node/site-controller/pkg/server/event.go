@@ -175,31 +175,30 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 
 func (c *SiteControllerEventServer) handleHealthReport(ctx context.Context, msg *epb.HealthReportEvent) error {
 	log.Infof("Received a health report event %+v", msg)
-	hClient, err := c.s.healthClient.GetClient()
-	if err != nil {
-		return err
-	}
 
 	nodeId := msg.NodeId
 	nodeType := normalizeNodeType(msg.NodeType)
 	if _, err := c.s.nodeClient.Get(nodeId); err != nil {
+		if isNotFound(err) {
+			log.Debugf("site-controller: ignoring health report for node %s, not in registry", nodeId)
+			return nil
+		}
 		return fmt.Errorf("failed to get node %s: %w", nodeId, err)
 	}
 
-	nodes, err := c.getNodesBySite("", nodeId)
+	siteId, err := c.siteOf(nodeId)
 	if err != nil {
-		return fmt.Errorf("failed to get nodes for node %s: %w", nodeId, err)
+		return err
 	}
-	if len(nodes.Nodes) == 0 {
-		return fmt.Errorf("no nodes found for node %s", nodeId)
+	if siteId == "" {
+		log.Debugf("site-controller: ignoring health report for node %s, not attached to a site", nodeId)
+		return nil
 	}
-	if nodes.Nodes[0] == nil {
-		return fmt.Errorf("node %s is nil", nodeId)
+
+	hClient, err := c.s.healthClient.GetClient()
+	if err != nil {
+		return err
 	}
-	if nodes.Nodes[0].Site.SiteId == "" {
-		return fmt.Errorf("no site found for node %s", nodeId)
-	}
-	siteId := nodes.Nodes[0].Site.SiteId
 
 	report, err := hClient.ListInterfaces(ctx, &hpb.ListInterfacesRequest{
 		NodeId: nodeId,
@@ -254,14 +253,14 @@ func (c *SiteControllerEventServer) handleNodeOnline(ctx context.Context, msg *e
 		return nil
 	}
 
-	nodes, err := c.getNodesBySite("", nodeId)
+	siteId, err := c.siteOf(nodeId)
 	if err != nil {
-		return fmt.Errorf("failed to get nodes for node %s: %w", nodeId, err)
+		return err
 	}
-	if len(nodes.Nodes) == 0 || nodes.Nodes[0] == nil || nodes.Nodes[0].Site.SiteId == "" {
-		return fmt.Errorf("no site found for node %s", nodeId)
+	if siteId == "" {
+		log.Debugf("site-controller: ignoring online event for tower %s, not attached to a site", nodeId)
+		return nil
 	}
-	siteId := nodes.Nodes[0].Site.SiteId
 
 	log.Infof("site-controller: tower %s back online for site %s, resetting observed service", nodeId, siteId)
 
@@ -390,6 +389,26 @@ func (c *SiteControllerEventServer) scheduleSetSiteComponents(siteID string) {
 		}
 		log.Infof("site-controller: updated site components for site %s", siteID)
 	}()
+}
+
+// siteOf returns the site a node is attached to, or "" when registry has none for it yet.
+func (c *SiteControllerEventServer) siteOf(nodeId string) (string, error) {
+	nodes, err := c.getNodesBySite("", nodeId)
+	if err != nil {
+		if isNotFound(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to get nodes for node %s: %w", nodeId, err)
+	}
+	if len(nodes.Nodes) == 0 || nodes.Nodes[0] == nil {
+		return "", nil
+	}
+	return nodes.Nodes[0].Site.SiteId, nil
+}
+
+func isNotFound(err error) bool {
+	var es *client.ErrorStatus
+	return errors.As(err, &es) && es.StatusCode == http.StatusNotFound
 }
 
 func (c *SiteControllerEventServer) getNodesBySite(siteID string, nodeId string) (*creg.ListNodesResponse, error) {
