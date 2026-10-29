@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"google.golang.org/protobuf/proto"
@@ -46,6 +47,17 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 		}
 
 		err = n.handleRegistryNodeAddEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
+		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleRegistryNodeDeleteEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -96,6 +108,19 @@ func (n *ConfiguratorEventServer) handleRegistryNodeAddEvent(key string, msg *ep
 
 	// Assignment starts configuration; registration only creates the node record.
 
+	return nil
+}
+
+func (n *ConfiguratorEventServer) handleRegistryNodeDeleteEvent(msg *epb.EventRegistryNodeDelete) error {
+	nodeId := strings.ToLower(msg.NodeId)
+	if nodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+
+	if err := n.s.configRepo.Delete(nodeId); err != nil {
+		log.Errorf("Error deleting node %s from configuration repo. Error: %+v", nodeId, err)
+		return err
+	}
 	return nil
 }
 

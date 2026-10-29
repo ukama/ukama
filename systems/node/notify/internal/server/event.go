@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/ukama/ukama/systems/node/notify/internal/db"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -90,6 +92,17 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 		}
 
 		err = n.handleNodeCreateEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
+		c := evt.EventToEventConfig[evt.EventNodeDelete]
+		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, c.Name)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleNodeDeleteEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -178,6 +191,22 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCre
 		n.msgbus,
 		n.baseRoutingKey,
 	)
+}
+
+func (n *NotifiyEventServer) handleNodeDeleteEvent(msg *epb.EventRegistryNodeDelete) error {
+	nodeId := strings.ToLower(msg.NodeId)
+	if nodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+
+	nts, err := n.notifyRepo.Purge(nodeId, "", "")
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Errorf("Failed to purge notifications of node %s: %v", nodeId, err)
+		return err
+	}
+	log.Infof("Purged %d notifications of deleted node %s", len(nts), nodeId)
+
+	return nil
 }
 
 func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, name string) error {

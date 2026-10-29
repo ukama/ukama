@@ -21,6 +21,7 @@ import (
 type HealthRepo interface {
 	List(reportID, nodeID string, reportedAt *time.Time, timeframe ukama.FilterTimeframesType) ([]*HealthReport, error)
 	StoreHealthReport(report *HealthReport, receivedAt time.Time) error
+	DeleteNode(nodeID string) error
 }
 
 type healthRepo struct {
@@ -161,5 +162,20 @@ func (r *healthRepo) StoreHealthReport(report *HealthReport, receivedAt time.Tim
 			return err
 		}
 		return syncNodeLatestHealth(tx, report, receivedAt)
+	})
+}
+
+func (r *healthRepo) DeleteNode(nodeID string) error {
+	if nodeID == "" {
+		return errors.New("node id is required")
+	}
+
+	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+		for _, m := range []interface{}{&HealthReport{}, &NodeLatestHealth{}, &Node{}} {
+			if err := tx.Where(map[string]interface{}{"nodeId": nodeID}).Delete(m).Error; err != nil {
+				return err
+			}
+		}
+		return nil
 	})
 }

@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -46,6 +47,17 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
+		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+		if err != nil {
+			return nil, err
+		}
+
+		err = n.handleRegistryNodeDeleteEvent(msg)
+		if err != nil {
+			return nil, err
+		}
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -69,6 +81,19 @@ func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.
 	err := n.s.nRepo.Add(strings.ToLower(msg.NodeId))
 	if err != nil {
 		log.Errorf("Error adding node %s to controller/nodeLog repo.Error: %+v", msg.NodeId, err)
+		return err
+	}
+	return nil
+}
+
+func (n *ControllerEventServer) handleRegistryNodeDeleteEvent(msg *epb.EventRegistryNodeDelete) error {
+	nodeId := strings.ToLower(msg.NodeId)
+	if nodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+
+	if err := n.s.nRepo.Delete(nodeId); err != nil {
+		log.Errorf("Error deleting node %s from controller/nodeLog repo. Error: %+v", nodeId, err)
 		return err
 	}
 	return nil
