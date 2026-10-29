@@ -13,13 +13,12 @@ import (
 	"fmt"
 	"strings"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/configurator/pkg/db"
 
 	log "github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	eCfgPb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 )
@@ -41,8 +40,9 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
-		msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeCreate: %v", err)
 			return nil, err
 		}
 
@@ -52,8 +52,9 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 		}
 
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
-		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeDelete: %v", err)
 			return nil, err
 		}
 
@@ -63,8 +64,9 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 		}
 
 	case msgbus.PrepareRoute(n.orgName, "event.node.local.{{ .Org}}.messaging.mesh.config.create"):
-		msg, err := n.unmarshalNodeConfigUpdateEvent(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[eCfgPb.NodeConfigUpdateEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal NodeConfigUpdateEvent: %v", err)
 			return nil, err
 		}
 
@@ -77,16 +79,6 @@ func (n *ConfiguratorEventServer) EventNotification(ctx context.Context, e *epb.
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-func (n *ConfiguratorEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
-	p := &epb.EventRegistryNodeCreate{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 // so, commenting for compiling.
@@ -122,17 +114,6 @@ func (n *ConfiguratorEventServer) handleRegistryNodeDeleteEvent(msg *epb.EventRe
 		return err
 	}
 	return nil
-}
-
-/* To Be tested on integration */
-func (n *ConfiguratorEventServer) unmarshalNodeConfigUpdateEvent(msg *anypb.Any) (*eCfgPb.NodeConfigUpdateEvent, error) {
-	p := &eCfgPb.NodeConfigUpdateEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeConfigUpdate message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 // so, commenting for compiling.

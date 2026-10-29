@@ -15,9 +15,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type ControllerEventServer struct {
@@ -37,8 +36,9 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
-		msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeCreate: %v", err)
 			return nil, err
 		}
 
@@ -48,8 +48,9 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 		}
 
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
-		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeDelete: %v", err)
 			return nil, err
 		}
 
@@ -63,16 +64,6 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	}
 
 	return &epb.EventResponse{}, nil
-}
-
-func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
-	p := &epb.EventRegistryNodeCreate{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
 }
 
 func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.EventRegistryNodeCreate) error {

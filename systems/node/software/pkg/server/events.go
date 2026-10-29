@@ -17,14 +17,13 @@ import (
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/common/validation"
 	hpb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const logMsgRoutingKey = "Received a message with Routing key %s and Message %+v"
@@ -73,7 +72,7 @@ func objectTypeFromRoutingKey(rk string) string {
 }
 
 func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
 	}
@@ -113,7 +112,7 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 }
 
 func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, e.RoutingKey)
+	msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
 	}
@@ -131,8 +130,8 @@ func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context, e
 // change-only notification, so software need not listen to the periodic health
 // report firehose.
 func (n *SoftwareUpdateEventServer) handleHealthAppsChangedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	p := &epb.HealthAppsChangedEvent{}
-	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+	p, err := cpb.UnmarshalProtoEvent[epb.HealthAppsChangedEvent](e.Msg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal health apps changed event: %w", err)
 	}
 	log.Infof("health apps changed for node %s; reconciling", p.NodeId)
@@ -186,8 +185,8 @@ func (n *SoftwareUpdateEventServer) applyDesiredToNode(nodeID string) error {
 // handleArtifactUploadedEvent records availability only — it does NOT set desired
 // or touch any node's status. Promotion is an explicit, separate action.
 func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	p := &epb.EventArtifactUploaded{}
-	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+	p, err := cpb.UnmarshalProtoEvent[epb.EventArtifactUploaded](e.Msg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal artifact uploaded event: %w", err)
 	}
 	aType := objectTypeFromRoutingKey(e.RoutingKey)
@@ -203,8 +202,8 @@ func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Cont
 // handleNodeAppChunkReadyEvent only flags the catalog row as chunked — it no longer
 // drives any node's desired version.
 func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	p := &epb.EventArtifactChunkReady{}
-	if err := anypb.UnmarshalTo(e.Msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}); err != nil {
+	p, err := cpb.UnmarshalProtoEvent[epb.EventArtifactChunkReady](e.Msg)
+	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node app chunk ready event: %w", err)
 	}
 	aType := objectTypeFromRoutingKey(e.RoutingKey)

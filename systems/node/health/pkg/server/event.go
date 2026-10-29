@@ -16,6 +16,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -37,8 +38,9 @@ func (h *HealthEventServer) EventNotification(ctx context.Context, e *epb.Event)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(h.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
 		c := evt.EventToEventConfig[evt.EventNodeDelete]
-		msg, err := epb.UnmarshalEventRegistryNodeDelete(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 
