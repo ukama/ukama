@@ -957,6 +957,28 @@ func TestNodeServer_DeleteNode(t *testing.T) {
 		assert.Nil(t, resp)
 	})
 
+	t.Run("NodeAssignedToSite", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_TOWERNODE)
+
+		nodeRepo := &mocks.NodeRepo{}
+		msgbusClient := &mbmocks.MsgBusServiceClient{}
+
+		nodeRepo.On("Delete", nodeId, mock.Anything).
+			Return(fmt.Errorf("node %s is still assigned to a site: %w", nodeId,
+				store.ErrPrecondition)).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", msgbusClient, nil,
+			orgId, nil, nil)
+
+		resp, err := s.DeleteNode(context.TODO(),
+			&pb.DeleteNodeRequest{NodeId: nodeId.StringLowercase()})
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+		msgbusClient.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	})
+
 	t.Run("DeleteRepoError", func(t *testing.T) {
 		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 

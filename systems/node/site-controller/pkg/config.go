@@ -47,6 +47,8 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.registry.site.site.create",
+				"event.cloud.local.{{ .Org}}.registry.site.site.delete",
+				"event.cloud.local.{{ .Org}}.registry.node.node.delete",
 				"event.cloud.local.ukama.node.health.report.store",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 			},

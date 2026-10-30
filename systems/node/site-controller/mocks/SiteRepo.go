@@ -12,6 +12,24 @@ type SiteRepo struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: siteID
+func (_m *SiteRepo) Delete(siteID string) error {
+	ret := _m.Called(siteID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(siteID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Ensure provides a mock function with given fields: siteID
 func (_m *SiteRepo) Ensure(siteID string) error {
 	ret := _m.Called(siteID)

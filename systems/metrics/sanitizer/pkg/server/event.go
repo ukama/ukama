@@ -12,14 +12,13 @@ import (
 	"context"
 	"fmt"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
-
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/metrics/sanitizer/pkg"
 
 	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
@@ -45,9 +44,11 @@ func (se *SanitizerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(se.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assign"):
-		msg, err := unmarshalNodeAssignEvent(e.Msg)
+	case msgbus.PrepareRoute(se.orgName, evt.EventRoutingKey[evt.EventNodeAssign]):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeAssign](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal node assign event: %v", err)
+
 			return nil, err
 		}
 
@@ -56,13 +57,28 @@ func (se *SanitizerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(se.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.release"):
-		msg, err := unmarshalNodeReleaseEvent(e.Msg)
+	case msgbus.PrepareRoute(se.orgName, evt.EventRoutingKey[evt.EventNodeRelease]):
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeReleasedEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal node release event: %v", err)
+
 			return nil, err
 		}
 
 		err = se.handleNodeReleaseEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
+	case msgbus.PrepareRoute(se.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal node delete event: %v", err)
+
+			return nil, err
+		}
+
+		err = se.handleNodeDeleteEvent(e.RoutingKey, msg)
 		if err != nil {
 			return nil, err
 		}
@@ -84,24 +100,6 @@ func (se *SanitizerEventServer) handleNodeReleaseEvent(key string, msg *epb.Node
 	return se.ss.syncNodeCache()
 }
 
-func unmarshalNodeAssignEvent(msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
-	p := &epb.EventRegistryNodeAssign{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal registry node assign message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-	return p, nil
-}
-
-func unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
-	p := &epb.NodeReleasedEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal node release message with : %+v. Error %s.", msg, err.Error())
-
-		return nil, err
-	}
-	return p, nil
+func (se *SanitizerEventServer) handleNodeDeleteEvent(key string, msg *epb.EventRegistryNodeDelete) error {
+	return se.ss.syncNodeCache()
 }

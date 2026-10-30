@@ -1,6 +1,6 @@
 version: 1
 name: p0-reattach-recovers-policy-after-missed-push
-description: Deterministically force the node offline for the entire window in which its package expires and the queued successor package rolls over, so the ASR-to-node policy push is guaranteed to miss the node. On reattach, the node must reverse-lookup the current policy from ASR rather than rejecting the attach on its stale local copy.
+description: Require actual policy recovery after an offline rollover.
 seed: 4525
 suite: p0
 priority: p0
@@ -156,6 +156,16 @@ phases:
       - type: wait_ues_attached
         ues: all
         seconds: 300
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+        new_pdn: true
+
+  - name: verify_recovered_traffic
+    events:
       - type: traffic
         ues: all
         amount_mb: 1

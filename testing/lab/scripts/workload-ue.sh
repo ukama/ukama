@@ -20,8 +20,7 @@ case "$action" in
     run_dir=$2
     imsi=$3
     case "$imsi" in ''|*[!0-9]*) echo 'invalid owned IMSI' >&2; exit 2 ;; esac
-    # Stop the retrying agent before closing the EPC session. Otherwise it
-    # could immediately reattach while the target population is decreasing.
+    # Keep the agent alive until its identity-pinned detach is acknowledged.
     state="$run_dir/runtime-ues/$ue_id.env"
     if [ ! -f "$state" ]; then
       # start-ue writes its state after container startup. Recover a partial
@@ -32,12 +31,6 @@ case "$action" in
         exit 1
       fi
       exit 0
-    fi
-    if [ -f "$state" ]; then
-      . "$state"
-      if [ -n "${UE_CONTAINER:-}" ] && podman container exists "$UE_CONTAINER"; then
-        podman stop -t 3 "$UE_CONTAINER" >/dev/null
-      fi
     fi
     "$script_dir/detach-ue.sh" "$ue_id" "$run_dir"
     "$script_dir/cleanup-ue.sh" "$ue_id" "$run_dir"

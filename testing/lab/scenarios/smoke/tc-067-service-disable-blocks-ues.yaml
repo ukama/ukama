@@ -1,6 +1,6 @@
 version: 1
 name: service-disable-blocks-ues
-description: Verify disabling service blocks traffic for an attached UE and prevents a second UE from attaching or passing traffic.
+description: Verify disabling service blocks traffic for an attached UE and allows a second UE to attach with data blocked.
 seed: 322
 suite: smoke
 priority: p0
@@ -62,21 +62,27 @@ phases:
         sites: all
         state: off
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: ue-000001
+        expected: blocked
+        same_pdn: true
+      - type: traffic_blocked
         ues: ue-000001
         amount_mb: 1
 
-  - name: reject_new_ue
+  - name: attach_new_ue_blocked
     events:
       - type: start_ues
         ues: ue-000002
       - type: wait_ues_attached
         ues: ue-000002
-        seconds: 15
-        expect:
-          result: failure
+        seconds: 60
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: ue-000002
+        expected: blocked
+        timeout_seconds: 60
+      - type: traffic_blocked
         ues: ue-000002
         amount_mb: 1
 

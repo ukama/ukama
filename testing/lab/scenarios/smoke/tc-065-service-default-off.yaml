@@ -1,6 +1,6 @@
 version: 1
 name: service-default-off
-description: Verify a newly started node keeps service disabled by default, so a UE cannot attach or pass traffic.
+description: Verify a newly started node keeps service disabled by default, so a valid UE has a live PDN but cannot pass traffic.
 seed: 320
 suite: smoke
 priority: p0
@@ -48,11 +48,13 @@ phases:
         ues: ue-000001
       - type: wait_ues_attached
         ues: ue-000001
-        seconds: 15
-        expect:
-          result: failure
+        seconds: 60
     checks:
-      - type: traffic_unavailable
+      - type: ue_pdn
+        ues: ue-000001
+        expected: blocked
+        timeout_seconds: 60
+      - type: traffic_blocked
         ues: ue-000001
         amount_mb: 1
 

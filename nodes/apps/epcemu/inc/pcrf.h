@@ -9,14 +9,27 @@
 #ifndef PCRF_H_
 #define PCRF_H_
 
-#include <stdbool.h>
-
 #include "epcemu.h"
+#include "ue.h"
 
-int pcrf_probe(EpcemuConfig *config, EpcemuStatus *status);
-bool pcrf_is_ready(EpcemuConfig *config);
-int pcrf_create_session(EpcemuConfig *config, const char *imsi,
-                        const char *ip, const char *apn);
-int pcrf_delete_session(EpcemuConfig *config, const char *imsi);
+typedef struct {
+    char instanceId[EPCEMU_ID_LEN];
+    char state[32];
+} PcrfEpc;
+
+typedef struct {
+    char state[32];
+    char dataState[16];
+    char reason[EPCEMU_MAX_REASON];
+} PcrfPdn;
+
+/* Return the exact HTTP status, or zero for an uncertain/invalid response. */
+int pcrf_get_epc(EpcemuConfig *config, PcrfEpc *epc);
+int pcrf_register_epc(EpcemuConfig *config, const char *id,
+                      const char *expected);
+int pcrf_create_session(EpcemuConfig *config, const UeEntry *ue,
+                        PcrfPdn *pdn);
+int pcrf_get_pdn(EpcemuConfig *config, const UeEntry *ue, PcrfPdn *pdn);
+int pcrf_delete_session(EpcemuConfig *config, const UeEntry *ue);
 
 #endif /* PCRF_H_ */

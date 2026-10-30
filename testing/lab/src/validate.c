@@ -18,6 +18,29 @@ static int fail(ulab_error_t *err, const char *msg) {
     return ULAB_ERR;
 }
 
+static int validate_pdn_check(const scenario_t *s,
+                               const check_spec_t *check,
+                               ulab_error_t *err) {
+    if (check->type != CHECK_UE_PDN) return ULAB_OK;
+    if (!ulab_streq(s->provider.type, "virtual") ||
+        check->ues.kind == SEL_NONE || check->timeout_seconds > 300 ||
+        (!ulab_streq(check->expected, "attached") &&
+         !ulab_streq(check->expected, "allowed") &&
+         !ulab_streq(check->expected, "blocked") &&
+         !ulab_streq(check->expected, "rejected")) ||
+        (check->same_pdn && check->new_pdn) ||
+        ((check->same_pdn || check->new_pdn) &&
+         ulab_streq(check->expected, "rejected")) ||
+        strspn(check->apn,
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
+        != strlen(check->apn)) {
+        return fail(err, "ue_pdn requires virtual UEs, a valid APN, "
+                    "attached/allowed/blocked/rejected and at most 300s; "
+                    "same_pdn/new_pdn are exclusive and require a live PDN");
+    }
+    return ULAB_OK;
+}
+
 int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     uint32_t pct = 0;
     size_t assertion_count = 0;
@@ -210,6 +233,15 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const event_spec_t *event;
 
             event = &phase->events[j];
+            if (event->apn[0] &&
+                (!ulab_streq(s->provider.type, "virtual") ||
+                 event->type != EVT_START_UES ||
+                 strspn(event->apn,
+                 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
+                 "0123456789.-") != strlen(event->apn))) {
+                return fail(err, "APN override requires virtual start_ues "
+                            "and ASCII letters, digits, dots or hyphens");
+            }
             if (event->retry_busy_seconds > 0 &&
                 (event->type != EVT_TOGGLE_SERVICE ||
                  event->retry_busy_seconds > 300 ||
@@ -478,6 +510,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
             const check_spec_t *check;
 
             check = &phase->checks[j];
+            if (validate_pdn_check(s, check, err)) return ULAB_ERR;
             if (check->type == CHECK_NODE_VERSION_EQUALS &&
                 (check->app[0] == '\0' || check->expected[0] == '\0')) {
                 return fail(err,
@@ -613,6 +646,7 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
         const check_spec_t *check;
 
         check = &s->final_checks[i];
+        if (validate_pdn_check(s, check, err)) return ULAB_ERR;
         if (check->type == CHECK_NODE_VERSION_EQUALS &&
             (check->app[0] == '\0' || check->expected[0] == '\0')) {
             return fail(err,

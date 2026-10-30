@@ -145,12 +145,18 @@ func (n *nodeRepo) Delete(nodeId ukama.NodeID,
 				store.ErrPrecondition)
 		}
 
-		result := tx.Where("node_id = ?", id).Delete(&Site{})
-		if result.Error != nil {
-			return result.Error
+		var sites int64
+		if countErr := tx.Model(&Site{}).Where("node_id = ?", id).
+			Count(&sites).Error; countErr != nil {
+			return countErr
 		}
 
-		result = tx.Where("node_id = ?", id).Delete(&NodeStatus{})
+		if sites > 0 {
+			return fmt.Errorf("node %s is still assigned to a site: %w", id,
+				store.ErrPrecondition)
+		}
+
+		result := tx.Where("node_id = ?", id).Delete(&NodeStatus{})
 		if result.Error != nil {
 			return result.Error
 		}

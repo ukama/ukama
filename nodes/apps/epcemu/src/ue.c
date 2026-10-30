@@ -103,39 +103,21 @@ static void copy_entry(UeEntry *dst, const UeEntry *src) {
     memcpy(dst, src, sizeof(UeEntry));
 }
 
-int ue_attach_start(const char *imsi,
-                    const char *iccid,
-                    const char *ip,
-                    const char *apn,
-                    char *reason,
-                    size_t reasonLen) {
+int ue_attach_start(const UeEntry *ue, char *reason, size_t reasonLen) {
 
     int idx;
-    int existing;
-    uint64_t now;
 
-    if (imsi == NULL || ip == NULL) {
-        snprintf(reason, reasonLen, "missing imsi or ip");
-        return USYS_FALSE;
-    }
+    if (ue == NULL) return USYS_FALSE;
 
     pthread_mutex_lock(&gLock);
 
-    existing = find_idx_imsi_locked(imsi);
-    if (existing >= 0) {
-        if (strcmp(gUes[existing].ip, ip) == 0 &&
-            gUes[existing].state == UeStateAttached) {
-            pthread_mutex_unlock(&gLock);
-            return USYS_TRUE;
-        }
-
-        snprintf(reason, reasonLen, "imsi already attached");
+    if (find_idx_imsi_locked(ue->imsi) >= 0) {
+        snprintf(reason, reasonLen, "imsi already reserved");
         pthread_mutex_unlock(&gLock);
         return USYS_FALSE;
     }
 
-    existing = find_idx_ip_locked(ip);
-    if (existing >= 0) {
+    if (find_idx_ip_locked(ue->ip) >= 0) {
         snprintf(reason, reasonLen, "ue ip already allocated");
         pthread_mutex_unlock(&gLock);
         return USYS_FALSE;
@@ -148,19 +130,12 @@ int ue_attach_start(const char *imsi,
         return USYS_FALSE;
     }
 
-    now = now_sec();
-
-    memset(&gUes[idx], 0, sizeof(UeEntry));
-    snprintf(gUes[idx].imsi, sizeof(gUes[idx].imsi), "%s", imsi);
-    snprintf(gUes[idx].iccid, sizeof(gUes[idx].iccid), "%s",
-             iccid ? iccid : "");
-    snprintf(gUes[idx].ip, sizeof(gUes[idx].ip), "%s", ip);
-    snprintf(gUes[idx].apn, sizeof(gUes[idx].apn), "%s",
-             apn ? apn : EPCEMU_DEF_APN);
-
+    copy_entry(&gUes[idx], ue);
     gUes[idx].state = UeStateAttaching;
-    gUes[idx].attachedAt = now;
-    gUes[idx].updatedAt = now;
+    gUes[idx].updatedAt = now_sec();
+    snprintf(gUes[idx].dataState, sizeof(gUes[idx].dataState), "unknown");
+    snprintf(gUes[idx].reason, sizeof(gUes[idx].reason),
+             "registration_pending");
 
     pthread_mutex_unlock(&gLock);
     return USYS_TRUE;
@@ -175,26 +150,26 @@ void ue_attach_complete(const char *imsi) {
     idx = find_idx_imsi_locked(imsi);
     if (idx >= 0) {
         gUes[idx].state = UeStateAttached;
+        gUes[idx].attachedAt = now_sec();
         gUes[idx].updatedAt = now_sec();
     }
 
     pthread_mutex_unlock(&gLock);
 }
 
-void ue_attach_fail(const char *imsi, const char *reason) {
+void ue_set_policy(const char *imsi, const char *state, const char *reason,
+                   bool checked) {
 
     int idx;
 
-    (void)reason;
-
     pthread_mutex_lock(&gLock);
-
     idx = find_idx_imsi_locked(imsi);
     if (idx >= 0) {
-        memset(&gUes[idx], 0, sizeof(UeEntry));
-        gUes[idx].state = UeStateFree;
+        snprintf(gUes[idx].dataState, sizeof(gUes[idx].dataState),
+                 "%s", state);
+        snprintf(gUes[idx].reason, sizeof(gUes[idx].reason), "%s", reason);
+        gUes[idx].policyCheckedAt = checked ? now_sec() : 0;
     }
-
     pthread_mutex_unlock(&gLock);
 }
 
@@ -211,6 +186,9 @@ int ue_detach_start(const char *imsi, UeEntry *copy) {
     }
 
     gUes[idx].state = UeStateDetaching;
+    snprintf(gUes[idx].dataState, sizeof(gUes[idx].dataState), "unknown");
+    snprintf(gUes[idx].reason, sizeof(gUes[idx].reason), "cleanup_pending");
+    gUes[idx].policyCheckedAt = 0;
     gUes[idx].updatedAt = now_sec();
     copy_entry(copy, &gUes[idx]);
 
@@ -351,6 +329,13 @@ static JsonObj *entry_json_locked(const UeEntry *ue) {
     json_object_set_new(obj, "ip",         json_string(ue->ip));
     json_object_set_new(obj, "apn",        json_string(ue->apn));
     json_object_set_new(obj, "state",      json_string(ue_state_str(ue->state)));
+    json_object_set_new(obj, "epc_instance_id",
+                        json_string(ue->instanceId));
+    json_object_set_new(obj, "pdn_id", json_string(ue->pdnId));
+    json_object_set_new(obj, "data_state", json_string(ue->dataState));
+    json_object_set_new(obj, "reason", json_string(ue->reason));
+    json_object_set_new(obj, "policyCheckedAt",
+                        json_integer(ue->policyCheckedAt));
     json_object_set_new(obj, "attachedAt", json_integer(ue->attachedAt));
     json_object_set_new(obj, "updatedAt",  json_integer(ue->updatedAt));
     json_object_set_new(obj, "lastSeenAt", json_integer(ue->lastSeenAt));
@@ -494,29 +479,32 @@ int ue_count_total(void) {
     return count;
 }
 
-void ue_for_each_attached(int (*cb)(const UeEntry *ue, void *arg),
-                          void *arg) {
+size_t ue_snapshot(UeEntry *entries, size_t capacity) {
 
-    UeEntry copy[EPCEMU_MAX_UES];
-    int i;
-    int count;
+    size_t i;
+    size_t count;
 
-    if (cb == NULL) return;
-
+    if (entries == NULL) return 0;
     count = 0;
-
     pthread_mutex_lock(&gLock);
-
-    for (i = 0; i < EPCEMU_MAX_UES; i++) {
-        if (gUes[i].state == UeStateAttached && count < EPCEMU_MAX_UES) {
-            copy_entry(&copy[count], &gUes[i]);
-            count++;
+    for (i = 0; i < EPCEMU_MAX_UES && count < capacity; i++) {
+        if (gUes[i].state != UeStateFree) {
+            copy_entry(&entries[count++], &gUes[i]);
         }
     }
-
     pthread_mutex_unlock(&gLock);
+    return count;
+}
 
+void ue_for_each(int (*cb)(const UeEntry *ue, void *arg), void *arg) {
+
+    UeEntry copy[EPCEMU_MAX_UES];
+    size_t i;
+    size_t count;
+
+    if (cb == NULL) return;
+    count = ue_snapshot(copy, EPCEMU_MAX_UES);
     for (i = 0; i < count; i++) {
-        cb(&copy[i], arg);
+        if (!cb(&copy[i], arg)) break;
     }
 }

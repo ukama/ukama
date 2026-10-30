@@ -330,6 +330,7 @@ func TestNodeRepo_Delete(t *testing.T) {
 
 	lockQuery := `^SELECT "id","parent_node_id" FROM "nodes" WHERE id = \$1 .*FOR UPDATE`
 	countQuery := `^SELECT count\(\*\) FROM "nodes" WHERE parent_node_id = \$1`
+	sitesQuery := `^SELECT count\(\*\) FROM "sites" WHERE node_id = \$1`
 
 	expectLock := func(parent *string) {
 		mock.ExpectQuery(lockQuery).WithArgs(id, 1).
@@ -342,12 +343,18 @@ func TestNodeRepo_Delete(t *testing.T) {
 			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
 	}
 
+	expectSites := func(count int) {
+		mock.ExpectQuery(sitesQuery).WithArgs(id).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
+	}
+
 	t.Run("NodeFound", func(t *testing.T) {
 		mock.ExpectBegin()
 		expectLock(nil)
 		expectChildren(0)
+		expectSites(0)
 
-		for _, table := range []string{"sites", "node_statuses", "nodes"} {
+		for _, table := range []string{"node_statuses", "nodes"} {
 			mock.ExpectExec(`^UPDATE "`+table+`" SET "deleted_at"=`).
 				WithArgs(sqlmock.AnyArg(), id).
 				WillReturnResult(sqlmock.NewResult(1, 1))
@@ -398,6 +405,19 @@ func TestNodeRepo_Delete(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
+	t.Run("AssignedToSite", func(t *testing.T) {
+		mock.ExpectBegin()
+		expectLock(nil)
+		expectChildren(0)
+		expectSites(1)
+		mock.ExpectRollback()
+
+		err := r.Delete(nodeId, nil)
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	dbErr := errors.New("db failed")
 
 	for _, tc := range []struct {
@@ -410,6 +430,11 @@ func TestNodeRepo_Delete(t *testing.T) {
 		{"CountChildrenFails", func() {
 			expectLock(nil)
 			mock.ExpectQuery(countQuery).WithArgs(id).WillReturnError(dbErr)
+		}},
+		{"CountSitesFails", func() {
+			expectLock(nil)
+			expectChildren(0)
+			mock.ExpectQuery(sitesQuery).WithArgs(id).WillReturnError(dbErr)
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

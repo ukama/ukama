@@ -159,8 +159,15 @@ func (r *Router) init() {
 		svc.GET("", formatDoc("Get service state", "Get service admission state"), tonic.Handler(r.getService, http.StatusOK))
 		svc.POST("", formatDoc("Set service state", "Enable or disable service admission"), tonic.Handler(r.setService, http.StatusAccepted))
 
+		v1.GET("/epc", formatDoc("Get EPC", "Read the current EPC instance"),
+			tonic.Handler(r.getEPC, http.StatusOK))
+		v1.POST("/epc", formatDoc("Register EPC", "Start an EPC instance"),
+			tonic.Handler(r.registerEPC, http.StatusAccepted))
+		v1.GET("/pdn/imsi/:imsi", formatDoc("Get PDN", "Observe a live PDN"),
+			tonic.Handler(r.getPDN, http.StatusOK))
 		s := v1.Group("/session", "session", "session")
-		s.POST("", formatDoc("Create session", "Create a new session"), tonic.Handler(r.createSession, http.StatusAccepted))
+		s.POST("", formatDoc("Register PDN", "Register an EPC-owned PDN"),
+			tonic.Handler(r.createSession, http.StatusAccepted))
 		s.DELETE("", formatDoc("End session", "End a session"), tonic.Handler(r.endSession, http.StatusAccepted))
 		s.GET("/:id", formatDoc("Get session", "Get a particular session"), tonic.Handler(r.getSessionByID, http.StatusOK))
 
@@ -195,7 +202,11 @@ func (r *Router) setService(c *gin.Context, req *api.ServiceRequest) error {
 	return r.controller.SetService(c, req)
 }
 
-func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
+func (r *Router) createSession(c *gin.Context, req *api.CreateSession) (
+	*api.PDNResponse, error) {
+	if err := validateDigits(req.Imsi); err != nil {
+		return nil, err
+	}
 	log.Infof("Received request for create session: %v", req)
 
 	req.ImsiStr = uintArrayToString(req.Imsi)
@@ -204,6 +215,9 @@ func (r *Router) createSession(c *gin.Context, req *api.CreateSession) error {
 }
 
 func (r *Router) endSession(c *gin.Context, req *api.EndSession) error {
+	if err := validateDigits(req.Imsi); err != nil {
+		return err
+	}
 	log.Infof("Received request for end session: %v", req)
 
 	req.ImsiStr = uintArrayToString(req.Imsi)
@@ -282,4 +296,32 @@ func uintToIp(nn uint32) string {
 	ip := make(net.IP, 4)
 	binary.BigEndian.PutUint32(ip, nn)
 	return ip.String()
+}
+
+func validateDigits(imsi []uint8) error {
+	if len(imsi) < 5 || len(imsi) > 15 {
+		return crest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "invalid_imsi"}
+	}
+	for _, digit := range imsi {
+		if digit > 9 {
+			return crest.HttpError{HttpCode: http.StatusBadRequest,
+				Message: "invalid_imsi"}
+		}
+	}
+	return nil
+}
+
+func (r *Router) registerEPC(c *gin.Context, req *api.RegisterEPC) (
+	*api.EPCResponse, error) {
+	return r.controller.RegisterEPC(c, req)
+}
+
+func (r *Router) getPDN(c *gin.Context, req *api.GetPDN) (
+	*api.PDNResponse, error) {
+	return r.controller.GetPDN(c, req)
+}
+
+func (r *Router) getEPC(c *gin.Context) (*api.EPCResponse, error) {
+	return r.controller.GetEPC(c)
 }

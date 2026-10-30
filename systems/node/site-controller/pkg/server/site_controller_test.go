@@ -10,12 +10,17 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -25,6 +30,7 @@ import (
 	"github.com/ukama/ukama/systems/node/site-controller/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 )
 
 const (
@@ -239,4 +245,186 @@ func TestHandleNodeOnline_RejectsUnparseableNodeId(t *testing.T) {
 
 	assert.Error(t, err)
 	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func registryError(code int) error {
+	return fmt.Errorf("GetNode failure: %w", fmt.Errorf("rest api GET failure with error: %w",
+		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))
+}
+
+// The event server has no health client here, so reaching ListInterfaces would panic.
+func TestHandleHealthReport_IgnoresNodeWithoutSite(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(&registry.NodeInfo{Id: testAmpID}, nil).Once()
+	nodeClient.On("List", registry.ListNodesRequest{NodeId: testAmpID}).
+		Return(&registry.ListNodesResponse{Nodes: []*registry.NodeInfo{{Id: testAmpID}}}, nil).Once()
+	states := &scmocks.StateRepo{}
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.NoError(t, err)
+	nodeClient.AssertExpectations(t)
+	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func TestHandleHealthReport_IgnoresNodeMissingFromRegistry(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(nil, registryError(http.StatusNotFound)).Once()
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil)}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.NoError(t, err)
+	nodeClient.AssertNotCalled(t, "List", mock.Anything)
+}
+
+func TestHandleHealthReport_ReturnsRegistryOutage(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", testAmpID).Return(nil, registryError(http.StatusInternalServerError)).Once()
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil)}
+
+	err := c.handleHealthReport(context.Background(), &epb.HealthReportEvent{NodeId: testAmpID, NodeType: ukama.NODE_ID_TYPE_AMPNODE})
+
+	assert.Error(t, err)
+}
+
+func TestHandleNodeOnline_IgnoresTowerWithoutSite(t *testing.T) {
+	for name, resp := range map[string]*registry.ListNodesResponse{
+		"no nodes":  {},
+		"no site":   {Nodes: []*registry.NodeInfo{{Id: testTowerID}}},
+		"nil entry": {Nodes: []*registry.NodeInfo{nil}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			nodeClient := &mbmocks.NodeClient{}
+			nodeClient.On("List", registry.ListNodesRequest{NodeId: testTowerID}).Return(resp, nil).Once()
+			states := &scmocks.StateRepo{}
+			c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+			err := c.handleNodeOnline(context.Background(), &epb.NodeOnlineEvent{NodeId: testTowerID})
+
+			assert.NoError(t, err)
+			states.AssertNotCalled(t, "Upsert", mock.Anything)
+		})
+	}
+}
+
+func TestHandleNodeOnline_ReturnsRegistryOutage(t *testing.T) {
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("List", registry.ListNodesRequest{NodeId: testTowerID}).Return(nil, registryError(http.StatusServiceUnavailable)).Once()
+	states := &scmocks.StateRepo{}
+	c := &SiteControllerEventServer{s: newTestServer(nodeClient, nil), states: states}
+
+	err := c.handleNodeOnline(context.Background(), &epb.NodeOnlineEvent{NodeId: testTowerID})
+
+	assert.Error(t, err)
+	states.AssertNotCalled(t, "Upsert", mock.Anything)
+}
+
+func TestEventNotification_SiteDeleteRemovesSite(t *testing.T) {
+	siteID := "77777777-7777-7777-7777-777777777777"
+
+	sites := &scmocks.SiteRepo{}
+	sites.On("Delete", siteID).Return(nil).Once()
+
+	c := &SiteControllerEventServer{sites: sites, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventDeleteSite{SiteId: siteID, NetworkId: "net"})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.site.site.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.NoError(t, err)
+	sites.AssertExpectations(t)
+}
+
+func TestEventNotification_RejectsMismatchedPayload(t *testing.T) {
+	sites := &scmocks.SiteRepo{}
+	c := &SiteControllerEventServer{sites: sites, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventAddSite{SiteId: "99999999-9999-9999-9999-999999999999"})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.site.site.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.Error(t, err)
+	sites.AssertNotCalled(t, "Delete", mock.Anything)
+}
+
+func TestHandleDeleteSite_ReportsStoreFailure(t *testing.T) {
+	sites := &scmocks.SiteRepo{}
+	sites.On("Delete", mock.Anything).Return(assert.AnError).Once()
+
+	c := &SiteControllerEventServer{sites: sites}
+
+	err := c.handleDeleteSite(&epb.EventDeleteSite{SiteId: "88888888-8888-8888-8888-888888888888"})
+
+	assert.Error(t, err, "a failed delete must surface so the event is retried")
+}
+
+func TestEventNotification_NodeDeleteClearsPortMaps(t *testing.T) {
+	nodeID := "uk-sa2644-tnode-v0-9a1e"
+
+	ports := &scmocks.PortMapRepo{}
+	ports.On("ClearNode", nodeID).Return(nil).Once()
+
+	c := &SiteControllerEventServer{ports: ports, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventRegistryNodeDelete{NodeId: nodeID})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.NoError(t, err)
+	ports.AssertExpectations(t)
+}
+
+func TestHandleNodeDelete_ReportsStoreFailure(t *testing.T) {
+	ports := &scmocks.PortMapRepo{}
+	ports.On("ClearNode", mock.Anything).Return(assert.AnError).Once()
+
+	c := &SiteControllerEventServer{ports: ports}
+
+	err := c.handleNodeDelete(&epb.EventRegistryNodeDelete{NodeId: "uk-sa2644-tnode-v0-9a1e"})
+
+	assert.Error(t, err, "a failed clear must surface so the event is retried")
+}
+
+func registryErr(code int) error {
+	return fmt.Errorf("GetSite failure: %w", fmt.Errorf("rest api GET failure with error: %w",
+		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))
+}
+
+func TestPruneDeletedSites_DeletesOnlySitesRegistryReportsMissing(t *testing.T) {
+	live := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+	gone := "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
+	unknown := "cccccccc-cccc-cccc-cccc-cccccccccccc"
+
+	sites := &scmocks.SiteRepo{}
+	sites.On("List").Return([]db.Site{{SiteID: live}, {SiteID: gone}, {SiteID: unknown}}, nil).Once()
+	sites.On("Delete", gone).Return(nil).Once()
+
+	siteClient := &mbmocks.SiteClient{}
+	siteClient.On("Get", live).Return(&registry.SiteInfo{Id: live}, nil).Once()
+	siteClient.On("Get", gone).Return(nil, registryErr(http.StatusNotFound)).Once()
+	siteClient.On("Get", unknown).Return(nil, registryErr(http.StatusInternalServerError)).Once()
+
+	srv := NewSiteControllerServer(testOrgName, nil, nil, nil, siteClient, nil, nil, nil)
+	c := &SiteControllerEventServer{s: srv, sites: sites}
+
+	c.PruneDeletedSites()
+
+	sites.AssertExpectations(t)
+	siteClient.AssertExpectations(t)
+	sites.AssertNotCalled(t, "Delete", live)
+	sites.AssertNotCalled(t, "Delete", unknown)
 }

@@ -10,13 +10,13 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 type ControllerEventServer struct {
@@ -36,12 +36,25 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
 	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.create"):
-		msg, err := n.unmarshalRegistryNodeAddEvent(e.Msg)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeCreate: %v", err)
 			return nil, err
 		}
 
 		err = n.handleRegistryNodeAddEvent(e.RoutingKey, msg)
+		if err != nil {
+			return nil, err
+		}
+
+	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal EventRegistryNodeDelete: %v", err)
+			return nil, err
+		}
+
+		err = n.handleRegistryNodeDeleteEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -53,22 +66,25 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 	return &epb.EventResponse{}, nil
 }
 
-func (n *ControllerEventServer) unmarshalRegistryNodeAddEvent(msg *anypb.Any) (*epb.EventRegistryNodeCreate, error) {
-	p := &epb.EventRegistryNodeCreate{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
-	if err != nil {
-		log.Errorf("Failed to Unmarshal NodeOnline  message with : %+v. Error %s.", msg, err.Error())
-		return nil, err
-	}
-	return p, nil
-}
-
 func (n *ControllerEventServer) handleRegistryNodeAddEvent(key string, msg *epb.EventRegistryNodeCreate) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	err := n.s.nRepo.Add(strings.ToLower(msg.NodeId))
 	if err != nil {
 		log.Errorf("Error adding node %s to controller/nodeLog repo.Error: %+v", msg.NodeId, err)
+		return err
+	}
+	return nil
+}
+
+func (n *ControllerEventServer) handleRegistryNodeDeleteEvent(msg *epb.EventRegistryNodeDelete) error {
+	nodeId := strings.ToLower(msg.NodeId)
+	if nodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+
+	if err := n.s.nRepo.Delete(nodeId); err != nil {
+		log.Errorf("Error deleting node %s from controller/nodeLog repo. Error: %+v", nodeId, err)
 		return err
 	}
 	return nil

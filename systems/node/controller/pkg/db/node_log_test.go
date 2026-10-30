@@ -193,3 +193,32 @@ func TestControllerRepo_Add(t *testing.T) {
 	})
 
 }
+
+func TestControllerRepo_Delete(t *testing.T) {
+	nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+	db, mock, err := sqlmock.New()
+	assert.NoError(t, err)
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`UPDATE "node_logs" SET "deleted_at"`)).
+		WithArgs(sqlmock.AnyArg(), nid.String()).
+		WillReturnResult(sqlmock.NewResult(0, 1))
+	mock.ExpectCommit()
+
+	dialector := postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	})
+	gdb, err := gorm.Open(dialector, &gorm.Config{})
+	assert.NoError(t, err)
+
+	r := int_db.NewNodeLogRepo(&UkamaDbMock{GormDb: gdb})
+
+	err = r.Delete(nid.String())
+
+	assert.NoError(t, err)
+	assert.NoError(t, mock.ExpectationsWereMet())
+}

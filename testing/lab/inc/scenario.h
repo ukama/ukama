@@ -123,6 +123,7 @@ typedef enum {
     CHECK_TRAFFIC_UNAVAILABLE,
     CHECK_NODE_READY,
     CHECK_UE_ATTACHED,
+    CHECK_UE_PDN,
     CHECK_USAGE_PER_SIM,
     CHECK_USAGE_SAMPLE,
     CHECK_PACKAGE_ACTIVE,
@@ -189,6 +190,9 @@ typedef enum {
 
 typedef struct {
     check_type_t type;
+    char         apn[100];
+    int          same_pdn;
+    int          new_pdn;
     char         target[ULAB_MAX_REF];
     selector_t   ues;
     selector_t   nodes;
@@ -269,6 +273,7 @@ typedef struct {
 
 typedef struct {
     event_type_t type;
+    char         apn[100];
     char         name[ULAB_MAX_NAME];
     selector_t   ues;
     selector_t   nodes;

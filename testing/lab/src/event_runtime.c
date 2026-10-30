@@ -1063,10 +1063,11 @@ int event_runtime(event_ctx_t *ctx,
             rc = runtime_ensure_media(ctx->runtime, err);
         }
         if (rc == ULAB_OK) {
-            rc = runtime_build_and_start_ues(NULL,
+            rc = runtime_start_ues_apn(NULL,
                                              ctx->runtime,
                                              ctx->world,
                                              &res,
+                                             event->apn,
                                              err);
         }
         selector_result_free(&res);
