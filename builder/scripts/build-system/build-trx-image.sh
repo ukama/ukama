@@ -58,7 +58,7 @@ cleanup() {
 trap cleanup EXIT
 
 check_pre_requisite() {
-    for cmd in make gzip mkfs.jffs2 mkenvimage sha256sum; do
+    for cmd in make gzip python mkfs.jffs2 mkenvimage sha256sum; do
         command -v "$cmd" >/dev/null || { log ERROR "'$cmd' not found in PATH"; exit 1; }
     done
 
@@ -80,7 +80,7 @@ build_stack() {
     make -C "${LTE_NODE_REPO}" stack TYPE="${MODE}"
     check_status $? "${MODE} stack built" "make stack"
 
-    STACK_BUILD_DIR=$(ls -d "${LTE_NODE_REPO}/stack/${MODE,,}/source/LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_"* 2>/dev/null | tail -1)
+    STACK_BUILD_DIR=$(find "${LTE_NODE_REPO}/stack/${MODE,,}/source" -maxdepth 1 -type d -name "LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_*" | sort | tail -1)
     [[ -n "$STACK_BUILD_DIR" ]] || { log ERROR "No ${MODE} stack build directory found"; exit 1; }
 }
 
