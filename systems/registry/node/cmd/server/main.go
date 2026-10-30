@@ -87,7 +87,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Invalid organization identifier %s. Error %s", serviceConfig.OrgId, err)
 	}
 
-	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient)
+	invClient := cinvent.NewComponentClient(serviceConfig.Http.InventoryClient,
+		client.WithTimeout(serviceConfig.Timeout))
 	initClient := ic.NewInitClient(serviceConfig.Http.InitClient,
 		client.WithDebug(serviceConfig.DebugMode))
 	hostString := ic.CreateHostString(serviceConfig.OrgName, NodeSystemName)
@@ -96,7 +97,8 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Fatalf("Failed to resolve node system address from initClient: %v", err)
 	}
 
-	healthClient := node.NewNodeHealthClient(nodeSystemUrl.String())
+	healthClient := node.NewNodeHealthClient(nodeSystemUrl.String(),
+		client.WithTimeout(serviceConfig.Timeout))
 
 	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
 		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
