@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if [ -e /mnt/app/init.d ];then
+	cp /mnt/app/init.d/* /etc/init.d/
+fi
+
+cp /mnt/app/trxstatus /usr/bin/
+cp /mnt/app/gpsGetLoc.sh /usr/bin
+cp /mnt/app/dl_pltd.sh /usr/bin/
+cp /mnt/app/ul_pltd.sh /usr/bin/
+cp /mnt/app/bringup /usr/bin
+cp /mnt/app/setled /usr/bin
+cp /mnt/app/get_stat.sh /usr/bin
+cp /mnt/app/ledCtrl /usr/bin

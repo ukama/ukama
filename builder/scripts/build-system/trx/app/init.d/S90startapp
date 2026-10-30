@@ -1,0 +1,280 @@
+#!/bin/sh
+source /tmp/system.conf
+
+if [ "$TARGET" == "zen" ];then
+    #Setting UART1
+    if [ -z "$BAUDRATE_UART1" ];then BAUDRATE_UART1=9600; echo "[$0] UART1 DEFAULT BAUDRATE SEELCTED";fi
+    echo "[$0] UART1 BAUDRATE_UART1 configuration : $BAUDRATE_UART1"
+    /bin/stty -F /dev/ttyS1 $BAUDRATE_UART1 -echo
+fi
+
+## Default SYNCBY is set to internal
+
+if [ -z "$SYNCBY" ]; then SYNCBY=internal; fi
+
+### This is only for ZEN boards equipped with a PTP module
+## SYNCBY takes ptp, gps, internal and ptp1pps as options
+if [ "$SYNCBY" == "ptp" ];then
+    if [ -z $PPSENABLECOUNT ];then PPSENABLECOUNT=16;fi
+    TEMPCOUNT=$PPSENABLECOUNT
+
+    echo "[$0] Starting PTP module"
+    /usr/bin/ptp_config.sh
+
+    if [ "$SKIPPPSLOCK" == "1" ];then
+	echo -n "[$0] Skip PPS SYNC lock"
+    else
+
+        echo -n  "[$0] Waiting for 1PPS SYNC "
+        
+        while [ 1 ];do
+	    cd /tmp
+            /usr/bin/ptprd.sh t Clock > /dev/null
+            PPSLOCKED=`grep -c -i "ing" ptp.Clock`
+	    if [ "$PPSLOCKED" == "1" ];then
+	        echo "ACQUIRED"
+                PPSENABLECOUNT=$TEMPCOUNT
+                break;
+		cd -
+	    else
+	        echo -n ". "
+	    fi
+            if [ $PPSENABLECOUNT -lt 0 ];then
+                echo
+                echo "[$0]   PPS SYNC COULD NOT BE ACQUIRED ...... [DONE - $PPSENABLECOUNT]"
+                toggle 1 0&
+                PPSENABLECOUNT=$TEMPCOUNT
+                break;
+            fi
+            let PPSENABLECOUNT=$PPSENABLECOUNT-1
+            sleep 5 ## Need to wait a bit before reading PTP module
+        done
+
+        ## Check if we exited previous WHILE because PPSLOCKED or TIMEOUT(TBD)
+        if [ "$PPSLOCKED" == "1" ];then
+            echo -n "[$0] Waiting for 1PPS LOCK "
+	    while [ 1 ];do
+                cd /tmp
+                /usr/bin/ptprd.sh pt Status > /dev/null
+                PPSRUNNING=`grep -c -i "running" ptp.Status`
+                if [ "$PPSRUNNING" == "1" ];then
+                    echo "ACQUIRED"
+                    echo "[$0] Updating system time"
+                    /usr/bin/ptprd.sh "UTC apply"
+                    cd -
+	            break;
+                else
+ 		    echo -n ". "
+                fi
+                if [ $PPSENABLECOUNT -lt 0 ];then ### 
+                    echo
+                    echo "[$0]   PPS LOCK COULD NOT BE ACQUIRED ...... [DONE - $PPSENABLECOUNT]"
+                    toggle 1 0&
+                    PPSENABLECOUNT=$TEMPCOUNT
+                    break;
+                fi
+                let PPSENABLECOUNT=$PPSENABLECOUNT-1
+                sleep 5 ## Need ot wait a bit before reading PTP module
+            done
+        fi ## PPSLOCKED
+    fi ##PPSLOCK
+fi ## SYNCBY ptp
+
+#To avoid parsing error for next if condition
+if [ -z $PPSRUNNING ];then PPSRUNNING=0;fi
+
+## This is common to ZENs that are GPS only enabled or PTP+GPS enabled.
+## In case of units with PTP module without gps connected, set SKIPGPSLOC to 1
+if [ "$SYNCBY" == "gps" -o "$PPSRUNNING" == "1" ];then
+    if [ "$SKIPGPSLOCATION" == "1" ];then
+	echo "[$0] Skip waiting for GPS location"
+    else
+        echo "[$0] Waiting for GPS Location"
+        rm -rf /etc/gps_loc.log
+        /usr/bin/gpsGetLoc.sh
+        sleep 1
+    fi
+fi
+
+## Check if MODE variable was provided. If not, default to e2e mode.
+if [ -z $MODE ];then MODE=e2e;fi
+
+if [ "$SEBYPASS" != "1" ];then
+    #Load lsmD app
+    if [ -f /usr/bin/bootoct ]; then
+        echo "[$0] Loading /bin/lsmD with bootoct BW=${BW}, MODE=${MODE} and  coremask 0x8"
+        bootoct /bin/lsmD coremask=0x8 console_uart=0 endbootargs rf_bw=${BW} MODE=${MODE}
+    elif [ -f /usr/bin/oct-app-ctl ]; then
+        echo "[$0] Loading /bin/lsmD with oct-app-ctl BW=${BW}, MODE=${MODE}"
+        oct-app-ctl boot -numcores=1 /bin/lsmD rf_bw=${BW} MODE=${MODE}
+    else
+        echo
+        echo "ERROR: neither bootoct nor oct-app-ctl found!!!"
+        echo "ERROR: neither bootoct nor oct-app-ctl found!!!"
+        echo "ERROR: neither bootoct nor oct-app-ctl found!!!"
+        echo
+    fi
+fi
+
+#Simple Executive start (if there is SE in core2)
+echo "[$0] Executing  /sbin/se_start"
+/sbin/se_start
+
+
+if [ "$TARGET" != "zen" ];then
+	/sbin/ifconfig eth1 down
+fi
+
+if [ -z $MIFLOGFILE ];then MIFLOGFILE=/dev/null;fi
+
+if [ "$STARTAPP" == "1" -o "$MODE" == "pltd" ];then
+    cd /
+	## Start Logger with exernal logParser application running
+	## Copy lsmLogDisp based on Mode - pltD or E2E
+	echo "[$0] Setting up the logger based on mode - selected $MODE"
+	cp /usr/bin/lsmLogDisp_${MODE} /usr/bin/lsmLogDisp
+	chmod +x /usr/bin/lsmLogDisp
+	
+	if [ "$LOGDISPEN" == "2" ];then
+	    if [ -z $LOGDISPPORT ];then LOGDISPPORT=9991;
+	                    echo "[$0] ***** VERIFY DEFAULT VALUE USED : LOGDISPPORT $LOGDISPPORT *****";fi
+	    if [ -z $LOGPARSERIP ];then LOGPARSERIP=10.102.81.100;
+	                    echo "[$0] ***** VERIFY DEFAULT VALUE USED : LOGPARSERIP $LOGPARSERIP *****";fi
+	
+	    if [ -f /usr/bin/lsmLogDisp ];then
+	        echo "[$0] Start core2 Logger"
+	        oncpu 0 /usr/bin/lsmLogDisp -p $LOGDISPPORT -a $LOGPARSERIP &
+	    fi
+	## Star Logger using SysLogD instead
+	elif [ "$LOGDISPEN" == "1" ];then
+	    if [ -f /usr/bin/lsmLogDisp ];then
+	        echo "[$0] Core2 log is started in /var/log"
+	        oncpu 0 /usr/bin/lsmLogDisp -l &
+	        echo "Started"
+	    fi
+	else
+	    echo "[$0] NO core2 LOGS WILL BE AVAILBLE"
+	fi
+
+	if [ -f /LFMSOFT_OCT_D.tgz ];then
+	    cd /
+	    tar -zxvf LFMSOFT_OCT_D.tgz
+	    rm LFMSOFT_OCT_D.tgz -vf
+	fi
+fi
+
+ ## Enable 1PPS from external sources
+        ## This must be done after dust command to assure SAMPLE ADJ are correctly 
+        ## setup first a newer DSP release will allow moving this logic to rc.sysinit
+    
+        ##
+        echo "[$0] Enable PPS"
+if [ "$SYNCBY" == "gps" -o "$SYNCBY" == "ptp" ];then
+        ##   GPS and PTP use
+            echo "[$0] Set system to use EXTERNAL 1PPS_IN"
+	    echo "[$0] System sync set to $SYNCBY"
+            oct-linux-csr MIO_PTP_PHY_1PPS_IN 0x4
+            if [ "$XOSERVODISABLE" == "1" ];then
+		echo "[$0] XO SERVO is not ENABLED.  RF XO will not be disciplined."
+	    else
+                #default to 60 seconds update interval
+                if [ -z $XOSERVOUPDATEINTERVAL ]; then XOSERVOUPDATEINTERVAL=60;fi
+
+                echo "[$0] Start xoservo app"
+                if [ -z "$XOSERVOLOG" ] ; then
+			XOSERVOLOG=/dev/null
+                fi
+                /usr/bin/xoservo.sh $XOSERVOUPDATEINTERVAL > $XOSERVOLOG &
+            fi     
+        else
+
+        ## IF/ELSE IS ONLY FOR CLARRITY IN THIS CASE
+	    if [ "$SYNCBY" == "ptp1pps" ];then
+        ## USE PTP engine to generate 1PPS from RF_CLK
+                echo "[$0] Set system to use PTP 1PPS"
+	        /etc/init_1pps.sh
+	    else ## if "$SYNCBY" == "internal"
+        ## INTERNAL synchronization
+		echo "[$0] Set system to first use PTP 1PPS then change to internal"
+		 /etc/init_1pps.sh ## Need to set 1PPS.
+                ##BRINGUP file will override.
+	    fi
+
+	    if [ "$XOTEMPCOMPENABLE" == "1" -a "$TCXO" == "pwm" ];then
+                echo "[$0] Enable Temperature compensation synchronization"
+	        /usr/bin/xotcomp.sh > /dev/null &
+	    fi
+        fi # CLOCK SOURCE SELECTION
+
+
+#CAVIUM START APP section 
+##############################
+if [ "$STARTAPP" == "1" -a "$MODE" != "pltd" ];then
+    cd /
+
+    if [ "$ESONENABLE" == "1" ];then
+    	#2- START MIF_SERVER
+		if [ -z $ESONIP ];then ESONIP=10.102.81.253;
+			echo "[$0] ***** VERIFY DEFAULT VALUE USED : ESONIP $ESONIP *****";fi
+
+		echo "[$0] Configure eSON IP : $ESONIP"
+		cd /tmp
+		echo $ESONIP > ahesonServerIpFile.txt
+		chmod 777 ahesonServerIpFile.txt
+
+		echo "[$0] Start SON MIF server"
+		ulimit -c unlimited
+		/usr/bin/sonMifServer > ${MIFLOGFILE} &
+    fi #ESONENABLE
+
+    ## Latest IPSEC integration within STACK requires TR-069 for configuration
+    if [ "$ACSENABLE" == "1" -o "$IPSECEN" == "1" ];then
+    	#2c START TR-069 Client
+	echo "[$0] Start TR-069 client"
+	if [ ! -d /Dimark_Client ];then
+	    echo -e "[$0] ERROR : COULD NOT FIND TR-069 Client ...\n\n\n"
+            toggle 1 6 7 & 
+            exit 1	
+        else 
+            chmod -R 777 /Dimark_Client/
+	    cd /
+        fi
+    fi    
+
+    if [ -e /bin/svnversion ];then
+        DUPLEXMODE=`cat /bin/svnversion |awk '/Product/{print $2}'`
+    fi
+    if [ -z $DUPLEXMODE ];then DUPLEXMODE=FDD;fi
+    echo "[$0] : START Override DSP RF Interface parameters in "$DUPLEXMODE" mode"
+    if [ -f /usr/bin/updatephyrfparams.sh ]; then
+        /usr/bin/updatephyrfparams.sh ${DUPLEXMODE} WRDDRCFG
+        DSPINIT=`oct-linux-memory -w 4  0x83000000 | awk '/Address/{print $4}'`
+        echo "[$0] : DONE Override DSP RF Interface parameters, Init Value: $DSPINIT"
+    else
+        echo "[$0] : S13swselect did not correctly retreive updatephyrfparams.sh by $CFGLOADBY"
+    fi
+    
+    sleep 1
+    echo "[$0] Start lfmsoftstart script"
+    if [ -f /bin/lfmsoftstart ];then
+    /bin/lfmsoftstart
+    fi
+
+    if [ "$TARGET" != "zen" ];then
+	/sbin/ifconfig eth1 down
+    fi
+
+###################################
+else
+### Do it externally for now
+    echo "[$0] Checking for custom scripts . . ."
+fi
+
+### Bringup S1 link (this file can be overwritten by ucliovrd option
+## Can always override UCLI even if stack is on flash
+## TFTP server must exist!
+if [ "$STARTAPP" == "1" -o "$CUST_START" == "1" -o "$MODE" == "pltd" ];then
+    echo "[$0] Starting /usr/bin/bringup script"
+    /usr/bin/bringup
+fi
+echo "[$0] DONE"

@@ -1,0 +1,122 @@
+#!/bin/sh
+
+VERSION=0.0
+
+periodCheckAlert=15 #seconds,  period to check alert
+
+##########  Private Value  ##########
+STATE_TX_IDLE=0
+STATE_TX_ACTIVE=1
+
+CELL_STATE_UP=0
+CELL_STATE_IDLE=1
+CELL_STATE_UNKNOWN=2
+LED_COLOR_OFF=0
+LED_COLOR_GREEN=1
+LED_COLOR_RED=2
+LED_COLOR_ORANGE=3
+LED_COLOR_BLUE=4
+
+stateCell=$CELL_STATE_IDLE
+
+ledboardColor=$LED_COLOR_BLUE
+
+SYSCFG_FILE_NAME=system.conf
+SYSCFG_DIR=
+SYSCFG_DIR_DEFAULT=/tmp
+OP_MODE=
+
+####################  Source system.conf  #######################
+if [ ! -z $SYSCFG_DIR ] ; then
+    if [ -f "$SYSCFG_DIR/$SYSCFG_FILE_NAME" ] ; then
+        source "$SYSCFG_DIR/$SYSCFG_FILE_NAME"
+    else
+        echo "$0 - Error: can't stat system.conf file : No such file or directory"
+        exit 1
+    fi
+elif [ -f $SYSCFG_DIR_DEFAULT/$SYSCFG_FILE_NAME ] ; then
+    source $SYSCFG_DIR_DEFAULT/$SYSCFG_FILE_NAME
+else
+    echo "$0 - Error: can't stat system.conf file : No such file or directory"
+    exit 1
+fi
+
+####################  Check System Mode  ########################
+if [ -z $OP_MODE ] ; then
+	OP_MODE=${MODE}
+fi
+
+loop()
+{
+	#########  Get Stat  ################
+	if [ ${OP_MODE} == "e2e" ] ; then
+		STATE=$(get_stat.sh state)
+		if [ $? = 0 ];then
+			if [ "$STATE" == "ENABLE" ];then
+				PERIOD_CHECK_CELL_STATE=0
+				stateCell=$CELL_STATE_UP;
+			elif [ "$STATE" == "IDLE" ];then
+				PERIOD_CHECK_CELL_STATE=0
+				stateCell=$CELL_STATE_IDLE
+			else
+				counterCellStateCheck=$(expr $counterCellStateCheck + $periodCheckAlert)
+				if [ $counterCellStateCheck -ge $PERIOD_CHECK_CELL_STATE ]; then
+					PERIOD_CHECK_CELL_STATE=0
+					stateCell=$CELL_STATE_UNKNOWN
+				fi
+			fi
+		else
+			echo "$0 - Error : could not get stats. Check that another ccli is not running"
+			stateCell=0
+		fi
+	elif [ ${OP_MODE} == "pltd" ] ; then
+		stateCell=$CELL_STATE_UP;
+	fi
+
+	
+	#####################################
+	#########    Flag Action    #########
+	#####################################
+
+	#********	  Cell State	********#
+	if [ $stateCell -ne $CELL_STATE_UP ] ; then
+		ledboardColor=$LED_COLOR_RED
+	else
+		ledboardColor=$LED_COLOR_GREEN
+	fi
+
+	if [ ${ledboardColor} -eq ${LED_COLOR_ORANGE} ]; then
+		setled orange on
+		if [ $? -ne 0 ] ; then
+			echo "$0 - Error : setled"
+			exit 1
+		fi
+	elif [ ${ledboardColor} -eq ${LED_COLOR_RED} ]; then
+		setled red on
+		if [ $? -ne 0 ] ; then
+			echo "$0 - Error : setled"
+			exit 1
+		fi
+	elif [ ${ledboardColor} -eq ${LED_COLOR_GREEN} ]; then
+		setled green on
+		if [ $? -ne 0 ] ; then
+			echo "$0 - Error : setled"
+			exit 1
+		fi
+	elif [ ${ledboardColor} -eq ${LED_COLOR_BLUE} ]; then
+		setled blue on
+		if [ $? -ne 0 ] ; then
+			echo "$0 - Error : setled"
+			exit 1
+		fi
+	fi
+
+
+	#########  Sleep 15 Seconds #########
+	sleep $periodCheckAlert
+
+	#########  Restart          #########
+	loop
+}
+
+loop

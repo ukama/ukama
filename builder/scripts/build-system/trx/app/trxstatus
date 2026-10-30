@@ -1,0 +1,17 @@
+#!/bin/sh
+
+FILEPATH=/sys/devices/soc.0/0.leds/leds/trx-status/brightness;
+
+trap 'echo 0 > ${FILEPATH}; done;exit 0' INT QUIT TERM
+
+echo 255 > ${FILEPATH};
+
+sleep 0.5;
+
+while : ; do
+	echo 0 > ${FILEPATH};
+	sleep 0.5;
+	echo 255 > ${FILEPATH};
+	sleep 0.5;
+done ;
+
