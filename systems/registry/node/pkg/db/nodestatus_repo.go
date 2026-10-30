@@ -9,9 +9,10 @@
 package db
 
 import (
-	"gorm.io/gorm"
+	"fmt"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 )
 
@@ -33,7 +34,8 @@ func NewNodeStatusRepo(db sql.Db) NodeStatusRepo {
 	}
 }
 
-// Update writes the named columns of ns in place. Naming them lets zero values such as Unknown be stored.
+// Update writes the named columns of ns in place. Naming them lets zero values such as
+// Unknown be stored.
 func (n *nodeStatusRepo) Update(ns *NodeStatus, columns ...string) error {
 	if len(columns) == 0 {
 		return nil
@@ -50,7 +52,7 @@ func (n *nodeStatusRepo) Update(ns *NodeStatus, columns ...string) error {
 	}
 
 	if result.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return fmt.Errorf("node status %s: %w", ns.NodeId, store.ErrNotFound)
 	}
 
 	return nil
@@ -90,14 +92,17 @@ func (n *nodeStatusRepo) GetAll() ([]NodeStatus, error) {
 	return ns, nil
 }
 
-func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64, err error) {
+func (n *nodeStatusRepo) GetNodeCount() (onlineNodeCount, offlineNodeCount int64,
+	err error) {
 	db := n.Db.GetGormDb()
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
+		ukama.NodeConnectivityOnline).Count(&onlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
-	if err := db.Model(&NodeStatus{}).Where("connectivity = ?", ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
+	if err := db.Model(&NodeStatus{}).Where("connectivity = ?",
+		ukama.NodeConnectivityOffline).Count(&offlineNodeCount).Error; err != nil {
 		return 0, 0, err
 	}
 
