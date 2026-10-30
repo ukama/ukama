@@ -1,0 +1,9 @@
+#!/bin/sh
+
+source /tmp/system.conf
+echo "[$0] Entered..."
+if [ -f /usr/bin/setled ];then
+	/usr/bin/setled blue on
+fi
+        
+echo -e "[$0] Exited.\n"
