@@ -1,218 +1,210 @@
-#!/bin/sh
+#!/bin/bash
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at https://mozilla.org/MPL/2.0/.
 #
 # Copyright (c) 2025-present, Ukama Inc.
 
-set -e
+set -euo pipefail
 
 DIR="$(pwd)"
-UKAMA_OS=$(realpath ../../../nodes/ukamaOS)
 UKAMA_ROOT=$(realpath ../../../)
-UKAMA_STACK_REPO=""
+MISC_FILES_DIR="${UKAMA_ROOT}/builder/scripts/build-system/trx"
+OUT_DIR="${OUT_DIR:-${DIR}/trx-image}"
+LTE_NODE_REPO=""
 MODE=""
+BAND_CFG="${BAND_CFG:-}"
+STACK_BUILD_DIR=""
+STAGE_DIR=""
 
-trap cleanup ERR
+UBOOT_PART_SIZE=$((0x220000))
+UBOOT_COPY_OFFSET=$((0xC0000))
+OS_PART_SIZE=$((0x500000))
+RD_PART_SIZE=$((0x2B00000))
+RD_MAX_SIZE=$((0x2800000))
+APP_PART_SIZE=$((0xEE0000))
+ENV_PART_SIZE=$((0x20000))
+JFFS2_ERASE_SIZE=0x20000
+
+STACK_FILES=(lsmD.gz LFMSOFT_OCT_D.tgz dsp.tgz Dimark_Client.tgz)
 
 log() {
-    local type="$1"
-    local message="$2"
+    local type="$1" msg="$2"
     local color
     case "$type" in
-        "INFO") color="\033[1;34m";;
-        "SUCCESS") color="\033[1;32m";;
-        "ERROR") color="\033[1;31m";;
-        *) color="\033[1;37m";;
+        INFO)    color="\033[1;34m";;
+        SUCCESS) color="\033[1;32m";;
+        ERROR)   color="\033[1;31m";;
+        *)       color="\033[1;37m";;
     esac
-    echo -e "${color}${type}: ${message}\033[0m"
+    echo -e "${color}${type}: ${msg}\033[0m"
 }
 
 check_status() {
-    if [ $1 -ne 0 ]; then
-        log "ERROR" "Script failed at stage: $3"
+    local code=$1 msg=$2 stage=$3
+    if [[ $code -ne 0 ]]; then
+        log ERROR "Stage '${stage}' failed"
         exit 1
     fi
-    log "SUCCESS" "$2"
+    log SUCCESS "$msg"
 }
 
 cleanup() {
-    cd "$UKAMA_STACK_REPO"
-    sudo make clean || true
-    cd "$DIR"
-    log "INFO" "Cleanup completed."
+    if [[ -n "$STAGE_DIR" ]]; then
+        rm -rf "$STAGE_DIR"
+    fi
 }
 
-check_required_packages() {
-    local packages=(
-        bc libncurses5-dev lzop libssl-dev gnat flex zlib1g-dev gcc automake-1.15
-        bison libelf-dev cmake curl libtool tcl pkg-config autopoint wget libisl-dev
-        g++ texinfo texlive ghostscript libnftnl-dev libmnl-dev patchelf libsctp-dev
-        openvpn libmicrohttpd-dev libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev
-        libsystemd-dev libcurl4 python3 bison cpp flex gettext cvs patch patchutils
-        libncurses5-dev u-boot-tools python3-xcbgen automake mtd-utils gawk
-        bsdmainutils rpm2cpio docbook docbook-utils sharutils zlib1g-dev libc6-i386
-        libc6-dev-i386 python2
-    )
+trap cleanup EXIT
 
-    log "INFO" "Checking required packages..."
-    local missing=()
-
-    for pkg in "${packages[@]}"; do
-        if ! dpkg -s "$pkg" &>/dev/null; then
-            missing+=("$pkg")
-        fi
+check_pre_requisite() {
+    for cmd in make gzip python mkfs.jffs2 mkenvimage sha256sum; do
+        command -v "$cmd" >/dev/null || { log ERROR "'$cmd' not found in PATH"; exit 1; }
     done
 
-    if [ "${#missing[@]}" -ne 0 ]; then
-        log "ERROR" "Missing packages: ${missing[*]}"
-        echo "Run: sudo apt-get install ${missing[*]}"
-        exit 1
-    fi
-
-    check_status 0 "All required packages are installed." "Package Check"
+    for f in "${LTE_NODE_REPO}/Makefile" "${LTE_NODE_REPO}/distro/env-setup" \
+             "${MISC_FILES_DIR}/uboot.env" "${MISC_FILES_DIR}/app/rc_pre.local" \
+             "${MISC_FILES_DIR}/app/${BAND_CFG}"; do
+        [[ -f "$f" ]] || { log ERROR "Missing ${f}"; exit 1; }
+    done
 }
 
-check_git_repo_and_submodules() {
-    local repo_dir="$1"
-
-    if [ ! -d "$repo_dir/.git" ]; then
-        log "ERROR" "Directory '$repo_dir' is not a valid Git repository."
-        exit 1
-    fi
-
-    log "INFO" "Found valid Git repository at '$repo_dir'."
-
-    if [ -f "$repo_dir/.gitmodules" ]; then
-        log "INFO" "Initializing and updating submodules..."
-        (cd "$repo_dir" && git submodule init && git submodule update)
-        check_status $? "Git submodules initialized and updated." "Git Submodule Update"
-    else
-        log "INFO" "No submodules found in '$repo_dir'."
-    fi
+build_os() {
+    log INFO "Building u-boot, kernel and rootfs from ${LTE_NODE_REPO}"
+    make -C "${LTE_NODE_REPO}" os fs
+    check_status $? "u-boot, kernel and rootfs built" "make os fs"
 }
 
-validate_output_artifacts() {
-    log "INFO" "Validating output artifacts..."
+build_stack() {
+    log INFO "Building ${MODE} LTE stack"
+    make -C "${LTE_NODE_REPO}" stack TYPE="${MODE}"
+    check_status $? "${MODE} stack built" "make stack"
 
-    local output_dir="$UKAMA_STACK_REPO/distro/output"
-    local stack_dir="$UKAMA_STACK_REPO/stack/${MODE,,}/source"
-    local stack_build_dir=""
-    if [[ "$MODE" == "TDD" ]]; then
-        stack_build_dir="$stack_dir/LTE_Stack_TDD_Bin_startup_NMMdisable_IPV6disable_158239"
-    else
-        stack_build_dir="$stack_dir/LTE_Stack_FDD_Bin_startup_NMMdisable_IPV6disable_158476"
-    fi
+    STACK_BUILD_DIR=$(find "${LTE_NODE_REPO}/stack/${MODE,,}/source" -maxdepth 1 -type d -name "LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_*" | sort | tail -1)
+    [[ -n "$STACK_BUILD_DIR" ]] || { log ERROR "No ${MODE} stack build directory found"; exit 1; }
+}
 
-    local expected_common=(
-        "$output_dir/fw.bin"
-        "$output_dir/lsm_os"
-        "$output_dir/lsm_os.gz"
-        "$output_dir/lsm_rd.gz"
-        "$output_dir/vmlinux.64"
-        "$output_dir/vmlinux.64.debug"
-    )
-
-    local expected_stack=(
-        "$stack_build_dir/Dimark_Client.tgz"
-        "$stack_build_dir/dsp.tgz"
-        "$stack_build_dir/LFMSOFT_OCT_D.tgz"
-        "$stack_build_dir/lsmD"
-        "$stack_build_dir/lsmD.gz"
-        "$stack_build_dir/pltD"
-        "$stack_build_dir/sonMifServer"
-    )
+validate_build_artifacts() {
+    local distro_out="${LTE_NODE_REPO}/distro/output"
+    UBOOT_BIN="${distro_out}/u-boot-octeon_trx.bin"
+    OS_GZ="${distro_out}/lsm_os.gz"
+    RD_GZ="${distro_out}/lsm_rd.gz"
 
     local missing=()
-    for file in "${expected_common[@]}" "${expected_stack[@]}"; do
-        if [ ! -f "$file" ]; then
-            missing+=("$file")
-        fi
+    for f in "$UBOOT_BIN" "$OS_GZ" "$RD_GZ"; do
+        [[ -f "$f" ]] || missing+=("$f")
     done
-
-    if [ "${#missing[@]}" -ne 0 ]; then
-        log "ERROR" "Missing output artifacts:"
-        for f in "${missing[@]}"; do
-            echo "  - $f"
-        done
+    for f in "${STACK_FILES[@]}"; do
+        [[ -f "${STACK_BUILD_DIR}/${f}" ]] || missing+=("${STACK_BUILD_DIR}/${f}")
+    done
+    if [[ ${#missing[@]} -ne 0 ]]; then
+        log ERROR "Missing build artifacts: ${missing[*]}"
         exit 1
     fi
 
-    log "SUCCESS" "All expected output artifacts are present."
+    (( $(stat -c %s "$UBOOT_BIN") <= UBOOT_COPY_OFFSET )) || { log ERROR "u-boot larger than $UBOOT_COPY_OFFSET bytes"; exit 1; }
+    (( $(stat -c %s "$OS_GZ") <= OS_PART_SIZE )) || { log ERROR "lsm_os.gz larger than $OS_PART_SIZE bytes"; exit 1; }
+    (( $(stat -c %s "$RD_GZ") <= RD_MAX_SIZE )) || { log ERROR "lsm_rd.gz larger than $RD_MAX_SIZE bytes"; exit 1; }
+
+    log SUCCESS "Build artifacts present and within partition sizes"
 }
 
-if [ -z "$1" ]; then
-    log "ERROR" "Usage: $0 <lte-stack-repo> [FDD|TDD]"
+stage_app() {
+    STAGE_DIR=$(mktemp -d)
+    cp -a "${MISC_FILES_DIR}/app/." "${STAGE_DIR}/"
+    for f in "${STACK_FILES[@]}"; do
+        cp "${STACK_BUILD_DIR}/${f}" "${STAGE_DIR}/"
+    done
+    cp "${MISC_FILES_DIR}/app/${BAND_CFG}" "${STAGE_DIR}/startup.cfg"
+    touch "${STAGE_DIR}/.sign1985"
+    log SUCCESS "App partition staged with ${BAND_CFG} as startup.cfg"
+}
+
+blank_image() {
+    head -c "$2" /dev/zero | tr '\000' '\377' > "$1"
+}
+
+pad_image() {
+    blank_image "$2" "$3"
+    dd if="$1" of="$2" conv=notrunc status=none
+}
+
+make_flash_images() {
+    mkdir -p "$OUT_DIR"
+    rm -f "${OUT_DIR}"/flash_*.img
+
+    blank_image "${OUT_DIR}/flash_uboot.img" "$UBOOT_PART_SIZE"
+    dd if="$UBOOT_BIN" of="${OUT_DIR}/flash_uboot.img" conv=notrunc status=none
+    dd if="$UBOOT_BIN" of="${OUT_DIR}/flash_uboot.img" bs="$UBOOT_COPY_OFFSET" seek=1 conv=notrunc status=none
+
+    pad_image "$OS_GZ" "${OUT_DIR}/flash_os0.img" "$OS_PART_SIZE"
+    pad_image "$RD_GZ" "${OUT_DIR}/flash_rd0.img" "$RD_PART_SIZE"
+    cp "${OUT_DIR}/flash_os0.img" "${OUT_DIR}/flash_os1.img"
+    cp "${OUT_DIR}/flash_rd0.img" "${OUT_DIR}/flash_rd1.img"
+
+    mkfs.jffs2 -b -U -s 0x1000 -e "$JFFS2_ERASE_SIZE" --pad="$APP_PART_SIZE" -d "$STAGE_DIR" -o "${OUT_DIR}/flash_app0.img"
+    blank_image "${OUT_DIR}/flash_app1.img" "$APP_PART_SIZE"
+
+    mkenvimage -b -p 0x00 -s "$ENV_PART_SIZE" -o "${OUT_DIR}/flash_env.img" "${MISC_FILES_DIR}/uboot.env"
+    chmod 644 "${OUT_DIR}/flash_env.img"
+
+    cp "$UBOOT_BIN" "${OUT_DIR}/u-boot-octeon_trx.bin"
+    cp "$OS_GZ" "${OUT_DIR}/lsm_os_trx.gz"
+    cp "$RD_GZ" "${OUT_DIR}/lsm_rd_trx.gz"
+
+    log SUCCESS "Flash images written to ${OUT_DIR}"
+}
+
+validate_flash_images() {
+    declare -A sizes=(
+        [uboot]=$UBOOT_PART_SIZE
+        [os0]=$OS_PART_SIZE [rd0]=$RD_PART_SIZE [app0]=$APP_PART_SIZE
+        [os1]=$OS_PART_SIZE [rd1]=$RD_PART_SIZE [app1]=$APP_PART_SIZE
+        [env]=$ENV_PART_SIZE
+    )
+    local total=0
+    for p in "${!sizes[@]}"; do
+        local f="${OUT_DIR}/flash_${p}.img"
+        if [[ ! -f "$f" || $(stat -c %s "$f") -ne ${sizes[$p]} ]]; then
+            log ERROR "flash_${p}.img missing or not ${sizes[$p]} bytes"
+            exit 1
+        fi
+        total=$((total + sizes[$p]))
+    done
+    (( total == 0x8000000 )) || { log ERROR "Partitions do not add up to 128 MiB NOR"; exit 1; }
+
+    (cd "$OUT_DIR" && sha256sum flash_*.img u-boot-octeon_trx.bin lsm_os_trx.gz lsm_rd_trx.gz > SHA256SUMS)
+    log SUCCESS "All flash images match the NOR layout"
+}
+
+if [[ $# -lt 1 ]]; then
+    log ERROR "Usage: $0 <lte-node-repo> [FDD|TDD]"
     exit 1
 fi
 
-UKAMA_STACK_REPO=$(realpath "$1")
-
+LTE_NODE_REPO=$(realpath "$1")
 MODE="${2:-FDD}"
 if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
-    log "ERROR" "Invalid mode '$MODE'. Expected 'FDD' or 'TDD'."
+    log ERROR "Invalid mode '$MODE'. Expected 'FDD' or 'TDD'."
     exit 1
 fi
 
-#check_required_packages
-check_git_repo_and_submodules "$UKAMA_STACK_REPO"
-
-# Build the toolchain and stack
-TOOLS_DIR="$UKAMA_STACK_REPO/tools"
-DISTRO_DIR="$UKAMA_STACK_REPO/distro"
-BUILD_DIR="$TOOLS_DIR/build"
-CROSSTOOL_DIR="$TOOLS_DIR/crosstool-ng"
-HOST_BIN_DIR="$DISTRO_DIR/host/bin"
-
-log "INFO" "Starting toolchain build..."
-
-cd "$CROSSTOOL_DIR"
-./bootstrap
-check_status $? "Bootstrap completed." "crosstool-ng bootstrap"
-
-mkdir -p "$BUILD_DIR"
-./configure --prefix="$BUILD_DIR"
-check_status $? "Configure completed." "crosstool-ng configure"
-
-make
-check_status $? "Build completed." "crosstool-ng make"
-
-make install
-check_status $? "Install completed." "crosstool-ng make install"
-export PATH="$BUILD_DIR/bin:$PATH"
-
-log "SUCCESS" "Toolchain built and installed."
-
-# Setup build environment
-cd "$DISTRO_DIR"
-source ./env-setup OCTEON_CNF71XX_PASS1_1 --verbose
-check_status $? "Environment setup sourced." "env-setup"
-log "SUCCESS" "Environment setup done."
-export PATH="$HOST_BIN_DIR:$PATH"
-
-# Clean up dtc parser (optional)
-cd "$DISTRO_DIR"
-if [ -f "dtc-lexer.l" ] && [ -f "dtc-parser.y" ]; then
-    flex -o dtc-lexer.lex.c dtc-lexer.l
-    bison -d -o dtc-parser.tab.c dtc-parser.y
-    log "INFO" "DTC parser generated."
+if [[ -z "$BAND_CFG" ]]; then
+    if [[ "$MODE" == "FDD" ]]; then
+        BAND_CFG="startup_band3_20Mhz.cfg"
+    else
+        log ERROR "No default TDD band config, set BAND_CFG"
+        exit 1
+    fi
 fi
 
-# Build firmware and images
-make fw
-check_status $? "Firmware image built (fw.bin)." "make fw"
+check_pre_requisite
+build_os
+build_stack
+validate_build_artifacts
+stage_app
+make_flash_images
+validate_flash_images
 
-make kernel-deb
-check_status $? "Kernel image built (lsm_os.gz)." "make kernel-deb"
-
-make rootfs
-check_status $? "Rootfs image built (lsm_rd.gz)." "make rootfs"
-
-# build stack (tdd or fdd)
-cd "$UKAMA_STACK_REPO"
-sudo make stack TYPE="$MODE"
-check_status $? "Build stack image. mode: $MODE" "make stack"
-
-validate_output_artifacts
-
-log "SUCCESS" "TRX board images creation complete!"
+log SUCCESS "TRX ${MODE} image creation complete (${BAND_CFG})"
+exit 0

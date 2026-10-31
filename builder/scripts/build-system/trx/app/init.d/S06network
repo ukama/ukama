@@ -1,0 +1,84 @@
+#!/bin/sh
+source /tmp/system.conf
+DEBUG_PORT=eth0
+
+config_eth() {
+	echo "[ $0 ] Configuring Autoneg for ethernet."
+	devmem 0x00011800B0001000 64 0x0140
+	readValue=`devmem 0x00011800B0001000 64`
+	echo "[ $0 ] Ethernet Autoneg config is $readValue "
+	sleep 2
+}
+
+echo "[$0] Entered..."
+
+# intitalize debug ethernet port
+/sbin/ifconfig $DEBUG_PORT down
+/sbin/ifconfig $DEBUG_PORT hw ether $ETHADDR
+config_eth
+
+## check DHCPclient enable or not
+if [ "${DHCPENABLE}" -eq "1" ] ; then
+	getIPfromDHCP=0
+	touch /usr/share/udhcpc/udhcpc.leasefail
+	chmod +x /usr/share/udhcpc/udhcpc.leasefail
+	/sbin/udhcpc -i ${DEBUG_PORT} &
+	for i in `seq 1 30` ; do
+		result=`ifconfig ${DEBUG_PORT} |grep "inet addr" | wc -l`
+		if [ "${result}" -eq "1" ] ; then
+			IPADDR=`ifconfig  ${DEBUG_PORT} |grep "inet addr" | awk '{print $2}' | awk -F":" '{print $2}'`
+			NETMASK=`ifconfig ${DEBUG_PORT} |grep "inet addr" | awk '{print $4}' | awk -F":" '{print $2}'`
+			GATEWAYIP=`route  |grep default | awk '{print $2}'`
+			getIPfromDHCP=1
+			break;
+		fi
+		sleep 2
+	done
+	if [ "${getIPfromDHCP}" -eq "0" ] ; then
+		echo "[$0] Can't get IP from DHCP Server , use default IP = ${IPADDR}"
+		killall udhcpc
+		/sbin/ifconfig $DEBUG_PORT $IPADDR netmask $NETMASK up
+		/sbin/route add default gw $GATEWAYIP
+		config_eth
+	else
+		echo "[$0] Get NEW IP = ${IPADDR} from DHCP Server"
+		echo "IPADDR=${IPADDR}" >> /tmp/system.conf
+		source /tmp/system.conf
+	fi
+else
+	/sbin/ifconfig $DEBUG_PORT $IPADDR netmask $NETMASK up
+	/sbin/route add default gw $GATEWAYIP
+	config_eth
+	
+	echo > /etc/resolv.conf
+	for a in "" 1 2 3 4 5 6 7 8 9 0 ; do
+		if [ -n "$(eval echo '$'DNSIP$a)" ] ; then
+			echo nameserver $(eval echo '$'DNSIP$a) >> /etc/resolv.conf;
+		fi;
+	done
+fi
+
+# DBEUG for the IP/Netmask/default GW
+echo "current IP configuration: ${IPADDR}/${NETMASK}, GW=${GATEWAYIP}"
+
+if [ -z $TARGET ]; then
+   if ! /sbin/ifconfig eth1 1>/dev/null 2>&1 ; then
+      echo "=========================="
+      echo "=========================="
+      echo ERROR: TARGET is null, but eth1 not exist...
+      echo "Did you forget to configure u-boot env 'target'?"
+      echo "=========================="
+      echo "=========================="
+      sleep 5;
+   else
+      /sbin/ifconfig eth1 down
+      /sbin/ifconfig eth1 hw ether $ETHADDR1
+
+## This should be in a script called init_oam.sh
+#Setup Switch
+#Checking the Target for Zen,
+      echo "[$0] Init ethernet switch"
+      oncpu 0 /usr/bin/bcm53115_cli kt
+   fi
+fi
+
