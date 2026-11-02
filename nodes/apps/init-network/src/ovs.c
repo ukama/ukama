@@ -1001,7 +1001,7 @@ static bool service_guard(Config *config) {
                  "cookie=%s,table=0,priority=65535,ip,%s=%s,actions=drop",
                  SERVICE_FLOW_COOKIE, directions[i], config->ueCidr);
 
-        if (exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", "OpenFlow13",
+        if (exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", config->openflow,
                      "add-flow", config->bridge, rule, NULL) != 0) {
             ok = false;
         }
@@ -1013,11 +1013,12 @@ static bool service_guard(Config *config) {
 static bool service_guard_matches(Config *config, const char *direction) {
 
     return shell_ok(config, "service guard is unavailable",
-                    "ovs-ofctl -O OpenFlow13 dump-flows %s "
+                    "ovs-ofctl -O %s dump-flows %s "
                     "'cookie=%s/%s,table=0,ip,%s=%s' | "
                     "awk '/priority=65535,ip/ && /actions=drop/ {n++} "
                     "END {exit n != 1}'",
-                    config->bridge, SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK,
+                    config->openflow, config->bridge,
+                    SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK,
                     direction, config->ueCidr);
 }
 
@@ -1030,11 +1031,12 @@ static bool service_guard_present(Config *config) {
 static bool service_guard_absent(Config *config) {
 
     return shell_ok(config, "service guard removal is unconfirmed",
-                    "flows=$(ovs-ofctl -O OpenFlow13 dump-flows %s "
+                    "flows=$(ovs-ofctl -O %s dump-flows %s "
                     "'cookie=%s/%s') || exit 1; "
                     "printf '%%s\\n' \"$flows\" | "
                     "awk '/cookie=/ {n++} END {exit n != 0}'",
-                    config->bridge, SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK);
+                    config->openflow, config->bridge,
+                    SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK);
 }
 
 bool ovs_service_set(Config *config, bool enabled) {
@@ -1051,7 +1053,7 @@ bool ovs_service_set(Config *config, bool enabled) {
         service_guard(config);
         ok = false;
     } else {
-        ok = exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", "OpenFlow13",
+        ok = exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", config->openflow,
                       "del-flows", config->bridge,
                       "cookie=" SERVICE_FLOW_COOKIE "/" SERVICE_FLOW_MASK,
                       NULL) == 0 &&
@@ -1119,6 +1121,7 @@ static bool configure_network(Config *config, AppStatus *status) {
     if (!setup_bridge(config, status))      return false;
 
     if (!serviceOn && !service_guard(config)) {
+        status_fail(status, "failed to install service OFF guard");
         return false;
     }
 
