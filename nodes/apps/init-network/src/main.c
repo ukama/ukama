@@ -162,6 +162,8 @@ int main(int argc, char **argv) {
     while (!gTerminate) {
         sleep(OVS_HEALTH_INTERVAL_SEC);
         if (gTerminate) continue;
+        ovs_service_poll(&config);
+
         if (!initialized) {
             if (!status_is_ready(&status)) continue;
             initialized = true;
@@ -176,6 +178,7 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        ovs_service_set(&config, false);
         healthFailures++;
         usys_log_warn("Network health check failed (%d/%d): %s",
                       healthFailures,

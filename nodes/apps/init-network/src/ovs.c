@@ -20,6 +20,7 @@
 #include "config.h"
 #include "exec.h"
 #include "ovs.h"
+#include "service_lease.h"
 #include "status.h"
 
 #define OVS_MAX_STR             1024
@@ -427,7 +428,7 @@ static bool setup_bridge(Config *config, AppStatus *status) {
 
     if (exec_cmd(config->cmdTimeoutSec,
                  "ovs-vsctl", "set-fail-mode", config->bridge,
-                 "standalone", NULL) != 0) {
+                 "secure", NULL) != 0) {
         status_fail(status, "failed to set bridge fail-mode");
         return false;
     }
@@ -977,6 +978,126 @@ static bool check_network(Config *config, char *reason, size_t reasonSize) {
     return error == NULL;
 }
 
+#define SERVICE_FLOW_COOKIE "0x5553455200000000"
+#define SERVICE_FLOW_MASK   "0xffffffffffffffff"
+
+static bool serviceOn;
+
+/* The guard has its own cookie and outranks PCRF permissions. Baseline
+ * reconciliation never removes it; management outside the UE CIDR stays up.
+ * Call these helpers with networkMutex held.
+ */
+static bool service_guard(Config *config) {
+
+    char rule[OVS_MAX_STR];
+    bool ok = true;
+    const char *directions[] = {"nw_src", "nw_dst"};
+    size_t i;
+
+    serviceOn = false;
+
+    for (i = 0; i < sizeof(directions) / sizeof(directions[0]); i++) {
+        snprintf(rule, sizeof(rule),
+                 "cookie=%s,table=0,priority=65535,ip,%s=%s,actions=drop",
+                 SERVICE_FLOW_COOKIE, directions[i], config->ueCidr);
+
+        if (exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", "OpenFlow13",
+                     "add-flow", config->bridge, rule, NULL) != 0) {
+            ok = false;
+        }
+    }
+
+    return ok;
+}
+
+static bool service_guard_matches(Config *config, const char *direction) {
+
+    return shell_ok(config, "service guard is unavailable",
+                    "ovs-ofctl -O OpenFlow13 dump-flows %s "
+                    "'cookie=%s/%s,table=0,ip,%s=%s' | "
+                    "awk '/priority=65535,ip/ && /actions=drop/ {n++} "
+                    "END {exit n != 1}'",
+                    config->bridge, SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK,
+                    direction, config->ueCidr);
+}
+
+static bool service_guard_present(Config *config) {
+
+    return service_guard_matches(config, "nw_src") &&
+           service_guard_matches(config, "nw_dst");
+}
+
+static bool service_guard_absent(Config *config) {
+
+    return shell_ok(config, "service guard removal is unconfirmed",
+                    "flows=$(ovs-ofctl -O OpenFlow13 dump-flows %s "
+                    "'cookie=%s/%s') || exit 1; "
+                    "printf '%%s\\n' \"$flows\" | "
+                    "awk '/cookie=/ {n++} END {exit n != 0}'",
+                    config->bridge, SERVICE_FLOW_COOKIE, SERVICE_FLOW_MASK);
+}
+
+bool ovs_service_set(Config *config, bool enabled) {
+
+    char reason[STATUS_REASON_LEN];
+    bool ok;
+
+    pthread_mutex_lock(&networkMutex);
+
+    if (!enabled) {
+        ok = service_guard(config) && service_guard_present(config);
+    } else if (!service_lease_valid() ||
+               !check_network(config, reason, sizeof(reason))) {
+        service_guard(config);
+        ok = false;
+    } else {
+        ok = exec_cmd(config->cmdTimeoutSec, "ovs-ofctl", "-O", "OpenFlow13",
+                      "del-flows", config->bridge,
+                      "cookie=" SERVICE_FLOW_COOKIE "/" SERVICE_FLOW_MASK,
+                      NULL) == 0 &&
+             service_guard_absent(config);
+        serviceOn = ok;
+
+        if (!ok) {
+            service_guard(config);
+        }
+    }
+
+    pthread_mutex_unlock(&networkMutex);
+
+    return ok;
+}
+
+JsonObj *ovs_service_status(Config *config) {
+
+    JsonObj *json;
+    char reason[STATUS_REASON_LEN];
+    bool ready;
+    bool confirmed;
+
+    pthread_mutex_lock(&networkMutex);
+    ready = check_network(config, reason, sizeof(reason));
+    confirmed = serviceOn ? ready && service_lease_valid() &&
+                                service_guard_absent(config)
+                          : service_guard_present(config);
+    json = json_pack("{s:s,s:b,s:b}", "state", serviceOn ? "on" : "off",
+                     "ready", ready, "confirmed", confirmed);
+    pthread_mutex_unlock(&networkMutex);
+
+    return json;
+}
+
+void ovs_service_poll(Config *config) {
+
+    pthread_mutex_lock(&networkMutex);
+
+    if (!serviceOn || !service_lease_valid()) {
+        service_guard(config);
+    }
+
+    pthread_mutex_unlock(&networkMutex);
+}
+
 bool ovs_check(Config *config, char *reason, size_t reasonSize) {
 
     bool ok;
@@ -996,6 +1117,11 @@ static bool configure_network(Config *config, AppStatus *status) {
     if (!setup_epc_aliases(config, status)) return false;
     if (!setup_tun(config, status))         return false;
     if (!setup_bridge(config, status))      return false;
+
+    if (!serviceOn && !service_guard(config)) {
+        return false;
+    }
+
     if (!setup_flows(config, status))       return false;
     if (!setup_forwarding(config, status))  return false;
     if (!setup_gateway(config, status))     return false;
