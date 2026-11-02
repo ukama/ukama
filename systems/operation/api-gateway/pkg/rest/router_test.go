@@ -10,12 +10,18 @@ package rest
 
 import (
 	"errors"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/tj/assert"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/ukama/ukama/systems/common/config"
+	"github.com/ukama/ukama/systems/common/rest"
 
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
@@ -402,6 +408,46 @@ func TestPostFailHandler(t *testing.T) {
 
 		assert.Error(t, err)
 	})
+}
+
+func TestRouterOperationRoutes(t *testing.T) {
+	id := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
+
+	for _, tc := range []struct {
+		name string
+		path string
+		body string
+		code int
+	}{
+		{"CompleteWithToken", "/complete",
+			`{"fencing_token":7,"actor":"controller","reason":"dispatched"}`, http.StatusOK},
+		{"CompleteWithoutToken", "/complete",
+			`{"actor":"controller","reason":"dispatched"}`, http.StatusBadRequest},
+		{"FailWithToken", "/fail",
+			`{"fencing_token":7,"actor":"controller","reason":"failed"}`, http.StatusOK},
+		{"FailWithoutToken", "/fail",
+			`{"actor":"controller","reason":"failed"}`, http.StatusBadRequest},
+		{"ForceUnlockWithServiceActor", "/force-unlock",
+			`{"actor":"controller","reason":"stuck"}`, http.StatusOK},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			serverConf := rest.DefaultHTTPConfig()
+
+			r := NewRouter(&Clients{Manager: &fakeManager{}}, &RouterConfig{
+				serverConf: &serverConf,
+				auth:       &config.Auth{BypassAuthMode: true},
+			}, nil)
+
+			w := httptest.NewRecorder()
+			req := httptest.NewRequest(http.MethodPost, "/v1/operations/"+id+tc.path,
+				strings.NewReader(tc.body))
+			req.Header.Set("Content-Type", "application/json")
+
+			r.f.Engine().ServeHTTP(w, req)
+
+			assert.Equal(t, tc.code, w.Code, w.Body.String())
+		})
+	}
 }
 
 func TestOperationFromProto(t *testing.T) {
