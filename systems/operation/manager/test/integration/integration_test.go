@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 /*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,5 +11,235 @@
 
 package integration
 
-// TODO: add integration tests covering Start/Get/MarkRunning/ForceUnlock
-// and the lease-expiry path. Follow the pattern in systems/node/state/test/integration.
+import (
+	"context"
+	"testing"
+	"time"
+
+	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
+	"github.com/tj/assert"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/uuid"
+	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+)
+
+const (
+	actor  = "integration-test"
+	reason = "integration test"
+)
+
+var tConfig *TestConfig
+
+type TestConfig struct {
+	ServiceHost string `default:"localhost:9090"`
+}
+
+func init() {
+	tConfig = &TestConfig{}
+
+	if err := rconf.NewConfReader("integration").Read(tConfig); err != nil {
+		log.Fatalf("Failed to read config: %v", err)
+	}
+}
+
+func newClient(t *testing.T) pb.OperationManagerServiceClient {
+	t.Helper()
+
+	conn, err := grpc.NewClient(tConfig.ServiceHost,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
+	assert.NoError(t, err)
+
+	t.Cleanup(func() {
+		assert.NoError(t, conn.Close())
+	})
+
+	return pb.NewOperationManagerServiceClient(conn)
+}
+
+func newContext(t *testing.T) context.Context {
+	t.Helper()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	t.Cleanup(cancel)
+
+	return ctx
+}
+
+func startOperation(t *testing.T, ctx context.Context,
+	c pb.OperationManagerServiceClient) *pb.Operation {
+	t.Helper()
+
+	resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+		Type:        "IntegrationTest",
+		System:      "operation",
+		ResourceKey: "test:integration:" + uuid.NewV4().String(),
+		RequestedBy: actor,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pb.OperationStatus_PENDING, resp.Operation.Status)
+	assert.True(t, resp.Operation.FencingToken > 0)
+	assertLockHeldBy(t, ctx, c, resp.Operation)
+
+	return resp.Operation
+}
+
+func assertLockHeldBy(t *testing.T, ctx context.Context,
+	c pb.OperationManagerServiceClient, op *pb.Operation) {
+	t.Helper()
+
+	resp, err := c.GetByResource(ctx, &pb.GetByResourceRequest{ResourceKey: op.ResourceKey})
+	assert.NoError(t, err)
+	assert.NotNil(t, resp.Operation)
+	assert.Equal(t, op.Id, resp.Operation.Id)
+}
+
+func assertLockFree(t *testing.T, ctx context.Context,
+	c pb.OperationManagerServiceClient, op *pb.Operation) {
+	t.Helper()
+
+	resp, err := c.GetByResource(ctx, &pb.GetByResourceRequest{ResourceKey: op.ResourceKey})
+	assert.NoError(t, err)
+	assert.Nil(t, resp.Operation)
+}
+
+func completeOperation(ctx context.Context, c pb.OperationManagerServiceClient,
+	op *pb.Operation, token uint64) (*pb.CompleteOperationResponse, error) {
+	return c.CompleteOperation(ctx, &pb.CompleteOperationRequest{
+		Id: op.Id, FencingToken: token, Actor: actor, Reason: reason,
+	})
+}
+
+func failOperation(ctx context.Context, c pb.OperationManagerServiceClient,
+	op *pb.Operation, token uint64) (*pb.FailOperationResponse, error) {
+	return c.FailOperation(ctx, &pb.FailOperationRequest{
+		Id: op.Id, FencingToken: token, Actor: actor, Reason: reason,
+	})
+}
+
+func TestComplete(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("WrongTokenKeepsTheLock", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := completeOperation(ctx, c, op, op.FencingToken+1)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assertLockHeldBy(t, ctx, c, op)
+	})
+
+	t.Run("RightTokenReleasesTheLock", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		resp, err := completeOperation(ctx, c, op, op.FencingToken)
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_SUCCESS, resp.Operation.Status)
+		assertLockFree(t, ctx, c, op)
+	})
+
+	t.Run("DuplicateIsIdempotent", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := completeOperation(ctx, c, op, op.FencingToken)
+		assert.NoError(t, err)
+
+		resp, err := completeOperation(ctx, c, op, op.FencingToken)
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_SUCCESS, resp.Operation.Status)
+	})
+
+	t.Run("AfterFailureIsRejected", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := failOperation(ctx, c, op, op.FencingToken)
+		assert.NoError(t, err)
+
+		_, err = completeOperation(ctx, c, op, op.FencingToken)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+
+		got, err := c.GetOperation(ctx, &pb.GetOperationRequest{Id: op.Id})
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_FAILED, got.Operation.Status)
+	})
+
+	t.Run("UnknownOperation", func(t *testing.T) {
+		_, err := completeOperation(ctx, c, &pb.Operation{Id: uuid.NewV4().String()}, 1)
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+}
+
+func TestFail(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("WrongTokenKeepsTheLock", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := failOperation(ctx, c, op, op.FencingToken+1)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assertLockHeldBy(t, ctx, c, op)
+	})
+
+	t.Run("RightTokenReleasesTheLock", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		resp, err := failOperation(ctx, c, op, op.FencingToken)
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_FAILED, resp.Operation.Status)
+		assert.Equal(t, reason, resp.Operation.Error)
+		assertLockFree(t, ctx, c, op)
+	})
+
+	t.Run("AfterCompletionIsRejected", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := completeOperation(ctx, c, op, op.FencingToken)
+		assert.NoError(t, err)
+
+		_, err = failOperation(ctx, c, op, op.FencingToken)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+}
+
+func TestForceUnlock(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("ReleasesTheLockWithoutAToken", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		resp, err := c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+			Id: op.Id, Actor: actor, Reason: reason,
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_CANCELLED, resp.Operation.Status)
+		assertLockFree(t, ctx, c, op)
+	})
+
+	t.Run("FinishedOperationIsRejected", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := completeOperation(ctx, c, op, op.FencingToken)
+		assert.NoError(t, err)
+
+		_, err = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+			Id: op.Id, Actor: actor, Reason: reason,
+		})
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+}
