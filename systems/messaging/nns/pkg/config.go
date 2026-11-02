@@ -52,7 +52,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{"event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 				"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-				"event.cloud.local.{{ .Org}}.registry.node.node.assigned",
+				"event.cloud.local.{{ .Org}}.registry.node.node.assign",
 				"event.cloud.local.{{ .Org}}.registry.node.node.release",
 			},
 		},

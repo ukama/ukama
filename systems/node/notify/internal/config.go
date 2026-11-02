@@ -38,6 +38,7 @@ func NewConfig(name string) *Config {
 			Timeout: 5 * time.Second,
 			ListenerRoutes: []string{
 				evt.EventRoutingKey[evt.EventNodeCreate],
+				evt.EventRoutingKey[evt.EventNodeDelete],
 				evt.EventRoutingKey[evt.EventNodeOnline],
 				evt.EventRoutingKey[evt.EventNodeOffline],
 				"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish",

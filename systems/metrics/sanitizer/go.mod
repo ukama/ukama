@@ -8,14 +8,14 @@ replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgC
 
 require (
 	github.com/golang/protobuf v1.5.4
-	github.com/klauspost/compress v1.19.2
+	github.com/klauspost/compress v1.19.1
 	github.com/num30/config v0.1.3
 	github.com/prometheus/prometheus v0.314.0
-	github.com/sirupsen/logrus v1.10.1
-	github.com/stretchr/testify v1.12.0
+	github.com/sirupsen/logrus v1.10.2
+	github.com/stretchr/testify v1.12.1
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
 	google.golang.org/grpc v1.83.1
-	google.golang.org/protobuf v1.36.12
+	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -94,6 +94,7 @@ require (
 	github.com/wagslane/go-rabbitmq v0.14.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20260709172345-9ea1abe57597 // indirect

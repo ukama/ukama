@@ -11,17 +11,18 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/node/notify/internal"
 	"github.com/ukama/ukama/systems/node/notify/internal/db"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
+	"gorm.io/gorm"
 
 	log "github.com/sirupsen/logrus"
 	evt "github.com/ukama/ukama/systems/common/events"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
@@ -50,8 +51,9 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 
 	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOnline]):
 		c := evt.EventToEventConfig[evt.EventNodeOnline]
-		msg, err := epb.UnmarshalNodeOnlineEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 
@@ -61,8 +63,9 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 		}
 	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeOffline]):
 		c := evt.EventToEventConfig[evt.EventNodeOffline]
-		msg, err := epb.UnmarshalNodeOfflineEvent(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeOfflineEvent](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 
@@ -72,24 +75,37 @@ func (n *NotifiyEventServer) EventNotification(ctx context.Context, e *epb.Event
 		}
 
 	case msgbus.PrepareRoute(n.orgName,"request.cloud.local.{{ .Org}}.node.controller.nodefeeder.publish"):
-		nodeMsg := &epb.NodeFeederMessage{}
-		if err := anypb.UnmarshalTo(e.Msg, nodeMsg, proto.UnmarshalOptions{}); err != nil {
+		nodeMsg, err := cpb.UnmarshalProtoEvent[epb.NodeFeederMessage](e.Msg)
+		if err != nil {
 			log.Errorf("Failed to unmarshal to NodeFeederMessage: %v", err)
 			return nil, err
 		}
-		err := n.handleNodeRestartEvent(nodeMsg)
+		err = n.handleNodeRestartEvent(nodeMsg)
 		if err != nil {
 			log.Errorf("Failed to handle node restart event: %v", err)
 			return nil, err
 		}
 	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeCreate]):
 		c := evt.EventToEventConfig[evt.EventNodeCreate]
-		msg, err := epb.UnmarshalEventRegistryNodeCreate(e.Msg, c.Name)
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeCreate](e.Msg)
 		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
 			return nil, err
 		}
 
 		err = n.handleNodeCreateEvent(msg, c.Title)
+		if err != nil {
+			return nil, err
+		}
+	case msgbus.PrepareRoute(n.orgName, evt.EventRoutingKey[evt.EventNodeDelete]):
+		c := evt.EventToEventConfig[evt.EventNodeDelete]
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", c.Name, err)
+			return nil, err
+		}
+
+		err = n.handleNodeDeleteEvent(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -178,6 +194,22 @@ func (n *NotifiyEventServer) handleNodeCreateEvent(msg *epb.EventRegistryNodeCre
 		n.msgbus,
 		n.baseRoutingKey,
 	)
+}
+
+func (n *NotifiyEventServer) handleNodeDeleteEvent(msg *epb.EventRegistryNodeDelete) error {
+	nodeId := strings.ToLower(msg.NodeId)
+	if nodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+
+	nts, err := n.notifyRepo.Purge(nodeId, "", "")
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		log.Errorf("Failed to purge notifications of node %s: %v", nodeId, err)
+		return err
+	}
+	log.Infof("Purged %d notifications of deleted node %s", len(nts), nodeId)
+
+	return nil
 }
 
 func (n *NotifiyEventServer) handleNodeOfflineEvent(msg *epb.NodeOfflineEvent, name string) error {

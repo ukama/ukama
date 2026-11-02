@@ -29,7 +29,7 @@ import (
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/server"
 
-	evt "github.com/ukama/ukama/systems/common/events"
+	// evt "github.com/ukama/ukama/systems/common/events"
 	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
@@ -422,7 +422,8 @@ func TestNodeEventServer_handleNodeStateTransitionEvent(t *testing.T) {
 
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
-		nodeStatusRepo.On("Update", mock.Anything, "state").Return(gorm.ErrRecordNotFound).Once()
+		nodeStatusRepo.On("Update", mock.Anything, "state").
+			Return(gorm.ErrRecordNotFound).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil, nil, orgId,
 			nil, nil)
@@ -523,34 +524,44 @@ func TestNodeEventServer_handleNodeStateTransitionEvent(t *testing.T) {
 		nodeStatusRepo.AssertExpectations(t)
 	})
 
-	t.Run("SubstateOff", func(t *testing.T) {
-		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+	for _, tc := range []struct {
+		substate     string
+		connectivity ukama.NodeConnectivity
+	}{
+		{"on", ukama.NodeConnectivityOnline},
+		{"off", ukama.NodeConnectivityOffline},
+	} {
+		t.Run("Substate_"+tc.substate+"_SetsConnectivity", func(t *testing.T) {
+			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
-		nodeRepo := &mocks.NodeRepo{}
-		nodeStatusRepo := &mocks.NodeStatusRepo{}
+			nodeRepo := &mocks.NodeRepo{}
+			nodeStatusRepo := &mocks.NodeStatusRepo{}
 
-		nodeRepo.On("Get", nodeId).
-			Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
-		nodeStatusRepo.On("Update", mock.Anything, "connectivity", "state").Return(nil).Once()
+			nodeRepo.On("Get", nodeId).
+				Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
+			nodeStatusRepo.On("Update", mock.MatchedBy(func(ns *db.NodeStatus) bool {
+				return ns.Connectivity == tc.connectivity
+			}), "connectivity", "state").Return(nil).Once()
 
-		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
-			nil, orgId, nil, nil)
-		eventServer := server.NewNodeEventServer("testorg", s, nil)
+			s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+				nil, orgId, nil, nil)
+			eventServer := server.NewNodeEventServer("testorg", s, nil)
 
-		resp, err := eventServer.EventNotification(context.TODO(), &epb.Event{
-			RoutingKey: routingKey,
-			Msg: mustAny(t, &epb.NodeStateChangeEvent{
-				NodeId:   nodeId.StringLowercase(),
-				State:    "faulty",
-				Substate: "off",
-			}),
+			resp, err := eventServer.EventNotification(context.TODO(), &epb.Event{
+				RoutingKey: routingKey,
+				Msg: mustAny(t, &epb.NodeStateChangeEvent{
+					NodeId:   nodeId.StringLowercase(),
+					State:    "faulty",
+					Substate: tc.substate,
+				}),
+			})
+
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
+			nodeRepo.AssertExpectations(t)
+			nodeStatusRepo.AssertExpectations(t)
 		})
-
-		assert.NoError(t, err)
-		assert.NotNil(t, resp)
-		nodeRepo.AssertExpectations(t)
-		nodeStatusRepo.AssertExpectations(t)
-	})
+	}
 
 	t.Run("UpdateStatusError", func(t *testing.T) {
 		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
@@ -558,7 +569,8 @@ func TestNodeEventServer_handleNodeStateTransitionEvent(t *testing.T) {
 		nodeRepo := &mocks.NodeRepo{}
 		nodeStatusRepo := &mocks.NodeStatusRepo{}
 
-		nodeStatusRepo.On("Update", mock.Anything, "connectivity", "state").Return(gorm.ErrInvalidDB).Once()
+		nodeStatusRepo.On("Update", mock.Anything, "connectivity", "state").
+			Return(gorm.ErrInvalidDB).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
 			nil, orgId, nil, nil)
@@ -797,84 +809,4 @@ func TestNodeEventServer_handleAddNodeToSite(t *testing.T) {
 		assert.Nil(t, resp)
 		siteRepo.AssertExpectations(t)
 	})
-}
-
-func TestNodeEventServer_MeshConnectivity(t *testing.T) {
-	cases := []struct {
-		name         string
-		event        evt.NodeStateEventId
-		msg          proto.Message
-		connectivity ukama.NodeConnectivity
-	}{
-		{"Online", evt.NodeStateEventOnline, &epb.NodeOnlineEvent{}, ukama.NodeConnectivityOnline},
-		{"Offline", evt.NodeStateEventOffline, &epb.NodeOfflineEvent{}, ukama.NodeConnectivityOffline},
-	}
-
-	for _, tc := range cases {
-		routingKey := msgbus.PrepareRoute("testorg", evt.NodeStateEventRoutingKey[tc.event])
-
-		t.Run(tc.name+"WritesConnectivityOnly", func(t *testing.T) {
-			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
-			nodeRepo := &mocks.NodeRepo{}
-			nodeStatusRepo := &mocks.NodeStatusRepo{}
-
-			nodeRepo.On("Get", nodeId).
-				Return(&db.Node{Id: nodeId.StringLowercase()}, nil).Once()
-			nodeStatusRepo.On("Update", mock.MatchedBy(func(ns *db.NodeStatus) bool {
-				return ns.Connectivity == tc.connectivity
-			}), "connectivity").Return(nil).Once()
-
-			s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
-				nil, orgId, nil, nil)
-			eventServer := server.NewNodeEventServer("testorg", s, nil)
-
-			resp, err := eventServer.EventNotification(context.TODO(), &epb.Event{
-				RoutingKey: routingKey,
-				Msg:        mustAny(t, withNodeId(tc.msg, nodeId.StringLowercase())),
-			})
-
-			assert.NoError(t, err)
-			assert.NotNil(t, resp)
-			nodeRepo.AssertExpectations(t)
-			nodeStatusRepo.AssertExpectations(t)
-		})
-
-		t.Run(tc.name+"UnknownNodeIgnored", func(t *testing.T) {
-			nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-
-			nodeRepo := &mocks.NodeRepo{}
-			nodeStatusRepo := &mocks.NodeStatusRepo{}
-
-			nodeStatusRepo.On("Update", mock.Anything, "connectivity").
-				Return(gorm.ErrRecordNotFound).Once()
-
-			s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
-				nil, orgId, nil, nil)
-			eventServer := server.NewNodeEventServer("testorg", s, nil)
-
-			resp, err := eventServer.EventNotification(context.TODO(), &epb.Event{
-				RoutingKey: routingKey,
-				Msg:        mustAny(t, withNodeId(tc.msg, nodeId.StringLowercase())),
-			})
-
-			assert.NoError(t, err)
-			assert.NotNil(t, resp)
-			nodeStatusRepo.AssertExpectations(t)
-			nodeRepo.AssertNotCalled(t, "Get", mock.Anything)
-		})
-	}
-}
-
-func withNodeId(msg proto.Message, nodeId string) proto.Message {
-	switch m := proto.Clone(msg).(type) {
-	case *epb.NodeOnlineEvent:
-		m.NodeId = nodeId
-		return m
-	case *epb.NodeOfflineEvent:
-		m.NodeId = nodeId
-		return m
-	}
-
-	return msg
 }

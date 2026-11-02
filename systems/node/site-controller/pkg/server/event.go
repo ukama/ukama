@@ -70,6 +70,7 @@ type SiteControllerEventServer struct {
 	flights              db.IntentFlightRepo
 	states               db.StateRepo
 	components           db.ComponentRepo
+	ports                db.PortMapRepo
 	componentSyncDelay   time.Duration
 	componentSyncTimeout time.Duration
 	epb.UnimplementedEventNotificationServiceServer
@@ -82,6 +83,7 @@ func NewSiteControllerEventServer(
 	flights db.IntentFlightRepo,
 	states db.StateRepo,
 	components db.ComponentRepo,
+	ports db.PortMapRepo,
 	config *pkg.Config,
 ) *SiteControllerEventServer {
 	return &SiteControllerEventServer{
@@ -92,6 +94,7 @@ func NewSiteControllerEventServer(
 		flights:              flights,
 		states:               states,
 		components:           components,
+		ports:                ports,
 		componentSyncDelay:   config.ComponentSyncDelay,
 		componentSyncTimeout: config.Timeout,
 	}
@@ -160,6 +163,22 @@ func (c *SiteControllerEventServer) EventNotification(ctx context.Context, e *ep
 		}
 
 		err = c.handleDeleteSite(msg)
+		if err != nil {
+			return nil, err
+		}
+
+		return &epb.EventResponse{}, nil
+
+	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"):
+		cfg := evt.EventToEventConfig[evt.EventNodeDelete]
+		msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal %s event: %v", cfg.Name, err)
+
+			return nil, err
+		}
+
+		err = c.handleNodeDelete(msg)
 		if err != nil {
 			return nil, err
 		}
@@ -338,6 +357,18 @@ func (c *SiteControllerEventServer) handleDeleteSite(msg *epb.EventDeleteSite) e
 
 	if err := c.sites.Delete(msg.SiteId); err != nil {
 		return fmt.Errorf("failed to delete site %s: %w", msg.SiteId, err)
+	}
+	return nil
+}
+
+func (c *SiteControllerEventServer) handleNodeDelete(msg *epb.EventRegistryNodeDelete) error {
+	if msg.NodeId == "" {
+		return fmt.Errorf("node delete event has no node id")
+	}
+	log.Infof("Clearing port maps of deleted node %s", msg.NodeId)
+
+	if err := c.ports.ClearNode(msg.NodeId); err != nil {
+		return fmt.Errorf("failed to clear port maps of node %s: %w", msg.NodeId, err)
 	}
 	return nil
 }

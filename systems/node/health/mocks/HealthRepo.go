@@ -16,6 +16,24 @@ type HealthRepo struct {
 	mock.Mock
 }
 
+// DeleteNode provides a mock function with given fields: nodeID
+func (_m *HealthRepo) DeleteNode(nodeID string) error {
+	ret := _m.Called(nodeID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteNode")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(nodeID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // List provides a mock function with given fields: reportID, nodeID, reportedAt, timeframe
 func (_m *HealthRepo) List(reportID string, nodeID string, reportedAt *time.Time, timeframe ukama.FilterTimeframesType) ([]*db.HealthReport, error) {
 	ret := _m.Called(reportID, nodeID, reportedAt, timeframe)

@@ -9,6 +9,8 @@
 package db
 
 import (
+	"errors"
+	"strings"
 	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
@@ -18,6 +20,7 @@ import (
 type PortMapRepo interface {
 	GetBySite(siteID string) ([]SitePortMap, error)
 	Upsert(siteID string, cnodeID string, ports []SitePortMap) error
+	ClearNode(nodeID string) error
 }
 type portMapRepo struct{ db sql.Db }
 
@@ -49,4 +52,13 @@ func (r *portMapRepo) Upsert(siteID string, cnodeID string, ports []SitePortMap)
 		}
 		return nil
 	})
+}
+
+func (r *portMapRepo) ClearNode(nodeID string) error {
+	if nodeID == "" {
+		return errors.New("node_id is required")
+	}
+	return r.db.GetGormDb().Model(&SitePortMap{}).
+		Where("LOWER(node_id) = ?", strings.ToLower(nodeID)).
+		Updates(map[string]interface{}{"node_id": "", "updated_at": time.Now().UTC()}).Error
 }

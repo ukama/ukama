@@ -16,6 +16,7 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -83,8 +84,7 @@ func TestNodeStatusRepo_Update(t *testing.T) {
 
 		err = r.Update(ns, "connectivity", "state")
 
-		assert.Error(t, err)
-		assert.Equal(t, gorm.ErrRecordNotFound, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

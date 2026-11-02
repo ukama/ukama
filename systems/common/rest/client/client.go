@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 
@@ -50,6 +51,12 @@ func WithDebug(debugMode bool) Option {
 	}
 }
 
+func WithTimeout(timeout time.Duration) Option {
+	return func(r *Resty) {
+		r.C = r.C.SetTimeout(timeout)
+	}
+}
+
 func WithBearer(key string) Option {
 	return func(r *Resty) {
 		r.C = r.C.SetHeader("Authorization", "Bearer "+key)
@@ -64,8 +71,8 @@ func WithError(apiErr error) Option {
 
 func WithContentTypeJSON() Option {
 	return func(r *Resty) {
-		r.C = r.C.SetHeader("Content-Type", "application/json ").
-			SetHeader("Accept", "application/json ")
+		r.C = r.C.SetHeader("Content-Type", "application/json").
+			SetHeader("Accept", "application/json")
 	}
 }
 

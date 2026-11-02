@@ -18,6 +18,7 @@ import (
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
@@ -49,8 +50,9 @@ func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (
 }
 
 func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalNodeStateChangeEvent(event.Msg, "NodeStateChangeEvent")
+	msg, err := cpb.UnmarshalProtoEvent[epb.NodeStateChangeEvent](event.Msg)
 	if err != nil {
+		log.Errorf("operation-monitor: unmarshal NodeStateChangeEvent: %v", err)
 		return nil, err
 	}
 

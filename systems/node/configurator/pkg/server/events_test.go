@@ -68,6 +68,33 @@ func TestConfiguratorServer_EventNotification(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
+	t.Run("DeleteNode", func(t *testing.T) {
+		any, err := anypb.New(&epb.EventRegistryNodeDelete{NodeId: testNode.String()})
+		assert.NoError(t, err)
+
+		configRepo.On("Delete", testNode.String()).Return(nil).Once()
+		_, err = eventServer.EventNotification(context.Background(), &epb.Event{
+			RoutingKey: "event.cloud.local.testorg.registry.node.node.delete",
+			Msg:        any,
+		})
+
+		assert.NoError(t, err)
+		configRepo.AssertCalled(t, "Delete", testNode.String())
+	})
+
+	t.Run("DeleteNodeWithoutId", func(t *testing.T) {
+		any, err := anypb.New(&epb.EventRegistryNodeDelete{})
+		assert.NoError(t, err)
+
+		_, err = eventServer.EventNotification(context.Background(), &epb.Event{
+			RoutingKey: "event.cloud.local.testorg.registry.node.node.delete",
+			Msg:        any,
+		})
+
+		assert.Error(t, err)
+		configRepo.AssertNotCalled(t, "Delete", "")
+	})
+
 	t.Run("UpdateNodeConfigSuccess", func(t *testing.T) {
 		/* Node Cretaed event */
 		evt := eCfgPb.NodeConfigUpdateEvent{

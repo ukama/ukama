@@ -9,12 +9,8 @@
 package utils
 
 import (
-	"errors"
 	"strings"
 
-	"github.com/jackc/pgconn"
-	"github.com/ukama/ukama/systems/common/grpc"
-	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -24,16 +20,8 @@ import (
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"
 )
 
-// RepoErrorToGrpc keeps gRPC status errors the repos return and maps the rest from SQL errors.
-func RepoErrorToGrpc(err error, entity string) error {
-	if st, ok := status.FromError(err); ok {
-		return st.Err()
-	}
-
-	return grpc.SqlErrorToGrpc(err, entity)
-}
-
-// IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers and unknown strings.
+// IsValidNodeConnectivity accepts the proto enum names in any case and rejects numbers
+// and unknown strings.
 func IsValidNodeConnectivity(value string) bool {
 	for name := range cpb.NodeConnectivity_value {
 		if strings.EqualFold(name, value) {
@@ -45,17 +33,8 @@ func IsValidNodeConnectivity(value string) bool {
 }
 
 func InvalidNodeIDError(nodeId string, err error) error {
-	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId, err.Error())
-}
-
-func ProcessNodeDuplErrors(err error, nodeId string) error {
-	var pge *pgconn.PgError
-
-	if errors.As(err, &pge) && pge.Code == sql.PGERROR_CODE_UNIQUE_VIOLATION {
-		return status.Errorf(codes.AlreadyExists, "node with node id %s already exist", nodeId)
-	}
-
-	return grpc.SqlErrorToGrpc(err, "node")
+	return status.Errorf(codes.InvalidArgument, "invalid node id %s. Error %s", nodeId,
+		err.Error())
 }
 
 func DbNodesToPbNodes(nodes []db.Node) []*pb.Node {

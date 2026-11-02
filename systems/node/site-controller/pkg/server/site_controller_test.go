@@ -368,6 +368,37 @@ func TestHandleDeleteSite_ReportsStoreFailure(t *testing.T) {
 	assert.Error(t, err, "a failed delete must surface so the event is retried")
 }
 
+func TestEventNotification_NodeDeleteClearsPortMaps(t *testing.T) {
+	nodeID := "uk-sa2644-tnode-v0-9a1e"
+
+	ports := &scmocks.PortMapRepo{}
+	ports.On("ClearNode", nodeID).Return(nil).Once()
+
+	c := &SiteControllerEventServer{ports: ports, orgName: testOrgName}
+
+	anyMsg, err := anypb.New(&epb.EventRegistryNodeDelete{NodeId: nodeID})
+	assert.NoError(t, err)
+
+	_, err = c.EventNotification(context.Background(), &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrgName, "event.cloud.local.{{ .Org}}.registry.node.node.delete"),
+		Msg:        anyMsg,
+	})
+
+	assert.NoError(t, err)
+	ports.AssertExpectations(t)
+}
+
+func TestHandleNodeDelete_ReportsStoreFailure(t *testing.T) {
+	ports := &scmocks.PortMapRepo{}
+	ports.On("ClearNode", mock.Anything).Return(assert.AnError).Once()
+
+	c := &SiteControllerEventServer{ports: ports}
+
+	err := c.handleNodeDelete(&epb.EventRegistryNodeDelete{NodeId: "uk-sa2644-tnode-v0-9a1e"})
+
+	assert.Error(t, err, "a failed clear must surface so the event is retried")
+}
+
 func registryErr(code int) error {
 	return fmt.Errorf("GetSite failure: %w", fmt.Errorf("rest api GET failure with error: %w",
 		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))

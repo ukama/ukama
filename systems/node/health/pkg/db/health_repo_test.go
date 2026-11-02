@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"errors"
 	"log"
 	"testing"
 	"time"
@@ -193,5 +194,64 @@ func TestHealthRepoStoreHealthReport(t *testing.T) {
 		r := int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb})
 		err = r.StoreHealthReport(nil, time.Now().UTC())
 		assert.Error(t, err)
+	})
+}
+
+func TestHealthRepoDeleteNode(t *testing.T) {
+	newRepo := func(t *testing.T) (int_db.HealthRepo, sqlmock.Sqlmock) {
+		db, mock, err := sqlmock.New()
+		assert.NoError(t, err)
+
+		dialector := postgres.New(postgres.Config{
+			DSN:                  "sqlmock_db_0",
+			DriverName:           "postgres",
+			Conn:                 db,
+			PreferSimpleProtocol: true,
+		})
+		gdb, err := gorm.Open(dialector, &gorm.Config{})
+		assert.NoError(t, err)
+
+		return int_db.NewHealthRepo(&UkamaDbMock{GormDb: gdb}), mock
+	}
+
+	t.Run("deletes reports, latest and node rows", func(t *testing.T) {
+		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).StringLowercase()
+		r, mock := newRepo(t)
+
+		mock.ExpectBegin()
+		for _, table := range []string{"health_reports", "node_latest_healths", "health_nodes"} {
+			mock.ExpectExec(`DELETE FROM "` + table + `" WHERE "` + table + `"."nodeId" = \$1`).
+				WithArgs(nid).
+				WillReturnResult(sqlmock.NewResult(0, 1))
+		}
+		mock.ExpectCommit()
+
+		err := r.DeleteNode(nid)
+
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rolls back on error", func(t *testing.T) {
+		nid := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE).StringLowercase()
+		r, mock := newRepo(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(`DELETE FROM "health_reports"`).
+			WithArgs(nid).
+			WillReturnError(errors.New("db down"))
+		mock.ExpectRollback()
+
+		err := r.DeleteNode(nid)
+
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("rejects empty node id", func(t *testing.T) {
+		r, mock := newRepo(t)
+
+		assert.Error(t, r.DeleteNode(""))
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

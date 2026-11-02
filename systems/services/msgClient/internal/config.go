@@ -16,13 +16,14 @@ import (
 
 type Config struct {
 	uconf.BaseConfig `mapstructure:",squash"`
-	DB               *uconf.Database   `default:"{}"`
-	Grpc             *uconf.Grpc       `default:"{}"`
-	Queue            *uconf.Queue      `default:"{}"`
-	Metrics          *uconf.Metrics    `default:"{}"`
-	Timeout          time.Duration     `default:"3s"`
-	HeathCheck       HeathCheckRoutine `default:"{}"`
-	System           string            `default:"init"`
+	Grpc             *uconf.Grpc    `default:"{}"`
+	Queue            *uconf.Queue   `default:"{}"`
+	Metrics          *uconf.Metrics `default:"{}"`
+	Timeout          time.Duration  `default:"3s"`
+	Lease            Lease          `default:"{}"`
+	Delivery         Delivery       `default:"{}"`
+	Publish          Publish        `default:"{}"`
+	System           string         `default:"init"`
 	OrgName          string
 	MasterOrgName    string
 	Shovel           Shovel
@@ -30,9 +31,11 @@ type Config struct {
 }
 
 type MsgBus struct {
-	ManagementUri string
-	User          string
-	Password      string
+	ManagementUri   string
+	User            string
+	Password        string
+	QueueMaxLength  int64         `default:"0"`
+	QueueFlushAfter time.Duration `default:"168h"`
 }
 
 type Shovel struct {
@@ -48,9 +51,17 @@ type Shovel struct {
 	DestUri         string `json:"dest-uri"`
 }
 
-type HeathCheckRoutine struct {
-	Period      time.Duration `default:"60s"`
-	AllowedMiss uint32        `default:"3"`
+type Lease struct {
+	RefreshInterval time.Duration `default:"2s"`
+	MissedRefreshes uint32        `default:"3"`
+}
+
+type Delivery struct {
+	Timeout time.Duration `default:"60s"`
+}
+
+type Publish struct {
+	Timeout time.Duration `default:"2s"`
 }
 
 func NewConfig() *Config {

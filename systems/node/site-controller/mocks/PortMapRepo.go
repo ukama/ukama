@@ -12,6 +12,24 @@ type PortMapRepo struct {
 	mock.Mock
 }
 
+// ClearNode provides a mock function with given fields: nodeID
+func (_m *PortMapRepo) ClearNode(nodeID string) error {
+	ret := _m.Called(nodeID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ClearNode")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(nodeID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // GetBySite provides a mock function with given fields: siteID
 func (_m *PortMapRepo) GetBySite(siteID string) ([]db.SitePortMap, error) {
 	ret := _m.Called(siteID)

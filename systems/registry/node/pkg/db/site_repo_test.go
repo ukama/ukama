@@ -16,10 +16,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
@@ -78,13 +77,13 @@ func TestSiteRepo_GetNodes(t *testing.T) {
 
 		mock.ExpectQuery(`^SELECT.*sites.*`).
 			WithArgs(siteID).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
 
 		// Act
 		nodes, err := r.GetNodes(siteID)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -180,7 +179,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode, aNode})
 
-		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrAlreadyExists), err)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -199,7 +198,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode})
 
-		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrAlreadyExists), err)
 		assert.Contains(t, err.Error(), tNode)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -215,7 +214,7 @@ func TestSiteRepo_AssignNodes(t *testing.T) {
 
 		assigned, err := r.AssignNodes(siteId, networkId, []string{tNode})
 
-		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 		assert.Contains(t, err.Error(), tNode)
 		assert.Nil(t, assigned)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -270,13 +269,13 @@ func TestSiteRepo_GetByNetwork(t *testing.T) {
 	t.Run("NetworkNotFound", func(t *testing.T) {
 		mock.ExpectQuery(`^SELECT.*sites.*`).
 			WithArgs(networkID).
-			WillReturnError(extsql.ErrNoRows)
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}))
 
 		// Act
 		nodes, err := r.GetByNetwork(networkID)
 
 		// Assert
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -353,63 +352,6 @@ func TestSiteRepo_GetFreeNodes(t *testing.T) {
 	})
 }
 
-func TestSiteRepo_IsAllocated(t *testing.T) {
-	var (
-		nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
-		db     *extsql.DB
-	)
-
-	db, mock, err := sqlmock.New() // mock sql.DB
-	assert.NoError(t, err)
-
-	dialector := postgres.New(postgres.Config{
-		DSN:                  "sqlmock_db_0",
-		DriverName:           "postgres",
-		Conn:                 db,
-		PreferSimpleProtocol: true,
-	})
-
-	gdb, err := gorm.Open(dialector, &gorm.Config{})
-	assert.NoError(t, err)
-
-	r := sidedb.NewSiteRepo(&UkamaDbMock{
-		GormDb: gdb,
-	})
-
-	t.Run("Allocated", func(t *testing.T) {
-		rows := sqlmock.NewRows([]string{"node_id"}).
-			AddRow(nodeId.StringLowercase())
-
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(rows)
-
-		// Act
-		ok, site := r.IsAllocated(nodeId)
-
-		// Assert
-		assert.True(t, ok)
-		assert.NotNil(t, site)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
-	t.Run("NotAllocated", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnError(extsql.ErrNoRows)
-
-		// Act
-		ok, site := r.IsAllocated(nodeId)
-
-		// Assert
-		assert.False(t, ok)
-		assert.NotNil(t, site)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-}
-
 func TestSiteRepo_RemoveNode(t *testing.T) {
 	var (
 		nodeId = ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
@@ -433,74 +375,118 @@ func TestSiteRepo_RemoveNode(t *testing.T) {
 		GormDb: gdb,
 	})
 
-	t.Run("NotAllocated", func(t *testing.T) {
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnError(extsql.ErrNoRows)
+	id := nodeId.StringLowercase()
 
-		// Act
+	lockQuery := `^SELECT "id" FROM "nodes" WHERE id = \$1 .*FOR UPDATE`
+	siteQuery := `^SELECT \* FROM "sites" WHERE node_id = `
+	groupQuery := `^SELECT count\(\*\) FROM "nodes" WHERE \(parent_node_id = `
+	deleteQuery := `^UPDATE "sites" SET "deleted_at"=`
+
+	expectLock := func() {
+		mock.ExpectQuery(lockQuery).WithArgs(id, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(id))
+	}
+
+	expectSite := func() {
+		mock.ExpectQuery(siteQuery).WithArgs(id, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id", "site_id"}).
+				AddRow(id, uuid.NewV4()))
+	}
+
+	expectGrouped := func(count int) {
+		mock.ExpectQuery(groupQuery).WithArgs(id, id).
+			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
+	}
+
+	t.Run("RemoveSuccess", func(t *testing.T) {
+		mock.ExpectBegin()
+		expectLock()
+		expectSite()
+		expectGrouped(0)
+		mock.ExpectExec(deleteQuery).WithArgs(sqlmock.AnyArg(), id).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectCommit()
+
 		site, err := r.RemoveNode(nodeId)
 
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, site)
-
-		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+		assert.Equal(t, id, site.NodeId)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("NodeNotFound", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectQuery(lockQuery).WithArgs(id, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"id"}))
+		mock.ExpectRollback()
+
+		site, err := r.RemoveNode(nodeId)
+
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
+		assert.Nil(t, site)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("NotAllocated", func(t *testing.T) {
+		mock.ExpectBegin()
+		expectLock()
+		mock.ExpectQuery(siteQuery).WithArgs(id, 1).
+			WillReturnRows(sqlmock.NewRows([]string{"node_id"}))
+		mock.ExpectRollback()
+
+		site, err := r.RemoveNode(nodeId)
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, site)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
 	t.Run("StillGrouped", func(t *testing.T) {
-		allocatedRows := sqlmock.NewRows([]string{"node_id"}).
-			AddRow(nodeId.StringLowercase())
-
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(allocatedRows)
-
-		mock.ExpectExec(regexp.QuoteMeta(`select * from nodes where parent_node_id=`+
-			` $1  OR (id= $2 AND parent_node_id is NOT NULL)`)).
-			WithArgs(nodeId.StringLowercase(), nodeId.StringLowercase()).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		// Act
-		site, err := r.RemoveNode(nodeId)
-
-		// Assert
-		assert.Error(t, err)
-		assert.Nil(t, site)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
-	})
-
-	t.Run("RemoveSuccess", func(t *testing.T) {
-		allocatedRows := sqlmock.NewRows([]string{"node_id"}).
-			AddRow(nodeId.StringLowercase())
-
-		mock.ExpectQuery(`^SELECT.*sites.*`).
-			WillReturnRows(allocatedRows)
-
-		mock.ExpectExec(regexp.QuoteMeta(`select * from nodes where parent_node_id=`+
-			` $1  OR (id= $2 AND parent_node_id is NOT NULL)`)).
-			WithArgs(nodeId.StringLowercase(), nodeId.StringLowercase()).
-			WillReturnResult(sqlmock.NewResult(0, 0))
-
 		mock.ExpectBegin()
+		expectLock()
+		expectSite()
+		expectGrouped(1)
+		mock.ExpectRollback()
 
-		mock.ExpectExec(`^UPDATE "sites" SET "deleted_at"=`).
-			WithArgs(sqlmock.AnyArg(), nodeId.StringLowercase()).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-
-		mock.ExpectCommit()
-
-		// Act
 		site, err := r.RemoveNode(nodeId)
 
-		// Assert
-		assert.NoError(t, err)
-		assert.NotNil(t, site)
-
-		err = mock.ExpectationsWereMet()
-		assert.NoError(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, site)
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
+
+	dbErr := errors.New("db failed")
+
+	for _, tc := range []struct {
+		name   string
+		expect func()
+	}{
+		{"LockFails", func() {
+			mock.ExpectQuery(lockQuery).WithArgs(id, 1).WillReturnError(dbErr)
+		}},
+		{"ReadSiteFails", func() {
+			expectLock()
+			mock.ExpectQuery(siteQuery).WithArgs(id, 1).WillReturnError(dbErr)
+		}},
+		{"GroupingFails", func() {
+			expectLock()
+			expectSite()
+			mock.ExpectQuery(groupQuery).WithArgs(id, id).WillReturnError(dbErr)
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			mock.ExpectBegin()
+			tc.expect()
+			mock.ExpectRollback()
+
+			site, err := r.RemoveNode(nodeId)
+
+			assert.True(t, errors.Is(err, dbErr), err)
+			assert.False(t, errors.Is(err, store.ErrPrecondition))
+			assert.Nil(t, site)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
 }
 
 func TestSiteRepo_ReleaseSite(t *testing.T) {
