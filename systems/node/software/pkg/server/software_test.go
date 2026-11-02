@@ -20,11 +20,13 @@ import (
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -563,5 +565,41 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, codes.Internal, status.Code(err))
 		opMgr.AssertNotCalled(t, "Start", mock.Anything)
+	})
+}
+
+func TestSoftwareServer_failOperation(t *testing.T) {
+	op := &copr.OperationInfo{Id: "op-update", FencingToken: 7}
+
+	t.Run("FailsWithFencingToken", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(&copr.OperationInfo{}, nil).Once()
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("ManagerErrorIsNotFatal", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("NoOperationIsNoop", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(nil, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything)
 	})
 }

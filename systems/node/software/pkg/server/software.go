@@ -277,8 +277,9 @@ func (s *SoftwareServer) failOperation(op *copr.OperationInfo, actionType, reaso
 	if s.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
-	if _, err := s.opManager.ForceUnlock(op.Id, pkg.ServiceName, reason); err != nil {
-		log.Errorf("%s failed to force unlock operation %s: %v", actionType, op.Id, err)
+	if _, err := s.opManager.Fail(op.Id, op.FencingToken, pkg.ServiceName,
+		reason); err != nil {
+		log.Errorf("%s failed to fail operation %s: %v", actionType, op.Id, err)
 	}
 }
 
