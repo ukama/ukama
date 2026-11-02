@@ -101,6 +101,9 @@ func (c *Controller) CreateSession(ctx *gin.Context,
 	}
 	c.pdnMu.Lock()
 	defer c.pdnMu.Unlock()
+	if !c.serviceEnabled() || !serviceLeaseValid() {
+		return nil, pdnError(http.StatusServiceUnavailable, "service_disabled")
+	}
 	if apn != c.apn {
 		return nil, pdnError(http.StatusForbidden, "unsupported_apn")
 	}
@@ -155,6 +158,10 @@ func (c *Controller) CreateSession(ctx *gin.Context,
 		return nil, err
 	}
 	result, err := c.applyPDNLocked(ctx, p)
+	if err == nil && !serviceLeaseValid() {
+		c.setService(false, "service_lease_expired")
+		err = pdnError(http.StatusServiceUnavailable, "service_disabled")
+	}
 	if err != nil {
 		// An unsuccessful attach must not later enable data in the monitor.
 		if markErr := c.store.SetPDNState(p, store.PDNClosing); markErr != nil {
@@ -401,6 +408,7 @@ func (c *Controller) checkDataPathLocked() error {
 	dp := c.sm.Status().DataPath
 	if !dp.Connected || dp.ConnectedCount > 1 {
 		c.restartRequired = true
+		c.setService(false, "datapath_unavailable")
 	}
 	if c.restartRequired || c.stopping {
 		return pdnError(http.StatusServiceUnavailable, "restart_required")
@@ -425,6 +433,14 @@ func (c *Controller) startPDNMonitor(period time.Duration) {
 				return
 			case <-ticker.C:
 				c.pdnMu.Lock()
+				if c.serviceEnabled() && !serviceLeaseValid() {
+					c.setService(false, "service_lease_expired")
+				}
+				if !c.serviceEnabled() {
+					if err := c.store.ClosePDNs(); err != nil {
+						log.Errorf("Close PDNs while service is OFF: %v", err)
+					}
+				}
 				if err := c.checkDataPathLocked(); err != nil {
 					if err := c.store.RetireEPCs(); err != nil {
 						log.Errorf("Retire EPC after disconnect: %v", err)
