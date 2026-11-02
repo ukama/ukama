@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	cgrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -136,56 +137,44 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	return &pb.MarkRunningResponse{Operation: toPb(op)}, nil
 }
 
-func (s *OperationServer) CompleteOperation(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+func (s *OperationServer) CompleteOperation(ctx context.Context,
+	req *pb.CompleteOperationRequest) (*pb.CompleteOperationResponse, error) {
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	current, err := s.repo.Get(id)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "operation not found")
-	}
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
-	}
 
-	op, err := s.repo.Terminate(id, current.FencingToken, db.OperationSuccess, db.OperationAudit{
+	op, err := s.repo.Terminate(id, req.FencingToken, db.OperationSuccess, db.OperationAudit{
 		Event:  "completed",
 		Actor:  req.Actor,
 		Reason: req.Reason,
 	}, "")
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "complete operation: %v", err)
+		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
 	}
 
 	log.Infof("operation %s completed by %s: %s", op.Id, req.Actor, req.Reason)
-	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+	return &pb.CompleteOperationResponse{Operation: toPb(op)}, nil
 }
 
-func (s *OperationServer) FailOperation(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+func (s *OperationServer) FailOperation(ctx context.Context,
+	req *pb.FailOperationRequest) (*pb.FailOperationResponse, error) {
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	current, err := s.repo.Get(id)
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, status.Error(codes.NotFound, "operation not found")
-	}
-	if err != nil {
-		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
-	}
 
-	op, err := s.repo.Terminate(id, current.FencingToken, db.OperationFailed, db.OperationAudit{
+	op, err := s.repo.Terminate(id, req.FencingToken, db.OperationFailed, db.OperationAudit{
 		Event:  "failed",
 		Actor:  req.Actor,
 		Reason: req.Reason,
 	}, req.Reason)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "fail operation: %v", err)
+		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
 	}
 
 	log.Warnf("operation %s failed by %s: %s", op.Id, req.Actor, req.Reason)
-	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+	return &pb.FailOperationResponse{Operation: toPb(op)}, nil
 }
 
 func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
@@ -207,7 +196,7 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 		Reason: req.Reason,
 	}, "force unlocked: "+req.Reason)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "force unlock: %v", err)
+		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
 	}
 
 	log.Warnf("operation %s force-unlocked by %s: %s", op.Id, req.Actor, req.Reason)

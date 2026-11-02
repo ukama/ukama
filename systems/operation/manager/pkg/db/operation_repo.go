@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
 )
@@ -149,15 +150,28 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 	}
 
 	var op Operation
+	var terminalErr error
+
 	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Where("id = ?", id).First(&op).Error; err != nil {
 			return err
 		}
 		if op.FencingToken != fencingToken {
-			return fmt.Errorf("fencing token mismatch (op=%d, given=%d)", op.FencingToken, fencingToken)
+			return fmt.Errorf("fencing token mismatch (op=%d, given=%d): %w",
+				op.FencingToken, fencingToken, store.ErrPrecondition)
 		}
 		if op.Status.IsTerminal() {
-			return nil
+			if op.Status != status {
+				terminalErr = fmt.Errorf("operation %s is already %s, cannot move to %s: %w",
+					id, op.Status, status, store.ErrPrecondition)
+			}
+
+			audit.Id = uuid.NewV4()
+			audit.OperationId = op.Id
+			audit.ResourceKey = op.ResourceKey
+			audit.Event = "ignored_" + audit.Event
+			audit.At = time.Now().UTC()
+			return tx.Create(&audit).Error
 		}
 
 		now := time.Now().UTC()
@@ -183,6 +197,9 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 	})
 	if err != nil {
 		return nil, err
+	}
+	if terminalErr != nil {
+		return nil, terminalErr
 	}
 	return &op, nil
 }

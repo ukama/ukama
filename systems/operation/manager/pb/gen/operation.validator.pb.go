@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -113,6 +113,64 @@ func (this *MarkRunningRequest) Validate() error {
 	return nil
 }
 func (this *MarkRunningResponse) Validate() error {
+	if this.Operation != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Operation); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Operation", err)
+		}
+	}
+	return nil
+}
+
+var _regex_CompleteOperationRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *CompleteOperationRequest) Validate() error {
+	if !_regex_CompleteOperationRequest_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.Actor == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Actor", fmt.Errorf(`value '%v' must not be an empty string`, this.Actor))
+	}
+	if this.Reason == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Reason", fmt.Errorf(`value '%v' must not be an empty string`, this.Reason))
+	}
+	if !(this.FencingToken > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("FencingToken", fmt.Errorf(`value '%v' must be greater than '0'`, this.FencingToken))
+	}
+	return nil
+}
+func (this *CompleteOperationResponse) Validate() error {
+	if this.Operation != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Operation); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("Operation", err)
+		}
+	}
+	return nil
+}
+
+var _regex_FailOperationRequest_Id = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *FailOperationRequest) Validate() error {
+	if !_regex_FailOperationRequest_Id.MatchString(this.Id) {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.Id))
+	}
+	if this.Id == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.Actor == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Actor", fmt.Errorf(`value '%v' must not be an empty string`, this.Actor))
+	}
+	if this.Reason == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Reason", fmt.Errorf(`value '%v' must not be an empty string`, this.Reason))
+	}
+	if !(this.FencingToken > 0) {
+		return github_com_mwitkow_go_proto_validators.FieldError("FencingToken", fmt.Errorf(`value '%v' must be greater than '0'`, this.FencingToken))
+	}
+	return nil
+}
+func (this *FailOperationResponse) Validate() error {
 	if this.Operation != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Operation); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Operation", err)

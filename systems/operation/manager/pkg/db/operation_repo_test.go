@@ -17,6 +17,7 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -237,7 +238,61 @@ func Test_Terminate(t *testing.T) {
 		out, err := repo.Terminate(op.Id, 4, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("DuplicateWithSameStatusIsAuditedAndSucceeds", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationSuccess,
+			FencingToken: 5,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "ignored_completed",
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+			OperationAudit{Event: "completed"}, "")
+
+		assert.NoError(t, err)
+		assert.Equal(t, OperationSuccess, out.Status)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("DifferentStatusIsAuditedAndRejected", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationTimeout,
+			FencingToken: 5,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "ignored_completed",
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+			OperationAudit{Event: "completed"}, "")
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
