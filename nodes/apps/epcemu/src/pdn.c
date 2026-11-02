@@ -10,9 +10,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "service_api.h"
 #include "netutil.h"
 #include "pcrf.h"
 #include "pdn.h"
+#include "service_lease.h"
 #include "ue.h"
 
 #define PDN_POLL_BATCH 8
@@ -251,6 +253,11 @@ static int attach_locked(ServiceContext *ctx, const UeEntry *request,
     int responseCode;
     bool exists;
 
+    if (!ctx->serviceOn || !service_lease_valid()) {
+        return error_status(HttpStatus_ServiceUnavailable, "service_disabled",
+                            reason, reasonLen);
+    }
+
     if (ctx->stopping || !sync_owner(ctx)) {
         return error_status(503, "pcrf_registration_pending",
                              reason, reasonLen);
@@ -289,6 +296,15 @@ static int attach_locked(ServiceContext *ctx, const UeEntry *request,
     }
 
     code = pcrf_create_session(ctx->config, &ue, &pdn);
+    if (!service_lease_valid()) {
+        ctx->serviceOn = false;
+        ue_for_each(mark_closing, NULL);
+        cleanup_one(ctx, &ue);
+
+        return error_status(HttpStatus_ServiceUnavailable, "service_disabled",
+                            reason, reasonLen);
+    }
+
     if (code == 202 && !strcmp(pdn.state, "live") &&
         (!strcmp(pdn.dataState, "allowed") ||
          !strcmp(pdn.dataState, "blocked"))) {
@@ -383,6 +399,11 @@ void pdn_poll(ServiceContext *ctx) {
 
     pthread_mutex_lock(&ctx->serviceMutex);
     if (!ctx->stopping) {
+        if (ctx->serviceOn && !service_lease_valid()) {
+            ctx->serviceOn = false;
+            ue_for_each(mark_closing, NULL);
+        }
+
         sync_owner(ctx);
         count = ue_snapshot(entries, EPCEMU_MAX_UES);
         /* Bound polling work and advance past failed requests on retry. */
@@ -392,6 +413,34 @@ void pdn_poll(ServiceContext *ctx) {
         }
     }
     pthread_mutex_unlock(&ctx->serviceMutex);
+}
+
+int pdn_set_service(ServiceContext *ctx, bool enabled) {
+
+    int code = HttpStatus_OK;
+
+    pthread_mutex_lock(&ctx->serviceMutex);
+
+    if (!enabled) {
+        ctx->serviceOn = false;
+        /* Revoke all local forwarding before the first remote DELETE. */
+        ue_for_each(mark_closing, NULL);
+        ue_for_each(cleanup_cb, ctx);
+
+        if (ue_count_total() != 0) {
+            code = HttpStatus_ServiceUnavailable;
+        }
+    } else if (!service_lease_valid() || ctx->stopping ||
+               !status_is_ready(ctx->status) ||
+               (!ctx->serviceOn && ue_count_total() != 0) || !sync_owner(ctx)) {
+        code = HttpStatus_ServiceUnavailable;
+    } else {
+        ctx->serviceOn = true;
+    }
+
+    pthread_mutex_unlock(&ctx->serviceMutex);
+
+    return code;
 }
 
 void pdn_shutdown(ServiceContext *ctx) {
