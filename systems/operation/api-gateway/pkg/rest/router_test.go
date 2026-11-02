@@ -21,14 +21,18 @@ import (
 )
 
 type fakeManager struct {
-	lastStartReq         *pb.StartOperationRequest
-	lastGetId            string
-	lastGetByResourceKey string
-	lastMarkRunningId    string
-	lastMarkRunningToken uint64
-	lastForceUnlockId    string
-	lastForceUnlockActor string
+	lastStartReq          *pb.StartOperationRequest
+	lastGetId             string
+	lastGetByResourceKey  string
+	lastMarkRunningId     string
+	lastMarkRunningToken  uint64
+	lastForceUnlockId     string
+	lastForceUnlockActor  string
 	lastForceUnlockReason string
+	lastTerminateToken    uint64
+	lastTerminateActor    string
+	lastTerminateReason   string
+	terminateErr          error
 
 	startResp         *pb.StartOperationResponse
 	startErr          error
@@ -100,8 +104,26 @@ func (f *fakeManager) ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResp
 	return &pb.ForceUnlockResponse{Operation: &pb.Operation{Id: id}}, nil
 }
 
-func (f *fakeManager) Complete(id, actor, reason string) (*pb.ForceUnlockResponse, error) {
-	return &pb.ForceUnlockResponse{Operation: &pb.Operation{Id: id}}, nil
+func (f *fakeManager) Complete(id string, fencingToken uint64, actor,
+	reason string) (*pb.CompleteOperationResponse, error) {
+	f.lastTerminateToken = fencingToken
+	f.lastTerminateActor = actor
+	f.lastTerminateReason = reason
+	if f.terminateErr != nil {
+		return nil, f.terminateErr
+	}
+	return &pb.CompleteOperationResponse{Operation: &pb.Operation{Id: id}}, nil
+}
+
+func (f *fakeManager) Fail(id string, fencingToken uint64, actor,
+	reason string) (*pb.FailOperationResponse, error) {
+	f.lastTerminateToken = fencingToken
+	f.lastTerminateActor = actor
+	f.lastTerminateReason = reason
+	if f.terminateErr != nil {
+		return nil, f.terminateErr
+	}
+	return &pb.FailOperationResponse{Operation: &pb.Operation{Id: id}}, nil
 }
 
 func newTestRouter(mgr *fakeManager) *Router {
@@ -297,7 +319,7 @@ func TestPostMarkRunningHandler(t *testing.T) {
 func TestPostForceUnlockHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
-	req := &ForceUnlockRequest{Id: uid, UserId: uid, Reason: "stuck"}
+	req := &ForceUnlockRequest{Id: uid, Actor: "controller", Reason: "stuck"}
 
 	t.Run("Success", func(t *testing.T) {
 		op := sampleProtoOperation()
@@ -309,7 +331,7 @@ func TestPostForceUnlockHandler(t *testing.T) {
 		resp, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.NoError(t, err)
 		assert.Equal(t, req.Id, mgr.lastForceUnlockId)
-		assert.Equal(t, uid, mgr.lastForceUnlockActor)
+		assert.Equal(t, "controller", mgr.lastForceUnlockActor)
 		assert.Equal(t, "stuck", mgr.lastForceUnlockReason)
 		assertOperationMapped(t, op, resp.Operation)
 	})
@@ -321,6 +343,64 @@ func TestPostForceUnlockHandler(t *testing.T) {
 		_, err := r.postForceUnlockHandler(&gin.Context{}, req)
 		assert.Error(t, err)
 		assert.Equal(t, req.Id, mgr.lastForceUnlockId)
+	})
+}
+
+func TestPostCompleteHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
+	req := &CompleteOperationRequest{
+		Id: uid, FencingToken: 7, Actor: "controller", Reason: "dispatched",
+	}
+
+	t.Run("PassesFencingToken", func(t *testing.T) {
+		mgr := &fakeManager{}
+		r := newTestRouter(mgr)
+
+		resp, err := r.postCompleteHandler(&gin.Context{}, req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uid, resp.Operation.Id)
+		assert.Equal(t, uint64(7), mgr.lastTerminateToken)
+		assert.Equal(t, "controller", mgr.lastTerminateActor)
+		assert.Equal(t, "dispatched", mgr.lastTerminateReason)
+	})
+
+	t.Run("ManagerError", func(t *testing.T) {
+		r := newTestRouter(&fakeManager{terminateErr: errors.New("manager down")})
+
+		_, err := r.postCompleteHandler(&gin.Context{}, req)
+
+		assert.Error(t, err)
+	})
+}
+
+func TestPostFailHandler(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
+	req := &FailOperationRequest{
+		Id: uid, FencingToken: 7, Actor: "controller", Reason: "publish failed",
+	}
+
+	t.Run("PassesFencingToken", func(t *testing.T) {
+		mgr := &fakeManager{}
+		r := newTestRouter(mgr)
+
+		resp, err := r.postFailHandler(&gin.Context{}, req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, uid, resp.Operation.Id)
+		assert.Equal(t, uint64(7), mgr.lastTerminateToken)
+		assert.Equal(t, "controller", mgr.lastTerminateActor)
+		assert.Equal(t, "publish failed", mgr.lastTerminateReason)
+	})
+
+	t.Run("ManagerError", func(t *testing.T) {
+		r := newTestRouter(&fakeManager{terminateErr: errors.New("manager down")})
+
+		_, err := r.postFailHandler(&gin.Context{}, req)
+
+		assert.Error(t, err)
 	})
 }
 
