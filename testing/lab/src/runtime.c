@@ -825,10 +825,12 @@ int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
     if ((!ulab_streq(expected, "attached") &&
          !ulab_streq(expected, "allowed") &&
          !ulab_streq(expected, "blocked") &&
-         !ulab_streq(expected, "rejected")) ||
+         !ulab_streq(expected, "rejected") &&
+         !ulab_streq(expected, "absent")) ||
         (check->same_pdn && check->new_pdn) ||
         ((check->same_pdn || check->new_pdn) &&
-         ulab_streq(expected, "rejected")) ||
+         (ulab_streq(expected, "rejected") ||
+          ulab_streq(expected, "absent"))) ||
         strspn(apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(apn) || check->timeout_seconds > 300) {

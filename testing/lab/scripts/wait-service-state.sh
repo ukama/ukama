@@ -5,7 +5,7 @@
 #
 # Copyright (c) 2026-present, Ukama Inc.
 
-# Wait until EPCEMU and PCRF both hold the requested service state long
+# Wait until device.d and every group member confirm the requested state long
 # enough to be safe for the next scenario step. This script is read-only: it
 # verifies controller convergence without forcing either node application.
 
@@ -25,13 +25,16 @@ TIMEOUT_SEC="${ULAB_SERVICE_STATE_TIMEOUT_SEC:-120}"
 POLL_SEC="${ULAB_SERVICE_STATE_POLL_SEC:-2}"
 STABLE_POLLS="${ULAB_SERVICE_STATE_STABLE_POLLS:-3}"
 
+DEVICE_PORT=18003
+NETWORK_PORT=18091
+EPCEMU_PORT=18028
+PCRF_PORT=18030
+DEVICE_STATE_PATH=/v1/state
+SERVICE_STATE_PATH=/v1/service
+EPCEMU_STATUS_PATH=/v1/status
+
 case "$EXPECTED_STATE" in
-    on)
-        EXPECTED_ADMISSION="enabled"
-        ;;
-    off)
-        EXPECTED_ADMISSION="disabled"
-        ;;
+    on|off) ;;
     *)
         echo "invalid service state: $EXPECTED_STATE" >&2
         exit 2
@@ -55,13 +58,9 @@ container_get() {
         2>/dev/null || true
 }
 
-matches_state() {
-    body="$1"
-
-    printf "%s" "$body" | \
-        grep -Eq '"state"[[:space:]]*:[[:space:]]*"'"$EXPECTED_STATE"'"' && \
-    printf "%s" "$body" | \
-        grep -Eq '"admission"[[:space:]]*:[[:space:]]*"'"$EXPECTED_ADMISSION"'"'
+matches_group() {
+    python3 "$(dirname "$0")/service-state.py" "$EXPECTED_STATE" \
+        "$device_body" "$network_body" "$pcrf_body" "$epc_body"
 }
 
 state_file="$STATE_DIR/$(safe_name "$LOGICAL_NODE_ID").env"
@@ -85,10 +84,12 @@ epc_body=""
 pcrf_body=""
 
 while :; do
-    epc_body="$(container_get 18028 /v1/status)"
-    pcrf_body="$(container_get 18030 /v1/service)"
+    device_body="$(container_get "$DEVICE_PORT" "$DEVICE_STATE_PATH")"
+    network_body="$(container_get "$NETWORK_PORT" "$SERVICE_STATE_PATH")"
+    epc_body="$(container_get "$EPCEMU_PORT" "$EPCEMU_STATUS_PATH")"
+    pcrf_body="$(container_get "$PCRF_PORT" "$SERVICE_STATE_PATH")"
 
-    if matches_state "$epc_body" && matches_state "$pcrf_body"; then
+    if matches_group; then
         stable=$((stable + 1))
         if [ "$stable" -ge "$STABLE_POLLS" ]; then
             echo "service-state: ok state=$EXPECTED_STATE stable_polls=$stable"
@@ -101,6 +102,8 @@ while :; do
     now_ts="$(date +%s)"
     if [ $((now_ts - start_ts)) -ge "$TIMEOUT_SEC" ]; then
         echo "service-state: failed state=$EXPECTED_STATE after ${TIMEOUT_SEC}s" >&2
+        echo "DEVICE: $device_body" >&2
+        echo "NETWORK: $network_body" >&2
         echo "EPCEMU: $epc_body" >&2
         echo "PCRF: $pcrf_body" >&2
         exit 1

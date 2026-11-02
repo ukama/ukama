@@ -27,15 +27,17 @@ static int validate_pdn_check(const scenario_t *s,
         (!ulab_streq(check->expected, "attached") &&
          !ulab_streq(check->expected, "allowed") &&
          !ulab_streq(check->expected, "blocked") &&
-         !ulab_streq(check->expected, "rejected")) ||
+         !ulab_streq(check->expected, "rejected") &&
+         !ulab_streq(check->expected, "absent")) ||
         (check->same_pdn && check->new_pdn) ||
         ((check->same_pdn || check->new_pdn) &&
-         ulab_streq(check->expected, "rejected")) ||
+         (ulab_streq(check->expected, "rejected") ||
+          ulab_streq(check->expected, "absent"))) ||
         strspn(check->apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(check->apn)) {
         return fail(err, "ue_pdn requires virtual UEs, a valid APN, "
-                    "attached/allowed/blocked/rejected and at most 300s; "
+                    "attached/allowed/blocked/rejected/absent and at most 300s; "
                     "same_pdn/new_pdn are exclusive and require a live PDN");
     }
     return ULAB_OK;
