@@ -29,6 +29,9 @@ typedef struct App {
     int envc;
 
     char *workdir;
+    char *lifecycleGuard;
+    bool guardActive;
+    unsigned long long guardToken;
 
     int port;
 

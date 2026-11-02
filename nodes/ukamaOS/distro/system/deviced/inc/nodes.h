@@ -35,7 +35,6 @@ int node_tower_build_state(Config *config, JsonObj *json);
 int node_amplifier_build_state(Config *config, JsonObj *json);
 int node_controller_build_state(Config *config, JsonObj *json);
 
-int node_tower_apply_service(Config *config, ControlState desired);
 int node_tower_apply_radio(Config *config, ControlState desired);
 int node_tower_before_reboot(Config *config);
 
