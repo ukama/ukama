@@ -442,8 +442,13 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("OperationForceUnlocked", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
+
+			sent, err := io.ReadAll(req.Body)
+			assert.NoError(tt, err)
+			assert.JSONEq(tt, `{"actor":"admin","reason":"stale lock"}`, string(sent))
 
 			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"CANCELLED","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
@@ -467,8 +472,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("ForceUnlockFailed", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			resp := `{"error":"not found"}`
 
@@ -491,8 +497,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -513,8 +520,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId)
-			assert.Equal(tt, "DELETE", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
+			assert.Equal(tt, "POST", req.Method)
 
 			return nil
 		}
@@ -527,4 +535,98 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 		assert.Error(tt, err)
 		assert.Nil(tt, op)
 	})
+}
+
+func TestManagerClient_CompleteAndFail(t *testing.T) {
+	const (
+		fencingToken = uint64(7)
+		actor        = "controller"
+		reason       = "done"
+	)
+
+	type terminate func(operation.ManagerClient) (*operation.OperationInfo, error)
+
+	calls := []struct {
+		name string
+		path string
+		call terminate
+	}{
+		{"Complete", "/complete", func(c operation.ManagerClient) (*operation.OperationInfo,
+			error) {
+			return c.Complete(testOperationId, fencingToken, actor, reason)
+		}},
+		{"Fail", "/fail", func(c operation.ManagerClient) (*operation.OperationInfo, error) {
+			return c.Fail(testOperationId, fencingToken, actor, reason)
+		}},
+	}
+
+	for _, tc := range calls {
+		t.Run(tc.name+"SendsFencingToken", func(tt *testing.T) {
+			mockTransport := func(req *http.Request) *http.Response {
+				assert.Equal(tt, req.URL.String(),
+					operation.OperationsEndpoint+"/"+testOperationId+tc.path)
+				assert.Equal(tt, "POST", req.Method)
+
+				sent, err := io.ReadAll(req.Body)
+				assert.NoError(tt, err)
+				assert.JSONEq(tt, `{"fencing_token":7,"actor":"controller","reason":"done"}`,
+					string(sent))
+
+				body := `{"operation":{"id":"` + testOperationId + `","fencing_token":7}}`
+
+				return &http.Response{
+					StatusCode: 200,
+					Status:     "200 OK",
+					Body:       io.NopCloser(bytes.NewBufferString(body)),
+					Header:     make(http.Header),
+				}
+			}
+
+			testManagerClient := operation.NewManagerClient("")
+			testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+			op, err := tc.call(testManagerClient)
+
+			assert.NoError(tt, err)
+			assert.Equal(tt, testOperationId, op.Id)
+		})
+
+		t.Run(tc.name+"RejectedByManager", func(tt *testing.T) {
+			mockTransport := func(req *http.Request) *http.Response {
+				return &http.Response{
+					StatusCode: 412,
+					Status:     "412 PRECONDITION FAILED",
+					Body:       io.NopCloser(bytes.NewBufferString(`{"error":"mismatch"}`)),
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}
+			}
+
+			testManagerClient := operation.NewManagerClient("")
+			testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+			op, err := tc.call(testManagerClient)
+
+			assert.Error(tt, err)
+			assert.Nil(tt, op)
+		})
+
+		t.Run(tc.name+"InvalidResponsePayload", func(tt *testing.T) {
+			mockTransport := func(req *http.Request) *http.Response {
+				return &http.Response{
+					StatusCode: 200,
+					Status:     "200 OK",
+					Body:       io.NopCloser(bytes.NewBufferString(`OK`)),
+					Header:     make(http.Header),
+				}
+			}
+
+			testManagerClient := operation.NewManagerClient("")
+			testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+			op, err := tc.call(testManagerClient)
+
+			assert.Error(tt, err)
+			assert.Nil(tt, op)
+		})
+	}
 }
