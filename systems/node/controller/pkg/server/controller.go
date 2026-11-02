@@ -339,8 +339,9 @@ func (c *ControllerServer) failOperation(op *copr.OperationInfo, actionType, rea
 	if c.opManager == nil || op == nil || op.Id == "" {
 		return
 	}
-	if _, err := c.opManager.ForceUnlock(op.Id, pkg.ServiceName, reason); err != nil {
-		log.Errorf("%s failed to force unlock operation %s: %v", actionType, op.Id, err)
+	if _, err := c.opManager.Fail(op.Id, op.FencingToken, pkg.ServiceName,
+		reason); err != nil {
+		log.Errorf("%s failed to fail operation %s: %v", actionType, op.Id, err)
 	}
 }
 
@@ -354,7 +355,8 @@ func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType 
 	if c.opManager == nil || op == nil || op.Id == "" {
 		return opmgrpb.OperationStatus_RUNNING.String()
 	}
-	if _, err := c.opManager.Complete(op.Id, pkg.ServiceName, "dispatched"); err != nil {
+	if _, err := c.opManager.Complete(op.Id, op.FencingToken, pkg.ServiceName,
+		"dispatched"); err != nil {
 		log.Errorf("%s failed to complete operation %s (lock frees at deadline): %v", actionType, op.Id, err)
 		return opmgrpb.OperationStatus_RUNNING.String()
 	}
