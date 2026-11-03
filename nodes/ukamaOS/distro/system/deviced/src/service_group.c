@@ -34,6 +34,7 @@ struct ServiceGroup {
     Config *config;
     pthread_t worker;
     bool stopping;
+    bool starting;
     bool healthy;
     bool held;
     uint64_t watchdogAt;
@@ -137,6 +138,7 @@ static void request_off(ServiceGroup *group, const char *reason) {
     ControlSubsysState *state = &control->Service;
 
     unlink(service_lease_path());
+    group->starting = false;
     state->Desired = CONTROL_STATE_OFF;
     state->Phase   = CONTROL_PHASE_PENDING;
     state->Token++;
@@ -260,7 +262,19 @@ static void *group_worker(void *arg) {
 
         token        = state->Token;
         enabled      = state->Desired == CONTROL_STATE_ON;
-        state->Phase = CONTROL_PHASE_EXECUTING;
+
+        if (!enabled && group->starting &&
+            service_clock_msec() >= group->deadline) {
+            group->starting = false;
+            state->Phase    = CONTROL_PHASE_FAULT;
+
+            if (control->Active == CONTROL_SUBSYS_SERVICE) {
+                control->Active = CONTROL_SUBSYS_NONE;
+            }
+        } else if (state->Phase != CONTROL_PHASE_FAULT) {
+            state->Phase = CONTROL_PHASE_EXECUTING;
+        }
+
         pthread_mutex_unlock(&control->Lock);
 
         ok = enabled ? enable_group(group, token) : disable_group(group);
@@ -269,6 +283,7 @@ static void *group_worker(void *arg) {
 
         if (state->Token == token) {
             if (ok) {
+                group->starting = false;
                 state->Current = enabled ? CONTROL_STATE_ON : CONTROL_STATE_OFF;
                 state->Phase   = CONTROL_PHASE_IDLE;
 
@@ -279,8 +294,10 @@ static void *group_worker(void *arg) {
                 group->deadline = 0;
             } else if (enabled) {
                 request_off(group, "service_on_failed");
-            } else {
-                state->Phase = CONTROL_PHASE_FAULT;
+            } else if (!group->starting ||
+                       service_clock_msec() >= group->deadline) {
+                group->starting = false;
+                state->Phase    = CONTROL_PHASE_FAULT;
 
                 if (control->Active == CONTROL_SUBSYS_SERVICE) {
                     control->Active = CONTROL_SUBSYS_NONE;
@@ -363,6 +380,7 @@ bool service_group_start(Config *config) {
     config->control->Service.Token =
         (uint64_t)now.tv_sec * CLOCK_NSEC_PER_SEC + now.tv_nsec;
     request_off(group, "startup");
+    group->starting = true;
 
     if (pthread_create(&group->worker, NULL, group_worker, group) != 0) {
         config->serviceGroup = NULL;
