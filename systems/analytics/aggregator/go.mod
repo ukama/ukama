@@ -12,7 +12,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
-	github.com/sirupsen/logrus v1.10.1
+	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/ukama/ukama/systems/analytics/schema v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
