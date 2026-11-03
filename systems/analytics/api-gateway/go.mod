@@ -14,7 +14,7 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/loopfz/gadgeto v0.11.6
-	github.com/sirupsen/logrus v1.10.2
+	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.1
 	github.com/ukama/ukama/systems/analytics/aggregator v0.0.0-00010101000000-000000000000
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
