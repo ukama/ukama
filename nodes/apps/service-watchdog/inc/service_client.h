@@ -21,9 +21,9 @@
 #define ENV_EPC_URL     "UKAMA_EPC_URL"
 #define ENV_EPC_KIND    "UKAMA_EPC_KIND"
 
-#define DEF_NETWORK_URL "http://127.0.0.1:18091/v1"
-#define DEF_PCRF_URL    "http://127.0.0.1:18030/v1"
-#define DEF_EPCEMU_URL  "http://127.0.0.1:18028/v1"
+#define DEF_SERVICE_URL_FORMAT "http://127.0.0.1:%d/v1"
+#define MIN_SERVICE_PORT       1
+#define MAX_SERVICE_PORT       65535
 
 #define EPC_KIND_REAL       "epc"
 #define EPC_KIND_EMULATED   "epcemu"

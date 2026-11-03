@@ -14,6 +14,8 @@
 
 #include "service_api.h"
 #include "service_client.h"
+#include "usys_file.h"
+#include "usys_services.h"
 
 #define RESPONSE_LIMIT    (1024 * 1024)
 #define HTTP_CONNECT_MSEC 1000L
@@ -137,9 +139,12 @@ done:
 bool service_peers_init(ServicePeer peers[SERVICE_MEMBER_COUNT]) {
 
     const char *names[]    = {ENV_NETWORK_URL, ENV_PCRF_URL, ENV_EPC_URL};
-    const char *defaults[] = {DEF_NETWORK_URL, DEF_PCRF_URL, DEF_EPCEMU_URL};
+    char *services[]       = {SERVICE_INIT_NETWORK, SERVICE_PCRF,
+                              SERVICE_EPCEMU};
     const char *value;
     const char *kind;
+    char defaultUrl[SERVICE_URL_LEN];
+    int port;
     size_t i;
 
     kind = getenv(ENV_EPC_KIND);
@@ -153,7 +158,18 @@ bool service_peers_init(ServicePeer peers[SERVICE_MEMBER_COUNT]) {
         value = getenv(names[i]);
 
         if (value == NULL) {
-            value = defaults[i];
+            port = usys_find_service_port(services[i]);
+
+            if (port < MIN_SERVICE_PORT || port > MAX_SERVICE_PORT) {
+                fprintf(stderr, "Cannot resolve service port: %s\n",
+                        services[i]);
+
+                return false;
+            }
+
+            snprintf(defaultUrl, sizeof(defaultUrl), DEF_SERVICE_URL_FORMAT,
+                     port);
+            value = defaultUrl;
         }
 
         if (strncmp(value, HTTP_SCHEME, sizeof(HTTP_SCHEME) - 1) != 0 ||

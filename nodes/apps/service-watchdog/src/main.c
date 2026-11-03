@@ -16,11 +16,10 @@
 #include <ulfius.h>
 
 #include "service_api.h"
+#include "usys_file.h"
+#include "usys_services.h"
 #include "version.h"
 #include "watchdog.h"
-
-#include "usys_services.h"
-#include "usys_file.h"
 
 typedef struct {
     ServicePeer peers[SERVICE_MEMBER_COUNT];
@@ -54,10 +53,8 @@ static void stop(int signalNumber) {
 static bool load_configuration(WatchdogConfig *config) {
 
     const char *base;
-    const char *portText;
     char defaultBase[SERVICE_URL_LEN];
-    char *end;
-    long port = DEF_WATCHDOG_PORT;
+    int port;
 
     if (!service_peers_init(config->peers)) {
         return false;
@@ -66,8 +63,17 @@ static bool load_configuration(WatchdogConfig *config) {
     base = getenv(ENV_DEVICE_URL);
 
     if (base == NULL) {
+        port = usys_find_service_port(SERVICE_DEVICE);
+
+        if (port < MIN_SERVICE_PORT || port > MAX_SERVICE_PORT) {
+            fprintf(stderr, "Cannot resolve service port: %s\n",
+                    SERVICE_DEVICE);
+
+            return false;
+        }
+
         snprintf(defaultBase, sizeof(defaultBase), DEF_DEVICE_URL_FORMAT,
-                 usys_find_service_port(SERVICE_DEVICE));
+                 port);
         base = defaultBase;
     }
 
@@ -76,18 +82,15 @@ static bool load_configuration(WatchdogConfig *config) {
         return false;
     }
 
-    portText = getenv(ENV_WATCHDOG_PORT);
+    port = usys_find_service_port(SERVICE_NAME);
 
-    if (portText != NULL) {
-        port = strtol(portText, &end, DECIMAL_BASE);
+    if (port < MIN_SERVICE_PORT || port > MAX_SERVICE_PORT) {
+        fprintf(stderr, "Cannot resolve service port: %s\n", SERVICE_NAME);
 
-        if (*end != '\0' || port < MIN_SERVICE_PORT ||
-            port > MAX_SERVICE_PORT) {
-            return false;
-        }
+        return false;
     }
 
-    config->port = (int)port;
+    config->port = port;
     snprintf(config->stateUrl, sizeof(config->stateUrl), "%s%s", base,
              DEVICE_API_STATE);
     snprintf(config->reportUrl, sizeof(config->reportUrl), "%s%s", base,
