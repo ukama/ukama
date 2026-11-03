@@ -236,7 +236,7 @@ func (r *Runner) compute(kpi schema.KpiSpec, windowID int64) error {
 		return err
 	}
 
-	if len(rows) == 0 {
+	if len(rows) == 0 && kpi.Kind != schema.KindFlow {
 		// The algo ran but matched nothing — e.g. no tnode/anode carries both
 		// site_id and network_id, so the uptime algos build no sites. The
 		// window is still marked computed, so without this the KPI just never

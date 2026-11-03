@@ -43,6 +43,9 @@ type Engine struct {
 	stop             chan struct{}
 	wg               sync.WaitGroup
 
+	wake       map[string]chan struct{}
+	dependents map[string][]string
+
 	// horizon is the oldest window each dataset's previous tick scanned.
 	mu      sync.Mutex
 	horizon map[string]int64
@@ -54,6 +57,19 @@ func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
 	stages, err := schema.OrderPulls(specs)
 	if err != nil {
 		return nil, err
+	}
+
+	wake := map[string]chan struct{}{}
+	dependents := map[string][]string{}
+
+	for _, stage := range stages {
+		for _, pull := range stage {
+			wake[pull.Key] = make(chan struct{}, 1)
+
+			for _, dep := range pull.Dependencies() {
+				dependents[dep] = append(dependents[dep], pull.Key)
+			}
+		}
 	}
 
 	return &Engine{
@@ -68,6 +84,8 @@ func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
 		catchup:          catchup,
 		windowReadyRoute: msgbus.PrepareRoute(org, schema.WindowReadyRoute),
 		stop:             make(chan struct{}),
+		wake:             wake,
+		dependents:       dependents,
 		horizon:          map[string]int64{},
 	}, nil
 }
@@ -109,8 +127,18 @@ func (e *Engine) runDataset(pull schema.PullSpec) {
 
 		select {
 		case <-ticker.C:
+		case <-e.wake[pull.Key]:
 		case <-e.stop:
 			return
+		}
+	}
+}
+
+func (e *Engine) wakeDependents(key string) {
+	for _, dep := range e.dependents[key] {
+		select {
+		case e.wake[dep] <- struct{}{}:
+		default:
 		}
 	}
 }
@@ -186,15 +214,14 @@ func (e *Engine) reportAbandoned(key string, oldest int64) {
 }
 
 func (e *Engine) processWindow(pull schema.PullSpec, windowID int64) error {
-	// A for_each child needs its parent pulled for the same window first.
-	if pull.ForEach != nil {
-		parentStatus, err := e.ledger.Status(e.org, schema.LedgerKindDataset, pull.ForEach.Dataset, windowID)
+	for _, dep := range pull.Dependencies() {
+		status, err := e.ledger.Status(e.org, schema.LedgerKindDataset, dep, windowID)
 		if err != nil {
 			return err
 		}
 
-		if parentStatus != schema.StatusPulled {
-			return nil // parent pending; retried next tick
+		if status != schema.StatusPulled {
+			return nil
 		}
 	}
 
@@ -230,6 +257,7 @@ func (e *Engine) processWindow(pull schema.PullSpec, windowID int64) error {
 
 	log.Infof("dataset %s window %d pulled (%d records)", pull.Key, windowID, n)
 
+	e.wakeDependents(pull.Key)
 	e.publishWindowReady(pull.Key, windowID)
 
 	return nil
