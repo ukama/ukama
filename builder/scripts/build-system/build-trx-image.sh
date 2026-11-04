@@ -191,10 +191,9 @@ fi
 
 if [[ -z "$BAND_CFG" ]]; then
     if [[ "$MODE" == "FDD" ]]; then
-        BAND_CFG="startup_band3_20Mhz.cfg"
+        BAND_CFG="startup_B1.cfg"
     else
-        log ERROR "No default TDD band config, set BAND_CFG"
-        exit 1
+        BAND_CFG="startup_B41.cfg"
     fi
 fi
 
