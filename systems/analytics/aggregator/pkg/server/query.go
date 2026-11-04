@@ -289,12 +289,26 @@ func (s *AggregatorServer) queryTotal(kpi schema.KpiSpec, op string, grain []str
 
 		prev, _, err = s.totalFromRollups(kpi, op, grain, filter, rng.calendarSpan, rng.prevFrom, rng.prevTo)
 	} else {
+		floor, bounded := s.windowFloor(now)
+		if bounded && rng.from.Before(floor) {
+			return nil, status.Errorf(codes.OutOfRange,
+				"range starts %s, before the oldest retained kpi window (%s); use granularity day|week|month for older periods",
+				rng.from.UTC().Format(time.RFC3339), floor.Format(time.RFC3339))
+		}
+
 		cur, err = s.totalFromWindows(kpi, op, grain, filter, rng.from, rng.to)
 		if err != nil {
 			return nil, err
 		}
 
-		prev, err = s.totalFromWindows(kpi, op, grain, filter, rng.prevFrom, rng.prevTo)
+		// A previous range that crosses the retention floor would compare
+		// against a partial total, so the trend is dropped instead.
+		if bounded && rng.prevFrom.Before(floor) {
+			prev = map[string]float64{}
+		} else {
+			prev, err = s.totalFromWindows(kpi, op, grain, filter, rng.prevFrom, rng.prevTo)
+		}
+
 		partial = nil // window folds include the in-progress window: always partial
 	}
 
@@ -350,6 +364,15 @@ func (s *AggregatorServer) totalFromRollups(kpi schema.KpiSpec, op string, grain
 	}
 
 	return values, partial, nil
+}
+
+// windowFloor is the oldest instant kpi_windows still covers, when retention is on.
+func (s *AggregatorServer) windowFloor(now time.Time) (time.Time, bool) {
+	if s.keep <= 0 {
+		return time.Time{}, false
+	}
+
+	return s.grid.WindowAt(now.Add(-s.keep)).Start.UTC(), true
 }
 
 // totalFromWindows folds kpi_windows components over [from, to) to the grain.
