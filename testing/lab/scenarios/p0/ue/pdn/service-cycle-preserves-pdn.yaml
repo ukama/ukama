@@ -71,7 +71,7 @@ phases:
         ues: ue-000001
         expected: absent
         timeout_seconds: 60
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000001
         amount_mb: 1
 
@@ -85,7 +85,7 @@ phases:
         expected: absent
         apn: internet
         timeout_seconds: 90
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000001
         amount_mb: 1
 

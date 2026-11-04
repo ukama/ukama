@@ -531,8 +531,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err, "KPI checks require key");
             }
             if (check->type == CHECK_KPI_VALUE &&
-                !check->has_expected_value) {
-                return fail(err, "kpi_value requires expected_value");
+                !check->has_expected_value &&
+                !ulab_streq(check->expected, "previous")) {
+                return fail(err,
+                            "kpi_value requires expected_value or expected: previous");
             }
             if (check->type == CHECK_PERFORMANCE_REPORT_CELL &&
                 (check->report[0] == '\0' || check->column[0] == '\0' ||

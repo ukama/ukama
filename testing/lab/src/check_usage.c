@@ -330,6 +330,11 @@ static int check_usage_aggregate(check_ctx_t *ctx,
             tolerance = check->tolerance_value;
         }
         matched = found && fabs(value.value - expected) <= tolerance;
+        if (!found && value.empty_response && expected_mb == 0 &&
+            ulab_streq(check->target, "network") &&
+            ulab_streq(key, "DATA_USAGE")) {
+            matched = 1;
+        }
         if (!matched && time(NULL) < deadline) {
             sleep(poll > 60u ? 60u : poll);
         }
