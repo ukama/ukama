@@ -1,0 +1,15 @@
+#!/bin/sh
+echo "Configuring Autoneg for emthernet."
+devmem 0x00011800B0001000 64 0x0140
+readValue=`devmem 0x00011800B0001000 64`
+echo "Ethernet Autoneg config is $readValue "
+if [ -e /mnt/app/init.d ];then
+        cp /mnt/app/init.d/* /etc/init.d/
+fi
+cp /mnt/app/bringup /usr/bin
+
+cp /mnt/app/gpsGetLoc.sh /usr/bin
+
+cp /mnt/app/ad9362_init_zen20Mhz.txt /usr/bin
+
+cp /mnt/app/xoservo.sh /usr/bin/xoservo.sh

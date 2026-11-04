@@ -1,0 +1,38 @@
+#!/bin/sh
+source /tmp/system.conf
+
+#### RF driver Check parameters
+
+if [ -z $BW ];then BW=10;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : BW $BW *****";fi
+if [ -z $RXFREQ ];then RXFREQ=710;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : RXFREQ $RXFREQ *****";fi
+if [ -z $TXFREQ ];then TXFREQ=740;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : TXFREQ $TXFREQ *****";fi
+if [ -z $ATTEN1 ];then ATTEN1=20;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : ATTEN1 $ATTEN1 *****";fi
+if [ -z $ATTEN2 ];then ATTEN2=20;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : ATTEN2 $ATTEN2 *****";fi
+if [ -z $GAIN1 ];then GAIN1=30;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : GAIN1 $GAIN1 *****";fi
+if [ -z $GAIN2 ];then GAIN2=30;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : GAIN2 $GAIN2 *****";fi
+if [ -z $PWMREGHIGH ];then PWMREGHIGH=0x7600;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : PWMREGHIGH $PWMREGHIGH *****";fi
+if [ -z $PWMREGLOW ];then PWMREGLOW=0x9200;echo "[RC.SYSINIT] ***** VERIFY DEFAULT VALUE USED : PWMREGLOW $PWMREGLOW *****";fi
+
+
+if [ "$CALLSIM" != "1" ];then
+
+    #1 < TCXO control >
+    if [ "$TCXO" == "pwm" ];then
+	echo "Enabling PWM "
+	echo "Setting PWM registers  : $PWMREGHIGH , $PWMREGLOW"
+	oncpu 0 /usr/bin/cn_rfdriver adi << EOF
+	pwm h $PWMREGHIGH l $PWMREGLOW e r q
+EOF
+    else ## dac or dac16
+	if [ -z $DAC_OFFSET ];then DAC_OFFSET=800;echo "[$0] ***** VERIFY DEFAULT VALUE USED : DAC_OFFSET $DAC_OFFSET *****";fi	
+	if [  "$TCXO" == "dac" ];then
+	    echo "[$0] Setting DAC offset :0x$DAC_OFFSET"
+	    oncpu 0 /usr/bin/ad5621Tester $DAC_OFFSET 
+        else # "$TCXO" == "dac16"
+            oncpu 0 /usr/bin/cn_rfdriver adi << EOF
+            dax $DAC_OFFSET q
+EOF
+        fi
+    fi
+fi
+

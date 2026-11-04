@@ -1,0 +1,2567 @@
+CVMX_SHARED: 0x1200e0000-0x1200f0000
+WARNING:
+Parameter checks are enabled. Expect some performance loss due to the extra checking
+WARNING:
+CSR address checks are enabled. Expect some performance loss due to the extra checking
+WARNING:
+POW state checks are enabled. Expect some performance loss due to the extra checking
+Active coremask = 0x1
+[RFIC_CTRL] Reset RFIF and RFSPI
+[RFIC_CTRL] Configure RFSPI Core
+
+[RF_Ctrl] RFIC Initialize Start!
+
+[RF_Ctrl] RFIC ADI INIT Reg Initialize Start!
+SPIWrite        3DF,  1
+SPIWrite        295, 14
+SPIWrite        2A6,  E
+SPIWrite        2A8,  E
+SPIWrite        292, 20
+SPIWrite        293, 80
+SPIWrite        294,  0
+SPIWrite        2AB,  7
+SPIWrite        2AC, FF
+SPIWrite          9, 17
+WAIT    20
+[RF_Ctrl] RFIC ADI INIT Reg Initialize Success!
+
+[RF_Ctrl] RFIC BB PLL Reg Initialize Start!
+SPIWrite         45,  0
+SPIWrite         46,  5
+SPIWrite         48, E8
+SPIWrite         49, 5B
+SPIWrite         4A, 35
+SPIWrite         4B, E0
+SPIWrite         4E, 10
+SPIWrite         43,  0
+SPIWrite         42,  0
+SPIWrite         41,  0
+SPIWrite         44, 20
+SPIWrite         3F,  5
+SPIWrite         3F,  1
+SPIWrite         4C, 86
+SPIWrite         4D,  1
+SPIWrite         4D,  5
+WAIT    20
+SPIWrite          2, CE
+SPIWrite          3, DE
+SPIWrite          4, 03
+SPIWrite          A, 09
+[RF_Ctrl] RFIC BB PLL Reg Initialize Success!
+
+//************************************************************
+// Program Tx FIR: C:\Program Files (x86)\Analog Devices\AD9361
+// Evaluation Software v2.1.1 (64-bit)\DigitalFilters\LTE20_MHz.ftr
+//************************************************************
+SPIWrite        065,FA  // Enable clock to Tx FIR Filter and set Filter gain Setting
+WAIT    1       // waits 1 ms
+SPIWrite        060,00  // Write FIR coefficient address
+SPIWrite        061,FB  // Write FIR coefficient data[7:0]
+SPIWrite        062,FF  // Write FIR coefficient data[15:8]
+SPIWrite        065,FE  // Set Write EN to push data into FIR filter register map
+SPIWrite        064,00  // Write to Read only register to delay ~1us
+SPIWrite        064,00  // Write to Read only register to delay ~1us
+SPIWrite        060,01
+SPIWrite        061,00
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,02
+SPIWrite        061,04
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,03
+SPIWrite        061,17
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,04
+SPIWrite        061,24
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,05
+SPIWrite        061,28
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,06
+SPIWrite        061,12
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,07
+SPIWrite        061,F3
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,08
+SPIWrite        061,DC
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,09
+SPIWrite        061,E6
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0A
+SPIWrite        061,0B
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0B
+SPIWrite        061,30
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0C
+SPIWrite        061,2E
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0D
+SPIWrite        061,FE
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0E
+SPIWrite        061,C4
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,0F
+SPIWrite        061,B8
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,10
+SPIWrite        061,F0
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,11
+SPIWrite        061,45
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,12
+SPIWrite        061,68
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,13
+SPIWrite        061,2B
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,14
+SPIWrite        061,B6
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,15
+SPIWrite        061,72
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,16
+SPIWrite        061,AE
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,17
+SPIWrite        061,47
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,18
+SPIWrite        061,B8
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,19
+SPIWrite        061,88
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1A
+SPIWrite        061,C8
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1B
+SPIWrite        061,1C
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1C
+SPIWrite        061,33
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1D
+SPIWrite        061,1A
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1E
+SPIWrite        061,10
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,1F
+SPIWrite        061,23
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,20
+SPIWrite        061,19
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,21
+SPIWrite        061,C9
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,22
+SPIWrite        061,75
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,23
+SPIWrite        061,9A
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,24
+SPIWrite        061,55
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,25
+SPIWrite        061,07
+SPIWrite        062,02
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,26
+SPIWrite        061,D3
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,27
+SPIWrite        061,9C
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,28
+SPIWrite        061,69
+SPIWrite        062,FD
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,29
+SPIWrite        061,97
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2A
+SPIWrite        061,5D
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2B
+SPIWrite        061,3D
+SPIWrite        062,03
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2C
+SPIWrite        061,34
+SPIWrite        062,02
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2D
+SPIWrite        061,CD
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2E
+SPIWrite        061,02
+SPIWrite        062,FC
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,2F
+SPIWrite        061,B7
+SPIWrite        062,FC
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,30
+SPIWrite        061,D7
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,31
+SPIWrite        061,E3
+SPIWrite        062,04
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,32
+SPIWrite        061,CA
+SPIWrite        062,04
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,33
+SPIWrite        061,D5
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,34
+SPIWrite        061,00
+SPIWrite        062,FA
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,35
+SPIWrite        061,FF
+SPIWrite        062,F8
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,36
+SPIWrite        061,F4
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,37
+SPIWrite        061,89
+SPIWrite        062,07
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,38
+SPIWrite        061,A8
+SPIWrite        062,0A
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,39
+SPIWrite        061,69
+SPIWrite        062,03
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3A
+SPIWrite        061,C3
+SPIWrite        062,F5
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3B
+SPIWrite        061,92
+SPIWrite        062,ED
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3C
+SPIWrite        061,90
+SPIWrite        062,F6
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3D
+SPIWrite        061,B4
+SPIWrite        062,12
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3E
+SPIWrite        061,9E
+SPIWrite        062,36
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,3F
+SPIWrite        061,9C
+SPIWrite        062,4F
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,40
+SPIWrite        061,9C
+SPIWrite        062,4F
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,41
+SPIWrite        061,9E
+SPIWrite        062,36
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,42
+SPIWrite        061,B4
+SPIWrite        062,12
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,43
+SPIWrite        061,90
+SPIWrite        062,F6
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,44
+SPIWrite        061,92
+SPIWrite        062,ED
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,45
+SPIWrite        061,C3
+SPIWrite        062,F5
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,46
+SPIWrite        061,69
+SPIWrite        062,03
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,47
+SPIWrite        061,A8
+SPIWrite        062,0A
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,48
+SPIWrite        061,89
+SPIWrite        062,07
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,49
+SPIWrite        061,F4
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4A
+SPIWrite        061,FF
+SPIWrite        062,F8
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4B
+SPIWrite        061,00
+SPIWrite        062,FA
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4C
+SPIWrite        061,D5
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4D
+SPIWrite        061,CA
+SPIWrite        062,04
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4E
+SPIWrite        061,E3
+SPIWrite        062,04
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,4F
+SPIWrite        061,D7
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,50
+SPIWrite        061,B7
+SPIWrite        062,FC
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,51
+SPIWrite        061,02
+SPIWrite        062,FC
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,52
+SPIWrite        061,CD
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,53
+SPIWrite        061,34
+SPIWrite        062,02
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,54
+SPIWrite        061,3D
+SPIWrite        062,03
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,55
+SPIWrite        061,5D
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,56
+SPIWrite        061,97
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,57
+SPIWrite        061,69
+SPIWrite        062,FD
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,58
+SPIWrite        061,9C
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,59
+SPIWrite        061,D3
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5A
+SPIWrite        061,07
+SPIWrite        062,02
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5B
+SPIWrite        061,55
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5C
+SPIWrite        061,9A
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5D
+SPIWrite        061,75
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5E
+SPIWrite        061,C9
+SPIWrite        062,FE
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,5F
+SPIWrite        061,19
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,60
+SPIWrite        061,23
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,61
+SPIWrite        061,10
+SPIWrite        062,01
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,62
+SPIWrite        061,1A
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,63
+SPIWrite        061,33
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,64
+SPIWrite        061,1C
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,65
+SPIWrite        061,C8
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,66
+SPIWrite        061,88
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,67
+SPIWrite        061,B8
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,68
+SPIWrite        061,47
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,69
+SPIWrite        061,AE
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6A
+SPIWrite        061,72
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6B
+SPIWrite        061,B6
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6C
+SPIWrite        061,2B
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6D
+SPIWrite        061,68
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6E
+SPIWrite        061,45
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,6F
+SPIWrite        061,F0
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,70
+SPIWrite        061,B8
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,71
+SPIWrite        061,C4
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,72
+SPIWrite        061,FE
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,73
+SPIWrite        061,2E
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,74
+SPIWrite        061,30
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,75
+SPIWrite        061,0B
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,76
+SPIWrite        061,E6
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,77
+SPIWrite        061,DC
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,78
+SPIWrite        061,F3
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,79
+SPIWrite        061,12
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7A
+SPIWrite        061,28
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7B
+SPIWrite        061,24
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7C
+SPIWrite        061,17
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7D
+SPIWrite        061,04
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7E
+SPIWrite        061,00
+SPIWrite        062,00
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        060,7F
+SPIWrite        061,FB
+SPIWrite        062,FF
+SPIWrite        065,FE
+SPIWrite        064,00
+SPIWrite        064,00
+SPIWrite        065,F8  // Disable clock to Tx Filter
+
+//************************************************************
+// Program Rx FIR: C:\Program Files (x86)\Analog Devices\AD9361
+// Evaluation Software v2.1.1 (64-bit)\DigitalFilters\LTE20_MHz.ftr
+//************************************************************
+SPIWrite        0F5,FA  // Enable clock to Rx FIR Filter
+SPIWrite        0F6,02  // Write Filter Gain setting
+WAIT    1       // waits 1 ms
+SPIWrite        0F0,00  // Write FIR coefficient address
+SPIWrite        0F1,31  // Write FIR coefficient data[7:0]
+SPIWrite        0F2,00  // Write FIR coefficient data[15:8]
+SPIWrite        0F5,FE  // Set Write EN to push data into FIR filter register map
+SPIWrite        0F4,00  // Dummy Write to Read only register to delay ~1us
+SPIWrite        0F4,00  // Dummy Write to Read only register to delay ~1us
+SPIWrite        0F0,01
+SPIWrite        0F1,D9
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,02
+SPIWrite        0F1,8E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,03
+SPIWrite        0F1,3E
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,04
+SPIWrite        0F1,39
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,05
+SPIWrite        0F1,32
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,06
+SPIWrite        0F1,47
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,07
+SPIWrite        0F1,9E
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,08
+SPIWrite        0F1,BF
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,09
+SPIWrite        0F1,87
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0A
+SPIWrite        0F1,8A
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0B
+SPIWrite        0F1,5E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0C
+SPIWrite        0F1,9B
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0D
+SPIWrite        0F1,53
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0E
+SPIWrite        0F1,72
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,0F
+SPIWrite        0F1,3B
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,10
+SPIWrite        0F1,C7
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,11
+SPIWrite        0F1,CB
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,12
+SPIWrite        0F1,FF
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,13
+SPIWrite        0F1,30
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,14
+SPIWrite        0F1,F2
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,15
+SPIWrite        0F1,B3
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,16
+SPIWrite        0F1,C4
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,17
+SPIWrite        0F1,51
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,18
+SPIWrite        0F1,B0
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,19
+SPIWrite        0F1,66
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1A
+SPIWrite        0F1,77
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1B
+SPIWrite        0F1,DB
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1C
+SPIWrite        0F1,4E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1D
+SPIWrite        0F1,AE
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1E
+SPIWrite        0F1,A9
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,1F
+SPIWrite        0F1,24
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,20
+SPIWrite        0F1,4B
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,21
+SPIWrite        0F1,CD
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,22
+SPIWrite        0F1,3F
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,23
+SPIWrite        0F1,92
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,24
+SPIWrite        0F1,B9
+SPIWrite        0F2,02
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,25
+SPIWrite        0F1,89
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,26
+SPIWrite        0F1,C7
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,27
+SPIWrite        0F1,D0
+SPIWrite        0F2,FC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,28
+SPIWrite        0F1,84
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,29
+SPIWrite        0F1,9B
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2A
+SPIWrite        0F1,88
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2B
+SPIWrite        0F1,9A
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2C
+SPIWrite        0F1,59
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2D
+SPIWrite        0F1,53
+SPIWrite        0F2,FC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2E
+SPIWrite        0F1,1F
+SPIWrite        0F2,FB
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,2F
+SPIWrite        0F1,47
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,30
+SPIWrite        0F1,84
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,31
+SPIWrite        0F1,53
+SPIWrite        0F2,06
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,32
+SPIWrite        0F1,AF
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,33
+SPIWrite        0F1,1E
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,34
+SPIWrite        0F1,06
+SPIWrite        0F2,F8
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,35
+SPIWrite        0F1,79
+SPIWrite        0F2,F9
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,36
+SPIWrite        0F1,78
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,37
+SPIWrite        0F1,F6
+SPIWrite        0F2,09
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,38
+SPIWrite        0F1,FD
+SPIWrite        0F2,0A
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,39
+SPIWrite        0F1,74
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3A
+SPIWrite        0F1,21
+SPIWrite        0F2,F3
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3B
+SPIWrite        0F1,34
+SPIWrite        0F2,EC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3C
+SPIWrite        0F1,20
+SPIWrite        0F2,F7
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3D
+SPIWrite        0F1,58
+SPIWrite        0F2,14
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3E
+SPIWrite        0F1,13
+SPIWrite        0F2,38
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,3F
+SPIWrite        0F1,78
+SPIWrite        0F2,50
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,40
+SPIWrite        0F1,78
+SPIWrite        0F2,50
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,41
+SPIWrite        0F1,13
+SPIWrite        0F2,38
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,42
+SPIWrite        0F1,58
+SPIWrite        0F2,14
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,43
+SPIWrite        0F1,20
+SPIWrite        0F2,F7
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,44
+SPIWrite        0F1,34
+SPIWrite        0F2,EC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,45
+SPIWrite        0F1,21
+SPIWrite        0F2,F3
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,46
+SPIWrite        0F1,74
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,47
+SPIWrite        0F1,FD
+SPIWrite        0F2,0A
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,48
+SPIWrite        0F1,F6
+SPIWrite        0F2,09
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,49
+SPIWrite        0F1,78
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4A
+SPIWrite        0F1,79
+SPIWrite        0F2,F9
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4B
+SPIWrite        0F1,06
+SPIWrite        0F2,F8
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4C
+SPIWrite        0F1,1E
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4D
+SPIWrite        0F1,AF
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4E
+SPIWrite        0F1,53
+SPIWrite        0F2,06
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,4F
+SPIWrite        0F1,84
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,50
+SPIWrite        0F1,47
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,51
+SPIWrite        0F1,1F
+SPIWrite        0F2,FB
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,52
+SPIWrite        0F1,53
+SPIWrite        0F2,FC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,53
+SPIWrite        0F1,59
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,54
+SPIWrite        0F1,9A
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,55
+SPIWrite        0F1,88
+SPIWrite        0F2,03
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,56
+SPIWrite        0F1,9B
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,57
+SPIWrite        0F1,84
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,58
+SPIWrite        0F1,D0
+SPIWrite        0F2,FC
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,59
+SPIWrite        0F1,C7
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5A
+SPIWrite        0F1,89
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5B
+SPIWrite        0F1,B9
+SPIWrite        0F2,02
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5C
+SPIWrite        0F1,92
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5D
+SPIWrite        0F1,3F
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5E
+SPIWrite        0F1,CD
+SPIWrite        0F2,FD
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,5F
+SPIWrite        0F1,4B
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,60
+SPIWrite        0F1,24
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,61
+SPIWrite        0F1,A9
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,62
+SPIWrite        0F1,AE
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,63
+SPIWrite        0F1,4E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,64
+SPIWrite        0F1,DB
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,65
+SPIWrite        0F1,77
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,66
+SPIWrite        0F1,66
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,67
+SPIWrite        0F1,B0
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,68
+SPIWrite        0F1,51
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,69
+SPIWrite        0F1,C4
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6A
+SPIWrite        0F1,B3
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6B
+SPIWrite        0F1,F2
+SPIWrite        0F2,FE
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6C
+SPIWrite        0F1,30
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6D
+SPIWrite        0F1,FF
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6E
+SPIWrite        0F1,CB
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,6F
+SPIWrite        0F1,C7
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,70
+SPIWrite        0F1,3B
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,71
+SPIWrite        0F1,72
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,72
+SPIWrite        0F1,53
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,73
+SPIWrite        0F1,9B
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,74
+SPIWrite        0F1,5E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,75
+SPIWrite        0F1,8A
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,76
+SPIWrite        0F1,87
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,77
+SPIWrite        0F1,BF
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,78
+SPIWrite        0F1,9E
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,79
+SPIWrite        0F1,47
+SPIWrite        0F2,FF
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7A
+SPIWrite        0F1,32
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7B
+SPIWrite        0F1,39
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7C
+SPIWrite        0F1,3E
+SPIWrite        0F2,01
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7D
+SPIWrite        0F1,8E
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7E
+SPIWrite        0F1,D9
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F0,7F
+SPIWrite        0F1,31
+SPIWrite        0F2,00
+SPIWrite        0F5,FE
+SPIWrite        0F4,00
+SPIWrite        0F4,00
+SPIWrite        0F5,F8  // Disable clock to Rx Filter
+
+[RF_Ctrl] RFIC Parallel Port Initialize Start!
+SPIWrite         10, CC
+SPIWrite         11,  0
+SPIWrite         12,  0
+SPIWrite          6,  8
+SPIWrite          7,  0
+SPIWrite         3C, 21
+SPIWrite         3D,  0
+SPIWrite         3E,  0
+[RF_Ctrl] RFIC Parallel Port Initialize Success!
+
+[RF_Ctrl] RFIC AUX DAC Initialize Start!
+SPIWrite         18,  0
+SPIWrite         19,  0
+SPIWrite         1A,  0
+SPIWrite         1B,  0
+SPIWrite         23, FF
+SPIWrite         26,  0
+SPIWrite         30,  0
+SPIWrite         31,  0
+SPIWrite         32,  0
+SPIWrite         33,  0
+[RF_Ctrl] RFIC AUX DAC Initialize Success!
+
+[RF_Ctrl] RFIC AUX ADC Initialize Start!
+SPIWrite          B,  0
+SPIWrite          C,  0
+SPIWrite          D,  3
+SPIWrite          F,  4
+SPIWrite         1D,  1
+SPIWrite         1E, 44
+SPIWrite         1F,  0
+[RF_Ctrl] RFIC AUX ADC Initialize Success!
+SPIWrite         35,  0
+SPIWrite         36, FF
+
+[RF_Ctrl] RFIC CONTROL OUT Reg Initialize Start!
+[RF_Ctrl] RFIC CONTROL OUT Reg Initialize Success!
+
+[RF_Ctrl] RFIC GPO Reg Initialize Start!
+SPIWrite         3A, 27
+SPIWrite         20,  0
+SPIWrite         27, E0
+SPIWrite         28,  0
+SPIWrite         29,  0
+SPIWrite         2A,  0
+SPIWrite         2B,  0
+SPIWrite         2C,  0
+SPIWrite         2D,  0
+SPIWrite         2E,  0
+SPIWrite         2F,  0
+SPIWrite        261,  0
+SPIWrite        2A1,  0
+SPIWrite        248,  B
+SPIWrite        288,  B
+SPIWrite        246,  2
+SPIWrite        286,  2
+SPIWrite        249, 8E
+SPIWrite        289, 8E
+SPIWrite        23B, 80
+SPIWrite        27B, 80
+SPIWrite        243,  D
+SPIWrite        283,  D
+SPIWrite        23D,  0
+SPIWrite        27D,  0
+SPIWrite         15,  4
+SPIWrite         14,  5
+SPIWrite         13,  1
+WAIT    5
+SPIWrite        23D,  4
+WAIT    10
+SPIWrite        27D,  4
+WAIT    10
+[RF_Ctrl] RFIC GPO Reg Initialize Success!
+
+[RF_Ctrl] RFIC SynthRx Reg Initialize Start!
+SPIWrite        23A, 4A
+SPIWrite        239, C0
+SPIWrite        242, 17
+SPIWrite        238, 60
+SPIWrite        245,  0
+SPIWrite        251,  D
+SPIWrite        250, 70
+SPIWrite        240,  F
+SPIWrite        23F, E7
+SPIWrite        23E, F3
+SPIWrite        23B, 91
+[RF_Ctrl] RFIC SynthRx Reg Initialize Success!
+
+[RF_Ctrl] RFIC SynthTRx Reg Initialize Start!
+SPIWrite        27A, 4A
+SPIWrite        279, C0
+SPIWrite        282, 17
+SPIWrite        278, 30
+SPIWrite        285,  0
+SPIWrite        291,  D
+SPIWrite        290, 70
+SPIWrite        280,  F
+SPIWrite        27F, E7
+SPIWrite        27E, F3
+SPIWrite        27B, 8F
+SPIWrite        233, A1
+SPIWrite        234, AA
+SPIWrite        235, 53
+SPIWrite        232,  0
+SPIWrite        231, 6F
+SPIWrite          5, 11
+SPIWrite        273, F6
+SPIWrite        274, FF
+SPIWrite        275, 58
+SPIWrite        272,  0
+SPIWrite        271, 89
+SPIWrite          5, 11
+[RF_Ctrl] RFIC SynthTRx Reg Initialize Success!
+
+[RF_Ctrl] RFIC GmSub Reg Initialize Start
+SPIWrite        13F,  2
+SPIWrite        138,  F
+SPIWrite        139, 78
+SPIWrite        13A,  0
+SPIWrite        13B,  0
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  E
+SPIWrite        139, 74
+SPIWrite        13A,  0
+SPIWrite        13B,  D
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  D
+SPIWrite        139, 70
+SPIWrite        13A,  0
+SPIWrite        13B, 15
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  C
+SPIWrite        139, 6C
+SPIWrite        13A,  0
+SPIWrite        13B, 1B
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  B
+SPIWrite        139, 68
+SPIWrite        13A,  0
+SPIWrite        13B, 21
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  A
+SPIWrite        139, 64
+SPIWrite        13A,  0
+SPIWrite        13B, 25
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  9
+SPIWrite        139, 60
+SPIWrite        13A,  0
+SPIWrite        13B, 29
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  8
+SPIWrite        139, 5C
+SPIWrite        13A,  0
+SPIWrite        13B, 2C
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  7
+SPIWrite        139, 58
+SPIWrite        13A,  0
+SPIWrite        13B, 2F
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  6
+SPIWrite        139, 54
+SPIWrite        13A,  0
+SPIWrite        13B, 31
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  5
+SPIWrite        139, 50
+SPIWrite        13A,  0
+SPIWrite        13B, 33
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  4
+SPIWrite        139, 4C
+SPIWrite        13A,  0
+SPIWrite        13B, 34
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  3
+SPIWrite        139, 48
+SPIWrite        13A,  0
+SPIWrite        13B, 35
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  2
+SPIWrite        139, 30
+SPIWrite        13A,  0
+SPIWrite        13B, 3A
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  1
+SPIWrite        139, 18
+SPIWrite        13A,  0
+SPIWrite        13B, 3D
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        138,  0
+SPIWrite        139,  0
+SPIWrite        13A,  0
+SPIWrite        13B, 3E
+SPIWrite        13F,  6
+WAIT    1
+SPIWrite        13F,  2
+SPIWrite        13F,  0
+[RF_Ctrl] RFIC GmSub Reg Initialize Success!
+
+[RF_Ctrl] RFIC Rx Gain Reg Initialize Start!
+SPIWrite        137, 1A
+SPIWrite        130,  0
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  1
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  2
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  3
+SPIWrite        131,  0
+SPIWrite        132,  1
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  4
+SPIWrite        131,  0
+SPIWrite        132,  2
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  5
+SPIWrite        131,  0
+SPIWrite        132,  3
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  6
+SPIWrite        131,  0
+SPIWrite        132,  4
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  7
+SPIWrite        131,  0
+SPIWrite        132,  5
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  8
+SPIWrite        131,  1
+SPIWrite        132,  3
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  9
+SPIWrite        131,  1
+SPIWrite        132,  4
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  A
+SPIWrite        131,  1
+SPIWrite        132,  5
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  B
+SPIWrite        131,  1
+SPIWrite        132,  6
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  C
+SPIWrite        131,  1
+SPIWrite        132,  7
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  D
+SPIWrite        131,  1
+SPIWrite        132,  8
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  E
+SPIWrite        131,  1
+SPIWrite        132,  9
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130,  F
+SPIWrite        131,  1
+SPIWrite        132,  A
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 10
+SPIWrite        131,  1
+SPIWrite        132,  B
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 11
+SPIWrite        131,  1
+SPIWrite        132,  C
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 12
+SPIWrite        131,  1
+SPIWrite        132,  D
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 13
+SPIWrite        131,  1
+SPIWrite        132,  E
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 14
+SPIWrite        131,  2
+SPIWrite        132,  9
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 15
+SPIWrite        131,  2
+SPIWrite        132,  A
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 16
+SPIWrite        131,  2
+SPIWrite        132,  B
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 17
+SPIWrite        131,  2
+SPIWrite        132,  C
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 18
+SPIWrite        131,  2
+SPIWrite        132,  D
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 19
+SPIWrite        131,  2
+SPIWrite        132,  E
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1A
+SPIWrite        131,  2
+SPIWrite        132,  F
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1B
+SPIWrite        131,  2
+SPIWrite        132, 10
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1C
+SPIWrite        131,  2
+SPIWrite        132, 2B
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1D
+SPIWrite        131,  2
+SPIWrite        132, 2C
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1E
+SPIWrite        131,  4
+SPIWrite        132, 28
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 1F
+SPIWrite        131,  4
+SPIWrite        132, 29
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 20
+SPIWrite        131,  4
+SPIWrite        132, 2A
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 21
+SPIWrite        131,  4
+SPIWrite        132, 2B
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 22
+SPIWrite        131, 24
+SPIWrite        132, 20
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 23
+SPIWrite        131, 24
+SPIWrite        132, 21
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 24
+SPIWrite        131, 44
+SPIWrite        132, 20
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 25
+SPIWrite        131, 44
+SPIWrite        132, 21
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 26
+SPIWrite        131, 44
+SPIWrite        132, 22
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 27
+SPIWrite        131, 44
+SPIWrite        132, 23
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 28
+SPIWrite        131, 44
+SPIWrite        132, 24
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 29
+SPIWrite        131, 44
+SPIWrite        132, 25
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2A
+SPIWrite        131, 44
+SPIWrite        132, 26
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2B
+SPIWrite        131, 44
+SPIWrite        132, 27
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2C
+SPIWrite        131, 44
+SPIWrite        132, 28
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2D
+SPIWrite        131, 44
+SPIWrite        132, 29
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2E
+SPIWrite        131, 44
+SPIWrite        132, 2A
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 2F
+SPIWrite        131, 44
+SPIWrite        132, 2B
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 30
+SPIWrite        131, 44
+SPIWrite        132, 2C
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 31
+SPIWrite        131, 44
+SPIWrite        132, 2D
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 32
+SPIWrite        131, 44
+SPIWrite        132, 2E
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 33
+SPIWrite        131, 44
+SPIWrite        132, 2F
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 34
+SPIWrite        131, 44
+SPIWrite        132, 30
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 35
+SPIWrite        131, 44
+SPIWrite        132, 31
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 36
+SPIWrite        131, 44
+SPIWrite        132, 32
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 37
+SPIWrite        131, 64
+SPIWrite        132, 2E
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 38
+SPIWrite        131, 64
+SPIWrite        132, 2F
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 39
+SPIWrite        131, 64
+SPIWrite        132, 30
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3A
+SPIWrite        131, 64
+SPIWrite        132, 31
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3B
+SPIWrite        131, 64
+SPIWrite        132, 32
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3C
+SPIWrite        131, 64
+SPIWrite        132, 33
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3D
+SPIWrite        131, 64
+SPIWrite        132, 34
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3E
+SPIWrite        131, 64
+SPIWrite        132, 35
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 3F
+SPIWrite        131, 64
+SPIWrite        132, 36
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 40
+SPIWrite        131, 64
+SPIWrite        132, 37
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 41
+SPIWrite        131, 64
+SPIWrite        132, 38
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 42
+SPIWrite        131, 65
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 43
+SPIWrite        131, 66
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 44
+SPIWrite        131, 67
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 45
+SPIWrite        131, 68
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 46
+SPIWrite        131, 69
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 47
+SPIWrite        131, 6A
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 48
+SPIWrite        131, 6B
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 49
+SPIWrite        131, 6C
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4A
+SPIWrite        131, 6D
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4B
+SPIWrite        131, 6E
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4C
+SPIWrite        131, 6F
+SPIWrite        132, 38
+SPIWrite        133, 20
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4D
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4E
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 4F
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 50
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 51
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 52
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 53
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 54
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 55
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 56
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 57
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 58
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 59
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        130, 5A
+SPIWrite        131,  0
+SPIWrite        132,  0
+SPIWrite        133,  0
+SPIWrite        137, 1E
+WAIT    1
+SPIWrite        137, 1A
+SPIWrite        137,  0
+[RF_Ctrl] RFIC Rx Gain Reg Initialize Success!
+
+//************************************************************
+// RX Baseband Filter Tuning (Real BW: 9.000000 MHz) 3dB Filter
+// Corner @ 12.600000 MHz)
+//************************************************************
+SPIWrite        1FB,09  // RX Freq Corner (MHz)
+SPIWrite        1FC,00  // RX Freq Corner (Khz)
+SPIWrite        1F8,09  // Rx BBF Tune Divider[7:0]
+SPIWrite        1F9,1E  // RX BBF Tune Divider[8]
+
+SPIWrite        1D5,3F  // Set Rx Mix LO CM
+SPIWrite        1C0,03  // Set GM common mode
+SPIWrite        1E2,02  // Enable Rx1 Filter Tuner
+SPIWrite        1E3,02  // Enable Rx2 Filter Tuner
+SPIWrite        016,80  // Start RX Filter Tune
+WAIT    20
+SPIWrite        1E2,03  // Disable Rx Filter Tuner (Rx1)
+SPIWrite        1E3,03  // Disable Rx Filter Tuner (Rx2)
+//************************************************************
+// TX Baseband Filter Tuning (Real BW: 9.000000 MHz) 3dB Filter
+// Corner @ 14.400000 MHz)
+//************************************************************
+SPIWrite        0D6,08  // TX BBF Tune Divier[7:0]
+SPIWrite        0D7,1E  // TX BBF Tune Divider[8]
+SPIWrite        0D8,04  // TX BBF Tuner BW (MHz)
+SPIWrite        0D9,40  // TX BBF Tuner BW (kHz) - 1 LSB = 7.8125 KHz.
+
+SPIWrite        0CA,22  // Enable Tx Filter Tuner
+SPIWrite        016,40  // Start Tx Filter Tune
+WAIT    20
+SPIWrite        0CA,26  // Disable Tx Filter Tuner (Both Channels)
+//************************************************************
+// RX TIA Setup:  Setup values scale based on RxBBF calibration
+// results.  See information in Calibration Guide.
+//************************************************************
+SPIWrite        1DB,60  // Set TIA selcc[2:0]
+SPIWrite        1DD,00  // Set RX TIA1 C MSB[6:0]
+SPIWrite        1DF,00  // Set RX TIA2 C MSB[6:0]
+SPIWrite        1DC,69  // Set RX TIA1 C LSB[5:0]
+SPIWrite        1DE,69  // Set RX TIA2 C LSB[5:0]
+
+//************************************************************
+// TX Secondary Filter Calibration Setup:  Real Bandwidth
+// 9.000000MHz, 3dB Corner @ 45.000000MHz
+//************************************************************
+SPIWrite        0D2,17  // TX Secondary Filter PDF Cap cal[5:0]
+SPIWrite        0D1,0C  // TX Secondary Filter PDF Res cal[3:0]
+SPIWrite        0D0,56  // Pdampbias
+
+//SPIWrite        A, 72
+
+[RF_Ctrl] RFIC ADC Reg Initialize Start!
+//SPIWrite        A, 72
+SPIWrite         200,00
+SPIWrite         201,00
+SPIWrite         202,00
+SPIWrite         203,24
+SPIWrite         204,24
+SPIWrite         205,00
+SPIWrite         206,00
+SPIWrite         207,7B
+SPIWrite         208,2A
+SPIWrite         209,3B
+SPIWrite         20A,4A
+SPIWrite         20B,1A
+SPIWrite         20C,4D
+SPIWrite         20D,18
+SPIWrite         20E,00
+SPIWrite         20F,7E
+SPIWrite         210,7D
+SPIWrite         211,7E
+SPIWrite         212,48
+SPIWrite         213,47
+SPIWrite         214,48
+SPIWrite         215,4B
+SPIWrite         216,4A
+SPIWrite         217,4B
+SPIWrite         218,2E
+SPIWrite         219,B0
+SPIWrite         21A,31
+SPIWrite         21B,1C
+SPIWrite         21C,B0
+SPIWrite         21D,31
+SPIWrite         21E,1C
+SPIWrite         21F,B0
+SPIWrite         220,31
+SPIWrite         221,37
+SPIWrite         222,38
+SPIWrite         223,40
+SPIWrite         224,40
+SPIWrite         225,2C
+SPIWrite         226,00
+SPIWrite         227,00
+SPIWrite         A3,  0
+SPIWrite         A0, 15
+SPIWrite         A3,  0
+SPIWrite         A1, 79
+SPIWrite         C1, 6F
+SPIWrite         C2, 6F
+SPIWrite         A9, FF
+SPIWrite         A1, 79
+SPIWrite         A2, 49
+SPIWrite         A5,  3
+SPIWrite         A6,  3
+SPIWrite         AA, 33
+SPIWrite         A4, 20
+SPIWrite        193, 3F
+SPIWrite        190,  F
+SPIWrite        194,  1
+SPIWrite         16,  1
+WAIT    20
+SPIWrite        185, 20
+SPIWrite        186, 10
+SPIWrite        187, 14
+SPIWrite        18B, 83
+SPIWrite        188, 64
+SPIWrite        189, 30
+SPIWrite         16,  2
+WAIT    20
+SPIWrite         16, 10
+WAIT    20
+SPIWrite        168,  3
+SPIWrite        16E, 25
+SPIWrite        16A, 75
+SPIWrite        16B, 15
+SPIWrite        169, CF
+SPIWrite        18B, AD
+[RF_Ctrl] RFIC ADC Reg Initialize Success!
+
+[RF_Ctrl] RFIC Tx Atten Reg Initialize Start!
+SPIWrite         73, 70
+SPIWrite         74,  0
+SPIWrite         75, 70
+SPIWrite         76,  0
+[RF_Ctrl] RFIC Tx Atten Reg Initialize Success!
+
+[RF_Ctrl] RFIC Rx MGC Reg Initialize Start!
+SPIWrite         FA, E0
+SPIWrite         FB,  8
+SPIWrite         FC, 23
+SPIWrite         FD, 4C
+SPIWrite         FE, 44
+SPIWrite        100, 6F
+SPIWrite        104, 2F
+SPIWrite        105, 3A
+SPIWrite        107,  8
+SPIWrite        108, 1F
+SPIWrite        109, 4C
+SPIWrite        10A, 18
+SPIWrite        10B,  0
+SPIWrite        10C, 4C
+SPIWrite        10D, 18
+SPIWrite        10E,  0
+SPIWrite        114, 30
+SPIWrite        11A, 1C
+SPIWrite         81,  0
+[RF_Ctrl] RFIC Rx MGC Reg Initialize Success!
+
+[RF_Ctrl] RFIC RSSI Reg Initialize Start!
+SPIWrite        150,  7
+SPIWrite        151,  0
+SPIWrite        152, FF
+SPIWrite        153,  0
+SPIWrite        154,  0
+SPIWrite        155,  0
+SPIWrite        156,  0
+SPIWrite        157,  0
+SPIWrite        158,  D
+SPIWrite        15C, 37
+SPIWrite          2, CE
+SPIWrite          3, DE
+SPIWrite        186, 64
+SPIWrite        188, 63
+SPIWrite         3C,  7
+SPIWrite         3B, 44
+[RF_Ctrl] RFIC RSSI Reg Initialize Success!
+
+[RF_Ctrl] RFIC Final Set Start!
+SPIWrite         12,  0
+SPIWrite         13,  1
+SPIWrite         15,  4
+SPIWrite         14, 23
+SPIWrite         7C, 40
+SPIWrite         73, 78
+SPIWrite         74,  0
+SPIWrite         75, 78
+SPIWrite         76,  0
+SPIWrite        109, 37
+SPIWrite        10C, 37
+[RF_Ctrl] RFIC Final Set Success!
+[RF_Ctrl] RFIC LNA On Start!
+SPIWrite         26,  10
+SPIWrite         27,  80
+[RF_Ctrl] RFIC LNA On Success!
+[RFIC_CTRL] RFIC Initialize Success!

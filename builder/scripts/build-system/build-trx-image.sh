@@ -13,9 +13,11 @@ MISC_FILES_DIR="${UKAMA_ROOT}/builder/scripts/build-system/trx"
 OUT_DIR="${OUT_DIR:-${DIR}/trx-image}"
 LTE_NODE_REPO=""
 MODE=""
+MODE_DIR=""
 BAND_CFG="${BAND_CFG:-}"
 STACK_BUILD_DIR=""
 STAGE_DIR=""
+ENV_FILE=""
 
 UBOOT_PART_SIZE=$((0x220000))
 UBOOT_COPY_OFFSET=$((0xC0000))
@@ -52,6 +54,9 @@ check_status() {
 cleanup() {
     if [[ -n "$STAGE_DIR" ]]; then
         rm -rf "$STAGE_DIR"
+    fi
+    if [[ -n "$ENV_FILE" ]]; then
+        rm -f "$ENV_FILE"
     fi
 }
 
@@ -112,12 +117,26 @@ validate_build_artifacts() {
 stage_app() {
     STAGE_DIR=$(mktemp -d)
     cp -a "${MISC_FILES_DIR}/app/." "${STAGE_DIR}/"
+    if [[ -d "${MODE_DIR}/app" ]]; then
+        cp -a "${MODE_DIR}/app/." "${STAGE_DIR}/"
+    fi
     for f in "${STACK_FILES[@]}"; do
         cp "${STACK_BUILD_DIR}/${f}" "${STAGE_DIR}/"
     done
     cp "${MISC_FILES_DIR}/app/${BAND_CFG}" "${STAGE_DIR}/startup.cfg"
     touch "${STAGE_DIR}/.sign1985"
     log SUCCESS "App partition staged with ${BAND_CFG} as startup.cfg"
+}
+
+stage_env() {
+    ENV_FILE=$(mktemp)
+    if [[ -f "${MODE_DIR}/uboot.env" ]]; then
+        awk -F= 'NR==FNR {seen[$1]; print; next} !($1 in seen)' \
+            "${MODE_DIR}/uboot.env" "${MISC_FILES_DIR}/uboot.env" > "$ENV_FILE"
+    else
+        cp "${MISC_FILES_DIR}/uboot.env" "$ENV_FILE"
+    fi
+    log SUCCESS "U-Boot env staged for ${MODE}"
 }
 
 blank_image() {
@@ -145,7 +164,7 @@ make_flash_images() {
     mkfs.jffs2 -b -U -s 0x1000 -e "$JFFS2_ERASE_SIZE" --pad="$APP_PART_SIZE" -d "$STAGE_DIR" -o "${OUT_DIR}/flash_app0.img"
     blank_image "${OUT_DIR}/flash_app1.img" "$APP_PART_SIZE"
 
-    mkenvimage -b -p 0x00 -s "$ENV_PART_SIZE" -o "${OUT_DIR}/flash_env.img" "${MISC_FILES_DIR}/uboot.env"
+    mkenvimage -b -p 0x00 -s "$ENV_PART_SIZE" -o "${OUT_DIR}/flash_env.img" "$ENV_FILE"
     chmod 644 "${OUT_DIR}/flash_env.img"
 
     cp "$UBOOT_BIN" "${OUT_DIR}/u-boot-octeon_trx.bin"
@@ -188,6 +207,7 @@ if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
     log ERROR "Invalid mode '$MODE'. Expected 'FDD' or 'TDD'."
     exit 1
 fi
+MODE_DIR="${MISC_FILES_DIR}/${MODE,,}"
 
 if [[ -z "$BAND_CFG" ]]; then
     if [[ "$MODE" == "FDD" ]]; then
@@ -202,6 +222,7 @@ build_os
 build_stack
 validate_build_artifacts
 stage_app
+stage_env
 make_flash_images
 validate_flash_images
 
