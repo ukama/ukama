@@ -16,6 +16,7 @@
 int pdn_init(ServiceContext *ctx);
 void pdn_poll(ServiceContext *ctx);
 void pdn_shutdown(ServiceContext *ctx);
+int pdn_set_service(ServiceContext *ctx, bool enabled);
 int pdn_attach(ServiceContext *ctx, JsonObj *body, JsonObj **reply,
                 char *reason, size_t reasonLen);
 int pdn_detach(ServiceContext *ctx, JsonObj *body,

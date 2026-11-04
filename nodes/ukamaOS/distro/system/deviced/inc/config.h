@@ -32,6 +32,7 @@ typedef struct {
     bool  clientMode;
     bool  remoteClientRebootOptional;
 
+    struct ServiceGroup *serviceGroup;
     ControlCtx *control;
     time_t     startTime;
 } Config;

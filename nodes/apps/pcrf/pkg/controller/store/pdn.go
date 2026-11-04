@@ -130,6 +130,14 @@ func (s *Store) RetireEPCs() error {
 	return tx.Commit()
 }
 
+// ClosePDNs atomically reserves every binding for teardown. Keep the EPC
+// owner registered so a healthy process can accept a fresh attach after ON.
+func (s *Store) ClosePDNs() error {
+	_, err := s.db.Exec("UPDATE pdns SET state = ? WHERE state = ?",
+		PDNClosing, PDNLive)
+	return err
+}
+
 func (s *Store) InsertPDN(p *PDN) error {
 	_, err := s.db.Exec(`INSERT INTO pdns
 		(instance_id, pdn_id, imsi, apn, ip, state)

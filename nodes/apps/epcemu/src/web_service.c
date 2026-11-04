@@ -12,6 +12,7 @@
 
 #include "data_plane.h"
 #include "epcemu.h"
+#include "service_lease.h"
 #include "http_status.h"
 #include "netutil.h"
 #include "pdn.h"
@@ -101,8 +102,16 @@ static JsonObj *status_json(ServiceContext *ctx) {
     json_object_set_new(service, "state",
                         json_string(serviceOn ? "on" : "off"));
     json_object_set_new(service, "admission",
-                        json_string(ready && ctx->config->pcrfReady ?
+                        json_string(!serviceOn || !service_lease_valid() ?
+                                    "disabled" :
+                                    ready && ctx->config->pcrfReady ?
                                     "enabled" : "pending"));
+    json_object_set_new(service, "pdn_count", json_integer(ue_count_total()));
+    json_object_set_new(service, "cleanup_pending",
+                        json_boolean(!serviceOn && ue_count_total() != 0));
+    json_object_set_new(service, "confirmed",
+                        json_boolean(serviceOn ? service_lease_valid()
+                                               : ue_count_total() == 0));
     json_object_set_new(root, "service", service);
 
     json_object_set_new(pcrf, "url",   json_string(ctx->config->pcrfUrl));
@@ -255,28 +264,19 @@ int web_service_cb_service(const URequest *request,
                            UResponse *response,
                            void *data) {
 
-    ServiceContext *ctx;
+    ServiceContext *ctx = data;
     JsonObj *body;
     JsonObj *reply;
     const char *state;
-    bool serviceOn;
-    bool admissionReady;
+    int code;
 
-    ctx = (ServiceContext *)data;
-    body = NULL;
-    reply = NULL;
-
-    if (ctx == NULL || ctx->config == NULL || !status_is_ready(ctx->status)) {
-        set_error(response, HttpStatus_ServiceUnavailable, "epcemu not ready");
+    if (ctx == NULL || ctx->config == NULL || ctx->status == NULL) {
+        set_error(response, HttpStatus_ServiceUnavailable,
+                  "epcemu unavailable");
         return U_CALLBACK_CONTINUE;
     }
 
     body = ulfius_get_json_body_request(request, NULL);
-    if (body == NULL) {
-        set_error(response, HttpStatus_BadRequest, "invalid JSON body");
-        return U_CALLBACK_CONTINUE;
-    }
-
     state = json_string_default(body, "state", NULL);
     if (state == NULL ||
         (strcmp(state, "on") != 0 && strcmp(state, "off") != 0)) {
@@ -285,29 +285,19 @@ int web_service_cb_service(const URequest *request,
         return U_CALLBACK_CONTINUE;
     }
 
-    serviceOn = strcmp(state, "on") == 0;
-
-    pthread_mutex_lock(&ctx->serviceMutex);
-    /* PCRF receives service policy separately and controls forwarding. */
-    ctx->serviceOn = serviceOn;
-    admissionReady = ctx->config->pcrfReady && !ctx->stopping;
-    pthread_mutex_unlock(&ctx->serviceMutex);
+    code = pdn_set_service(ctx, strcmp(state, "on") == 0);
 
     json_decref(body);
 
-    reply = json_pack("{s:s, s:s, s:i}",
-                      "state", serviceOn ? "on" : "off",
-                      "admission", admissionReady ? "enabled" : "pending",
-                      "attachedUes", ue_count_attached());
+    reply = status_json(ctx);
     if (reply == NULL) {
         set_error(response, HttpStatus_InternalServerError,
                   "failed to build service response");
         return U_CALLBACK_CONTINUE;
     }
 
-    usys_log_info("service: %s", serviceOn ? "on" : "off");
-
-    ulfius_set_json_body_response(response, HttpStatus_OK, reply);
+    ulfius_set_json_body_response(response, code,
+                                  json_object_get(reply, "service"));
     json_decref(reply);
 
     return U_CALLBACK_CONTINUE;

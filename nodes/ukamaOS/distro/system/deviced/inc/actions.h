@@ -12,7 +12,6 @@
 #include "config.h"
 #include "control.h"
 
-int actions_service_apply(Config *config, ControlState desired);
 int actions_radio_apply(Config *config, ControlState desired);
 int actions_reboot_apply(Config *config);
 

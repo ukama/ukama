@@ -148,6 +148,8 @@ phases:
 
   - name: enable_service_and_continue_policy_test
     events:
+      - type: wait_nodes_ready
+        nodes: all
       - type: toggle_service
         sites: all
         state: on
