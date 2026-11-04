@@ -81,6 +81,9 @@ func NewStore(name string) (*Store, error) {
 		return nil, fmt.Errorf("error opening database: %s. Error: %w", dbPath, err)
 	}
 
+	// SQLite has one writer; share one connection across store operations.
+	database.SetMaxOpenConns(1)
+
 	repo.db = database
 
 	err = repo.CreateTables()
@@ -1131,6 +1134,18 @@ func (s *Store) GetSessionDetails(session *Session) (*Session, error) {
 
 }
 
+// Session rows must be closed before looking up related records. This also
+// permits callers to use the store's single database connection.
+func (s *Store) loadSessionDetails(sessions []Session) ([]Session, error) {
+	for i := range sessions {
+		if _, err := s.GetSessionDetails(&sessions[i]); err != nil {
+			return nil, err
+		}
+	}
+
+	return sessions, nil
+}
+
 func (s *Store) GetSessionByID(sessionID int) (*Session, error) {
 	session := new(Session)
 	var err error
@@ -1187,15 +1202,17 @@ func (s *Store) GetSessionsByImsi(imsi string) ([]Session, error) {
 			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
-		session, err = s.GetSessionDetails(session)
-		if err != nil {
-			return nil, err
-		}
-
 		sessions = append(sessions, *session)
 	}
 
-	return sessions, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return s.loadSessionDetails(sessions)
 }
 
 func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Session, error) {
@@ -1229,15 +1246,17 @@ func (s *Store) GetUnsyncSessionsByImsiAfterTime(imsi string, time uint64) ([]Se
 			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
-		session, err = s.GetSessionDetails(session)
-		if err != nil {
-			return nil, err
-		}
-
 		sessions = append(sessions, *session)
 	}
 
-	return sessions, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return s.loadSessionDetails(sessions)
 }
 
 func (s *Store) GetActiveSessionByImsi(imsi string) (*Session, error) {
@@ -1335,15 +1354,17 @@ func (s *Store) GetAllActiveSessions() ([]Session, error) {
 				session.ID, err)
 		}
 
-		session, err = s.GetSessionDetails(session)
-		if err != nil {
-			return nil, err
-		}
-
 		sessions = append(sessions, *session)
 	}
 
-	return sessions, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return s.loadSessionDetails(sessions)
 }
 
 func (s *Store) GetAllNonPublishedSessions() ([]Session, error) {
@@ -1375,15 +1396,17 @@ func (s *Store) GetAllNonPublishedSessions() ([]Session, error) {
 			return nil, fmt.Errorf("failed to get poilicy id for session %d. Error: %w", session.ID, err)
 		}
 
-		session, err = s.GetSessionDetails(session)
-		if err != nil {
-			return nil, err
-		}
-
 		sessions = append(sessions, *session)
 	}
 
-	return sessions, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return s.loadSessionDetails(sessions)
 }
 
 func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
@@ -1414,15 +1437,17 @@ func (s *Store) GetAllNonPublishedTerminatedSessions() ([]Session, error) {
 			return nil, err
 		}
 
-		session, err = s.GetSessionDetails(session)
-		if err != nil {
-			return nil, err
-		}
-
 		sessions = append(sessions, *session)
 	}
 
-	return sessions, nil
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+
+	return s.loadSessionDetails(sessions)
 }
 
 /* Only consumed data is allowed to update */
