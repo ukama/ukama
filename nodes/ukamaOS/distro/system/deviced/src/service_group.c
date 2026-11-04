@@ -131,6 +131,20 @@ static bool watchdog_live(ServiceGroup *group) {
            now - group->watchdogAt < WATCHDOG_MSEC;
 }
 
+/* Called with control->Lock held. Use the same gate for status and ON. */
+static bool ready_to_enable(ServiceGroup *group) {
+
+    ControlCtx *control = group->config->control;
+
+    return !group->held && group->healthy && watchdog_live(group) &&
+           control->Service.Phase == CONTROL_PHASE_IDLE &&
+           control->Active == CONTROL_SUBSYS_NONE &&
+           control->Radio.Phase != CONTROL_PHASE_PENDING &&
+           control->Radio.Phase != CONTROL_PHASE_EXECUTING &&
+           control->Reboot.Phase != CONTROL_PHASE_PENDING &&
+           control->Reboot.Phase != CONTROL_PHASE_EXECUTING;
+}
+
 /* Called with control->Lock held. Revocation must precede teardown. */
 static void request_off(ServiceGroup *group, const char *reason) {
 
@@ -445,14 +459,15 @@ JsonObj *service_group_state(Config *config) {
     now       = service_clock_msec();
     remaining = group->deadline > now ? group->deadline - now : 0;
 
-    json = json_pack("{s:s,s:s,s:s,s:I,s:I,s:s,s:b}",
+    json = json_pack("{s:s,s:s,s:s,s:I,s:I,s:s,s:b,s:b}",
                      "current", current,
                      "desired", desired,
                      "phase", phase,
                      "token", (json_int_t)state->Token,
                      "remaining_ms", remaining,
                      "reason", group->reason,
-                     "maintenance", group->held);
+                     "maintenance", group->held,
+                     "ready", ready_to_enable(group));
     pthread_mutex_unlock(&config->control->Lock);
 
     return json;
@@ -479,13 +494,7 @@ int service_group_command(const URequest *request, UResponse *response,
 
         if (!strcasecmp(desired, "off")) {
             request_off(group, "operator_off");
-        } else if (group->held || !group->healthy || !watchdog_live(group) ||
-                   control->Service.Phase != CONTROL_PHASE_IDLE ||
-                   control->Active != CONTROL_SUBSYS_NONE ||
-                   control->Radio.Phase == CONTROL_PHASE_PENDING ||
-                   control->Radio.Phase == CONTROL_PHASE_EXECUTING ||
-                   control->Reboot.Phase == CONTROL_PHASE_PENDING ||
-                   control->Reboot.Phase == CONTROL_PHASE_EXECUTING) {
+        } else if (!ready_to_enable(group)) {
             code = HttpStatus_Conflict;
         } else if (control->Service.Current != CONTROL_STATE_ON) {
             control->Service.Desired = CONTROL_STATE_ON;

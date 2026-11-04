@@ -43,7 +43,7 @@ class NodeState(unittest.TestCase):
         podman.write_text('''#!/bin/sh
 case "$1" in
     inspect) printf 'true\\n' ;;
-    exec) printf '{"state":"READY"}\\n' ;;
+    exec) printf '{"state":"READY","service_group":{"ready":true}}\\n' ;;
     *) exit 1 ;;
 esac
 ''')
@@ -69,6 +69,32 @@ esac
                                 capture_output=True, text=True, timeout=10)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn('node-ready logical=' + node_id, result.stdout)
+
+    def test_tower_waits_for_service_readiness(self):
+        self.assertEqual(self.write_state('tower-wait').returncode, 0)
+        state = self.run_dir / 'runtime-nodes/tower-wait.env'
+        with state.open('a') as out:
+            out.write('NODE_KIND=tower\n')
+        podman = self.directory / 'bin/podman'
+        for status in ('{}', '{"service_group":{"ready":false}}'):
+            with self.subTest(status=status):
+                podman.write_text('''#!/bin/sh
+case "$1" in
+    inspect) printf 'true\\n' ;;
+    exec)
+        case "$*" in
+            */v1/state*) printf '%s\\n' '%s' ;;
+            *) printf '{"state":"READY"}\\n' ;;
+        esac ;;
+    *) exit 1 ;;
+esac
+''' % ('%s', status))
+                result = subprocess.run(
+                    ['sh', str(ROOT / 'scripts/wait-nodes-ready.sh'),
+                     'tower-wait', str(self.run_dir)], env=self.env,
+                    capture_output=True, text=True, timeout=10)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertNotIn('node-ready logical=', result.stdout)
 
     def test_reported_scenarios_reach_readiness_with_full_ids(self):
         scenarios = sorted(p for p in (ROOT / 'scenarios/resilience').rglob('r*.yaml')
