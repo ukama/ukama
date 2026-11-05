@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -297,4 +298,62 @@ func TestMarkRunning(t *testing.T) {
 		assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
 		repo.AssertExpectations(t)
 	})
+}
+
+var invalidResourceKeys = map[string]string{
+	"Empty":          "",
+	"Blank":          "   ",
+	"LeadingSpace":   " node:abc",
+	"InnerSpace":     "node abc",
+	"Tab":            "node:\tabc",
+	"Nul":            "node:\x00abc",
+	"InvalidUtf8":    "node:\xffabc",
+	"TooLong":        strings.Repeat("a", maxResourceKeyLen+1),
+	"ControlNewline": "node:abc\n",
+}
+
+func TestValidateResourceKey(t *testing.T) {
+	for _, key := range []string{
+		"node:uk-sa2450-tnode-v0-4e86",
+		"config:apply",
+		"test:integration:" + uuid.NewV4().String(),
+		strings.Repeat("a", maxResourceKeyLen),
+	} {
+		assert.NoError(t, validateResourceKey(key), key)
+	}
+
+	for name, key := range invalidResourceKeys {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, codes.InvalidArgument, status.Code(validateResourceKey(key)))
+		})
+	}
+}
+
+func TestInvalidResourceKeyIsRejected(t *testing.T) {
+	for name, key := range invalidResourceKeys {
+		t.Run("Start"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+				Type: "RestartNode", System: "node", ResourceKey: key,
+				IdempotencyKey: "key",
+			})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything)
+		})
+
+		t.Run("GetByResource"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			_, err := s.GetByResource(context.Background(),
+				&pb.GetByResourceRequest{ResourceKey: key})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			repo.AssertNotCalled(t, "GetByResource", mock.Anything)
+		})
+	}
 }

@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	"unicode"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -53,7 +54,26 @@ func NewOperationServer(orgName, orgId string, repo db.OperationRepo, msgBus mb.
 	}
 }
 
+const maxResourceKeyLen = 255
+
+func validateResourceKey(key string) error {
+	if key == "" || len(key) > maxResourceKeyLen {
+		return status.Errorf(codes.InvalidArgument,
+			"resource key must be 1 to %d bytes", maxResourceKeyLen)
+	}
+	for _, r := range key {
+		if r == unicode.ReplacementChar || !unicode.IsPrint(r) || unicode.IsSpace(r) {
+			return status.Error(codes.InvalidArgument,
+				"resource key must contain only printable, non-space characters")
+		}
+	}
+	return nil
+}
+
 func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
+	if err := validateResourceKey(req.ResourceKey); err != nil {
+		return nil, err
+	}
 	if req.IdempotencyKey != "" {
 		existing, err := s.repo.GetByIdempotencyKey(req.IdempotencyKey)
 		if err != nil {
@@ -115,6 +135,9 @@ func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperation
 }
 
 func (s *OperationServer) GetByResource(ctx context.Context, req *pb.GetByResourceRequest) (*pb.GetByResourceResponse, error) {
+	if err := validateResourceKey(req.ResourceKey); err != nil {
+		return nil, err
+	}
 	op, err := s.repo.GetByResource(req.ResourceKey)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "get by resource: %v", err)
