@@ -27,6 +27,7 @@ import (
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 const testOrgName = "test-org"
@@ -96,6 +97,8 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-rf"}).
+		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-rf", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 
@@ -136,6 +139,8 @@ func TestControllerServer_ToggleService(t *testing.T) {
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-svc", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-svc"}).
+		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-svc", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 
@@ -196,6 +201,8 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-i"}).
+		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-i", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -227,6 +234,8 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
+	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-i"}).
+		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Fail", "op-i", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 
@@ -277,6 +286,8 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-radio", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-radio"}).
+		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-radio", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 
@@ -342,4 +353,80 @@ func TestControllerServer_OfflineNodeIsRejectedWithoutLocking(t *testing.T) {
 			opMgr.AssertNotCalled(t, "Start", mock.Anything)
 		})
 	}
+}
+
+func TestControllerServer_operationIntentCleanup(t *testing.T) {
+	op := &copr.OperationInfo{Id: "op-x", FencingToken: 3}
+	cancelReq := &opmonpb.CancelIntentRequest{OperationId: "op-x"}
+
+	t.Run("CompleteFailureKeepsIntent", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, "dispatched").
+			Return(nil, assert.AnError).Once()
+
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
+		status := c.completeOperation(op, "ToggleRadio")
+
+		assert.Equal(t, opmgrpb.OperationStatus_RUNNING.String(), status)
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("CancelFailureDoesNotChangeResult", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, "dispatched").
+			Return(&copr.OperationInfo{}, nil).Once()
+		opMon.On("Cancel", cancelReq).Return(nil, assert.AnError).Once()
+
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
+		status := c.completeOperation(op, "ToggleRadio")
+
+		assert.Equal(t, opmgrpb.OperationStatus_SUCCESS.String(), status)
+		opMon.AssertExpectations(t)
+	})
+
+	t.Run("FailCancelsIntent", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, "publish failed").
+			Return(&copr.OperationInfo{}, nil).Once()
+		opMon.On("Cancel", cancelReq).
+			Return(&opmonpb.CancelIntentResponse{}, nil).Once()
+
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
+		c.failOperation(op, "ToggleRadio", "publish failed")
+
+		opMon.AssertExpectations(t)
+	})
+
+	t.Run("FailFailureKeepsIntent", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, "publish failed").
+			Return(nil, assert.AnError).Once()
+
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
+		c.failOperation(op, "ToggleRadio", "publish failed")
+
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+	})
+
+	t.Run("RegisterFailureDoesNotCancel", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Start", mock.Anything).
+			Return(&copr.StartResponse{Operation: op}, nil).Once()
+		opMon.On("Register", mock.Anything).Return(nil, assert.AnError).Once()
+		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, mock.Anything).
+			Return(&copr.OperationInfo{}, nil).Once()
+
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
+		_, err := c.acquireAndRegister("ToggleRadio", "node:x")
+
+		assert.Error(t, err)
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+		opMgr.AssertExpectations(t)
+	})
 }

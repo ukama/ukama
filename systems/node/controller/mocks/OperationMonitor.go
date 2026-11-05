@@ -12,6 +12,36 @@ type OperationMonitor struct {
 	mock.Mock
 }
 
+// Cancel provides a mock function with given fields: req
+func (_m *OperationMonitor) Cancel(req *gen.CancelIntentRequest) (*gen.CancelIntentResponse, error) {
+	ret := _m.Called(req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Cancel")
+	}
+
+	var r0 *gen.CancelIntentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*gen.CancelIntentRequest) (*gen.CancelIntentResponse, error)); ok {
+		return rf(req)
+	}
+	if rf, ok := ret.Get(0).(func(*gen.CancelIntentRequest) *gen.CancelIntentResponse); ok {
+		r0 = rf(req)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.CancelIntentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*gen.CancelIntentRequest) error); ok {
+		r1 = rf(req)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Close provides a mock function with no fields
 func (_m *OperationMonitor) Close() {
 	_m.Called()

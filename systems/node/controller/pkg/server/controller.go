@@ -316,7 +316,7 @@ func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*
 		DeadlineSeconds: c.opDeadlineSecs,
 	}); err != nil {
 		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
-		c.failOperation(op, actionType, fmt.Sprintf("register intent failed: %v", err))
+		c.markFailed(op, actionType, fmt.Sprintf("register intent failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
 	}
 	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
@@ -336,12 +336,33 @@ func (c *ControllerServer) markRunning(op *copr.OperationInfo, actionType string
 }
 
 func (c *ControllerServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
+	if c.markFailed(op, actionType, reason) {
+		c.cancelIntent(op, actionType)
+	}
+}
+
+func (c *ControllerServer) markFailed(op *copr.OperationInfo, actionType,
+	reason string) bool {
 	if c.opManager == nil || op == nil || op.Id == "" {
-		return
+		return false
 	}
 	if _, err := c.opManager.Fail(op.Id, op.FencingToken, pkg.ServiceName,
 		reason); err != nil {
 		log.Errorf("%s failed to fail operation %s: %v", actionType, op.Id, err)
+		return false
+	}
+	return true
+}
+
+func (c *ControllerServer) cancelIntent(op *copr.OperationInfo, actionType string) {
+	if c.opMonitor == nil {
+		return
+	}
+	if _, err := c.opMonitor.Cancel(&opmonpb.CancelIntentRequest{
+		OperationId: op.Id,
+	}); err != nil {
+		log.Warnf("%s failed to cancel intent for operation %s: %v",
+			actionType, op.Id, err)
 	}
 }
 
@@ -360,6 +381,7 @@ func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType 
 		log.Errorf("%s failed to complete operation %s (lock frees at deadline): %v", actionType, op.Id, err)
 		return opmgrpb.OperationStatus_RUNNING.String()
 	}
+	c.cancelIntent(op, actionType)
 	return opmgrpb.OperationStatus_SUCCESS.String()
 }
 
