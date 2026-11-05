@@ -6,13 +6,15 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#define _GNU_SOURCE
 #include <arpa/inet.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <netinet/in.h>
+#include <poll.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/select.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -100,7 +102,7 @@ static int udp_socket_create(int port) {
     int fd;
     int opt;
 
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
+    fd = socket(AF_INET, SOCK_DGRAM | SOCK_NONBLOCK | SOCK_CLOEXEC, 0);
     if (fd < 0) {
         usys_log_error("failed to create UDP socket: %s", strerror(errno));
         return -1;
@@ -223,34 +225,27 @@ static void handle_tun_to_udp(DataPlane *dp) {
 static void *data_plane_loop(void *arg) {
 
     DataPlane *dp;
-    fd_set rfds;
-    int maxfd;
+    struct pollfd fds[3];
     int rc;
 
     dp = (DataPlane *)arg;
-    if (dp == NULL) return NULL;
+    fds[0] = (struct pollfd){ .fd = dp->stopPipe[0], .events = POLLIN };
+    fds[1] = (struct pollfd){ .fd = dp->udpFd, .events = POLLIN };
+    fds[2] = (struct pollfd){ .fd = dp->tunFd, .events = POLLIN };
 
-    while (dp->running) {
-        FD_ZERO(&rfds);
-        FD_SET(dp->udpFd, &rfds);
-        FD_SET(dp->tunFd, &rfds);
-
-        maxfd = dp->udpFd > dp->tunFd ? dp->udpFd : dp->tunFd;
-
-        rc = select(maxfd + 1, &rfds, NULL, NULL, NULL);
+    for (;;) {
+        rc = poll(fds, 3, -1);
         if (rc < 0) {
             if (errno == EINTR) continue;
-            usys_log_error("data plane select failed: %s", strerror(errno));
+            usys_log_error("data plane poll failed: %s", strerror(errno));
             break;
         }
 
-        if (FD_ISSET(dp->udpFd, &rfds)) {
-            handle_udp_to_tun(dp);
-        }
-
-        if (FD_ISSET(dp->tunFd, &rfds)) {
-            handle_tun_to_udp(dp);
-        }
+        /* Closing the only writer wakes even an idle worker. */
+        if (fds[0].revents) break;
+        if ((fds[1].revents | fds[2].revents) & (POLLHUP | POLLNVAL)) break;
+        if (fds[1].revents & (POLLIN | POLLERR)) handle_udp_to_tun(dp);
+        if (fds[2].revents & (POLLIN | POLLERR)) handle_tun_to_udp(dp);
     }
 
     return NULL;
@@ -265,7 +260,10 @@ int data_plane_start(DataPlane *dp,
     }
 
     memset(dp, 0, sizeof(DataPlane));
-    pthread_mutex_init(&dp->lock, NULL);
+    if (pthread_mutex_init(&dp->lock, NULL) != 0) {
+        status_fail(status, "failed to initialize data plane lock");
+        return USYS_FALSE;
+    }
 
     status_set(status, EpcemuStateStartingDataPlane,
                "starting data plane");
@@ -273,27 +271,28 @@ int data_plane_start(DataPlane *dp,
     dp->tunFd = tun_create(config->tunName);
     if (dp->tunFd < 0) {
         status_fail(status, "failed to open EPC tun interface");
-        return USYS_FALSE;
+        goto fail_lock;
     }
 
     dp->udpFd = udp_socket_create(config->dataPort);
     if (dp->udpFd < 0) {
-        tun_close(dp->tunFd);
         status_fail(status, "failed to open epcemu-data UDP socket");
-        return USYS_FALSE;
+        goto fail_tun;
     }
 
-    dp->running = true;
-    dp->ready = true;
+    if (pipe2(dp->stopPipe, O_CLOEXEC) < 0) {
+        status_fail(status, "failed to open data plane stop pipe");
+        goto fail_udp;
+    }
 
     if (pthread_create(&dp->thread, NULL, data_plane_loop, dp) != 0) {
-        dp->running = false;
-        close(dp->udpFd);
-        tun_close(dp->tunFd);
+        close(dp->stopPipe[0]);
+        close(dp->stopPipe[1]);
         status_fail(status, "failed to create data plane thread");
-        return USYS_FALSE;
+        goto fail_udp;
     }
 
+    dp->ready = true;
     config->dataPlaneReady = true;
 
     usys_log_info("epcemu data plane ready udp=%d tun=%s addr=%s",
@@ -302,21 +301,26 @@ int data_plane_start(DataPlane *dp,
                   config->tunAddr);
 
     return USYS_TRUE;
+
+fail_udp:
+    close(dp->udpFd);
+fail_tun:
+    tun_close(dp->tunFd);
+fail_lock:
+    pthread_mutex_destroy(&dp->lock);
+    return USYS_FALSE;
 }
 
 void data_plane_stop(DataPlane *dp) {
 
-    if (dp == NULL) return;
+    if (dp == NULL || !dp->ready) return;
 
-    dp->running = false;
-
-    if (dp->udpFd >= 0) close(dp->udpFd);
-    if (dp->tunFd >= 0) tun_close(dp->tunFd);
-
-    if (dp->ready) {
-        pthread_join(dp->thread, NULL);
-    }
-
+    close(dp->stopPipe[1]);
+    pthread_join(dp->thread, NULL);
+    close(dp->stopPipe[0]);
+    close(dp->udpFd);
+    tun_close(dp->tunFd);
+    dp->ready = false;
     pthread_mutex_destroy(&dp->lock);
 }
 
