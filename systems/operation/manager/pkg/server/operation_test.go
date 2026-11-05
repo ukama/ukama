@@ -37,9 +37,11 @@ func TestStartOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("GetByIdempotencyKey", mock.Anything).Return(nil, nil).Maybe()
-		repo.On("Start", mock.AnythingOfType("*db.Operation"), mock.AnythingOfType("time.Duration")).
-			Return(func(op *db.Operation, _ time.Duration) *db.Operation {
+		repo.On("GetByIdempotencyKey", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
+			mock.AnythingOfType("time.Duration")).
+			Return(func(_ context.Context, op *db.Operation,
+				_ time.Duration) *db.Operation {
 				op.FencingToken = 1
 				return op
 			}, nil)
@@ -60,8 +62,8 @@ func TestStartOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("GetByIdempotencyKey", mock.Anything).Return(nil, nil).Maybe()
-		repo.On("Start", mock.AnythingOfType("*db.Operation"),
+		repo.On("GetByIdempotencyKey", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
+		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
 			mock.AnythingOfType("time.Duration")).Return(nil, db.ErrLockConflict)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
@@ -79,7 +81,7 @@ func TestStartOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Start", mock.AnythingOfType("*db.Operation"),
+		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
 			mock.AnythingOfType("time.Duration")).Return(nil, fmt.Errorf("db down"))
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
@@ -104,7 +106,7 @@ func TestStartOperation(t *testing.T) {
 			FencingToken: 2,
 			ResourceKey:  "node:abc",
 		}
-		repo.On("GetByIdempotencyKey", "key-123").Return(existing, nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key-123").Return(existing, nil)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 			Type:           "RestartNode",
@@ -116,7 +118,7 @@ func TestStartOperation(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, existing.Id.String(), resp.Operation.Id)
 		// Start must NOT be called when idempotency key matches
-		repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything)
+		repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
 		repo.AssertExpectations(t)
 	})
 }
@@ -126,7 +128,7 @@ func TestGetByResource(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("GetByResource", "node:free").Return(nil, nil)
+		repo.On("GetByResource", mock.Anything, "node:free").Return(nil, nil)
 
 		resp, err := s.GetByResource(context.Background(), &pb.GetByResourceRequest{ResourceKey: "node:free"})
 
@@ -140,7 +142,7 @@ func TestGetByResource(t *testing.T) {
 		s := NewOperationServer(orgName, "", repo, nil)
 
 		holder := &db.Operation{Id: uuid.NewV4(), ResourceKey: "node:abc", FencingToken: 1}
-		repo.On("GetByResource", "node:abc").Return(holder, nil)
+		repo.On("GetByResource", mock.Anything, "node:abc").Return(holder, nil)
 
 		resp, err := s.GetByResource(context.Background(), &pb.GetByResourceRequest{ResourceKey: "node:abc"})
 
@@ -161,14 +163,14 @@ func TestCompleteOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+		repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationSuccess, audit, "").
 			Return(&db.Operation{Id: id, Status: db.OperationSuccess}, nil).Once()
 
 		resp, err := s.CompleteOperation(context.Background(), req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_SUCCESS, resp.Operation.Status)
-		repo.AssertNotCalled(t, "Get", mock.Anything)
+		repo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
 		repo.AssertExpectations(t)
 	})
 
@@ -176,7 +178,7 @@ func TestCompleteOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+		repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationSuccess, audit, "").
 			Return(nil, fmt.Errorf("token mismatch: %w", store.ErrPrecondition)).Once()
 
 		resp, err := s.CompleteOperation(context.Background(), req)
@@ -189,7 +191,7 @@ func TestCompleteOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+		repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationSuccess, audit, "").
 			Return(nil, gorm.ErrRecordNotFound).Once()
 
 		resp, err := s.CompleteOperation(context.Background(), req)
@@ -220,14 +222,15 @@ func TestFailOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Terminate", id, uint64(7), db.OperationFailed, audit, "publish failed").
+		repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationFailed, audit,
+			"publish failed").
 			Return(&db.Operation{Id: id, Status: db.OperationFailed}, nil).Once()
 
 		resp, err := s.FailOperation(context.Background(), req)
 
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_FAILED, resp.Operation.Status)
-		repo.AssertNotCalled(t, "Get", mock.Anything)
+		repo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
 		repo.AssertExpectations(t)
 	})
 
@@ -235,7 +238,8 @@ func TestFailOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		repo.On("Terminate", id, uint64(7), db.OperationFailed, audit, "publish failed").
+		repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationFailed, audit,
+			"publish failed").
 			Return(nil, fmt.Errorf("already success: %w", store.ErrPrecondition)).Once()
 
 		resp, err := s.FailOperation(context.Background(), req)
@@ -254,8 +258,9 @@ func TestForceUnlock(t *testing.T) {
 		current := &db.Operation{Id: id, ResourceKey: "node:abc", FencingToken: 9, Status: db.OperationRunning}
 		cancelled := &db.Operation{Id: id, ResourceKey: "node:abc", FencingToken: 9, Status: db.OperationCancelled}
 
-		repo.On("Get", id).Return(current, nil)
-		repo.On("Terminate", id, uint64(9), db.OperationCancelled, mock.AnythingOfType("db.OperationAudit"), mock.Anything).
+		repo.On("Get", mock.Anything, id).Return(current, nil)
+		repo.On("Terminate", mock.Anything, id, uint64(9), db.OperationCancelled,
+			mock.AnythingOfType("db.OperationAudit"), mock.Anything).
 			Return(cancelled, nil)
 
 		resp, err := s.ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
@@ -275,8 +280,8 @@ func TestForceUnlock(t *testing.T) {
 
 		id := uuid.NewV4()
 
-		repo.On("Get", id).Return(&db.Operation{Id: id, FencingToken: 9}, nil)
-		repo.On("Terminate", id, uint64(9), db.OperationCancelled,
+		repo.On("Get", mock.Anything, id).Return(&db.Operation{Id: id, FencingToken: 9}, nil)
+		repo.On("Terminate", mock.Anything, id, uint64(9), db.OperationCancelled,
 			mock.AnythingOfType("db.OperationAudit"), mock.Anything).
 			Return(nil, fmt.Errorf("already success: %w", store.ErrPrecondition))
 
@@ -296,7 +301,7 @@ func TestMarkRunning(t *testing.T) {
 
 		id := uuid.NewV4()
 		running := &db.Operation{Id: id, ResourceKey: "node:abc", FencingToken: 3, Status: db.OperationRunning}
-		repo.On("MarkRunning", id, uint64(3)).Return(running, nil)
+		repo.On("MarkRunning", mock.Anything, id, uint64(3)).Return(running, nil)
 
 		resp, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
 			Id:           id.String(),
@@ -306,6 +311,61 @@ func TestMarkRunning(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
 		repo.AssertExpectations(t)
+	})
+}
+
+func TestRepoErrorCodes(t *testing.T) {
+	id := uuid.NewV4()
+	lockTimeout := fmt.Errorf("terminate: %w", db.ErrLockTimeout)
+
+	for name, tc := range map[string]struct {
+		err  error
+		code codes.Code
+	}{
+		"LockTimeoutIsUnavailable":   {lockTimeout, codes.Unavailable},
+		"DeadlineIsDeadlineExceeded": {context.DeadlineExceeded, codes.DeadlineExceeded},
+		"CancelledIsCanceled":        {context.Canceled, codes.Canceled},
+		"OtherErrorIsInternal":       {fmt.Errorf("db down"), codes.Internal},
+	} {
+		t.Run("Complete"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("Terminate", mock.Anything, id, uint64(7), db.OperationSuccess,
+				mock.Anything, "").Return(nil, tc.err).Once()
+
+			_, err := s.CompleteOperation(context.Background(),
+				&pb.CompleteOperationRequest{
+					Id: id.String(), FencingToken: 7, Actor: "a", Reason: "r",
+				})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+
+		t.Run("Start"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("Start", mock.Anything, mock.Anything, mock.Anything).
+				Return(nil, tc.err).Once()
+
+			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+	}
+
+	t.Run("MarkRunningLockTimeoutIsUnavailable", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("MarkRunning", mock.Anything, id, uint64(3)).
+			Return(nil, lockTimeout).Once()
+
+		_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+			Id: id.String(), FencingToken: 3,
+		})
+
+		assert.Equal(t, codes.Unavailable, status.Code(err))
 	})
 }
 
@@ -350,8 +410,8 @@ func TestInvalidResourceKeyIsRejected(t *testing.T) {
 			})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
-			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything)
-			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
 		})
 
 		t.Run("GetByResource"+name, func(t *testing.T) {
@@ -362,7 +422,7 @@ func TestInvalidResourceKeyIsRejected(t *testing.T) {
 				&pb.GetByResourceRequest{ResourceKey: key})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
-			repo.AssertNotCalled(t, "GetByResource", mock.Anything)
+			repo.AssertNotCalled(t, "GetByResource", mock.Anything, mock.Anything)
 		})
 	}
 }
@@ -379,8 +439,9 @@ func TestStartOperationLease(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			s := NewOperationServer(orgName, "", repo, nil)
 
-			repo.On("Start", mock.AnythingOfType("*db.Operation"), tc.lease).
-				Return(func(op *db.Operation, _ time.Duration) *db.Operation {
+			repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"), tc.lease).
+				Return(func(_ context.Context, op *db.Operation,
+					_ time.Duration) *db.Operation {
 					return op
 				}, nil).Once()
 
@@ -408,8 +469,8 @@ func TestStartOperationLease(t *testing.T) {
 			})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
-			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything)
-			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
 		})
 	}
 }

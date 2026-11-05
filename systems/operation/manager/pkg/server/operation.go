@@ -85,9 +85,9 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	if req.IdempotencyKey != "" {
-		existing, err := s.repo.GetByIdempotencyKey(req.IdempotencyKey)
+		existing, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
 		if err != nil {
-			return nil, status.Errorf(codes.Internal, "idempotency lookup: %v", err)
+			return nil, repoErr(err)
 		}
 		if existing != nil {
 			return &pb.StartOperationResponse{Operation: toPb(existing)}, nil
@@ -108,13 +108,13 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 		op.IdempotencyKey = &k
 	}
 
-	op, err := s.repo.Start(op, lease)
+	op, err := s.repo.Start(ctx, op, lease)
 	if errors.Is(err, db.ErrLockConflict) {
 		return nil, status.Error(codes.AlreadyExists,
 			"resource is locked by an active operation")
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "start operation: %v", err)
+		return nil, repoErr(err)
 	}
 
 	log.Infof("operation %s started: type=%s resource=%s token=%d", op.Id, op.Type, op.ResourceKey, op.FencingToken)
@@ -126,12 +126,12 @@ func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperation
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	op, err := s.repo.Get(id)
+	op, err := s.repo.Get(ctx, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.NotFound, "operation not found")
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
+		return nil, repoErr(err)
 	}
 	return &pb.GetOperationResponse{Operation: toPb(op)}, nil
 }
@@ -140,9 +140,9 @@ func (s *OperationServer) GetByResource(ctx context.Context, req *pb.GetByResour
 	if err := validateResourceKey(req.ResourceKey); err != nil {
 		return nil, err
 	}
-	op, err := s.repo.GetByResource(req.ResourceKey)
+	op, err := s.repo.GetByResource(ctx, req.ResourceKey)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "get by resource: %v", err)
+		return nil, repoErr(err)
 	}
 	if op == nil {
 		return &pb.GetByResourceResponse{}, nil
@@ -155,7 +155,10 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	op, err := s.repo.MarkRunning(id, req.FencingToken)
+	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken)
+	if isTransient(err) {
+		return nil, repoErr(err)
+	}
 	if err != nil {
 		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
 	}
@@ -169,13 +172,14 @@ func (s *OperationServer) CompleteOperation(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
 
-	op, err := s.repo.Terminate(id, req.FencingToken, db.OperationSuccess, db.OperationAudit{
-		Event:  "completed",
-		Actor:  req.Actor,
-		Reason: req.Reason,
-	}, "")
+	op, err := s.repo.Terminate(ctx, id, req.FencingToken, db.OperationSuccess,
+		db.OperationAudit{
+			Event:  "completed",
+			Actor:  req.Actor,
+			Reason: req.Reason,
+		}, "")
 	if err != nil {
-		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
+		return nil, repoErr(err)
 	}
 
 	log.Infof("operation %s completed by %s: %s", op.Id, req.Actor, req.Reason)
@@ -189,13 +193,14 @@ func (s *OperationServer) FailOperation(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
 
-	op, err := s.repo.Terminate(id, req.FencingToken, db.OperationFailed, db.OperationAudit{
-		Event:  "failed",
-		Actor:  req.Actor,
-		Reason: req.Reason,
-	}, req.Reason)
+	op, err := s.repo.Terminate(ctx, id, req.FencingToken, db.OperationFailed,
+		db.OperationAudit{
+			Event:  "failed",
+			Actor:  req.Actor,
+			Reason: req.Reason,
+		}, req.Reason)
 	if err != nil {
-		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
+		return nil, repoErr(err)
 	}
 
 	log.Warnf("operation %s failed by %s: %s", op.Id, req.Actor, req.Reason)
@@ -207,25 +212,39 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	current, err := s.repo.Get(id)
+	current, err := s.repo.Get(ctx, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.NotFound, "operation not found")
 	}
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "get operation: %v", err)
+		return nil, repoErr(err)
 	}
 
-	op, err := s.repo.Terminate(id, current.FencingToken, db.OperationCancelled, db.OperationAudit{
-		Event:  "force_unlock",
-		Actor:  req.Actor,
-		Reason: req.Reason,
-	}, "force unlocked: "+req.Reason)
+	op, err := s.repo.Terminate(ctx, id, current.FencingToken, db.OperationCancelled,
+		db.OperationAudit{
+			Event:  "force_unlock",
+			Actor:  req.Actor,
+			Reason: req.Reason,
+		}, "force unlocked: "+req.Reason)
 	if err != nil {
-		return nil, cgrpc.StoreErrorToGrpc(err, "operation")
+		return nil, repoErr(err)
 	}
 
 	log.Warnf("operation %s force-unlocked by %s: %s", op.Id, req.Actor, req.Reason)
 	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+}
+
+func isTransient(err error) bool {
+	return errors.Is(err, db.ErrLockTimeout) ||
+		errors.Is(err, context.Canceled) ||
+		errors.Is(err, context.DeadlineExceeded)
+}
+
+func repoErr(err error) error {
+	if errors.Is(err, db.ErrLockTimeout) {
+		return status.Error(codes.Unavailable, err.Error())
+	}
+	return cgrpc.StoreErrorToGrpc(err, "operation")
 }
 
 func toPb(o *db.Operation) *pb.Operation {

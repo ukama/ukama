@@ -9,10 +9,12 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -20,19 +22,25 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-var ErrLockConflict = errors.New("resource_locked")
+var (
+	ErrLockConflict = errors.New("resource_locked")
+	ErrLockTimeout  = errors.New("lock_timeout")
+)
 
-const lockTimeoutStmt = "SET LOCAL lock_timeout = '5s'"
+const (
+	lockTimeoutStmt       = "SET LOCAL lock_timeout = '2s'"
+	pgErrLockNotAvailable = "55P03"
+)
 
 type OperationRepo interface {
-	Start(op *Operation, lockTTL time.Duration) (*Operation, error)
-	Get(id uuid.UUID) (*Operation, error)
-	GetByResource(resourceKey string) (*Operation, error)
-	GetByIdempotencyKey(key string) (*Operation, error)
-	MarkRunning(id uuid.UUID, fencingToken uint64) (*Operation, error)
-	Terminate(id uuid.UUID, fencingToken uint64, status OperationStatus,
-		audit OperationAudit, opErr string) (*Operation, error)
-	FindExpired(now time.Time, limit int) ([]Operation, error)
+	Start(ctx context.Context, op *Operation, lockTTL time.Duration) (*Operation, error)
+	Get(ctx context.Context, id uuid.UUID) (*Operation, error)
+	GetByResource(ctx context.Context, resourceKey string) (*Operation, error)
+	GetByIdempotencyKey(ctx context.Context, key string) (*Operation, error)
+	MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64) (*Operation, error)
+	Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64,
+		status OperationStatus, audit OperationAudit, opErr string) (*Operation, error)
+	FindExpired(ctx context.Context, now time.Time, limit int) ([]Operation, error)
 }
 
 type operationRepo struct {
@@ -43,8 +51,12 @@ func NewOperationRepo(db sql.Db) OperationRepo {
 	return &operationRepo{db: db}
 }
 
-func (r *operationRepo) Start(op *Operation, lockTTL time.Duration) (*Operation, error) {
-	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+func (r *operationRepo) Start(ctx context.Context, op *Operation,
+	lockTTL time.Duration) (*Operation, error) {
+	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := tx.Exec(lockTimeoutStmt).Error; err != nil {
+			return err
+		}
 		if err := tx.Create(op).Error; err != nil {
 			return err
 		}
@@ -77,34 +89,39 @@ func (r *operationRepo) Start(op *Operation, lockTTL time.Duration) (*Operation,
 		return nil, ErrLockConflict
 	}
 	if err != nil {
-		return nil, fmt.Errorf("start operation: %w", err)
+		return nil, fmt.Errorf("start operation: %w", lockTimeoutErr(err))
 	}
 	return op, nil
 }
 
-func (r *operationRepo) Get(id uuid.UUID) (*Operation, error) {
+func (r *operationRepo) Get(ctx context.Context, id uuid.UUID) (*Operation, error) {
 	var op Operation
-	if err := r.db.GetGormDb().Where("id = ?", id).First(&op).Error; err != nil {
+	if err := r.db.GetGormDb().WithContext(ctx).Where("id = ?", id).
+		First(&op).Error; err != nil {
 		return nil, err
 	}
 	return &op, nil
 }
 
-func (r *operationRepo) GetByResource(resourceKey string) (*Operation, error) {
+func (r *operationRepo) GetByResource(ctx context.Context,
+	resourceKey string) (*Operation, error) {
 	var lock ResourceLock
-	err := r.db.GetGormDb().Where("resource_key = ?", resourceKey).First(&lock).Error
+	err := r.db.GetGormDb().WithContext(ctx).
+		Where("resource_key = ?", resourceKey).First(&lock).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return r.Get(lock.OperationId)
+	return r.Get(ctx, lock.OperationId)
 }
 
-func (r *operationRepo) GetByIdempotencyKey(key string) (*Operation, error) {
+func (r *operationRepo) GetByIdempotencyKey(ctx context.Context,
+	key string) (*Operation, error) {
 	var op Operation
-	err := r.db.GetGormDb().Where("idempotency_key = ?", key).First(&op).Error
+	err := r.db.GetGormDb().WithContext(ctx).
+		Where("idempotency_key = ?", key).First(&op).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
@@ -114,9 +131,10 @@ func (r *operationRepo) GetByIdempotencyKey(key string) (*Operation, error) {
 	return &op, nil
 }
 
-func (r *operationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*Operation, error) {
+func (r *operationRepo) MarkRunning(ctx context.Context, id uuid.UUID,
+	fencingToken uint64) (*Operation, error) {
 	var op Operation
-	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := lockOperation(tx, &op, "id = ? AND fencing_token = ?", id,
 			fencingToken); err != nil {
 			return err
@@ -136,13 +154,14 @@ func (r *operationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*Operati
 		}).Error
 	})
 	if err != nil {
-		return nil, err
+		return nil, lockTimeoutErr(err)
 	}
 	return &op, nil
 }
 
-func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
-	status OperationStatus, audit OperationAudit, opErr string) (*Operation, error) {
+func (r *operationRepo) Terminate(ctx context.Context, id uuid.UUID,
+	fencingToken uint64, status OperationStatus, audit OperationAudit,
+	opErr string) (*Operation, error) {
 
 	if !status.IsTerminal() {
 		return nil, fmt.Errorf("terminate: %s is not a terminal status", status)
@@ -151,7 +170,7 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 	var op Operation
 	var rejectErr error
 
-	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
+	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := lockOperation(tx, &op, "id = ?", id); err != nil {
 			return err
 		}
@@ -203,12 +222,20 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 		return writeAudit("", nil)
 	})
 	if err != nil {
-		return nil, err
+		return nil, lockTimeoutErr(err)
 	}
 	if rejectErr != nil {
 		return nil, rejectErr
 	}
 	return &op, nil
+}
+
+func lockTimeoutErr(err error) error {
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgErrLockNotAvailable {
+		return fmt.Errorf("%w: %v", ErrLockTimeout, err)
+	}
+	return err
 }
 
 func lockOperation(tx *gorm.DB, op *Operation, query string,
@@ -220,9 +247,10 @@ func lockOperation(tx *gorm.DB, op *Operation, query string,
 		Where(query, args...).First(op).Error
 }
 
-func (r *operationRepo) FindExpired(now time.Time, limit int) ([]Operation, error) {
+func (r *operationRepo) FindExpired(ctx context.Context, now time.Time,
+	limit int) ([]Operation, error) {
 	var ops []Operation
-	err := r.db.GetGormDb().
+	err := r.db.GetGormDb().WithContext(ctx).
 		Where("lease_expires_at < ? AND status IN ?", now, []OperationStatus{OperationPending, OperationRunning}).
 		Limit(limit).
 		Find(&ops).Error

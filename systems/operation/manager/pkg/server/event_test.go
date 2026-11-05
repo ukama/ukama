@@ -67,7 +67,8 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 	for _, e := range events {
 		t.Run(e.name+"Applied", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
-			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
+			repo.On("Terminate", mock.Anything, opId, uint64(5), e.status,
+				mock.Anything, mock.Anything).
 				Return(&db.Operation{}, nil).Once()
 
 			resp, err := NewEventServer(orgName, repo).
@@ -80,7 +81,8 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 
 		t.Run(e.name+"LateIsAcknowledged", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
-			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
+			repo.On("Terminate", mock.Anything, opId, uint64(5), e.status,
+				mock.Anything, mock.Anything).
 				Return(nil, precondition).Once()
 
 			resp, err := NewEventServer(orgName, repo).
@@ -93,7 +95,8 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 
 		t.Run(e.name+"UnknownOperationIsAcknowledged", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
-			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
+			repo.On("Terminate", mock.Anything, opId, uint64(5), e.status,
+				mock.Anything, mock.Anything).
 				Return(nil, gorm.ErrRecordNotFound).Once()
 
 			resp, err := NewEventServer(orgName, repo).
@@ -106,7 +109,8 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 
 		t.Run(e.name+"RepoFailureIsUnavailable", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
-			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
+			repo.On("Terminate", mock.Anything, opId, uint64(5), e.status,
+				mock.Anything, mock.Anything).
 				Return(nil, assert.AnError).Once()
 
 			resp, err := NewEventServer(orgName, repo).

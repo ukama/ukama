@@ -3,6 +3,8 @@
 package mocks
 
 import (
+	context "context"
+
 	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/operation/manager/pkg/db"
 
@@ -16,9 +18,9 @@ type OperationRepo struct {
 	mock.Mock
 }
 
-// FindExpired provides a mock function with given fields: now, limit
-func (_m *OperationRepo) FindExpired(now time.Time, limit int) ([]db.Operation, error) {
-	ret := _m.Called(now, limit)
+// FindExpired provides a mock function with given fields: ctx, now, limit
+func (_m *OperationRepo) FindExpired(ctx context.Context, now time.Time, limit int) ([]db.Operation, error) {
+	ret := _m.Called(ctx, now, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FindExpired")
@@ -26,19 +28,19 @@ func (_m *OperationRepo) FindExpired(now time.Time, limit int) ([]db.Operation, 
 
 	var r0 []db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(time.Time, int) ([]db.Operation, error)); ok {
-		return rf(now, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, int) ([]db.Operation, error)); ok {
+		return rf(ctx, now, limit)
 	}
-	if rf, ok := ret.Get(0).(func(time.Time, int) []db.Operation); ok {
-		r0 = rf(now, limit)
+	if rf, ok := ret.Get(0).(func(context.Context, time.Time, int) []db.Operation); ok {
+		r0 = rf(ctx, now, limit)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(time.Time, int) error); ok {
-		r1 = rf(now, limit)
+	if rf, ok := ret.Get(1).(func(context.Context, time.Time, int) error); ok {
+		r1 = rf(ctx, now, limit)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -46,9 +48,9 @@ func (_m *OperationRepo) FindExpired(now time.Time, limit int) ([]db.Operation, 
 	return r0, r1
 }
 
-// Get provides a mock function with given fields: id
-func (_m *OperationRepo) Get(id uuid.UUID) (*db.Operation, error) {
-	ret := _m.Called(id)
+// Get provides a mock function with given fields: ctx, id
+func (_m *OperationRepo) Get(ctx context.Context, id uuid.UUID) (*db.Operation, error) {
+	ret := _m.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Get")
@@ -56,19 +58,19 @@ func (_m *OperationRepo) Get(id uuid.UUID) (*db.Operation, error) {
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID) (*db.Operation, error)); ok {
-		return rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*db.Operation, error)); ok {
+		return rf(ctx, id)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID) *db.Operation); ok {
-		r0 = rf(id)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID) *db.Operation); ok {
+		r0 = rf(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID) error); ok {
-		r1 = rf(id)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = rf(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -76,9 +78,9 @@ func (_m *OperationRepo) Get(id uuid.UUID) (*db.Operation, error) {
 	return r0, r1
 }
 
-// GetByIdempotencyKey provides a mock function with given fields: key
-func (_m *OperationRepo) GetByIdempotencyKey(key string) (*db.Operation, error) {
-	ret := _m.Called(key)
+// GetByIdempotencyKey provides a mock function with given fields: ctx, key
+func (_m *OperationRepo) GetByIdempotencyKey(ctx context.Context, key string) (*db.Operation, error) {
+	ret := _m.Called(ctx, key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByIdempotencyKey")
@@ -86,19 +88,19 @@ func (_m *OperationRepo) GetByIdempotencyKey(key string) (*db.Operation, error) 
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Operation, error)); ok {
-		return rf(key)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.Operation, error)); ok {
+		return rf(ctx, key)
 	}
-	if rf, ok := ret.Get(0).(func(string) *db.Operation); ok {
-		r0 = rf(key)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Operation); ok {
+		r0 = rf(ctx, key)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(key)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -106,9 +108,9 @@ func (_m *OperationRepo) GetByIdempotencyKey(key string) (*db.Operation, error) 
 	return r0, r1
 }
 
-// GetByResource provides a mock function with given fields: resourceKey
-func (_m *OperationRepo) GetByResource(resourceKey string) (*db.Operation, error) {
-	ret := _m.Called(resourceKey)
+// GetByResource provides a mock function with given fields: ctx, resourceKey
+func (_m *OperationRepo) GetByResource(ctx context.Context, resourceKey string) (*db.Operation, error) {
+	ret := _m.Called(ctx, resourceKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByResource")
@@ -116,19 +118,19 @@ func (_m *OperationRepo) GetByResource(resourceKey string) (*db.Operation, error
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*db.Operation, error)); ok {
-		return rf(resourceKey)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.Operation, error)); ok {
+		return rf(ctx, resourceKey)
 	}
-	if rf, ok := ret.Get(0).(func(string) *db.Operation); ok {
-		r0 = rf(resourceKey)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Operation); ok {
+		r0 = rf(ctx, resourceKey)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(resourceKey)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, resourceKey)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -136,9 +138,9 @@ func (_m *OperationRepo) GetByResource(resourceKey string) (*db.Operation, error
 	return r0, r1
 }
 
-// MarkRunning provides a mock function with given fields: id, fencingToken
-func (_m *OperationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*db.Operation, error) {
-	ret := _m.Called(id, fencingToken)
+// MarkRunning provides a mock function with given fields: ctx, id, fencingToken
+func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64) (*db.Operation, error) {
+	ret := _m.Called(ctx, id, fencingToken)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MarkRunning")
@@ -146,19 +148,19 @@ func (_m *OperationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*db.Ope
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uint64) (*db.Operation, error)); ok {
-		return rf(id, fencingToken)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64) (*db.Operation, error)); ok {
+		return rf(ctx, id, fencingToken)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uint64) *db.Operation); ok {
-		r0 = rf(id, fencingToken)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64) *db.Operation); ok {
+		r0 = rf(ctx, id, fencingToken)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID, uint64) error); ok {
-		r1 = rf(id, fencingToken)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64) error); ok {
+		r1 = rf(ctx, id, fencingToken)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -166,9 +168,9 @@ func (_m *OperationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*db.Ope
 	return r0, r1
 }
 
-// Start provides a mock function with given fields: op, lockTTL
-func (_m *OperationRepo) Start(op *db.Operation, lockTTL time.Duration) (*db.Operation, error) {
-	ret := _m.Called(op, lockTTL)
+// Start provides a mock function with given fields: ctx, op, lockTTL
+func (_m *OperationRepo) Start(ctx context.Context, op *db.Operation, lockTTL time.Duration) (*db.Operation, error) {
+	ret := _m.Called(ctx, op, lockTTL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Start")
@@ -176,19 +178,19 @@ func (_m *OperationRepo) Start(op *db.Operation, lockTTL time.Duration) (*db.Ope
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*db.Operation, time.Duration) (*db.Operation, error)); ok {
-		return rf(op, lockTTL)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Operation, time.Duration) (*db.Operation, error)); ok {
+		return rf(ctx, op, lockTTL)
 	}
-	if rf, ok := ret.Get(0).(func(*db.Operation, time.Duration) *db.Operation); ok {
-		r0 = rf(op, lockTTL)
+	if rf, ok := ret.Get(0).(func(context.Context, *db.Operation, time.Duration) *db.Operation); ok {
+		r0 = rf(ctx, op, lockTTL)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*db.Operation, time.Duration) error); ok {
-		r1 = rf(op, lockTTL)
+	if rf, ok := ret.Get(1).(func(context.Context, *db.Operation, time.Duration) error); ok {
+		r1 = rf(ctx, op, lockTTL)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -196,9 +198,9 @@ func (_m *OperationRepo) Start(op *db.Operation, lockTTL time.Duration) (*db.Ope
 	return r0, r1
 }
 
-// Terminate provides a mock function with given fields: id, fencingToken, status, audit, opErr
-func (_m *OperationRepo) Terminate(id uuid.UUID, fencingToken uint64, status db.OperationStatus, audit db.OperationAudit, opErr string) (*db.Operation, error) {
-	ret := _m.Called(id, fencingToken, status, audit, opErr)
+// Terminate provides a mock function with given fields: ctx, id, fencingToken, status, audit, opErr
+func (_m *OperationRepo) Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64, status db.OperationStatus, audit db.OperationAudit, opErr string) (*db.Operation, error) {
+	ret := _m.Called(ctx, id, fencingToken, status, audit, opErr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Terminate")
@@ -206,19 +208,19 @@ func (_m *OperationRepo) Terminate(id uuid.UUID, fencingToken uint64, status db.
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) (*db.Operation, error)); ok {
-		return rf(id, fencingToken, status, audit, opErr)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) (*db.Operation, error)); ok {
+		return rf(ctx, id, fencingToken, status, audit, opErr)
 	}
-	if rf, ok := ret.Get(0).(func(uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) *db.Operation); ok {
-		r0 = rf(id, fencingToken, status, audit, opErr)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) *db.Operation); ok {
+		r0 = rf(ctx, id, fencingToken, status, audit, opErr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) error); ok {
-		r1 = rf(id, fencingToken, status, audit, opErr)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) error); ok {
+		r1 = rf(ctx, id, fencingToken, status, audit, opErr)
 	} else {
 		r1 = ret.Error(1)
 	}

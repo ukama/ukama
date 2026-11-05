@@ -99,7 +99,8 @@ func runGrpcServer(gormdb sql.Db) {
 	cnet := creg.NewNetworkClient(regUrl.String())
 	csite := creg.NewSiteClient(regUrl.String())
 	cnode := creg.NewNodeClient(regUrl.String())
-	opMgr := copr.NewManagerClient(operationUrl.String())
+	opMgr := copr.NewManagerClient(operationUrl.String(),
+		client.WithTimeout(svcConf.Operation.Timeout))
 
 	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
