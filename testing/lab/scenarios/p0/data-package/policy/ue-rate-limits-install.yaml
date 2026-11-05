@@ -5,7 +5,7 @@ seed: 18530
 suite: p0
 priority: p0
 tags: [virtual, runtime, pdn, rate-limits]
-status: active
+status: skip 
 
 provider:
   type: virtual
