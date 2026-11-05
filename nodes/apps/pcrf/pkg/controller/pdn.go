@@ -278,7 +278,7 @@ func (c *Controller) policyReason(imsi string, se *store.Session) (
 func sameSessionPolicy(se *store.Session, sub *store.Subscriber) bool {
 	p := &sub.PolicyID
 	return se.PolicyID.ID == p.ID &&
-		se.RxMeterID.Rate == p.Ulbr && se.TxMeterID.Rate == p.Dlbr &&
+		se.RxMeterID.Rate == p.Dlbr && se.TxMeterID.Rate == p.Ulbr &&
 		se.RxMeterID.Burst == p.Burst && se.TxMeterID.Burst == p.Burst
 }
 
