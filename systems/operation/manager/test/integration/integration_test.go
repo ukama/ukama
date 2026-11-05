@@ -88,6 +88,20 @@ func startOperation(t *testing.T, ctx context.Context,
 	return resp.Operation
 }
 
+func startRunningOperation(t *testing.T, ctx context.Context,
+	c pb.OperationManagerServiceClient) *pb.Operation {
+	t.Helper()
+
+	op := startOperation(t, ctx, c)
+	resp, err := c.MarkRunning(ctx, &pb.MarkRunningRequest{
+		Id: op.Id, FencingToken: op.FencingToken,
+	})
+	assert.NoError(t, err)
+	assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
+
+	return resp.Operation
+}
+
 func assertLockHeldBy(t *testing.T, ctx context.Context,
 	c pb.OperationManagerServiceClient, op *pb.Operation) {
 	t.Helper()
@@ -135,7 +149,7 @@ func TestComplete(t *testing.T) {
 	})
 
 	t.Run("RightTokenReleasesTheLock", func(t *testing.T) {
-		op := startOperation(t, ctx, c)
+		op := startRunningOperation(t, ctx, c)
 
 		resp, err := completeOperation(ctx, c, op, op.FencingToken)
 
@@ -144,8 +158,17 @@ func TestComplete(t *testing.T) {
 		assertLockFree(t, ctx, c, op)
 	})
 
-	t.Run("DuplicateIsIdempotent", func(t *testing.T) {
+	t.Run("OnPendingIsRejected", func(t *testing.T) {
 		op := startOperation(t, ctx, c)
+
+		_, err := completeOperation(ctx, c, op, op.FencingToken)
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assertLockHeldBy(t, ctx, c, op)
+	})
+
+	t.Run("DuplicateIsIdempotent", func(t *testing.T) {
+		op := startRunningOperation(t, ctx, c)
 
 		_, err := completeOperation(ctx, c, op, op.FencingToken)
 		assert.NoError(t, err)
@@ -203,7 +226,7 @@ func TestFail(t *testing.T) {
 	})
 
 	t.Run("AfterCompletionIsRejected", func(t *testing.T) {
-		op := startOperation(t, ctx, c)
+		op := startRunningOperation(t, ctx, c)
 
 		_, err := completeOperation(ctx, c, op, op.FencingToken)
 		assert.NoError(t, err)
@@ -231,7 +254,7 @@ func TestForceUnlock(t *testing.T) {
 	})
 
 	t.Run("FinishedOperationIsRejected", func(t *testing.T) {
-		op := startOperation(t, ctx, c)
+		op := startRunningOperation(t, ctx, c)
 
 		_, err := completeOperation(ctx, c, op, op.FencingToken)
 		assert.NoError(t, err)

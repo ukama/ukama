@@ -16,8 +16,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"gorm.io/gorm"
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -88,7 +91,20 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 			repo.AssertExpectations(t)
 		})
 
-		t.Run(e.name+"OtherErrorIsReturned", func(t *testing.T) {
+		t.Run(e.name+"UnknownOperationIsAcknowledged", func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
+				Return(nil, gorm.ErrRecordNotFound).Once()
+
+			resp, err := NewEventServer(orgName, repo).
+				EventNotification(context.Background(), e.event(t))
+
+			assert.NoError(t, err)
+			assert.NotNil(t, resp)
+			repo.AssertExpectations(t)
+		})
+
+		t.Run(e.name+"RepoFailureIsUnavailable", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			repo.On("Terminate", opId, uint64(5), e.status, mock.Anything, mock.Anything).
 				Return(nil, assert.AnError).Once()
@@ -96,7 +112,7 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 			resp, err := NewEventServer(orgName, repo).
 				EventNotification(context.Background(), e.event(t))
 
-			assert.ErrorIs(t, err, assert.AnError)
+			assert.Equal(t, codes.Unavailable, status.Code(err))
 			assert.Nil(t, resp)
 			repo.AssertExpectations(t)
 		})

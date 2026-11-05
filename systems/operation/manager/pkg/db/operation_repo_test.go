@@ -171,7 +171,7 @@ func Test_MarkRunning(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+		expectLockedSelect(mock).
 			WillReturnRows(operationRow(op))
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -201,7 +201,7 @@ func Test_Terminate(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+		expectLockedSelect(mock).
 			WillReturnRows(operationRow(op))
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
@@ -230,9 +230,13 @@ func Test_Terminate(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+		expectLockedSelect(mock).
 			WillReturnRows(operationRow(op))
-		mock.ExpectRollback()
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "rejected_completed",
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
 
 		// zombie carries an older token (4 < 9) → rejected
 		out, err := repo.Terminate(op.Id, 4, OperationSuccess,
@@ -254,7 +258,7 @@ func Test_Terminate(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+		expectLockedSelect(mock).
 			WillReturnRows(operationRow(op))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
 			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "ignored_completed",
@@ -281,7 +285,7 @@ func Test_Terminate(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+		expectLockedSelect(mock).
 			WillReturnRows(operationRow(op))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
 			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "ignored_completed",
@@ -293,6 +297,81 @@ func Test_Terminate(t *testing.T) {
 			OperationAudit{Event: "completed"}, "")
 
 		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("RejectsCompleteOnPending", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationPending,
+			FencingToken: 5,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "rejected_completed",
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+			OperationAudit{Event: "completed"}, "")
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("AllowsFailOnPending", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationPending,
+			FencingToken: 5,
+			ResourceKey:  "node:abc",
+		}
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "resource_locks"`)).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "failed",
+				sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		out, err := repo.Terminate(op.Id, op.FencingToken, OperationFailed,
+			OperationAudit{Event: "failed"}, "boom")
+
+		assert.NoError(t, err)
+		assert.Equal(t, OperationFailed, out.Status)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReturnsLockTimeout", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnError(errors.New("canceling statement due to lock timeout"))
+		mock.ExpectRollback()
+
+		out, err := repo.Terminate(uuid.NewV4(), 5, OperationSuccess,
+			OperationAudit{Event: "completed"}, "")
+
+		assert.Error(t, err)
+		assert.False(t, errors.Is(err, store.ErrPrecondition))
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -343,4 +422,10 @@ func Test_FindExpired(t *testing.T) {
 		assert.Len(t, out, 1)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
+}
+
+func expectLockedSelect(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
+	mock.ExpectExec(regexp.QuoteMeta(lockTimeoutStmt)).
+		WillReturnResult(sqlmock.NewResult(0, 0))
+	return mock.ExpectQuery(`SELECT \* FROM "operations" .* FOR UPDATE`)
 }
