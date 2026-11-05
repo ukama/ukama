@@ -36,14 +36,14 @@ func TestZeroBandwidth_CreatePauseResumeAndEnd(t *testing.T) {
 			ns, rx, tx, err := s.CreateSession(sub, "192.168.8.2", "tower")
 			require.NoError(t, err)
 			rxID, txID := uint32(ns.RxMeterID.ID), uint32(ns.TxMeterID.ID)
-			if rates[0] == 0 {
+			if p.Dlbr == 0 {
 				rxID = 0
 			}
-			if rates[1] == 0 {
+			if p.Ulbr == 0 {
 				txID = 0
 			}
 			sm := &sessionManager{store: s, d: d, period: time.Hour, idle: time.Hour, cache: make(map[string]*sessionCache)}
-			d.On("AddNewDataPath", ns.UeIpAddr, rxID, txID, uint32(rates[0]), uint32(rates[1]), uint32(0), rx.Cookie, tx.Cookie).Return(nil).Once()
+			d.On("AddNewDataPath", ns.UeIpAddr, rxID, txID, uint32(p.Dlbr), uint32(p.Ulbr), uint32(0), rx.Cookie, tx.Cookie).Return(nil).Once()
 			require.NoError(t, sm.CreateSesssion(context.Background(), sub, ns, rx, tx))
 			t.Cleanup(func() { sm.cacheCleanupForTest(sub.Imsi) })
 			d.On("DataPathStats", rx.Cookie, tx.Cookie).Return(uint64(20), uint64(1), uint64(80), uint64(1), nil).Once()

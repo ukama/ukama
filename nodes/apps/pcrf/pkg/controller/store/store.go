@@ -362,7 +362,7 @@ func (s *Store) CreateReroute(r *api.ReRoute) (*ReRoute, error) {
 	return rr, nil
 }
 
-/* Create a new meter */
+/* RX and TX are from the UE: RX is downlink, TX is uplink. */
 func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM PathType) (*Meter, error) {
 	var r sql.Result
 	var err error
@@ -372,13 +372,13 @@ func (s *Store) CreateMeter(sub *Subscriber, p *Policy, typeM PathType) (*Meter,
 		r, err = s.db.Exec(`
 			INSERT INTO meters (rate, type, burst)
 			VALUES (?, ?, ?);
-		`, p.Ulbr, typeM, p.Burst)
+		`, p.Dlbr, typeM, p.Burst)
 
 	case TX_PATH:
 		r, err = s.db.Exec(`
 			INSERT INTO meters (rate, type, burst)
 			VALUES (?, ?, ?);
-		`, p.Dlbr, typeM, p.Burst)
+		`, p.Ulbr, typeM, p.Burst)
 	}
 	if err != nil {
 		log.Errorf("Failed to insert meter for subscriber %s. Error: %v", sub.Imsi, err)

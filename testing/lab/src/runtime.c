@@ -813,6 +813,38 @@ int runtime_start_ues_apn(const char *repo, runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_ue_rate_policy(runtime_t *rt, const world_t *w,
+                           const selector_result_t *ues,
+                           const event_spec_t *event, ulab_error_t *err) {
+    size_t i;
+    const char *op = event->type == EVT_SET_UE_RATE_POLICY ? "set" : "wait";
+
+    if (!ues->count) {
+        snprintf(err->msg, sizeof(err->msg), "rate event selected no UEs");
+        return ULAB_ERR;
+    }
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue = &w->ues[ues->idx[i]];
+        char args[4096];
+        int rc;
+
+        if (strchr(rt->run_dir, '\'') || strchr(ue->site_ref, '\'') ||
+            strchr(ue->imsi, '\'') || strchr(ue->ip, '\'')) {
+            snprintf(err->msg, sizeof(err->msg), "invalid rate event argument");
+            return ULAB_ERR;
+        }
+        rc = snprintf(args, sizeof(args), "'%s' '%s' '%s' '%s' %s %u %u",
+                      rt->run_dir, ue->site_ref, ue->imsi, ue->ip, op,
+                      event->uplink_kbps, event->downlink_kbps);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg), "rate event args too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "ue-rate-policy.py", args, err)) return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
 int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
                             const selector_result_t *ues,
                             const check_spec_t *check, ulab_error_t *err) {

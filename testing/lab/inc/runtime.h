@@ -76,6 +76,9 @@ int runtime_build_and_start_ues(const char *repo,
 int runtime_start_ues_apn(const char *repo, runtime_t *rt,
                            const world_t *w, const selector_result_t *ues,
                            const char *apn, ulab_error_t *err);
+int runtime_ue_rate_policy(runtime_t *rt, const world_t *w,
+                           const selector_result_t *ues,
+                           const event_spec_t *event, ulab_error_t *err);
 int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
                             const selector_result_t *ues,
                             const check_spec_t *check, ulab_error_t *err);

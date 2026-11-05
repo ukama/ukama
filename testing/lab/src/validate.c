@@ -275,6 +275,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if ((event->type == EVT_SET_UE_RATE_POLICY ||
+                 event->type == EVT_WAIT_UE_RATE_LIMITS) &&
+                (!ulab_streq(s->provider.type, "virtual") ||
+                 event->ues.kind == SEL_NONE || !event->uplink_kbps ||
+                 !event->downlink_kbps)) {
+                return fail(err, "rate events need virtual UEs and positive uplink_kbps/downlink_kbps");
+            }
             if (event->type == EVT_WAIT_UE_SESSIONS ||
                 event->type == EVT_FINALIZE_UE_SESSIONS) {
                 if (event->ues.kind == SEL_NONE) {

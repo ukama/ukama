@@ -70,6 +70,8 @@ typedef enum {
     EVT_WAIT_UES_ATTACHED,
     EVT_WAIT_UES_DETACHED,
     EVT_WAIT_UE_SESSIONS,
+    EVT_SET_UE_RATE_POLICY,
+    EVT_WAIT_UE_RATE_LIMITS,
     EVT_FINALIZE_UE_SESSIONS,
     EVT_WAIT,
     EVT_RESTART_NODES,
@@ -273,6 +275,8 @@ typedef struct {
 
 typedef struct {
     event_type_t type;
+    uint32_t     uplink_kbps;
+    uint32_t     downlink_kbps;
     char         apn[100];
     char         name[ULAB_MAX_NAME];
     selector_t   ues;
