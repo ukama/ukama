@@ -122,6 +122,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
     case EVT_WAIT_UES_DETACHED: return "wait_ues_detached";
+    case EVT_SET_UE_RATE_POLICY: return "set_ue_rate_policy";
+    case EVT_WAIT_UE_RATE_LIMITS: return "wait_ue_rate_limits";
     case EVT_WAIT_UE_SESSIONS: return "wait_ue_sessions";
     case EVT_FINALIZE_UE_SESSIONS: return "finalize_ue_sessions";
     case EVT_WAIT: return "wait";
@@ -280,6 +282,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_WAIT_UES_ATTACHED;
     } else if (ulab_streq(name, "wait_ues_detached")) {
         *out = EVT_WAIT_UES_DETACHED;
+    } else if (ulab_streq(name, "set_ue_rate_policy")) {
+        *out = EVT_SET_UE_RATE_POLICY;
+    } else if (ulab_streq(name, "wait_ue_rate_limits")) {
+        *out = EVT_WAIT_UE_RATE_LIMITS;
     } else if (ulab_streq(name, "wait_ue_sessions")) {
         *out = EVT_WAIT_UE_SESSIONS;
     } else if (ulab_streq(name, "finalize_ue_sessions")) {
@@ -1146,6 +1152,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
         return web_u32(val, &e->timeout_seconds);
     if (scenario_is_web_event(e->type))
         return apply_web_event_field(e, key, val);
+    if (e->type == EVT_SET_UE_RATE_POLICY || e->type == EVT_WAIT_UE_RATE_LIMITS) {
+        if (ulab_streq(key, "uplink_kbps")) return web_u32(val, &e->uplink_kbps);
+        if (ulab_streq(key, "downlink_kbps")) return web_u32(val, &e->downlink_kbps);
+    }
     if (e->type == EVT_START_UES && ulab_streq(key, "apn")) {
         if (!val[0]) return ULAB_ERR;
         return ulab_copy(e->apn, sizeof(e->apn), val);
