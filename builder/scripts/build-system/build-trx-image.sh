@@ -11,24 +11,16 @@ DIR="$(pwd)"
 UKAMA_ROOT=$(realpath ../../../)
 MISC_FILES_DIR="${UKAMA_ROOT}/builder/scripts/build-system/trx"
 OUT_DIR="${OUT_DIR:-${DIR}/trx-image}"
-LTE_NODE_REPO=""
 MODE=""
-MODE_DIR=""
-BAND_CFG="${BAND_CFG:-}"
-STACK_BUILD_DIR=""
-STAGE_DIR=""
-ENV_FILE=""
+BAND=""
+EARFCN=""
+BAND_CFG=""
+TMP_CFG=""
 
-UBOOT_PART_SIZE=$((0x220000))
-UBOOT_COPY_OFFSET=$((0xC0000))
-OS_PART_SIZE=$((0x500000))
-RD_PART_SIZE=$((0x2B00000))
-RD_MAX_SIZE=$((0x2800000))
-APP_PART_SIZE=$((0xEE0000))
-ENV_PART_SIZE=$((0x20000))
-JFFS2_ERASE_SIZE=0x20000
-
-STACK_FILES=(lsmD.gz LFMSOFT_OCT_D.tgz dsp.tgz Dimark_Client.tgz)
+FDD_UL_OFFSET=18000
+UL_BW_20MHZ=5
+declare -A EARFCN_MIN=([1]=0 [41]=39650 [48]=55240)
+declare -A EARFCN_MAX=([1]=599 [41]=41589 [48]=56739)
 
 log() {
     local type="$1" msg="$2"
@@ -42,189 +34,96 @@ log() {
     echo -e "${color}${type}: ${msg}\033[0m"
 }
 
-check_status() {
-    local code=$1 msg=$2 stage=$3
-    if [[ $code -ne 0 ]]; then
-        log ERROR "Stage '${stage}' failed"
-        exit 1
-    fi
-    log SUCCESS "$msg"
-}
-
 cleanup() {
-    if [[ -n "$STAGE_DIR" ]]; then
-        rm -rf "$STAGE_DIR"
-    fi
-    if [[ -n "$ENV_FILE" ]]; then
-        rm -f "$ENV_FILE"
+    if [[ -n "$TMP_CFG" ]]; then
+        rm -f "$TMP_CFG"
     fi
 }
 
 trap cleanup EXIT
 
 check_pre_requisite() {
-    for cmd in make gzip python mkfs.jffs2 mkenvimage sha256sum; do
+    for cmd in awk sed sha256sum; do
         command -v "$cmd" >/dev/null || { log ERROR "'$cmd' not found in PATH"; exit 1; }
     done
 
-    for f in "${LTE_NODE_REPO}/Makefile" "${LTE_NODE_REPO}/distro/env-setup" \
-             "${MISC_FILES_DIR}/uboot.env" "${MISC_FILES_DIR}/app/rc_pre.local" \
-             "${MISC_FILES_DIR}/app/${BAND_CFG}"; do
-        [[ -f "$f" ]] || { log ERROR "Missing ${f}"; exit 1; }
-    done
-}
+    [[ -f "$BAND_CFG" ]] || { log ERROR "No ${MODE} config for band ${BAND}: ${BAND_CFG}"; exit 1; }
 
-build_os() {
-    log INFO "Building u-boot, kernel and rootfs from ${LTE_NODE_REPO}"
-    make -C "${LTE_NODE_REPO}" os fs
-    check_status $? "u-boot, kernel and rootfs built" "make os fs"
-}
-
-build_stack() {
-    log INFO "Building ${MODE} LTE stack"
-    make -C "${LTE_NODE_REPO}" stack TYPE="${MODE}"
-    check_status $? "${MODE} stack built" "make stack"
-
-    STACK_BUILD_DIR=$(find "${LTE_NODE_REPO}/stack/${MODE,,}/source" -maxdepth 1 -type d -name "LTE_Stack_${MODE}_Bin_startup_NMMdisable_IPV6disable_*" | sort | tail -1)
-    [[ -n "$STACK_BUILD_DIR" ]] || { log ERROR "No ${MODE} stack build directory found"; exit 1; }
-}
-
-validate_build_artifacts() {
-    local distro_out="${LTE_NODE_REPO}/distro/output"
-    UBOOT_BIN="${distro_out}/u-boot-octeon_trx.bin"
-    OS_GZ="${distro_out}/lsm_os.gz"
-    RD_GZ="${distro_out}/lsm_rd.gz"
-
-    local missing=()
-    for f in "$UBOOT_BIN" "$OS_GZ" "$RD_GZ"; do
-        [[ -f "$f" ]] || missing+=("$f")
-    done
-    for f in "${STACK_FILES[@]}"; do
-        [[ -f "${STACK_BUILD_DIR}/${f}" ]] || missing+=("${STACK_BUILD_DIR}/${f}")
-    done
-    if [[ ${#missing[@]} -ne 0 ]]; then
-        log ERROR "Missing build artifacts: ${missing[*]}"
-        exit 1
+    if [[ -n "$EARFCN" ]]; then
+        [[ "$EARFCN" =~ ^[0-9]+$ ]] || { log ERROR "EARFCN '${EARFCN}' is not a number"; exit 1; }
     fi
-
-    (( $(stat -c %s "$UBOOT_BIN") <= UBOOT_COPY_OFFSET )) || { log ERROR "u-boot larger than $UBOOT_COPY_OFFSET bytes"; exit 1; }
-    (( $(stat -c %s "$OS_GZ") <= OS_PART_SIZE )) || { log ERROR "lsm_os.gz larger than $OS_PART_SIZE bytes"; exit 1; }
-    (( $(stat -c %s "$RD_GZ") <= RD_MAX_SIZE )) || { log ERROR "lsm_rd.gz larger than $RD_MAX_SIZE bytes"; exit 1; }
-
-    log SUCCESS "Build artifacts present and within partition sizes"
 }
 
-stage_app() {
-    STAGE_DIR=$(mktemp -d)
-    cp -a "${MISC_FILES_DIR}/app/." "${STAGE_DIR}/"
-    if [[ -d "${MODE_DIR}/app" ]]; then
-        cp -a "${MODE_DIR}/app/." "${STAGE_DIR}/"
-    fi
-    for f in "${STACK_FILES[@]}"; do
-        cp "${STACK_BUILD_DIR}/${f}" "${STAGE_DIR}/"
-    done
-    cp "${MISC_FILES_DIR}/app/${BAND_CFG}" "${STAGE_DIR}/startup.cfg"
-    touch "${STAGE_DIR}/.sign1985"
-    log SUCCESS "App partition staged with ${BAND_CFG} as startup.cfg"
+cfg_value() {
+    awk -v k="$1" '{for (i = 1; i < NF; i++) if ($i == k) {print $NF; exit}}' "$2"
 }
 
-stage_env() {
-    ENV_FILE=$(mktemp)
-    if [[ -f "${MODE_DIR}/uboot.env" ]]; then
-        awk -F= 'NR==FNR {seen[$1]; print; next} !($1 in seen)' \
-            "${MODE_DIR}/uboot.env" "${MISC_FILES_DIR}/uboot.env" > "$ENV_FILE"
-    else
-        cp "${MISC_FILES_DIR}/uboot.env" "$ENV_FILE"
-    fi
-    log SUCCESS "U-Boot env staged for ${MODE}"
-}
-
-blank_image() {
-    head -c "$2" /dev/zero | tr '\000' '\377' > "$1"
-}
-
-pad_image() {
-    blank_image "$2" "$3"
-    dd if="$1" of="$2" conv=notrunc status=none
-}
-
-make_flash_images() {
-    mkdir -p "$OUT_DIR"
-    rm -f "${OUT_DIR}"/flash_*.img
-
-    blank_image "${OUT_DIR}/flash_uboot.img" "$UBOOT_PART_SIZE"
-    dd if="$UBOOT_BIN" of="${OUT_DIR}/flash_uboot.img" conv=notrunc status=none
-    dd if="$UBOOT_BIN" of="${OUT_DIR}/flash_uboot.img" bs="$UBOOT_COPY_OFFSET" seek=1 conv=notrunc status=none
-
-    pad_image "$OS_GZ" "${OUT_DIR}/flash_os0.img" "$OS_PART_SIZE"
-    pad_image "$RD_GZ" "${OUT_DIR}/flash_rd0.img" "$RD_PART_SIZE"
-    cp "${OUT_DIR}/flash_os0.img" "${OUT_DIR}/flash_os1.img"
-    cp "${OUT_DIR}/flash_rd0.img" "${OUT_DIR}/flash_rd1.img"
-
-    mkfs.jffs2 -b -U -s 0x1000 -e "$JFFS2_ERASE_SIZE" --pad="$APP_PART_SIZE" -d "$STAGE_DIR" -o "${OUT_DIR}/flash_app0.img"
-    blank_image "${OUT_DIR}/flash_app1.img" "$APP_PART_SIZE"
-
-    mkenvimage -b -p 0x00 -s "$ENV_PART_SIZE" -o "${OUT_DIR}/flash_env.img" "$ENV_FILE"
-    chmod 644 "${OUT_DIR}/flash_env.img"
-
-    cp "$UBOOT_BIN" "${OUT_DIR}/u-boot-octeon_trx.bin"
-    cp "$OS_GZ" "${OUT_DIR}/lsm_os_trx.gz"
-    cp "$RD_GZ" "${OUT_DIR}/lsm_rd_trx.gz"
-
-    log SUCCESS "Flash images written to ${OUT_DIR}"
-}
-
-validate_flash_images() {
-    declare -A sizes=(
-        [uboot]=$UBOOT_PART_SIZE
-        [os0]=$OS_PART_SIZE [rd0]=$RD_PART_SIZE [app0]=$APP_PART_SIZE
-        [os1]=$OS_PART_SIZE [rd1]=$RD_PART_SIZE [app1]=$APP_PART_SIZE
-        [env]=$ENV_PART_SIZE
-    )
-    local total=0
-    for p in "${!sizes[@]}"; do
-        local f="${OUT_DIR}/flash_${p}.img"
-        if [[ ! -f "$f" || $(stat -c %s "$f") -ne ${sizes[$p]} ]]; then
-            log ERROR "flash_${p}.img missing or not ${sizes[$p]} bytes"
-            exit 1
-        fi
-        total=$((total + sizes[$p]))
-    done
-    (( total == 0x8000000 )) || { log ERROR "Partitions do not add up to 128 MiB NOR"; exit 1; }
-
-    (cd "$OUT_DIR" && sha256sum flash_*.img u-boot-octeon_trx.bin lsm_os_trx.gz lsm_rd_trx.gz > SHA256SUMS)
-    log SUCCESS "All flash images match the NOR layout"
-}
-
-if [[ $# -lt 1 ]]; then
-    log ERROR "Usage: $0 <lte-node-repo> [FDD|TDD]"
-    exit 1
-fi
-
-LTE_NODE_REPO=$(realpath "$1")
-MODE="${2:-FDD}"
-if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
-    log ERROR "Invalid mode '$MODE'. Expected 'FDD' or 'TDD'."
-    exit 1
-fi
-MODE_DIR="${MISC_FILES_DIR}/${MODE,,}"
-
-if [[ -z "$BAND_CFG" ]]; then
+ul_earfcn() {
     if [[ "$MODE" == "FDD" ]]; then
-        BAND_CFG="startup_B1.cfg"
+        echo $(($1 + FDD_UL_OFFSET))
     else
-        BAND_CFG="startup_B41.cfg"
+        echo "$1"
     fi
+}
+
+make_cfg() {
+    mkdir -p "$OUT_DIR"
+    rm -f "${OUT_DIR}/startup.cfg" "${OUT_DIR}/SHA256SUMS"
+    TMP_CFG=$(mktemp)
+
+    if [[ -z "$EARFCN" ]]; then
+        cp "$BAND_CFG" "$TMP_CFG"
+        return
+    fi
+
+    local old_dl ul
+    old_dl=$(cfg_value u16dlcarrierfreq "$BAND_CFG")
+    ul=$(ul_earfcn "$EARFCN")
+    sed -E \
+        -e "s/^(configure cell u16dlcarrierfreq 0 )[0-9]+/\1${EARFCN}/" \
+        -e "s/^(configure cell freq u16ulcarrierfreq 0 )[0-9]+/\1${ul}/" \
+        -e "s/^(configure cell eutranfreqrelation u16arfcnvalueeutrandl 0 [0-9]+ )${old_dl}([[:space:]]*)$/\1${EARFCN}\2/" \
+        "$BAND_CFG" > "$TMP_CFG"
+}
+
+validate_cfg() {
+    local band dl ul ul_bw
+    band=$(cfg_value u8freqbandindicator "$TMP_CFG")
+    dl=$(cfg_value u16dlcarrierfreq "$TMP_CFG")
+    ul=$(cfg_value u16ulcarrierfreq "$TMP_CFG")
+    ul_bw=$(cfg_value eulbandwidth "$TMP_CFG")
+
+    [[ "$band" == "$BAND" ]] || { log ERROR "Config is band ${band}, expected ${BAND}"; exit 1; }
+    (( dl >= EARFCN_MIN[$BAND] && dl <= EARFCN_MAX[$BAND] )) || {
+        log ERROR "EARFCN ${dl} is outside band ${BAND} (${EARFCN_MIN[$BAND]}-${EARFCN_MAX[$BAND]})"
+        exit 1
+    }
+    [[ "$ul" == "$(ul_earfcn "$dl")" ]] || { log ERROR "UL EARFCN ${ul} does not match DL ${dl}"; exit 1; }
+    [[ "$ul_bw" == "$UL_BW_20MHZ" ]] || { log ERROR "Config is not 20 MHz"; exit 1; }
+
+    mv "$TMP_CFG" "${OUT_DIR}/startup.cfg"
+    chmod 644 "${OUT_DIR}/startup.cfg"
+    (cd "$OUT_DIR" && sha256sum startup.cfg > SHA256SUMS)
+    log SUCCESS "Band ${BAND}, EARFCN DL ${dl} UL ${ul}, 20 MHz"
+}
+
+MODE="${1:-FDD}"
+if [[ "$MODE" != "FDD" && "$MODE" != "TDD" ]]; then
+    log ERROR "Usage: $0 [FDD|TDD] [band] [earfcn]"
+    exit 1
 fi
+
+if [[ "$MODE" == "FDD" ]]; then
+    BAND="${2:-1}"
+else
+    BAND="${2:-41}"
+fi
+EARFCN="${3:-}"
+BAND_CFG="${MISC_FILES_DIR}/${MODE,,}/startup_B${BAND}.cfg"
 
 check_pre_requisite
-build_os
-build_stack
-validate_build_artifacts
-stage_app
-stage_env
-make_flash_images
-validate_flash_images
+make_cfg
+validate_cfg
 
-log SUCCESS "TRX ${MODE} image creation complete (${BAND_CFG})"
+log SUCCESS "TRX ${MODE} config written to ${OUT_DIR}/startup.cfg"
 exit 0
