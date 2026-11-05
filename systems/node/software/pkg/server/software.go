@@ -254,7 +254,7 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*co
 		DeadlineSeconds: s.opDeadlineSecs,
 	}); err != nil {
 		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
-		s.failOperation(op, actionType, fmt.Sprintf("register intent failed: %v", err))
+		s.markFailed(op, actionType, fmt.Sprintf("register intent failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
 	}
 	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
@@ -274,12 +274,33 @@ func (s *SoftwareServer) markRunning(op *copr.OperationInfo, actionType string) 
 }
 
 func (s *SoftwareServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
+	if s.markFailed(op, actionType, reason) {
+		s.cancelIntent(op, actionType)
+	}
+}
+
+func (s *SoftwareServer) markFailed(op *copr.OperationInfo, actionType,
+	reason string) bool {
 	if s.opManager == nil || op == nil || op.Id == "" {
-		return
+		return false
 	}
 	if _, err := s.opManager.Fail(op.Id, op.FencingToken, pkg.ServiceName,
 		reason); err != nil {
 		log.Errorf("%s failed to fail operation %s: %v", actionType, op.Id, err)
+		return false
+	}
+	return true
+}
+
+func (s *SoftwareServer) cancelIntent(op *copr.OperationInfo, actionType string) {
+	if s.opMonitor == nil {
+		return
+	}
+	if _, err := s.opMonitor.Cancel(&opmonpb.CancelIntentRequest{
+		OperationId: op.Id,
+	}); err != nil {
+		log.Warnf("%s failed to cancel intent for operation %s: %v",
+			actionType, op.Id, err)
 	}
 }
 

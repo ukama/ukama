@@ -24,6 +24,7 @@ import (
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
@@ -579,6 +580,49 @@ func TestSoftwareServer_failOperation(t *testing.T) {
 		s := &SoftwareServer{opManager: opMgr}
 		s.failOperation(op, "UpdateSoftware", "publish failed")
 
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("CancelsIntentAfterFail", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(&copr.OperationInfo{}, nil).Once()
+		opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-update"}).
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMon.AssertExpectations(t)
+	})
+
+	t.Run("FailFailureKeepsIntent", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+	})
+
+	t.Run("RegisterFailureDoesNotCancel", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Start", mock.Anything).
+			Return(&copr.StartResponse{Operation: op}, nil).Once()
+		opMon.On("Register", mock.Anything).Return(nil, assert.AnError).Once()
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, mock.Anything).
+			Return(&copr.OperationInfo{}, nil).Once()
+
+		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
+		_, err := s.acquireAndRegister("UpdateSoftware", "node:x")
+
+		assert.Error(t, err)
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
 		opMgr.AssertExpectations(t)
 	})
 
