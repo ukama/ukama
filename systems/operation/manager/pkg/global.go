@@ -17,6 +17,7 @@ const (
 
 const (
 	DefaultLeaseTTL = 5 * time.Minute
+	MaxLeaseTTL     = time.Hour
 	SweeperInterval = 30 * time.Second
 )
 

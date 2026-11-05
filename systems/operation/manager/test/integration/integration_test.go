@@ -295,3 +295,32 @@ func TestInvalidResourceKey(t *testing.T) {
 		})
 	}
 }
+
+func TestStartLease(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	start := func(seconds uint32) (*pb.StartOperationResponse, error) {
+		return c.StartOperation(ctx, &pb.StartOperationRequest{
+			Type:         "IntegrationTest",
+			System:       "operation",
+			ResourceKey:  "test:integration:" + uuid.NewV4().String(),
+			RequestedBy:  actor,
+			LeaseSeconds: seconds,
+		})
+	}
+
+	t.Run("MaxIsAccepted", func(t *testing.T) {
+		resp, err := start(3600)
+
+		assert.NoError(t, err)
+		assert.WithinDuration(t, time.Now().Add(time.Hour),
+			resp.Operation.LeaseExpiresAt.AsTime(), time.Minute)
+	})
+
+	t.Run("AboveMaxIsRejected", func(t *testing.T) {
+		_, err := start(3601)
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
