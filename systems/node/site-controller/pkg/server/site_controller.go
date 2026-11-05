@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	log "github.com/sirupsen/logrus"
@@ -60,17 +61,11 @@ func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteReque
 }
 
 func (s *SiteControllerServer) SetService(ctx context.Context, req *pb.SetServiceRequest) (*pb.SetServiceResponse, error) {
-	nodeID, err := s.resolveNode(req.SiteId, ukama.NODE_ID_TYPE_TOWERNODE)
+	nodes, err := s.readySiteNodes(req.SiteId, "SetService", ukama.NODE_ID_TYPE_TOWERNODE)
 	if err != nil {
 		return nil, err
 	}
-	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
-	if err != nil {
-		return nil, mapErr(err)
-	}
-	if err := s.ensureNodesIdle("SetService", nodes.Nodes, ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_CNODE); err != nil {
-		return nil, err
-	}
+	nodeID := nodes[ukama.NODE_ID_TYPE_TOWERNODE][0]
 	client, err := s.controller.GetClient()
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
@@ -88,36 +83,20 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
+	nodes, err := s.readySiteNodes(req.SiteId, "SetRadio", ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE)
 	if err != nil {
-		return nil, mapErr(err)
-	}
-	tnode := ""
-	anode := ""
-	for _, node := range nodes.Nodes {
-		if node.Type == ukama.NODE_ID_TYPE_TOWERNODE {
-			tnode = node.Id
-		}
-		if node.Type == ukama.NODE_ID_TYPE_AMPNODE {
-			anode = node.Id
-		}
-	}
-
-	if err := s.ensureNodesIdle("SetRadio", nodes.Nodes, ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE, ukama.NODE_ID_TYPE_CNODE); err != nil {
 		return nil, err
 	}
 
-	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: tnode, State: req.State})
-	if err != nil {
-		return nil, mapErr(err)
+	for _, nodeType := range []string{ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE} {
+		for _, nodeID := range nodes[nodeType] {
+			if _, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: req.State}); err != nil {
+				return nil, mapErr(err)
+			}
+		}
 	}
 
-	_, err = client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: anode, State: req.State})
-	if err != nil {
-		return nil, mapErr(err)
-	}
-
-	log.Infof("site-controller: forwarded RADIO %s for site %s to tnode=%s, anode=%s", req.State, req.SiteId, tnode, anode)
+	log.Infof("site-controller: forwarded RADIO %s for site %s to tnode=%v, anode=%v", req.State, req.SiteId, nodes[ukama.NODE_ID_TYPE_TOWERNODE], nodes[ukama.NODE_ID_TYPE_AMPNODE])
 	return &pb.SetRadioResponse{}, nil
 }
 
@@ -126,22 +105,19 @@ func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartS
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "node-controller unavailable: %v", err)
 	}
-	nodes, err := s.nodeClient.GetNodesBySite(req.SiteId)
+	nodes, err := s.readySiteNodes(req.SiteId, "RestartSite", ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE)
 	if err != nil {
-		return nil, mapErr(err)
-	}
-	if err := s.ensureNodesIdle("RestartSite", nodes.Nodes, ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE, ukama.NODE_ID_TYPE_CNODE); err != nil {
 		return nil, err
 	}
 
 	operationIds := make([]string, 0)
-	for _, node := range nodes.Nodes {
-		if node.Type != ukama.NODE_ID_TYPE_CNODE {
-			resp, err := client.RestartNode(ctx, &contpb.RestartNodeRequest{NodeId: node.Id})
+	for _, nodeType := range []string{ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE} {
+		for _, nodeID := range nodes[nodeType] {
+			resp, err := client.RestartNode(ctx, &contpb.RestartNodeRequest{NodeId: nodeID})
 			if err != nil {
 				return nil, mapErr(err)
 			}
-			log.Infof("site-controller: restarted node %s for site %s, op=%s", node.Id, req.SiteId, resp.GetOperationId())
+			log.Infof("site-controller: restarted node %s for site %s, op=%s", nodeID, req.SiteId, resp.GetOperationId())
 			operationIds = append(operationIds, resp.GetOperationId())
 		}
 	}
@@ -180,59 +156,71 @@ func (s *SiteControllerServer) ToggleInternetSwitch(ctx context.Context, req *pb
 	return &pb.ToggleInternetSwitchResponse{OperationId: resp.GetOperationId(), ResourceKey: resp.GetResourceKey(), Status: resp.GetStatus()}, nil
 }
 
-func (s *SiteControllerServer) resolveNode(siteID, nodeType string) (string, error) {
+func (s *SiteControllerServer) readySiteNodes(siteID, action string, required ...string) (map[string][]string, error) {
 	if siteID == "" {
-		return "", status.Errorf(codes.InvalidArgument, "site id cannot be empty")
+		return nil, status.Errorf(codes.InvalidArgument, "site id cannot be empty")
 	}
 	resp, err := s.nodeClient.GetNodesBySite(siteID)
 	if err != nil {
-		return "", status.Errorf(codes.Internal, "failed to resolve nodes for site %s: %v", siteID, err)
+		return nil, mapErr(err)
 	}
+
+	byType := make(map[string][]creg.NodeInfo)
 	for _, n := range resp.Nodes {
-		nId, err := ukama.ValidateNodeId(n.Id)
-		if err != nil {
-			continue
-		}
-		if t := ukama.GetNodeType(nId.String()); t != nil && *t == nodeType {
-			return nId.String(), nil
+		t := nodeTypeOf(n)
+		byType[t] = append(byType[t], n)
+	}
+	for _, t := range required {
+		if len(byType[t]) == 0 {
+			return nil, status.Errorf(codes.NotFound, "%s: no %s node found for site %s", action, t, siteID)
 		}
 	}
-	return "", status.Errorf(codes.NotFound, "no node of type %s found for site %s", nodeType, siteID)
-}
 
-func (s *SiteControllerServer) ensureNodesIdle(action string, nodes []creg.NodeInfo, nodeTypes ...string) error {
 	if s.opManager == nil {
-		return status.Errorf(codes.Unavailable, "%s: operation manager is not set", action)
+		return nil, status.Errorf(codes.Unavailable, "%s: operation manager is not set", action)
 	}
-	for _, n := range nodes {
-		if !hasNodeType(n, nodeTypes) {
-			continue
-		}
-		op, err := s.opManager.GetByResource("node:" + n.Id)
-		if err != nil {
-			return status.Errorf(codes.Unavailable, "%s: failed to read operation lock for node %s: %v", action, n.Id, err)
-		}
-		if op != nil && !isTerminalOperation(op.Status) {
-			log.Warnf("site-controller: %s rejected, node %s busy with %s op=%s", action, n.Id, op.Type, op.Id)
-			return status.Errorf(codes.FailedPrecondition, "%s rejected: node %s is busy with %s operation %s", action, n.Id, op.Type, op.Id)
+
+	checked := required
+	if !slices.Contains(required, ukama.NODE_ID_TYPE_CNODE) {
+		checked = append(slices.Clone(required), ukama.NODE_ID_TYPE_CNODE)
+	}
+
+	ids := make(map[string][]string, len(checked))
+	for _, t := range checked {
+		for _, n := range byType[t] {
+			id := canonicalNodeID(n.Id)
+			if !strings.EqualFold(n.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
+				return nil, status.Errorf(codes.FailedPrecondition, "%s rejected: node %s is not online, connectivity is %q", action, id, n.Status.Connectivity)
+			}
+			op, err := s.opManager.GetByResource("node:" + id)
+			if err != nil {
+				return nil, status.Errorf(codes.Unavailable, "%s: failed to read operation lock for node %s: %v", action, id, err)
+			}
+			if op != nil && !isTerminalOperation(op.Status) {
+				log.Warnf("site-controller: %s rejected, node %s busy with %s op=%s", action, id, op.Type, op.Id)
+				return nil, status.Errorf(codes.FailedPrecondition, "%s rejected: node %s is busy with %s operation %s", action, id, op.Type, op.Id)
+			}
+			ids[t] = append(ids[t], id)
 		}
 	}
-	return nil
+	return ids, nil
 }
 
-func hasNodeType(n creg.NodeInfo, nodeTypes []string) bool {
-	nodeType := n.Type
-	if nodeType == "" {
-		if t := ukama.GetNodeType(n.Id); t != nil {
-			nodeType = *t
-		}
+func canonicalNodeID(id string) string {
+	if nId, err := ukama.ValidateNodeId(id); err == nil {
+		return nId.String()
 	}
-	for _, want := range nodeTypes {
-		if nodeType == want {
-			return true
-		}
+	return id
+}
+
+func nodeTypeOf(n creg.NodeInfo) string {
+	if n.Type != "" {
+		return strings.ToLower(n.Type)
 	}
-	return false
+	if t := ukama.GetNodeType(canonicalNodeID(n.Id)); t != nil {
+		return *t
+	}
+	return ""
 }
 
 func isTerminalOperation(opStatus string) bool {
