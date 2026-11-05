@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -17,6 +18,7 @@ import (
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
@@ -60,6 +62,11 @@ func (e *EventServer) handleCompleted(_ context.Context, event *epb.Event) (*epb
 	}
 	if _, err := e.repo.Terminate(opId, msg.FencingToken, db.OperationSuccess,
 		db.OperationAudit{Event: "completed"}, ""); err != nil {
+		if errors.Is(err, store.ErrPrecondition) {
+			log.Warnf("operation/manager: ignoring late completed event for op %s: %v",
+				opId, err)
+			return &epb.EventResponse{}, nil
+		}
 		log.Errorf("operation/manager: terminate(success) failed for op %s: %v", opId, err)
 		return nil, err
 	}
@@ -78,6 +85,11 @@ func (e *EventServer) handleFailed(_ context.Context, event *epb.Event) (*epb.Ev
 	}
 	if _, err := e.repo.Terminate(opId, msg.FencingToken, db.OperationFailed,
 		db.OperationAudit{Event: "failed", Reason: msg.Reason}, msg.Reason); err != nil {
+		if errors.Is(err, store.ErrPrecondition) {
+			log.Warnf("operation/manager: ignoring late failed event for op %s: %v",
+				opId, err)
+			return &epb.EventResponse{}, nil
+		}
 		log.Errorf("operation/manager: terminate(failed) failed for op %s: %v", opId, err)
 		return nil, err
 	}
