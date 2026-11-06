@@ -25,7 +25,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/node/operation-monitor/mocks"
-	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 )
 
@@ -226,7 +225,7 @@ func appsChangedEvent(t *testing.T, apps map[string]string) *epb.Event {
 		t.Fatalf("marshal event: %v", err)
 	}
 	return &epb.Event{
-		RoutingKey: msgbus.PrepareRoute(testOrg, pkg.HealthAppsChangedRoute),
+		RoutingKey: msgbus.PrepareRoute(testOrg, "event.cloud.local.{{ .Org}}.node.health.apps.changed"),
 		Msg:        msg,
 	}
 }
