@@ -149,10 +149,6 @@ func (h *HealthServer) latestAppsFingerprint(nodeID string) string {
 	return appsFingerprint(parsed.Apps)
 }
 
-// publishAppsChangedIfNeeded emits a HealthAppsChangedEvent only when the
-// node's app inventory (by name@version) differs from the previous report, or
-// on the first report. Best-effort: failures are logged and never affect the
-// StoreHealthReport result. The existing HealthReportEvent emission is unchanged.
 func (h *HealthServer) publishAppsChangedIfNeeded(nodeID, nodeType string, apps []parser.HealthApp, prevFingerprint string) {
 	if h.msgbus == nil {
 		return
@@ -161,7 +157,11 @@ func (h *HealthServer) publishAppsChangedIfNeeded(nodeID, nodeType string, apps 
 		return
 	}
 	route := h.healthRoutingKey.SetAction("changed").SetObject("apps").MustBuild()
-	evt := &epb.HealthAppsChangedEvent{NodeId: nodeID, NodeType: nodeType}
+	versions := make([]*epb.HealthAppVersion, 0, len(apps))
+	for _, a := range apps {
+		versions = append(versions, &epb.HealthAppVersion{Name: a.Name, Version: a.Version})
+	}
+	evt := &epb.HealthAppsChangedEvent{NodeId: nodeID, NodeType: nodeType, Apps: versions}
 	log.Infof("Publishing apps-changed event %+v with key %+v", evt, route)
 	if err := h.msgbus.PublishRequest(route, evt); err != nil {
 		log.Errorf("Failed to publish apps-changed event %+v with key %+v. Errors %s", evt, route, err.Error())

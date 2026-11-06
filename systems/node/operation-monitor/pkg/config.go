@@ -37,6 +37,7 @@ func NewConfig(name string) *Config {
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
 				evt.EventRoutingKey[evt.EventNodeStateTransition],
+				"event.cloud.local.{{ .Org}}.node.health.apps.changed",
 			},
 		},
 	}
