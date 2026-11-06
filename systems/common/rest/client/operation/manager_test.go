@@ -56,37 +56,6 @@ func TestManagerClient_Start(t *testing.T) {
 		assert.Equal(tt, operation.StatusPending, resp.Operation.Status)
 		assert.Equal(tt, uint64(1), resp.Operation.FencingToken)
 		assert.Equal(tt, testResourceKey, resp.Operation.ResourceKey)
-		assert.Nil(tt, resp.ConflictingOperation)
-	})
-
-	t.Run("ConflictingOperation", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint)
-			assert.Equal(tt, "POST", req.Method)
-
-			body := `{"conflicting_operation":{"id":"7f8b9c0d-1e2f-3a4b-5c6d-7e8f9a0b1c2d","type":"deploy","system":"node","status":"RUNNING","fencing_token":2,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
-
-			return &http.Response{
-				StatusCode: 200,
-				Status:     "200 OK",
-				Body:       io.NopCloser(bytes.NewBufferString(body)),
-				Header:     make(http.Header),
-			}
-		}
-
-		testManagerClient := operation.NewManagerClient("")
-		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
-
-		resp, err := testManagerClient.Start(operation.StartRequest{
-			Type:        "deploy",
-			System:      "node",
-			ResourceKey: testResourceKey,
-		})
-
-		assert.NoError(tt, err)
-		assert.Nil(tt, resp.Operation)
-		assert.NotNil(tt, resp.ConflictingOperation)
-		assert.Equal(tt, operation.StatusRunning, resp.ConflictingOperation.Status)
 	})
 
 	t.Run("StartFailed", func(tt *testing.T) {

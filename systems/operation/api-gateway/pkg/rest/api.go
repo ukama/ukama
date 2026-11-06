@@ -89,8 +89,7 @@ type Operation struct {
 }
 
 type StartOperationResponse struct {
-	Operation            *Operation `json:"operation"`
-	ConflictingOperation *Operation `json:"conflicting_operation,omitempty"`
+	Operation *Operation `json:"operation"`
 }
 
 type GetOperationResponse struct {

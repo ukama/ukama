@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jackc/pgx/v5/pgconn"
 	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
 	"github.com/ukama/ukama/systems/common/store"
@@ -112,10 +113,8 @@ func Test_Start(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
-	t.Run("ReturnsConflictWhenResourceLocked", func(t *testing.T) {
-		mock, repo := setupTestDB(t)
-
-		op := &Operation{
+	newOp := func() *Operation {
+		return &Operation{
 			Id:             uuid.NewV4(),
 			Type:           "RestartNode",
 			System:         "node",
@@ -123,36 +122,42 @@ func Test_Start(t *testing.T) {
 			ResourceKey:    "node:uk-sa2450-tnode-v0-4e86",
 			LeaseExpiresAt: time.Now().Add(5 * time.Minute),
 		}
-		holder := &Operation{
-			Id:           uuid.NewV4(),
-			Type:         "RestartNode",
-			System:       "node",
-			Status:       OperationRunning,
-			FencingToken: 7,
-			ResourceKey:  op.ResourceKey,
-		}
+	}
+
+	t.Run("ReturnsConflictWhenResourceLocked", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := newOp()
 
 		mock.ExpectBegin()
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
-		// lock insert fails on PK collision
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
-			WillReturnError(gorm.ErrDuplicatedKey)
-		// look up existing lock holder
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
-			WithArgs(op.ResourceKey, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"resource_key", "operation_id", "fencing_token"}).
-				AddRow(op.ResourceKey, holder.Id, holder.FencingToken))
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
-			WithArgs(holder.Id, sqlmock.AnyArg()).
-			WillReturnRows(operationRow(holder))
+			WillReturnError(&pgconn.PgError{Code: "23505"})
 		mock.ExpectRollback()
 
 		out, err := repo.Start(op, 5*time.Minute)
 
-		assert.True(t, errors.Is(err, ErrLockConflict))
-		assert.NotNil(t, out)
-		assert.Equal(t, holder.Id, out.Id)
+		assert.True(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("OtherLockErrorIsNotConflict", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := newOp()
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
+			WillReturnError(&pgconn.PgError{Code: "57014"})
+		mock.ExpectRollback()
+
+		out, err := repo.Start(op, 5*time.Minute)
+
+		assert.Error(t, err)
+		assert.False(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

@@ -191,12 +191,8 @@ func TestPostStartHandler(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		op := sampleProtoOperation()
-		conflict := &pb.Operation{Id: "conflict-op"}
 		mgr := &fakeManager{
-			startResp: &pb.StartOperationResponse{
-				Operation:            op,
-				ConflictingOperation: conflict,
-			},
+			startResp: &pb.StartOperationResponse{Operation: op},
 		}
 		r := newTestRouter(mgr)
 
@@ -210,7 +206,6 @@ func TestPostStartHandler(t *testing.T) {
 		assert.Equal(t, req.IdempotencyKey, mgr.lastStartReq.IdempotencyKey)
 		assert.Equal(t, req.LeaseSeconds, mgr.lastStartReq.LeaseSeconds)
 		assertOperationMapped(t, op, resp.Operation)
-		assert.Equal(t, "conflict-op", resp.ConflictingOperation.Id)
 	})
 
 	t.Run("ManagerError", func(t *testing.T) {

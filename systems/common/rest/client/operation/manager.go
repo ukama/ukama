@@ -56,8 +56,7 @@ type StartRequest struct {
 }
 
 type StartResponse struct {
-	Operation            *OperationInfo `json:"operation,omitempty"`
-	ConflictingOperation *OperationInfo `json:"conflicting_operation,omitempty"`
+	Operation *OperationInfo `json:"operation,omitempty"`
 }
 
 type GetResponse struct {

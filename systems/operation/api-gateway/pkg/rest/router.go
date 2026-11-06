@@ -150,8 +150,7 @@ func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*
 	}
 
 	return &StartOperationResponse{
-		Operation:            operationFromProto(resp.Operation),
-		ConflictingOperation: operationFromProto(resp.ConflictingOperation),
+		Operation: operationFromProto(resp.Operation),
 	}, nil
 }
 

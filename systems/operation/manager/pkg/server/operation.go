@@ -110,11 +110,8 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 
 	op, err := s.repo.Start(op, lease)
 	if errors.Is(err, db.ErrLockConflict) {
-		resp := &pb.StartOperationResponse{}
-		if op != nil {
-			resp.ConflictingOperation = toPb(op)
-		}
-		return resp, status.Error(codes.AlreadyExists, "resource is locked by an active operation")
+		return nil, status.Error(codes.AlreadyExists,
+			"resource is locked by an active operation")
 	}
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "start operation: %v", err)

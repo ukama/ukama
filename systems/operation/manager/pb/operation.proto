@@ -58,8 +58,9 @@ message StartOperationRequest {
 }
 
 message StartOperationResponse {
+    reserved 2;
+    reserved "conflictingOperation";
     Operation operation = 1;
-    Operation conflictingOperation = 2;
 }
 
 message GetOperationRequest {

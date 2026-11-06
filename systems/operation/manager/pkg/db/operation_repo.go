@@ -44,7 +44,6 @@ func NewOperationRepo(db sql.Db) OperationRepo {
 }
 
 func (r *operationRepo) Start(op *Operation, lockTTL time.Duration) (*Operation, error) {
-	var holdingOp *Operation
 	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(op).Error; err != nil {
 			return err
@@ -58,14 +57,10 @@ func (r *operationRepo) Start(op *Operation, lockTTL time.Duration) (*Operation,
 			ExpiresAt:    time.Now().UTC().Add(lockTTL),
 		}
 		if err := tx.Create(lock).Error; err != nil {
-			var existing ResourceLock
-			if findErr := tx.Where("resource_key = ?", op.ResourceKey).First(&existing).Error; findErr == nil {
-				var loadOp Operation
-				if loadErr := tx.Where("id = ?", existing.OperationId).First(&loadOp).Error; loadErr == nil {
-					holdingOp = &loadOp
-				}
+			if sql.IsDuplicateKeyError(err) {
+				return ErrLockConflict
 			}
-			return ErrLockConflict
+			return err
 		}
 
 		return tx.Create(&OperationAudit{
@@ -79,7 +74,7 @@ func (r *operationRepo) Start(op *Operation, lockTTL time.Duration) (*Operation,
 	})
 
 	if errors.Is(err, ErrLockConflict) {
-		return holdingOp, ErrLockConflict
+		return nil, ErrLockConflict
 	}
 	if err != nil {
 		return nil, fmt.Errorf("start operation: %w", err)

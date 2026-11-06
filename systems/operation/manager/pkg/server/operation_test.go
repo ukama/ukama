@@ -60,18 +60,9 @@ func TestStartOperation(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 
-		holder := &db.Operation{
-			Id:           uuid.NewV4(),
-			Type:         "RestartNode",
-			System:       "node",
-			Status:       db.OperationRunning,
-			FencingToken: 5,
-			ResourceKey:  "node:abc",
-		}
-
 		repo.On("GetByIdempotencyKey", mock.Anything).Return(nil, nil).Maybe()
-		repo.On("Start", mock.AnythingOfType("*db.Operation"), mock.AnythingOfType("time.Duration")).
-			Return(holder, db.ErrLockConflict)
+		repo.On("Start", mock.AnythingOfType("*db.Operation"),
+			mock.AnythingOfType("time.Duration")).Return(nil, db.ErrLockConflict)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 			Type:        "RestartNode",
@@ -79,10 +70,26 @@ func TestStartOperation(t *testing.T) {
 			ResourceKey: "node:abc",
 		})
 
-		assert.Error(t, err)
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
-		assert.NotNil(t, resp.ConflictingOperation)
-		assert.Equal(t, holder.Id.String(), resp.ConflictingOperation.Id)
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("RepoFailureIsInternal", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Start", mock.AnythingOfType("*db.Operation"),
+			mock.AnythingOfType("time.Duration")).Return(nil, fmt.Errorf("db down"))
+
+		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+			Type:        "RestartNode",
+			System:      "node",
+			ResourceKey: "node:abc",
+		})
+
+		assert.Equal(t, codes.Internal, status.Code(err))
+		assert.Nil(t, resp)
 		repo.AssertExpectations(t)
 	})
 

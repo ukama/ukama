@@ -313,11 +313,10 @@ func (x *StartOperationRequest) GetLeaseSeconds() uint32 {
 }
 
 type StartOperationResponse struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	Operation            *Operation             `protobuf:"bytes,1,opt,name=operation,proto3" json:"operation,omitempty"`
-	ConflictingOperation *Operation             `protobuf:"bytes,2,opt,name=conflictingOperation,proto3" json:"conflictingOperation,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Operation     *Operation             `protobuf:"bytes,1,opt,name=operation,proto3" json:"operation,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *StartOperationResponse) Reset() {
@@ -353,13 +352,6 @@ func (*StartOperationResponse) Descriptor() ([]byte, []int) {
 func (x *StartOperationResponse) GetOperation() *Operation {
 	if x != nil {
 		return x.Operation
-	}
-	return nil
-}
-
-func (x *StartOperationResponse) GetConflictingOperation() *Operation {
-	if x != nil {
-		return x.ConflictingOperation
 	}
 	return nil
 }
@@ -992,10 +984,9 @@ const file_operation_proto_rawDesc = "" +
 	"\vresourceKey\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\x12 \n" +
 	"\vrequestedBy\x18\x04 \x01(\tR\vrequestedBy\x12&\n" +
 	"\x0eidempotencyKey\x18\x05 \x01(\tR\x0eidempotencyKey\x12\"\n" +
-	"\fleaseSeconds\x18\x06 \x01(\rR\fleaseSeconds\"\xb8\x01\n" +
+	"\fleaseSeconds\x18\x06 \x01(\rR\fleaseSeconds\"y\n" +
 	"\x16StartOperationResponse\x12C\n" +
-	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation\x12Y\n" +
-	"\x14conflictingOperation\x18\x02 \x01(\v2%.ukama.operation.manager.v1.OperationR\x14conflictingOperation\"0\n" +
+	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperationJ\x04\b\x02\x10\x03R\x14conflictingOperation\"0\n" +
 	"\x13GetOperationRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\"[\n" +
 	"\x14GetOperationResponse\x12C\n" +
@@ -1086,32 +1077,31 @@ var file_operation_proto_depIdxs = []int32{
 	16, // 3: ukama.operation.manager.v1.Operation.terminalAt:type_name -> google.protobuf.Timestamp
 	16, // 4: ukama.operation.manager.v1.Operation.createdAt:type_name -> google.protobuf.Timestamp
 	1,  // 5: ukama.operation.manager.v1.StartOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 6: ukama.operation.manager.v1.StartOperationResponse.conflictingOperation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 7: ukama.operation.manager.v1.GetOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 8: ukama.operation.manager.v1.GetByResourceResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 9: ukama.operation.manager.v1.MarkRunningResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 10: ukama.operation.manager.v1.CompleteOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 11: ukama.operation.manager.v1.FailOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	1,  // 12: ukama.operation.manager.v1.ForceUnlockResponse.operation:type_name -> ukama.operation.manager.v1.Operation
-	2,  // 13: ukama.operation.manager.v1.OperationManagerService.StartOperation:input_type -> ukama.operation.manager.v1.StartOperationRequest
-	4,  // 14: ukama.operation.manager.v1.OperationManagerService.GetOperation:input_type -> ukama.operation.manager.v1.GetOperationRequest
-	6,  // 15: ukama.operation.manager.v1.OperationManagerService.GetByResource:input_type -> ukama.operation.manager.v1.GetByResourceRequest
-	8,  // 16: ukama.operation.manager.v1.OperationManagerService.MarkRunning:input_type -> ukama.operation.manager.v1.MarkRunningRequest
-	10, // 17: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:input_type -> ukama.operation.manager.v1.CompleteOperationRequest
-	12, // 18: ukama.operation.manager.v1.OperationManagerService.FailOperation:input_type -> ukama.operation.manager.v1.FailOperationRequest
-	14, // 19: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:input_type -> ukama.operation.manager.v1.ForceUnlockRequest
-	3,  // 20: ukama.operation.manager.v1.OperationManagerService.StartOperation:output_type -> ukama.operation.manager.v1.StartOperationResponse
-	5,  // 21: ukama.operation.manager.v1.OperationManagerService.GetOperation:output_type -> ukama.operation.manager.v1.GetOperationResponse
-	7,  // 22: ukama.operation.manager.v1.OperationManagerService.GetByResource:output_type -> ukama.operation.manager.v1.GetByResourceResponse
-	9,  // 23: ukama.operation.manager.v1.OperationManagerService.MarkRunning:output_type -> ukama.operation.manager.v1.MarkRunningResponse
-	11, // 24: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:output_type -> ukama.operation.manager.v1.CompleteOperationResponse
-	13, // 25: ukama.operation.manager.v1.OperationManagerService.FailOperation:output_type -> ukama.operation.manager.v1.FailOperationResponse
-	15, // 26: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:output_type -> ukama.operation.manager.v1.ForceUnlockResponse
-	20, // [20:27] is the sub-list for method output_type
-	13, // [13:20] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	1,  // 6: ukama.operation.manager.v1.GetOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 7: ukama.operation.manager.v1.GetByResourceResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 8: ukama.operation.manager.v1.MarkRunningResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 9: ukama.operation.manager.v1.CompleteOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 10: ukama.operation.manager.v1.FailOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 11: ukama.operation.manager.v1.ForceUnlockResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	2,  // 12: ukama.operation.manager.v1.OperationManagerService.StartOperation:input_type -> ukama.operation.manager.v1.StartOperationRequest
+	4,  // 13: ukama.operation.manager.v1.OperationManagerService.GetOperation:input_type -> ukama.operation.manager.v1.GetOperationRequest
+	6,  // 14: ukama.operation.manager.v1.OperationManagerService.GetByResource:input_type -> ukama.operation.manager.v1.GetByResourceRequest
+	8,  // 15: ukama.operation.manager.v1.OperationManagerService.MarkRunning:input_type -> ukama.operation.manager.v1.MarkRunningRequest
+	10, // 16: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:input_type -> ukama.operation.manager.v1.CompleteOperationRequest
+	12, // 17: ukama.operation.manager.v1.OperationManagerService.FailOperation:input_type -> ukama.operation.manager.v1.FailOperationRequest
+	14, // 18: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:input_type -> ukama.operation.manager.v1.ForceUnlockRequest
+	3,  // 19: ukama.operation.manager.v1.OperationManagerService.StartOperation:output_type -> ukama.operation.manager.v1.StartOperationResponse
+	5,  // 20: ukama.operation.manager.v1.OperationManagerService.GetOperation:output_type -> ukama.operation.manager.v1.GetOperationResponse
+	7,  // 21: ukama.operation.manager.v1.OperationManagerService.GetByResource:output_type -> ukama.operation.manager.v1.GetByResourceResponse
+	9,  // 22: ukama.operation.manager.v1.OperationManagerService.MarkRunning:output_type -> ukama.operation.manager.v1.MarkRunningResponse
+	11, // 23: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:output_type -> ukama.operation.manager.v1.CompleteOperationResponse
+	13, // 24: ukama.operation.manager.v1.OperationManagerService.FailOperation:output_type -> ukama.operation.manager.v1.FailOperationResponse
+	15, // 25: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:output_type -> ukama.operation.manager.v1.ForceUnlockResponse
+	19, // [19:26] is the sub-list for method output_type
+	12, // [12:19] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_operation_proto_init() }
