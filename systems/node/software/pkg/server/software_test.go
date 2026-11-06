@@ -19,10 +19,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
@@ -564,4 +566,36 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 		assert.Equal(t, codes.Internal, status.Code(err))
 		opMgr.AssertNotCalled(t, "Start", mock.Anything)
 	})
+}
+
+func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
+	sw := dbSoftwareFixture()
+	sRepo := mocks.NewSoftwareRepo(t)
+	sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
+
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil)
+
+	op := &copr.OperationInfo{Id: uuid.NewV4().String(), FencingToken: 7}
+	opMgr := &mbmocks.ManagerClient{}
+	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMgr.On("ForceUnlock", op.Id, mock.Anything, mock.Anything).Return(op, nil).Once()
+
+	opMon := mocks.NewOperationMonitor(t)
+	opMon.On("Register", mock.MatchedBy(func(r *opmonpb.RegisterIntentRequest) bool {
+		return r.ActionType == "UpdateSoftware" &&
+			r.ResourceKey == "node:"+testNodeIdNormalized &&
+			r.CompletionRule == "app."+testAppNameForUpdate+"="+testTagVersion
+	})).Return(nil, assert.AnError).Once()
+
+	s := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), nil, nil, nil,
+		mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, opMgr, opMon, 0, 0, nodeClient)
+
+	_, err := s.UpdateSoftware(context.Background(), &pb.UpdateSoftwareRequest{
+		NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+	require.Error(t, err)
+	opMon.AssertExpectations(t)
+	opMgr.AssertExpectations(t)
 }
