@@ -18,7 +18,7 @@ import (
 )
 
 func TestCustomAPNAdmissionAndRetry(t *testing.T) {
-	for _, configured := range []string{"corp.ukama", strings.Repeat("a", 63) + "." + strings.Repeat("b", 35)} {
+	for _, configured := range []string{"internet.ukama", strings.Repeat("a", 63) + "." + strings.Repeat("b", 35)} {
 		t.Run(configured, func(t *testing.T) {
 			c, sm, req := pdnFixture(t)
 			c.apn = configured
