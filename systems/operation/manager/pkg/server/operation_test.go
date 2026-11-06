@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -17,7 +18,9 @@ import (
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/operation/manager/mocks"
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
@@ -137,6 +140,101 @@ func TestGetByResource(t *testing.T) {
 	})
 }
 
+func TestCompleteOperation(t *testing.T) {
+	id := uuid.NewV4()
+	audit := mock.AnythingOfType("db.OperationAudit")
+	req := &pb.CompleteOperationRequest{
+		Id: id.String(), FencingToken: 7, Actor: "controller", Reason: "dispatched",
+	}
+
+	t.Run("UsesCallerToken", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+			Return(&db.Operation{Id: id, Status: db.OperationSuccess}, nil).Once()
+
+		resp, err := s.CompleteOperation(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_SUCCESS, resp.Operation.Status)
+		repo.AssertNotCalled(t, "Get", mock.Anything)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("PreconditionMapsToFailedPrecondition", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+			Return(nil, fmt.Errorf("token mismatch: %w", store.ErrPrecondition)).Once()
+
+		resp, err := s.CompleteOperation(context.Background(), req)
+
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+
+	t.Run("MissingOperationMapsToNotFound", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Terminate", id, uint64(7), db.OperationSuccess, audit, "").
+			Return(nil, gorm.ErrRecordNotFound).Once()
+
+		resp, err := s.CompleteOperation(context.Background(), req)
+
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("InvalidId", func(t *testing.T) {
+		s := NewOperationServer(orgName, "", &mocks.OperationRepo{}, nil)
+
+		resp, err := s.CompleteOperation(context.Background(),
+			&pb.CompleteOperationRequest{Id: "not-a-uuid"})
+
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
+
+func TestFailOperation(t *testing.T) {
+	id := uuid.NewV4()
+	audit := mock.AnythingOfType("db.OperationAudit")
+	req := &pb.FailOperationRequest{
+		Id: id.String(), FencingToken: 7, Actor: "controller", Reason: "publish failed",
+	}
+
+	t.Run("UsesCallerTokenAndRecordsReason", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Terminate", id, uint64(7), db.OperationFailed, audit, "publish failed").
+			Return(&db.Operation{Id: id, Status: db.OperationFailed}, nil).Once()
+
+		resp, err := s.FailOperation(context.Background(), req)
+
+		assert.NoError(t, err)
+		assert.Equal(t, pb.OperationStatus_FAILED, resp.Operation.Status)
+		repo.AssertNotCalled(t, "Get", mock.Anything)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("PreconditionMapsToFailedPrecondition", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		repo.On("Terminate", id, uint64(7), db.OperationFailed, audit, "publish failed").
+			Return(nil, fmt.Errorf("already success: %w", store.ErrPrecondition)).Once()
+
+		resp, err := s.FailOperation(context.Background(), req)
+
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+	})
+}
+
 func TestForceUnlock(t *testing.T) {
 	t.Run("CancelsAndReleases", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
@@ -159,6 +257,25 @@ func TestForceUnlock(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_CANCELLED, resp.Operation.Status)
 		repo.AssertExpectations(t)
+	})
+
+	t.Run("FinishedOperationMapsToFailedPrecondition", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		id := uuid.NewV4()
+
+		repo.On("Get", id).Return(&db.Operation{Id: id, FencingToken: 9}, nil)
+		repo.On("Terminate", id, uint64(9), db.OperationCancelled,
+			mock.AnythingOfType("db.OperationAudit"), mock.Anything).
+			Return(nil, fmt.Errorf("already success: %w", store.ErrPrecondition))
+
+		resp, err := s.ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
+			Id: id.String(), Actor: "owner@ukama.com", Reason: "stuck operation",
+		})
+
+		assert.Nil(t, resp)
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
 }
 

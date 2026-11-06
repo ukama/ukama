@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -19,14 +20,15 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
+	"github.com/ukama/ukama/systems/node/software/pkg"
 	"github.com/ukama/ukama/systems/node/software/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -568,6 +570,68 @@ func TestUpdateSoftware_OfflineNode(t *testing.T) {
 	})
 }
 
+func TestSoftwareServer_failOperation(t *testing.T) {
+	op := &copr.OperationInfo{Id: "op-update", FencingToken: 7}
+
+	t.Run("FailsWithFencingToken", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(&copr.OperationInfo{}, nil).Once()
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("CancelsIntentAfterFail", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(&copr.OperationInfo{}, nil).Once()
+		opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-update"}).
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMon.AssertExpectations(t)
+	})
+
+	t.Run("FailFailureKeepsIntent", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMon := &mocks.OperationMonitor{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+	})
+
+	t.Run("ManagerErrorIsNotFatal", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
+			Return(nil, assert.AnError).Once()
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(op, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertExpectations(t)
+	})
+
+	t.Run("NoOperationIsNoop", func(t *testing.T) {
+		opMgr := &mbmocks.ManagerClient{}
+
+		s := &SoftwareServer{opManager: opMgr}
+		s.failOperation(nil, "UpdateSoftware", "publish failed")
+
+		opMgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything)
+	})
+}
+
 func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
 	sw := dbSoftwareFixture()
 	sRepo := mocks.NewSoftwareRepo(t)
@@ -580,7 +644,10 @@ func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
 	op := &copr.OperationInfo{Id: uuid.NewV4().String(), FencingToken: 7}
 	opMgr := &mbmocks.ManagerClient{}
 	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
-	opMgr.On("ForceUnlock", op.Id, mock.Anything, mock.Anything).Return(op, nil).Once()
+	opMgr.On("Fail", op.Id, uint64(7), pkg.ServiceName,
+		mock.MatchedBy(func(reason string) bool {
+			return strings.HasPrefix(reason, "register intent failed")
+		})).Return(op, nil).Once()
 
 	opMon := mocks.NewOperationMonitor(t)
 	opMon.On("Register", mock.MatchedBy(func(r *opmonpb.RegisterIntentRequest) bool {
@@ -596,6 +663,8 @@ func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
 		NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
 
 	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+	opMon.AssertNotCalled(t, "Cancel", mock.Anything)
 	opMon.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
 }

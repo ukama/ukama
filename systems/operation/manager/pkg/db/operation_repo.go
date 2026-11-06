@@ -14,11 +14,15 @@ import (
 	"time"
 
 	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var ErrLockConflict = errors.New("resource_locked")
+
+const lockTimeoutStmt = "SET LOCAL lock_timeout = '5s'"
 
 type OperationRepo interface {
 	Start(op *Operation, lockTTL time.Duration) (*Operation, error)
@@ -118,7 +122,8 @@ func (r *operationRepo) GetByIdempotencyKey(key string) (*Operation, error) {
 func (r *operationRepo) MarkRunning(id uuid.UUID, fencingToken uint64) (*Operation, error) {
 	var op Operation
 	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("id = ? AND fencing_token = ?", id, fencingToken).First(&op).Error; err != nil {
+		if err := lockOperation(tx, &op, "id = ? AND fencing_token = ?", id,
+			fencingToken); err != nil {
 			return err
 		}
 		if op.Status != OperationPending {
@@ -149,15 +154,40 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 	}
 
 	var op Operation
+	var rejectErr error
+
 	err := r.db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Where("id = ?", id).First(&op).Error; err != nil {
+		if err := lockOperation(tx, &op, "id = ?", id); err != nil {
 			return err
 		}
+
+		writeAudit := func(prefix string, cause error) error {
+			rejectErr = cause
+			audit.Id = uuid.NewV4()
+			audit.OperationId = op.Id
+			audit.ResourceKey = op.ResourceKey
+			audit.Event = prefix + audit.Event
+			audit.At = time.Now().UTC()
+			return tx.Create(&audit).Error
+		}
+
 		if op.FencingToken != fencingToken {
-			return fmt.Errorf("fencing token mismatch (op=%d, given=%d)", op.FencingToken, fencingToken)
+			return writeAudit("rejected_", fmt.Errorf(
+				"fencing token mismatch (op=%d, given=%d): %w",
+				op.FencingToken, fencingToken, store.ErrPrecondition))
 		}
 		if op.Status.IsTerminal() {
-			return nil
+			var cause error
+			if op.Status != status {
+				cause = fmt.Errorf("operation %s is already %s, cannot move to %s: %w",
+					id, op.Status, status, store.ErrPrecondition)
+			}
+			return writeAudit("ignored_", cause)
+		}
+		if status == OperationSuccess && op.Status == OperationPending {
+			return writeAudit("rejected_", fmt.Errorf(
+				"operation %s is pending, cannot move to %s: %w",
+				id, status, store.ErrPrecondition))
 		}
 
 		now := time.Now().UTC()
@@ -175,16 +205,24 @@ func (r *operationRepo) Terminate(id uuid.UUID, fencingToken uint64,
 			return err
 		}
 
-		audit.Id = uuid.NewV4()
-		audit.OperationId = op.Id
-		audit.ResourceKey = op.ResourceKey
-		audit.At = now
-		return tx.Create(&audit).Error
+		return writeAudit("", nil)
 	})
 	if err != nil {
 		return nil, err
 	}
+	if rejectErr != nil {
+		return nil, rejectErr
+	}
 	return &op, nil
+}
+
+func lockOperation(tx *gorm.DB, op *Operation, query string,
+	args ...interface{}) error {
+	if err := tx.Exec(lockTimeoutStmt).Error; err != nil {
+		return err
+	}
+	return tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where(query, args...).First(op).Error
 }
 
 func (r *operationRepo) FindExpired(now time.Time, limit int) ([]Operation, error) {

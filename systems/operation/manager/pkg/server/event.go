@@ -10,13 +10,18 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"gorm.io/gorm"
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
@@ -54,17 +59,8 @@ func (e *EventServer) handleCompleted(_ context.Context, event *epb.Event) (*epb
 	if err != nil {
 		return nil, err
 	}
-	opId, err := uuid.FromString(msg.OperationId)
-	if err != nil {
-		return nil, fmt.Errorf("invalid operation id %q: %w", msg.OperationId, err)
-	}
-	if _, err := e.repo.Terminate(opId, msg.FencingToken, db.OperationSuccess,
-		db.OperationAudit{Event: "completed"}, ""); err != nil {
-		log.Errorf("operation/manager: terminate(success) failed for op %s: %v", opId, err)
-		return nil, err
-	}
-	log.Infof("operation %s → success (lock released)", opId)
-	return &epb.EventResponse{}, nil
+	return e.terminate(msg.OperationId, msg.FencingToken, db.OperationSuccess,
+		db.OperationAudit{Event: "completed"}, "")
 }
 
 func (e *EventServer) handleFailed(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
@@ -72,15 +68,33 @@ func (e *EventServer) handleFailed(_ context.Context, event *epb.Event) (*epb.Ev
 	if err != nil {
 		return nil, err
 	}
-	opId, err := uuid.FromString(msg.OperationId)
+	return e.terminate(msg.OperationId, msg.FencingToken, db.OperationFailed,
+		db.OperationAudit{Event: "failed", Reason: msg.Reason}, msg.Reason)
+}
+
+func (e *EventServer) terminate(operationId string, fencingToken uint64,
+	st db.OperationStatus, audit db.OperationAudit,
+	opErr string) (*epb.EventResponse, error) {
+	opId, err := uuid.FromString(operationId)
 	if err != nil {
-		return nil, fmt.Errorf("invalid operation id %q: %w", msg.OperationId, err)
+		return nil, fmt.Errorf("invalid operation id %q: %w", operationId, err)
 	}
-	if _, err := e.repo.Terminate(opId, msg.FencingToken, db.OperationFailed,
-		db.OperationAudit{Event: "failed", Reason: msg.Reason}, msg.Reason); err != nil {
-		log.Errorf("operation/manager: terminate(failed) failed for op %s: %v", opId, err)
-		return nil, err
+
+	_, err = e.repo.Terminate(opId, fencingToken, st, audit, opErr)
+	switch {
+	case err == nil:
+		log.Infof("operation %s → %s (lock released)", opId, st)
+	case errors.Is(err, store.ErrPrecondition):
+		log.Warnf("operation/manager: ignoring %s event for op %s: %v",
+			audit.Event, opId, err)
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		log.Warnf("operation/manager: ignoring %s event for unknown op %s",
+			audit.Event, opId)
+	default:
+		log.Errorf("operation/manager: %s event for op %s failed: %v",
+			audit.Event, opId, err)
+		return nil, status.Errorf(codes.Unavailable, "terminate operation %s: %v",
+			opId, err)
 	}
-	log.Infof("operation %s → failed (lock released): %s", opId, msg.Reason)
 	return &epb.EventResponse{}, nil
 }

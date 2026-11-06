@@ -56,7 +56,10 @@ type manager interface {
 	GetByResource(resourceKey string) (*pb.GetByResourceResponse, error)
 	MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error)
 	ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse, error)
-	Complete(id, actor, reason string) (*pb.ForceUnlockResponse, error)
+	Complete(id string, fencingToken uint64, actor,
+		reason string) (*pb.CompleteOperationResponse, error)
+	Fail(id string, fencingToken uint64, actor,
+		reason string) (*pb.FailOperationResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -127,6 +130,9 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		ops.POST("/:id/run", formatDoc("Mark operation running", "Transitions a pending operation to running. Caller must pass the fencing token."), tonic.Handler(r.postMarkRunningHandler, http.StatusOK))
 		ops.POST("/:id/force-unlock", formatDoc("Force-unlock an operation", "Privileged. Cancels the operation and releases its lock with audit reason."), tonic.Handler(r.postForceUnlockHandler, http.StatusOK))
 		ops.POST("/:id/complete", formatDoc("Complete an operation", "Marks a running operation successful and releases its lock."), tonic.Handler(r.postCompleteHandler, http.StatusOK))
+		ops.POST("/:id/fail", formatDoc("Fail an operation",
+			"Marks an operation failed and releases its lock. Caller must pass the fencing token."),
+			tonic.Handler(r.postFailHandler, http.StatusOK))
 	}
 }
 
@@ -186,7 +192,7 @@ func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest)
 }
 
 func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*ForceUnlockResponse, error) {
-	resp, err := r.clients.Manager.ForceUnlock(req.Id, req.UserId, req.Reason)
+	resp, err := r.clients.Manager.ForceUnlock(req.Id, req.Actor, req.Reason)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +203,18 @@ func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest)
 }
 
 func (r *Router) postCompleteHandler(c *gin.Context, req *CompleteOperationRequest) (*ForceUnlockResponse, error) {
-	resp, err := r.clients.Manager.Complete(req.Id, req.Actor, req.Reason)
+	resp, err := r.clients.Manager.Complete(req.Id, req.FencingToken, req.Actor, req.Reason)
+	if err != nil {
+		return nil, err
+	}
+
+	return &ForceUnlockResponse{
+		Operation: operationFromProto(resp.Operation),
+	}, nil
+}
+
+func (r *Router) postFailHandler(c *gin.Context, req *FailOperationRequest) (*ForceUnlockResponse, error) {
+	resp, err := r.clients.Manager.Fail(req.Id, req.FencingToken, req.Actor, req.Reason)
 	if err != nil {
 		return nil, err
 	}

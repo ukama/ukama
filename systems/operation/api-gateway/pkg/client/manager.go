@@ -86,8 +86,22 @@ func (m *Manager) ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse
 	return m.client.ForceUnlock(ctx, &pb.ForceUnlockRequest{Id: id, Actor: actor, Reason: reason})
 }
 
-func (m *Manager) Complete(id, actor, reason string) (*pb.ForceUnlockResponse, error) {
+func (m *Manager) Complete(id string, fencingToken uint64,
+	actor, reason string) (*pb.CompleteOperationResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
-	return m.client.CompleteOperation(ctx, &pb.ForceUnlockRequest{Id: id, Actor: actor, Reason: reason})
+
+	return m.client.CompleteOperation(ctx, &pb.CompleteOperationRequest{
+		Id: id, FencingToken: fencingToken, Actor: actor, Reason: reason,
+	})
+}
+
+func (m *Manager) Fail(id string, fencingToken uint64,
+	actor, reason string) (*pb.FailOperationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+
+	return m.client.FailOperation(ctx, &pb.FailOperationRequest{
+		Id: id, FencingToken: fencingToken, Actor: actor, Reason: reason,
+	})
 }

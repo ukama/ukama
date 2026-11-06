@@ -74,8 +74,15 @@ type ForceUnlockRequest struct {
 }
 
 type CompleteRequest struct {
-	Actor  string `json:"actor"`
-	Reason string `json:"reason"`
+	FencingToken uint64 `json:"fencing_token"`
+	Actor        string `json:"actor"`
+	Reason       string `json:"reason"`
+}
+
+type FailRequest struct {
+	FencingToken uint64 `json:"fencing_token"`
+	Actor        string `json:"actor"`
+	Reason       string `json:"reason"`
 }
 
 type ManagerClient interface {
@@ -84,7 +91,8 @@ type ManagerClient interface {
 	GetByResource(resourceKey string) (*OperationInfo, error)
 	MarkRunning(id string, fencingToken uint64) (*OperationInfo, error)
 	ForceUnlock(id, actor, reason string) (*OperationInfo, error)
-	Complete(id, actor, reason string) (*OperationInfo, error)
+	Complete(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
+	Fail(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
 }
 
 type managerClient struct {
@@ -161,11 +169,10 @@ func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, e
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.R.Delete(m.u.String() + OperationsEndpoint + "/" + id)
+	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/force-unlock", b)
 	if err != nil {
 		return nil, fmt.Errorf("ForceUnlock failure: %w", err)
 	}
-	_ = b
 	out := &GetResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
 		return nil, fmt.Errorf("ForceUnlock deserialize: %w", uerr)
@@ -173,8 +180,11 @@ func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, e
 	return out.Operation, nil
 }
 
-func (m *managerClient) Complete(id, actor, reason string) (*OperationInfo, error) {
-	b, err := json.Marshal(CompleteRequest{Actor: actor, Reason: reason})
+func (m *managerClient) Complete(id string, fencingToken uint64,
+	actor, reason string) (*OperationInfo, error) {
+	b, err := json.Marshal(CompleteRequest{
+		FencingToken: fencingToken, Actor: actor, Reason: reason,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
@@ -185,6 +195,25 @@ func (m *managerClient) Complete(id, actor, reason string) (*OperationInfo, erro
 	out := &GetResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
 		return nil, fmt.Errorf("CompleteOperation deserialize: %w", uerr)
+	}
+	return out.Operation, nil
+}
+
+func (m *managerClient) Fail(id string, fencingToken uint64,
+	actor, reason string) (*OperationInfo, error) {
+	b, err := json.Marshal(FailRequest{
+		FencingToken: fencingToken, Actor: actor, Reason: reason,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("request marshal error: %w", err)
+	}
+	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/fail", b)
+	if err != nil {
+		return nil, fmt.Errorf("FailOperation failure: %w", err)
+	}
+	out := &GetResponse{}
+	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
+		return nil, fmt.Errorf("FailOperation deserialize: %w", uerr)
 	}
 	return out.Operation, nil
 }

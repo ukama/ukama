@@ -34,14 +34,22 @@ type MarkRunningRequest struct {
 
 type ForceUnlockRequest struct {
 	Id     string `json:"id" path:"id" validate:"required,uuid"`
-	UserId string `json:"user_id" validate:"required,uuid"`
+	Actor  string `json:"actor" validate:"required"`
 	Reason string `json:"reason" validate:"required"`
 }
 
 type CompleteOperationRequest struct {
-	Id     string `json:"id" path:"id" validate:"required,uuid"`
-	Actor  string `json:"actor" validate:"required"`
-	Reason string `json:"reason"`
+	Id           string `json:"id" path:"id" validate:"required,uuid"`
+	FencingToken uint64 `json:"fencing_token" validate:"required"`
+	Actor        string `json:"actor" validate:"required"`
+	Reason       string `json:"reason" validate:"required"`
+}
+
+type FailOperationRequest struct {
+	Id           string `json:"id" path:"id" validate:"required,uuid"`
+	FencingToken uint64 `json:"fencing_token" validate:"required"`
+	Actor        string `json:"actor" validate:"required"`
+	Reason       string `json:"reason" validate:"required"`
 }
 
 /*
