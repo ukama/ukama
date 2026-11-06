@@ -160,6 +160,7 @@ typedef enum {
     CHECK_NODE_VERSION_EQUALS,
     CHECK_NODE_HEALTH_OK,
     CHECK_UE_ADDRESSING,
+    CHECK_UE_APN,
     CHECK_RELEASE_UNAVAILABLE,
     CHECK_LIST_COUNT_EQUALS,
     CHECK_ENTITY_FIELDS_EQUAL,
@@ -377,6 +378,7 @@ typedef struct {
     int start_ues;
     int wait_nodes_ready;
     int wait_ues_attached;
+    char apn[100];
 } runtime_spec_t;
 
 typedef struct {

@@ -30,6 +30,7 @@ typedef struct {
 
 typedef struct {
     char provider[ULAB_MAX_REF];
+    char apn[100];
     char script_dir[ULAB_MAX_PATH];
     char run_dir[ULAB_MAX_PATH];
     char repo[ULAB_MAX_PATH];
@@ -88,6 +89,8 @@ int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
 int runtime_wait_ues_detached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
+int runtime_verify_ue_apns(runtime_t *rt, const world_t *w,
+                           const selector_result_t *ues, ulab_error_t *err);
 int runtime_verify_ue_addresses(runtime_t *rt, const world_t *w,
                                 const selector_result_t *ues, ulab_error_t *err);
 int runtime_verify_ue_sessions(runtime_t *rt, const world_t *w,

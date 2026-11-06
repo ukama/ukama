@@ -18,12 +18,33 @@ static int fail(ulab_error_t *err, const char *msg) {
     return ULAB_ERR;
 }
 
+static int valid_service_apn(const char *apn) {
+    size_t label = 0;
+    size_t i;
+    unsigned char ch;
+    int alnum;
+
+    if (!apn[0] || strlen(apn) > 99) return 0;
+    for (i = 0; apn[i]; i++) {
+        ch = (unsigned char)apn[i];
+        alnum = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9');
+        if (ch == '.') {
+            if (!label || apn[i - 1] == '-') return 0;
+            label = 0;
+        } else {
+            if ((!alnum && ch != '-') || (!label && !alnum) || ++label > 63) return 0;
+        }
+    }
+    return label && apn[i - 1] != '-';
+}
+
 static int validate_pdn_check(const scenario_t *s,
                                const check_spec_t *check,
                                ulab_error_t *err) {
-    if (check->type == CHECK_UE_ADDRESSING &&
+    if ((check->type == CHECK_UE_ADDRESSING || check->type == CHECK_UE_APN) &&
         (!ulab_streq(s->provider.type, "virtual") || check->ues.kind == SEL_NONE)) {
-        return fail(err, "ue_addressing requires selected virtual UEs");
+        return fail(err, "ue_addressing/ue_apn requires selected virtual UEs");
     }
     if (check->type != CHECK_UE_PDN) return ULAB_OK;
     if (!ulab_streq(s->provider.type, "virtual") ||
@@ -54,6 +75,12 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     size_t j;
     int has_configure_sites;
     int monitor_active = 0;
+
+    if (s->runtime.apn[0] &&
+        (!ulab_streq(s->provider.type, "virtual") ||
+         !valid_service_apn(s->runtime.apn))) {
+        return fail(err, "runtime.apn requires a valid virtual service APN (1..99 bytes)");
+    }
 
     has_configure_sites = 0;
     for (i = 0; i < s->phase_count; i++) {
