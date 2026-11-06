@@ -394,6 +394,18 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
         return hardware_check_runtime(ctx, check, res, err);
     }
 
+    if (check->type == CHECK_UE_ADDRESSING) {
+        ulab_error_t detail = {0};
+
+        if (selector_resolve_ues(ctx->world, &check->ues, &sel, err)) return ULAB_ERR;
+        res->passed = sel.count > 0 &&
+            runtime_verify_ue_addresses(ctx->runtime, ctx->world, &sel, &detail) == ULAB_OK;
+        snprintf(res->detail, sizeof(res->detail), "UE address checks: %zu UEs %.768s",
+                 sel.count, detail.msg);
+        selector_result_free(&sel);
+        return ULAB_OK;
+    }
+
     if (check->type == CHECK_RELEASE_UNAVAILABLE) {
         return check_release_unavailable(ctx, check, res, err);
     }

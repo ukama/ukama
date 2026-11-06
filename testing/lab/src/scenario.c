@@ -222,6 +222,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_DASHBOARD_LOADS: return "dashboard_loads";
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
     case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
+    case CHECK_UE_ADDRESSING: return "ue_addressing";
     case CHECK_NODE_HEALTH_OK: return "node_health_ok";
     case CHECK_RELEASE_UNAVAILABLE: return "release_unavailable";
     case CHECK_LIST_COUNT_EQUALS: return "list_count_equals";
@@ -452,6 +453,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_VERSION_EQUALS;
     } else if (ulab_streq(name, "node_health_ok")) {
         *out = CHECK_NODE_HEALTH_OK;
+    } else if (ulab_streq(name, "ue_addressing")) {
+        *out = CHECK_UE_ADDRESSING;
     } else if (ulab_streq(name, "release_unavailable")) {
         *out = CHECK_RELEASE_UNAVAILABLE;
     } else if (ulab_streq(name, "list_count_equals")) {
