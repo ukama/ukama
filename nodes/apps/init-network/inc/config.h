@@ -117,6 +117,7 @@ typedef struct {
 
 } Config;
 
+bool config_valid_ue_subnet(const char *text);
 void config_set_defaults(Config *config);
 bool config_load_from_file(Config *config, const char *path);
 void config_free(Config *config);
