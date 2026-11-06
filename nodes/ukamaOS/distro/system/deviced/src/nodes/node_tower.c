@@ -8,7 +8,9 @@
 
 #include <string.h>
 
+#include "service_api.h"
 #include "nodes.h"
+#include "service_group.h"
 
 #include "http_status.h"
 #include "web_client.h"
@@ -47,6 +49,13 @@ void node_tower_setup_endpoints(Config *config, UInst *instance) {
     node_add_unsupported_methods(instance, "POST", URL_PREFIX,
                                  API_RES_EP("service"));
 
+    ulfius_add_endpoint_by_val(instance, HTTP_POST, URL_PREFIX,
+                               API_EP_SERVICE_WATCHDOG, 0,
+                               &service_group_watchdog, config);
+    ulfius_add_endpoint_by_val(instance, HTTP_POST, URL_PREFIX,
+                               API_EP_SERVICE_MAINTENANCE, 0,
+                               &service_group_maintenance, config);
+
     ulfius_add_endpoint_by_val(instance, "POST", URL_PREFIX,
                                API_RES_EP("radio"), 0,
                                &web_service_cb_post_radio, config);
@@ -67,6 +76,7 @@ int node_tower_build_state(Config *config, JsonObj *json) {
         return STATUS_NOK;
     }
     json_object_set_new(json, "service", json_string(state));
+    json_object_set_new(json, "service_group", service_group_state(config));
 
     memset(state, 0, sizeof(state));
     if (control_get_subsys_public_state(config->control,
@@ -76,45 +86,6 @@ int node_tower_build_state(Config *config, JsonObj *json) {
         return STATUS_NOK;
     }
     json_object_set_new(json, "radio", json_string(state));
-
-    return STATUS_OK;
-}
-
-int node_tower_apply_service(Config *config, ControlState desired) {
-
-    int retCode;
-
-    if (!config) return STATUS_NOK;
-
-    usys_log_info("service: %s", desired == CONTROL_STATE_ON ? "on" : "off");
-
-    if (desired == CONTROL_STATE_OFF) {
-        retCode = -1;
-        if (wc_post_service_to_epcemu(config, desired, &retCode) != STATUS_OK) {
-            usys_log_error("Unable to disable EPCEMU service");
-            return STATUS_NOK;
-        }
-
-        retCode = -1;
-        if (wc_post_service_to_pcrf(config, desired, &retCode) != STATUS_OK) {
-            usys_log_error("Unable to disable PCRF service");
-            return STATUS_NOK;
-        }
-
-        return STATUS_OK;
-    }
-
-    retCode = -1;
-    if (wc_post_service_to_pcrf(config, desired, &retCode) != STATUS_OK) {
-        usys_log_error("Unable to enable PCRF service");
-        return STATUS_NOK;
-    }
-
-    retCode = -1;
-    if (wc_post_service_to_epcemu(config, desired, &retCode) != STATUS_OK) {
-        usys_log_error("Unable to enable EPCEMU service");
-        return STATUS_NOK;
-    }
 
     return STATUS_OK;
 }

@@ -16,6 +16,7 @@
 #include "app_runtime.h"
 #include "starterd.h"
 #include "readiness.h"
+#include "lifecycle_guard.h"
 
 #include <errno.h>
 #include <pthread.h>
@@ -540,7 +541,7 @@ static bool update_self(Supervisor *s,
     return true;
 }
 
-static bool update_one_app(Supervisor *s,
+static bool perform_update(Supervisor *s,
                            const char *space,
                            const char *name,
                            const char *tag,
@@ -630,6 +631,44 @@ static bool update_one_app(Supervisor *s,
     free(oldTag);
     free(oldLastGood);
     return true;
+}
+
+static bool update_one_app(Supervisor *s,
+                           const char *space,
+                           const char *name,
+                           const char *tag,
+                           const char *hub) {
+
+    App *app = app_find(s->spaceList, space, name);
+    bool ok;
+
+    if (!app || !lifecycle_guard_begin(app)) {
+        return false;
+    }
+
+    ok = perform_update(s, space, name, tag, hub);
+
+    if (!s->ctx || !s->ctx->switchRequested) {
+        lifecycle_guard_end(app);
+    }
+
+    return ok;
+}
+
+static void finish_guards(Supervisor *s) {
+
+    Space *space;
+    App *app;
+
+    if (!s->applicationsStarted || (s->ctx && s->ctx->switchRequested)) {
+        return;
+    }
+
+    for (space = s->spaceList; space != NULL; space = space->next) {
+        for (app = space->appList; app != NULL; app = app->next) {
+            lifecycle_guard_end(app);
+        }
+    }
 }
 
 static bool update_app(Supervisor *s,
@@ -785,6 +824,7 @@ static void* supervisor_thread(void *arg) {
 
             pthread_mutex_unlock(&s->mu);
             drive_lifecycle_gate(s);
+            finish_guards(s);
             pthread_mutex_lock(&s->mu);
 
             clock_gettime(CLOCK_REALTIME, &ts);
@@ -822,9 +862,10 @@ static void* supervisor_thread(void *arg) {
             App *app;
 
             app = app_find(s->spaceList, a->space, a->name);
-            if (app) {
+            if (app && lifecycle_guard_begin(app)) {
                 usys_log_info("terminate: %s/%s", a->space, a->name);
                 app_stop(s->config, app, APP_REASON_TERMINATED);
+                lifecycle_guard_end(app);
                 state_store_save(s->config, s->spaceList);
             }
             if (s->ctx) {
@@ -834,7 +875,7 @@ static void* supervisor_thread(void *arg) {
             App *app;
 
             app = app_find(s->spaceList, a->space, a->name);
-            if (!app || !app_restart(s, app)) {
+            if (!app || !lifecycle_guard_begin(app) || !app_restart(s, app)) {
                 usys_log_error("restart: failed %s/%s",
                                a->space ? a->space : "(null)",
                                a->name ? a->name : "(null)");
@@ -844,6 +885,11 @@ static void* supervisor_thread(void *arg) {
                               a->name);
             }
             state_store_save(s->config, s->spaceList);
+
+            if (app) {
+                lifecycle_guard_end(app);
+            }
+
             if (s->ctx) s->ctx->restartRequested = 0;
         } else if (a->type == ACTION_UPDATE_APP) {
             if (!update_app(s, a->space, a->name, a->tag, a->hub)) {

@@ -213,3 +213,100 @@ func TestRuleMatches(t *testing.T) {
 	assert.False(t, ruleMatches("", tr))
 	assert.False(t, ruleMatches("garbage", tr))
 }
+
+func appsChangedEvent(t *testing.T, apps map[string]string) *epb.Event {
+	t.Helper()
+	ev := &epb.HealthAppsChangedEvent{NodeId: testNodeId, NodeType: "tower"}
+	for name, version := range apps {
+		ev.Apps = append(ev.Apps, &epb.HealthAppVersion{Name: name, Version: version})
+	}
+	msg, err := anypb.New(ev)
+	if err != nil {
+		t.Fatalf("marshal event: %v", err)
+	}
+	return &epb.Event{
+		RoutingKey: msgbus.PrepareRoute(testOrg, "event.cloud.local.{{ .Org}}.node.health.apps.changed"),
+		Msg:        msg,
+	}
+}
+
+func updateIntent(rule string) db.MonitoredIntent {
+	i := watchingIntent(false)
+	i.ActionType = "UpdateSoftware"
+	i.CompletionRule = rule
+	return i
+}
+
+func TestHandleAppsChanged_TargetVersionCompletesWithoutArming(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := updateIntent("app.example=1.2.4")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
+		Return(&intent, nil).Once()
+	mb.On("PublishRequest", mock.MatchedBy(func(route string) bool {
+		return strings.HasSuffix(route, ".operation.manager.operation.completed")
+	}), mock.Anything).Return(nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(),
+		appsChangedEvent(t, map[string]string{"example": "1.2.4", "other": "0.1"}))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	mb.AssertExpectations(t)
+	repo.AssertNotCalled(t, "Arm", mock.Anything)
+}
+
+func TestHandleAppsChanged_OtherVersionKeepsWatching(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := updateIntent("app.example=1.2.4")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(),
+		appsChangedEvent(t, map[string]string{"example": "1.2.3"}))
+
+	assert.NoError(t, err)
+	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
+	repo.AssertNotCalled(t, "Arm", mock.Anything)
+	mb.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+}
+
+func TestHandleAppsChanged_IgnoresStateRuleIntent(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(false)
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(),
+		appsChangedEvent(t, map[string]string{"example": "1.2.4"}))
+
+	assert.NoError(t, err)
+	repo.AssertNotCalled(t, "Arm", mock.Anything)
+	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
+}
+
+func TestHandleStateTransition_IgnoresAppRuleIntent(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := updateIntent("app.example=1.2.4")
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Configured", "off"))
+
+	assert.NoError(t, err)
+	repo.AssertNotCalled(t, "Arm", mock.Anything)
+	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
+}

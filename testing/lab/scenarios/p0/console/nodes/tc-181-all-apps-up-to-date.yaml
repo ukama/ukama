@@ -1,6 +1,6 @@
 version: 1
 name: p0-tc-181-all-apps-up-to-date
-description: Without promoting a newer release, verify every application shown by Node Detail reports up_to_date and includes its required identity fields.
+description: Promote and install a known example release, then verify every application shown by Node Detail reports up_to_date and includes its required identity fields.
 seed: 5181
 suite: p0
 priority: p0
@@ -23,6 +23,39 @@ runtime:
   wait: [nodes_ready]
 
 phases:
+  - name: prepare_current_release
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: software_status_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        status: update_available
+        desired_version: ${ULAB_SOFTWARE_TARGET_VERSION}
+        timeout_seconds: 120
+        immediate: true
+
+  - name: install_current_release
+    events:
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: node_version_equals
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        version: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: node_health_ok
+        type_selector: controller
+        count_per_network: 1
+        app: example
+
   - name: verify_every_app_current
     checks:
       - type: software_status_equals

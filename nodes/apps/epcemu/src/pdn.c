@@ -10,9 +10,11 @@
 #include <string.h>
 #include <time.h>
 
+#include "service_api.h"
 #include "netutil.h"
 #include "pcrf.h"
 #include "pdn.h"
+#include "service_lease.h"
 #include "ue.h"
 
 #define PDN_POLL_BATCH 8
@@ -161,29 +163,6 @@ static int sync_owner(ServiceContext *ctx) {
     return USYS_TRUE;
 }
 
-static int valid_address(EpcemuConfig *config, const char *ip) {
-
-    char host[EPCEMU_MAX_STR];
-    char *slash;
-    uint32_t value;
-
-    if (!ip_to_uint32(ip, &value) ||
-        !ip_in_cidr(ip, config->ueCidr)) return USYS_FALSE;
-    if ((value >> 24) == 0 || (value >> 24) == 127 ||
-        (value >> 28) >= 14 || (value & 0xffff0000u) == 0xa9fe0000u) {
-        return USYS_FALSE;
-    }
-    /* A UE cannot reserve the provisioned TUN or bridge address. */
-    snprintf(host, sizeof(host), "%s", config->tunAddr);
-    slash = strchr(host, '/');
-    if (slash != NULL) *slash = '\0';
-    if (!strcmp(host, ip)) return USYS_FALSE;
-    snprintf(host, sizeof(host), "%s", config->bridgeCidr);
-    slash = strchr(host, '/');
-    if (slash != NULL) *slash = '\0';
-    return strcmp(host, ip) != 0;
-}
-
 static int read_attach(ServiceContext *ctx, JsonObj *body, UeEntry *ue,
                         char *reason, size_t reasonLen) {
 
@@ -199,7 +178,7 @@ static int read_attach(ServiceContext *ctx, JsonObj *body, UeEntry *ue,
         return error_status(400, "invalid_iccid", reason, reasonLen);
     }
     if (!copy_field(body, "ip", ue->ip, sizeof(ue->ip), true) ||
-        !valid_address(ctx->config, ue->ip)) {
+        !ue_address_valid(ctx->config, ue->ip)) {
         return error_status(400, "invalid_ue_address", reason, reasonLen);
     }
     apn = json_object_get(body, "apn");
@@ -251,6 +230,11 @@ static int attach_locked(ServiceContext *ctx, const UeEntry *request,
     int responseCode;
     bool exists;
 
+    if (!ctx->serviceOn || !service_lease_valid()) {
+        return error_status(HttpStatus_ServiceUnavailable, "service_disabled",
+                            reason, reasonLen);
+    }
+
     if (ctx->stopping || !sync_owner(ctx)) {
         return error_status(503, "pcrf_registration_pending",
                              reason, reasonLen);
@@ -289,6 +273,15 @@ static int attach_locked(ServiceContext *ctx, const UeEntry *request,
     }
 
     code = pcrf_create_session(ctx->config, &ue, &pdn);
+    if (!service_lease_valid()) {
+        ctx->serviceOn = false;
+        ue_for_each(mark_closing, NULL);
+        cleanup_one(ctx, &ue);
+
+        return error_status(HttpStatus_ServiceUnavailable, "service_disabled",
+                            reason, reasonLen);
+    }
+
     if (code == 202 && !strcmp(pdn.state, "live") &&
         (!strcmp(pdn.dataState, "allowed") ||
          !strcmp(pdn.dataState, "blocked"))) {
@@ -383,6 +376,11 @@ void pdn_poll(ServiceContext *ctx) {
 
     pthread_mutex_lock(&ctx->serviceMutex);
     if (!ctx->stopping) {
+        if (ctx->serviceOn && !service_lease_valid()) {
+            ctx->serviceOn = false;
+            ue_for_each(mark_closing, NULL);
+        }
+
         sync_owner(ctx);
         count = ue_snapshot(entries, EPCEMU_MAX_UES);
         /* Bound polling work and advance past failed requests on retry. */
@@ -392,6 +390,34 @@ void pdn_poll(ServiceContext *ctx) {
         }
     }
     pthread_mutex_unlock(&ctx->serviceMutex);
+}
+
+int pdn_set_service(ServiceContext *ctx, bool enabled) {
+
+    int code = HttpStatus_OK;
+
+    pthread_mutex_lock(&ctx->serviceMutex);
+
+    if (!enabled) {
+        ctx->serviceOn = false;
+        /* Revoke all local forwarding before the first remote DELETE. */
+        ue_for_each(mark_closing, NULL);
+        ue_for_each(cleanup_cb, ctx);
+
+        if (ue_count_total() != 0) {
+            code = HttpStatus_ServiceUnavailable;
+        }
+    } else if (!service_lease_valid() || ctx->stopping ||
+               !status_is_ready(ctx->status) ||
+               (!ctx->serviceOn && ue_count_total() != 0) || !sync_owner(ctx)) {
+        code = HttpStatus_ServiceUnavailable;
+    } else {
+        ctx->serviceOn = true;
+    }
+
+    pthread_mutex_unlock(&ctx->serviceMutex);
+
+    return code;
 }
 
 void pdn_shutdown(ServiceContext *ctx) {

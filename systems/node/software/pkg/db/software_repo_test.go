@@ -238,7 +238,7 @@ func TestSoftwareRepoSetDesiredForApp(t *testing.T) {
 		res := setupSoftwareTestDB(t)
 
 		res.Mock.ExpectBegin()
-		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "desired_version"=$1,"status"=CASE WHEN current_version <> $2 THEN $3 ELSE $4 END,"updated_at"=$5 WHERE app_name = $6 AND status <> $7`)).
+		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "desired_version"=$1,"status"=CASE WHEN current_version <> $2 THEN CAST($3 AS smallint) ELSE CAST($4 AS smallint) END,"updated_at"=$5 WHERE app_name = $6 AND status <> $7`)).
 			WithArgs(desired, desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate), sqlmock.AnyArg(),
 				defaultAppName, uint8(ukama.UpdateInProgress)).
 			WillReturnResult(sqlmock.NewResult(0, 4721))

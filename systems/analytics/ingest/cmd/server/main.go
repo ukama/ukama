@@ -127,6 +127,21 @@ func run(sDb sql.Db) {
 		log.Fatalf("Initializing ingest engine failed: %v", err)
 	}
 
+	var pruner *engine.Pruner
+
+	if serviceConfig.Retention.Window > 0 {
+		keep := int64(serviceConfig.Retention.Window / serviceConfig.Window.W)
+		if keep < catchup {
+			log.Fatalf("RETENTION_WINDOW (%s) keeps %d windows, fewer than the %d-window catch-up; the engine would re-pull pruned windows.",
+				serviceConfig.Retention.Window, keep, catchup)
+		}
+
+		pruner = engine.NewPruner(grid, specs, rawRepo, ledgerRepo, serviceConfig.OrgName,
+			keep, serviceConfig.Retention.Interval, serviceConfig.Retention.BatchSize)
+	} else {
+		log.Warnf("RETENTION_WINDOW is 0: window-strategy rows are never pruned")
+	}
+
 	// Health/reflection-only gRPC server (repo convention; admin RPCs later).
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {})
 
@@ -136,6 +151,10 @@ func run(sDb sql.Db) {
 	go grpcServer.StartServer()
 	go msgBusListener(mbClient)
 	go eng.Start()
+
+	if pruner != nil {
+		go pruner.Start()
+	}
 
 	waitForExit()
 }

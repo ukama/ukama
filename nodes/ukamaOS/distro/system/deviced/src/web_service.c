@@ -17,6 +17,7 @@
 #include "deviced.h"
 #include "http_status.h"
 #include "nodes.h"
+#include "service_group.h"
 #include "web_client.h"
 #include "web_service.h"
 
@@ -48,9 +49,7 @@ static int retry_action(Config *config,
 
     ret = STATUS_NOK;
     for (attempt = 1; attempt <= CONTROL_ACTION_MAX_ATTEMPTS; attempt++) {
-        if (subsystem == CONTROL_SUBSYS_SERVICE) {
-            ret = actions_service_apply(config, desired);
-        } else if (subsystem == CONTROL_SUBSYS_RADIO) {
+        if (subsystem == CONTROL_SUBSYS_RADIO) {
             ret = actions_radio_apply(config, desired);
         } else if (subsystem == CONTROL_SUBSYS_REBOOT) {
             ret = actions_reboot_apply(config);
@@ -169,9 +168,7 @@ static void* worker_run(void *arg) {
 
     pthread_mutex_lock(&control->Lock);
     ss = NULL;
-    if (args->Subsystem == CONTROL_SUBSYS_SERVICE) {
-        ss = &control->Service;
-    } else if (args->Subsystem == CONTROL_SUBSYS_RADIO) {
+    if (args->Subsystem == CONTROL_SUBSYS_RADIO) {
         ss = &control->Radio;
     } else if (args->Subsystem == CONTROL_SUBSYS_REBOOT) {
         ss = &control->Reboot;
@@ -229,26 +226,6 @@ static void* worker_run(void *arg) {
             control_mark_fault(control, args->Subsystem);
         } else {
             control_mark_reboot_done(control);
-        }
-
-        usys_free(args);
-        pthread_exit(NULL);
-    }
-
-    if (args->Subsystem == CONTROL_SUBSYS_SERVICE) {
-        (void)wc_send_action_alarm_to_notifyd(config,
-                     (desired == CONTROL_STATE_ON) ? "service_on" : "service_off",
-                                          (desired == CONTROL_STATE_ON) ?
-                                          "Enabling cellular service" : "Disabling cellular service",
-                                           &retCode);
-
-        execRet = retry_action(config,
-                               CONTROL_SUBSYS_SERVICE,
-                               desired);
-        if (execRet == STATUS_OK) {
-            control_mark_done(control, args->Subsystem, desired);
-        } else {
-            control_mark_fault(control, args->Subsystem);
         }
         usys_free(args);
         pthread_exit(NULL);
@@ -470,7 +447,7 @@ int web_service_cb_post_service(const URequest *request,
         return json_set_empty(response, HttpStatus_NotFound);
     }
 
-    return post_state_change(request, response, config, CONTROL_SUBSYS_SERVICE);
+    return service_group_command(request, response, config);
 }
 
 int web_service_cb_post_radio(const URequest *request,

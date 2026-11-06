@@ -56,9 +56,8 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Expected values are daily averages seen on the 1m analytics window
-      # (4 of 7 windows up here). The tolerance absorbs one to two windows of
-      # timing drift in either direction.
+      # Compare with the measured OFF baseline; startup time changes the
+      # number of windows in the daily average.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -66,8 +65,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 57.1429
-        tolerance: 10
+        expected: previous
+        comparator: greater_than
         immediate: true
         timeout_seconds: 300
         poll_seconds: 20
@@ -79,7 +78,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # RF off is downtime: 4 of 9 windows up.
+      # RF off must lower the measured daily average.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -87,8 +86,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 44.4444
-        tolerance: 10
+        expected: previous
+        comparator: less_than
         immediate: true
         timeout_seconds: 180
         poll_seconds: 20
@@ -100,8 +99,7 @@ phases:
       - type: wait
         seconds: 120
     checks:
-      # Uptime recovers while the RF-off windows stay in the daily average:
-      # 6 of 11 windows up.
+      # RF on must raise the average again, retaining the RF-off history.
       - type: kpi_value
         key: SITE_UPTIME
         span: daily
@@ -109,8 +107,8 @@ phases:
         scope_key: site_id
         scope_value: site-001
         networks: net-001
-        expected_value: 54.5455
-        tolerance: 10
+        expected: previous
+        comparator: greater_than
         immediate: true
         timeout_seconds: 180
         poll_seconds: 20

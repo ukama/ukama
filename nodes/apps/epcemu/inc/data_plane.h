@@ -15,7 +15,7 @@
 #include "epcemu.h"
 
 typedef struct {
-    bool running;
+    int stopPipe[2];
     bool ready;
     int udpFd;
     int tunFd;

@@ -104,8 +104,14 @@ func run(sDb sql.Db) {
 
 	repo := db.NewRepo(sDb)
 
-	engine, err := rollup.NewEngine(grid, kpis, repo, repo, serviceConfig.OrgName,
-		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.SweepInterval)
+	keep := serviceConfig.Retention.Window
+	if keep > 0 && keep < rollup.MinWindowRetention {
+		log.Fatalf("RETENTION_WINDOW (%s) is below %s: the sweeper and last_30d trends read windows that old",
+			keep, rollup.MinWindowRetention)
+	}
+
+	engine, err := rollup.NewEngine(grid, kpis, repo, repo, repo, serviceConfig.OrgName,
+		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.SweepInterval, keep)
 	if err != nil {
 		log.Fatalf("Initializing rollup engine failed: %v", err)
 	}
@@ -126,7 +132,7 @@ func run(sDb sql.Db) {
 		serviceConfig.Rollup.ReportWindow, rollupLoc)
 
 	readServer, err := server.NewAggregatorServer(serviceConfig.OrgName, kpis, repo, composer, grid, repo,
-		serviceConfig.Rollup.Timezone)
+		serviceConfig.Rollup.Timezone, keep)
 	if err != nil {
 		log.Fatalf("Initializing aggregator read server failed: %v", err)
 	}
@@ -145,6 +151,15 @@ func run(sDb sql.Db) {
 		msgBusListener(mbClient)
 		engine.StartSweeper()
 	}()
+
+	if keep > 0 {
+		pruner := rollup.NewPruner(grid, repo, serviceConfig.OrgName, keep,
+			serviceConfig.Retention.Interval, serviceConfig.Retention.BatchSize, engine.Ready())
+
+		go pruner.Start()
+	} else {
+		log.Warnf("RETENTION_WINDOW is 0: kpi_windows rows are never pruned")
+	}
 
 	waitForExit()
 }
