@@ -29,7 +29,6 @@ import (
 // Edges:
 //   - params.first_value "count" counts a series' first observed value as
 //     consumption; "baseline" (the default) records it as baseline only.
-//   - Idle series stay in /v1/last and emit explicit 0 rows, never a gap.
 //   - Counter reset (cur < prev) clamps to 0; the pre-reset residual is lost.
 //
 // package_id is the CATALOG package (cdr's `dataplan` label, renamed at
@@ -112,6 +111,9 @@ func DataUsage(win schema.Window, in Datasets, spec schema.KpiSpec) ([]Result, e
 
 	for _, scopeKey := range order {
 		agg := byScope[scopeKey]
+		if agg.total == 0 {
+			continue
+		}
 
 		results = append(results, Result{
 			Scope: agg.scope,

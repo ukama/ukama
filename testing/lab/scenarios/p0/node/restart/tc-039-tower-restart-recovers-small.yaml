@@ -108,6 +108,8 @@ phases:
 
   - name: enable_service_and_verify_traffic
     events:
+      - type: wait_nodes_ready
+        nodes: all
       - type: toggle_service
         sites: all
         state: on

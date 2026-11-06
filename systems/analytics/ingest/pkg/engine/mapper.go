@@ -32,18 +32,59 @@ func GetPath(item interface{}, path string) (interface{}, bool) {
 	cur := item
 
 	for _, seg := range strings.Split(path, ".") {
+		key, indexes, ok := splitIndexes(seg)
+		if !ok {
+			return nil, false
+		}
+
 		m, ok := cur.(map[string]interface{})
 		if !ok {
 			return nil, false
 		}
 
-		cur, ok = lookupKey(m, seg)
+		cur, ok = lookupKey(m, key)
 		if !ok {
 			return nil, false
+		}
+
+		for _, i := range indexes {
+			arr, ok := cur.([]interface{})
+			if !ok || i >= len(arr) {
+				return nil, false
+			}
+
+			cur = arr[i]
 		}
 	}
 
 	return cur, true
+}
+
+func splitIndexes(seg string) (string, []int, bool) {
+	open := strings.IndexByte(seg, '[')
+	if open < 0 {
+		return seg, nil, true
+	}
+
+	key, rest := seg[:open], seg[open:]
+	indexes := []int{}
+
+	for rest != "" {
+		end := strings.IndexByte(rest, ']')
+		if rest[0] != '[' || end < 0 {
+			return "", nil, false
+		}
+
+		i, err := strconv.Atoi(rest[1:end])
+		if err != nil || i < 0 {
+			return "", nil, false
+		}
+
+		indexes = append(indexes, i)
+		rest = rest[end+1:]
+	}
+
+	return key, indexes, true
 }
 
 func lookupKey(m map[string]interface{}, key string) (interface{}, bool) {

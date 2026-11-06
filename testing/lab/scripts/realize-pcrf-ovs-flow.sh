@@ -248,9 +248,9 @@ tx_meter="$(json_get_any_first "$tx_obj" MeterID meterID meter_id)"
 policy_json="$(podman exec "$TNODE_CONTAINER" \
     curl -fsS --max-time 5 "$PCRF_BASE/v1/policy/imsi/$IMSI" 2>/dev/null || true)"
 
-# Store.CreateMeter uses Ulbr for RX and Dlbr for TX. Keep that mapping.
-rx_rate="$(json_get_any_first "$policy_json" Ulbr ulbr ULBR 2>/dev/null || true)"
-tx_rate="$(json_get_any_first "$policy_json" Dlbr dlbr DLBR 2>/dev/null || true)"
+# UE receive (nw_dst) is downlink; UE transmit (nw_src) is uplink.
+rx_rate="$(json_get_any_first "$policy_json" Dlbr dlbr DLBR 2>/dev/null || true)"
+tx_rate="$(json_get_any_first "$policy_json" Ulbr ulbr ULBR 2>/dev/null || true)"
 
 rx_rate="${rx_rate:-1000000}"
 tx_rate="${tx_rate:-1000000}"

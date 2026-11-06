@@ -48,6 +48,8 @@ static int event_run_actual(event_ctx_t *ctx, const event_spec_t *event,
     case EVT_START_UES:
     case EVT_WAIT_UES_ATTACHED:
     case EVT_WAIT_UES_DETACHED:
+    case EVT_SET_UE_RATE_POLICY:
+    case EVT_WAIT_UE_RATE_LIMITS:
     case EVT_WAIT_UE_SESSIONS:
     case EVT_FINALIZE_UE_SESSIONS:
     case EVT_WAIT:

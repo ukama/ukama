@@ -22,9 +22,10 @@ type Config struct {
 	Queue            *uconf.Queue     `default:"{}"`
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
-	Window           *WindowConfig `default:"{}"`
-	Rollup           *RollupConfig `default:"{}"`
-	PushGateway      string        `default:"http://localhost:9091"`
+	Window           *WindowConfig    `default:"{}"`
+	Rollup           *RollupConfig    `default:"{}"`
+	Retention        *RetentionConfig `default:"{}"`
+	PushGateway      string           `default:"http://localhost:9091"`
 	OrgName          string
 	OrgId            string
 }
@@ -51,6 +52,13 @@ type RollupConfig struct {
 	// to show stable per-entity stats, so this is a longer, config-driven
 	// rolling window (default 8 weeks = 1344h) rather than the UI filter.
 	ReportWindow time.Duration `default:"1344h"`
+}
+
+// RetentionConfig bounds kpi_windows. Window 0 keeps every row.
+type RetentionConfig struct {
+	Window    time.Duration `default:"2160h"`
+	Interval  time.Duration `default:"1h"`
+	BatchSize int           `default:"5000"`
 }
 
 func NewConfig(name string) *Config {

@@ -6,6 +6,8 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <arpa/inet.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,6 +47,55 @@ static char *toml_string_or(toml_table_t *table,
     return dup_or_default(NULL, defValue);
 }
 
+static bool valid_cidr(const char *text, bool hostPool) {
+
+    struct in_addr addr;
+    char host[INET_ADDRSTRLEN];
+    const char *slash;
+    const char *p;
+    size_t len;
+    unsigned int prefix = 0;
+    uint32_t mask;
+
+    if (text == NULL) return false;
+    slash = strchr(text, '/');
+    if (slash == NULL) return false;
+    len = (size_t)(slash - text);
+    if (len == 0 || len >= sizeof(host)) return false;
+    memcpy(host, text, len);
+    host[len] = '\0';
+    if (inet_pton(AF_INET, host, &addr) != 1) return false;
+
+    p = slash + 1;
+    if (*p == '\0' || (*p == '0' && p[1] != '\0')) return false;
+    for (; *p; p++) {
+        if (*p < '0' || *p > '9') return false;
+        prefix = prefix * 10 + (unsigned int)(*p - '0');
+        if (prefix > 32) return false;
+    }
+
+    if (!hostPool) return true;
+    if (prefix > 30) return false;
+    mask = prefix == 0 ? 0 : UINT32_MAX << (32 - prefix);
+    return (ntohl(addr.s_addr) & ~mask) == 0;
+}
+
+bool config_valid_ue_subnet(const char *text) {
+
+    return valid_cidr(text, true);
+}
+
+/* An omitted CIDR uses its default. An explicitly invalid type is an error. */
+static char *cidr_or_default(toml_table_t *table, const char *key,
+                             const char *fallback) {
+
+    toml_datum_t value;
+
+    if (table == NULL || !toml_key_exists(table, key)) return strdup(fallback);
+    value = toml_string_in(table, key);
+    return value.ok ? value.u.s : NULL;
+}
+
 static int toml_int_or(toml_table_t *table, const char *key, int defValue) {
 
     toml_datum_t datum;
@@ -71,13 +122,13 @@ static bool toml_bool_or(toml_table_t *table,
     return defValue;
 }
 
-static void load_tun_extra(Config *config, toml_table_t *tun) {
+static bool load_tun_extra(Config *config, toml_table_t *tun) {
 
     toml_array_t *arr;
     toml_datum_t datum;
     int i;
 
-    if (config == NULL || tun == NULL) return;
+    if (tun == NULL) return true;
 
     for (i = 0; i < config->tunExtraCount; i++) {
         usys_free(config->tunExtraCidrs[i]);
@@ -86,13 +137,15 @@ static void load_tun_extra(Config *config, toml_table_t *tun) {
     config->tunExtraCount = 0;
 
     arr = toml_array_in(tun, "extra_cidrs");
-    if (arr == NULL) return;
+    if (arr == NULL) return !toml_key_exists(tun, "extra_cidrs");
+    if (toml_array_nelem(arr) > INIT_NETWORK_MAX_EXTRA_IPS) return false;
 
-    for (i = 0; i < INIT_NETWORK_MAX_EXTRA_IPS; i++) {
+    for (i = 0; i < toml_array_nelem(arr); i++) {
         datum = toml_string_at(arr, i);
-        if (!datum.ok) break;
+        if (!datum.ok) return false;
         config->tunExtraCidrs[config->tunExtraCount++] = datum.u.s;
     }
+    return true;
 }
 
 static void resolve_service_port(Config *config, int fallbackPort) {
@@ -182,6 +235,7 @@ bool config_load_from_file(Config *config, const char *path) {
     toml_table_t *routing;
     toml_table_t *gateway;
     int fallbackPort;
+    int i;
 
     if (config == NULL || path == NULL) return false;
 
@@ -237,20 +291,29 @@ bool config_load_from_file(Config *config, const char *path) {
     config->bridgeAddr    = toml_string_or(bridge, "address", DEF_BRIDGE_ADDR);
     config->bridgeNetmask = toml_string_or(bridge, "netmask",
                                            DEF_BRIDGE_NETMASK);
-    config->bridgeCidr    = toml_string_or(bridge, "cidr", DEF_BRIDGE_CIDR);
-    config->bridgeSubnet  = toml_string_or(bridge, "subnet", DEF_BRIDGE_SUBNET);
+    config->bridgeCidr    = cidr_or_default(bridge, "cidr", DEF_BRIDGE_CIDR);
+    config->bridgeSubnet  = cidr_or_default(bridge, "subnet", DEF_BRIDGE_SUBNET);
 
     usys_free(config->ueCidr);
-    config->ueCidr      = toml_string_or(ue, "cidr", DEF_UE_CIDR);
+    config->ueCidr = cidr_or_default(ue, "cidr", DEF_UE_CIDR);
+    if (!config_valid_ue_subnet(config->ueCidr)) {
+        usys_log_error("invalid UE subnet in %s", path);
+        toml_free(root);
+        return false;
+    }
     config->defaultDrop = toml_bool_or(ue, "default_drop", true);
 
     usys_free(config->tunIf);
     usys_free(config->tunPrimaryCidr);
     config->tunEnable      = toml_bool_or(tun, "enable", DEF_TUN_ENABLE);
     config->tunIf          = toml_string_or(tun, "interface", DEF_TUN_IF);
-    config->tunPrimaryCidr = toml_string_or(tun, "primary_cidr",
+    config->tunPrimaryCidr = cidr_or_default(tun, "primary_cidr",
                                             DEF_TUN_PRIMARY_CIDR);
-    load_tun_extra(config, tun);
+    if (!load_tun_extra(config, tun)) {
+        usys_log_error("invalid TUN extra_cidrs in %s", path);
+        toml_free(root);
+        return false;
+    }
 
     usys_free(config->epcIf);
     usys_free(config->epcSctpAddr);
@@ -286,9 +349,24 @@ bool config_load_from_file(Config *config, const char *path) {
                                              DEF_GATEWAY_BRIDGE_IF);
     config->gatewayNamespaceIf = toml_string_or(gateway, "namespace_if",
                                                 DEF_GATEWAY_NS_IF);
-    config->gatewayAddr = toml_string_or(gateway, "address", DEF_GATEWAY_ADDR);
+    config->gatewayAddr = cidr_or_default(gateway, "address", DEF_GATEWAY_ADDR);
     config->gatewayIp = toml_string_or(gateway, "ip", DEF_GATEWAY_IP);
 
+    if (!valid_cidr(config->bridgeCidr, false) ||
+        !valid_cidr(config->bridgeSubnet, false) ||
+        (config->tunEnable && !valid_cidr(config->tunPrimaryCidr, false)) ||
+        (config->gatewayEnable && !valid_cidr(config->gatewayAddr, false))) {
+        usys_log_error("invalid interface CIDR in %s", path);
+        toml_free(root);
+        return false;
+    }
+    for (i = 0; config->tunEnable && i < config->tunExtraCount; i++) {
+        if (!valid_cidr(config->tunExtraCidrs[i], false)) {
+            usys_log_error("invalid extra TUN CIDR in %s", path);
+            toml_free(root);
+            return false;
+        }
+    }
     resolve_service_port(config, fallbackPort);
 
     toml_free(root);

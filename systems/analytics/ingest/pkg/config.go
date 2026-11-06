@@ -22,9 +22,10 @@ type Config struct {
 	MsgClient        *uconf.MsgClient `default:"{}"`
 	Service          *uconf.Service
 	Http             HttpServices
-	Window           *WindowConfig `default:"{}"`
-	Engine           *EngineConfig `default:"{}"`
-	PushGateway      string        `default:"http://localhost:9091"`
+	Window           *WindowConfig    `default:"{}"`
+	Engine           *EngineConfig    `default:"{}"`
+	Retention        *RetentionConfig `default:"{}"`
+	PushGateway      string           `default:"http://localhost:9091"`
 	OrgName          string
 	OrgId            string
 }
@@ -57,6 +58,12 @@ type EngineConfig struct {
 	RetryCount int `default:"3"`
 	// ResolverTTL is the initclient resolution cache TTL.
 	ResolverTTL time.Duration `default:"10m"`
+}
+
+type RetentionConfig struct {
+	Window    time.Duration `default:"48h"`
+	Interval  time.Duration `default:"15m"`
+	BatchSize int           `default:"5000"`
 }
 
 func NewConfig(name string) *Config {

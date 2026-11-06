@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
 
     ctx.config = &config;
     ctx.status = &status;
-    ctx.serviceOn = true;
+    ctx.serviceOn = false;
     pthread_mutex_init(&ctx.serviceMutex, NULL);
 
     usys_log_debug("Starting %s", EPCEMU_SERVICE_NAME);

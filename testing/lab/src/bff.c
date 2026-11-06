@@ -2822,6 +2822,8 @@ int bff_get_kpi_value(bff_client_t *c,
     }
 
     *found = 0;
+    memset(value, 0, sizeof(*value));
+    value->empty_response = json_array_size(arr) == 0;
     for (i = 0; i < json_array_size(arr); i++) {
         bff_kpi_value_t candidate;
 

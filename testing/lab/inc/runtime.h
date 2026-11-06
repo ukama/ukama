@@ -16,6 +16,18 @@
 typedef int (*runtime_execute_fn)(void *ctx, const char *script,
                                  const char *args, ulab_error_t *err);
 
+/* Last successful kpi_value observation, scoped to one query. */
+typedef struct {
+    char key[ULAB_MAX_REF];
+    char span[ULAB_MAX_REF];
+    char op[ULAB_MAX_REF];
+    char network_id[ULAB_MAX_ID];
+    char scope_key[ULAB_MAX_REF];
+    char scope_value[ULAB_MAX_ID];
+    double value;
+    int valid;
+} runtime_kpi_t;
+
 typedef struct {
     char provider[ULAB_MAX_REF];
     char script_dir[ULAB_MAX_PATH];
@@ -31,6 +43,7 @@ typedef struct {
     runtime_execute_fn execute;
     void *execute_ctx;
     struct hardware_runtime *hardware;
+    runtime_kpi_t last_kpi;
 } runtime_t;
 
 int runtime_load_workload_sites(runtime_t *rt, world_t *w, ulab_error_t *err);
@@ -63,6 +76,9 @@ int runtime_build_and_start_ues(const char *repo,
 int runtime_start_ues_apn(const char *repo, runtime_t *rt,
                            const world_t *w, const selector_result_t *ues,
                            const char *apn, ulab_error_t *err);
+int runtime_ue_rate_policy(runtime_t *rt, const world_t *w,
+                           const selector_result_t *ues,
+                           const event_spec_t *event, ulab_error_t *err);
 int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
                             const selector_result_t *ues,
                             const check_spec_t *check, ulab_error_t *err);
@@ -72,6 +88,8 @@ int runtime_wait_ues_attached(runtime_t *rt, world_t *w,
 int runtime_wait_ues_detached(runtime_t *rt, world_t *w,
                               const selector_result_t *ues,
                               ulab_error_t *err);
+int runtime_verify_ue_addresses(runtime_t *rt, const world_t *w,
+                                const selector_result_t *ues, ulab_error_t *err);
 int runtime_verify_ue_sessions(runtime_t *rt, const world_t *w,
                                const selector_result_t *ues,
                                ulab_error_t *err);

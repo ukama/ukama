@@ -27,5 +27,11 @@ message HealthReportEvent {
 message HealthAppsChangedEvent {
     string nodeId = 1;
     string nodeType = 2;
+    repeated HealthAppVersion apps = 3;
+}
+
+message HealthAppVersion {
+    string name = 1;
+    string version = 2;
 }
 

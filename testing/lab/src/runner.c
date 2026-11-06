@@ -142,6 +142,8 @@ static int event_uses_ue_runtime(event_type_t type) {
         type == EVT_START_UES ||
         type == EVT_WAIT_UES_ATTACHED ||
         type == EVT_WAIT_UES_DETACHED ||
+        type == EVT_SET_UE_RATE_POLICY ||
+        type == EVT_WAIT_UE_RATE_LIMITS ||
         type == EVT_WAIT_UE_SESSIONS ||
         type == EVT_FINALIZE_UE_SESSIONS;
 }
@@ -986,6 +988,7 @@ static int is_live_runtime_check(const check_spec_t *check) {
          check->type == CHECK_TRAFFIC_BLOCKED ||
          check->type == CHECK_TRAFFIC_UNAVAILABLE ||
          check->type == CHECK_NODE_VERSION_EQUALS ||
+         check->type == CHECK_UE_ADDRESSING ||
          check->type == CHECK_NODE_HEALTH_OK);
 }
 

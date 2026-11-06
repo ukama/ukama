@@ -127,7 +127,7 @@ describe("buildSiteActions — independent async release", () => {
     expect(tower.operation?.id).toBe(expired.id);
     expect(waiting.service.available).toBe(false);
     expect(waiting.restartSite.available).toBe(false);
-    expect(waiting.rf.available).toBe(true);
+    expect(waiting.rf.available).toBe(false);
 
     const released = toNodeStatus(
       {
@@ -142,6 +142,7 @@ describe("buildSiteActions — independent async release", () => {
     expect(released.operation).toBe(undefined);
     expect(ready.service.available).toBe(true);
     expect(ready.restartSite.available).toBe(true);
+    expect(ready.rf.available).toBe(true);
   });
 
   it("all idle → everything available", () => {
@@ -170,7 +171,7 @@ describe("buildSiteActions — independent async release", () => {
     expect(a.service.available).toBe(true);
   });
 
-  it("tower busy → service and restartSite locked, RF stays available", () => {
+  it("tower busy → service, RF and restartSite locked", () => {
     const a = buildSiteActions([
       status({
         nodeId: "t",
@@ -181,7 +182,8 @@ describe("buildSiteActions — independent async release", () => {
       status({ nodeId: "a", type: NODE_TYPE.anode }),
     ]);
     expect(a.service.available).toBe(false);
-    expect(a.rf.available).toBe(true);
+    expect(a.rf.available).toBe(false);
+    expect(a.rf.reason).toContain("Service change in progress");
     expect(a.restartSite.available).toBe(false);
   });
 
@@ -191,6 +193,16 @@ describe("buildSiteActions — independent async release", () => {
     ]);
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toBe("No amplifier node on this site");
+  });
+
+  it("missing tower → RF and service unavailable", () => {
+    const a = buildSiteActions([
+      status({ nodeId: "a", type: NODE_TYPE.anode }),
+    ]);
+    expect(a.rf.available).toBe(false);
+    expect(a.rf.reason).toBe("No tower node on this site");
+    expect(a.service.available).toBe(false);
+    expect(a.service.reason).toBe("No tower node on this site");
   });
 });
 
@@ -226,14 +238,15 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
     expect(actions.service.available).toBe(true);
   });
 
-  it("offline tower blocks service and restart, but leaves RF available", () => {
+  it("offline tower blocks service, RF and restart", () => {
     const nodes = site();
     nodes[0].connectivity = NODE_CONNECTIVITY.Offline;
     const actions = buildSiteActions(nodes);
     expect(actions.restartSite.available).toBe(false);
     expect(actions.service.available).toBe(false);
     expect(actions.service.reason).toContain("Node t ");
-    expect(actions.rf.available).toBe(true);
+    expect(actions.rf.available).toBe(false);
+    expect(actions.rf.reason).toContain("Node t ");
   });
 
   it("offline controller disables every action with a reason", () => {
