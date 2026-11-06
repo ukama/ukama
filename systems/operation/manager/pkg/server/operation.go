@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 	"unicode"
 
@@ -72,6 +73,9 @@ func validateResourceKey(key string) error {
 
 func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
 	if err := validateResourceKey(req.ResourceKey); err != nil {
+		return nil, err
+	}
+	if err := requireText("requestedBy", req.RequestedBy); err != nil {
 		return nil, err
 	}
 
@@ -155,7 +159,10 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken)
+	if err := requireText("actor", req.Actor); err != nil {
+		return nil, err
+	}
+	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken, req.Actor)
 	if isTransient(err) {
 		return nil, repoErr(err)
 	}
@@ -167,6 +174,9 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 
 func (s *OperationServer) CompleteOperation(ctx context.Context,
 	req *pb.CompleteOperationRequest) (*pb.CompleteOperationResponse, error) {
+	if err := requireActorAndReason(req.Actor, req.Reason); err != nil {
+		return nil, err
+	}
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
@@ -188,6 +198,9 @@ func (s *OperationServer) CompleteOperation(ctx context.Context,
 
 func (s *OperationServer) FailOperation(ctx context.Context,
 	req *pb.FailOperationRequest) (*pb.FailOperationResponse, error) {
+	if err := requireActorAndReason(req.Actor, req.Reason); err != nil {
+		return nil, err
+	}
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
@@ -208,6 +221,9 @@ func (s *OperationServer) FailOperation(ctx context.Context,
 }
 
 func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+	if err := requireActorAndReason(req.Actor, req.Reason); err != nil {
+		return nil, err
+	}
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
@@ -232,6 +248,20 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 
 	log.Warnf("operation %s force-unlocked by %s: %s", op.Id, req.Actor, req.Reason)
 	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
+}
+
+func requireText(field, value string) error {
+	if strings.TrimSpace(value) == "" {
+		return status.Errorf(codes.InvalidArgument, "%s must not be blank", field)
+	}
+	return nil
+}
+
+func requireActorAndReason(actor, reason string) error {
+	if err := requireText("actor", actor); err != nil {
+		return err
+	}
+	return requireText("reason", reason)
 }
 
 func isTransient(err error) bool {

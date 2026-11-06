@@ -25,6 +25,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/node/operation-monitor/mocks"
+	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 )
 
@@ -117,7 +118,9 @@ func TestHandleStateTransition_ArmedIntentCompletes(t *testing.T) {
 	mb.On("PublishRequest", mock.MatchedBy(func(route string) bool {
 		return strings.HasPrefix(route, "event.cloud.global.") &&
 			strings.HasSuffix(route, ".operation.manager.operation.completed")
-	}), mock.Anything).Return(nil).Once()
+	}), mock.MatchedBy(func(event *epb.OperationCompletedEvent) bool {
+		return event.Actor == pkg.OperationMonitorActor
+	})).Return(nil).Once()
 
 	s := newEventServer(repo, mb)
 	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Configured", "on"))

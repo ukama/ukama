@@ -21,6 +21,7 @@ import (
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 
+	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 )
 
@@ -118,6 +119,7 @@ func (e *EventServer) publishCompleted(intent *db.MonitoredIntent) error {
 		FencingToken: intent.FencingToken,
 		ResourceKey:  intent.ResourceKey,
 		CompletedAt:  timestamppb.Now(),
+		Actor:        pkg.OperationMonitorActor,
 	})
 }
 

@@ -21,6 +21,11 @@ const (
 	SweeperInterval = 30 * time.Second
 )
 
+const (
+	OperationManagerSweeperActor = "operation-manager-sweeper"
+	OperationMonitorActor        = "operation-monitor"
+)
+
 var (
 	IsDebugMode bool   = false
 	InstanceId  string = ServiceName + "-debug"

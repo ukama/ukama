@@ -81,5 +81,6 @@ func (s *Sweeper) publishFailed(intent *db.MonitoredIntent, reason string) error
 		ResourceKey:  intent.ResourceKey,
 		Reason:       reason,
 		FailedAt:     timestamppb.Now(),
+		Actor:        pkg.OperationMonitorSweeperActor,
 	})
 }

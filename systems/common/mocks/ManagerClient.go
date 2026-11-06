@@ -162,9 +162,9 @@ func (_m *ManagerClient) GetByResource(resourceKey string) (*operation.Operation
 	return r0, r1
 }
 
-// MarkRunning provides a mock function with given fields: id, fencingToken
-func (_m *ManagerClient) MarkRunning(id string, fencingToken uint64) (*operation.OperationInfo, error) {
-	ret := _m.Called(id, fencingToken)
+// MarkRunning provides a mock function with given fields: id, fencingToken, actor
+func (_m *ManagerClient) MarkRunning(id string, fencingToken uint64, actor string) (*operation.OperationInfo, error) {
+	ret := _m.Called(id, fencingToken, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MarkRunning")
@@ -172,19 +172,19 @@ func (_m *ManagerClient) MarkRunning(id string, fencingToken uint64) (*operation
 
 	var r0 *operation.OperationInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, uint64) (*operation.OperationInfo, error)); ok {
-		return rf(id, fencingToken)
+	if rf, ok := ret.Get(0).(func(string, uint64, string) (*operation.OperationInfo, error)); ok {
+		return rf(id, fencingToken, actor)
 	}
-	if rf, ok := ret.Get(0).(func(string, uint64) *operation.OperationInfo); ok {
-		r0 = rf(id, fencingToken)
+	if rf, ok := ret.Get(0).(func(string, uint64, string) *operation.OperationInfo); ok {
+		r0 = rf(id, fencingToken, actor)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*operation.OperationInfo)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string, uint64) error); ok {
-		r1 = rf(id, fencingToken)
+	if rf, ok := ret.Get(1).(func(string, uint64, string) error); ok {
+		r1 = rf(id, fencingToken, actor)
 	} else {
 		r1 = ret.Error(1)
 	}

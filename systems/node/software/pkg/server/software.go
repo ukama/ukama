@@ -266,7 +266,8 @@ func (s *SoftwareServer) markRunning(op *copr.OperationInfo, actionType string) 
 		return nil
 	}
 
-	if _, err := s.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+	if _, err := s.opManager.MarkRunning(op.Id, op.FencingToken,
+		pkg.ServiceName); err != nil {
 		log.Warnf("%s mark running failed for op %s: %v", actionType, op.Id, err)
 		return err
 	}

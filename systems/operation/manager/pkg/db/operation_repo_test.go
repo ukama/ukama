@@ -205,10 +205,12 @@ func Test_MarkRunning(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "running", "controller",
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken)
+		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken, "controller")
 
 		assert.NoError(t, err)
 		assert.Equal(t, OperationRunning, out.Status)

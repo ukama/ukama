@@ -95,7 +95,7 @@ func startRunningOperation(t *testing.T, ctx context.Context,
 
 	op := startOperation(t, ctx, c)
 	resp, err := c.MarkRunning(ctx, &pb.MarkRunningRequest{
-		Id: op.Id, FencingToken: op.FencingToken,
+		Id: op.Id, FencingToken: op.FencingToken, Actor: actor,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
@@ -341,6 +341,43 @@ func TestStartConflict(t *testing.T) {
 
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
 		assert.Nil(t, resp)
+		assertLockHeldBy(t, ctx, c, op)
+	})
+}
+
+func TestBlankActors(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("StartWithoutRequestedBy", func(t *testing.T) {
+		_, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+			Type:        "IntegrationTest",
+			System:      "operation",
+			ResourceKey: "test:integration:" + uuid.NewV4().String(),
+			RequestedBy: "   ",
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("MarkRunningWithoutActor", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := c.MarkRunning(ctx, &pb.MarkRunningRequest{
+			Id: op.Id, FencingToken: op.FencingToken,
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("CompleteWithBlankActor", func(t *testing.T) {
+		op := startRunningOperation(t, ctx, c)
+
+		_, err := c.CompleteOperation(ctx, &pb.CompleteOperationRequest{
+			Id: op.Id, FencingToken: op.FencingToken, Actor: "  ", Reason: reason,
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 		assertLockHeldBy(t, ctx, c, op)
 	})
 }
