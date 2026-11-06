@@ -11,6 +11,7 @@ package rollup
 import (
 	"fmt"
 	"math"
+	"sync"
 	"time"
 
 	log "github.com/sirupsen/logrus"
@@ -18,6 +19,10 @@ import (
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
+
+// MinWindowRetention keeps every window the sweeper's previous-month recompute
+// (up to 62 days back) and a last_30d trend (60 days) read.
+const MinWindowRetention = 63 * 24 * time.Hour
 
 // Engine materializes calendar-span rollups from kpi_windows components.
 //
@@ -29,16 +34,24 @@ import (
 type Engine struct {
 	grid    schema.Grid
 	kpis    map[string]schema.KpiSpec
-	windows db.KpiWindowReader
-	rollups db.RollupRepo
-	org     string
-	loc     *time.Location
-	sweep   time.Duration
-	stop    chan struct{}
+	windows   db.KpiWindowReader
+	rollups   db.RollupRepo
+	retention db.RetentionRepo
+	org       string
+	loc       *time.Location
+	sweep     time.Duration
+	keep      time.Duration
+	stop      chan struct{}
+
+	ready     chan struct{}
+	readyOnce sync.Once
 }
 
+// keep is the kpi_windows retention (0 = forever). Spans that start before
+// now-keep may have lost windows, so they are never recomputed once they exist.
 func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowReader,
-	rollups db.RollupRepo, org, timezone string, sweep time.Duration) (*Engine, error) {
+	rollups db.RollupRepo, retention db.RetentionRepo, org, timezone string,
+	sweep, keep time.Duration) (*Engine, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		return nil, fmt.Errorf("loading rollup timezone %q: %w", timezone, err)
@@ -50,14 +63,17 @@ func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowRead
 	}
 
 	return &Engine{
-		grid:    grid,
-		kpis:    byKey,
-		windows: windows,
-		rollups: rollups,
-		org:     org,
-		loc:     loc,
-		sweep:   sweep,
-		stop:    make(chan struct{}),
+		grid:      grid,
+		kpis:      byKey,
+		windows:   windows,
+		rollups:   rollups,
+		retention: retention,
+		org:       org,
+		loc:       loc,
+		sweep:     sweep,
+		keep:      keep,
+		stop:      make(chan struct{}),
+		ready:     make(chan struct{}),
 	}, nil
 }
 
@@ -85,7 +101,7 @@ func (e *Engine) OnKpiComputed(kpiKey string, windowID int64) {
 // periodically recomputes the current spans to cover lost events and keep
 // partial spans fresh.
 func (e *Engine) StartSweeper() {
-	e.backfillOnce()
+	clean := e.backfillOnce()
 
 	ticker := time.NewTicker(e.sweep)
 	defer ticker.Stop()
@@ -95,6 +111,10 @@ func (e *Engine) StartSweeper() {
 	for {
 		select {
 		case <-ticker.C:
+			if !clean {
+				clean = e.backfillOnce()
+			}
+
 			e.sweepOnce()
 		case <-e.stop:
 			return
@@ -106,16 +126,29 @@ func (e *Engine) Stop() {
 	close(e.stop)
 }
 
+// Ready closes after the first backfill that finished without errors: from
+// then on every span holding kpi_windows has a rollup, so pruning is safe.
+func (e *Engine) Ready() <-chan struct{} {
+	return e.ready
+}
+
+func (e *Engine) frozen(spanStart, now time.Time) bool {
+	return e.keep > 0 && spanStart.Before(now.Add(-e.keep))
+}
+
 // backfillOnce re-materializes all spans intersecting each KPI's kpi_windows
 // history. Runs at boot: after this, every historical span carries the
 // current components-row shape regardless of what an older engine wrote.
-func (e *Engine) backfillOnce() {
+func (e *Engine) backfillOnce() bool {
 	now := time.Now().UTC()
+	clean := true
 
 	for _, kpi := range e.kpis {
 		minID, _, ok, err := e.windows.WindowBounds(e.org, kpi.Kpi)
 		if err != nil {
 			log.Errorf("backfill: window bounds for %s: %v", kpi.Kpi, err)
+
+			clean = false
 
 			continue
 		}
@@ -135,8 +168,10 @@ func (e *Engine) backfillOnce() {
 					break
 				}
 
-				if err := e.RecomputeSpan(kpi, span, spanStart); err != nil {
+				if err := e.backfillSpan(kpi, span, spanStart, now); err != nil {
 					log.Errorf("backfill: recompute %s %s @ %s: %v", kpi.Kpi, span, spanStart, err)
+
+					clean = false
 				}
 
 				next, err := SpanEnd(span, spanStart)
@@ -150,6 +185,27 @@ func (e *Engine) backfillOnce() {
 
 		log.Infof("backfill: %s rollups re-materialized from %s", kpi.Kpi, start)
 	}
+
+	if clean {
+		e.readyOnce.Do(func() { close(e.ready) })
+	}
+
+	return clean
+}
+
+// backfillSpan recomputes a span, except a frozen one that already has a
+// rollup: its windows may be partly pruned, and the stored rollup is final.
+func (e *Engine) backfillSpan(kpi schema.KpiSpec, span string, spanStart, now time.Time) error {
+	if !e.frozen(spanStart, now) {
+		return e.RecomputeSpan(kpi, span, spanStart)
+	}
+
+	exists, err := e.retention.HasSpan(e.org, kpi.Kpi, span, spanStart)
+	if err != nil || exists {
+		return err
+	}
+
+	return e.recompute(kpi, span, spanStart)
 }
 
 // sweepOnce recomputes the current AND previous span for every KPI: current
@@ -189,6 +245,16 @@ func (e *Engine) RecomputeSpan(kpi schema.KpiSpec, span string, t time.Time) err
 		return err
 	}
 
+	if e.frozen(spanStart, time.Now().UTC()) {
+		log.Debugf("skipping %s %s @ %s: span starts before kpi_windows retention", kpi.Kpi, span, spanStart)
+
+		return nil
+	}
+
+	return e.recompute(kpi, span, spanStart)
+}
+
+func (e *Engine) recompute(kpi schema.KpiSpec, span string, spanStart time.Time) error {
 	spanEnd, err := SpanEnd(span, spanStart)
 	if err != nil {
 		return err

@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	pb "github.com/ukama/ukama/systems/analytics/aggregator/pb/gen"
 	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
@@ -27,7 +29,7 @@ func mustServer(t *testing.T, org string, kpis []schema.KpiSpec, rollups db.Roll
 	composer *performance.Composer, grid schema.Grid, windows db.KpiWindowReader) *AggregatorServer {
 	t.Helper()
 
-	srv, err := NewAggregatorServer(org, kpis, rollups, composer, grid, windows, "UTC")
+	srv, err := NewAggregatorServer(org, kpis, rollups, composer, grid, windows, "UTC", 0)
 	if err != nil {
 		t.Fatalf("building server: %v", err)
 	}
@@ -300,4 +302,44 @@ func TestQuery_UnknownKpiIsNotBlamedOnTheFilter(t *testing.T) {
 		Filter: map[string]string{"iccid": "x"},
 	})
 	assert.NoError(t, err)
+}
+
+func retainedServer(t *testing.T, windows stubWindows) *AggregatorServer {
+	t.Helper()
+
+	srv, err := NewAggregatorServer("org", []schema.KpiSpec{flowUsageSpec()}, stubRollups{}, nil,
+		schema.Grid{W: 5 * time.Minute}, windows, "UTC", rollup.MinWindowRetention)
+	assert.NoError(t, err)
+
+	return srv
+}
+
+func TestQuery_CustomRangeBeforeRetentionIsOutOfRange(t *testing.T) {
+	now := time.Now().UTC()
+	srv := retainedServer(t, stubWindows{})
+
+	_, err := srv.Query(context.TODO(), &pb.QueryRequest{
+		Kpis: []string{"DATA_USAGE"},
+		From: now.Add(-100 * 24 * time.Hour).Format(time.RFC3339),
+		To:   now.Add(-90 * 24 * time.Hour).Format(time.RFC3339),
+	})
+
+	assert.Equal(t, codes.OutOfRange, status.Code(err))
+}
+
+func TestQuery_CustomRangeDropsTrendWhenPreviousRangeIsPruned(t *testing.T) {
+	now := time.Now().UTC()
+	srv := retainedServer(t, stubWindows{rows: []schema.KpiWindow{
+		{KpiKey: "DATA_USAGE", Scope: schema.CanonicalScope(nil), WindowID: 1, Value: 7, Sum: 7, Count: 1},
+	}})
+
+	resp, err := srv.Query(context.TODO(), &pb.QueryRequest{
+		Kpis: []string{"DATA_USAGE"},
+		From: now.Add(-40 * 24 * time.Hour).Format(time.RFC3339),
+		To:   now.Add(-10 * 24 * time.Hour).Format(time.RFC3339),
+	})
+
+	assert.NoError(t, err)
+	assert.Len(t, resp.Rows, 1)
+	assert.False(t, resp.Rows[0].Points[0].Trend.HasPrevious)
 }
