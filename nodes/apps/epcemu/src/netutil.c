@@ -9,6 +9,10 @@
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <errno.h>
+#include <limits.h>
+#include <net/if.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <sys/random.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -52,43 +56,114 @@ int ip_to_uint32(const char *ip, uint32_t *out) {
     return USYS_TRUE;
 }
 
-static int cidr_to_netmask(int prefix, uint32_t *mask) {
+/* Accept a dotted IPv4 address followed by one decimal prefix, 0..32. */
+bool ipv4_cidr_parse(const char *text, Ipv4Cidr *cidr) {
 
-    if (mask == NULL || prefix < 0 || prefix > 32) return USYS_FALSE;
+    char host[INET_ADDRSTRLEN];
+    struct in_addr addr;
+    const char *slash;
+    const char *p;
+    size_t len;
+    unsigned int prefix = 0;
 
-    if (prefix == 0) {
-        *mask = 0;
-    } else {
-        *mask = 0xffffffffu << (32 - prefix);
+    if (text == NULL || cidr == NULL) return false;
+    slash = strchr(text, '/');
+    if (slash == NULL) return false;
+    len = (size_t)(slash - text);
+    if (len == 0 || len >= sizeof(host)) return false;
+    memcpy(host, text, len);
+    host[len] = '\0';
+    if (inet_pton(AF_INET, host, &addr) != 1) return false;
+
+    p = slash + 1;
+    if (*p == '\0' || (*p == '0' && p[1] != '\0')) return false;
+    for (; *p; p++) {
+        if (*p < '0' || *p > '9') return false;
+        prefix = prefix * 10 + (unsigned int)(*p - '0');
+        if (prefix > 32) return false;
     }
 
-    return USYS_TRUE;
+    cidr->address = ntohl(addr.s_addr);
+    cidr->mask = prefix == 0 ? 0 : UINT32_MAX << (32 - prefix);
+    return true;
+}
+
+/* A UE pool needs a network, a broadcast and at least one host address. */
+bool ue_subnet_parse(const char *text, Ipv4Cidr *pool) {
+
+    return ipv4_cidr_parse(text, pool) &&
+           (pool->address & ~pool->mask) == 0 && ~pool->mask > 1u;
 }
 
 int ip_in_cidr(const char *ip, const char *cidr) {
 
-    char cidrCopy[EPCEMU_MAX_STR];
-    char *slash;
-    int prefix;
-    uint32_t ipValue;
-    uint32_t netValue;
-    uint32_t mask;
+    uint32_t value;
+    Ipv4Cidr subnet;
 
-    if (ip == NULL || cidr == NULL) return USYS_FALSE;
+    return ip_to_uint32(ip, &value) && ipv4_cidr_parse(cidr, &subnet) &&
+           (value & subnet.mask) == (subnet.address & subnet.mask);
+}
 
-    snprintf(cidrCopy, sizeof(cidrCopy), "%s", cidr);
+/* SIOCGIFCONF includes secondary IPv4 addresses. Fail closed on an
+ * incomplete snapshot; interface configuration can change between calls. */
+static bool address_is_available(uint32_t value) {
 
-    slash = strchr(cidrCopy, '/');
-    if (slash == NULL) return USYS_FALSE;
+    struct ifconf list = {0};
+    struct ifreq *entries;
+    const struct sockaddr_in *addr;
+    size_t count;
+    size_t i;
+    int size;
+    int fd;
+    bool available = false;
 
-    *slash = '\0';
-    prefix = atoi(slash + 1);
+    fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
+    if (fd < 0) return false;
+    if (ioctl(fd, SIOCGIFCONF, &list) < 0 || list.ifc_len < 0 ||
+        list.ifc_len > INT_MAX - (int)sizeof(*entries)) goto done;
+    size = list.ifc_len + (int)sizeof(*entries);
+    entries = malloc((size_t)size);
+    if (entries == NULL) goto done;
+    list.ifc_req = entries;
+    list.ifc_len = size;
+    if (ioctl(fd, SIOCGIFCONF, &list) == 0 && list.ifc_len >= 0 &&
+        list.ifc_len <= size - (int)sizeof(*entries)) {
+        available = true;
+        count = (size_t)list.ifc_len / sizeof(*entries);
+        for (i = 0; i < count; i++) {
+            addr = (const struct sockaddr_in *)&entries[i].ifr_addr;
+            if (addr->sin_family == AF_INET && ntohl(addr->sin_addr.s_addr) == value) {
+                available = false;
+                break;
+            }
+        }
+    }
+    free(entries);
+done:
+    close(fd);
+    return available;
+}
 
-    if (!ip_to_uint32(ip, &ipValue)) return USYS_FALSE;
-    if (!ip_to_uint32(cidrCopy, &netValue)) return USYS_FALSE;
-    if (!cidr_to_netmask(prefix, &mask)) return USYS_FALSE;
+int ue_address_valid(const EpcemuConfig *config, const char *ip) {
 
-    return ((ipValue & mask) == (netValue & mask)) ? USYS_TRUE : USYS_FALSE;
+    Ipv4Cidr pool;
+    Ipv4Cidr iface;
+    uint32_t value;
+
+    if (config == NULL || !ue_subnet_parse(config->ueCidr, &pool) ||
+        !ip_to_uint32(ip, &value) || (value & pool.mask) != pool.address ||
+        value == pool.address || value == (pool.address | ~pool.mask) ||
+        (value >> 24) == 0 || (value >> 24) == 127 ||
+        (value >> 28) >= 14 || (value & 0xffff0000u) == 0xa9fe0000u) {
+        return USYS_FALSE;
+    }
+    if ((ipv4_cidr_parse(config->tunAddr, &iface) && value == iface.address) ||
+        (ipv4_cidr_parse(config->bridgeCidr, &iface) && value == iface.address) ||
+        (ipv4_cidr_parse(config->gatewayCidr, &iface) && value == iface.address)) {
+        return USYS_FALSE;
+    }
+
+    return address_is_available(value);
 }
 
 JsonObj *imsi_to_json_array(const char *imsi) {

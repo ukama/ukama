@@ -988,6 +988,7 @@ static int is_live_runtime_check(const check_spec_t *check) {
          check->type == CHECK_TRAFFIC_BLOCKED ||
          check->type == CHECK_TRAFFIC_UNAVAILABLE ||
          check->type == CHECK_NODE_VERSION_EQUALS ||
+         check->type == CHECK_UE_ADDRESSING ||
          check->type == CHECK_NODE_HEALTH_OK);
 }
 

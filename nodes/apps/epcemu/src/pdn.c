@@ -163,29 +163,6 @@ static int sync_owner(ServiceContext *ctx) {
     return USYS_TRUE;
 }
 
-static int valid_address(EpcemuConfig *config, const char *ip) {
-
-    char host[EPCEMU_MAX_STR];
-    char *slash;
-    uint32_t value;
-
-    if (!ip_to_uint32(ip, &value) ||
-        !ip_in_cidr(ip, config->ueCidr)) return USYS_FALSE;
-    if ((value >> 24) == 0 || (value >> 24) == 127 ||
-        (value >> 28) >= 14 || (value & 0xffff0000u) == 0xa9fe0000u) {
-        return USYS_FALSE;
-    }
-    /* A UE cannot reserve the provisioned TUN or bridge address. */
-    snprintf(host, sizeof(host), "%s", config->tunAddr);
-    slash = strchr(host, '/');
-    if (slash != NULL) *slash = '\0';
-    if (!strcmp(host, ip)) return USYS_FALSE;
-    snprintf(host, sizeof(host), "%s", config->bridgeCidr);
-    slash = strchr(host, '/');
-    if (slash != NULL) *slash = '\0';
-    return strcmp(host, ip) != 0;
-}
-
 static int read_attach(ServiceContext *ctx, JsonObj *body, UeEntry *ue,
                         char *reason, size_t reasonLen) {
 
@@ -201,7 +178,7 @@ static int read_attach(ServiceContext *ctx, JsonObj *body, UeEntry *ue,
         return error_status(400, "invalid_iccid", reason, reasonLen);
     }
     if (!copy_field(body, "ip", ue->ip, sizeof(ue->ip), true) ||
-        !valid_address(ctx->config, ue->ip)) {
+        !ue_address_valid(ctx->config, ue->ip)) {
         return error_status(400, "invalid_ue_address", reason, reasonLen);
     }
     apn = json_object_get(body, "apn");

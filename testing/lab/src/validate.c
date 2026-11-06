@@ -21,6 +21,10 @@ static int fail(ulab_error_t *err, const char *msg) {
 static int validate_pdn_check(const scenario_t *s,
                                const check_spec_t *check,
                                ulab_error_t *err) {
+    if (check->type == CHECK_UE_ADDRESSING &&
+        (!ulab_streq(s->provider.type, "virtual") || check->ues.kind == SEL_NONE)) {
+        return fail(err, "ue_addressing requires selected virtual UEs");
+    }
     if (check->type != CHECK_UE_PDN) return ULAB_OK;
     if (!ulab_streq(s->provider.type, "virtual") ||
         check->ues.kind == SEL_NONE || check->timeout_seconds > 300 ||
