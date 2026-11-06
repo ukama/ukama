@@ -142,6 +142,8 @@ static int event_uses_ue_runtime(event_type_t type) {
         type == EVT_START_UES ||
         type == EVT_WAIT_UES_ATTACHED ||
         type == EVT_WAIT_UES_DETACHED ||
+        type == EVT_SET_UE_RATE_POLICY ||
+        type == EVT_WAIT_UE_RATE_LIMITS ||
         type == EVT_WAIT_UE_SESSIONS ||
         type == EVT_FINALIZE_UE_SESSIONS;
 }

@@ -27,15 +27,17 @@ static int validate_pdn_check(const scenario_t *s,
         (!ulab_streq(check->expected, "attached") &&
          !ulab_streq(check->expected, "allowed") &&
          !ulab_streq(check->expected, "blocked") &&
-         !ulab_streq(check->expected, "rejected")) ||
+         !ulab_streq(check->expected, "rejected") &&
+         !ulab_streq(check->expected, "absent")) ||
         (check->same_pdn && check->new_pdn) ||
         ((check->same_pdn || check->new_pdn) &&
-         ulab_streq(check->expected, "rejected")) ||
+         (ulab_streq(check->expected, "rejected") ||
+          ulab_streq(check->expected, "absent"))) ||
         strspn(check->apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(check->apn)) {
         return fail(err, "ue_pdn requires virtual UEs, a valid APN, "
-                    "attached/allowed/blocked/rejected and at most 300s; "
+                    "attached/allowed/blocked/rejected/absent and at most 300s; "
                     "same_pdn/new_pdn are exclusive and require a live PDN");
     }
     return ULAB_OK;
@@ -273,6 +275,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if ((event->type == EVT_SET_UE_RATE_POLICY ||
+                 event->type == EVT_WAIT_UE_RATE_LIMITS) &&
+                (!ulab_streq(s->provider.type, "virtual") ||
+                 event->ues.kind == SEL_NONE || !event->uplink_kbps ||
+                 !event->downlink_kbps)) {
+                return fail(err, "rate events need virtual UEs and positive uplink_kbps/downlink_kbps");
+            }
             if (event->type == EVT_WAIT_UE_SESSIONS ||
                 event->type == EVT_FINALIZE_UE_SESSIONS) {
                 if (event->ues.kind == SEL_NONE) {
@@ -529,8 +538,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err, "KPI checks require key");
             }
             if (check->type == CHECK_KPI_VALUE &&
-                !check->has_expected_value) {
-                return fail(err, "kpi_value requires expected_value");
+                !check->has_expected_value &&
+                !ulab_streq(check->expected, "previous")) {
+                return fail(err,
+                            "kpi_value requires expected_value or expected: previous");
             }
             if (check->type == CHECK_PERFORMANCE_REPORT_CELL &&
                 (check->report[0] == '\0' || check->column[0] == '\0' ||

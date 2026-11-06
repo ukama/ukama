@@ -345,6 +345,42 @@ static int check_node_health(check_ctx_t *ctx,
     return ULAB_OK;
 }
 
+static int verify_unavailable_pdns(check_ctx_t *ctx,
+                                    const selector_result_t *ues,
+                                    ulab_error_t *err) {
+    check_spec_t pdn;
+    selector_result_t selected;
+    size_t i;
+
+    if (ues->count == 0) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "traffic_unavailable selected no UEs");
+        return ULAB_ERR;
+    }
+
+    memset(&pdn, 0, sizeof(pdn));
+    memset(&selected, 0, sizeof(selected));
+    ulab_copy(pdn.expected, sizeof(pdn.expected), "absent");
+    selected.count = 1;
+
+    for (i = 0; i < ues->count; i++) {
+        selected.idx = &ues->idx[i];
+
+        /* Service OFF removes the PDN; policy blocking retains it. */
+        if (runtime_verify_ue_pdns(ctx->runtime, ctx->world, &selected,
+                                   &pdn, err) == ULAB_OK) {
+            continue;
+        }
+
+        if (runtime_verify_ue_policy_blocks(ctx->runtime, ctx->world,
+                                            &selected, err) != ULAB_OK) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
 int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
                   check_result_t *res, ulab_error_t *err) {
     selector_result_t sel;
@@ -447,11 +483,15 @@ int check_runtime(check_ctx_t *ctx, const check_spec_t *check,
             sleep(1);
         } while (1);
 
-        if (expected && (check->type == CHECK_TRAFFIC_BLOCKED ||
-                        check->type == CHECK_TRAFFIC_UNAVAILABLE)) {
+        if (expected && check->type == CHECK_TRAFFIC_BLOCKED) {
             memset(&session_err, 0, sizeof(session_err));
             if (runtime_verify_ue_policy_blocks(ctx->runtime, ctx->world,
                                                 &sel, &session_err) != ULAB_OK) {
+                expected = 0;
+            }
+        } else if (expected && check->type == CHECK_TRAFFIC_UNAVAILABLE) {
+            memset(&session_err, 0, sizeof(session_err));
+            if (verify_unavailable_pdns(ctx, &sel, &session_err) != ULAB_OK) {
                 expected = 0;
             }
         }

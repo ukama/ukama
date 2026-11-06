@@ -20,7 +20,7 @@ enum HttpStatusCode {
     HttpStatus_ServiceUnavailable  = 503
 };
 
-static const char *HttpStatusStr(int code) {
+static inline const char *HttpStatusStr(int code) {
 
     switch (code) {
     case 200: return "OK";
