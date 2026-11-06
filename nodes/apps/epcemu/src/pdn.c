@@ -7,6 +7,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -58,9 +59,15 @@ static int copy_field(JsonObj *body, const char *name, char *out,
 
 int pdn_init(ServiceContext *ctx) {
 
+    const char *apn;
+
     if (ctx == NULL || ctx->config == NULL) return USYS_FALSE;
-    if (!apn_normalize(EPCEMU_DEF_APN, strlen(EPCEMU_DEF_APN),
-                       ctx->config->apn)) return USYS_FALSE;
+    apn = getenv("UKAMA_APN");
+    if (apn == NULL) apn = EPCEMU_DEF_APN;
+    if (!apn_normalize(apn, strlen(apn), ctx->config->apn)) {
+        usys_log_error("Invalid UKAMA_APN");
+        return USYS_FALSE;
+    }
     return identity_create(ctx->instanceId);
 }
 
