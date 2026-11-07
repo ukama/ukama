@@ -12,15 +12,23 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "jansson.h"
+#include "epcemu.h"
 
 typedef json_t JsonObj;
 
+typedef struct {
+    uint32_t address;
+    uint32_t mask;
+} Ipv4Cidr;
+
+bool ipv4_cidr_parse(const char *text, Ipv4Cidr *cidr);
+bool ue_subnet_parse(const char *text, Ipv4Cidr *pool);
 int apn_normalize(const char *input, size_t len, char *output);
 int identity_create(char *id);
 int identity_valid(const char *id);
 int imsi_valid(const char *imsi);
 int ip_to_uint32(const char *ip, uint32_t *out);
+int ue_address_valid(const EpcemuConfig *config, const char *ip);
 int ip_in_cidr(const char *ip, const char *cidr);
 JsonObj *imsi_to_json_array(const char *imsi);
 

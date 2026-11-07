@@ -1,0 +1,84 @@
+version: 1
+name: p0-ue-address-validation
+description: Validate UE subnet prefixes on the tower, reject reserved addresses and preserve traffic on the assigned host.
+seed: 1856
+suite: p0
+priority: p0
+tags: [virtual, runtime, pdn]
+status: active
+
+provider:
+  type: virtual
+
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 1
+
+packages:
+  - ref: base
+    name: PDN Base
+    data_mb: 100
+    duration_days: 1
+    amount: 1.00
+    assign_percent: 100
+
+setup:
+  create_via_bff:
+    - networks
+    - sites
+    - nodes
+    - node_site_links
+    - packages
+    - subscribers
+    - sims
+
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: establish_first_pdn
+    events:
+      - type: toggle_service
+        sites: all
+        state: on
+      - type: start_ues
+        ues: all
+      - type: wait_ues_attached
+        ues: all
+        seconds: 90
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        apn: internet
+        timeout_seconds: 90
+
+  - name: validate_subnets_and_reject_invalid_addresses
+    events: []
+    checks:
+      - type: ue_addressing
+        ues: all
+        immediate: true
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        same_pdn: true
+        timeout_seconds: 30
+
+  - name: use_valid_assignment
+    events:
+      - type: traffic
+        ues: all
+        amount_mb: 1
+    checks:
+      - type: ue_pdn
+        ues: all
+        expected: allowed
+        same_pdn: true
+        timeout_seconds: 30

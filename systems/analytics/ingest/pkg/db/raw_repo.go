@@ -31,6 +31,7 @@ type RawRepo interface {
 	StateAsOf(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error)
 	// WindowRows returns the rows belonging to exactly windowID.
 	WindowRows(orgID, datasetKey string, windowID int64) ([]schema.RawRecord, error)
+	PruneBefore(orgID, datasetKey string, beforeWindow int64, batch int) (int64, error)
 }
 
 type rawRepo struct {
@@ -39,6 +40,17 @@ type rawRepo struct {
 
 func NewRawRepo(db sql.Db) RawRepo {
 	return &rawRepo{db: db}
+}
+
+func (r *rawRepo) PruneBefore(orgID, datasetKey string, beforeWindow int64, batch int) (int64, error) {
+	res := r.db.GetGormDb().Exec(`
+		DELETE FROM raw_records WHERE id IN (
+			SELECT id FROM raw_records
+			WHERE org_id = ? AND dataset_key = ? AND window_id < ?
+			LIMIT ?)`,
+		orgID, datasetKey, beforeWindow, batch)
+
+	return res.RowsAffected, res.Error
 }
 
 func (r *rawRepo) InsertWindowed(records []schema.RawRecord) error {

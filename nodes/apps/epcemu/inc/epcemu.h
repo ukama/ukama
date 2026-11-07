@@ -77,6 +77,7 @@ typedef struct {
     char ueCidr[EPCEMU_MAX_STR];
     char bridge[EPCEMU_MAX_STR];
     char bridgeCidr[EPCEMU_MAX_STR];
+    char gatewayCidr[EPCEMU_MAX_STR];
 
     char tunName[EPCEMU_MAX_STR];
     char tunAddr[EPCEMU_MAX_STR];

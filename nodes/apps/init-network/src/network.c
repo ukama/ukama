@@ -9,6 +9,7 @@
 #include <string.h>
 #include <ulfius.h>
 
+#include "service_api.h"
 #include "init_network.h"
 #include "web_service.h"
 
@@ -93,6 +94,13 @@ static void setup_webservice_endpoints(ServiceContext *ctx, UInst *instance) {
                                &web_service_cb_reconcile, ctx);
     setup_unsupported_methods(instance, "POST", URL_PREFIX,
                               API_RES_EP("reconcile"));
+
+    ulfius_add_endpoint_by_val(instance, HTTP_GET, URL_PREFIX,
+                               API_EP_SERVICE, 0,
+                               &web_service_cb_service, ctx);
+    ulfius_add_endpoint_by_val(instance, HTTP_POST, URL_PREFIX,
+                               API_EP_SERVICE, 0,
+                               &web_service_cb_service, ctx);
 
     ulfius_set_default_endpoint(instance, &web_service_cb_default, ctx);
 }

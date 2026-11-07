@@ -50,18 +50,17 @@ func TestDataUsage(t *testing.T) {
 
 		results, err := DataUsage(win, in, spec)
 		assert.NoError(t, err)
-		assert.Len(t, results, 2)
 
 		byIccid := map[string]Result{}
 		for _, r := range results {
 			byIccid[r.Scope["iccid"]] = r
 		}
 
-		// icc1 consumed 250 in the window; icc2 was idle -> explicit 0 row.
+		assert.Len(t, results, 1)
 		assert.Equal(t, 250.0, byIccid["icc1"].Value)
 		assert.Equal(t, 250.0, byIccid["icc1"].Sum)
 		assert.Equal(t, 1.0, byIccid["icc1"].Count)
-		assert.Equal(t, 0.0, byIccid["icc2"].Value)
+		assert.NotContains(t, byIccid, "icc2")
 
 		assert.Equal(t, map[string]string{
 			"network_id":     "net1",
@@ -82,8 +81,7 @@ func TestDataUsage(t *testing.T) {
 
 		results, err := DataUsage(win, in, spec)
 		assert.NoError(t, err)
-		assert.Len(t, results, 1)
-		assert.Equal(t, 0.0, results[0].Value)
+		assert.Empty(t, results)
 	})
 
 	t.Run("first appearance counts with first_value count", func(t *testing.T) {
@@ -115,8 +113,19 @@ func TestDataUsage(t *testing.T) {
 
 		results, err := DataUsage(win, in, spec)
 		assert.NoError(t, err)
+		assert.Empty(t, results)
+	})
+
+	t.Run("plain string values from the current mapping", func(t *testing.T) {
+		in := Datasets{
+			"usage":      {usageRow("icc1", "sp1", "pkg1", "net1", "site1", "700")},
+			"usage_prev": {usageRow("icc1", "sp1", "pkg1", "net1", "site1", []interface{}{1.7e9, "400"})},
+		}
+
+		results, err := DataUsage(win, in, spec)
+		assert.NoError(t, err)
 		assert.Len(t, results, 1)
-		assert.Equal(t, 0.0, results[0].Value)
+		assert.Equal(t, 300.0, results[0].Value, "prev stored as a pair, cur as a plain string")
 	})
 
 	t.Run("series without identity labels are skipped", func(t *testing.T) {

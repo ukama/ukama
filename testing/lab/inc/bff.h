@@ -245,6 +245,7 @@ typedef struct {
     bff_scope_entry_t scope[ULAB_MAX_BFF_KPI_SCOPES];
     size_t scope_count;
     bff_kpi_trend_t trend;
+    int empty_response;
 } bff_kpi_value_t;
 
 int bff_init(bff_client_t *c,

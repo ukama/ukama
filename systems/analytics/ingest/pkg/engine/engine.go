@@ -22,16 +22,18 @@ import (
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 )
 
-// Engine is the ingest scheduler: every tick it walks the pull DAG in
-// topological stages and, for each dataset, claims and executes all eligible,
-// not-yet-pulled windows. The ledger claim is what prevents double-pulling —
-// across ticks, restarts, replays and replicas.
+type WindowPuller interface {
+	Execute(pull schema.PullSpec, win schema.Window) (int, error)
+}
+
+// Engine is the ingest scheduler. The ledger claim is what prevents
+// double-pulling — across ticks, restarts, replays and replicas.
 type Engine struct {
 	grid    schema.Grid
 	stages  [][]schema.PullSpec
 	ledger  db.LedgerRepo
 	errors  db.ErrorRepo
-	puller  *Puller
+	puller  WindowPuller
 	mb      mb.MsgBusServiceClient
 	org     string
 	tick    time.Duration
@@ -39,6 +41,10 @@ type Engine struct {
 
 	windowReadyRoute string
 	stop             chan struct{}
+	wg               sync.WaitGroup
+
+	wake       map[string]chan struct{}
+	dependents map[string][]string
 
 	// horizon is the oldest window each dataset's previous tick scanned.
 	mu      sync.Mutex
@@ -46,11 +52,24 @@ type Engine struct {
 }
 
 func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
-	errors db.ErrorRepo, puller *Puller, msgBus mb.MsgBusServiceClient,
+	errors db.ErrorRepo, puller WindowPuller, msgBus mb.MsgBusServiceClient,
 	org string, tick time.Duration, catchup int64) (*Engine, error) {
 	stages, err := schema.OrderPulls(specs)
 	if err != nil {
 		return nil, err
+	}
+
+	wake := map[string]chan struct{}{}
+	dependents := map[string][]string{}
+
+	for _, stage := range stages {
+		for _, pull := range stage {
+			wake[pull.Key] = make(chan struct{}, 1)
+
+			for _, dep := range pull.Dependencies() {
+				dependents[dep] = append(dependents[dep], pull.Key)
+			}
+		}
 	}
 
 	return &Engine{
@@ -65,43 +84,71 @@ func New(grid schema.Grid, specs []schema.SourceSpec, ledger db.LedgerRepo,
 		catchup:          catchup,
 		windowReadyRoute: msgbus.PrepareRoute(org, schema.WindowReadyRoute),
 		stop:             make(chan struct{}),
+		wake:             wake,
+		dependents:       dependents,
 		horizon:          map[string]int64{},
 	}, nil
 }
 
 func (e *Engine) Start() {
-	log.Infof("ingest engine starting: W-grid ticks every %s, %d pull stages", e.tick, len(e.stages))
+	n := 0
+	for _, stage := range e.stages {
+		n += len(stage)
+	}
+
+	log.Infof("ingest engine starting: %d datasets, each ticking every %s", n, e.tick)
+
+	for _, stage := range e.stages {
+		for _, pull := range stage {
+			e.wg.Add(1)
+
+			go e.runDataset(pull)
+		}
+	}
+
+	e.wg.Wait()
+}
+
+func (e *Engine) Stop() {
+	close(e.stop)
+	e.wg.Wait()
+}
+
+func (e *Engine) runDataset(pull schema.PullSpec) {
+	defer e.wg.Done()
 
 	ticker := time.NewTicker(e.tick)
 	defer ticker.Stop()
 
-	e.runOnce() // immediate first pass
-
 	for {
+		if err := e.processPull(pull, time.Now().UTC()); err != nil {
+			log.Errorf("processing dataset %s: %v", pull.Key, err)
+		}
+
 		select {
 		case <-ticker.C:
-			e.runOnce()
+		case <-e.wake[pull.Key]:
 		case <-e.stop:
 			return
 		}
 	}
 }
 
-func (e *Engine) Stop() {
-	close(e.stop)
+func (e *Engine) wakeDependents(key string) {
+	for _, dep := range e.dependents[key] {
+		select {
+		case e.wake[dep] <- struct{}{}:
+		default:
+		}
+	}
 }
 
-// runOnce processes stages in DAG order so for_each children see their
-// parents' data for the same window.
-func (e *Engine) runOnce() {
-	now := time.Now().UTC()
-
-	for _, stage := range e.stages {
-		for _, pull := range stage {
-			if err := e.processPull(pull, now); err != nil {
-				log.Errorf("processing dataset %s: %v", pull.Key, err)
-			}
-		}
+func (e *Engine) stopping() bool {
+	select {
+	case <-e.stop:
+		return true
+	default:
+		return false
 	}
 }
 
@@ -117,7 +164,7 @@ func (e *Engine) processPull(pull schema.PullSpec, now time.Time) error {
 
 	var firstErr error
 
-	for w := oldest; w <= newest; w++ {
+	for w := oldest; w <= newest && !e.stopping(); w++ {
 		status, err := e.ledger.Status(e.org, schema.LedgerKindDataset, pull.Key, w)
 		if err != nil {
 			return err
@@ -167,15 +214,14 @@ func (e *Engine) reportAbandoned(key string, oldest int64) {
 }
 
 func (e *Engine) processWindow(pull schema.PullSpec, windowID int64) error {
-	// A for_each child needs its parent pulled for the same window first.
-	if pull.ForEach != nil {
-		parentStatus, err := e.ledger.Status(e.org, schema.LedgerKindDataset, pull.ForEach.Dataset, windowID)
+	for _, dep := range pull.Dependencies() {
+		status, err := e.ledger.Status(e.org, schema.LedgerKindDataset, dep, windowID)
 		if err != nil {
 			return err
 		}
 
-		if parentStatus != schema.StatusPulled {
-			return nil // parent pending; retried next tick
+		if status != schema.StatusPulled {
+			return nil
 		}
 	}
 
@@ -211,6 +257,7 @@ func (e *Engine) processWindow(pull schema.PullSpec, windowID int64) error {
 
 	log.Infof("dataset %s window %d pulled (%d records)", pull.Key, windowID, n)
 
+	e.wakeDependents(pull.Key)
 	e.publishWindowReady(pull.Key, windowID)
 
 	return nil

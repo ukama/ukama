@@ -176,9 +176,33 @@ static int check_kpi(check_ctx_t *ctx, const check_spec_t *check,
     unsigned int poll;
     int found;
     int matched;
+    check_spec_t resolved;
+    runtime_kpi_t *previous;
+    const char *span;
+    const char *network_id;
 
     network = selected_network(ctx, check, err);
     resolve_scope(ctx, check, network, scope_value, sizeof(scope_value), err);
+    span = check->span[0] ? check->span : "daily";
+    network_id = network ? network->bff_id : "";
+    previous = &ctx->runtime->last_kpi;
+
+    if (ulab_streq(check->expected, "previous")) {
+        if (!previous->valid || !ulab_streq(previous->key, check->key) ||
+            !ulab_streq(previous->span, span) ||
+            !ulab_streq(previous->op, check->op) ||
+            !ulab_streq(previous->network_id, network_id) ||
+            !ulab_streq(previous->scope_key, check->scope_key) ||
+            !ulab_streq(previous->scope_value, scope_value)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "kpi_value requires a previous observation of the same query");
+            return ULAB_ERR;
+        }
+        resolved = *check;
+        resolved.expected_value = previous->value;
+        resolved.has_expected_value = 1;
+        check = &resolved;
+    }
     deadline = time(NULL) + (time_t)(check->timeout_seconds ?
                                     check->timeout_seconds : 300u);
     poll = check->poll_seconds ? check->poll_seconds : 5u;
@@ -242,10 +266,24 @@ static int check_kpi(check_ctx_t *ctx, const check_spec_t *check,
                     compare_value(value.value, check);
             }
         }
+        if (matched && ulab_streq(check->key, "SITE_UPTIME")) {
+            matched = value.value >= 0 && value.value <= 100;
+        }
         if (!matched && time(NULL) < deadline) {
             sleep(poll > 60u ? 60u : poll);
         }
     } while (!matched && time(NULL) < deadline);
+
+    if (matched && check->type == CHECK_KPI_VALUE) {
+        ulab_copy(previous->key, sizeof(previous->key), check->key);
+        ulab_copy(previous->span, sizeof(previous->span), span);
+        ulab_copy(previous->op, sizeof(previous->op), check->op);
+        ulab_copy(previous->network_id, sizeof(previous->network_id), network_id);
+        ulab_copy(previous->scope_key, sizeof(previous->scope_key), check->scope_key);
+        ulab_copy(previous->scope_value, sizeof(previous->scope_value), scope_value);
+        previous->value = value.value;
+        previous->valid = 1;
+    }
 
     res->passed = matched;
     snprintf(res->detail, sizeof(res->detail),
