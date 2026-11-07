@@ -11,6 +11,43 @@ import sys
 from pathlib import Path
 
 
+def init_network_command(command):
+    # starterd may execute ld-linux, with init-network as the loader's argument.
+    # Encode each cmdline as one record, preserving NUL-separated argv entries.
+    processes = command('sh', '-c', r"""for p in /proc/[0-9]*; do
+    [ -r "$p/cmdline" ] || continue
+    printf '%s ' "${p##*/}"
+    od -An -v -tx1 "$p/cmdline" 2>/dev/null | tr -d '\n'
+    printf '\n'
+done""")
+    matches = []
+    app_names = {'init-network', 'init-network.d'}
+    for record in processes.splitlines():
+        pid, _, encoded = record.partition(' ')
+        if not pid.isdecimal() or not encoded.strip():
+            continue
+        argv = bytes.fromhex(encoded).decode(errors='surrogateescape').split('\0')
+        name = Path(argv[0]).name
+        if name in app_names:
+            matches.append([f'/proc/{pid}/exe'])
+            continue
+        if not (name == 'ld.so' or (name.startswith('ld-') and '.so' in name)):
+            continue
+        index = 1
+        if len(argv) > 2 and argv[1] == '--library-path':
+            index = 3
+        if len(argv) <= index or Path(argv[index]).name not in app_names:
+            continue
+        app = argv[index]
+        if not app.startswith('/'):
+            app = f'/proc/{pid}/cwd/{app}'
+        matches.append([f'/proc/{pid}/exe', *argv[1:index], app])
+    if len(matches) != 1:
+        raise ValueError('expected one running init-network app on the tower '
+                         f'(direct or loader launch); found {len(matches)}')
+    return matches[0]
+
+
 def run(run_dir, ue_id):
     key = re.sub(r'[^A-Za-z0-9_.-]', '-', ue_id)
     path = Path(run_dir) / 'runtime-ues' / (key + '.env')
@@ -25,16 +62,14 @@ def run(run_dir, ue_id):
                                         *args], text=True, timeout=10)
 
     # Run the same parser used by the deployed daemon before it sets up OVS.
-    pids = command('sh', '-c', 'pidof init-network.d || pidof init-network').split()
-    if len(pids) != 1 or not pids[0].isdecimal():
-        raise ValueError('expected one running init-network process on the tower')
-    inputs = Path(__file__).resolve().parents[1] / 'scenarios/p0/resilience/inputs'
+    validator = init_network_command(command)
+    inputs = Path(__file__).resolve().parents[1] / 'scenarios/p0/ue/addressing/input'
     cases = json.loads((inputs / 'ue-subnets.json').read_text())
     for cidr, expected in cases.items():
         if expected not in ('valid', 'invalid'):
             raise ValueError(f'bad subnet expectation for {cidr}: {expected}')
         probe = subprocess.run(['podman', 'exec', state['TNODE_CONTAINER'],
-                                f'/proc/{pids[0]}/exe', '--check-ue-subnet', cidr],
+                                *validator, '--check-ue-subnet', cidr],
                                text=True, capture_output=True, timeout=10)
         if probe.returncode != int(expected == 'invalid') or probe.stdout.strip() != expected:
             raise ValueError(f'init-network subnet {cidr!r}: expected {expected}, '

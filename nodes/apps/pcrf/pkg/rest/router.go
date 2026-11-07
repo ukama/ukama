@@ -207,6 +207,10 @@ func (r *Router) createSession(c *gin.Context, req *api.CreateSession) (
 	if err := validateDigits(req.Imsi); err != nil {
 		return nil, err
 	}
+	if _, err := api.NormalizeAPN(req.ApnName); err != nil {
+		return nil, crest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: "invalid_apn"}
+	}
 	log.Infof("Received request for create session: %v", req)
 
 	req.ImsiStr = uintArrayToString(req.Imsi)

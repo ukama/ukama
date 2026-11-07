@@ -223,6 +223,7 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
     case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
     case CHECK_UE_ADDRESSING: return "ue_addressing";
+    case CHECK_UE_APN: return "ue_apn";
     case CHECK_NODE_HEALTH_OK: return "node_health_ok";
     case CHECK_RELEASE_UNAVAILABLE: return "release_unavailable";
     case CHECK_LIST_COUNT_EQUALS: return "list_count_equals";
@@ -453,6 +454,8 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_VERSION_EQUALS;
     } else if (ulab_streq(name, "node_health_ok")) {
         *out = CHECK_NODE_HEALTH_OK;
+    } else if (ulab_streq(name, "ue_apn")) {
+        *out = CHECK_UE_APN;
     } else if (ulab_streq(name, "ue_addressing")) {
         *out = CHECK_UE_ADDRESSING;
     } else if (ulab_streq(name, "release_unavailable")) {
@@ -1560,7 +1563,10 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
         }
 
         if (sec == SEC_RUNTIME) {
-            if (ind == 2 && ulab_streq(key, "start")) {
+            if (ind == 2 && ulab_streq(key, "apn")) {
+                if (!val[0] || ulab_copy(s->runtime.apn,
+                    sizeof(s->runtime.apn), val)) goto bad;
+            } else if (ind == 2 && ulab_streq(key, "start")) {
                 s->runtime.start_nodes = parse_inline_list(val, "nodes");
                 s->runtime.start_ues = parse_inline_list(val, "ues");
             } else if (ind == 2 && ulab_streq(key, "wait")) {

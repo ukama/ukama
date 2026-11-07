@@ -9,6 +9,7 @@
 package pkg
 
 import (
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -40,6 +41,10 @@ type BrdigeConfig struct {
 }
 
 func NewConfig(name string) *Config {
+	apn, present := os.LookupEnv("UKAMA_APN")
+	if !present {
+		apn = "internet"
+	}
 	defaultCors := cors.DefaultConfig()
 	defaultCors.AllowWildcard = true
 	defaultCors.AllowOrigins = []string{"http://localhost", "https://localhost"}
@@ -48,7 +53,7 @@ func NewConfig(name string) *Config {
 		BaseConfig: config.BaseConfig{
 			DebugMode: true,
 		},
-		APN: "internet",
+		APN: apn,
 		DB:  DefaultDBPath,
 		Bridge: BrdigeConfig{
 			Period:          2 * time.Second,
