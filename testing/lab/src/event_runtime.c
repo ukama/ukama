@@ -1079,6 +1079,14 @@ int event_runtime(event_ctx_t *ctx,
     case EVT_WAIT_UES_DETACHED:
         return event_wait_ues_detached(ctx, event, err);
 
+    case EVT_SET_UE_RATE_POLICY:
+    case EVT_WAIT_UE_RATE_LIMITS:
+        rc = selector_resolve_ues(ctx->world, &event->ues, &res, err);
+        if (rc != ULAB_OK) return rc;
+        rc = runtime_ue_rate_policy(ctx->runtime, ctx->world, &res, event, err);
+        selector_result_free(&res);
+        return rc;
+
     case EVT_WAIT_UE_SESSIONS:
         return event_wait_ue_sessions(ctx, event, err);
 

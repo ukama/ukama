@@ -418,6 +418,7 @@ int runtime_init(runtime_t *rt,
     ulab_copy(rt->script_dir, sizeof(rt->script_dir), script_dir);
     ulab_copy(rt->run_dir, sizeof(rt->run_dir), run_dir);
     ulab_copy(rt->repo, sizeof(rt->repo), repo ? repo : "");
+    snprintf(rt->apn, sizeof(rt->apn), "internet");
     rt->service_enabled = 0;
     rt->radio_enabled = 1;
     rt->node_offline = 0;
@@ -484,8 +485,8 @@ int runtime_start_selected_site(runtime_t *rt, world_t *w, size_t index,
 
     if (index >= w->site_count) return ULAB_ERR;
     site = &w->sites[index];
-    n = snprintf(args, sizeof(args), "%s %s %s %s %zu", rt->repo,
-                 site->ref, site->network_ref, rt->run_dir, index);
+    n = snprintf(args, sizeof(args), "%s %s %s %s %zu %s", rt->repo,
+                 site->ref, site->network_ref, rt->run_dir, index, rt->apn);
     if (n < 0 || (size_t)n >= sizeof(args)) return ULAB_ERR;
     if (run_script(rt, "build-and-start-site.sh", args, err) ||
         load_runtime_site_state(rt, site, err) ||
@@ -506,12 +507,12 @@ int runtime_virtual_build_and_start_sites(const char *repo,
         site = &w->sites[i];
 
         memset(args, 0, sizeof(args));
-        rc = snprintf(args, sizeof(args), "%s %s %s %s %llu",
+        rc = snprintf(args, sizeof(args), "%s %s %s %s %llu %s",
                       repo,
                       site->ref,
                       site->network_ref,
                       rt->run_dir,
-                      (unsigned long long)i);
+                      (unsigned long long)i, rt->apn);
         if (rc < 0 || (size_t)rc >= sizeof(args)) {
             snprintf(err->msg, sizeof(err->msg),
                      "start-site args too long for site %s", site->ref);
@@ -747,7 +748,7 @@ int runtime_start_ues_apn(const char *repo, runtime_t *rt,
         }
         return hardware_runtime_ues(rt, w, ues, "start", 0, err);
     }
-    if (!apn || !apn[0]) apn = "internet";
+    if (!apn || !apn[0]) apn = rt->apn;
     if (strlen(apn) > 99 || strspn(apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(apn)) {
@@ -813,6 +814,38 @@ int runtime_start_ues_apn(const char *repo, runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_ue_rate_policy(runtime_t *rt, const world_t *w,
+                           const selector_result_t *ues,
+                           const event_spec_t *event, ulab_error_t *err) {
+    size_t i;
+    const char *op = event->type == EVT_SET_UE_RATE_POLICY ? "set" : "wait";
+
+    if (!ues->count) {
+        snprintf(err->msg, sizeof(err->msg), "rate event selected no UEs");
+        return ULAB_ERR;
+    }
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue = &w->ues[ues->idx[i]];
+        char args[4096];
+        int rc;
+
+        if (strchr(rt->run_dir, '\'') || strchr(ue->site_ref, '\'') ||
+            strchr(ue->imsi, '\'') || strchr(ue->ip, '\'')) {
+            snprintf(err->msg, sizeof(err->msg), "invalid rate event argument");
+            return ULAB_ERR;
+        }
+        rc = snprintf(args, sizeof(args), "'%s' '%s' '%s' '%s' %s %u %u",
+                      rt->run_dir, ue->site_ref, ue->imsi, ue->ip, op,
+                      event->uplink_kbps, event->downlink_kbps);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg), "rate event args too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "ue-rate-policy.py", args, err)) return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
 int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
                             const selector_result_t *ues,
                             const check_spec_t *check, ulab_error_t *err) {
@@ -825,10 +858,12 @@ int runtime_verify_ue_pdns(runtime_t *rt, const world_t *w,
     if ((!ulab_streq(expected, "attached") &&
          !ulab_streq(expected, "allowed") &&
          !ulab_streq(expected, "blocked") &&
-         !ulab_streq(expected, "rejected")) ||
+         !ulab_streq(expected, "rejected") &&
+         !ulab_streq(expected, "absent")) ||
         (check->same_pdn && check->new_pdn) ||
         ((check->same_pdn || check->new_pdn) &&
-         ulab_streq(expected, "rejected")) ||
+         (ulab_streq(expected, "rejected") ||
+          ulab_streq(expected, "absent"))) ||
         strspn(apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(apn) || check->timeout_seconds > 300) {
@@ -926,6 +961,52 @@ int runtime_wait_ues_detached(runtime_t *rt,
         ue->attached = 0;
     }
 
+    return ULAB_OK;
+}
+
+int runtime_verify_ue_apns(runtime_t *rt, const world_t *w,
+                                const selector_result_t *ues, ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue = &w->ues[ues->idx[i]];
+        char args[4096];
+        int rc;
+
+        if (strchr(rt->run_dir, '\'') || strchr(ue->id, '\'')) {
+            snprintf(err->msg, sizeof(err->msg), "invalid UE APN probe argument");
+            return ULAB_ERR;
+        }
+        rc = snprintf(args, sizeof(args), "'%s' '%s'", rt->run_dir, ue->id);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg), "UE APN probe arguments too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "check-ue-apns.py", args, err)) return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+
+int runtime_verify_ue_addresses(runtime_t *rt, const world_t *w,
+                                const selector_result_t *ues, ulab_error_t *err) {
+    size_t i;
+
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue = &w->ues[ues->idx[i]];
+        char args[4096];
+        int rc;
+
+        if (strchr(rt->run_dir, '\'') || strchr(ue->id, '\'')) {
+            snprintf(err->msg, sizeof(err->msg), "invalid UE address probe argument");
+            return ULAB_ERR;
+        }
+        rc = snprintf(args, sizeof(args), "'%s' '%s'", rt->run_dir, ue->id);
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg), "UE address probe arguments too long");
+            return ULAB_ERR;
+        }
+        if (run_script(rt, "check-ue-addresses.py", args, err)) return ULAB_ERR;
+    }
     return ULAB_OK;
 }
 

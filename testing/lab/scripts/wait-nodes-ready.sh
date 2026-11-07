@@ -63,6 +63,34 @@ lifecycle_status() {
         2>/dev/null
 }
 
+service_status() {
+    podman exec "$CONTAINER_NAME" sh -lc '
+        port=$(getent services device/tcp | awk "{print \$2}" | cut -d/ -f1)
+        [ -n "$port" ] || exit 1
+        curl -fsS --max-time 2 "http://127.0.0.1:$port/v1/state"
+    ' 2>/dev/null
+}
+
+service_ready() {
+    case "${NODE_KIND:-${NODE_TYPE:-}}" in
+        tower) ;;
+        *) return 0 ;;
+    esac
+
+    service_status | python3 -c '
+import json
+import sys
+
+try:
+    data = json.load(sys.stdin)
+    ready = data.get("service_group", {}).get("ready") is True
+except Exception:
+    ready = False
+
+sys.exit(0 if ready else 1)
+'
+}
+
 lifecycle_state() {
     lifecycle_status | python3 -c '
 import json
@@ -88,6 +116,9 @@ print_debug() {
     echo "---- lifecycle.d /v1/status ----" >&2
     lifecycle_status >&2 ||
         echo "lifecycle.d not reachable on port ${LIFECYCLE_PORT}" >&2
+
+    echo "---- device.d /v1/state ----" >&2
+    service_status >&2 || echo "device.d not reachable" >&2
 
     echo "---- starter.d /v1/status ----" >&2
     starter_status >&2 ||
@@ -119,10 +150,12 @@ while :; do
 
     case "$state" in
         READY|OPERATIONAL)
-            echo "node-ready logical=$LOGICAL_NODE_ID " \
-                 "factory=${FACTORY_NODE_ID:-} " \
-                 "container=$CONTAINER_NAME lifecycle=$state"
-            exit 0
+            if service_ready; then
+                echo "node-ready logical=$LOGICAL_NODE_ID " \
+                     "factory=${FACTORY_NODE_ID:-} " \
+                     "container=$CONTAINER_NAME lifecycle=$state"
+                exit 0
+            fi
             ;;
 
         FAULTY)

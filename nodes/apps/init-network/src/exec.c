@@ -14,11 +14,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "usys_log.h"
 
 #include "exec.h"
+
+#define EXEC_POLL_NSEC 10000000L
 
 bool exec_tool_exists(const char *cmd) {
 
@@ -59,11 +62,19 @@ bool exec_tool_exists(const char *cmd) {
 int exec_cmd_argv(int timeoutSec, char *const argv[]) {
 
     pid_t pid;
+    struct timespec deadline;
+    struct timespec now;
+    const struct timespec interval = {0, EXEC_POLL_NSEC};
     int status;
-    int waited;
     int rc;
 
     if (argv == NULL || argv[0] == NULL) return -1;
+
+    if (clock_gettime(CLOCK_MONOTONIC, &deadline) != 0) {
+        usys_log_error("cannot read command clock: %s", strerror(errno));
+        return -1;
+    }
+    deadline.tv_sec += timeoutSec;
 
     pid = fork();
     if (pid < 0) {
@@ -76,7 +87,6 @@ int exec_cmd_argv(int timeoutSec, char *const argv[]) {
         _exit(127);
     }
 
-    waited = 0;
     status = 0;
 
     while (true) {
@@ -93,18 +103,26 @@ int exec_cmd_argv(int timeoutSec, char *const argv[]) {
             return -1;
         }
 
-        if (waited >= timeoutSec) {
-            usys_log_error("command timed out: %s", argv[0]);
-            kill(pid, SIGTERM);
-            sleep(1);
-            kill(pid, SIGKILL);
-            waitpid(pid, &status, 0);
-            return -1;
+        if (clock_gettime(CLOCK_MONOTONIC, &now) != 0) {
+            usys_log_error("cannot read command clock: %s", strerror(errno));
+            break;
         }
 
-        sleep(1);
-        waited++;
+        if (now.tv_sec > deadline.tv_sec ||
+            (now.tv_sec == deadline.tv_sec &&
+             now.tv_nsec >= deadline.tv_nsec)) {
+            usys_log_error("command timed out: %s", argv[0]);
+            break;
+        }
+
+        nanosleep(&interval, NULL);
     }
+
+    kill(pid, SIGTERM);
+    sleep(1);
+    kill(pid, SIGKILL);
+    waitpid(pid, &status, 0);
+    return -1;
 }
 
 int exec_cmd(int timeoutSec, const char *cmd, ...) {

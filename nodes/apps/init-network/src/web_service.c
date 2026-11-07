@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include "service_api.h"
 #include "web_service.h"
 #include "http_status.h"
 #include "version.h"
@@ -190,6 +191,40 @@ int web_service_cb_not_allowed(const URequest *request,
     ulfius_set_string_body_response(response,
                                     HttpStatus_MethodNotAllowed,
                                     HttpStatusStr(HttpStatus_MethodNotAllowed));
+
+    return U_CALLBACK_CONTINUE;
+}
+
+int web_service_cb_service(const URequest *request, UResponse *response,
+                           void *data) {
+
+    ServiceContext *ctx = data;
+    JsonObj *body;
+    JsonObj *reply;
+    const char *state;
+    int code = HttpStatus_OK;
+
+    if (!strcmp(request->http_verb, HTTP_POST)) {
+        body = ulfius_get_json_body_request(request, NULL);
+        state = json_string_value(json_object_get(body, "state"));
+
+        if (state == NULL || (strcmp(state, "on") && strcmp(state, "off"))) {
+            json_decref(body);
+            ulfius_set_empty_body_response(response, HttpStatus_BadRequest);
+
+            return U_CALLBACK_CONTINUE;
+        }
+
+        if (!ovs_service_set(ctx->config, !strcmp(state, "on"))) {
+            code = HttpStatus_ServiceUnavailable;
+        }
+
+        json_decref(body);
+    }
+
+    reply = ovs_service_status(ctx->config);
+    ulfius_set_json_body_response(response, code, reply);
+    json_decref(reply);
 
     return U_CALLBACK_CONTINUE;
 }

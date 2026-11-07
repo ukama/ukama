@@ -72,14 +72,12 @@ func (r *softwareRepo) Update(Software *Software) error {
 	return r.Db.GetGormDb().Save(Software).Error
 }
 
-// SetDesiredForApp sets the desired version on every idle row of the app in one
-// statement. Rows in UpdateInProgress keep their target for the update watcher.
 func (r *softwareRepo) SetDesiredForApp(appName, desired string) (int64, error) {
 	res := r.Db.GetGormDb().Model(&Software{}).
 		Where("app_name = ? AND status <> ?", appName, uint8(ukama.UpdateInProgress)).
 		Updates(map[string]interface{}{
 			"desired_version": desired,
-			"status": gorm.Expr("CASE WHEN current_version <> ? THEN ? ELSE ? END",
+			"status": gorm.Expr("CASE WHEN current_version <> ? THEN CAST(? AS smallint) ELSE CAST(? AS smallint) END",
 				desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate)),
 		})
 	return res.RowsAffected, res.Error

@@ -19,4 +19,8 @@ bool ovs_setup(Config *config, AppStatus *status);
 bool ovs_reconcile(Config *config, AppStatus *status);
 bool ovs_check(Config *config, char *reason, size_t reasonSize);
 
+bool ovs_service_set(Config *config, bool enabled);
+JsonObj *ovs_service_status(Config *config);
+void ovs_service_poll(Config *config);
+
 #endif /* OVS_H_ */

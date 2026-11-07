@@ -46,6 +46,14 @@ type RollupRepo interface {
 	Range(orgID, kpiKey, span string, from, to time.Time, scopeFilter map[string]string) ([]schema.KpiRollup, error)
 }
 
+// RetentionRepo prunes the KPI zone and reports which spans already have a
+// materialized rollup, so pruned history is never re-rolled from a partial set.
+type RetentionRepo interface {
+	HasSpan(orgID, kpiKey, span string, spanStart time.Time) (bool, error)
+	PruneWindowsBefore(orgID string, beforeWindow int64, batch int) (int64, error)
+	PruneKpiLedgerBefore(orgID string, beforeWindow int64, batch int) (int64, error)
+}
+
 type repo struct {
 	db sql.Db
 }
@@ -156,6 +164,39 @@ func (r *repo) WindowBounds(orgID, kpiKey string) (int64, int64, bool, error) {
 	}
 
 	return *bounds.MinID, *bounds.MaxID, true, nil
+}
+
+func (r *repo) HasSpan(orgID, kpiKey, span string, spanStart time.Time) (bool, error) {
+	var n int64
+
+	err := r.db.GetGormDb().Model(&schema.KpiRollup{}).
+		Where("org_id = ? AND kpi_key = ? AND span = ? AND op = ? AND span_start = ?",
+			orgID, kpiKey, span, schema.RollupRowOp, spanStart.UTC()).
+		Count(&n).Error
+
+	return n > 0, err
+}
+
+func (r *repo) PruneWindowsBefore(orgID string, beforeWindow int64, batch int) (int64, error) {
+	res := r.db.GetGormDb().Exec(`
+		DELETE FROM kpi_windows WHERE id IN (
+			SELECT id FROM kpi_windows
+			WHERE org_id = ? AND window_id < ?
+			LIMIT ?)`,
+		orgID, beforeWindow, batch)
+
+	return res.RowsAffected, res.Error
+}
+
+func (r *repo) PruneKpiLedgerBefore(orgID string, beforeWindow int64, batch int) (int64, error) {
+	res := r.db.GetGormDb().Exec(`
+		DELETE FROM window_ledgers WHERE id IN (
+			SELECT id FROM window_ledgers
+			WHERE org_id = ? AND kind = ? AND window_id < ?
+			LIMIT ?)`,
+		orgID, schema.LedgerKindKpi, beforeWindow, batch)
+
+	return res.RowsAffected, res.Error
 }
 
 // filterScope keeps rows whose canonical scope JSON contains all requested

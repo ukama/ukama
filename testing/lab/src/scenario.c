@@ -122,6 +122,8 @@ const char *scenario_event_name(event_type_t type) {
     case EVT_START_UES: return "start_ues";
     case EVT_WAIT_UES_ATTACHED: return "wait_ues_attached";
     case EVT_WAIT_UES_DETACHED: return "wait_ues_detached";
+    case EVT_SET_UE_RATE_POLICY: return "set_ue_rate_policy";
+    case EVT_WAIT_UE_RATE_LIMITS: return "wait_ue_rate_limits";
     case EVT_WAIT_UE_SESSIONS: return "wait_ue_sessions";
     case EVT_FINALIZE_UE_SESSIONS: return "finalize_ue_sessions";
     case EVT_WAIT: return "wait";
@@ -220,6 +222,8 @@ const char *scenario_check_name(check_type_t type) {
     case CHECK_DASHBOARD_LOADS: return "dashboard_loads";
     case CHECK_DASHBOARD_SECTION_OK: return "dashboard_section_ok";
     case CHECK_NODE_VERSION_EQUALS: return "node_version_equals";
+    case CHECK_UE_ADDRESSING: return "ue_addressing";
+    case CHECK_UE_APN: return "ue_apn";
     case CHECK_NODE_HEALTH_OK: return "node_health_ok";
     case CHECK_RELEASE_UNAVAILABLE: return "release_unavailable";
     case CHECK_LIST_COUNT_EQUALS: return "list_count_equals";
@@ -280,6 +284,10 @@ int scenario_event_from_name(const char *name, event_type_t *out) {
         *out = EVT_WAIT_UES_ATTACHED;
     } else if (ulab_streq(name, "wait_ues_detached")) {
         *out = EVT_WAIT_UES_DETACHED;
+    } else if (ulab_streq(name, "set_ue_rate_policy")) {
+        *out = EVT_SET_UE_RATE_POLICY;
+    } else if (ulab_streq(name, "wait_ue_rate_limits")) {
+        *out = EVT_WAIT_UE_RATE_LIMITS;
     } else if (ulab_streq(name, "wait_ue_sessions")) {
         *out = EVT_WAIT_UE_SESSIONS;
     } else if (ulab_streq(name, "finalize_ue_sessions")) {
@@ -446,6 +454,10 @@ int scenario_check_from_name(const char *name, check_type_t *out) {
         *out = CHECK_NODE_VERSION_EQUALS;
     } else if (ulab_streq(name, "node_health_ok")) {
         *out = CHECK_NODE_HEALTH_OK;
+    } else if (ulab_streq(name, "ue_apn")) {
+        *out = CHECK_UE_APN;
+    } else if (ulab_streq(name, "ue_addressing")) {
+        *out = CHECK_UE_ADDRESSING;
     } else if (ulab_streq(name, "release_unavailable")) {
         *out = CHECK_RELEASE_UNAVAILABLE;
     } else if (ulab_streq(name, "list_count_equals")) {
@@ -1146,6 +1158,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
         return web_u32(val, &e->timeout_seconds);
     if (scenario_is_web_event(e->type))
         return apply_web_event_field(e, key, val);
+    if (e->type == EVT_SET_UE_RATE_POLICY || e->type == EVT_WAIT_UE_RATE_LIMITS) {
+        if (ulab_streq(key, "uplink_kbps")) return web_u32(val, &e->uplink_kbps);
+        if (ulab_streq(key, "downlink_kbps")) return web_u32(val, &e->downlink_kbps);
+    }
     if (e->type == EVT_START_UES && ulab_streq(key, "apn")) {
         if (!val[0]) return ULAB_ERR;
         return ulab_copy(e->apn, sizeof(e->apn), val);
@@ -1547,7 +1563,10 @@ int scenario_load(const char *path, scenario_t *s, ulab_error_t *err) {
         }
 
         if (sec == SEC_RUNTIME) {
-            if (ind == 2 && ulab_streq(key, "start")) {
+            if (ind == 2 && ulab_streq(key, "apn")) {
+                if (!val[0] || ulab_copy(s->runtime.apn,
+                    sizeof(s->runtime.apn), val)) goto bad;
+            } else if (ind == 2 && ulab_streq(key, "start")) {
                 s->runtime.start_nodes = parse_inline_list(val, "nodes");
                 s->runtime.start_ues = parse_inline_list(val, "ues");
             } else if (ind == 2 && ulab_streq(key, "wait")) {

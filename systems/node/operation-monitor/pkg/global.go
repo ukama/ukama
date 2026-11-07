@@ -31,8 +31,9 @@ var DefaultCompletionRule = map[string]string{
 	"ToggleRadio":          "substate=on",
 	"ToggleInternetSwitch": "substate=on",
 	"ToggleService":        "substate=on",
-	"UpdateSoftware":       "substate=on",
 }
+
+const AppRulePrefix = "app."
 
 var (
 	IsDebugMode bool   = false

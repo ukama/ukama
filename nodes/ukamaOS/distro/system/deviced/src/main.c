@@ -15,6 +15,7 @@
 #include "nodes.h"
 #include "web_client.h"
 #include "control.h"
+#include "service_group.h"
 
 #include "usys_api.h"
 #include "usys_file.h"
@@ -232,6 +233,12 @@ int main(int argc, char **argv) {
         node_controller_init_control(&serviceConfig);
     }
 
+    if (node_is_tower(&serviceConfig) && !service_group_start(&serviceConfig)) {
+        usys_log_error("Unable to start service group controller");
+        exitCode = USYS_TRUE;
+        goto done;
+    }
+
     if (start_web_service(&serviceConfig, &serviceInst) != USYS_TRUE) {
         usys_log_error("Webservice failed to setup for clients. Exiting.");
         exitCode = USYS_TRUE;
@@ -241,6 +248,7 @@ int main(int argc, char **argv) {
     pause();
 
 done:
+    service_group_stop(&serviceConfig);
     ulfius_stop_framework(&serviceInst);
     ulfius_clean_instance(&serviceInst);
 

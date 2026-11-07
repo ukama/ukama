@@ -62,6 +62,8 @@ int check_run(check_ctx_t *ctx, const check_spec_t *check,
     case CHECK_TRAFFIC_BLOCKED:
     case CHECK_TRAFFIC_UNAVAILABLE:
     case CHECK_NODE_VERSION_EQUALS:
+    case CHECK_UE_ADDRESSING:
+    case CHECK_UE_APN:
     case CHECK_NODE_HEALTH_OK:
     case CHECK_RELEASE_UNAVAILABLE:
         return check_runtime(ctx, check, res, err);
