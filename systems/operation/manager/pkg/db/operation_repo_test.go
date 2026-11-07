@@ -184,6 +184,21 @@ func Test_Start(t *testing.T) {
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
+	t.Run("LockTimeoutStatementFailure", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(lockTimeoutStmt)).
+			WillReturnError(errors.New("connection reset"))
+		mock.ExpectRollback()
+
+		out, err := repo.Start(ctx, newOp(), 5*time.Minute)
+
+		assert.Error(t, err)
+		assert.False(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
 }
 
 func Test_MarkRunning(t *testing.T) {
@@ -212,6 +227,20 @@ func Test_MarkRunning(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, OperationRunning, out.Status)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+	t.Run("ReturnsLockTimeout", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
+		mock.ExpectRollback()
+
+		out, err := repo.MarkRunning(ctx, uuid.NewV4(), 3)
+
+		assert.True(t, errors.Is(err, ErrLockTimeout), err)
+		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
@@ -440,6 +469,99 @@ func Test_GetByResource(t *testing.T) {
 		out, err := repo.GetByResource(ctx, "node:free")
 
 		assert.NoError(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+	t.Run("ReturnsLockHolder", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		holder := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationRunning,
+			FencingToken: 4,
+			ResourceKey:  "node:busy",
+		}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
+			WillReturnRows(sqlmock.NewRows([]string{
+				"resource_key", "operation_id", "fencing_token",
+			}).AddRow(holder.ResourceKey, holder.Id, holder.FencingToken))
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(holder))
+
+		out, err := repo.GetByResource(ctx, holder.ResourceKey)
+
+		assert.NoError(t, err)
+		assert.Equal(t, holder.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func Test_Get(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{Id: uuid.NewV4(), Status: OperationPending, ResourceKey: "node:a"}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.Get(ctx, op.Id)
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("MissingOperationIsNotFound", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.Get(ctx, uuid.NewV4())
+
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func Test_GetByIdempotencyKey(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{Id: uuid.NewV4(), Status: OperationPending, ResourceKey: "node:a"}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.GetByIdempotencyKey(ctx, "key")
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("UnknownKeyReturnsNil", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.GetByIdempotencyKey(ctx, "unknown")
+
+		assert.NoError(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("QueryErrorIsReturned", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(errors.New("connection reset"))
+
+		out, err := repo.GetByIdempotencyKey(ctx, "key")
+
+		assert.Error(t, err)
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
