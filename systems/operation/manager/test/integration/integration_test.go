@@ -339,3 +339,23 @@ func TestStartLease(t *testing.T) {
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 	})
 }
+
+func TestStartConflict(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("SecondStartIsAlreadyExists", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+			Type:        "IntegrationTest",
+			System:      "operation",
+			ResourceKey: op.ResourceKey,
+			RequestedBy: actor,
+		})
+
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.Nil(t, resp)
+		assertLockHeldBy(t, ctx, c, op)
+	})
+}

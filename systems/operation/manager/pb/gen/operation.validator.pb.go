@@ -59,11 +59,6 @@ func (this *StartOperationResponse) Validate() error {
 			return github_com_mwitkow_go_proto_validators.FieldError("Operation", err)
 		}
 	}
-	if this.ConflictingOperation != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ConflictingOperation); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("ConflictingOperation", err)
-		}
-	}
 	return nil
 }
 
