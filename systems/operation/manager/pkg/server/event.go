@@ -54,33 +54,35 @@ func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (
 	}
 }
 
-func (e *EventServer) handleCompleted(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) handleCompleted(ctx context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	msg, err := epb.UnmarshalOperationCompletedEvent(event.Msg, "OperationCompletedEvent")
 	if err != nil {
 		return nil, err
 	}
-	return e.terminate(msg.OperationId, msg.FencingToken, db.OperationSuccess,
+	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationSuccess,
 		db.OperationAudit{Event: "completed"}, "")
 }
 
-func (e *EventServer) handleFailed(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) handleFailed(ctx context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	msg, err := epb.UnmarshalOperationFailedEvent(event.Msg, "OperationFailedEvent")
 	if err != nil {
 		return nil, err
 	}
-	return e.terminate(msg.OperationId, msg.FencingToken, db.OperationFailed,
+	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationFailed,
 		db.OperationAudit{Event: "failed", Reason: msg.Reason}, msg.Reason)
 }
 
-func (e *EventServer) terminate(operationId string, fencingToken uint64,
-	st db.OperationStatus, audit db.OperationAudit,
+func (e *EventServer) terminate(ctx context.Context, operationId string,
+	fencingToken uint64, st db.OperationStatus, audit db.OperationAudit,
 	opErr string) (*epb.EventResponse, error) {
 	opId, err := uuid.FromString(operationId)
 	if err != nil {
 		return nil, fmt.Errorf("invalid operation id %q: %w", operationId, err)
 	}
 
-	_, err = e.repo.Terminate(opId, fencingToken, st, audit, opErr)
+	_, err = e.repo.Terminate(ctx, opId, fencingToken, st, audit, opErr)
 	switch {
 	case err == nil:
 		log.Infof("operation %s → %s (lock released)", opId, st)

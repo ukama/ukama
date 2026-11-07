@@ -9,6 +9,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"regexp"
 	"testing"
@@ -95,6 +96,7 @@ func Test_Start(t *testing.T) {
 		}
 
 		mock.ExpectBegin()
+		expectLockTimeout(mock)
 		// insert operation (returns generated id + fencing_token)
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 1))
@@ -106,7 +108,7 @@ func Test_Start(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Start(op, 5*time.Minute)
+		out, err := repo.Start(ctx, op, 5*time.Minute)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, out)
@@ -129,15 +131,36 @@ func Test_Start(t *testing.T) {
 		op := newOp()
 
 		mock.ExpectBegin()
+		expectLockTimeout(mock)
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
 			WillReturnError(&pgconn.PgError{Code: "23505"})
 		mock.ExpectRollback()
 
-		out, err := repo.Start(op, 5*time.Minute)
+		out, err := repo.Start(ctx, op, 5*time.Minute)
 
 		assert.True(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("LockTimeoutIsNotConflict", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := newOp()
+
+		mock.ExpectBegin()
+		expectLockTimeout(mock)
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
+			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
+			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
+		mock.ExpectRollback()
+
+		out, err := repo.Start(ctx, op, 5*time.Minute)
+
+		assert.True(t, errors.Is(err, ErrLockTimeout), err)
+		assert.False(t, errors.Is(err, ErrLockConflict), err)
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -147,13 +170,29 @@ func Test_Start(t *testing.T) {
 		op := newOp()
 
 		mock.ExpectBegin()
+		expectLockTimeout(mock)
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "fencing_token"}).AddRow(op.Id, 8))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
 			WillReturnError(&pgconn.PgError{Code: "57014"})
 		mock.ExpectRollback()
 
-		out, err := repo.Start(op, 5*time.Minute)
+		out, err := repo.Start(ctx, op, 5*time.Minute)
+
+		assert.Error(t, err)
+		assert.False(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+	t.Run("LockTimeoutStatementFailure", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		mock.ExpectExec(regexp.QuoteMeta(lockTimeoutStmt)).
+			WillReturnError(errors.New("connection reset"))
+		mock.ExpectRollback()
+
+		out, err := repo.Start(ctx, newOp(), 5*time.Minute)
 
 		assert.Error(t, err)
 		assert.False(t, errors.Is(err, ErrLockConflict), err)
@@ -184,10 +223,24 @@ func Test_MarkRunning(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.MarkRunning(op.Id, op.FencingToken)
+		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken)
 
 		assert.NoError(t, err)
 		assert.Equal(t, OperationRunning, out.Status)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+	t.Run("ReturnsLockTimeout", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
+		mock.ExpectRollback()
+
+		out, err := repo.MarkRunning(ctx, uuid.NewV4(), 3)
+
+		assert.True(t, errors.Is(err, ErrLockTimeout), err)
+		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
@@ -216,7 +269,7 @@ func Test_Terminate(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+		out, err := repo.Terminate(ctx, op.Id, op.FencingToken, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
 		assert.NoError(t, err)
@@ -244,7 +297,7 @@ func Test_Terminate(t *testing.T) {
 		mock.ExpectCommit()
 
 		// zombie carries an older token (4 < 9) → rejected
-		out, err := repo.Terminate(op.Id, 4, OperationSuccess,
+		out, err := repo.Terminate(ctx, op.Id, 4, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
 		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
@@ -271,7 +324,7 @@ func Test_Terminate(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+		out, err := repo.Terminate(ctx, op.Id, op.FencingToken, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
 		assert.NoError(t, err)
@@ -298,7 +351,7 @@ func Test_Terminate(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+		out, err := repo.Terminate(ctx, op.Id, op.FencingToken, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
 		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
@@ -325,7 +378,7 @@ func Test_Terminate(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Terminate(op.Id, op.FencingToken, OperationSuccess,
+		out, err := repo.Terminate(ctx, op.Id, op.FencingToken, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
 		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
@@ -356,7 +409,7 @@ func Test_Terminate(t *testing.T) {
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.Terminate(op.Id, op.FencingToken, OperationFailed,
+		out, err := repo.Terminate(ctx, op.Id, op.FencingToken, OperationFailed,
 			OperationAudit{Event: "failed"}, "boom")
 
 		assert.NoError(t, err)
@@ -369,14 +422,28 @@ func Test_Terminate(t *testing.T) {
 
 		mock.ExpectBegin()
 		expectLockedSelect(mock).
-			WillReturnError(errors.New("canceling statement due to lock timeout"))
+			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
 		mock.ExpectRollback()
 
-		out, err := repo.Terminate(uuid.NewV4(), 5, OperationSuccess,
+		out, err := repo.Terminate(ctx, uuid.NewV4(), 5, OperationSuccess,
 			OperationAudit{Event: "completed"}, "")
 
-		assert.Error(t, err)
+		assert.True(t, errors.Is(err, ErrLockTimeout), err)
 		assert.False(t, errors.Is(err, store.ErrPrecondition))
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("CancelledContextChangesNothing", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		cancelled, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		out, err := repo.Terminate(cancelled, uuid.NewV4(), 5, OperationSuccess,
+			OperationAudit{Event: "completed"}, "")
+
+		assert.True(t, errors.Is(err, context.Canceled), err)
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -384,7 +451,7 @@ func Test_Terminate(t *testing.T) {
 	t.Run("RejectsNonTerminalStatus", func(t *testing.T) {
 		_, repo := setupTestDB(t)
 
-		out, err := repo.Terminate(uuid.NewV4(), 1, OperationRunning,
+		out, err := repo.Terminate(ctx, uuid.NewV4(), 1, OperationRunning,
 			OperationAudit{Event: "running"}, "")
 
 		assert.Error(t, err)
@@ -399,9 +466,102 @@ func Test_GetByResource(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
 			WillReturnError(gorm.ErrRecordNotFound)
 
-		out, err := repo.GetByResource("node:free")
+		out, err := repo.GetByResource(ctx, "node:free")
 
 		assert.NoError(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+	t.Run("ReturnsLockHolder", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		holder := &Operation{
+			Id:           uuid.NewV4(),
+			Status:       OperationRunning,
+			FencingToken: 4,
+			ResourceKey:  "node:busy",
+		}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
+			WillReturnRows(sqlmock.NewRows([]string{
+				"resource_key", "operation_id", "fencing_token",
+			}).AddRow(holder.ResourceKey, holder.Id, holder.FencingToken))
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(holder))
+
+		out, err := repo.GetByResource(ctx, holder.ResourceKey)
+
+		assert.NoError(t, err)
+		assert.Equal(t, holder.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func Test_Get(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{Id: uuid.NewV4(), Status: OperationPending, ResourceKey: "node:a"}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.Get(ctx, op.Id)
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("MissingOperationIsNotFound", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.Get(ctx, uuid.NewV4())
+
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func Test_GetByIdempotencyKey(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		op := &Operation{Id: uuid.NewV4(), Status: OperationPending, ResourceKey: "node:a"}
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnRows(operationRow(op))
+
+		out, err := repo.GetByIdempotencyKey(ctx, "key")
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id, out.Id)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("UnknownKeyReturnsNil", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(gorm.ErrRecordNotFound)
+
+		out, err := repo.GetByIdempotencyKey(ctx, "unknown")
+
+		assert.NoError(t, err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("QueryErrorIsReturned", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
+			WillReturnError(errors.New("connection reset"))
+
+		out, err := repo.GetByIdempotencyKey(ctx, "key")
+
+		assert.Error(t, err)
 		assert.Nil(t, out)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
@@ -421,7 +581,7 @@ func Test_FindExpired(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "operations"`)).
 			WillReturnRows(operationRow(op))
 
-		out, err := repo.FindExpired(time.Now(), 100)
+		out, err := repo.FindExpired(ctx, time.Now(), 100)
 
 		assert.NoError(t, err)
 		assert.Len(t, out, 1)
@@ -429,8 +589,14 @@ func Test_FindExpired(t *testing.T) {
 	})
 }
 
-func expectLockedSelect(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
+func expectLockTimeout(mock sqlmock.Sqlmock) {
 	mock.ExpectExec(regexp.QuoteMeta(lockTimeoutStmt)).
 		WillReturnResult(sqlmock.NewResult(0, 0))
+}
+
+func expectLockedSelect(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
+	expectLockTimeout(mock)
 	return mock.ExpectQuery(`SELECT \* FROM "operations" .* FOR UPDATE`)
 }
+
+var ctx = context.Background()

@@ -122,7 +122,8 @@ func runGrpcServer(gormdb sql.Db) {
 	if err != nil {
 		log.Errorf("Failed to resolve operation address: %v", err)
 	} else {
-		opManager = copr.NewManagerClient(opUrl.String())
+		opManager = copr.NewManagerClient(opUrl.String(),
+			client.WithTimeout(svcConf.Operation.Timeout))
 	}
 
 	nodeClient := creg.NewNodeClient(regUrl.String())

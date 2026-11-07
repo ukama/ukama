@@ -42,13 +42,16 @@ func (s *Sweeper) Run(ctx context.Context) {
 			log.Info("operation/manager sweeper stopped")
 			return
 		case <-t.C:
-			s.sweepOnce()
+			s.sweepOnce(ctx)
 		}
 	}
 }
 
-func (s *Sweeper) sweepOnce() {
-	expired, err := s.repo.FindExpired(time.Now().UTC(), s.batch)
+func (s *Sweeper) sweepOnce(parent context.Context) {
+	ctx, cancel := context.WithTimeout(parent, s.interval)
+	defer cancel()
+
+	expired, err := s.repo.FindExpired(ctx, time.Now().UTC(), s.batch)
 	if err != nil {
 		log.Errorf("sweeper: FindExpired error: %v", err)
 		return
@@ -59,10 +62,11 @@ func (s *Sweeper) sweepOnce() {
 	log.Infof("sweeper: timing out %d expired operation(s)", len(expired))
 	for i := range expired {
 		op := &expired[i]
-		_, err := s.repo.Terminate(op.Id, op.FencingToken, db.OperationTimeout, db.OperationAudit{
-			Event:  "timeout",
-			Reason: "lease expired",
-		}, "lease expired")
+		_, err := s.repo.Terminate(ctx, op.Id, op.FencingToken, db.OperationTimeout,
+			db.OperationAudit{
+				Event:  "timeout",
+				Reason: "lease expired",
+			}, "lease expired")
 		if err != nil {
 			log.Warnf("sweeper: terminate(timeout) for %s failed: %v", op.Id, err)
 		}

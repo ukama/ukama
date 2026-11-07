@@ -10,9 +10,13 @@ package operation
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/go-resty/resty/v2"
 
 	log "github.com/sirupsen/logrus"
 
@@ -20,6 +24,11 @@ import (
 )
 
 const OperationsEndpoint = "/v1/operations"
+
+const (
+	terminateAttempts = 3
+	terminateBackoff  = 500 * time.Millisecond
+)
 
 const (
 	StatusPending   = "PENDING"
@@ -95,8 +104,9 @@ type ManagerClient interface {
 }
 
 type managerClient struct {
-	u *url.URL
-	R *client.Resty
+	u       *url.URL
+	R       *client.Resty
+	backoff time.Duration
 }
 
 func NewManagerClient(host string, options ...client.Option) *managerClient {
@@ -104,7 +114,8 @@ func NewManagerClient(host string, options ...client.Option) *managerClient {
 	if err != nil {
 		log.Fatalf("Can't parse %s url. Error: %v", host, err)
 	}
-	return &managerClient{u: u, R: client.NewResty(options...)}
+	return &managerClient{u: u, R: client.NewResty(options...),
+		backoff: terminateBackoff}
 }
 
 func (m *managerClient) Start(req StartRequest) (*StartResponse, error) {
@@ -187,7 +198,7 @@ func (m *managerClient) Complete(id string, fencingToken uint64,
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/complete", b)
+	resp, err := m.postWithRetry(m.u.String()+OperationsEndpoint+"/"+id+"/complete", b)
 	if err != nil {
 		return nil, fmt.Errorf("CompleteOperation failure: %w", err)
 	}
@@ -206,7 +217,7 @@ func (m *managerClient) Fail(id string, fencingToken uint64,
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/fail", b)
+	resp, err := m.postWithRetry(m.u.String()+OperationsEndpoint+"/"+id+"/fail", b)
 	if err != nil {
 		return nil, fmt.Errorf("FailOperation failure: %w", err)
 	}
@@ -215,4 +226,23 @@ func (m *managerClient) Fail(id string, fencingToken uint64,
 		return nil, fmt.Errorf("FailOperation deserialize: %w", uerr)
 	}
 	return out.Operation, nil
+}
+
+func (m *managerClient) postWithRetry(url string, b []byte) (*resty.Response, error) {
+	for attempt := 1; ; attempt++ {
+		resp, err := m.R.Post(url, b)
+		if err == nil || attempt == terminateAttempts || !isRetryable(err) {
+			return resp, err
+		}
+		time.Sleep(time.Duration(attempt) * m.backoff)
+	}
+}
+
+func isRetryable(err error) bool {
+	var status *client.ErrorStatus
+	if errors.As(err, &status) {
+		return status.StatusCode == http.StatusServiceUnavailable ||
+			status.StatusCode == http.StatusGatewayTimeout
+	}
+	return true
 }
