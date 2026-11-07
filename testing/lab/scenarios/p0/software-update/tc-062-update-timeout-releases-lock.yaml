@@ -76,7 +76,7 @@ phases:
         count_per_network: 1
         busy: false
         immediate: true
-        timeout_seconds: 300
+        timeout_seconds: 360
 
   - name: restore_controller
     events:
