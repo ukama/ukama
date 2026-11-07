@@ -130,7 +130,7 @@ func (c *Controller) Status() ControllerStatus {
 		Ready:    smStatus.DataPath.Connected,
 		State:    "ready",
 		Reason:   "none",
-		Service:  c.ServiceStatus(),
+		Service:  c.serviceStatusLocked(),
 		DataPath: smStatus.DataPath,
 	}
 
@@ -239,24 +239,46 @@ func (c *Controller) ExitController() error {
 }
 
 func (c *Controller) ServiceStatus() api.ServiceResponse {
+	c.pdnMu.Lock()
+	defer c.pdnMu.Unlock()
+	return c.serviceStatusLocked()
+}
+
+// Caller holds pdnMu so counts and admission describe the same state.
+func (c *Controller) serviceStatusLocked() api.ServiceResponse {
 	c.serviceMu.RLock()
 	defer c.serviceMu.RUnlock()
+
+	pdns, err := c.store.GetLivePDNs()
+	cleanupPending := err != nil
+
+	for _, pdn := range pdns {
+		cleanupPending = cleanupPending || pdn.State == store.PDNClosing
+	}
 
 	state := "off"
 	admission := "disabled"
 	reason := c.serviceReason
 	if c.serviceOn {
 		state = "on"
-		admission = "enabled"
+		if serviceLeaseValid() {
+			admission = "enabled"
+		}
 	}
 	if reason == "" {
 		reason = "ok"
 	}
 
 	return api.ServiceResponse{
-		State:     state,
-		Admission: admission,
-		Reason:    reason,
+		State:          state,
+		Admission:      admission,
+		Reason:         reason,
+		PDNCount:       len(pdns),
+		CleanupPending: cleanupPending,
+		Confirmed: !cleanupPending && (!c.serviceOn || serviceLeaseValid()) &&
+			(c.serviceOn || len(pdns) == 0),
+		Ready: !c.stopping && !c.restartRequired &&
+			c.sm.Status().DataPath.Connected,
 	}
 }
 
@@ -269,14 +291,34 @@ func (c *Controller) SetService(ctx context.Context,
 	}
 	c.pdnMu.Lock()
 	defer c.pdnMu.Unlock()
-	c.serviceMu.Lock()
-	c.serviceOn = state == "on"
-	c.serviceReason = "ok"
-	if !c.serviceOn {
-		c.serviceReason = "operator_disabled"
+	if state == "off" {
+		// Close admission before any operation that can fail. Closing rows
+		// survive restart and cannot be resumed by a later policy push.
+		c.setService(false, "operator_disabled")
+
+		if err := c.store.ClosePDNs(); err != nil {
+			return err
+		}
+		return c.cleanupPDNsLocked(ctx)
 	}
-	c.serviceMu.Unlock()
-	return c.reconcilePDNsLocked(ctx)
+	if !serviceLeaseValid() {
+		return pdnError(http.StatusServiceUnavailable, "service_lease_expired")
+	}
+	if err := c.checkDataPathLocked(); err != nil {
+		return err
+	}
+	if err := c.cleanupPDNsLocked(ctx); err != nil {
+		return pdnError(http.StatusServiceUnavailable, "cleanup_pending")
+	}
+	c.setService(true, "ok")
+	return nil
+}
+
+func (c *Controller) setService(enabled bool, reason string) {
+	c.serviceMu.Lock()
+	defer c.serviceMu.Unlock()
+	c.serviceOn = enabled
+	c.serviceReason = reason
 }
 
 func (c *Controller) serviceEnabled() bool {

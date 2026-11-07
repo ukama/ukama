@@ -48,6 +48,8 @@ typedef struct {
 typedef struct {
     pthread_mutex_t Lock;
 
+    bool ServiceHeld;
+
     ControlSubsystem   Active;
     ControlSubsysState Service;
     ControlSubsysState Radio;

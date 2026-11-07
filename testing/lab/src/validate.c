@@ -18,24 +18,51 @@ static int fail(ulab_error_t *err, const char *msg) {
     return ULAB_ERR;
 }
 
+static int valid_service_apn(const char *apn) {
+    size_t label = 0;
+    size_t i;
+    unsigned char ch;
+    int alnum;
+
+    if (!apn[0] || strlen(apn) > 99) return 0;
+    for (i = 0; apn[i]; i++) {
+        ch = (unsigned char)apn[i];
+        alnum = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') ||
+                (ch >= '0' && ch <= '9');
+        if (ch == '.') {
+            if (!label || apn[i - 1] == '-') return 0;
+            label = 0;
+        } else {
+            if ((!alnum && ch != '-') || (!label && !alnum) || ++label > 63) return 0;
+        }
+    }
+    return label && apn[i - 1] != '-';
+}
+
 static int validate_pdn_check(const scenario_t *s,
                                const check_spec_t *check,
                                ulab_error_t *err) {
+    if ((check->type == CHECK_UE_ADDRESSING || check->type == CHECK_UE_APN) &&
+        (!ulab_streq(s->provider.type, "virtual") || check->ues.kind == SEL_NONE)) {
+        return fail(err, "ue_addressing/ue_apn requires selected virtual UEs");
+    }
     if (check->type != CHECK_UE_PDN) return ULAB_OK;
     if (!ulab_streq(s->provider.type, "virtual") ||
         check->ues.kind == SEL_NONE || check->timeout_seconds > 300 ||
         (!ulab_streq(check->expected, "attached") &&
          !ulab_streq(check->expected, "allowed") &&
          !ulab_streq(check->expected, "blocked") &&
-         !ulab_streq(check->expected, "rejected")) ||
+         !ulab_streq(check->expected, "rejected") &&
+         !ulab_streq(check->expected, "absent")) ||
         (check->same_pdn && check->new_pdn) ||
         ((check->same_pdn || check->new_pdn) &&
-         ulab_streq(check->expected, "rejected")) ||
+         (ulab_streq(check->expected, "rejected") ||
+          ulab_streq(check->expected, "absent"))) ||
         strspn(check->apn,
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.-")
         != strlen(check->apn)) {
         return fail(err, "ue_pdn requires virtual UEs, a valid APN, "
-                    "attached/allowed/blocked/rejected and at most 300s; "
+                    "attached/allowed/blocked/rejected/absent and at most 300s; "
                     "same_pdn/new_pdn are exclusive and require a live PDN");
     }
     return ULAB_OK;
@@ -48,6 +75,12 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
     size_t j;
     int has_configure_sites;
     int monitor_active = 0;
+
+    if (s->runtime.apn[0] &&
+        (!ulab_streq(s->provider.type, "virtual") ||
+         !valid_service_apn(s->runtime.apn))) {
+        return fail(err, "runtime.apn requires a valid virtual service APN (1..99 bytes)");
+    }
 
     has_configure_sites = 0;
     for (i = 0; i < s->phase_count; i++) {
@@ -273,6 +306,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 continue;
             }
 
+            if ((event->type == EVT_SET_UE_RATE_POLICY ||
+                 event->type == EVT_WAIT_UE_RATE_LIMITS) &&
+                (!ulab_streq(s->provider.type, "virtual") ||
+                 event->ues.kind == SEL_NONE || !event->uplink_kbps ||
+                 !event->downlink_kbps)) {
+                return fail(err, "rate events need virtual UEs and positive uplink_kbps/downlink_kbps");
+            }
             if (event->type == EVT_WAIT_UE_SESSIONS ||
                 event->type == EVT_FINALIZE_UE_SESSIONS) {
                 if (event->ues.kind == SEL_NONE) {
@@ -529,8 +569,10 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err, "KPI checks require key");
             }
             if (check->type == CHECK_KPI_VALUE &&
-                !check->has_expected_value) {
-                return fail(err, "kpi_value requires expected_value");
+                !check->has_expected_value &&
+                !ulab_streq(check->expected, "previous")) {
+                return fail(err,
+                            "kpi_value requires expected_value or expected: previous");
             }
             if (check->type == CHECK_PERFORMANCE_REPORT_CELL &&
                 (check->report[0] == '\0' || check->column[0] == '\0' ||

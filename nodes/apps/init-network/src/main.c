@@ -31,6 +31,7 @@
 static volatile bool gTerminate = false;
 
 static UsysOption longOptions[] = {
+    { "check-ue-subnet", required_argument, 0, 's' },
     { "config",  required_argument, 0, 'c' },
     { "logs",    required_argument, 0, 'l' },
     { "help",    no_argument,       0, 'h' },
@@ -68,6 +69,7 @@ static void usage(void) {
     printf("Usage: init-network.d [options]\n");
     printf("Options:\n");
     printf("-h, --help                    Help menu\n");
+    printf("-s, --check-ue-subnet <cidr>  Validate the UE subnet and exit\n");
     printf("-c, --config <file>           Config file\n");
     printf("-l, --logs <TRACE|DEBUG|INFO> Log level for the process\n");
     printf("-v, --version                 Software version\n");
@@ -100,7 +102,7 @@ int main(int argc, char **argv) {
         opt = 0;
         optIdx = 0;
 
-        opt = usys_getopt_long(argc, argv, "c:l:hv", longOptions, &optIdx);
+        opt = usys_getopt_long(argc, argv, "c:l:s:hv", longOptions, &optIdx);
         if (opt == -1) break;
 
         switch (opt) {
@@ -113,6 +115,14 @@ int main(int argc, char **argv) {
             printf("%s\n", VERSION);
             exit(0);
             break;
+
+        case 's':
+            if (config_valid_ue_subnet(optarg)) {
+                puts("valid");
+                return 0;
+            }
+            puts("invalid");
+            return 1;
 
         case 'c':
             configFile = optarg;
@@ -162,6 +172,8 @@ int main(int argc, char **argv) {
     while (!gTerminate) {
         sleep(OVS_HEALTH_INTERVAL_SEC);
         if (gTerminate) continue;
+        ovs_service_poll(&config);
+
         if (!initialized) {
             if (!status_is_ready(&status)) continue;
             initialized = true;
@@ -176,6 +188,7 @@ int main(int argc, char **argv) {
             continue;
         }
 
+        ovs_service_set(&config, false);
         healthFailures++;
         usys_log_warn("Network health check failed (%d/%d): %s",
                       healthFailures,

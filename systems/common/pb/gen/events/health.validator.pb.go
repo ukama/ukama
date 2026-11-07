@@ -7,6 +7,7 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
+	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -18,5 +19,15 @@ func (this *HealthReportEvent) Validate() error {
 	return nil
 }
 func (this *HealthAppsChangedEvent) Validate() error {
+	for _, item := range this.Apps {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Apps", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *HealthAppVersion) Validate() error {
 	return nil
 }

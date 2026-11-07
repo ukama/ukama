@@ -8,13 +8,14 @@
 set -eu
 
 if [ "$#" -lt 3 ]; then
-    echo "usage: $0 <node-id> <container-name> <run-dir>" >&2
+    echo "usage: $0 <node-id> <container-name> <run-dir> [apn]" >&2
     exit 2
 fi
 
 NODE_ID="$1"
 CONTAINER_NAME="$2"
 RUN_DIR="$3"
+APN="${4-internet}"
 IMAGE_REPO="${IMAGE_REPO:-testing/virtualnode}"
 IMAGE="$IMAGE_REPO:$NODE_ID"
 PROBE_IMAGE="${ULAB_NET_PROBE_IMAGE:-alpine:3.20}"
@@ -111,6 +112,7 @@ if [ -n "${ULAB_NODE_ENTRYPOINT:-}" ]; then
     if ! podman create \
         --name "$CONTAINER_NAME" \
         --restart=no \
+        --env "UKAMA_APN=$APN" \
         --label io.ukama.lab.restart-manager=systemd \
         --privileged \
         --device /dev/net/tun \
@@ -129,6 +131,7 @@ else
     if ! podman create \
         --name "$CONTAINER_NAME" \
         --restart=no \
+        --env "UKAMA_APN=$APN" \
         --label io.ukama.lab.restart-manager=systemd \
         --privileged \
         --device /dev/net/tun \

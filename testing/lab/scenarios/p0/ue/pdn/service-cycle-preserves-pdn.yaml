@@ -1,6 +1,6 @@
 version: 1
-name: p0-service-cycle-preserves-pdn
-description: Block and resume traffic without replacing the PDN.
+name: p0-service-cycle-terminates-pdn
+description: Service OFF removes the PDN; explicit ON permits a fresh attach.
 seed: 323
 suite: p0
 priority: p0
@@ -69,10 +69,9 @@ phases:
     checks:
       - type: ue_pdn
         ues: ue-000001
-        expected: blocked
+        expected: absent
         timeout_seconds: 60
-        same_pdn: true
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000001
         amount_mb: 1
 
@@ -83,11 +82,10 @@ phases:
     checks:
       - type: ue_pdn
         ues: ue-000001
-        expected: blocked
+        expected: absent
         apn: internet
         timeout_seconds: 90
-        same_pdn: true
-      - type: traffic_blocked
+      - type: traffic_unavailable
         ues: ue-000001
         amount_mb: 1
 
@@ -96,13 +94,15 @@ phases:
       - type: toggle_service
         sites: all
         state: on
+      - type: start_ues
+        ues: ue-000001
       - type: wait_ues_attached
         ues: ue-000001
     checks:
       - type: ue_pdn
         ues: ue-000001
         expected: allowed
-        same_pdn: true
+        new_pdn: true
       - type: traffic_allowed
         ues: ue-000001
         amount_mb: 1

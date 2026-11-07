@@ -36,7 +36,7 @@ type OperationServices struct {
 	ManagerHost  string        `default:"manager:9090"`
 	MonitorHost  string        `default:"operation-monitor:9090"`
 	Timeout      time.Duration `default:"5s"`
-	LeaseSecs    uint32        `default:"300"`
+	LeaseSecs    uint32        `default:"360"`
 	DeadlineSecs uint32        `default:"300"`
 }
 

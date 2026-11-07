@@ -144,6 +144,7 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     const char *tag;
     const char *cmd;
     const char *workdir;
+    const char *guard;
     int svcPort;
 
     if (!json_is_object(j)) return NULL;
@@ -166,6 +167,15 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
 
     v = json_object_get(j, "workdir");
     workdir = json_is_string(v) ? json_string_value(v) : NULL;
+
+    v = json_object_get(j, "lifecycleGuard");
+    guard = v ? json_string_value(v) : NULL;
+
+    if (v && (!guard || strncmp(guard, "http://", 7) || strlen(guard) > 255)) {
+        usys_log_error("manifest: lifecycleGuard must be an HTTP URL");
+
+        return NULL;
+    }
 
     if (!m_is_valid_name(name) ||
         !m_is_valid_name(service) ||
@@ -190,8 +200,11 @@ static App* m_parse_app(const char *spaceName, json_t *j) {
     a->cmd     = strdup(cmd);
     a->workdir = workdir ? strdup(workdir) : NULL;
 
+    a->lifecycleGuard = guard ? strdup(guard) : NULL;
+    a->guardActive    = guard != NULL;
+
     if (!a->space || !a->name || !a->service || !a->tag || !a->cmd ||
-        (workdir && !a->workdir)) {
+        (workdir && !a->workdir) || (guard && !a->lifecycleGuard)) {
         m_free_app(a);
         return NULL;
     }
@@ -270,6 +283,7 @@ static void m_free_app(App *a) {
     m_free_argv(a->argv);
     m_free_envp(a->envp);
     free(a->workdir);
+    free(a->lifecycleGuard);
     free(a->lastGoodTag);
     free(a);
 }

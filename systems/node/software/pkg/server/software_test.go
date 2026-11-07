@@ -12,6 +12,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -609,23 +610,6 @@ func TestSoftwareServer_failOperation(t *testing.T) {
 		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
 	})
 
-	t.Run("RegisterFailureDoesNotCancel", func(t *testing.T) {
-		opMgr := &mbmocks.ManagerClient{}
-		opMon := &mocks.OperationMonitor{}
-		opMgr.On("Start", mock.Anything).
-			Return(&copr.StartResponse{Operation: op}, nil).Once()
-		opMon.On("Register", mock.Anything).Return(nil, assert.AnError).Once()
-		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, mock.Anything).
-			Return(&copr.OperationInfo{}, nil).Once()
-
-		s := &SoftwareServer{opManager: opMgr, opMonitor: opMon}
-		_, err := s.acquireAndRegister("UpdateSoftware", "node:x")
-
-		assert.Error(t, err)
-		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
-		opMgr.AssertExpectations(t)
-	})
-
 	t.Run("ManagerErrorIsNotFatal", func(t *testing.T) {
 		opMgr := &mbmocks.ManagerClient{}
 		opMgr.On("Fail", "op-update", uint64(7), pkg.ServiceName, "publish failed").
@@ -646,4 +630,41 @@ func TestSoftwareServer_failOperation(t *testing.T) {
 		opMgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything)
 	})
+}
+
+func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
+	sw := dbSoftwareFixture()
+	sRepo := mocks.NewSoftwareRepo(t)
+	sRepo.On("List", testNodeIdNormalized, ukama.UpdateAvailable, testAppNameForUpdate).Return([]*db.Software{sw}, nil)
+
+	nodeClient := &mbmocks.NodeClient{}
+	nodeClient.On("Get", mock.Anything).
+		Return(&creg.NodeInfo{Status: creg.NodeStatusInfo{Connectivity: "Online"}}, nil)
+
+	op := &copr.OperationInfo{Id: uuid.NewV4().String(), FencingToken: 7}
+	opMgr := &mbmocks.ManagerClient{}
+	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMgr.On("Fail", op.Id, uint64(7), pkg.ServiceName,
+		mock.MatchedBy(func(reason string) bool {
+			return strings.HasPrefix(reason, "register intent failed")
+		})).Return(op, nil).Once()
+
+	opMon := mocks.NewOperationMonitor(t)
+	opMon.On("Register", mock.MatchedBy(func(r *opmonpb.RegisterIntentRequest) bool {
+		return r.ActionType == "UpdateSoftware" &&
+			r.ResourceKey == "node:"+testNodeIdNormalized &&
+			r.CompletionRule == "app."+testAppNameForUpdate+"="+testTagVersion
+	})).Return(nil, assert.AnError).Once()
+
+	s := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), mocks.NewNodeRepo(t), nil, nil, nil,
+		mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, opMgr, opMon, 0, 0, nodeClient)
+
+	_, err := s.UpdateSoftware(context.Background(), &pb.UpdateSoftwareRequest{
+		NodeId: testNodeId, Name: testAppNameForUpdate, Tag: testTagVersion})
+
+	require.Error(t, err)
+	assert.Equal(t, codes.Internal, status.Code(err))
+	opMon.AssertNotCalled(t, "Cancel", mock.Anything)
+	opMon.AssertExpectations(t)
+	opMgr.AssertExpectations(t)
 }

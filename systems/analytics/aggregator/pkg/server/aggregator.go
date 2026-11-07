@@ -40,6 +40,8 @@ type AggregatorServer struct {
 	// kpi_windows components instead of calendar rollups.
 	grid    schema.Grid
 	windows db.KpiWindowReader
+	// keep is the kpi_windows retention (0 = forever).
+	keep time.Duration
 	// loc anchors calendar range tokens (today/this_week/this_month) —
 	// same timezone the rollup engine uses for span boundaries.
 	loc *time.Location
@@ -48,7 +50,7 @@ type AggregatorServer struct {
 
 func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRepo,
 	composer *performance.Composer, grid schema.Grid, windows db.KpiWindowReader,
-	timezone string) (*AggregatorServer, error) {
+	timezone string, keep time.Duration) (*AggregatorServer, error) {
 	byKey := map[string]schema.KpiSpec{}
 	for _, k := range kpis {
 		byKey[k.Kpi] = k
@@ -73,6 +75,7 @@ func NewAggregatorServer(org string, kpis []schema.KpiSpec, rollups db.RollupRep
 		composer: composer,
 		grid:     grid,
 		windows:  windows,
+		keep:     keep,
 		loc:      loc,
 	}, nil
 }

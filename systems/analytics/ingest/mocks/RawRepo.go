@@ -30,6 +30,34 @@ func (_m *RawRepo) InsertWindowed(records []schema.RawRecord) error {
 	return r0
 }
 
+// PruneBefore provides a mock function with given fields: orgID, datasetKey, beforeWindow, batch
+func (_m *RawRepo) PruneBefore(orgID string, datasetKey string, beforeWindow int64, batch int) (int64, error) {
+	ret := _m.Called(orgID, datasetKey, beforeWindow, batch)
+
+	if len(ret) == 0 {
+		panic("no return value specified for PruneBefore")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, string, int64, int) (int64, error)); ok {
+		return rf(orgID, datasetKey, beforeWindow, batch)
+	}
+	if rf, ok := ret.Get(0).(func(string, string, int64, int) int64); ok {
+		r0 = rf(orgID, datasetKey, beforeWindow, batch)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, string, int64, int) error); ok {
+		r1 = rf(orgID, datasetKey, beforeWindow, batch)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // StateAsOf provides a mock function with given fields: orgID, datasetKey, windowID
 func (_m *RawRepo) StateAsOf(orgID string, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
 	ret := _m.Called(orgID, datasetKey, windowID)

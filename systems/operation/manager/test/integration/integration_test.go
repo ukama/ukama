@@ -86,6 +86,15 @@ func startOperation(t *testing.T, ctx context.Context,
 	assert.True(t, resp.Operation.FencingToken > 0)
 	assertLockHeldBy(t, ctx, c, resp.Operation)
 
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+			Id: resp.Operation.Id, Actor: actor, Reason: reason,
+		})
+	})
+
 	return resp.Operation
 }
 
@@ -316,6 +325,12 @@ func TestStartLease(t *testing.T) {
 		assert.NoError(t, err)
 		assert.WithinDuration(t, time.Now().Add(time.Hour),
 			resp.Operation.LeaseExpiresAt.AsTime(), time.Minute)
+
+		_, err = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+			Id: resp.Operation.Id, Actor: actor, Reason: reason,
+		})
+		assert.NoError(t, err)
+		assertLockFree(t, ctx, c, resp.Operation)
 	})
 
 	t.Run("AboveMaxIsRejected", func(t *testing.T) {
