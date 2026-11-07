@@ -37,7 +37,8 @@ type OperationRepo interface {
 	Get(ctx context.Context, id uuid.UUID) (*Operation, error)
 	GetByResource(ctx context.Context, resourceKey string) (*Operation, error)
 	GetByIdempotencyKey(ctx context.Context, key string) (*Operation, error)
-	MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64) (*Operation, error)
+	MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64,
+		actor string) (*Operation, error)
 	Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64,
 		status OperationStatus, audit OperationAudit, opErr string) (*Operation, error)
 	FindExpired(ctx context.Context, now time.Time, limit int) ([]Operation, error)
@@ -132,7 +133,7 @@ func (r *operationRepo) GetByIdempotencyKey(ctx context.Context,
 }
 
 func (r *operationRepo) MarkRunning(ctx context.Context, id uuid.UUID,
-	fencingToken uint64) (*Operation, error) {
+	fencingToken uint64, actor string) (*Operation, error) {
 	var op Operation
 	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := lockOperation(tx, &op, "id = ? AND fencing_token = ?", id,
@@ -150,7 +151,7 @@ func (r *operationRepo) MarkRunning(ctx context.Context, id uuid.UUID,
 		}
 		return tx.Create(&OperationAudit{
 			Id: uuid.NewV4(), OperationId: op.Id, ResourceKey: op.ResourceKey,
-			Event: "running", At: now,
+			Event: "running", Actor: actor, At: now,
 		}).Error
 	})
 	if err != nil {

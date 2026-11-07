@@ -96,7 +96,8 @@ func (c *ConfiguratorServer) ApplyConfig(ctx context.Context, req *pb.ApplyConfi
 	}
 
 	if c.opManager != nil && op != nil && op.Id != "" {
-		if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken); err != nil {
+		if _, err := c.opManager.MarkRunning(op.Id, op.FencingToken,
+			pkg.ServiceName); err != nil {
 			log.Warnf("ApplyConfig mark running failed for op %s: %v", op.Id, err)
 		}
 	}

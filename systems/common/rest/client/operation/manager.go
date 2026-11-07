@@ -74,6 +74,7 @@ type GetResponse struct {
 
 type MarkRunningRequest struct {
 	FencingToken uint64 `json:"fencing_token"`
+	Actor        string `json:"actor"`
 }
 
 type ForceUnlockRequest struct {
@@ -97,7 +98,7 @@ type ManagerClient interface {
 	Start(StartRequest) (*StartResponse, error)
 	Get(id string) (*OperationInfo, error)
 	GetByResource(resourceKey string) (*OperationInfo, error)
-	MarkRunning(id string, fencingToken uint64) (*OperationInfo, error)
+	MarkRunning(id string, fencingToken uint64, actor string) (*OperationInfo, error)
 	ForceUnlock(id, actor, reason string) (*OperationInfo, error)
 	Complete(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
 	Fail(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
@@ -158,8 +159,9 @@ func (m *managerClient) GetByResource(resourceKey string) (*OperationInfo, error
 	return out.Operation, nil
 }
 
-func (m *managerClient) MarkRunning(id string, fencingToken uint64) (*OperationInfo, error) {
-	b, err := json.Marshal(MarkRunningRequest{FencingToken: fencingToken})
+func (m *managerClient) MarkRunning(id string, fencingToken uint64,
+	actor string) (*OperationInfo, error) {
+	b, err := json.Marshal(MarkRunningRequest{FencingToken: fencingToken, Actor: actor})
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}

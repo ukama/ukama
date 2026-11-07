@@ -18,6 +18,7 @@ import (
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/node/operation-monitor/mocks"
+	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 )
 
@@ -39,7 +40,8 @@ func TestSweeper_PublishFailureCanRetry(t *testing.T) {
 	mb.On("PublishRequest", mock.Anything, mock.MatchedBy(func(event *epb.OperationFailedEvent) bool {
 		return event.OperationId == intent.OperationId.String() &&
 			event.FencingToken == intent.FencingToken &&
-			event.Reason == "deadline exceeded"
+			event.Reason == "deadline exceeded" &&
+			event.Actor == pkg.OperationMonitorSweeperActor
 	})).Return(nil).Once()
 	repo.On("MarkTerminal", intent.OperationId, db.IntentExpired).
 		Return(&intent, nil).Once()

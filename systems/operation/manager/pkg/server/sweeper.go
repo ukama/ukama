@@ -65,6 +65,7 @@ func (s *Sweeper) sweepOnce(parent context.Context) {
 		_, err := s.repo.Terminate(ctx, op.Id, op.FencingToken, db.OperationTimeout,
 			db.OperationAudit{
 				Event:  "timeout",
+				Actor:  pkg.OperationManagerSweeperActor,
 				Reason: "lease expired",
 			}, "lease expired")
 		if err != nil {

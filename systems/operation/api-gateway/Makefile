@@ -1,6 +1,6 @@
 include ../../config.mk
 
-.PHONY: build deps lint gen mocks clean integration.test test server
+.PHONY: build lint clean integration.test test server
 
 build: integration.build
 	@echo Building version: \"$(BIN_VER)\"
@@ -11,12 +11,6 @@ test:
 
 lint:
 	golangci-lint run
-
-deps:
-	go install github.com/vektra/mockery/v2@latest
-
-mocks:
-	mockery --all --recursive
 
 clean:
 	rm -rf bin/

@@ -1,6 +1,6 @@
 include ../../config.mk
 
-.PHONY: integration.test test build lint deps gen mocks clean docs server
+.PHONY: integration.test test build lint deps gen pb mocks clean docs server
 
 build: integration.build
 	env CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-X github.com/ukama/ukama/systems/operation/manager/cmd/version.Version=$(BIN_VER) -extldflags=-static' -gcflags=all="-N -l" -o bin/manager cmd/server/main.go
@@ -23,7 +23,9 @@ deps:
 	go install github.com/mwitkow/go-proto-validators/protoc-gen-govalidators@latest
 	go install github.com/vektra/mockery/v2@latest
 
-gen:
+gen: pb mocks
+
+pb:
 	protoc -I ./pb -I ../../common/pb -I ../../common/pb/dep \
 		--go_out=$(GOPATH)/src --go-grpc_out=$(GOPATH)/src \
 		--go-grpc_opt=require_unimplemented_servers=true \

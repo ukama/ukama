@@ -536,6 +536,7 @@ type MarkRunningRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	FencingToken  uint64                 `protobuf:"varint,2,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	Actor         string                 `protobuf:"bytes,3,opt,name=actor,proto3" json:"actor,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -582,6 +583,13 @@ func (x *MarkRunningRequest) GetFencingToken() uint64 {
 		return x.FencingToken
 	}
 	return 0
+}
+
+func (x *MarkRunningRequest) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
 }
 
 type MarkRunningResponse struct {
@@ -977,12 +985,12 @@ const file_operation_proto_rawDesc = "" +
 	"\n" +
 	"terminalAt\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"terminalAt\x128\n" +
-	"\tcreatedAt\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xeb\x01\n" +
+	"\tcreatedAt\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf3\x01\n" +
 	"\x15StartOperationRequest\x12\x1a\n" +
 	"\x04type\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x04type\x12\x1e\n" +
 	"\x06system\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06system\x12(\n" +
-	"\vresourceKey\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\x12 \n" +
-	"\vrequestedBy\x18\x04 \x01(\tR\vrequestedBy\x12&\n" +
+	"\vresourceKey\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\x12(\n" +
+	"\vrequestedBy\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vrequestedBy\x12&\n" +
 	"\x0eidempotencyKey\x18\x05 \x01(\tR\x0eidempotencyKey\x12\"\n" +
 	"\fleaseSeconds\x18\x06 \x01(\rR\fleaseSeconds\"y\n" +
 	"\x16StartOperationResponse\x12C\n" +
@@ -994,10 +1002,11 @@ const file_operation_proto_rawDesc = "" +
 	"\x14GetByResourceRequest\x12(\n" +
 	"\vresourceKey\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\"\\\n" +
 	"\x15GetByResourceResponse\x12C\n" +
-	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation\"S\n" +
+	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation\"q\n" +
 	"\x12MarkRunningRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12\"\n" +
-	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\"Z\n" +
+	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12\x1c\n" +
+	"\x05actor\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05actor\"Z\n" +
 	"\x13MarkRunningResponse\x12C\n" +
 	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation\"\x9f\x01\n" +
 	"\x18CompleteOperationRequest\x12\x19\n" +

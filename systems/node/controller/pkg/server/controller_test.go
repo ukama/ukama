@@ -56,7 +56,8 @@ func TestControllerServer_RestartNode(t *testing.T) {
 		return req.ResourceKey == "node:"+nodeId
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-restart", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-restart", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
 		Target:     testOrgName + "..." + nodeId,
@@ -96,7 +97,8 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 		return req.ResourceKey == "node:"+nodeId
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-rf", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-rf", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-rf"}).
 		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-rf", uint64(1), mock.Anything, mock.Anything).
@@ -138,7 +140,8 @@ func TestControllerServer_ToggleService(t *testing.T) {
 		return req.ResourceKey == "node:"+nodeId
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-svc", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-svc", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-svc"}).
 		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-svc", uint64(1), mock.Anything, mock.Anything).
@@ -200,7 +203,8 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 		return req.ResourceKey == resourceKey
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-i", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-i"}).
 		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-i", uint64(1), mock.Anything, mock.Anything).
@@ -232,7 +236,8 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 		return req.ResourceKey == resourceKey
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-i", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-i", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(assert.AnError).Once()
 	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-i"}).
 		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
@@ -285,7 +290,8 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 		return req.ResourceKey == "node:"+nodeId
 	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
-	opMgr.On("MarkRunning", "op-radio", uint64(1)).Return(&copr.OperationInfo{}, nil).Once()
+	opMgr.On("MarkRunning", "op-radio", uint64(1), "controller").
+		Return(&copr.OperationInfo{}, nil).Once()
 	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-radio"}).
 		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
 	opMgr.On("Complete", "op-radio", uint64(1), mock.Anything, mock.Anything).

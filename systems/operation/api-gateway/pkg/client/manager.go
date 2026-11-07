@@ -74,10 +74,13 @@ func (m *Manager) GetByResource(resourceKey string) (*pb.GetByResourceResponse, 
 	return m.client.GetByResource(ctx, &pb.GetByResourceRequest{ResourceKey: resourceKey})
 }
 
-func (m *Manager) MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error) {
+func (m *Manager) MarkRunning(id string, fencingToken uint64,
+	actor string) (*pb.MarkRunningResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
-	return m.client.MarkRunning(ctx, &pb.MarkRunningRequest{Id: id, FencingToken: fencingToken})
+	return m.client.MarkRunning(ctx, &pb.MarkRunningRequest{
+		Id: id, FencingToken: fencingToken, Actor: actor,
+	})
 }
 
 func (m *Manager) ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse, error) {

@@ -18,6 +18,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/operation/manager/mocks"
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 )
 
@@ -27,7 +28,8 @@ func newTestSweeper(repo db.OperationRepo, interval time.Duration) *Sweeper {
 
 func timeoutAudit() interface{} {
 	return mock.MatchedBy(func(a db.OperationAudit) bool {
-		return a.Event == "timeout" && a.Reason == "lease expired"
+		return a.Event == "timeout" && a.Reason == "lease expired" &&
+			a.Actor == pkg.OperationManagerSweeperActor
 	})
 }
 

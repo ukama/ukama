@@ -138,9 +138,9 @@ func (_m *OperationRepo) GetByResource(ctx context.Context, resourceKey string) 
 	return r0, r1
 }
 
-// MarkRunning provides a mock function with given fields: ctx, id, fencingToken
-func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64) (*db.Operation, error) {
-	ret := _m.Called(ctx, id, fencingToken)
+// MarkRunning provides a mock function with given fields: ctx, id, fencingToken, actor
+func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64, actor string) (*db.Operation, error) {
+	ret := _m.Called(ctx, id, fencingToken, actor)
 
 	if len(ret) == 0 {
 		panic("no return value specified for MarkRunning")
@@ -148,19 +148,19 @@ func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingT
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64) (*db.Operation, error)); ok {
-		return rf(ctx, id, fencingToken)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, string) (*db.Operation, error)); ok {
+		return rf(ctx, id, fencingToken, actor)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64) *db.Operation); ok {
-		r0 = rf(ctx, id, fencingToken)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, string) *db.Operation); ok {
+		r0 = rf(ctx, id, fencingToken, actor)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64) error); ok {
-		r1 = rf(ctx, id, fencingToken)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64, string) error); ok {
+		r1 = rf(ctx, id, fencingToken, actor)
 	} else {
 		r1 = ret.Error(1)
 	}

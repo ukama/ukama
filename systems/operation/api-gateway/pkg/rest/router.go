@@ -54,7 +54,8 @@ type manager interface {
 	Start(*pb.StartOperationRequest) (*pb.StartOperationResponse, error)
 	Get(id string) (*pb.GetOperationResponse, error)
 	GetByResource(resourceKey string) (*pb.GetByResourceResponse, error)
-	MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error)
+	MarkRunning(id string, fencingToken uint64, actor string) (*pb.MarkRunningResponse,
+		error)
 	ForceUnlock(id, actor, reason string) (*pb.ForceUnlockResponse, error)
 	Complete(id string, fencingToken uint64, actor,
 		reason string) (*pb.CompleteOperationResponse, error)
@@ -180,7 +181,7 @@ func (r *Router) getByResourceHandler(c *gin.Context, req *GetByResourceRequest)
 }
 
 func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest) (*MarkRunningResponse, error) {
-	resp, err := r.clients.Manager.MarkRunning(req.Id, req.FencingToken)
+	resp, err := r.clients.Manager.MarkRunning(req.Id, req.FencingToken, req.Actor)
 	if err != nil {
 		return nil, err
 	}

@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -20,10 +21,12 @@ import (
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 )
 
@@ -56,22 +59,31 @@ func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (
 
 func (e *EventServer) handleCompleted(ctx context.Context,
 	event *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalOperationCompletedEvent(event.Msg, "OperationCompletedEvent")
+	msg, err := cpb.UnmarshalProtoEvent[epb.OperationCompletedEvent](event.Msg)
 	if err != nil {
 		return nil, err
 	}
 	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationSuccess,
-		db.OperationAudit{Event: "completed"}, "")
+		db.OperationAudit{Event: "completed", Actor: eventActor(msg.Actor)}, "")
 }
 
 func (e *EventServer) handleFailed(ctx context.Context,
 	event *epb.Event) (*epb.EventResponse, error) {
-	msg, err := epb.UnmarshalOperationFailedEvent(event.Msg, "OperationFailedEvent")
+	msg, err := cpb.UnmarshalProtoEvent[epb.OperationFailedEvent](event.Msg)
 	if err != nil {
 		return nil, err
 	}
 	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationFailed,
-		db.OperationAudit{Event: "failed", Reason: msg.Reason}, msg.Reason)
+		db.OperationAudit{
+			Event: "failed", Actor: eventActor(msg.Actor), Reason: msg.Reason,
+		}, msg.Reason)
+}
+
+func eventActor(actor string) string {
+	if strings.TrimSpace(actor) == "" {
+		return pkg.OperationMonitorActor
+	}
+	return actor
 }
 
 func (e *EventServer) terminate(ctx context.Context, operationId string,

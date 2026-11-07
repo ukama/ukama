@@ -47,6 +47,7 @@ func TestStartOperation(t *testing.T) {
 			}, nil)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+			RequestedBy: "controller",
 			Type:        "RestartNode",
 			System:      "node",
 			ResourceKey: "node:abc",
@@ -67,6 +68,7 @@ func TestStartOperation(t *testing.T) {
 			mock.AnythingOfType("time.Duration")).Return(nil, db.ErrLockConflict)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+			RequestedBy: "controller",
 			Type:        "RestartNode",
 			System:      "node",
 			ResourceKey: "node:abc",
@@ -85,6 +87,7 @@ func TestStartOperation(t *testing.T) {
 			mock.AnythingOfType("time.Duration")).Return(nil, fmt.Errorf("db down"))
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+			RequestedBy: "controller",
 			Type:        "RestartNode",
 			System:      "node",
 			ResourceKey: "node:abc",
@@ -109,6 +112,7 @@ func TestStartOperation(t *testing.T) {
 		repo.On("GetByIdempotencyKey", mock.Anything, "key-123").Return(existing, nil)
 
 		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+			RequestedBy:    "controller",
 			Type:           "RestartNode",
 			System:         "node",
 			ResourceKey:    "node:abc",
@@ -340,9 +344,10 @@ func TestMarkRunning(t *testing.T) {
 
 		id := uuid.NewV4()
 		running := &db.Operation{Id: id, ResourceKey: "node:abc", FencingToken: 3, Status: db.OperationRunning}
-		repo.On("MarkRunning", mock.Anything, id, uint64(3)).Return(running, nil)
+		repo.On("MarkRunning", mock.Anything, id, uint64(3), "controller").Return(running, nil)
 
 		resp, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+			Actor:        "controller",
 			Id:           id.String(),
 			FencingToken: 3,
 		})
@@ -387,7 +392,8 @@ func TestRepoErrorCodes(t *testing.T) {
 				Return(nil, tc.err).Once()
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				RequestedBy: "controller",
+				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
 			})
 
 			assert.Equal(t, tc.code, status.Code(err))
@@ -401,7 +407,7 @@ func TestRepoErrorCodes(t *testing.T) {
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
-				IdempotencyKey: "key",
+				RequestedBy: "controller", IdempotencyKey: "key",
 			})
 
 			assert.Equal(t, tc.code, status.Code(err))
@@ -449,11 +455,12 @@ func TestRepoErrorCodes(t *testing.T) {
 	t.Run("MarkRunningLockTimeoutIsUnavailable", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
-		repo.On("MarkRunning", mock.Anything, id, uint64(3)).
+		repo.On("MarkRunning", mock.Anything, id, uint64(3), "controller").
 			Return(nil, lockTimeout).Once()
 
 		_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
-			Id: id.String(), FencingToken: 3,
+			Actor: "controller",
+			Id:    id.String(), FencingToken: 3,
 		})
 
 		assert.Equal(t, codes.Unavailable, status.Code(err))
@@ -496,7 +503,8 @@ func TestInvalidResourceKeyIsRejected(t *testing.T) {
 			s := NewOperationServer(orgName, "", repo, nil)
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-				Type: "RestartNode", System: "node", ResourceKey: key,
+				RequestedBy: "controller",
+				Type:        "RestartNode", System: "node", ResourceKey: key,
 				IdempotencyKey: "key",
 			})
 
@@ -537,7 +545,8 @@ func TestStartOperationLease(t *testing.T) {
 				}, nil).Once()
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				RequestedBy: "controller",
+				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
 				LeaseSeconds: tc.seconds,
 			})
 
@@ -555,7 +564,8 @@ func TestStartOperationLease(t *testing.T) {
 			s := NewOperationServer(orgName, "", repo, nil)
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				RequestedBy: "controller",
+				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
 				IdempotencyKey: "key", LeaseSeconds: seconds,
 			})
 
@@ -563,5 +573,76 @@ func TestStartOperationLease(t *testing.T) {
 			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything, mock.Anything)
 			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
 		})
+	}
+}
+
+func TestBlankActorsAreRejected(t *testing.T) {
+	id := uuid.NewV4().String()
+
+	for _, blank := range []string{"", "   "} {
+		calls := map[string]func(s *OperationServer) error{
+			"StartRequestedBy": func(s *OperationServer) error {
+				_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+					Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+					RequestedBy: blank,
+				})
+				return err
+			},
+			"MarkRunningActor": func(s *OperationServer) error {
+				_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+					Id: id, FencingToken: 1, Actor: blank,
+				})
+				return err
+			},
+			"CompleteActor": func(s *OperationServer) error {
+				_, err := s.CompleteOperation(context.Background(),
+					&pb.CompleteOperationRequest{
+						Id: id, FencingToken: 1, Actor: blank, Reason: "r",
+					})
+				return err
+			},
+			"CompleteReason": func(s *OperationServer) error {
+				_, err := s.CompleteOperation(context.Background(),
+					&pb.CompleteOperationRequest{
+						Id: id, FencingToken: 1, Actor: "a", Reason: blank,
+					})
+				return err
+			},
+			"FailActor": func(s *OperationServer) error {
+				_, err := s.FailOperation(context.Background(), &pb.FailOperationRequest{
+					Id: id, FencingToken: 1, Actor: blank, Reason: "r",
+				})
+				return err
+			},
+			"FailReason": func(s *OperationServer) error {
+				_, err := s.FailOperation(context.Background(), &pb.FailOperationRequest{
+					Id: id, FencingToken: 1, Actor: "a", Reason: blank,
+				})
+				return err
+			},
+			"ForceUnlockActor": func(s *OperationServer) error {
+				_, err := s.ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
+					Id: id, Actor: blank, Reason: "r",
+				})
+				return err
+			},
+			"ForceUnlockReason": func(s *OperationServer) error {
+				_, err := s.ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
+					Id: id, Actor: "a", Reason: blank,
+				})
+				return err
+			},
+		}
+
+		for name, call := range calls {
+			t.Run(fmt.Sprintf("%s%q", name, blank), func(t *testing.T) {
+				repo := &mocks.OperationRepo{}
+
+				err := call(NewOperationServer(orgName, "", repo, nil))
+
+				assert.Equal(t, codes.InvalidArgument, status.Code(err))
+				repo.AssertExpectations(t)
+			})
+		}
 	}
 }

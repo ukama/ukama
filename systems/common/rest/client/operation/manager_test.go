@@ -317,6 +317,8 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
 			assert.Equal(tt, "POST", req.Method)
+			sent, _ := io.ReadAll(req.Body)
+			assert.Contains(tt, string(sent), `"actor":"controller"`)
 
 			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"RUNNING","fencing_token":42,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
@@ -331,7 +333,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		testManagerClient := operation.NewManagerClient("")
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken)
+		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
 
 		assert.NoError(tt, err)
 		assert.Equal(tt, testOperationId, op.Id)
@@ -357,7 +359,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		testManagerClient := operation.NewManagerClient("")
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken)
+		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
 
 		assert.Error(tt, err)
 		assert.Nil(tt, op)
@@ -379,7 +381,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		testManagerClient := operation.NewManagerClient("")
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken)
+		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
 
 		assert.Error(tt, err)
 		assert.Nil(tt, op)
@@ -396,7 +398,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		testManagerClient := operation.NewManagerClient("")
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken)
+		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
 
 		assert.Error(tt, err)
 		assert.Nil(tt, op)

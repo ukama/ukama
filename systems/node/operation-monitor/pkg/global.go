@@ -20,6 +20,11 @@ const (
 	SweeperInterval    = 30 * time.Second
 )
 
+const (
+	OperationMonitorActor        = "operation-monitor"
+	OperationMonitorSweeperActor = "operation-monitor-sweeper"
+)
+
 // Action → completion rule fallback when caller doesn't supply one.
 // A reboot takes the node offline then back online (substate: on→off→on)
 // without changing the main state (Operational stays Operational), so
