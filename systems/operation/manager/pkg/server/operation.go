@@ -74,6 +74,16 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	if err := validateResourceKey(req.ResourceKey); err != nil {
 		return nil, err
 	}
+
+	lease := time.Duration(req.LeaseSeconds) * time.Second
+	if lease > pkg.MaxLeaseTTL {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"lease seconds must be at most %d", int(pkg.MaxLeaseTTL.Seconds()))
+	}
+	if lease == 0 {
+		lease = pkg.DefaultLeaseTTL
+	}
+
 	if req.IdempotencyKey != "" {
 		existing, err := s.repo.GetByIdempotencyKey(req.IdempotencyKey)
 		if err != nil {
@@ -82,11 +92,6 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 		if existing != nil {
 			return &pb.StartOperationResponse{Operation: toPb(existing)}, nil
 		}
-	}
-
-	lease := time.Duration(req.LeaseSeconds) * time.Second
-	if lease == 0 {
-		lease = pkg.DefaultLeaseTTL
 	}
 
 	op := &db.Operation{

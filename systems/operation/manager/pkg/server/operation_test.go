@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 	"testing"
 	"time"
@@ -25,6 +26,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/operation/manager/mocks"
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 )
 
@@ -354,6 +356,53 @@ func TestInvalidResourceKeyIsRejected(t *testing.T) {
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			repo.AssertNotCalled(t, "GetByResource", mock.Anything)
+		})
+	}
+}
+
+func TestStartOperationLease(t *testing.T) {
+	for name, tc := range map[string]struct {
+		seconds uint32
+		lease   time.Duration
+	}{
+		"ZeroUsesDefault": {0, pkg.DefaultLeaseTTL},
+		"MaxIsAccepted":   {3600, time.Hour},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			repo.On("Start", mock.AnythingOfType("*db.Operation"), tc.lease).
+				Return(func(op *db.Operation, _ time.Duration) *db.Operation {
+					return op
+				}, nil).Once()
+
+			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				LeaseSeconds: tc.seconds,
+			})
+
+			assert.NoError(t, err)
+			repo.AssertExpectations(t)
+		})
+	}
+
+	for name, seconds := range map[string]uint32{
+		"AboveMaxIsRejected":  3601,
+		"MaxUint32IsRejected": math.MaxUint32,
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				IdempotencyKey: "key", LeaseSeconds: seconds,
+			})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything)
 		})
 	}
 }
