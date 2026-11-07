@@ -13,10 +13,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/require"
@@ -100,6 +104,12 @@ var pdnTestNumber int
 
 func pdnFixture(t *testing.T) (*Controller, *pdnSessions, *api.CreateSession) {
 	t.Helper()
+	path := filepath.Join(t.TempDir(), "service.lease")
+	t.Setenv("UKAMA_SERVICE_LEASE", path)
+	var now unix.Timespec
+	require.NoError(t, unix.ClockGettime(unix.CLOCK_MONOTONIC, &now))
+	require.NoError(t, os.WriteFile(path,
+		[]byte(fmt.Sprintln(now.Nano()/1000000+serviceLeaseMsec)), 0600))
 	s := newTestStore(t)
 	sm := &pdnSessions{store: s, active: make(map[string]int),
 		dp: datapath.Status{Connected: true, ConnectedCount: 1}}
@@ -216,7 +226,7 @@ func TestPDNPolicyBeforeAttachCreatesNoForwarding(t *testing.T) {
 
 func TestPDNPolicyReasons(t *testing.T) {
 	cases := []string{"package_expired", "package_not_started",
-		"quota_exhausted", "subscriber_disabled", "service_disabled"}
+		"quota_exhausted", "subscriber_disabled"}
 	for _, reason := range cases {
 		t.Run(reason, func(t *testing.T) {
 			c, sm, req := pdnFixture(t)
@@ -236,9 +246,6 @@ func TestPDNPolicyReasons(t *testing.T) {
 				require.NoError(t,
 					c.store.UpdateSubscriberServiceStatus(sub, false))
 			}
-			if reason == "service_disabled" {
-				c.serviceOn = false
-			}
 			result, err := c.CreateSession(&gin.Context{}, req)
 			require.NoError(t, err)
 			require.Equal(t, "live", result.State)
@@ -249,39 +256,53 @@ func TestPDNPolicyReasons(t *testing.T) {
 	}
 }
 
-func TestPDNServiceToggleKeepsPDNs(t *testing.T) {
+func TestPDNServiceOffTerminatesBindings(t *testing.T) {
 	c, sm, req := pdnFixture(t)
-	p := pdnPolicy()
-	pushPDNPolicy(t, c, req.ImsiStr, p)
+	pushPDNPolicy(t, c, req.ImsiStr, pdnPolicy())
 	_, err := c.CreateSession(&gin.Context{}, req)
 	require.NoError(t, err)
-	original := sm.active[req.ImsiStr]
 	require.NoError(t, c.SetService(context.Background(),
 		&api.ServiceRequest{State: "off"}))
-	got, err := c.GetPDN(&gin.Context{}, &api.GetPDN{Imsi: req.ImsiStr})
+	require.False(t, sm.HasActiveSession(req.ImsiStr))
+	closed, err := c.store.GetPDN(req.InstanceID, req.PDNID)
 	require.NoError(t, err)
-	require.Equal(t, "blocked", got.DataState)
-	require.Equal(t, original, sm.active[req.ImsiStr])
-	other := *req
-	other.ImsiStr = "999993777777777"
-	other.IpStr = "192.168.8.3"
-	other.PDNID = uuid.NewV4().String()
-	pushPDNPolicy(t, c, other.ImsiStr, pdnPolicy())
-	got, err = c.CreateSession(&gin.Context{}, &other)
-	require.NoError(t, err)
-	require.Equal(t, "blocked", got.DataState)
+	require.Equal(t, store.PDNClosed, closed.State)
+	_, err = c.CreateSession(&gin.Context{}, req)
+	checkHTTPError(t, err, http.StatusServiceUnavailable)
 	require.NoError(t, c.SetService(context.Background(),
 		&api.ServiceRequest{State: "on"}))
-	require.Equal(t, original, sm.active[req.ImsiStr])
-	require.True(t, sm.HasActiveSession(other.ImsiStr))
-	off := false
-	require.NoError(t, c.UpdateSubscriber(&gin.Context{},
-		&api.UpdateSubscriber{Imsi: req.ImsiStr, Policy: p,
-			IsServiceOn: &off}))
-	got, err = c.GetPDN(&gin.Context{}, &api.GetPDN{Imsi: req.ImsiStr})
+	_, err = c.CreateSession(&gin.Context{}, req)
+	checkHTTPError(t, err, http.StatusGone)
+	req.PDNID = uuid.NewV4().String()
+	_, err = c.CreateSession(&gin.Context{}, req)
 	require.NoError(t, err)
-	require.Equal(t, "subscriber_disabled", got.Reason)
-	require.Equal(t, original, sm.active[req.ImsiStr])
+	require.True(t, sm.HasActiveSession(req.ImsiStr))
+}
+
+func TestPDNServiceOffRetriesFailedCleanup(t *testing.T) {
+	c, sm, req := pdnFixture(t)
+	pushPDNPolicy(t, c, req.ImsiStr, pdnPolicy())
+	_, err := c.CreateSession(&gin.Context{}, req)
+	require.NoError(t, err)
+	sm.endErr = errors.New("datapath unavailable")
+	require.Error(t, c.SetService(context.Background(),
+		&api.ServiceRequest{State: "off"}))
+	require.False(t, c.serviceEnabled())
+	require.True(t, c.ServiceStatus().CleanupPending)
+	require.Error(t, c.SetService(context.Background(),
+		&api.ServiceRequest{State: "on"}))
+	require.False(t, c.serviceEnabled())
+	require.Error(t, c.UpdateSubscriber(&gin.Context{},
+		&api.UpdateSubscriber{Imsi: req.ImsiStr, Policy: pdnPolicy()}))
+	pending, err := c.store.GetPDN(req.InstanceID, req.PDNID)
+	require.NoError(t, err)
+	require.Equal(t, store.PDNClosing, pending.State)
+	sm.endErr = nil
+	require.NoError(t, c.SetService(context.Background(),
+		&api.ServiceRequest{State: "off"}))
+	require.Zero(t, c.ServiceStatus().PDNCount)
+	require.False(t, c.ServiceStatus().CleanupPending)
+	require.False(t, c.serviceEnabled())
 }
 
 func TestPDNExpirationIsCheckedWhileIdle(t *testing.T) {
@@ -458,4 +479,29 @@ func TestPDNLateBootCannotReplaceNewerProcess(t *testing.T) {
 	got, err := c.GetEPC(&gin.Context{})
 	require.NoError(t, err)
 	require.Equal(t, next.InstanceID, got.InstanceID)
+}
+
+func TestServiceLeaseExpiryRequiresNewOperatorOn(t *testing.T) {
+	c, _, req := pdnFixture(t)
+	_, err := c.CreateSession(&gin.Context{}, req)
+	require.NoError(t, err)
+	require.True(t, c.Status().Service.Confirmed)
+	require.NoError(t, os.Remove(os.Getenv("UKAMA_SERVICE_LEASE")))
+	require.False(t, c.ServiceStatus().Confirmed)
+	c.startPDNMonitor(10 * time.Millisecond)
+	require.Eventually(t, func() bool {
+		status := c.ServiceStatus()
+		return status.State == "off" && status.PDNCount == 0 && status.Confirmed
+	}, time.Second, 10*time.Millisecond)
+	var now unix.Timespec
+	require.NoError(t, unix.ClockGettime(unix.CLOCK_MONOTONIC, &now))
+	require.NoError(t, os.WriteFile(os.Getenv("UKAMA_SERVICE_LEASE"),
+		[]byte(fmt.Sprintln(now.Nano()/1000000+serviceLeaseMsec)), 0600))
+	require.Equal(t, "off", c.Status().Service.State)
+	_, err = c.CreateSession(&gin.Context{}, req)
+	checkHTTPError(t, err, http.StatusServiceUnavailable)
+	require.NoError(t, c.SetService(context.Background(), &api.ServiceRequest{State: "on"}))
+	req.PDNID = uuid.NewV4().String()
+	_, err = c.CreateSession(&gin.Context{}, req)
+	require.NoError(t, err)
 }

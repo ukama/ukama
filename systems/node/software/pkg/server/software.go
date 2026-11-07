@@ -228,7 +228,7 @@ func (s *SoftwareServer) GetReleaseCatalog(ctx context.Context, req *pb.GetRelea
 	return &pb.GetReleaseCatalogResponse{Releases: out}, nil
 }
 
-func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {
+func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey, completionRule string) (*copr.OperationInfo, error) {
 	if s.opManager == nil || s.opMonitor == nil {
 		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
 		return &copr.OperationInfo{Id: "", ResourceKey: resourceKey}, nil
@@ -251,6 +251,7 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey string) (*co
 		ResourceKey:     resourceKey,
 		ActionType:      actionType,
 		FencingToken:    op.FencingToken,
+		CompletionRule:  completionRule,
 		DeadlineSeconds: s.opDeadlineSecs,
 	}); err != nil {
 		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
@@ -435,7 +436,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to marshal update request: %v", err)
 	}
 
-	op, err := s.acquireAndRegister("UpdateSoftware", "node:"+nId.String())
+	op, err := s.acquireAndRegister("UpdateSoftware", "node:"+nId.String(), "app."+req.Name+"="+req.Tag)
 	if err != nil {
 		return nil, err
 	}

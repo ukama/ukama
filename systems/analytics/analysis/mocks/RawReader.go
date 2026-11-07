@@ -12,12 +12,12 @@ type RawReader struct {
 	mock.Mock
 }
 
-// StateAsOf provides a mock function with given fields: orgID, datasetKey, windowID
-func (_m *RawReader) StateAsOf(orgID string, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
+// LastKnownAsOf provides a mock function with given fields: orgID, datasetKey, windowID
+func (_m *RawReader) LastKnownAsOf(orgID string, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
 	ret := _m.Called(orgID, datasetKey, windowID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for StateAsOf")
+		panic("no return value specified for LastKnownAsOf")
 	}
 
 	var r0 []schema.RawRecord
@@ -42,12 +42,12 @@ func (_m *RawReader) StateAsOf(orgID string, datasetKey string, windowID int64) 
 	return r0, r1
 }
 
-// LastKnownAsOf provides a mock function with given fields: orgID, datasetKey, windowID
-func (_m *RawReader) LastKnownAsOf(orgID string, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
+// StateAsOf provides a mock function with given fields: orgID, datasetKey, windowID
+func (_m *RawReader) StateAsOf(orgID string, datasetKey string, windowID int64) ([]schema.RawRecord, error) {
 	ret := _m.Called(orgID, datasetKey, windowID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for LastKnownAsOf")
+		panic("no return value specified for StateAsOf")
 	}
 
 	var r0 []schema.RawRecord

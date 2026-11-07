@@ -11,6 +11,7 @@ pulls:
     strategy: full_snapshot
     items: $.packages
     entity: package_id
+    after: [subscriber.simpackage.listBySim]
     map:
       package_id: $.uuid
       name: $.name

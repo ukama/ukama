@@ -208,6 +208,13 @@ bool control_set_pending(ControlCtx *ctx,
         goto done;
     }
 
+    if (ctx->ServiceHeld || (subsystem != CONTROL_SUBSYS_SERVICE &&
+                             (ctx->Service.Phase == CONTROL_PHASE_PENDING ||
+                              ctx->Service.Phase == CONTROL_PHASE_EXECUTING))) {
+        status = HttpStatus_Conflict;
+        goto done;
+    }
+
     if (ctx->Active != CONTROL_SUBSYS_NONE && ctx->Active != subsystem) {
 
         ControlSubsysState *activeSs = NULL;

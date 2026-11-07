@@ -27,8 +27,7 @@ pulls:
       iccid: $.metric.iccid
       # Series identity only; never a KPI dimension.
       session_id: $.metric.session
-      # Prometheus sample pair [ts, "value"].
-      value: $.value
+      value: $.value[1]
 
   # Node liveness for SITE_UPTIME / NETWORK_UPTIME: each node's system uptime
   # counter, republished by the sanitizer with node_id/site/network labels.
@@ -84,8 +83,7 @@ pulls:
       lookback: 30m
     map:
       network_id: $.metric.network
-      # Prometheus sample pair [ts, "value"].
-      value: $.value
+      value: $.value[1]
 
   - key: metrics.inactive_sims.last
     endpoint: /v1/last/metrics/inactive_sims
@@ -96,4 +94,4 @@ pulls:
       lookback: 30m
     map:
       network_id: $.metric.network
-      value: $.value
+      value: $.value[1]

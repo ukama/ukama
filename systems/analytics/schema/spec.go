@@ -55,6 +55,7 @@ type PullSpec struct {
 	// a component suffixed with "?" is optional.
 	Entity    string            `yaml:"entity"`
 	ForEach   *ForEachSpec      `yaml:"for_each"`
+	After     []string          `yaml:"after"`
 	Map       map[string]string `yaml:"map"` // field -> $.path into each item
 	RateLimit string            `yaml:"rate_limit"`
 
@@ -69,6 +70,16 @@ type PullSpec struct {
 	// row carrying the binds plus unreachable:true. Use for health probes
 	// where unreachable IS the signal.
 	OnError string `yaml:"on_error"`
+}
+
+func (p PullSpec) Dependencies() []string {
+	deps := make([]string, 0, len(p.After)+1)
+
+	if p.ForEach != nil {
+		deps = append(deps, p.ForEach.Dataset)
+	}
+
+	return append(deps, p.After...)
 }
 
 // ForEachSpec fans a pull out over the rows of a parent dataset, binding row
@@ -264,6 +275,11 @@ func ValidateSourceSpecs(specs []SourceSpec) error {
 			if p.ForEach != nil && !keys[p.ForEach.Dataset] {
 				return fmt.Errorf("dataset %s: for_each references unknown dataset %q", p.Key, p.ForEach.Dataset)
 			}
+			for _, a := range p.After {
+				if !keys[a] {
+					return fmt.Errorf("dataset %s: after references unknown dataset %q", p.Key, a)
+				}
+			}
 		}
 	}
 
@@ -292,18 +308,19 @@ func OrderPulls(specs []SourceSpec) ([][]PullSpec, error) {
 			return d, nil
 		}
 		if seen[key] {
-			return 0, fmt.Errorf("for_each cycle involving dataset %q", key)
+			return 0, fmt.Errorf("dependency cycle involving dataset %q", key)
 		}
 		seen[key] = true
 
-		p := pulls[key]
 		d := 0
-		if p.ForEach != nil {
-			pd, err := resolve(p.ForEach.Dataset, seen)
+		for _, dep := range pulls[key].Dependencies() {
+			pd, err := resolve(dep, seen)
 			if err != nil {
 				return 0, err
 			}
-			d = pd + 1
+			if pd+1 > d {
+				d = pd + 1
+			}
 		}
 
 		depth[key] = d

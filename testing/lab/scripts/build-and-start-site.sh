@@ -8,7 +8,7 @@
 set -eu
 
 if [ "$#" -lt 4 ]; then
-    echo "usage: $0 <repo> <site-ref> <network-ref> <run-dir> [slot]" >&2
+    echo "usage: $0 <repo> <site-ref> <network-ref> <run-dir> [slot] [apn]" >&2
     exit 2
 fi
 
@@ -17,6 +17,7 @@ SITE_REF="$2"
 NETWORK_REF="$3"
 RUN_DIR="$4"
 SLOT="${5:-0}"
+APN="${6-internet}"
 
 FACTORY_URL="${FACTORY_URL:-https://factory-ukama.udev.ukama.com}"
 FACTORY_ORG="${FACTORY_ORG:-ukama}"
@@ -343,7 +344,7 @@ write_node_state "$SITE_REF-anode" "$ANODE_ID" "anode" "$ANODE_CONTAINER"
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$CNODE_ID" "$NODE_RUNTIME"
 "$SCRIPT_DIR/build-node.sh" "$REPO" "$ANODE_ID" "$NODE_RUNTIME"
 
-"$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR"
+"$SCRIPT_DIR/start-node.sh" "$TNODE_ID" "$TNODE_CONTAINER" "$RUN_DIR" "$APN"
 "$SCRIPT_DIR/start-node.sh" "$CNODE_ID" "$CNODE_CONTAINER" "$RUN_DIR"
 "$SCRIPT_DIR/start-node.sh" "$ANODE_ID" "$ANODE_CONTAINER" "$RUN_DIR"
 

@@ -17,6 +17,7 @@ import (
 
 	"github.com/ukama/ukama/nodes/apps/pcrf/cmd/version"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg"
+	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/api"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/client"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/controller"
 	"github.com/ukama/ukama/nodes/apps/pcrf/pkg/rest"
@@ -51,6 +52,10 @@ func main() {
 	ccmd.ProcessVersionArgument(pkg.ServiceName, os.Args, version.Version)
 
 	svcConf = pkg.NewConfig(pkg.ServiceName)
+	svcConf.APN, err = api.NormalizeAPN(svcConf.APN)
+	if err != nil {
+		log.Fatalf("Invalid UKAMA_APN: %v", err)
+	}
 
 	log.SetOutput(os.Stdout)
 

@@ -6,6 +6,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -121,7 +122,7 @@ static int append_env_object(json_t *japp, EnvVar *env) {
     return TRUE;
 }
 
-static int manifest_add_app(json_t *apps, Config *config) {
+static int manifest_add_app(json_t *apps, Config *config, bool serviceGroup) {
 
     json_t *japp = NULL;
     json_t *jargv = NULL;
@@ -162,6 +163,16 @@ static int manifest_add_app(json_t *apps, Config *config) {
     json_object_set_new(japp, "name", json_string(name));
     json_object_set_new(japp, "tag",  json_string(tag));
     json_object_set_new(japp, "cmd",  json_string(cmd));
+
+    if (serviceGroup &&
+        (streq(name, "pcrf") || streq(name, "epcemu") || streq(name, "epc") ||
+         streq(name, "init-network") || streq(name, "deviced") ||
+         streq(name, "starterd") || streq(name, "service-watchdog"))) {
+        json_object_set_new(
+            japp, "lifecycleGuard",
+            json_string("http://127.0.0.1:18003/v1/service/maintenance"));
+    }
+
     if (config->capp->service) {
         json_object_set_new(japp,
                             "service",
@@ -252,7 +263,9 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
             continue;
         }
 
-        if (!manifest_add_app(bootApps, cfg)) {
+        if (!manifest_add_app(bootApps, cfg,
+                              find_app_config(configs, "service-watchdog") !=
+                                  NULL)) {
             return FALSE;
         }
     }
@@ -275,7 +288,9 @@ static int append_boot_apps_in_order(json_t *bootApps, Configs *configs) {
             continue;
         }
 
-        if (!manifest_add_app(bootApps, ptr->config)) {
+        if (!manifest_add_app(bootApps, ptr->config,
+                              find_app_config(configs, "service-watchdog") !=
+                                  NULL)) {
             return FALSE;
         }
     }
@@ -306,7 +321,9 @@ static int append_service_apps(json_t *svcApps, Configs *configs) {
             continue;
         }
 
-        if (!manifest_add_app(svcApps, ptr->config)) {
+        if (!manifest_add_app(svcApps, ptr->config,
+                              find_app_config(configs, "service-watchdog") !=
+                                  NULL)) {
             return FALSE;
         }
     }

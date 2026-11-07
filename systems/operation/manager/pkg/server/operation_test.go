@@ -156,6 +156,45 @@ func TestGetByResource(t *testing.T) {
 	})
 }
 
+func TestGetOperation(t *testing.T) {
+	t.Run("ReturnsOperation", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		op := &db.Operation{Id: uuid.NewV4(), ResourceKey: "node:abc", FencingToken: 2}
+		repo.On("Get", mock.Anything, op.Id).Return(op, nil).Once()
+
+		resp, err := s.GetOperation(context.Background(),
+			&pb.GetOperationRequest{Id: op.Id.String()})
+
+		assert.NoError(t, err)
+		assert.Equal(t, op.Id.String(), resp.Operation.Id)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("MissingOperationIsNotFound", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		id := uuid.NewV4()
+		repo.On("Get", mock.Anything, id).Return(nil, gorm.ErrRecordNotFound).Once()
+
+		_, err := s.GetOperation(context.Background(),
+			&pb.GetOperationRequest{Id: id.String()})
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("InvalidId", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		_, err := s.GetOperation(context.Background(),
+			&pb.GetOperationRequest{Id: "not-a-uuid"})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		repo.AssertNotCalled(t, "Get", mock.Anything, mock.Anything)
+	})
+}
+
 func TestCompleteOperation(t *testing.T) {
 	id := uuid.NewV4()
 	audit := mock.AnythingOfType("db.OperationAudit")
@@ -358,6 +397,58 @@ func TestRepoErrorCodes(t *testing.T) {
 			})
 
 			assert.Equal(t, tc.code, status.Code(err))
+		})
+
+		t.Run("StartIdempotencyLookup"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("GetByIdempotencyKey", mock.Anything, "key").
+				Return(nil, tc.err).Once()
+
+			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
+				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
+				RequestedBy: "controller", IdempotencyKey: "key",
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
+		})
+
+		t.Run("GetOperation"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("Get", mock.Anything, id).Return(nil, tc.err).Once()
+
+			_, err := s.GetOperation(context.Background(),
+				&pb.GetOperationRequest{Id: id.String()})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+
+		t.Run("GetByResource"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("GetByResource", mock.Anything, "node:abc").
+				Return(nil, tc.err).Once()
+
+			_, err := s.GetByResource(context.Background(),
+				&pb.GetByResourceRequest{ResourceKey: "node:abc"})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+
+		t.Run("ForceUnlock"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("Get", mock.Anything, id).Return(nil, tc.err).Once()
+
+			_, err := s.ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
+				Id: id.String(), Actor: "a", Reason: "r",
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+			repo.AssertNotCalled(t, "Terminate", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		})
 	}
 

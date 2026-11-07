@@ -118,7 +118,7 @@ def previous_binding(state, snapshot):
 
 def observe(state, expected, apn="-", snapshot=None, same=False, new=False):
     if (same and new) or ((same or new) and
-                          expected in ("detached", "rejected")):
+                          expected in ("detached", "rejected", "absent")):
         raise Pending("invalid PDN identity expectation")
     agent = agent_status(state)
     epc_code, epc = api(state, 18028, "/v1/ue/" + state["IMSI"])
@@ -128,8 +128,8 @@ def observe(state, expected, apn="-", snapshot=None, same=False, new=False):
     if apn != "-" and requested.lower() != apn.lower():
         raise Pending("requested APN differs from the scenario expectation")
 
-    if expected in ("detached", "rejected"):
-        if agent.get("state") != expected:
+    if expected in ("detached", "rejected", "absent"):
+        if expected != "absent" and agent.get("state") != expected:
             raise Pending(f"UE state={agent.get('state')}, need {expected}")
         if expected == "rejected" and (
                 agent.get("http_status") != 403 or
@@ -202,7 +202,7 @@ def main():
     parser.add_argument("ue")
     parser.add_argument("run_dir")
     parser.add_argument("expected", choices=("attached", "allowed", "blocked",
-                                           "rejected", "detached", "detach"))
+                                           "rejected", "detached", "detach", "absent"))
     parser.add_argument("seconds", type=int, nargs="?", default=0)
     parser.add_argument("apn", nargs="?", default="-")
     parser.add_argument("same", type=int, choices=(0, 1), nargs="?", default=0)

@@ -29,9 +29,14 @@ type Config struct {
 	OrgName             string
 	Service             *uconf.Service
 	Http                HttpServices
+	Operation           OperationServices
 }
 type HttpServices struct {
 	InitClient string `default:"api-gateway-init:8080"`
+}
+
+type OperationServices struct {
+	Timeout time.Duration `default:"5s"`
 }
 
 func NewConfig(name string) *Config {
@@ -43,6 +48,7 @@ func NewConfig(name string) *Config {
 		HealthHost:          "health:9090",
 		NodeControllerHost:  "controller:9090",
 		Service:             uconf.LoadServiceHostConfig(name),
+		Operation:           OperationServices{Timeout: 5 * time.Second},
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{

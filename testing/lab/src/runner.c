@@ -142,6 +142,8 @@ static int event_uses_ue_runtime(event_type_t type) {
         type == EVT_START_UES ||
         type == EVT_WAIT_UES_ATTACHED ||
         type == EVT_WAIT_UES_DETACHED ||
+        type == EVT_SET_UE_RATE_POLICY ||
+        type == EVT_WAIT_UE_RATE_LIMITS ||
         type == EVT_WAIT_UE_SESSIONS ||
         type == EVT_FINALIZE_UE_SESSIONS;
 }
@@ -986,6 +988,8 @@ static int is_live_runtime_check(const check_spec_t *check) {
          check->type == CHECK_TRAFFIC_BLOCKED ||
          check->type == CHECK_TRAFFIC_UNAVAILABLE ||
          check->type == CHECK_NODE_VERSION_EQUALS ||
+         check->type == CHECK_UE_ADDRESSING ||
+         check->type == CHECK_UE_APN ||
          check->type == CHECK_NODE_HEALTH_OK);
 }
 
@@ -1460,6 +1464,9 @@ static int runner_validate_one(const runner_opts_t *opts) {
     rc = runtime_init(&runtime, scenario->provider.type,
                       opts->script_dir, runDir, opts->repo);
     if (rc != ULAB_OK) { rc = ULAB_ERUNTIME; goto done; }
+    if (scenario->runtime.apn[0]) {
+        ulab_copy(runtime.apn, sizeof(runtime.apn), scenario->runtime.apn);
+    }
     if (runtime_is_hardware(&runtime) &&
         hardware_runtime_open(&runtime, &hardware, &world, &err)) {
         preparation_failed = 1;

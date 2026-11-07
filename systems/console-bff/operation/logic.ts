@@ -116,7 +116,7 @@ export const busyReason = (op?: OperationDto): string => {
 /**
  * Per-action availability for the site page, derived from node roles:
  *  - restartSite depends on EVERY node (all must be idle)
- *  - rf         depends on the amplifier node (anode)
+ *  - rf         depends on the amplifier and tower nodes (anode, tnode)
  *  - service    depends on the tower node (tnode)
  */
 export const buildSiteActions = (
@@ -146,18 +146,24 @@ export const buildSiteActions = (
     : { available: true };
 
   const roleAction = (
-    node: SiteNodeStatus | undefined,
-    missingReason: string
+    required: [SiteNodeStatus | undefined, string][]
   ): SiteActionsDto["rf"] => {
-    if (!node) return { available: false, reason: missingReason };
-    const reason = unavailableReason([node, ...controllers]);
+    const nodes: SiteNodeStatus[] = [];
+    for (const [node, missingReason] of required) {
+      if (!node) return { available: false, reason: missingReason };
+      nodes.push(node);
+    }
+    const reason = unavailableReason([...nodes, ...controllers]);
     if (reason) return { available: false, reason };
     return { available: true };
   };
 
   return {
     restartSite,
-    rf: roleAction(amp, "No amplifier node on this site"),
-    service: roleAction(tower, "No tower node on this site"),
+    rf: roleAction([
+      [amp, "No amplifier node on this site"],
+      [tower, "No tower node on this site"],
+    ]),
+    service: roleAction([[tower, "No tower node on this site"]]),
   };
 };

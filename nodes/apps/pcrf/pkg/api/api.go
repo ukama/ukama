@@ -15,7 +15,7 @@ type CreateSession struct {
 	PDNID      string  `json:"pdn_id" validate:"required"`
 	Imsi       []uint8 `json:"imsi" validate:"required"`
 	ImsiStr    string  `json:"imsi_str,omitempty"`
-	ApnName    string  `json:"apn_name" validate:"required"`
+	ApnName    string  `json:"apn_name"`
 	Ip         uint32  `json:"pdn_address" validate:"required"`
 	IpStr      string  `json:"ip_str,omitempty"`
 }
@@ -207,7 +207,11 @@ type ServiceRequest struct {
 }
 
 type ServiceResponse struct {
-	State     string `json:"state"`
-	Admission string `json:"admission"`
-	Reason    string `json:"reason"`
+	Confirmed      bool   `json:"confirmed"`
+	PDNCount       int    `json:"pdn_count"`
+	CleanupPending bool   `json:"cleanup_pending"`
+	Ready          bool   `json:"ready"`
+	State          string `json:"state"`
+	Admission      string `json:"admission"`
+	Reason         string `json:"reason"`
 }

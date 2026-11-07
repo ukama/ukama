@@ -11,18 +11,6 @@
 
 #include "usys_log.h"
 
-int actions_service_apply(Config *config, ControlState desired) {
-
-    if (!config) return STATUS_NOK;
-
-    if (node_is_tower(config)) {
-        return node_tower_apply_service(config, desired);
-    }
-
-    usys_log_error("service: unsupported on this device.d instance");
-    return STATUS_NOK;
-}
-
 int actions_radio_apply(Config *config, ControlState desired) {
 
     if (!config) return STATUS_NOK;

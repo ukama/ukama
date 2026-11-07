@@ -56,7 +56,7 @@ int tun_create(const char *name) {
     index = if_nametoindex(name);
     if (index == 0) return -1;
 
-    fd = open("/dev/net/tun", O_RDWR | O_CLOEXEC);
+    fd = open("/dev/net/tun", O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (fd < 0) return -1;
 
     ifr.ifr_flags = IFF_TUN | IFF_NO_PI;

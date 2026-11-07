@@ -12,6 +12,7 @@
 #include "epcemu.h"
 #include "http_client.h"
 #include "init_network.h"
+#include "netutil.h"
 
 #define INIT_NETWORK_RECONCILE_TIMEOUT_SEC 30
 
@@ -54,26 +55,37 @@ static int reconcile_response_ok(JsonObj *root) {
                            &routingReady) && tunReady && routingReady;
 }
 
+static bool read_cidr(JsonObj *value, char *out, size_t cap, bool uePool) {
+
+    Ipv4Cidr cidr;
+    const char *text = json_string_value(value);
+    size_t len = json_string_length(value);
+
+    if (text == NULL || len >= cap || len != strlen(text)) return false;
+    if (uePool ? !ue_subnet_parse(text, &cidr) : !ipv4_cidr_parse(text, &cidr)) {
+        return false;
+    }
+    memcpy(out, text, len + 1);
+    return true;
+}
+
 static int read_tun_config(JsonObj *root, EpcemuConfig *config) {
 
     JsonObj *tun;
     JsonObj *enabled;
     const char *name;
-    const char *addr;
 
     tun = json_object_get(root, "tun");
     if (!json_is_object(tun)) return USYS_FALSE;
 
     name = json_string_value(json_object_get(tun, "interface"));
-    addr = json_string_value(json_object_get(tun, "primaryCidr"));
     enabled = json_object_get(tun, "enabled");
-    if (name == NULL || addr == NULL || !json_is_boolean(enabled) ||
-        name[0] == '\0' || addr[0] == '\0' ||
-        strlen(name) >= sizeof(config->tunName) ||
-        strlen(addr) >= sizeof(config->tunAddr)) return USYS_FALSE;
+    if (name == NULL || !json_is_boolean(enabled) ||
+        name[0] == '\0' || strlen(name) >= sizeof(config->tunName) ||
+        !read_cidr(json_object_get(tun, "primaryCidr"), config->tunAddr,
+                   sizeof(config->tunAddr), false)) return USYS_FALSE;
 
     snprintf(config->tunName, sizeof(config->tunName), "%s", name);
-    snprintf(config->tunAddr, sizeof(config->tunAddr), "%s", addr);
     config->initNetworkRouted = reconcile_response_ok(root);
 
     return json_is_true(enabled) && config->initNetworkRouted;
@@ -84,6 +96,7 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
     char url[EPCEMU_MAX_STR * 2];
     JsonObj *root;
     JsonObj *bridge;
+    JsonObj *gateway;
     JsonObj *ue;
     JsonObj *ready;
     JsonObj *value;
@@ -145,23 +158,18 @@ int init_network_probe(EpcemuConfig *config, EpcemuStatus *status) {
                  json_string_value(value));
     }
 
-    value = json_object_get(bridge, "cidr");
-    if (json_is_string(value)) {
-        snprintf(config->bridgeCidr, sizeof(config->bridgeCidr), "%s",
-                 json_string_value(value));
-    }
-
-    value = json_object_get(ue, "cidr");
-    if (json_is_string(value)) {
-        snprintf(config->ueCidr, sizeof(config->ueCidr), "%s",
-                 json_string_value(value));
-    }
-
-    if (config->ueCidr[0] == '\0') {
+    gateway = json_object_get(root, "gateway");
+    config->gatewayCidr[0] = '\0';
+    if (!read_cidr(json_object_get(ue, "cidr"), config->ueCidr,
+                   sizeof(config->ueCidr), true) ||
+        !read_cidr(json_object_get(bridge, "cidr"), config->bridgeCidr,
+                   sizeof(config->bridgeCidr), false) ||
+        (json_is_true(json_object_get(gateway, "enabled")) &&
+         !read_cidr(json_object_get(gateway, "address"), config->gatewayCidr,
+                    sizeof(config->gatewayCidr), false))) {
         json_decref(root);
-        status_set(status,
-                   EpcemuStateCheckingInitNetwork,
-                   "waiting for init-network UE CIDR");
+        status_set(status, EpcemuStateCheckingInitNetwork,
+                   "invalid init-network subnet configuration");
         return USYS_FALSE;
     }
 

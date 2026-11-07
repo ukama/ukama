@@ -16,12 +16,15 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	ukamapb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/health/mocks"
 	pb "github.com/ukama/ukama/systems/node/health/pb/gen"
 	"github.com/ukama/ukama/systems/node/health/pkg/db"
+	"github.com/ukama/ukama/systems/node/health/pkg/parser"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -504,4 +507,19 @@ func TestHealthServerListInterfaces(t *testing.T) {
 func jsonNumber(v int64) string {
 	b, _ := json.Marshal(v)
 	return string(b)
+}
+
+func TestHealthServerPublishAppsChangedCarriesVersions(t *testing.T) {
+	msgBus := &cmocks.MsgBusServiceClient{}
+	s := NewHealthServer(testOrgName, &mocks.HealthRepo{}, false, msgBus)
+
+	msgBus.On("PublishRequest", mock.Anything, mock.MatchedBy(func(e *epb.HealthAppsChangedEvent) bool {
+		return e.NodeId == testCNode.StringLowercase() && e.NodeType == "control" &&
+			len(e.Apps) == 1 && e.Apps[0].Name == "example" && e.Apps[0].Version == "1.2.4"
+	})).Return(nil).Once()
+
+	s.publishAppsChangedIfNeeded(testCNode.StringLowercase(), "control",
+		[]parser.HealthApp{{Name: "example", Version: "1.2.4"}}, "")
+
+	msgBus.AssertExpectations(t)
 }
