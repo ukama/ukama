@@ -13,6 +13,7 @@ package integration
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -265,4 +266,32 @@ func TestForceUnlock(t *testing.T) {
 
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	})
+}
+
+func TestInvalidResourceKey(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	for name, key := range map[string]string{
+		"Blank":   "   ",
+		"Nul":     "test:integration:\x00",
+		"TooLong": "test:integration:" + strings.Repeat("a", 255),
+	} {
+		t.Run("Start"+name, func(t *testing.T) {
+			_, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+				Type:        "IntegrationTest",
+				System:      "operation",
+				ResourceKey: key,
+				RequestedBy: actor,
+			})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+
+		t.Run("GetByResource"+name, func(t *testing.T) {
+			_, err := c.GetByResource(ctx, &pb.GetByResourceRequest{ResourceKey: key})
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		})
+	}
 }
