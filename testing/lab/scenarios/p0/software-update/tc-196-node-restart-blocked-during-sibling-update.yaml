@@ -1,0 +1,93 @@
+version: 1
+name: p0-tc-196-node-restart-blocked-during-sibling-update
+description: Start a controller software update and verify a direct tower restart is rejected while that sibling node operation is active, leaves no lock on the tower, then verify the site unlocks.
+seed: 5196
+suite: p0
+priority: p0
+tags: [virtual, software-update, node, restart, operation-lock, tc-196]
+status: active
+provider:
+  type: virtual
+world:
+  networks: 1
+  sites_per_network: 1
+  nodes_per_site:
+    tower: 1
+    amplifier: 1
+    controller: 1
+  ues_per_site: 0
+setup:
+  create_via_bff: [networks, sites, nodes, node_site_links]
+runtime:
+  start: [nodes]
+  wait: [nodes_ready]
+
+phases:
+  - name: verify_site_before_update
+    checks:
+      - type: node_status_equals
+        nodes: all
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 300
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        immediate: true
+        timeout_seconds: 300
+
+  - name: start_update
+    events:
+      - type: promote_release
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+      - type: wait
+        seconds: 30
+      - type: software_update
+        type_selector: controller
+        count_per_network: 1
+        app: example
+        tag: ${ULAB_SOFTWARE_TARGET_VERSION}
+    checks:
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: true
+        immediate: true
+        timeout_seconds: 60
+
+  - name: reject_tower_restart
+    events:
+      - type: restart_nodes
+        type_selector: tower
+        count_per_network: 1
+        expect:
+          result: failure
+    checks:
+      - type: node_operation_status_equals
+        type_selector: tower
+        count_per_network: 1
+        busy: false
+        immediate: true
+        timeout_seconds: 10
+      - type: node_operation_status_equals
+        type_selector: controller
+        count_per_network: 1
+        busy: true
+        immediate: true
+        timeout_seconds: 10
+
+  - name: site_unlocks_after_update
+    checks:
+      - type: site_operation_status_equals
+        sites: all
+        busy: false
+        timeout_seconds: 300
+      - type: node_status_equals
+        type_selector: tower
+        count_per_network: 1
+        connectivity: Online
+        state: Operational
+        immediate: true
+        timeout_seconds: 60
