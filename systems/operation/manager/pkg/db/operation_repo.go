@@ -23,8 +23,9 @@ import (
 )
 
 var (
-	ErrLockConflict = errors.New("resource_locked")
-	ErrLockTimeout  = errors.New("lock_timeout")
+	ErrLockConflict        = errors.New("resource_locked")
+	ErrLockTimeout         = errors.New("lock_timeout")
+	ErrIdempotencyKeyTaken = errors.New("idempotency_key_taken")
 )
 
 const (
@@ -59,6 +60,9 @@ func (r *operationRepo) Start(ctx context.Context, op *Operation,
 			return err
 		}
 		if err := tx.Create(op).Error; err != nil {
+			if sql.IsDuplicateKeyError(err) {
+				return ErrIdempotencyKeyTaken
+			}
 			return err
 		}
 
@@ -86,8 +90,8 @@ func (r *operationRepo) Start(ctx context.Context, op *Operation,
 		}).Error
 	})
 
-	if errors.Is(err, ErrLockConflict) {
-		return nil, ErrLockConflict
+	if errors.Is(err, ErrLockConflict) || errors.Is(err, ErrIdempotencyKeyTaken) {
+		return nil, err
 	}
 	if err != nil {
 		return nil, fmt.Errorf("start operation: %w", lockTimeoutErr(err))

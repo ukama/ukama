@@ -145,6 +145,40 @@ func Test_Start(t *testing.T) {
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
+	t.Run("TakenIdempotencyKey", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockTimeout(mock)
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
+			WillReturnError(&pgconn.PgError{Code: "23505"})
+		mock.ExpectRollback()
+
+		out, err := repo.Start(ctx, newOp(), 5*time.Minute)
+
+		assert.True(t, errors.Is(err, ErrIdempotencyKeyTaken), err)
+		assert.False(t, errors.Is(err, ErrLockConflict), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("OtherOperationInsertErrorIsWrapped", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockTimeout(mock)
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
+			WillReturnError(errors.New("connection reset"))
+		mock.ExpectRollback()
+
+		out, err := repo.Start(ctx, newOp(), 5*time.Minute)
+
+		assert.Error(t, err)
+		assert.False(t, errors.Is(err, ErrIdempotencyKeyTaken), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	t.Run("LockTimeoutIsNotConflict", func(t *testing.T) {
 		mock, repo := setupTestDB(t)
 		op := newOp()

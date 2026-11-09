@@ -89,12 +89,9 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	if req.IdempotencyKey != "" {
-		existing, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
-		if err != nil {
-			return nil, repoErr(err)
-		}
-		if existing != nil {
-			return &pb.StartOperationResponse{Operation: toPb(existing)}, nil
+		resp, err := s.replay(ctx, req)
+		if resp != nil || err != nil {
+			return resp, err
 		}
 	}
 
@@ -113,6 +110,14 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	op, err := s.repo.Start(ctx, op, lease)
+	if errors.Is(err, db.ErrIdempotencyKeyTaken) {
+		resp, err := s.replay(ctx, req)
+		if resp == nil && err == nil {
+			err = status.Errorf(codes.Aborted,
+				"idempotency key %q is in use by a concurrent start", req.IdempotencyKey)
+		}
+		return resp, err
+	}
 	if errors.Is(err, db.ErrLockConflict) {
 		return nil, status.Error(codes.AlreadyExists,
 			"resource is locked by an active operation")
@@ -122,6 +127,24 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	log.Infof("operation %s started: type=%s resource=%s token=%d", op.Id, op.Type, op.ResourceKey, op.FencingToken)
+	return &pb.StartOperationResponse{Operation: toPb(op)}, nil
+}
+
+func (s *OperationServer) replay(ctx context.Context,
+	req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
+	op, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
+	if err != nil {
+		return nil, repoErr(err)
+	}
+	if op == nil {
+		return nil, nil
+	}
+	if op.ResourceKey != req.ResourceKey || op.Type != req.Type ||
+		op.System != req.System {
+		return nil, status.Errorf(codes.InvalidArgument,
+			"idempotency key %q belongs to %s %s operation on %s",
+			req.IdempotencyKey, op.System, op.Type, op.ResourceKey)
+	}
 	return &pb.StartOperationResponse{Operation: toPb(op)}, nil
 }
 
