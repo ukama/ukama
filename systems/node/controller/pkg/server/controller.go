@@ -131,18 +131,6 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
-func (c *ControllerServer) RestartNode(ctx context.Context,
-	req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
-	if req.NodeId == "" {
-		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
-	}
-	resp, err := c.RestartNodes(ctx, &pb.RestartNodesRequest{NodeIds: []string{req.NodeId}})
-	if err != nil {
-		return nil, err
-	}
-	return resp.Operations[0], nil
-}
-
 func (c *ControllerServer) RestartNodes(ctx context.Context,
 	req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
 	ids, err := validNodeIds(req.NodeIds)
@@ -234,17 +222,6 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 	}
 	opStatus := c.completeOperation(op, "ToggleInternetSwitch")
 	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
-}
-
-func (c *ControllerServer) ToggleRadio(ctx context.Context,
-	req *pb.ToggleRadioRequest) (*pb.ToggleRadioResponse, error) {
-	resp, err := c.ToggleRadios(ctx, &pb.ToggleRadiosRequest{
-		NodeIds: []string{req.NodeId}, State: req.State,
-	})
-	if err != nil {
-		return nil, err
-	}
-	return resp.Operations[0], nil
 }
 
 func (c *ControllerServer) ToggleRadios(ctx context.Context,

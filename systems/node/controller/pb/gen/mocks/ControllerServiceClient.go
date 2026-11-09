@@ -127,43 +127,6 @@ func (_m *ControllerServiceClient) PingNode(ctx context.Context, in *gen.PingNod
 	return r0, r1
 }
 
-// RestartNode provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.RestartNodeRequest, opts ...grpc.CallOption) (*gen.RestartNodeResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RestartNode")
-	}
-
-	var r0 *gen.RestartNodeResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) (*gen.RestartNodeResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) *gen.RestartNodeResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RestartNodeResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // RestartNodes provides a mock function with given fields: ctx, in, opts
 func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.RestartNodesRequest, opts ...grpc.CallOption) (*gen.RestartNodesResponse, error) {
 	_va := make([]interface{}, len(opts))
@@ -230,43 +193,6 @@ func (_m *ControllerServiceClient) SendNodeCommand(ctx context.Context, in *gen.
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.SendNodeCommandRequest, ...grpc.CallOption) error); ok {
-		r1 = rf(ctx, in, opts...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// ToggleRadio provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleRadio(ctx context.Context, in *gen.ToggleRadioRequest, opts ...grpc.CallOption) (*gen.ToggleRadioResponse, error) {
-	_va := make([]interface{}, len(opts))
-	for _i := range opts {
-		_va[_i] = opts[_i]
-	}
-	var _ca []interface{}
-	_ca = append(_ca, ctx, in)
-	_ca = append(_ca, _va...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ToggleRadio")
-	}
-
-	var r0 *gen.ToggleRadioResponse
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) (*gen.ToggleRadioResponse, error)); ok {
-		return rf(ctx, in, opts...)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) *gen.ToggleRadioResponse); ok {
-		r0 = rf(ctx, in, opts...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleRadioResponse)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)

@@ -67,22 +67,7 @@ func (this *ToggleSwitchPortRequest) Validate() error {
 func (this *ToggleSwitchPortResponse) Validate() error {
 	return nil
 }
-func (this *ToggleRadioRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
-	if this.State == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
-	}
-	return nil
-}
 func (this *ToggleRadioResponse) Validate() error {
-	return nil
-}
-func (this *RestartNodeRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
-	}
 	return nil
 }
 func (this *RestartNodeResponse) Validate() error {

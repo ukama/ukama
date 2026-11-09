@@ -109,8 +109,7 @@ func TestLockNodes_BusySiblingRejectsDirectAction(t *testing.T) {
 				strings.Contains(reason, "UpdateSoftware")
 		})).Return(&copr.OperationInfo{}, nil).Once()
 
-	_, err := f.server().RestartNode(context.TODO(),
-		&pb.RestartNodeRequest{NodeId: siteTnode})
+	_, err := restartNode(f.server(), siteTnode)
 
 	assert.Equal(t, codes.AlreadyExists, status.Code(err))
 	assert.Contains(t, status.Convert(err).Message(), "op-update")

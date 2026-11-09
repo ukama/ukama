@@ -606,58 +606,6 @@ func (x *ToggleSwitchPortResponse) GetStatus() string {
 	return ""
 }
 
-type ToggleRadioRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	State         string                 `protobuf:"bytes,2,opt,name=state,proto3" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *ToggleRadioRequest) Reset() {
-	*x = ToggleRadioRequest{}
-	mi := &file_controller_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *ToggleRadioRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*ToggleRadioRequest) ProtoMessage() {}
-
-func (x *ToggleRadioRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use ToggleRadioRequest.ProtoReflect.Descriptor instead.
-func (*ToggleRadioRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *ToggleRadioRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
-func (x *ToggleRadioRequest) GetState() string {
-	if x != nil {
-		return x.State
-	}
-	return ""
-}
-
 type ToggleRadioResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,json=operation_id,proto3" json:"operationId,omitempty"`
@@ -669,7 +617,7 @@ type ToggleRadioResponse struct {
 
 func (x *ToggleRadioResponse) Reset() {
 	*x = ToggleRadioResponse{}
-	mi := &file_controller_proto_msgTypes[11]
+	mi := &file_controller_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -681,7 +629,7 @@ func (x *ToggleRadioResponse) String() string {
 func (*ToggleRadioResponse) ProtoMessage() {}
 
 func (x *ToggleRadioResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[11]
+	mi := &file_controller_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -694,7 +642,7 @@ func (x *ToggleRadioResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleRadioResponse.ProtoReflect.Descriptor instead.
 func (*ToggleRadioResponse) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{11}
+	return file_controller_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ToggleRadioResponse) GetOperationId() string {
@@ -718,50 +666,6 @@ func (x *ToggleRadioResponse) GetStatus() string {
 	return ""
 }
 
-type RestartNodeRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=nodeId,json=node_id,proto3" json:"nodeId,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *RestartNodeRequest) Reset() {
-	*x = RestartNodeRequest{}
-	mi := &file_controller_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *RestartNodeRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*RestartNodeRequest) ProtoMessage() {}
-
-func (x *RestartNodeRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use RestartNodeRequest.ProtoReflect.Descriptor instead.
-func (*RestartNodeRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *RestartNodeRequest) GetNodeId() string {
-	if x != nil {
-		return x.NodeId
-	}
-	return ""
-}
-
 type RestartNodeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,json=operation_id,proto3" json:"operationId,omitempty"`
@@ -773,7 +677,7 @@ type RestartNodeResponse struct {
 
 func (x *RestartNodeResponse) Reset() {
 	*x = RestartNodeResponse{}
-	mi := &file_controller_proto_msgTypes[13]
+	mi := &file_controller_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -785,7 +689,7 @@ func (x *RestartNodeResponse) String() string {
 func (*RestartNodeResponse) ProtoMessage() {}
 
 func (x *RestartNodeResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[13]
+	mi := &file_controller_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -798,7 +702,7 @@ func (x *RestartNodeResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartNodeResponse.ProtoReflect.Descriptor instead.
 func (*RestartNodeResponse) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{13}
+	return file_controller_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RestartNodeResponse) GetOperationId() string {
@@ -831,7 +735,7 @@ type RestartNodesRequest struct {
 
 func (x *RestartNodesRequest) Reset() {
 	*x = RestartNodesRequest{}
-	mi := &file_controller_proto_msgTypes[14]
+	mi := &file_controller_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -843,7 +747,7 @@ func (x *RestartNodesRequest) String() string {
 func (*RestartNodesRequest) ProtoMessage() {}
 
 func (x *RestartNodesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[14]
+	mi := &file_controller_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -856,7 +760,7 @@ func (x *RestartNodesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartNodesRequest.ProtoReflect.Descriptor instead.
 func (*RestartNodesRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{14}
+	return file_controller_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RestartNodesRequest) GetNodeIds() []string {
@@ -875,7 +779,7 @@ type RestartNodesResponse struct {
 
 func (x *RestartNodesResponse) Reset() {
 	*x = RestartNodesResponse{}
-	mi := &file_controller_proto_msgTypes[15]
+	mi := &file_controller_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -887,7 +791,7 @@ func (x *RestartNodesResponse) String() string {
 func (*RestartNodesResponse) ProtoMessage() {}
 
 func (x *RestartNodesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[15]
+	mi := &file_controller_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -900,7 +804,7 @@ func (x *RestartNodesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RestartNodesResponse.ProtoReflect.Descriptor instead.
 func (*RestartNodesResponse) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{15}
+	return file_controller_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *RestartNodesResponse) GetOperations() []*RestartNodeResponse {
@@ -920,7 +824,7 @@ type ToggleRadiosRequest struct {
 
 func (x *ToggleRadiosRequest) Reset() {
 	*x = ToggleRadiosRequest{}
-	mi := &file_controller_proto_msgTypes[16]
+	mi := &file_controller_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -932,7 +836,7 @@ func (x *ToggleRadiosRequest) String() string {
 func (*ToggleRadiosRequest) ProtoMessage() {}
 
 func (x *ToggleRadiosRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[16]
+	mi := &file_controller_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -945,7 +849,7 @@ func (x *ToggleRadiosRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleRadiosRequest.ProtoReflect.Descriptor instead.
 func (*ToggleRadiosRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{16}
+	return file_controller_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ToggleRadiosRequest) GetNodeIds() []string {
@@ -971,7 +875,7 @@ type ToggleRadiosResponse struct {
 
 func (x *ToggleRadiosResponse) Reset() {
 	*x = ToggleRadiosResponse{}
-	mi := &file_controller_proto_msgTypes[17]
+	mi := &file_controller_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -983,7 +887,7 @@ func (x *ToggleRadiosResponse) String() string {
 func (*ToggleRadiosResponse) ProtoMessage() {}
 
 func (x *ToggleRadiosResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[17]
+	mi := &file_controller_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -996,7 +900,7 @@ func (x *ToggleRadiosResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleRadiosResponse.ProtoReflect.Descriptor instead.
 func (*ToggleRadiosResponse) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{17}
+	return file_controller_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ToggleRadiosResponse) GetOperations() []*ToggleRadioResponse {
@@ -1016,7 +920,7 @@ type ToggleServiceRequest struct {
 
 func (x *ToggleServiceRequest) Reset() {
 	*x = ToggleServiceRequest{}
-	mi := &file_controller_proto_msgTypes[18]
+	mi := &file_controller_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1028,7 +932,7 @@ func (x *ToggleServiceRequest) String() string {
 func (*ToggleServiceRequest) ProtoMessage() {}
 
 func (x *ToggleServiceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[18]
+	mi := &file_controller_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1041,7 +945,7 @@ func (x *ToggleServiceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleServiceRequest.ProtoReflect.Descriptor instead.
 func (*ToggleServiceRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{18}
+	return file_controller_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ToggleServiceRequest) GetNodeId() string {
@@ -1069,7 +973,7 @@ type ToggleServiceResponse struct {
 
 func (x *ToggleServiceResponse) Reset() {
 	*x = ToggleServiceResponse{}
-	mi := &file_controller_proto_msgTypes[19]
+	mi := &file_controller_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1081,7 +985,7 @@ func (x *ToggleServiceResponse) String() string {
 func (*ToggleServiceResponse) ProtoMessage() {}
 
 func (x *ToggleServiceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[19]
+	mi := &file_controller_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1094,7 +998,7 @@ func (x *ToggleServiceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ToggleServiceResponse.ProtoReflect.Descriptor instead.
 func (*ToggleServiceResponse) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{19}
+	return file_controller_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ToggleServiceResponse) GetOperationId() string {
@@ -1127,7 +1031,7 @@ type PublishMsgRequest struct {
 
 func (x *PublishMsgRequest) Reset() {
 	*x = PublishMsgRequest{}
-	mi := &file_controller_proto_msgTypes[20]
+	mi := &file_controller_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1139,7 +1043,7 @@ func (x *PublishMsgRequest) String() string {
 func (*PublishMsgRequest) ProtoMessage() {}
 
 func (x *PublishMsgRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_controller_proto_msgTypes[20]
+	mi := &file_controller_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1152,7 +1056,7 @@ func (x *PublishMsgRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PublishMsgRequest.ProtoReflect.Descriptor instead.
 func (*PublishMsgRequest) Descriptor() ([]byte, []int) {
-	return file_controller_proto_rawDescGZIP(), []int{20}
+	return file_controller_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PublishMsgRequest) GetState() string {
@@ -1208,16 +1112,11 @@ const file_controller_proto_rawDesc = "" +
 	"\x18ToggleSwitchPortResponse\x12!\n" +
 	"\voperationId\x18\x01 \x01(\tR\foperation_id\x12!\n" +
 	"\vresourceKey\x18\x02 \x01(\tR\fresource_key\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\"S\n" +
-	"\x12ToggleRadioRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\x12\x1c\n" +
-	"\x05state\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state\"s\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\"s\n" +
 	"\x13ToggleRadioResponse\x12!\n" +
 	"\voperationId\x18\x01 \x01(\tR\foperation_id\x12!\n" +
 	"\vresourceKey\x18\x02 \x01(\tR\fresource_key\x12\x16\n" +
-	"\x06status\x18\x03 \x01(\tR\x06status\"5\n" +
-	"\x12RestartNodeRequest\x12\x1f\n" +
-	"\x06nodeId\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\anode_id\"s\n" +
+	"\x06status\x18\x03 \x01(\tR\x06status\"s\n" +
 	"\x13RestartNodeResponse\x12!\n" +
 	"\voperationId\x18\x01 \x01(\tR\foperation_id\x12!\n" +
 	"\vresourceKey\x18\x02 \x01(\tR\fresource_key\x12\x16\n" +
@@ -1243,11 +1142,9 @@ const file_controller_proto_rawDesc = "" +
 	"\vresourceKey\x18\x02 \x01(\tR\fresource_key\x12\x16\n" +
 	"\x06status\x18\x03 \x01(\tR\x06status\"1\n" +
 	"\x11PublishMsgRequest\x12\x1c\n" +
-	"\x05state\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state2\xf5\b\n" +
-	"\x11ControllerService\x12j\n" +
-	"\vRestartNode\x12,.ukama.node.controller.v1.RestartNodeRequest\x1a-.ukama.node.controller.v1.RestartNodeResponse\x12m\n" +
-	"\fRestartNodes\x12-.ukama.node.controller.v1.RestartNodesRequest\x1a..ukama.node.controller.v1.RestartNodesResponse\x12j\n" +
-	"\vToggleRadio\x12,.ukama.node.controller.v1.ToggleRadioRequest\x1a-.ukama.node.controller.v1.ToggleRadioResponse\x12m\n" +
+	"\x05state\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05state2\x9d\a\n" +
+	"\x11ControllerService\x12m\n" +
+	"\fRestartNodes\x12-.ukama.node.controller.v1.RestartNodesRequest\x1a..ukama.node.controller.v1.RestartNodesResponse\x12m\n" +
 	"\fToggleRadios\x12-.ukama.node.controller.v1.ToggleRadiosRequest\x1a..ukama.node.controller.v1.ToggleRadiosResponse\x12y\n" +
 	"\x10ToggleSwitchPort\x121.ukama.node.controller.v1.ToggleSwitchPortRequest\x1a2.ukama.node.controller.v1.ToggleSwitchPortResponse\x12p\n" +
 	"\rToggleService\x12..ukama.node.controller.v1.ToggleServiceRequest\x1a/.ukama.node.controller.v1.ToggleServiceResponse\x12a\n" +
@@ -1269,7 +1166,7 @@ func file_controller_proto_rawDescGZIP() []byte {
 	return file_controller_proto_rawDescData
 }
 
-var file_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 21)
+var file_controller_proto_msgTypes = make([]protoimpl.MessageInfo, 19)
 var file_controller_proto_goTypes = []any{
 	(*DeleteNodeConfigRequest)(nil),  // 0: ukama.node.controller.v1.DeleteNodeConfigRequest
 	(*DeleteNodeConfigResponse)(nil), // 1: ukama.node.controller.v1.DeleteNodeConfigResponse
@@ -1281,43 +1178,37 @@ var file_controller_proto_goTypes = []any{
 	(*PingNodeResponse)(nil),         // 7: ukama.node.controller.v1.PingNodeResponse
 	(*ToggleSwitchPortRequest)(nil),  // 8: ukama.node.controller.v1.ToggleSwitchPortRequest
 	(*ToggleSwitchPortResponse)(nil), // 9: ukama.node.controller.v1.ToggleSwitchPortResponse
-	(*ToggleRadioRequest)(nil),       // 10: ukama.node.controller.v1.ToggleRadioRequest
-	(*ToggleRadioResponse)(nil),      // 11: ukama.node.controller.v1.ToggleRadioResponse
-	(*RestartNodeRequest)(nil),       // 12: ukama.node.controller.v1.RestartNodeRequest
-	(*RestartNodeResponse)(nil),      // 13: ukama.node.controller.v1.RestartNodeResponse
-	(*RestartNodesRequest)(nil),      // 14: ukama.node.controller.v1.RestartNodesRequest
-	(*RestartNodesResponse)(nil),     // 15: ukama.node.controller.v1.RestartNodesResponse
-	(*ToggleRadiosRequest)(nil),      // 16: ukama.node.controller.v1.ToggleRadiosRequest
-	(*ToggleRadiosResponse)(nil),     // 17: ukama.node.controller.v1.ToggleRadiosResponse
-	(*ToggleServiceRequest)(nil),     // 18: ukama.node.controller.v1.ToggleServiceRequest
-	(*ToggleServiceResponse)(nil),    // 19: ukama.node.controller.v1.ToggleServiceResponse
-	(*PublishMsgRequest)(nil),        // 20: ukama.node.controller.v1.PublishMsgRequest
+	(*ToggleRadioResponse)(nil),      // 10: ukama.node.controller.v1.ToggleRadioResponse
+	(*RestartNodeResponse)(nil),      // 11: ukama.node.controller.v1.RestartNodeResponse
+	(*RestartNodesRequest)(nil),      // 12: ukama.node.controller.v1.RestartNodesRequest
+	(*RestartNodesResponse)(nil),     // 13: ukama.node.controller.v1.RestartNodesResponse
+	(*ToggleRadiosRequest)(nil),      // 14: ukama.node.controller.v1.ToggleRadiosRequest
+	(*ToggleRadiosResponse)(nil),     // 15: ukama.node.controller.v1.ToggleRadiosResponse
+	(*ToggleServiceRequest)(nil),     // 16: ukama.node.controller.v1.ToggleServiceRequest
+	(*ToggleServiceResponse)(nil),    // 17: ukama.node.controller.v1.ToggleServiceResponse
+	(*PublishMsgRequest)(nil),        // 18: ukama.node.controller.v1.PublishMsgRequest
 }
 var file_controller_proto_depIdxs = []int32{
-	13, // 0: ukama.node.controller.v1.RestartNodesResponse.operations:type_name -> ukama.node.controller.v1.RestartNodeResponse
-	11, // 1: ukama.node.controller.v1.ToggleRadiosResponse.operations:type_name -> ukama.node.controller.v1.ToggleRadioResponse
-	12, // 2: ukama.node.controller.v1.ControllerService.RestartNode:input_type -> ukama.node.controller.v1.RestartNodeRequest
-	14, // 3: ukama.node.controller.v1.ControllerService.RestartNodes:input_type -> ukama.node.controller.v1.RestartNodesRequest
-	10, // 4: ukama.node.controller.v1.ControllerService.ToggleRadio:input_type -> ukama.node.controller.v1.ToggleRadioRequest
-	16, // 5: ukama.node.controller.v1.ControllerService.ToggleRadios:input_type -> ukama.node.controller.v1.ToggleRadiosRequest
-	8,  // 6: ukama.node.controller.v1.ControllerService.ToggleSwitchPort:input_type -> ukama.node.controller.v1.ToggleSwitchPortRequest
-	18, // 7: ukama.node.controller.v1.ControllerService.ToggleService:input_type -> ukama.node.controller.v1.ToggleServiceRequest
-	6,  // 8: ukama.node.controller.v1.ControllerService.PingNode:input_type -> ukama.node.controller.v1.PingNodeRequest
-	4,  // 9: ukama.node.controller.v1.ControllerService.SendNodeCommand:input_type -> ukama.node.controller.v1.SendNodeCommandRequest
-	2,  // 10: ukama.node.controller.v1.ControllerService.ConfigNode:input_type -> ukama.node.controller.v1.ConfigNodeRequest
-	0,  // 11: ukama.node.controller.v1.ControllerService.DeleteNodeConfig:input_type -> ukama.node.controller.v1.DeleteNodeConfigRequest
-	13, // 12: ukama.node.controller.v1.ControllerService.RestartNode:output_type -> ukama.node.controller.v1.RestartNodeResponse
-	15, // 13: ukama.node.controller.v1.ControllerService.RestartNodes:output_type -> ukama.node.controller.v1.RestartNodesResponse
-	11, // 14: ukama.node.controller.v1.ControllerService.ToggleRadio:output_type -> ukama.node.controller.v1.ToggleRadioResponse
-	17, // 15: ukama.node.controller.v1.ControllerService.ToggleRadios:output_type -> ukama.node.controller.v1.ToggleRadiosResponse
-	9,  // 16: ukama.node.controller.v1.ControllerService.ToggleSwitchPort:output_type -> ukama.node.controller.v1.ToggleSwitchPortResponse
-	19, // 17: ukama.node.controller.v1.ControllerService.ToggleService:output_type -> ukama.node.controller.v1.ToggleServiceResponse
-	7,  // 18: ukama.node.controller.v1.ControllerService.PingNode:output_type -> ukama.node.controller.v1.PingNodeResponse
-	5,  // 19: ukama.node.controller.v1.ControllerService.SendNodeCommand:output_type -> ukama.node.controller.v1.SendNodeCommandResponse
-	3,  // 20: ukama.node.controller.v1.ControllerService.ConfigNode:output_type -> ukama.node.controller.v1.ConfigNodeResponse
-	1,  // 21: ukama.node.controller.v1.ControllerService.DeleteNodeConfig:output_type -> ukama.node.controller.v1.DeleteNodeConfigResponse
-	12, // [12:22] is the sub-list for method output_type
-	2,  // [2:12] is the sub-list for method input_type
+	11, // 0: ukama.node.controller.v1.RestartNodesResponse.operations:type_name -> ukama.node.controller.v1.RestartNodeResponse
+	10, // 1: ukama.node.controller.v1.ToggleRadiosResponse.operations:type_name -> ukama.node.controller.v1.ToggleRadioResponse
+	12, // 2: ukama.node.controller.v1.ControllerService.RestartNodes:input_type -> ukama.node.controller.v1.RestartNodesRequest
+	14, // 3: ukama.node.controller.v1.ControllerService.ToggleRadios:input_type -> ukama.node.controller.v1.ToggleRadiosRequest
+	8,  // 4: ukama.node.controller.v1.ControllerService.ToggleSwitchPort:input_type -> ukama.node.controller.v1.ToggleSwitchPortRequest
+	16, // 5: ukama.node.controller.v1.ControllerService.ToggleService:input_type -> ukama.node.controller.v1.ToggleServiceRequest
+	6,  // 6: ukama.node.controller.v1.ControllerService.PingNode:input_type -> ukama.node.controller.v1.PingNodeRequest
+	4,  // 7: ukama.node.controller.v1.ControllerService.SendNodeCommand:input_type -> ukama.node.controller.v1.SendNodeCommandRequest
+	2,  // 8: ukama.node.controller.v1.ControllerService.ConfigNode:input_type -> ukama.node.controller.v1.ConfigNodeRequest
+	0,  // 9: ukama.node.controller.v1.ControllerService.DeleteNodeConfig:input_type -> ukama.node.controller.v1.DeleteNodeConfigRequest
+	13, // 10: ukama.node.controller.v1.ControllerService.RestartNodes:output_type -> ukama.node.controller.v1.RestartNodesResponse
+	15, // 11: ukama.node.controller.v1.ControllerService.ToggleRadios:output_type -> ukama.node.controller.v1.ToggleRadiosResponse
+	9,  // 12: ukama.node.controller.v1.ControllerService.ToggleSwitchPort:output_type -> ukama.node.controller.v1.ToggleSwitchPortResponse
+	17, // 13: ukama.node.controller.v1.ControllerService.ToggleService:output_type -> ukama.node.controller.v1.ToggleServiceResponse
+	7,  // 14: ukama.node.controller.v1.ControllerService.PingNode:output_type -> ukama.node.controller.v1.PingNodeResponse
+	5,  // 15: ukama.node.controller.v1.ControllerService.SendNodeCommand:output_type -> ukama.node.controller.v1.SendNodeCommandResponse
+	3,  // 16: ukama.node.controller.v1.ControllerService.ConfigNode:output_type -> ukama.node.controller.v1.ConfigNodeResponse
+	1,  // 17: ukama.node.controller.v1.ControllerService.DeleteNodeConfig:output_type -> ukama.node.controller.v1.DeleteNodeConfigResponse
+	10, // [10:18] is the sub-list for method output_type
+	2,  // [2:10] is the sub-list for method input_type
 	2,  // [2:2] is the sub-list for extension type_name
 	2,  // [2:2] is the sub-list for extension extendee
 	0,  // [0:2] is the sub-list for field type_name
@@ -1334,7 +1225,7 @@ func file_controller_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_controller_proto_rawDesc), len(file_controller_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   21,
+			NumMessages:   19,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

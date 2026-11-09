@@ -7,9 +7,7 @@ import "validator.proto";
 
 // Defines the service for controller operations
 service ControllerService {
-  rpc RestartNode(RestartNodeRequest) returns (RestartNodeResponse);
   rpc RestartNodes(RestartNodesRequest) returns (RestartNodesResponse);
-  rpc ToggleRadio(ToggleRadioRequest) returns (ToggleRadioResponse);
   rpc ToggleRadios(ToggleRadiosRequest) returns (ToggleRadiosResponse);
   rpc ToggleSwitchPort(ToggleSwitchPortRequest) returns (ToggleSwitchPortResponse);
   rpc ToggleService(ToggleServiceRequest) returns (ToggleServiceResponse);
@@ -75,20 +73,10 @@ message ToggleSwitchPortResponse {
   string status = 3;
 }
 
-message ToggleRadioRequest {
-  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-  string state = 2 [(validator.field) = {string_not_empty: true}, json_name = "state"];
-}
-
 message ToggleRadioResponse {
   string operationId = 1 [json_name = "operation_id"];
   string resourceKey = 2 [json_name = "resource_key"];
   string status = 3;
-}
-
-message RestartNodeRequest {
-  string nodeId = 1 [(validator.field) = {string_not_empty: true}, json_name = "node_id"];
-
 }
 
 message RestartNodeResponse {
