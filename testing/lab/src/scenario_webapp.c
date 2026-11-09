@@ -158,7 +158,7 @@ static int operation_event(const event_spec_t *e, ulab_error_t *err) {
     int common = ulab_streq(e->target, "open_restart") || ulab_streq(e->target, "confirm_restart") || ulab_streq(e->target, "cancel_dialog");
     if (!(site || node) || !(common || fault || (site && (fill || toggle || port ||
         ulab_streq(e->target, "open_ports") || ulab_streq(e->target, "open_nodes") || ulab_streq(e->target, "watch_restart") ||
-        ulab_streq(e->target, "open_site_actions") || ulab_streq(e->target, "close_site_actions"))) ||
+        ulab_streq(e->target, "prepare_ue_service") || ulab_streq(e->target, "open_site_actions") || ulab_streq(e->target, "close_site_actions"))) ||
         (node && (update || ulab_streq(e->target, "watch_timeout") || ulab_streq(e->target, "open_software")))))
         return fail(err, "web_action requires a supported operation on its matching detail view");
     if (fill) {

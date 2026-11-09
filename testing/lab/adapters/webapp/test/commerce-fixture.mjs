@@ -75,7 +75,40 @@ function client() {
       }
       button('Close',()=>d.remove(),d);
     }
-    if(path==='/network'){
+    if (path.startsWith('/network/sites/')) {
+      const site = db.sites.find(s => path.endsWith('/' + s.id));
+      button('Site actions', () => {
+        const list = document.createElement('div');
+        list.role = 'menu';
+        list.tabIndex = -1;
+        menu.append(list);
+        list.focus();
+        const close = e => {
+          if (e.key !== 'Escape') return;
+          list.remove();
+          document.removeEventListener('keydown', close);
+        };
+        document.addEventListener('keydown', close);
+        for (const [label, op, initial] of [['Radio', 'toggleRfStatus', true], ['Cellular', 'toggleService', false]]) {
+          const row = document.createElement('div');
+          row.role = 'menuitem';
+          row.innerHTML = '<span class="MuiListItemText-primary"></span><input type="checkbox"><span></span>';
+          row.firstChild.textContent = label;
+          const checkbox = row.querySelector('input');
+          const draw = on => { checkbox.checked = on; row.lastChild.textContent = on ? 'On' : 'Off'; };
+          draw(site[op] ?? initial);
+          row.onclick = async () => {
+            const on = !(site[op] ?? initial);
+            checkbox.disabled = true;
+            await graphql(op, {siteId: site.id, status: on});
+            site[op] = on;
+            draw(on);
+            checkbox.disabled = false;
+          };
+          list.append(row);
+        }
+      }, main.querySelector('.pagehead'));
+    } else if(path==='/network'){
       const active=db.sims.filter(s=>s.network_id===selected&&s.status==='active').length;
       const wrong=db.mode==='foreign-network-usage';
       const fields=[['Active customers',active],['Data volume',bytes(active||wrong?db.usage:0)]];
@@ -175,6 +208,12 @@ export const commerceFixture = (mode, extension = {}) => provisioningFixture(mod
   },
   graphql(body,db) {
     const extra=extension.graphql?.(body,db);if(extra)return extra;
+    if (['toggleRfStatus', 'toggleService'].includes(body.operationName)) {
+      const op = body.operationName, data = body.variables.data;
+      db.sites.find(s => s.id === data.siteId)[op] = data.status;
+      db.operations.push({op, data});
+      return {data: {[op]: {success: true}}};
+    }
     if(body.operationName==='isPackageNameAvailable')return {data:{isPackageNameAvailable:{name:body.variables.name,isAvailable:!db.plans.some(p=>p.name===body.variables.name)}}};
     if(body.operationName==='SimPoolOverview')return {data:{simPoolView:{sims:{error:null}}}};
     const op=/\b(fixtureEntitlement|updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;

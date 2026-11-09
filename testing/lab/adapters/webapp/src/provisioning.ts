@@ -107,7 +107,37 @@ export class Creation {
     this.submit();
     await dialog.getByRole('button', { name: 'Create network', exact: true }).click({ timeout: budget.remaining() });
     await dialog.waitFor({ state: 'hidden', timeout: budget.remaining() });
-    await budget.poll(() => switcher.locator('.nm').innerText({ timeout: budget.remaining() }), value => value === this.inputs.name, 'Created network not visible');
+    await app.selectNetwork(String(this.inputs.name), budget);
+  }
+  private async configureTower(app: ConsoleApp, tower: string, budget: Budget): Promise<void> {
+    const main = this.page.locator('main.main');
+    const row = main.getByRole('row').filter({ has: this.page.getByRole('cell', { name: tower, exact: true }) });
+    const configure = row.getByRole('button', { name: 'Configure', exact: true });
+    const end = performance.now() + Math.min(180_000, Math.max(1, budget.remaining() - 500));
+    let nextRefresh = performance.now() + 2_000;
+    let state = 'tower row missing';
+
+    for (;;) {
+      const rows = await row.count();
+      if (rows > 1) throw new WorkerError('AMBIGUOUS_LOCATOR', `Node pool has multiple rows for ${tower}`);
+      if (await configure.isVisible() && await configure.isEnabled()) break;
+      if (await main.locator('.MuiSkeleton-root:visible').count()) state = 'loading node inventory';
+      else if (await main.getByText("Couldn't load node pool", { exact: true }).isVisible()) state = 'inventory read failed';
+      else if (!rows) state = 'tower row missing';
+      else if (await row.getByRole('button', { name: 'View detail', exact: true }).isVisible()) state = 'row shows View detail';
+      else state = await configure.isVisible() ? 'Configure disabled' : 'row has no Configure button';
+      budget.actual = { tower, node_pool: state };
+      if (performance.now() >= end) throw new WorkerError('NODE_POOL_NOT_READY', `Node pool: ${tower}: ${state}`, budget.actual);
+      // NodePool uses a cache-first read. Refresh the visible inventory while
+      // the newly booted tower registers, before dispatching any Configure click.
+      if (performance.now() >= nextRefresh && state !== 'loading node inventory') {
+        await app.reload({}, budget);
+        nextRefresh = performance.now() + 15_000;
+      } else {
+        await new Promise(resolve => setTimeout(resolve, Math.min(500, Math.max(1, end - performance.now()))));
+      }
+    }
+    await configure.click({ timeout: Math.min(10_000, budget.remaining()) });
   }
   private async site(app: ConsoleApp, budget: Budget): Promise<void> {
     const name = String(this.inputs.name), network = String(this.inputs.network_name), tower = String(this.inputs.tower_id);
@@ -116,10 +146,12 @@ export class Creation {
     if (await this.page.locator('main.main .ecard').filter({ has: this.page.getByText(name, { exact: true }) }).count())
       throw new WorkerError('NAME_EXISTS', 'Planned site already exists; refusing to claim it');
     await app.open({ view: 'network_node_pool' }, budget);
-    const row = this.page.getByRole('row').filter({ has: this.page.getByText(tower, { exact: true }) });
-    await row.getByRole('button', { name: 'Configure', exact: true }).click({ timeout: budget.remaining() });
+    await this.configureTower(app, tower, budget);
     await this.page.getByRole('heading', { name: 'Select a network', exact: true }).waitFor({ timeout: budget.remaining() });
-    if (new URL(this.page.url()).searchParams.get('nid') !== tower) throw new WorkerError('WRONG_TOWER', 'Configure lost the selected tower; console defect, no mutation submitted');
+    // Some Console versions auto-detect the trio after network selection. In
+    // either flow the settings screen must identify our exact tower before submit.
+    const selectedTower = new URL(this.page.url()).searchParams.get('nid');
+    if (selectedTower !== null && selectedTower !== tower) throw new WorkerError('WRONG_TOWER', 'Configure lost the selected tower; console defect, no mutation submitted');
     await this.page.getByRole('radio').filter({ has: this.page.getByText(network, { exact: true }) }).click({ timeout: budget.remaining() });
     await this.page.getByRole('button', { name: 'Continue', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('checkbox', { name: "I've installed and powered on all my units", exact: true }).check({ timeout: budget.remaining() });

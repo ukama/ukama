@@ -3,6 +3,7 @@
  */
 #include "webapp.h"
 #include "runtime.h"
+#include "log.h"
 #include "bff.h"
 #include "sim_factory.h"
 #include "util.h"
@@ -24,6 +25,7 @@ typedef struct {
     int started;
     int child;
     int uncertain;
+    int site_creation_attempted;
     const char *run_dir;
 } local_t;
 typedef struct { local_t *local; const char *name; const char *args; } script_t;
@@ -95,6 +97,7 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
     if (!journal->root) return ULAB_OK;
     intents = json_object_get(journal->root, "creation_intents");
     json_array_foreach(intents, i, intent) {
+        if (ulab_streq(json_string_value(json_object_get(intent, "kind")), "site")) local->site_creation_attempted = 1;
         snprintf(suffix, sizeof(suffix), "browser/%.80s/creation-%lld.json", local->world->run_id,
                  (long long)json_integer_value(json_object_get(intent, "command_id")));
         if (webapp_path(path, sizeof(path), local->run_dir, suffix, err)) return ULAB_ERR;
@@ -143,6 +146,7 @@ static int create(local_t *local, webapp_journal_t *journal, const char *kind, j
     intent = json_pack("{s:i,s:s,s:O,s:O,s:s}", "command_id", local->client->sequence + 1, "kind", kind,
                        "ref", json_object_get(inputs, "ref"), "name", json_object_get(inputs, "name"), "state", "pending");
     if (!intent || json_array_append_new(intents, intent) || webapp_journal_save(journal, err)) { json_decref(inputs); return ULAB_ERR; }
+    ulab_status("WEBAPP", "%s %s", action, json_string_value(json_object_get(inputs, "name")));
     rc = webapp_call(local->client, action, inputs, 900, &reply, err);
     if (!rc) {
         json_t *bindings = json_object_get(reply, "bindings");
@@ -189,38 +193,60 @@ static int import_sims(local_t *local, webapp_journal_t *journal, ulab_error_t *
     if (webapp_journal_save(journal, err)) rc = ULAB_ERR;
     json_decref(inputs); json_decref(reply); return rc;
 }
+static int wait_site_anchors(void *ctx, ulab_error_t *err) {
+    local_t *local = ctx;
+    bff_client_t bff;
+    size_t i;
+    int rc;
+
+    rc = bff_init(&bff, local->opts->bff_url, local->run_dir);
+    if (rc) webapp_error(err, "cannot initialize BFF for site readiness");
+    for (i = 0; !rc && i < local->world->site_count; i++) {
+        site_t *site = &local->world->sites[i];
+        ulab_status("BACKEND", "wait for site %s tower %s in registry", site->ref, site->tnode_id);
+        rc = bff_wait_site_anchor_online(&bff, site, err);
+    }
+    bff_close(&bff);
+    return rc;
+}
+
+static int start_nodes(local_t *local, ulab_error_t *err) {
+    selector_t all = { .kind = SEL_ALL };
+    selector_result_t nodes = {0};
+    int rc;
+
+    if (!local->world->site_count) return ULAB_OK;
+    local->started = 1;
+    if (runtime_ensure_network(&local->runtime, err) ||
+        runtime_build_and_start_sites(local->opts->repo, &local->runtime, local->world, err))
+        return ULAB_ERR;
+    rc = selector_resolve_nodes(local->world, &all, &nodes, err);
+    if (!rc) rc = runtime_wait_nodes_ready(&local->runtime, local->world, &nodes, err);
+    selector_result_free(&nodes);
+    return rc;
+}
+
 static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journal, ulab_error_t *err) {
     local_t *local = ctx;
     world_t *world = local->world;
     const webapp_spec_t *profile = &local->scenario->webapp;
     size_t i;
-    size_t n;
     json_t *inputs;
     json_t *components;
-    selector_result_t selected = {0};
-    int rc;
     local->client = client;
     json_object_set_new(journal->root, "creation_intents", json_array());
+    if (start_nodes(local, err)) return ULAB_ERR;
+    if (world->site_count && !ulab_streq(profile->session_mode, "onboarding") &&
+        webapp_bounded_job(wait_site_anchors, local, client->deadline, client->cancel, err)) return ULAB_ERR;
     for (i = 0; i < world->network_count && !ulab_streq(profile->session_mode,"onboarding"); i++) {
         inputs = json_pack("{s:s,s:s}", "ref", world->networks[i].ref, "name", world->networks[i].name);
         if (!inputs || create(local, journal, "network", inputs, err)) return ULAB_ERR;
     }
     if (import_sims(local, journal, err)) return ULAB_ERR;
     if (!world->site_count) return ULAB_OK;
-    local->started = 1;
-    if (runtime_ensure_network(&local->runtime, err)) return ULAB_ERR;
-    for (i = 0; i < world->site_count; i++) {
+    for (i = 0; i < world->site_count && !ulab_streq(profile->session_mode,"onboarding"); i++) {
         site_t *site = &world->sites[i];
         network_t *network = world_network_by_ref(world, site->network_ref);
-        if (runtime_start_selected_site(&local->runtime, world, i, err)) return ULAB_ERR;
-        selected.idx = calloc(world->node_count, sizeof(size_t));
-        if (!selected.idx) return webapp_error(err, "cannot allocate runtime selection");
-        selected.count = 0;
-        for (n = 0; n < world->node_count; n++) if (!strcmp(world->nodes[n].site_ref, site->ref)) selected.idx[selected.count++] = n;
-        rc = runtime_wait_nodes_ready(&local->runtime, world, &selected, err);
-        selector_result_free(&selected);
-        if (rc) return rc;
-        if (ulab_streq(profile->session_mode,"onboarding")) continue;
         components = json_pack("{s:s,s:s,s:s}", "switch", profile->switch_component, "backhaul", profile->backhaul_component, "power", profile->power_component);
         inputs = json_pack("{s:s,s:s,s:s,s:s,s:s,s:o}", "ref", site->ref, "name", site->name, "network_name", network->name,
                            "network_id", network->bff_id, "tower_id", site->tnode_id, "components", components);
@@ -282,7 +308,9 @@ static int cleanup_resource(void *ctx, const char *kind, const char *id, ulab_er
     int rc;
     int linked = 0;
     size_t i;
-    if (local->uncertain) return webapp_error(err, "unresolved creation: retain resources for reconciliation using the journal");
+    /* Before the first site mutation, claimed nodes cannot be linked to an unresolved site. */
+    if (local->uncertain && (!ulab_streq(kind, "node") || local->site_creation_attempted))
+        return webapp_error(err, "unresolved creation: retain resources for reconciliation using the journal");
     snprintf(suffix, sizeof(suffix), "cleanup-%s-%s", kind, id);
     if (webapp_path(path, sizeof(path), local->run_dir, suffix, err) || mkdir(path, 0700)) return webapp_error(err, "cannot open cleanup log directory");
     for (i = 0; i < local->world->node_count; i++) if (!strcmp(local->world->nodes[i].bff_id, id)) {

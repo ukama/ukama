@@ -45,6 +45,18 @@ packages:
     country: USA
     scope: network
 phases:
+  - name: prepare-site-for-traffic
+    events:
+      - type: web_open
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+      - type: web_action
+        view: network_site_detail
+        networks: net-001
+        sites: site-001
+        action: prepare_ue_service
+        timeout_seconds: 180
   - name: imported-inventory
     events:
       - type: web_open

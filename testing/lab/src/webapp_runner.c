@@ -497,8 +497,10 @@ done:
     if (hooks && hooks->prepare_cleanup && webapp_bounded_job(hooks->prepare_cleanup, hooks->ctx,
         webapp_now() + 30, NULL, &cleanup_error)) cleanup_failed = 1;
     if (webapp_journal_cleanup(&journal, hooks, webapp_now() + 120, &cleanup_error)) cleanup_failed = 1;
+    /* Teardown stops the containers serially, removes their per-node images
+     * and waits for the run's mesh resources. Allow the full runtime job budget. */
     if (hooks && hooks->cleanup_runtime && webapp_bounded_job(hooks->cleanup_runtime, hooks->ctx,
-        webapp_now() + 15, NULL, &cleanup_error)) runtime_cleanup_failed = cleanup_failed = 1;
+        webapp_now() + 900, NULL, &cleanup_error)) runtime_cleanup_failed = cleanup_failed = 1;
     if (world && (webapp_path(world_path, sizeof(world_path), run_dir, "world.json", &cleanup_error) ||
         world_write_json(world, world_path))) {
         cleanup_failed = 1;

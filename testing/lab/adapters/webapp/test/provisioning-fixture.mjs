@@ -21,7 +21,8 @@ function client() {
   document.querySelector('.netswitch').onclick = () => {
     menu.innerHTML = '';
     for (const n of db.networks) {
-      const b = button(n.name, () => { selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; window.inventorySwitch?.(); void render(); }, menu); b.role = 'menuitem';
+      const b = button('', () => { selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; window.inventorySwitch?.(); void render(); }, menu); b.role = 'menuitem';
+      const label = document.createElement('span'); label.textContent = n.name; b.append(label);
     }
     const b = button('Add network', () => {
       menu.innerHTML = '<div role="dialog"><h2>Add network</h2><input placeholder="network-name"></div>';
@@ -29,7 +30,8 @@ function client() {
       button('Create network', async () => {
         const n = await graphql('addNetwork', { name: dialog.querySelector('input').value, isDefault: false });
         if (db.mode === 'late-network') return;
-        selected = n.id; sessionStorage.setItem('network', selected); menu.innerHTML = ''; await render();
+        if (db.mode !== 'previous-network-selected') selected = n.id;
+        sessionStorage.setItem('network', selected); menu.innerHTML = ''; await render();
       }, dialog);
     }, menu); b.role = 'menuitem';
   };

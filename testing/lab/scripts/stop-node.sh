@@ -43,7 +43,7 @@ if [ -n "${FACTORY_NODE_ID:-}" ]; then
     do
         if podman image exists "$img" >/dev/null 2>&1; then
             echo "stop-node: rmi tag $img"
-            podman rmi "$img" >/dev/null 2>&1 || true
+            podman rmi "$img" >/dev/null || FAILED=1
         fi
     done
 fi

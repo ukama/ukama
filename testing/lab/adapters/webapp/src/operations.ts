@@ -26,7 +26,7 @@ export class Operations {
     return this.page.getByRole('dialog').filter({ has: this.page.getByText(this.site ? 'Restart site' : 'Restart node', { exact: true }) });
   }
   private menu(label: string) {
-    return this.page.getByRole('menuitem').filter({ has: this.page.locator('.MuiListItemText-primary').getByText(label, { exact: true }) });
+    return this.page.getByRole('menuitem').filter({ has: this.page.locator('.MuiListItemText-primary').and(this.page.getByText(label, { exact: true })) });
   }
   private software(app: unknown) { return this.main().getByRole('button', { name: `View ${str(app, 'app')} resources`, exact: true }); }
   private port(n: number) {
@@ -113,9 +113,21 @@ export class Operations {
     // no repeat mutation after a transport failure or assertion timeout.
     await target.click({ timeout: budget.remaining() });
   }
+  private async prepareUeService(budget: Budget): Promise<void> {
+    await this.click(this.control('Site actions')!, budget);
+    for (const label of ['Radio', 'Cellular']) {
+      const readyState = async () => (await this.available(label)) ? this.field(`${label} state`) : null;
+      const current = await budget.poll(readyState, value => value === 'On' || value === 'Off', `${label} is unavailable`);
+      if (current === 'Off') {
+        await this.click(this.menu(label), budget);
+        await budget.poll(readyState, value => value === 'On', `${label} did not turn on`);
+      }
+    }
+    await this.page.keyboard.press('Escape');
+  }
   async run(inputs: ObjectValue, budget: Budget): Promise<void> {
     const action = str(inputs.action, 'action');
-    const siteOnly = ['open_site_actions', 'close_site_actions', 'fill_confirmation', 'set_radio', 'set_service', 'open_ports', 'open_nodes', 'set_port', 'watch_restart'];
+    const siteOnly = ['open_site_actions', 'close_site_actions', 'fill_confirmation', 'set_radio', 'set_service', 'prepare_ue_service', 'open_ports', 'open_nodes', 'set_port', 'watch_restart'];
     const nodeOnly = ['open_software', 'update_software', 'retry_update', 'watch_timeout'];
     if ((siteOnly.includes(action) && !this.site) || (nodeOnly.includes(action) && this.site))
       throw new WorkerError('INVALID_INPUT', 'Action does not belong to this detail view');
@@ -138,6 +150,7 @@ export class Operations {
     if (action === 'confirm_restart') return this.click(this.control('Confirm restart')!, budget);
     if (action === 'cancel_dialog') return this.click(this.control('Cancel')!, budget);
     if (action === 'open_site_actions') return this.click(this.control('Site actions')!, budget);
+    if (action === 'prepare_ue_service') return this.prepareUeService(budget);
     if (action === 'close_site_actions') {
       await this.page.getByRole('menu').waitFor({ state: 'visible', timeout: budget.remaining() });
       await this.page.keyboard.press('Escape'); return;
