@@ -24,6 +24,10 @@ query GetNodeOperationStatus($nodeId: String!) {
     operation {
       ...OperationFields
     }
+    blocked
+    blockingOperation {
+      ...OperationFields
+    }
   }
 }
 

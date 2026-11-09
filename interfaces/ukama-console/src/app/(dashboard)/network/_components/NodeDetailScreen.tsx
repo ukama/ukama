@@ -281,12 +281,14 @@ function RestartAction({
   const op = lock.operation;
   const elapsed = useElapsed(op?.startedAt);
 
+  const blocker = lock.blockingOperation;
   const offline = (connectivity ?? '').toLowerCase() !== 'online';
+  const siteBusy = lock.blocked && !lock.busy;
   const busyLabel = `Restarting…${elapsed ? ` (${elapsed})` : ''}`;
   const busyReason = offline
     ? `${name} is offline — it can't be restarted until it reconnects`
-    : op
-      ? `${prettyOpType(op.type)} in progress${byWhom(op.requestedBy)}`
+    : blocker
+      ? `${prettyOpType(blocker.type)} in progress${byWhom(blocker.requestedBy)}`
       : undefined;
 
   const [restart, { loading }] = useRestartNodeMutation({
@@ -313,7 +315,7 @@ function RestartAction({
   };
   // Guard against firing into a guaranteed conflict if the node turned busy
   // (by someone else) while the confirm dialog was open.
-  const submitBlocked = offline || loading || (lock.busy && !loading);
+  const submitBlocked = offline || loading || (lock.blocked && !loading);
 
   return (
     <>
@@ -324,7 +326,7 @@ function RestartAction({
         onClick={() => setOpen(true)}
         busy={lock.busy}
         busyLabel={busyLabel}
-        blocked={offline}
+        blocked={offline || siteBusy}
         reason={busyReason}
       >
         Restart node
@@ -354,7 +356,7 @@ function RestartAction({
               >
                 {loading
                   ? 'Restarting…'
-                  : lock.busy
+                  : lock.blocked
                     ? 'Node is busy'
                     : 'Restart node'}
               </Button>
@@ -818,8 +820,8 @@ function NodeApps({
   const offline = (connectivity ?? '').toLowerCase() !== 'online';
   const updateBlockedReason = offline
     ? "Node is offline — software can't be updated until it reconnects"
-    : lock.busy
-      ? `${prettyOpType(lock.operation?.type)} in progress${byWhom(lock.operation?.requestedBy)}`
+    : lock.blocked
+      ? `${prettyOpType(lock.blockingOperation?.type)} in progress${byWhom(lock.blockingOperation?.requestedBy)}`
       : undefined;
   const [updatingName, setUpdatingName] = useState<string | null>(null);
   const [selectedApp, setSelectedApp] = useState<string | null>(null);
@@ -948,7 +950,7 @@ function NodeApps({
                     size="small"
                     variant="contained"
                     disabled={
-                      updatingName !== null || offline || lock.busy
+                      updatingName !== null || offline || lock.blocked
                     }
                     title={updateBlockedReason}
                     onClick={(e) => {

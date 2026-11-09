@@ -10,7 +10,7 @@ export type GetNodeOperationStatusQueryVariables = Types.Exact<{
 }>;
 
 
-export type GetNodeOperationStatusQuery = { __typename?: 'Query', getNodeOperationStatus: { __typename?: 'NodeOperationStatusDto', nodeId: string, busy: boolean, operation?: { __typename?: 'OperationDto', id: string, type: string, status: string, requestedBy?: string | null, startedAt?: string | null, leaseExpiresAt?: string | null } | null } };
+export type GetNodeOperationStatusQuery = { __typename?: 'Query', getNodeOperationStatus: { __typename?: 'NodeOperationStatusDto', nodeId: string, busy: boolean, blocked: boolean, operation?: { __typename?: 'OperationDto', id: string, type: string, status: string, requestedBy?: string | null, startedAt?: string | null, leaseExpiresAt?: string | null } | null, blockingOperation?: { __typename?: 'OperationDto', id: string, type: string, status: string, requestedBy?: string | null, startedAt?: string | null, leaseExpiresAt?: string | null } | null } };
 
 export type GetSiteOperationStatusQueryVariables = Types.Exact<{
   siteId: Types.Scalars['String']['input'];
@@ -35,6 +35,10 @@ export const GetNodeOperationStatusDocument = gql`
     nodeId
     busy
     operation {
+      ...OperationFields
+    }
+    blocked
+    blockingOperation {
       ...OperationFields
     }
   }

@@ -1483,6 +1483,8 @@ type NodeOperationStatusDto {
   type: NodeTypeEnum
   busy: Boolean!
   operation: OperationDto
+  blocked: Boolean!
+  blockingOperation: OperationDto
 }
 
 type OperationDto {
