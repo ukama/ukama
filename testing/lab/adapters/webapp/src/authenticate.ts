@@ -4,7 +4,7 @@
 import { mkdir, open, rename, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { chromium, firefox, webkit } from 'playwright';
+import { chromium, errors, firefox, webkit, type Browser, type Page } from 'playwright';
 import { assertSession } from './console-app.js';
 import { baseURL, Budget, WorkerError } from './contract.js';
 
@@ -30,27 +30,46 @@ export function allowedLoginOrigin(consoleOrigin: string, loginOrigin: string, c
   return labels.length >= 4 && loginURL.hostname.endsWith(`.${labels.slice(1).join('.')}`);
 }
 
+// Report only known route names. Redirect URLs can contain flow IDs and tokens.
+function loginLocation(page: Page | undefined, consoleOrigin: string, loginOrigin: string): string {
+  if (!page) return 'unopened';
+  if (page.isClosed()) return 'closed';
+  const url = new URL(page.url());
+  if (url.protocol === 'about:') return 'blank';
+  const host = url.origin === consoleOrigin ? 'console' : url.origin === loginOrigin ? 'sign-in' : 'other';
+  const route = url.pathname.match(/^\/(auth\/login|login|sign-in|signin|welcome|configure|unauthorized|business|network|customer|error)(?:\/|$)/);
+  return host + '/' + (route?.[1] ?? (url.pathname === '/' ? '' : 'other'));
+}
+
 export async function automaticAuth(origin: string, destination: string,
                                     engine: BrowserName, metadata?: string): Promise<void> {
   const identifier = process.env.UKAMA_IDENTIFIER, password = process.env.UKAMA_PASSWORD;
   if (!identifier || !password)
     throw new WorkerError('AUTH_CREDENTIALS', 'Export UKAMA_IDENTIFIER and UKAMA_PASSWORD before running the batch');
   const executablePath = process.env[`ULAB_WEBAPP_${engine.toUpperCase()}_EXECUTABLE_PATH`] || process.env.ULAB_WEBAPP_EXECUTABLE_PATH;
-  const browser = await ({ chromium, firefox, webkit })[engine].launch({
-    headless: true, timeout: 30000, ...(executablePath ? { executablePath } : {}),
-  });
+  let browser: Browser | undefined, activePage: Page | undefined;
+  let step = 'start-browser', authOrigin = '', loginHttp: number | undefined;
   try {
+    browser = await ({ chromium, firefox, webkit })[engine].launch({
+      headless: process.env.ULAB_WEBAPP_HEADLESS !== 'false', timeout: 30000,
+      ...(executablePath ? { executablePath } : {}),
+    });
+    step = 'create-page';
     const context = await browser.newContext();
     const page = await context.newPage();
+    activePage = page;
     page.setDefaultTimeout(30000);
+    step = 'open-console';
     const response = await page.goto(origin, { waitUntil: 'domcontentloaded', timeout: 60000 });
     if (response && response.status() >= 400)
-      throw new WorkerError('AUTH_UNAVAILABLE', 'Console sign-in returned an HTTP error');
+      throw new WorkerError('AUTH_UNAVAILABLE', `Console sign-in returned HTTP ${response.status()}`);
+    step = 'find-password';
     const passwordInput = page.locator('input[type="password"]').filter({ visible: true });
     await passwordInput.waitFor({ state: 'visible' });
-    const authOrigin = new URL(page.url()).origin;
+    authOrigin = new URL(page.url()).origin;
     if (!allowedLoginOrigin(origin, authOrigin, process.env.ULAB_WEBAPP_AUTH_ORIGIN))
       throw new WorkerError('AUTH_ORIGIN', 'Unexpected sign-in host; configure ULAB_WEBAPP_AUTH_ORIGIN for the intended password app');
+    step = 'find-login-controls';
     const form = page.locator('form').filter({ has: passwordInput });
     if (await form.count() !== 1)
       throw new WorkerError('AUTH_FORM', 'Expected one visible password sign-in form');
@@ -63,17 +82,49 @@ export async function automaticAuth(origin: string, destination: string,
     if (await submit.count() !== 1)
       throw new WorkerError('AUTH_FORM', 'Expected one password sign-in submit control');
     // Login has no trace, screenshots or request logging containing credentials.
+    step = 'fill-identifier';
     await identity.fill(identifier);
+    step = 'fill-password';
     await passwordInput.fill(password);
+    step = 'submit-login';
+    page.on('response', reply => {
+      if (reply.request().method() !== 'POST') return;
+      const url = new URL(reply.url());
+      if (url.protocol !== 'https:' && url.protocol !== 'http:') return;
+      if ((url.origin === authOrigin || allowedLoginOrigin(origin, url.origin)) &&
+          /\/(login|sign-in|signin)\/?$/.test(url.pathname)) loginHttp = reply.status();
+    });
     await submit.click();
-    await page.locator('header.topbar .viewseg').waitFor({ state: 'visible', timeout: 60000 });
+    step = 'wait-console-landing';
+    const header = page.locator('header.topbar .viewseg');
+    const welcome = page.getByRole('heading', { name: 'Welcome to Ukama!', exact: true });
+    const landing = await new Budget(60000).poll(async () => {
+      const url = new URL(page.url());
+      if (url.origin !== origin) return null;
+      if (url.pathname === '/welcome') return await welcome.isVisible() ? 'welcome' : null;
+      return await header.isVisible() ? 'dashboard' : null;
+    }, Boolean, 'Waiting for the Console welcome page or dashboard');
+    if (landing === 'welcome') {
+      step = 'confirm-welcome';
+      await page.getByRole('button', { name: 'Continue', exact: true }).click();
+      step = 'wait-dashboard-after-welcome';
+      const welcomeError = page.locator('main.welcome-root .welcome-error');
+      await header.or(welcomeError).filter({ visible: true }).first().waitFor({ timeout: 60000 });
+      if (await welcomeError.isVisible())
+        throw new WorkerError('AUTH_WELCOME', 'Console could not save the welcome confirmation');
+    }
+    step = 'verify-dashboard';
     await assertSession(page, origin, new Budget(10000));
+    step = 'save-session';
     await privateJSON(destination, await context.storageState({ indexedDB: true }));
     if (metadata) await privateJSON(metadata, { auth_origin: authOrigin });
     process.stderr.write('WEBAPP authentication ready\n');
   } catch (error) {
-    if (error instanceof WorkerError) throw error;
-    // Playwright call logs can include filled values. Never forward them.
-    throw new WorkerError('AUTH_FAILED', 'Automatic login failed; check the credentials, login form and Console availability');
-  } finally { await browser.close(); }
+    // Playwright exceptions may contain filled values. Keep only their timeout category.
+    const code = error instanceof WorkerError ? error.code : 'AUTH_FAILED';
+    const reason = error instanceof WorkerError ? error.message :
+      error instanceof errors.TimeoutError ? 'Timed out' : 'Operation failed';
+    const location = loginLocation(activePage, origin, authOrigin);
+    throw new WorkerError(code, `${reason} (step=${step} page=${location} login_post_http=${loginHttp ?? 'unobserved'})`);
+  } finally { await browser?.close(); }
 }
