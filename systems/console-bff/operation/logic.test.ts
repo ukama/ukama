@@ -7,12 +7,14 @@
  */
 import { NODE_CONNECTIVITY, NODE_TYPE } from "../common/enums";
 import {
+  NodeLockStatus,
   SiteNodeStatus,
   buildSiteActions,
   isLockBusy,
   leaseExpired,
   nodeResourceKey,
   toNodeStatus,
+  withBlocking,
 } from "./logic";
 import { OperationDto, ResourceLockDto } from "./resolvers/types";
 
@@ -155,7 +157,7 @@ describe("buildSiteActions — independent async release", () => {
     expect(a.service.available).toBe(true);
   });
 
-  it("amplifier busy → RF and restartSite locked, service stays available", () => {
+  it("amplifier busy → service, RF and restartSite locked", () => {
     const a = buildSiteActions([
       status({ nodeId: "t", type: NODE_TYPE.tnode }),
       status({
@@ -168,7 +170,41 @@ describe("buildSiteActions — independent async release", () => {
     expect(a.rf.available).toBe(false);
     expect(a.rf.reason).toContain("sam");
     expect(a.restartSite.available).toBe(false);
-    expect(a.service.available).toBe(true);
+    expect(a.service.available).toBe(false);
+    expect(a.service.reason).toContain("sam");
+  });
+
+  it("busy node of another type → every action locked", () => {
+    const a = buildSiteActions([
+      status({ nodeId: "t", type: NODE_TYPE.tnode }),
+      status({ nodeId: "a", type: NODE_TYPE.anode }),
+      status({
+        nodeId: "x",
+        busy: true,
+        operation: op({ type: "UpdateSoftware", requestedBy: "kim" }),
+      }),
+    ]);
+    for (const action of [a.restartSite, a.rf, a.service]) {
+      expect(action.available).toBe(false);
+      expect(action.reason).toBe("UpdateSoftware in progress by kim");
+    }
+  });
+
+  it("a busy node is reported before an offline one", () => {
+    const a = buildSiteActions([
+      status({
+        nodeId: "t",
+        type: NODE_TYPE.tnode,
+        connectivity: NODE_CONNECTIVITY.Offline,
+      }),
+      status({
+        nodeId: "a",
+        type: NODE_TYPE.anode,
+        busy: true,
+        operation: op({ requestedBy: "sam" }),
+      }),
+    ]);
+    expect(a.service.reason).toBe("Restart in progress by sam");
   });
 
   it("tower busy → service, RF and restartSite locked", () => {
@@ -340,5 +376,47 @@ describe("buildSiteActions — connectivity and controller dependencies", () => 
       })
     );
     expectBlocked(buildSiteActions(nodes));
+  });
+});
+
+describe("withBlocking", () => {
+  const idle = (nodeId: string): NodeLockStatus => ({ nodeId, busy: false });
+  const busy = (nodeId: string, requestedBy: string): NodeLockStatus => ({
+    nodeId,
+    busy: true,
+    operation: op({ requestedBy }),
+  });
+
+  it("idle node on an idle site is not blocked", () => {
+    expect(withBlocking(idle("t"), [idle("a"), idle("c")])).toEqual({
+      nodeId: "t",
+      busy: false,
+      blocked: false,
+      blockingOperation: undefined,
+    });
+  });
+
+  it("busy node is blocked by its own operation", () => {
+    const b = withBlocking(busy("t", "own"), [busy("c", "sibling")]);
+    expect(b.blocked).toBe(true);
+    expect(b.blockingOperation?.requestedBy).toBe("own");
+  });
+
+  it("idle node is blocked by a busy site node", () => {
+    const b = withBlocking(idle("t"), [idle("a"), busy("c", "sam")]);
+    expect(b.busy).toBe(false);
+    expect(b.operation).toBe(undefined);
+    expect(b.blocked).toBe(true);
+    expect(b.blockingOperation?.requestedBy).toBe("sam");
+  });
+
+  it("keeps the node's own fields", () => {
+    const node = status({ nodeId: "t", type: NODE_TYPE.tnode });
+    expect(withBlocking(node, [node])).toMatchObject({
+      nodeId: "t",
+      type: NODE_TYPE.tnode,
+      connectivity: NODE_CONNECTIVITY.Online,
+      blocked: false,
+    });
   });
 });

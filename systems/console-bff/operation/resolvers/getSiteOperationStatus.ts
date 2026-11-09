@@ -13,6 +13,7 @@ import {
   buildSiteActions,
   nodeResourceKey,
   toNodeStatus,
+  withBlocking,
 } from "../logic";
 import { SiteOperationStatusDto, SiteOperationStatusInputDto } from "./types";
 
@@ -71,7 +72,7 @@ export class GetSiteOperationStatusResolver {
       siteId: data.siteId,
       busy: statuses.some(s => s.busy),
       degraded: reads.some(r => r.failed),
-      nodes: statuses,
+      nodes: statuses.map(s => withBlocking(s, statuses)),
       actions: buildSiteActions(statuses),
     };
   }

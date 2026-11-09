@@ -110,6 +110,12 @@ export class NodeOperationStatusDto {
   /** The active operation, if any (null when idle). */
   @Field(() => OperationDto, { nullable: true })
   operation?: OperationDto;
+
+  @Field()
+  blocked: boolean;
+
+  @Field(() => OperationDto, { nullable: true })
+  blockingOperation?: OperationDto;
 }
 
 /**
