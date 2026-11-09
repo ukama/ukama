@@ -22,6 +22,14 @@ type fakeServiceClient struct {
 	pb.OperationManagerServiceClient
 	completeReq *pb.CompleteOperationRequest
 	failReq     *pb.FailOperationRequest
+	runningReq  *pb.MarkRunningRequest
+}
+
+func (f *fakeServiceClient) MarkRunning(_ context.Context, in *pb.MarkRunningRequest,
+	_ ...grpc.CallOption) (*pb.MarkRunningResponse, error) {
+	f.runningReq = in
+
+	return &pb.MarkRunningResponse{Operation: &pb.Operation{Id: in.Id}}, nil
 }
 
 func (f *fakeServiceClient) CompleteOperation(_ context.Context,
@@ -63,4 +71,15 @@ func TestManager_Fail(t *testing.T) {
 	assert.Equal(t, uint64(7), fake.failReq.FencingToken)
 	assert.Equal(t, "controller", fake.failReq.Actor)
 	assert.Equal(t, "publish failed", fake.failReq.Reason)
+}
+
+func TestManager_MarkRunning(t *testing.T) {
+	fake := &fakeServiceClient{}
+
+	resp, err := NewManagerFromClient(fake).MarkRunning("op-1", 7, "controller")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "op-1", resp.Operation.Id)
+	assert.Equal(t, uint64(7), fake.runningReq.FencingToken)
+	assert.Equal(t, "controller", fake.runningReq.Actor)
 }

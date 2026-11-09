@@ -29,6 +29,7 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	"github.com/ukama/ukama/systems/operation/manager/mocks"
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 )
 
@@ -121,4 +122,66 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 			repo.AssertExpectations(t)
 		})
 	}
+}
+
+func TestEventNotification_actor(t *testing.T) {
+	opId := uuid.NewV4()
+
+	for name, tc := range map[string]struct {
+		event *epb.Event
+		actor string
+	}{
+		"CompletedCarriesActor": {
+			newOperationEvent(t, evt.EventOperationCompleted,
+				&epb.OperationCompletedEvent{OperationId: opId.String(), FencingToken: 5,
+					Actor: "operation-monitor"}),
+			"operation-monitor",
+		},
+		"FailedCarriesActor": {
+			newOperationEvent(t, evt.EventOperationFailed,
+				&epb.OperationFailedEvent{OperationId: opId.String(), FencingToken: 5,
+					Reason: "deadline exceeded", Actor: "operation-monitor-sweeper"}),
+			"operation-monitor-sweeper",
+		},
+		"MissingActorFallsBack": {
+			newOperationEvent(t, evt.EventOperationCompleted,
+				&epb.OperationCompletedEvent{OperationId: opId.String(), FencingToken: 5}),
+			pkg.OperationMonitorActor,
+		},
+		"BlankActorFallsBack": {
+			newOperationEvent(t, evt.EventOperationFailed,
+				&epb.OperationFailedEvent{OperationId: opId.String(), FencingToken: 5,
+					Reason: "deadline exceeded", Actor: "  "}),
+			pkg.OperationMonitorActor,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			repo.On("Terminate", mock.Anything, opId, uint64(5), mock.Anything,
+				mock.MatchedBy(func(a db.OperationAudit) bool {
+					return a.Actor == tc.actor
+				}), mock.Anything).Return(&db.Operation{}, nil).Once()
+
+			_, err := NewEventServer(orgName, repo).
+				EventNotification(context.Background(), tc.event)
+
+			assert.NoError(t, err)
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestSweeperActor(t *testing.T) {
+	repo := &mocks.OperationRepo{}
+	op := db.Operation{Id: uuid.NewV4(), FencingToken: 4}
+	repo.On("FindExpired", mock.Anything, mock.Anything, 100).
+		Return([]db.Operation{op}, nil).Once()
+	repo.On("Terminate", mock.Anything, op.Id, uint64(4), db.OperationTimeout,
+		mock.MatchedBy(func(a db.OperationAudit) bool {
+			return a.Actor == pkg.OperationManagerSweeperActor
+		}), "lease expired").Return(&db.Operation{}, nil).Once()
+
+	NewSweeper(repo).sweepOnce(context.Background())
+
+	repo.AssertExpectations(t)
 }

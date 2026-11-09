@@ -90,6 +90,10 @@ func startOperation(t *testing.T, ctx context.Context,
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
+		cur, err := c.GetOperation(ctx, &pb.GetOperationRequest{Id: resp.Operation.Id})
+		if err != nil || !unfinished(cur.Operation.Status) {
+			return
+		}
 		_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
 			Id: resp.Operation.Id, Actor: actor, Reason: reason,
 		})
@@ -98,13 +102,17 @@ func startOperation(t *testing.T, ctx context.Context,
 	return resp.Operation
 }
 
+func unfinished(st pb.OperationStatus) bool {
+	return st == pb.OperationStatus_PENDING || st == pb.OperationStatus_RUNNING
+}
+
 func startRunningOperation(t *testing.T, ctx context.Context,
 	c pb.OperationManagerServiceClient) *pb.Operation {
 	t.Helper()
 
 	op := startOperation(t, ctx, c)
 	resp, err := c.MarkRunning(ctx, &pb.MarkRunningRequest{
-		Id: op.Id, FencingToken: op.FencingToken,
+		Id: op.Id, FencingToken: op.FencingToken, Actor: actor,
 	})
 	assert.NoError(t, err)
 	assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
@@ -356,6 +364,43 @@ func TestStartConflict(t *testing.T) {
 
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
 		assert.Nil(t, resp)
+		assertLockHeldBy(t, ctx, c, op)
+	})
+}
+
+func TestBlankActors(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("StartWithoutRequestedBy", func(t *testing.T) {
+		_, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+			Type:        "IntegrationTest",
+			System:      "operation",
+			ResourceKey: "test:integration:" + uuid.NewV4().String(),
+			RequestedBy: "   ",
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("MarkRunningWithoutActor", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := c.MarkRunning(ctx, &pb.MarkRunningRequest{
+			Id: op.Id, FencingToken: op.FencingToken,
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+
+	t.Run("CompleteWithBlankActor", func(t *testing.T) {
+		op := startRunningOperation(t, ctx, c)
+
+		_, err := c.CompleteOperation(ctx, &pb.CompleteOperationRequest{
+			Id: op.Id, FencingToken: op.FencingToken, Actor: "  ", Reason: reason,
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 		assertLockHeldBy(t, ctx, c, op)
 	})
 }

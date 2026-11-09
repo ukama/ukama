@@ -167,6 +167,7 @@ func (e *EventServer) publishCompleted(intent *db.MonitoredIntent) error {
 		FencingToken: intent.FencingToken,
 		ResourceKey:  intent.ResourceKey,
 		CompletedAt:  timestamppb.Now(),
+		Actor:        pkg.OperationMonitorActor,
 	})
 }
 

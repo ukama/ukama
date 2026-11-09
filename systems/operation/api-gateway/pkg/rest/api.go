@@ -14,7 +14,7 @@ type StartOperationRequest struct {
 	Type           string `json:"type" validate:"required" example:"RestartNode"`
 	System         string `json:"system" validate:"required" example:"node"`
 	ResourceKey    string `json:"resource_key" validate:"required" example:"node:uk-sa2450-tnode-v0-4e86"`
-	RequestedBy    string `json:"requested_by"`
+	RequestedBy    string `json:"requested_by" validate:"required" example:"controller"`
 	IdempotencyKey string `json:"idempotency_key"`
 	LeaseSeconds   uint32 `json:"lease_seconds"`
 }
@@ -30,6 +30,7 @@ type GetByResourceRequest struct {
 type MarkRunningRequest struct {
 	Id           string `json:"id" path:"id" validate:"required,uuid"`
 	FencingToken uint64 `json:"fencing_token" validate:"required"`
+	Actor        string `json:"actor" validate:"required" example:"controller"`
 }
 
 type ForceUnlockRequest struct {

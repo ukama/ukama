@@ -21,6 +21,7 @@ import (
 
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
+	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 const testOrgName = "testOrg"
@@ -93,4 +94,28 @@ func TestConfiguratorServer_ApplyConfig(t *testing.T) {
 	configStore.AssertExpectations(t)
 	assert.NoError(t, err)
 
+}
+
+func TestConfiguratorServer_ApplyConfigMarksRunningAsConfigurator(t *testing.T) {
+	configStore := &mocks.ConfigStoreProvider{}
+	opMgr := &mocks.OperationManager{}
+
+	s := NewConfiguratorServer(&mbmocks.MsgBusServiceClient{}, &mocks.ConfigRepo{},
+		&mocks.CommitRepo{}, configStore, testOrgName, pkg.IsDebugMode, opMgr, 1800)
+	req := &pb.ApplyConfigRequest{Hash: "4f6e609"}
+
+	opMgr.On("Start", mock.MatchedBy(func(r *opmgrpb.StartOperationRequest) bool {
+		return r.RequestedBy == pkg.ServiceName
+	})).Return(&opmgrpb.StartOperationResponse{
+		Operation: &opmgrpb.Operation{Id: "op-cfg", FencingToken: 4},
+	}, nil).Once()
+	configStore.On("HandleConfigCommitReq", mock.Anything, req.Hash).Return(nil).Once()
+	opMgr.On("MarkRunning", "op-cfg", uint64(4), pkg.ServiceName).
+		Return(&opmgrpb.MarkRunningResponse{}, nil).Once()
+
+	_, err := s.ApplyConfig(context.Background(), req)
+
+	assert.NoError(t, err)
+	opMgr.AssertExpectations(t)
+	configStore.AssertExpectations(t)
 }

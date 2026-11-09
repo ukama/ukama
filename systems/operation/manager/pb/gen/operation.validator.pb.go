@@ -51,6 +51,9 @@ func (this *StartOperationRequest) Validate() error {
 	if this.ResourceKey == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("ResourceKey", fmt.Errorf(`value '%v' must not be an empty string`, this.ResourceKey))
 	}
+	if this.RequestedBy == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("RequestedBy", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestedBy))
+	}
 	return nil
 }
 func (this *StartOperationResponse) Validate() error {
@@ -104,6 +107,9 @@ func (this *MarkRunningRequest) Validate() error {
 	}
 	if this.Id == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("Id", fmt.Errorf(`value '%v' must not be an empty string`, this.Id))
+	}
+	if this.Actor == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("Actor", fmt.Errorf(`value '%v' must not be an empty string`, this.Actor))
 	}
 	return nil
 }

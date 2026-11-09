@@ -32,6 +32,7 @@ type fakeManager struct {
 	lastGetByResourceKey  string
 	lastMarkRunningId     string
 	lastMarkRunningToken  uint64
+	lastMarkRunningActor  string
 	lastForceUnlockId     string
 	lastForceUnlockActor  string
 	lastForceUnlockReason string
@@ -85,9 +86,11 @@ func (f *fakeManager) GetByResource(resourceKey string) (*pb.GetByResourceRespon
 	return &pb.GetByResourceResponse{}, nil
 }
 
-func (f *fakeManager) MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error) {
+func (f *fakeManager) MarkRunning(id string, fencingToken uint64,
+	actor string) (*pb.MarkRunningResponse, error) {
 	f.lastMarkRunningId = id
 	f.lastMarkRunningToken = fencingToken
+	f.lastMarkRunningActor = actor
 	if f.markRunningErr != nil {
 		return nil, f.markRunningErr
 	}
@@ -290,6 +293,7 @@ func TestPostMarkRunningHandler(t *testing.T) {
 	req := &MarkRunningRequest{
 		Id:           "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f",
 		FencingToken: 42,
+		Actor:        "controller",
 	}
 
 	t.Run("Success", func(t *testing.T) {
@@ -303,6 +307,7 @@ func TestPostMarkRunningHandler(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, req.Id, mgr.lastMarkRunningId)
 		assert.Equal(t, req.FencingToken, mgr.lastMarkRunningToken)
+		assert.Equal(t, req.Actor, mgr.lastMarkRunningActor)
 		assertOperationMapped(t, op, resp.Operation)
 	})
 

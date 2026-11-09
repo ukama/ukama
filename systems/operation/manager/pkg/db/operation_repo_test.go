@@ -220,10 +220,12 @@ func Test_MarkRunning(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "running", "controller",
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
-		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken)
+		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken, "controller")
 
 		assert.NoError(t, err)
 		assert.Equal(t, OperationRunning, out.Status)
@@ -237,7 +239,7 @@ func Test_MarkRunning(t *testing.T) {
 			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
 		mock.ExpectRollback()
 
-		out, err := repo.MarkRunning(ctx, uuid.NewV4(), 3)
+		out, err := repo.MarkRunning(ctx, uuid.NewV4(), 3, "controller")
 
 		assert.True(t, errors.Is(err, ErrLockTimeout), err)
 		assert.Nil(t, out)

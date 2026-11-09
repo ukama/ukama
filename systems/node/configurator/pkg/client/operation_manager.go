@@ -21,7 +21,8 @@ import (
 
 type OperationManager interface {
 	Start(req *pb.StartOperationRequest) (*pb.StartOperationResponse, error)
-	MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error)
+	MarkRunning(id string, fencingToken uint64, actor string) (*pb.MarkRunningResponse,
+		error)
 	Close()
 }
 
@@ -49,10 +50,13 @@ func (m *operationManager) Start(req *pb.StartOperationRequest) (*pb.StartOperat
 	return m.client.StartOperation(ctx, req)
 }
 
-func (m *operationManager) MarkRunning(id string, fencingToken uint64) (*pb.MarkRunningResponse, error) {
+func (m *operationManager) MarkRunning(id string, fencingToken uint64,
+	actor string) (*pb.MarkRunningResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
-	return m.client.MarkRunning(ctx, &pb.MarkRunningRequest{Id: id, FencingToken: fencingToken})
+	return m.client.MarkRunning(ctx, &pb.MarkRunningRequest{
+		Id: id, FencingToken: fencingToken, Actor: actor,
+	})
 }
 
 func (m *operationManager) Close() {
