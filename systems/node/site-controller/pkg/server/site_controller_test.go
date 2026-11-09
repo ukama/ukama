@@ -21,7 +21,6 @@ import (
 	"github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/rest/client"
-	"github.com/ukama/ukama/systems/common/rest/client/operation"
 	registry "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -51,14 +50,10 @@ func (f *fakeControllerProvider) GetClient() (contpb.ControllerServiceClient, er
 
 var online = registry.NodeStatusInfo{Connectivity: ukama.NodeConnectivityOnline.String()}
 
-func newTestServer(nodeClient *mbmocks.NodeClient, controllerClient contpb.ControllerServiceClient) *SiteControllerServer {
-	opManager := &mbmocks.ManagerClient{}
-	opManager.On("GetByResource", mock.Anything).Return(nil, nil)
-	return newTestServerWithOps(nodeClient, controllerClient, opManager)
-}
-
-func newTestServerWithOps(nodeClient *mbmocks.NodeClient, controllerClient contpb.ControllerServiceClient, opManager *mbmocks.ManagerClient) *SiteControllerServer {
-	return NewSiteControllerServer(testOrgName, nil, nil, nodeClient, nil, nil, &fakeControllerProvider{client: controllerClient}, opManager, nil)
+func newTestServer(nodeClient *mbmocks.NodeClient,
+	controllerClient contpb.ControllerServiceClient) *SiteControllerServer {
+	return NewSiteControllerServer(testOrgName, nil, nil, nodeClient, nil, nil,
+		&fakeControllerProvider{client: controllerClient}, nil)
 }
 
 func TestSetService_ForwardsToTowerNode(t *testing.T) {
@@ -95,13 +90,11 @@ func TestSetRadio_ForwardsToTowerAndAmplifierNodes(t *testing.T) {
 		},
 	}, nil).Once()
 
-	controllerClient.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
-		return req.NodeId == testTowerID && req.State == "off"
-	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-t"}, nil).Once()
-
-	controllerClient.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
-		return req.NodeId == testAmpID && req.State == "off"
-	})).Return(&contpb.ToggleRadioResponse{OperationId: "op-a"}, nil).Once()
+	controllerClient.On("ToggleRadios", mock.Anything,
+		mock.MatchedBy(func(req *contpb.ToggleRadiosRequest) bool {
+			return assert.ObjectsAreEqual([]string{testTowerID, testAmpID}, req.NodeIds) &&
+				req.State == "off"
+		})).Return(&contpb.ToggleRadiosResponse{}, nil).Once()
 
 	s := newTestServer(nodeClient, controllerClient)
 
@@ -153,130 +146,68 @@ func siteWithAllNodes() *registry.NodesBySite {
 	}
 }
 
-func cnodeUpdating() *mbmocks.ManagerClient {
-	opManager := &mbmocks.ManagerClient{}
-	opManager.On("GetByResource", "node:"+testCnodeID).Return(&operation.OperationInfo{
-		Id: "op-update", Type: "UpdateSoftware", Status: operation.StatusRunning, ResourceKey: "node:" + testCnodeID,
-	}, nil)
-	opManager.On("GetByResource", mock.Anything).Return(nil, nil)
-	return opManager
+func busyController() error {
+	return status.Error(codes.AlreadyExists,
+		"rejected: node:"+testCnodeID+" is busy with UpdateSoftware operation op-update")
 }
 
-func TestRestartSite_RejectedWhileCnodeUpdating(t *testing.T) {
-	siteID := "44444444-4444-4444-4444-444444444444"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-
-	s := newTestServerWithOps(nodeClient, controllerClient, cnodeUpdating())
-
-	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteID})
-
-	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-	assert.Contains(t, err.Error(), testCnodeID)
-	controllerClient.AssertNotCalled(t, "RestartNode", mock.Anything, mock.Anything)
-}
-
-func TestRestartSite_IdleSiteRestartsTowerAndAmplifierOnly(t *testing.T) {
+func TestRestartSite_RestartsTowerAndAmplifierInOneCall(t *testing.T) {
 	siteID := "55555555-5555-5555-5555-555555555555"
 	nodeClient := &mbmocks.NodeClient{}
 	controllerClient := &contmocks.ControllerServiceClient{}
-	opManager := &mbmocks.ManagerClient{}
 	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-	opManager.On("GetByResource", "node:"+testTowerID).Return(nil, nil).Once()
-	opManager.On("GetByResource", "node:"+testAmpID).Return(nil, nil).Once()
-	opManager.On("GetByResource", "node:"+testCnodeID).Return(&operation.OperationInfo{
-		Id: "op-done", Type: "UpdateSoftware", Status: operation.StatusSuccess,
-	}, nil).Once()
-	controllerClient.On("RestartNode", mock.Anything, mock.MatchedBy(func(req *contpb.RestartNodeRequest) bool {
-		return req.NodeId == testTowerID || req.NodeId == testAmpID
-	})).Return(&contpb.RestartNodeResponse{OperationId: "op-r"}, nil).Twice()
+	controllerClient.On("RestartNodes", mock.Anything,
+		mock.MatchedBy(func(req *contpb.RestartNodesRequest) bool {
+			return assert.ObjectsAreEqual([]string{testTowerID, testAmpID}, req.NodeIds)
+		})).Return(&contpb.RestartNodesResponse{Operations: []*contpb.RestartNodeResponse{
+		{OperationId: "op-t"}, {OperationId: "op-a"},
+	}}, nil).Once()
 
-	s := newTestServerWithOps(nodeClient, controllerClient, opManager)
+	s := newTestServer(nodeClient, controllerClient)
 
 	resp, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteID})
 
 	assert.NoError(t, err)
-	assert.Len(t, resp.OperationIds, 2)
-	opManager.AssertExpectations(t)
+	assert.Equal(t, []string{"op-t", "op-a"}, resp.OperationIds)
 	controllerClient.AssertExpectations(t)
-}
-
-func TestSetRadio_RejectedWhileCnodeUpdating(t *testing.T) {
-	siteID := "66666666-6666-6666-6666-666666666666"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-
-	s := newTestServerWithOps(nodeClient, controllerClient, cnodeUpdating())
-
-	_, err := s.SetRadio(context.TODO(), &pb.SetRadioRequest{SiteId: siteID, State: "off"})
-
-	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-	controllerClient.AssertNotCalled(t, "ToggleRadio", mock.Anything, mock.Anything)
-}
-
-func TestSetService_RejectedWhileCnodeUpdating(t *testing.T) {
-	siteID := "77777777-7777-7777-7777-777777777777"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-
-	s := newTestServerWithOps(nodeClient, controllerClient, cnodeUpdating())
-
-	_, err := s.SetService(context.TODO(), &pb.SetServiceRequest{SiteId: siteID, State: "off"})
-
-	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-	controllerClient.AssertNotCalled(t, "ToggleService", mock.Anything, mock.Anything)
-}
-
-func TestSetService_IgnoresBusyAmplifier(t *testing.T) {
-	siteID := "88888888-8888-8888-8888-888888888888"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	opManager := &mbmocks.ManagerClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-	opManager.On("GetByResource", "node:"+testTowerID).Return(nil, nil).Once()
-	opManager.On("GetByResource", "node:"+testCnodeID).Return(nil, nil).Once()
-	controllerClient.On("ToggleService", mock.Anything, mock.Anything).Return(&contpb.ToggleServiceResponse{OperationId: "op-s"}, nil).Once()
-
-	s := newTestServerWithOps(nodeClient, controllerClient, opManager)
-
-	_, err := s.SetService(context.TODO(), &pb.SetServiceRequest{SiteId: siteID, State: "on"})
-
-	assert.NoError(t, err)
-	opManager.AssertNotCalled(t, "GetByResource", "node:"+testAmpID)
-	controllerClient.AssertExpectations(t)
-}
-
-func TestRestartSite_LockReadFailureIsUnavailable(t *testing.T) {
-	siteID := "99999999-9999-9999-9999-999999999999"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	opManager := &mbmocks.ManagerClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
-	opManager.On("GetByResource", mock.Anything).Return(nil, errors.New("connection refused"))
-
-	s := newTestServerWithOps(nodeClient, controllerClient, opManager)
-
-	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteID})
-
-	assert.Equal(t, codes.Unavailable, status.Code(err))
 	controllerClient.AssertNotCalled(t, "RestartNode", mock.Anything, mock.Anything)
 }
 
-func TestRestartSite_NoOperationManagerIsUnavailable(t *testing.T) {
-	siteID := "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
-	nodeClient := &mbmocks.NodeClient{}
-	controllerClient := &contmocks.ControllerServiceClient{}
-	nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
+func TestSiteActions_BusySiteIsAlreadyExists(t *testing.T) {
+	for name, call := range map[string]func(*SiteControllerServer, string) error{
+		"RestartSite": func(s *SiteControllerServer, site string) error {
+			_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: site})
+			return err
+		},
+		"SetRadio": func(s *SiteControllerServer, site string) error {
+			_, err := s.SetRadio(context.TODO(),
+				&pb.SetRadioRequest{SiteId: site, State: "off"})
+			return err
+		},
+		"SetService": func(s *SiteControllerServer, site string) error {
+			_, err := s.SetService(context.TODO(),
+				&pb.SetServiceRequest{SiteId: site, State: "off"})
+			return err
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			siteID := "44444444-4444-4444-4444-444444444444"
+			nodeClient := &mbmocks.NodeClient{}
+			controllerClient := &contmocks.ControllerServiceClient{}
+			nodeClient.On("GetNodesBySite", siteID).Return(siteWithAllNodes(), nil).Once()
+			controllerClient.On("RestartNodes", mock.Anything, mock.Anything).
+				Return(nil, busyController()).Maybe()
+			controllerClient.On("ToggleRadios", mock.Anything, mock.Anything).
+				Return(nil, busyController()).Maybe()
+			controllerClient.On("ToggleService", mock.Anything, mock.Anything).
+				Return(nil, busyController()).Maybe()
 
-	s := NewSiteControllerServer(testOrgName, nil, nil, nodeClient, nil, nil, &fakeControllerProvider{client: controllerClient}, nil, nil)
+			err := call(newTestServer(nodeClient, controllerClient), siteID)
 
-	_, err := s.RestartSite(context.TODO(), &pb.RestartSiteRequest{SiteId: siteID})
-
-	assert.Equal(t, codes.Unavailable, status.Code(err))
-	controllerClient.AssertNotCalled(t, "RestartNode", mock.Anything, mock.Anything)
+			assert.Equal(t, codes.AlreadyExists, status.Code(err))
+			assert.Contains(t, err.Error(), testCnodeID)
+		})
+	}
 }
 
 func TestSetRadio_OfflineAmplifierRejectedBeforeAnyToggle(t *testing.T) {
@@ -293,7 +224,7 @@ func TestSetRadio_OfflineAmplifierRejectedBeforeAnyToggle(t *testing.T) {
 
 	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	assert.Contains(t, err.Error(), testAmpID)
-	controllerClient.AssertNotCalled(t, "ToggleRadio", mock.Anything, mock.Anything)
+	controllerClient.AssertNotCalled(t, "ToggleRadios", mock.Anything, mock.Anything)
 }
 
 func TestRestartSite_OfflineCnodeRejected(t *testing.T) {
@@ -310,7 +241,7 @@ func TestRestartSite_OfflineCnodeRejected(t *testing.T) {
 
 	assert.Equal(t, codes.FailedPrecondition, status.Code(err))
 	assert.Contains(t, err.Error(), testCnodeID)
-	controllerClient.AssertNotCalled(t, "RestartNode", mock.Anything, mock.Anything)
+	controllerClient.AssertNotCalled(t, "RestartNodes", mock.Anything, mock.Anything)
 }
 
 func TestSetRadio_MissingAmplifierNotFound(t *testing.T) {
@@ -329,7 +260,7 @@ func TestSetRadio_MissingAmplifierNotFound(t *testing.T) {
 	_, err := s.SetRadio(context.TODO(), &pb.SetRadioRequest{SiteId: siteID, State: "on"})
 
 	assert.Equal(t, codes.NotFound, status.Code(err))
-	controllerClient.AssertNotCalled(t, "ToggleRadio", mock.Anything, mock.Anything)
+	controllerClient.AssertNotCalled(t, "ToggleRadios", mock.Anything, mock.Anything)
 }
 
 func TestRestartSite_EmptyRegistryTypeNeverRestartsCnode(t *testing.T) {
@@ -343,9 +274,12 @@ func TestRestartSite_EmptyRegistryTypeNeverRestartsCnode(t *testing.T) {
 			{Id: testAmpID, Status: online},
 		},
 	}, nil).Once()
-	controllerClient.On("RestartNode", mock.Anything, mock.MatchedBy(func(req *contpb.RestartNodeRequest) bool {
-		return req.NodeId == testTowerID || req.NodeId == testAmpID
-	})).Return(&contpb.RestartNodeResponse{OperationId: "op-r"}, nil).Twice()
+	controllerClient.On("RestartNodes", mock.Anything,
+		mock.MatchedBy(func(req *contpb.RestartNodesRequest) bool {
+			return assert.ObjectsAreEqual([]string{testTowerID, testAmpID}, req.NodeIds)
+		})).Return(&contpb.RestartNodesResponse{Operations: []*contpb.RestartNodeResponse{
+		{OperationId: "op-t"}, {OperationId: "op-a"},
+	}}, nil).Once()
 
 	s := newTestServer(nodeClient, controllerClient)
 
@@ -354,9 +288,6 @@ func TestRestartSite_EmptyRegistryTypeNeverRestartsCnode(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, resp.OperationIds, 2)
 	controllerClient.AssertExpectations(t)
-	controllerClient.AssertNotCalled(t, "RestartNode", mock.Anything, mock.MatchedBy(func(req *contpb.RestartNodeRequest) bool {
-		return req.NodeId == testCnodeID
-	}))
 }
 
 func TestRecordObservedState_WritesStateNotIntent(t *testing.T) {
@@ -644,7 +575,7 @@ func TestPruneDeletedSites_DeletesOnlySitesRegistryReportsMissing(t *testing.T) 
 	siteClient.On("Get", gone).Return(nil, registryErr(http.StatusNotFound)).Once()
 	siteClient.On("Get", unknown).Return(nil, registryErr(http.StatusInternalServerError)).Once()
 
-	srv := NewSiteControllerServer(testOrgName, nil, nil, nil, siteClient, nil, nil, nil, nil)
+	srv := NewSiteControllerServer(testOrgName, nil, nil, nil, siteClient, nil, nil, nil)
 	c := &SiteControllerEventServer{s: srv, sites: sites}
 
 	c.PruneDeletedSites()
