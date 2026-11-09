@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
@@ -83,18 +84,21 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 	}
 }
 
-func (c *ControllerServer) ensureNodeOnline(nodeID string) error {
+func (c *ControllerServer) onlineNode(nodeID string) (*creg.NodeInfo, error) {
 	node, err := c.nodeClient.Get(nodeID)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to resolve node %s: %v", nodeID, err)
+		return nil, status.Errorf(codes.Internal, "failed to resolve node %s: %v",
+			nodeID, err)
 	}
 
-	if !strings.EqualFold(node.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
-		return status.Errorf(codes.NotFound, "node %s is not available: connectivity is %s",
+	if !strings.EqualFold(node.Status.Connectivity,
+		ukama.NodeConnectivityOnline.String()) {
+		return nil, status.Errorf(codes.NotFound,
+			"node %s is not available: connectivity is %s",
 			nodeID, node.Status.Connectivity)
 	}
 
-	return nil
+	return node, nil
 }
 
 func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNodeCommandRequest) (*pb.SendNodeCommandResponse, error) {
@@ -106,14 +110,11 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	if err := c.ensureNodeOnline(nId.String()); err != nil {
-		return nil, err
-	}
-
-	op, err := c.acquireAndRegister("SendNodeCommand", "node:"+nId.String())
+	ops, err := c.lockNodes("SendNodeCommand", nId.String())
 	if err != nil {
 		return nil, err
 	}
+	op := ops[0]
 	if err := c.markRunning(op, "SendNodeCommand"); err != nil {
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
@@ -130,36 +131,54 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
-func (c *ControllerServer) RestartNode(ctx context.Context, req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
+func (c *ControllerServer) RestartNode(ctx context.Context,
+	req *pb.RestartNodeRequest) (*pb.RestartNodeResponse, error) {
 	if req.NodeId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
 	}
-	nId, err := ukama.ValidateNodeId(req.NodeId)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
-	}
-	if _, err = c.nRepo.Get(nId.String()); err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
-	}
-
-	if err := c.ensureNodeOnline(nId.String()); err != nil {
-		return nil, err
-	}
-
-	op, err := c.acquireAndRegister("RestartNode", "node:"+nId.String())
+	resp, err := c.RestartNodes(ctx, &pb.RestartNodesRequest{NodeIds: []string{req.NodeId}})
 	if err != nil {
 		return nil, err
 	}
-	if err := c.markRunning(op, "RestartNode"); err != nil {
-		c.failOperation(op, "RestartNode", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	return resp.Operations[0], nil
+}
+
+func (c *ControllerServer) RestartNodes(ctx context.Context,
+	req *pb.RestartNodesRequest) (*pb.RestartNodesResponse, error) {
+	ids, err := validNodeIds(req.NodeIds)
+	if err != nil {
+		return nil, err
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["RESTART"].method, actions["RESTART"].path, nId.String(), []byte("")); err != nil {
-		c.failOperation(op, "RestartNode", fmt.Sprintf("publish failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
+	for _, id := range ids {
+		if _, err := c.nRepo.Get(id); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"Node has not been registered yet: %s", err.Error())
+		}
 	}
 
-	return &pb.RestartNodeResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
+	ops, err := c.lockNodes("RestartNode", ids...)
+	if err != nil {
+		return nil, err
+	}
+	if err := c.markAllRunning(ops, "RestartNode"); err != nil {
+		return nil, err
+	}
+
+	resp := &pb.RestartNodesResponse{}
+	for i, op := range ops {
+		if err := c.publishMessage(c.orgName+"..."+ids[i], actions["RESTART"].method,
+			actions["RESTART"].path, ids[i], []byte("")); err != nil {
+			c.failAll(ops[i:], "RestartNode", fmt.Sprintf("publish failed: %v", err))
+			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s",
+				err.Error())
+		}
+		resp.Operations = append(resp.Operations, &pb.RestartNodeResponse{
+			OperationId: op.Id,
+			ResourceKey: op.ResourceKey,
+			Status:      opmgrpb.OperationStatus_RUNNING.String(),
+		})
+	}
+	return resp, nil
 }
 
 func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest) (*pb.PingNodeResponse, error) {
@@ -200,14 +219,11 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		return nil, err
 	}
 
-	if err := c.ensureNodeOnline(nId.String()); err != nil {
-		return nil, err
-	}
-
-	op, err := c.acquireAndRegister("ToggleInternetSwitch", nodeKey(nId.String()))
+	ops, err := c.lockNodes("ToggleInternetSwitch", nId.String())
 	if err != nil {
 		return nil, err
 	}
+	op := ops[0]
 	if err := c.markRunning(op, "ToggleInternetSwitch"); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
@@ -220,12 +236,23 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
 }
 
-func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioRequest) (*pb.ToggleRadioResponse, error) {
-	log.Infof("Toggling RADIO on/off for node %v, to %v", req.NodeId, req.State)
-	// TODO: RF toggle will send command to Tnode and Anode both
-	nId, err := ukama.ValidateNodeId(req.NodeId)
+func (c *ControllerServer) ToggleRadio(ctx context.Context,
+	req *pb.ToggleRadioRequest) (*pb.ToggleRadioResponse, error) {
+	resp, err := c.ToggleRadios(ctx, &pb.ToggleRadiosRequest{
+		NodeIds: []string{req.NodeId}, State: req.State,
+	})
 	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid format of node id. Error %s", err.Error())
+		return nil, err
+	}
+	return resp.Operations[0], nil
+}
+
+func (c *ControllerServer) ToggleRadios(ctx context.Context,
+	req *pb.ToggleRadiosRequest) (*pb.ToggleRadiosResponse, error) {
+	log.Infof("Toggling RADIO on/off for nodes %v, to %v", req.NodeIds, req.State)
+	ids, err := validNodeIds(req.NodeIds)
+	if err != nil {
+		return nil, err
 	}
 
 	data, err := json.Marshal(map[string]string{"state": req.State})
@@ -233,24 +260,29 @@ func (c *ControllerServer) ToggleRadio(ctx context.Context, req *pb.ToggleRadioR
 		return nil, err
 	}
 
-	if err := c.ensureNodeOnline(nId.String()); err != nil {
-		return nil, err
-	}
-
-	op, err := c.acquireAndRegister("ToggleRadio", nodeKey(nId.String()))
+	ops, err := c.lockNodes("ToggleRadio", ids...)
 	if err != nil {
 		return nil, err
 	}
-	if err := c.markRunning(op, "ToggleRadio"); err != nil {
-		c.failOperation(op, "ToggleRadio", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+	if err := c.markAllRunning(ops, "ToggleRadio"); err != nil {
+		return nil, err
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["RADIO"].method, actions["RADIO"].path, nId.String(), data); err != nil {
-		c.failOperation(op, "ToggleRadio", fmt.Sprintf("publish failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "Failed to publish RADIO switch message: %s", err.Error())
+
+	resp := &pb.ToggleRadiosResponse{}
+	for i, op := range ops {
+		if err := c.publishMessage(c.orgName+"..."+ids[i], actions["RADIO"].method,
+			actions["RADIO"].path, ids[i], data); err != nil {
+			c.failAll(ops[i:], "ToggleRadio", fmt.Sprintf("publish failed: %v", err))
+			return nil, status.Errorf(codes.Internal,
+				"Failed to publish RADIO switch message: %s", err.Error())
+		}
+		resp.Operations = append(resp.Operations, &pb.ToggleRadioResponse{
+			OperationId: op.Id,
+			ResourceKey: op.ResourceKey,
+			Status:      c.completeOperation(op, "ToggleRadio"),
+		})
 	}
-	opStatus := c.completeOperation(op, "ToggleRadio")
-	return &pb.ToggleRadioResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+	return resp, nil
 }
 
 func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServiceRequest) (*pb.ToggleServiceResponse, error) {
@@ -266,14 +298,11 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		return nil, err
 	}
 
-	if err := c.ensureNodeOnline(nId.String()); err != nil {
-		return nil, err
-	}
-
-	op, err := c.acquireAndRegister("ToggleService", nodeKey(nId.String()))
+	ops, err := c.lockNodes("ToggleService", nId.String())
 	if err != nil {
 		return nil, err
 	}
+	op := ops[0]
 	if err := c.markRunning(op, "ToggleService"); err != nil {
 		c.failOperation(op, "ToggleService", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
@@ -290,37 +319,135 @@ func nodeKey(nodeID string) string {
 	return "node:" + nodeID
 }
 
-func (c *ControllerServer) acquireAndRegister(actionType, resourceKey string) (*copr.OperationInfo, error) {
-	if c.opManager == nil || c.opMonitor == nil {
-		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
-		return nil, fmt.Errorf("operation manager/monitor is not set")
+func (c *ControllerServer) lockNodes(actionType string,
+	nodeIDs ...string) ([]*copr.OperationInfo, error) {
+	targets := make([]string, 0, len(nodeIDs))
+	siteID := ""
+	for i, id := range nodeIDs {
+		node, err := c.onlineNode(id)
+		if err != nil {
+			return nil, err
+		}
+		if i > 0 && node.Site.SiteId != siteID {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"%s: nodes %v do not belong to the same site", actionType, nodeIDs)
+		}
+		siteID = node.Site.SiteId
+		targets = append(targets, nodeKey(id))
 	}
 
-	startResp, err := c.opManager.Start(copr.StartRequest{
-		Type:         actionType,
-		System:       "node",
-		ResourceKey:  resourceKey,
-		RequestedBy:  pkg.ServiceName,
-		LeaseSeconds: c.opLeaseSecs,
-	})
+	if c.opManager == nil || c.opMonitor == nil {
+		return nil, status.Errorf(codes.Unavailable,
+			"%s: operation manager/monitor is not set", actionType)
+	}
+
+	siblings, err := c.siteNodeKeys(siteID)
 	if err != nil {
-		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
 		return nil, err
 	}
-	op := startResp.Operation
-	if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
-		OperationId:     op.Id,
-		ResourceKey:     resourceKey,
-		ActionType:      actionType,
-		FencingToken:    op.FencingToken,
-		DeadlineSeconds: c.opDeadlineSecs,
-	}); err != nil {
-		log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
-		c.markFailed(op, actionType, fmt.Sprintf("register intent failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+
+	ops, err := copr.LockThenCheck(c.opManager, copr.LockRequest{
+		Type:         actionType,
+		System:       "node",
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: c.opLeaseSecs,
+		Targets:      targets,
+		Siblings:     siblings,
+	})
+	if errors.Is(err, copr.ErrBusy) {
+		log.Warnf("%s rejected for %v: %v", actionType, nodeIDs, err)
+		return nil, status.Errorf(codes.AlreadyExists, "%s rejected: %v",
+			actionType, err)
 	}
-	log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id, op.FencingToken, resourceKey)
-	return op, nil
+	if err != nil {
+		log.Errorf("%s lock for %v failed: %v", actionType, nodeIDs, err)
+		return nil, status.Errorf(codes.Unavailable, "%s: lock nodes: %v",
+			actionType, err)
+	}
+
+	for i, op := range ops {
+		if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
+			OperationId:     op.Id,
+			ResourceKey:     op.ResourceKey,
+			ActionType:      actionType,
+			FencingToken:    op.FencingToken,
+			DeadlineSeconds: c.opDeadlineSecs,
+		}); err != nil {
+			log.Errorf("%s register intent for op %s failed: %v", actionType, op.Id, err)
+			reason := fmt.Sprintf("register intent failed: %v", err)
+			for _, registered := range ops[:i] {
+				c.failOperation(registered, actionType, reason)
+			}
+			for _, pending := range ops[i:] {
+				c.markFailed(pending, actionType, reason)
+			}
+			return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+		}
+		log.Infof("%s acquired lock op=%s token=%d for %s", actionType, op.Id,
+			op.FencingToken, op.ResourceKey)
+	}
+	return ops, nil
+}
+
+func (c *ControllerServer) siteNodeKeys(siteID string) ([]string, error) {
+	if siteID == "" {
+		return nil, nil
+	}
+	resp, err := c.nodeClient.GetNodesBySite(siteID)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "read nodes of site %s: %v",
+			siteID, err)
+	}
+	keys := make([]string, 0, len(resp.Nodes))
+	for _, n := range resp.Nodes {
+		keys = append(keys, nodeKey(canonicalNodeID(n.Id)))
+	}
+	return keys, nil
+}
+
+func canonicalNodeID(id string) string {
+	if nId, err := ukama.ValidateNodeId(id); err == nil {
+		return nId.String()
+	}
+	return id
+}
+
+func validNodeIds(raw []string) ([]string, error) {
+	if len(raw) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "node ID cannot be empty")
+	}
+	seen := make(map[string]bool, len(raw))
+	ids := make([]string, 0, len(raw))
+	for _, r := range raw {
+		nId, err := ukama.ValidateNodeId(r)
+		if err != nil {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"invalid format of node id. Error %s", err.Error())
+		}
+		if !seen[nId.String()] {
+			seen[nId.String()] = true
+			ids = append(ids, nId.String())
+		}
+	}
+	return ids, nil
+}
+
+func (c *ControllerServer) markAllRunning(ops []*copr.OperationInfo,
+	actionType string) error {
+	for _, op := range ops {
+		if err := c.markRunning(op, actionType); err != nil {
+			c.failAll(ops, actionType, fmt.Sprintf("mark running failed: %v", err))
+			return status.Errorf(codes.Internal, "mark running: %v", err)
+		}
+	}
+	return nil
+}
+
+func (c *ControllerServer) failAll(ops []*copr.OperationInfo, actionType,
+	reason string) {
+	for _, op := range ops {
+		c.failOperation(op, actionType, reason)
+	}
 }
 
 func (c *ControllerServer) markRunning(op *copr.OperationInfo, actionType string) error {

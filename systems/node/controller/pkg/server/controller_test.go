@@ -428,8 +428,9 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, mock.Anything).
 			Return(&copr.OperationInfo{}, nil).Once()
 
-		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
-		_, err := c.acquireAndRegister("ToggleRadio", "node:x")
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon,
+			nodeClient: onlineNodeClient()}
+		_, err := c.lockNodes("ToggleRadio", "x")
 
 		assert.Error(t, err)
 		opMon.AssertNotCalled(t, "Cancel", mock.Anything)

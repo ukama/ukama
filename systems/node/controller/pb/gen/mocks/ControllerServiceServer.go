@@ -134,6 +134,36 @@ func (_m *ControllerServiceServer) RestartNode(_a0 context.Context, _a1 *gen.Res
 	return r0, r1
 }
 
+// RestartNodes provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) RestartNodes(_a0 context.Context, _a1 *gen.RestartNodesRequest) (*gen.RestartNodesResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RestartNodes")
+	}
+
+	var r0 *gen.RestartNodesResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest) (*gen.RestartNodesResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest) *gen.RestartNodesResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.RestartNodesResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodesRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // SendNodeCommand provides a mock function with given fields: _a0, _a1
 func (_m *ControllerServiceServer) SendNodeCommand(_a0 context.Context, _a1 *gen.SendNodeCommandRequest) (*gen.SendNodeCommandResponse, error) {
 	ret := _m.Called(_a0, _a1)
@@ -186,6 +216,36 @@ func (_m *ControllerServiceServer) ToggleRadio(_a0 context.Context, _a1 *gen.Tog
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadioRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// ToggleRadios provides a mock function with given fields: _a0, _a1
+func (_m *ControllerServiceServer) ToggleRadios(_a0 context.Context, _a1 *gen.ToggleRadiosRequest) (*gen.ToggleRadiosResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ToggleRadios")
+	}
+
+	var r0 *gen.ToggleRadiosResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadiosRequest) (*gen.ToggleRadiosResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadiosRequest) *gen.ToggleRadiosResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.ToggleRadiosResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadiosRequest) error); ok {
 		r1 = rf(_a0, _a1)
 	} else {
 		r1 = ret.Error(1)
