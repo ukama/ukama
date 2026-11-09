@@ -337,7 +337,9 @@ func (r *Reconciler) applyRadio(ctx context.Context, siteID, state string) error
 	if err != nil {
 		return fmt.Errorf("get controller client: %w", err)
 	}
-	if _, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: state}); err != nil {
+	if _, err := client.ToggleRadios(ctx, &contpb.ToggleRadiosRequest{
+		NodeIds: []string{nodeID}, State: state,
+	}); err != nil {
 		return fmt.Errorf("apply radio: %w", err)
 	}
 	return nil
