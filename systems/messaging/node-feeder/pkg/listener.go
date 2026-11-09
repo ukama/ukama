@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/proto"
@@ -43,6 +44,11 @@ type QueueListener struct {
 	maxRetryCount  int64
 	retryPeriodSec int
 	listenerConfig ListenerConfig
+	retryPub       RetryPublisher
+	retryBackoff   []time.Duration
+	maxRequestAge  time.Duration
+	latest         *latestRequests
+	now            func() time.Time
 }
 
 type RequestMultiplier interface {
@@ -56,6 +62,12 @@ func NewQueueListener(service string, queueUri string, serviceId string, request
 		return nil, err
 	}
 
+	retryPub, err := NewRetryPublisher(queueUri)
+	if err != nil {
+		return nil, errors.Wrap(err, "error creating retry publisher")
+	}
+
+	maxRequestAge := time.Duration(conf.MaxRequestAgeSec) * time.Second
 	q := &QueueListener{
 		service:        service,
 		consumer:       client,
@@ -65,6 +77,11 @@ func NewQueueListener(service string, queueUri string, serviceId string, request
 		maxRetryCount:  conf.ExecutionRetryCount,
 		retryPeriodSec: conf.RetryPeriodSec,
 		listenerConfig: conf,
+		retryPub:       retryPub,
+		retryBackoff:   backoffDurations(conf.RetryBackoffSec),
+		maxRequestAge:  maxRequestAge,
+		latest:         newLatestRequests(maxRequestAge),
+		now:            time.Now,
 	}
 
 	err = q.declareQueueTopology(queueUri)
@@ -140,6 +157,14 @@ func (q *QueueListener) declareQueueTopology(queueUri string) error {
 		return errors.Wrap(err, errorCreatingWaitingQueueErr)
 	}
 
+	// One queue per backoff step: RabbitMQ only supports a fixed TTL per queue.
+	for _, delay := range q.retryBackoff {
+		_, err = ch.QueueDeclare(retryQueueName(delay), true, false, false, false, retryQueueArgs(delay))
+		if err != nil {
+			return errors.Wrap(err, "error declaring retry queue "+retryQueueName(delay))
+		}
+	}
+
 	return nil
 }
 
@@ -204,16 +229,79 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 		return
 	}
 
-	err := q.processRequest(delivery)
+	log.Infof("Raw message %v", delivery.Body)
+
+	request, err := unmarshalNodeFeederMessage(delivery.Body)
+	if err != nil {
+		log.Errorf("Failed to parse message with key %s. Error %s", delivery.RoutingKey, err.Error())
+		done <- true
+		return
+	}
+
+	attempt, firstSeen := retryState(delivery.Headers, q.now())
+	if q.maxRequestAge > 0 && q.now().Sub(firstSeen) > q.maxRequestAge {
+		q.retire(request, attempt, "max request age reached")
+		done <- true
+		return
+	}
+
+	if !strings.HasSuffix(request.Target, "*") {
+		key := requestKey(request)
+		if attempt == 0 {
+			q.latest.record(key, firstSeen)
+		} else if q.latest.superseded(key, firstSeen) {
+			log.Infof("Dropping retry %d of %s %s for %s: a newer request replaced it", attempt, request.HttpMethod, request.Path, request.Target)
+			metrics.RecordSupersededRequestMetric()
+			done <- true
+			return
+		}
+	}
+
+	err = q.processRequest(request)
 	if err != nil {
 		log.Errorf("Error processing request. Error: %+v", err)
 		metrics.RecordFailedRequestMetric()
-		done <- false
+		done <- q.scheduleRetry(delivery, request, attempt, firstSeen)
 		return
 	}
 	metrics.RecordSuccessfulRequestMetric()
 
 	done <- true
+}
+
+// scheduleRetry reports whether the failed delivery can be acked. It cannot when
+// there is no backoff configured or the retry publish fails, so the nack sends it
+// through the waiting queue instead.
+func (q *QueueListener) scheduleRetry(delivery amqp.Delivery, request *epb.NodeFeederMessage, attempt int, firstSeen time.Time) bool {
+	if len(q.retryBackoff) == 0 {
+		return false
+	}
+
+	if attempt >= len(q.retryBackoff) {
+		q.retire(request, attempt, "retries exhausted")
+		return true
+	}
+
+	delay := q.retryBackoff[attempt]
+	if q.maxRequestAge > 0 && q.now().Add(delay).Sub(firstSeen) > q.maxRequestAge {
+		q.retire(request, attempt, "next retry would pass max request age")
+		return true
+	}
+
+	queue := retryQueueName(delay)
+	err := q.retryPub.Publish(queue, delivery.Body, retryHeaders(delivery.Headers, attempt+1, firstSeen))
+	if err != nil {
+		log.Errorf("Failed to publish retry to %s, falling back to the waiting queue. Error: %v", queue, err)
+		return false
+	}
+
+	log.Infof("Retry %d of %s %s for %s in %s", attempt+1, request.HttpMethod, request.Path, request.Target, delay)
+	return true
+}
+
+func (q *QueueListener) retire(request *epb.NodeFeederMessage, attempt int, reason string) {
+	log.Warnf("Dropping %s %s for %s after %d retries: %s", request.HttpMethod, request.Path, request.Target, attempt, reason)
+	metrics.RecordRetiredRequestMetric()
 }
 
 func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
@@ -241,7 +329,7 @@ func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
 		}
 	}
 
-	log.Warning("Cannot get retry count from message headers")
+	// Retries from the backoff queues carry x-death entries for other exchanges.
 	return false
 }
 
@@ -272,24 +360,14 @@ func unmarshalNodeFeederMessage(body []byte) (*epb.NodeFeederMessage, error) {
 }
 
 // process node msg also
-func (q *QueueListener) processRequest(delivery amqp.Delivery) error {
-
-	log.Infof("Raw message %v", delivery.Body)
-
-	request, err := unmarshalNodeFeederMessage(delivery.Body)
-	if err != nil {
-		log.Errorf("Failed to parse message with key %s. Error %s", delivery.RoutingKey, err.Error())
-		return nil
-	}
-
+func (q *QueueListener) processRequest(request *epb.NodeFeederMessage) error {
 	log.Infof("Received request: %+v", request)
 	if strings.HasSuffix(request.Target, "*") {
 		log.Infof("Wildcarded target: %s", request.Target)
-		err = q.requestMult.Process(request)
-		return err
+		return q.requestMult.Process(request)
 	} else {
 		log.Infof("Direct node target: %s", request.Target)
-		err = q.requestExec.Execute(request)
+		err := q.requestExec.Execute(request)
 
 		if err != nil {
 			if dErr, ok := err.(Device4xxServerError); ok {
