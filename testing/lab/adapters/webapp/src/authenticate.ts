@@ -4,7 +4,7 @@
 import { mkdir, open, rename, rm } from 'node:fs/promises';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { chromium, errors, firefox, webkit, type Browser, type Page } from 'playwright';
+import { chromium, errors, firefox, webkit, type Browser, type Locator, type Page, type Request } from 'playwright';
 import { assertSession } from './console-app.js';
 import { baseURL, Budget, WorkerError } from './contract.js';
 
@@ -41,6 +41,66 @@ function loginLocation(page: Page | undefined, consoleOrigin: string, loginOrigi
   return host + '/' + (route?.[1] ?? (url.pathname === '/' ? '' : 'other'));
 }
 
+interface WelcomeAttempt {
+  clicks: number;
+  post: 'unobserved' | 'pending' | 'failed' | number;
+  navigations: number;
+  lastNavigation: string;
+}
+
+async function confirmWelcome(page: Page, origin: string, button: Locator, attempt: WelcomeAttempt): Promise<void> {
+  const budget = new Budget(60000);
+  const errorNotice = page.locator('main.welcome-root .welcome-error');
+  const header = page.locator('header.topbar .viewseg');
+  let welcomeRequest: Request | undefined;
+  const settleMs = 5000;
+  let lastActivity = performance.now();
+  page.on('request', request => {
+    if (request.method() !== 'POST') return;
+    const url = new URL(request.url());
+    if (url.origin === origin && url.pathname === '/api/auth/welcome') {
+      welcomeRequest = request;
+      attempt.post = 'pending';
+    }
+  });
+  page.on('response', reply => {
+    if (reply.request() === welcomeRequest) attempt.post = reply.status();
+  });
+  page.on('requestfailed', request => {
+    if (request === welcomeRequest) attempt.post = 'failed';
+  });
+  page.on('framenavigated', frame => {
+    if (frame !== page.mainFrame()) return;
+    attempt.navigations++;
+    attempt.lastNavigation = loginLocation(page, origin, '');
+    lastActivity = performance.now();
+  });
+
+  attempt.clicks++;
+  await button.click({ timeout: budget.remaining() });
+  lastActivity = performance.now();
+  await budget.poll(async () => {
+    if (page.isClosed()) throw new WorkerError('AUTH_PAGE_CLOSED', 'Browser page closed during welcome confirmation');
+    if (attempt.post === 'failed' || (typeof attempt.post === 'number' && attempt.post >= 400))
+      throw new WorkerError('AUTH_WELCOME', 'Welcome confirmation request failed');
+    const url = new URL(page.url());
+    if (url.origin !== origin) return false;
+    if (url.pathname !== '/welcome') return header.isVisible();
+    if (await errorNotice.isVisible())
+      throw new WorkerError('AUTH_WELCOME', 'Console could not save the welcome confirmation');
+    // A navigation can leave the same unconfirmed welcome form on screen.
+    // Only retry on a settled page if the handler has not started its POST.
+    const navigation = attempt.navigations;
+    if (attempt.clicks === 1 && !welcomeRequest && performance.now() - lastActivity >= settleMs &&
+        await button.isVisible() && await button.isEnabled({ timeout: budget.remaining() }) &&
+        !welcomeRequest && attempt.navigations === navigation && page.url() === url.href) {
+      attempt.clicks++;
+      await button.click({ timeout: budget.remaining() });
+    }
+    return false;
+  }, Boolean, 'The Console dashboard did not open after welcome confirmation');
+}
+
 export async function automaticAuth(origin: string, destination: string,
                                     engine: BrowserName, metadata?: string): Promise<void> {
   const identifier = process.env.UKAMA_IDENTIFIER, password = process.env.UKAMA_PASSWORD;
@@ -48,6 +108,7 @@ export async function automaticAuth(origin: string, destination: string,
     throw new WorkerError('AUTH_CREDENTIALS', 'Export UKAMA_IDENTIFIER and UKAMA_PASSWORD before running the batch');
   const executablePath = process.env[`ULAB_WEBAPP_${engine.toUpperCase()}_EXECUTABLE_PATH`] || process.env.ULAB_WEBAPP_EXECUTABLE_PATH;
   let browser: Browser | undefined, activePage: Page | undefined;
+  let welcomeAttempt: WelcomeAttempt | undefined;
   let step = 'start-browser', authOrigin = '', loginHttp: number | undefined;
   try {
     browser = await ({ chromium, firefox, webkit })[engine].launch({
@@ -97,21 +158,18 @@ export async function automaticAuth(origin: string, destination: string,
     await submit.click();
     step = 'wait-console-landing';
     const header = page.locator('header.topbar .viewseg');
-    const welcome = page.getByRole('heading', { name: 'Welcome to Ukama!', exact: true });
+    const continueButton = page.getByRole('button', { name: 'Continue', exact: true });
     const landing = await new Budget(60000).poll(async () => {
+      if (page.isClosed()) throw new WorkerError('AUTH_PAGE_CLOSED', 'Browser page closed while waiting for the Console');
       const url = new URL(page.url());
       if (url.origin !== origin) return null;
-      if (url.pathname === '/welcome') return await welcome.isVisible() ? 'welcome' : null;
+      if (url.pathname === '/welcome') return await continueButton.isVisible() ? 'welcome' : null;
       return await header.isVisible() ? 'dashboard' : null;
     }, Boolean, 'Waiting for the Console welcome page or dashboard');
     if (landing === 'welcome') {
       step = 'confirm-welcome';
-      await page.getByRole('button', { name: 'Continue', exact: true }).click();
-      step = 'wait-dashboard-after-welcome';
-      const welcomeError = page.locator('main.welcome-root .welcome-error');
-      await header.or(welcomeError).filter({ visible: true }).first().waitFor({ timeout: 60000 });
-      if (await welcomeError.isVisible())
-        throw new WorkerError('AUTH_WELCOME', 'Console could not save the welcome confirmation');
+      welcomeAttempt = { clicks: 0, post: 'unobserved', navigations: 0, lastNavigation: 'unobserved' };
+      await confirmWelcome(page, origin, continueButton, welcomeAttempt);
     }
     step = 'verify-dashboard';
     await assertSession(page, origin, new Budget(10000));
@@ -125,6 +183,7 @@ export async function automaticAuth(origin: string, destination: string,
     const reason = error instanceof WorkerError ? error.message :
       error instanceof errors.TimeoutError ? 'Timed out' : 'Operation failed';
     const location = loginLocation(activePage, origin, authOrigin);
-    throw new WorkerError(code, `${reason} (step=${step} page=${location} login_post_http=${loginHttp ?? 'unobserved'})`);
+    const welcome = welcomeAttempt ? ` welcome_post=${welcomeAttempt.post} welcome_clicks=${welcomeAttempt.clicks} welcome_navigations=${welcomeAttempt.navigations} welcome_last_nav=${welcomeAttempt.lastNavigation}` : '';
+    throw new WorkerError(code, `${reason} (step=${step} page=${location} login_post_http=${loginHttp ?? 'unobserved'}${welcome})`);
   } finally { await browser?.close(); }
 }
