@@ -139,6 +139,33 @@ export class Creation {
     }
     await configure.click({ timeout: Math.min(10_000, budget.remaining()) });
   }
+  private async selectSiteComponent(field: string, requested: unknown, budget: Budget): Promise<void> {
+    const select = this.page.locator(`select[name="${field}Id"]`);
+    await select.waitFor({ state: 'visible', timeout: budget.remaining() });
+    // The Console renders these native selects after its inventory query settles.
+    const options = await select.locator('option:enabled').evaluateAll(elements =>
+      (elements as HTMLOptionElement[]).filter(o => o.value.trim()).map(o => ({
+        value: o.value, label: o.label, selected: o.selected,
+      })));
+    if (!options.length)
+      throw new WorkerError('SITE_COMPONENT_UNAVAILABLE', `No selectable ${field} component in the Console inventory`);
+
+    let choice = options.find(o => o.selected) ?? options[0]!;
+    if (requested !== undefined && requested !== '') {
+      const label = str(requested, `${field}_component`);
+      const matches = options.filter(o => o.label === label);
+      if (matches.length !== 1)
+        throw new WorkerError('SITE_COMPONENT_UNAVAILABLE',
+          `Expected one ${field} component labeled "${label}", found ${matches.length}`,
+          { field, available_labels: options.slice(0, 12).map(o => o.label) });
+      choice = matches[0]!;
+    }
+    if (!choice.selected)
+      await select.selectOption({ value: choice.value }, { timeout: budget.remaining() });
+    const actual = await select.inputValue({ timeout: budget.remaining() });
+    if (actual !== choice.value)
+      throw new WorkerError('SITE_COMPONENT_UNAVAILABLE', `Console did not retain the selected ${field} component`, actual);
+  }
   private async site(app: ConsoleApp, budget: Budget): Promise<void> {
     const name = String(this.inputs.name), network = String(this.inputs.network_name), tower = String(this.inputs.tower_id);
     await app.open({ view: 'network_sites', network_name: network }, budget);
@@ -165,14 +192,25 @@ export class Creation {
         (await this.page.locator('.cfg-readonly').innerText({ timeout: budget.remaining() })).trim() !== tower)
       throw new WorkerError('WRONG_TOWER', 'Site wizard identity differs from the planned tower/network');
     const components = object(this.inputs.components ?? {}, 'components'); keys(components, ['switch', 'backhaul', 'power']);
-    for (const field of ['switch', 'backhaul', 'power']) {
-      const select = this.page.locator(`select[name="${field}Id"]`);
-      if (components[field]) await select.selectOption({ label: str(components[field], field) }, { timeout: budget.remaining() });
-      await budget.poll(() => select.inputValue({ timeout: budget.remaining() }), Boolean, `Select an unambiguous ${field} component or set its visible label in webapp`);
-    }
+    for (const field of ['switch', 'backhaul', 'power'])
+      await this.selectSiteComponent(field, components[field], budget);
     this.submit();
     await this.page.getByRole('button', { name: 'Create site', exact: true }).click({ timeout: budget.remaining() });
-    await this.page.getByRole('heading', { name: 'Upload SIMs', exact: true }).waitFor({ timeout: budget.remaining() });
+    const upload = this.page.getByRole('heading', { name: 'Upload SIMs', exact: true });
+    const formError = this.page.locator('.cfg-fields .cfg-error:visible, .cfg-fields .ff-err:visible').first();
+    await upload.or(formError).first().waitFor({ state: 'visible', timeout: budget.remaining() });
+    if (await formError.isVisible()) {
+      const message = await formError.innerText({ timeout: budget.remaining() });
+      // These Console validation errors return before useCreateSite runs.
+      const rejectedByForm = await formError.evaluate(el => el.classList.contains('ff-err')) ||
+        message === 'Your node was not found in your inventory (no access component). Please contact support.' ||
+        message === 'No spectrum component found in your inventory. Please contact support.';
+      if (rejectedByForm && !this.requestSeen && !this.binding) {
+        this.receipt.state = 'prepared';
+        this.save();
+      }
+      throw new WorkerError('SITE_CREATE_FAILED', message);
+    }
     await this.page.getByRole('button', { name: 'Finish setup', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('button', { name: 'Go to Console', exact: true }).click({ timeout: budget.remaining() });
     await app.open({ view: 'network_sites', network_name: network }, budget);

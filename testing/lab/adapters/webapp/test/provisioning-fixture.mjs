@@ -49,9 +49,15 @@ function client() {
       main.innerHTML = '<div class="MuiCard-root"><div><span>Sites online</span></div><div class="value"></div></div>'; updateKpi();
     } else if (path === '/network/manage/node-pool') {
       main.innerHTML = '<table><tbody></tbody></table>';
-      for (const node of db.nodes.filter(n => n.type === 'Tower node' && !n.site)) {
+      const stale = db.mode === 'stale-node-pool' && !sessionStorage.getItem('pool-visited');
+      sessionStorage.setItem('pool-visited', '1');
+      for (const node of db.nodes.filter(n => !stale && n.type === 'Tower node' && !n.site)) {
         const row = document.createElement('tr'); row.innerHTML = `<td>${node.id}</td><td></td>`;
-        button('Configure', () => { tower = db.mode === 'wrong-tower' ? 'other-tnode-999' : node.id; void move('/configure/select-network?flow=install-site&nid=' + tower); }, row.lastChild);
+        button('Configure', () => {
+          tower = db.mode === 'wrong-tower' ? 'other-tnode-999' : node.id;
+          const unpinned = ['stale-node-pool', 'wrong-detected-tower'].includes(db.mode);
+          void move(unpinned ? '/configure/select-network' : '/configure/select-network?flow=install-site&nid=' + tower);
+        }, row.lastChild);
         main.querySelector('tbody').append(row);
       }
     } else if (path === '/network/sites') {
@@ -82,11 +88,47 @@ function client() {
       button('Next', () => move('/configure/site?networkid=' + selected + '&nid=' + tower));
     } else if (path === '/configure/site') {
       main.innerHTML = '<h1>Name your site</h1><input placeholder="site-name">';
-      button('Name site', () => { siteName = main.querySelector('input').value; void move('/configure/site/settings?networkid=' + selected + '&nid=' + tower); });
+      button('Name site', () => {
+        siteName = main.querySelector('input').value;
+        if (db.mode === 'wrong-detected-tower') tower = 'other-tnode-999';
+        void move('/configure/site/settings?networkid=' + selected + '&nid=' + tower);
+      });
     } else if (path === '/configure/site/settings') {
-      main.innerHTML = `<h1>Configure site settings</h1><div class="cfg-readonly">${params().get('nid')}</div>` + ['switch', 'backhaul', 'power'].map(f => `<select name="${f}Id"><option value="${f}-id">Default ${f}</option></select>`).join('');
+      main.innerHTML = `<h1>Configure site settings</h1><div class="cfg-readonly">${params().get('nid')}</div><div class="cfg-fields"></div>`;
+      const fields = main.querySelector('.cfg-fields');
+      const categories = ['switch', 'backhaul', 'power'];
+      for (const category of categories) {
+        const select = document.createElement('select');
+        select.name = category + 'Id';
+        select.add(new Option('Select ' + category + ' component', ''));
+        if (db.mode !== 'empty-power' || category !== 'power') {
+          if (db.mode === 'multiple-components') {
+            const disabled = new Option('Unavailable', category + '-disabled');
+            disabled.disabled = true;
+            select.add(disabled);
+            select.add(new Option('First ' + category, category + '-1'));
+            select.add(new Option('Second ' + category, category + '-2'));
+          } else {
+            select.add(new Option('Default ' + category, category + '-id', true, true));
+          }
+        }
+        fields.append(select);
+      }
       button('Create site', async () => {
-        await graphql('addSite', { name: siteName, network_id: selected, access_id: tower, switch_id: 'switch-id', power_id: 'power-id', backhaul_id: 'backhaul-id' });
+        const data = { name: siteName, network_id: selected, access_id: tower };
+        for (const category of categories) {
+          const value = fields.querySelector(`select[name="${category}Id"]`).value;
+          if (!value) {
+            fields.insertAdjacentHTML('beforeend', `<p class="ff-err">Select a ${category} component</p>`);
+            return;
+          }
+          data[category + '_id'] = value;
+        }
+        if (db.mode === 'missing-spectrum') {
+          fields.insertAdjacentHTML('beforeend', '<p class="cfg-error">No spectrum component found in your inventory. Please contact support.</p>');
+          return;
+        }
+        await graphql('addSite', data);
         if (db.mode === 'late-site') return;
         await move('/configure/sims');
       });
@@ -125,10 +167,15 @@ export async function provisioningFixture(mode = '', extension = {}) {
           const n = db.nodes.find(n=>n.id === body.id); if(n) { n.offline = body.action === 'disconnect-node.sh'; extension.connectivity?.(n,db); }
         }
       } else {
-        const op = /\b(addNetwork|addSite|deleteNetwork|deleteSite|deleteNode|releaseNodeFromSite)\s*\(/.exec(body.query)?.[1];
+        const op = /\b(getNodes|addNetwork|addSite|deleteNetwork|deleteSite|deleteNode|releaseNodeFromSite)\s*\(/.exec(body.query)?.[1];
         const data = body.variables?.data;
         const id = /id:\s*"([^"]+)"/.exec(body.query)?.[1];
         db.operations.push({ op, data, id });
+        if (op === 'getNodes') {
+          result = { nodes: db.nodes.filter(n => !n.site && n.type === 'Tower node').map(n => ({
+            id: n.id, status: {state: 'Ready', connectivity: 'Online'}, latitude: '51.05', longitude: '-114.07',
+          })) };
+        }
         if (op === 'addNetwork') { const n = { id: `network-${db.networks.length}`, name: data.name }; db.networks.push(n); result = mode==='opaque-network' ? {id:n.id} : n; }
         if (op === 'addSite') { const s = { id: `site-${db.sites.length+1}`, name:data.name, network_id:data.network_id }; db.sites.push(s); for (const n of db.nodes.filter(n=>n.id.replace(/-(a|c)node-/,'-tnode-')===data.access_id)) n.site = s.id; result=s; }
         if (op === 'releaseNodeFromSite') { result={success:true}; }

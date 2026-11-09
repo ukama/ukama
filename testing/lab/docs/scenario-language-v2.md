@@ -222,8 +222,10 @@ read from the visible dot's native tooltip (`title`), independently of lifecycle
 ```
 
 The `webapp` block additionally accepts optional `switch_component`,
-`backhaul_component`, and `power_component` visible option labels. Omit them
-when the wizard auto-selects a single available component. Creation commands
+`backhaul_component`, and `power_component` visible option labels. Each supplied
+label must match one selectable option. With no label, site setup keeps the
+Console selection or picks the first available inventory entry in the dropdown.
+An empty category fails site setup before submission. Creation commands
 and each runtime setup script receive at most 900 seconds, capped by the
 remaining scenario budget; ordinary events/checks keep their declared budgets.
 
