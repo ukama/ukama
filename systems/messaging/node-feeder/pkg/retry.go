@@ -111,6 +111,9 @@ func headerInt(headers amqp.Table, name string) (int64, bool) {
 func retryHeaders(headers amqp.Table, attempt int, firstSeen time.Time) amqp.Table {
 	out := amqp.Table{}
 	for k, v := range headers {
+		if k == "x-death" || strings.HasPrefix(k, "x-first-death-") || strings.HasPrefix(k, "x-last-death-") {
+			continue
+		}
 		out[k] = v
 	}
 	out[retryAttemptHeaderName] = int64(attempt)

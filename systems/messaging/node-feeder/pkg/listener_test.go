@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	amqp091 "github.com/rabbitmq/amqp091-go"
 	amqp "github.com/streadway/amqp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -80,6 +81,11 @@ func retryOf(attempt int, firstSeen time.Time) amqp.Table {
 	return amqp.Table{retryAttemptHeaderName: int64(attempt), retryFirstSeenHeaderName: firstSeen.UnixMilli()}
 }
 
+// encodable reports whether the publisher can send these headers.
+func encodable(h amqp.Table) bool {
+	return amqp091.Table(h).Validate() == nil
+}
+
 func TestHandler_SuccessIsAcked(t *testing.T) {
 	f := newFixture(t)
 	f.exec.On("Execute", mock.Anything).Return(nil).Once()
@@ -93,7 +99,7 @@ func TestHandler_FirstFailureRetriesAfterFirstStep(t *testing.T) {
 	f.exec.On("Execute", mock.Anything).Return(errUnavailable).Once()
 	f.pub.On("Publish", "node-feeder.retry.2s", mock.Anything, mock.MatchedBy(func(h amqp.Table) bool {
 		return h[retryAttemptHeaderName] == int64(1) && h[retryFirstSeenHeaderName] == f.now.UnixMilli() &&
-			h["df-target"] == testTarget
+			h["df-target"] == testTarget && encodable(h)
 	})).Return(nil).Once()
 
 	assert.True(t, f.handle(t, newDelivery(t, testTarget, "POST", "configd/v1/config", amqp.Table{"df-target": testTarget})))
@@ -104,10 +110,18 @@ func TestHandler_LaterFailureUsesNextStepAndKeepsFirstSeen(t *testing.T) {
 	firstSeen := f.now.Add(-8 * time.Second)
 	f.exec.On("Execute", mock.Anything).Return(errUnavailable).Once()
 	f.pub.On("Publish", "node-feeder.retry.15s", mock.Anything, mock.MatchedBy(func(h amqp.Table) bool {
-		return h[retryAttemptHeaderName] == int64(3) && h[retryFirstSeenHeaderName] == firstSeen.UnixMilli()
+		_, hasDeath := h["x-death"]
+		return h[retryAttemptHeaderName] == int64(3) && h[retryFirstSeenHeaderName] == firstSeen.UnixMilli() &&
+			h["df-target"] == testTarget && !hasDeath && h["x-first-death-queue"] == nil && encodable(h)
 	})).Return(nil).Once()
 
-	assert.True(t, f.handle(t, newDelivery(t, testTarget, "POST", "configd/v1/config", retryOf(2, firstSeen))))
+	// A retry comes back from its TTL queue with the broker's dead-letter headers.
+	headers := retryOf(2, firstSeen)
+	headers["df-target"] = testTarget
+	headers["x-death"] = []interface{}{amqp.Table{"count": int64(1), "queue": "node-feeder.retry.5s", "reason": "expired"}}
+	headers["x-first-death-queue"] = "node-feeder.retry.2s"
+
+	assert.True(t, f.handle(t, newDelivery(t, testTarget, "POST", "configd/v1/config", headers)))
 }
 
 func TestHandler_RetiresWhenRetriesExhausted(t *testing.T) {
