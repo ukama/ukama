@@ -89,8 +89,11 @@ func TestRestartNode(t *testing.T) {
 
 	arc.On("AuthenticateUser", mock.Anything, mock.Anything).Return(nil)
 
-	c.On("RestartNode", mock.Anything, mock.Anything).Return(&cpb.RestartNodeResponse{},
-		nil)
+	c.On("RestartNodes", mock.Anything, &cpb.RestartNodesRequest{
+		NodeIds: []string{"60285a2a-fe1d-4261-a868-5be480075b8f"},
+	}).Return(&cpb.RestartNodesResponse{
+		Operations: []*cpb.RestartNodeResponse{{OperationId: "op-restart"}},
+	}, nil)
 
 	r := NewRouter(&Clients{
 		Controller:   client.NewControllerFromClient(c),
@@ -101,6 +104,7 @@ func TestRestartNode(t *testing.T) {
 
 	// assert
 	assert.Equal(t, http.StatusOK, w.Code)
+	assert.Contains(t, w.Body.String(), "op-restart")
 	c.AssertExpectations(t)
 }
 
