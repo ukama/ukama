@@ -9,6 +9,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 	"sync"
@@ -18,9 +19,12 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var ErrQueueInUse = errors.New("queue in use")
+
 type Topology interface {
 	EnsureQueue(queue string, routes []string) error
 	DeleteQueue(queue string) error
+	DeleteUnusedQueue(queue string) error
 	SetMaxLength(queue string, max int64) error
 	OwnedQueues() ([]string, error)
 }
@@ -303,7 +307,14 @@ func (r *Registry) flush(queue string, now time.Time) {
 		s.stopListener()
 	}
 
-	if err := r.topo.DeleteQueue(queue); err != nil {
+	if err := r.topo.DeleteUnusedQueue(queue); err != nil {
+		if errors.Is(err, ErrQueueInUse) {
+			r.mu.Lock()
+			r.owned[queue] = now
+			r.mu.Unlock()
+			log.Warnf("[%s] Queue not flushed, it still has a consumer", queue)
+			return
+		}
 		log.Errorf("[%s] Failed to flush queue. Error %s", queue, err.Error())
 		return
 	}

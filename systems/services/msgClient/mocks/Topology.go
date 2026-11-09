@@ -27,6 +27,24 @@ func (_m *Topology) DeleteQueue(queue string) error {
 	return r0
 }
 
+// DeleteUnusedQueue provides a mock function with given fields: queue
+func (_m *Topology) DeleteUnusedQueue(queue string) error {
+	ret := _m.Called(queue)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUnusedQueue")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string) error); ok {
+		r0 = rf(queue)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // EnsureQueue provides a mock function with given fields: queue, routes
 func (_m *Topology) EnsureQueue(queue string, routes []string) error {
 	ret := _m.Called(queue, routes)
