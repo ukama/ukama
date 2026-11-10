@@ -51,7 +51,10 @@ export async function statusFault(page: Page, site: boolean, inputs: ObjectValue
     if (faults.get(page) !== fault || new URL(page.url()).pathname !== fault.path || request.url() !== endpoint || read?.operation !== operation || read.id !== id) {
       await route.fallback(); return;
     }
-    const value = site ? {siteId:id,busy:false,degraded:false,nodes:[],actions:{restartSite:{available:true},rf:{available:true},service:{available:true}}} : {nodeId:id,busy:false,operation:null};
+    const available = {__typename:'ActionAvailabilityDto',available:true,reason:null};
+    const value = site ? {__typename:'SiteOperationStatusDto',siteId:id,busy:false,degraded:false,nodes:[],
+      actions:{__typename:'SiteActionsDto',restartSite:available,rf:available,service:available}} :
+      {__typename:'NodeOperationStatusDto',nodeId:id,busy:false,operation:null};
     await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':new URL(page.url()).origin,'access-control-allow-credentials':'true'},body:JSON.stringify(mode === 'read_error' ?
       {errors:[{message:'Lab controlled operation-status read failure'}]} : {data:{[site ? 'getSiteOperationStatus' : 'getNodeOperationStatus']:value}})});
     if (faults.get(page) === fault && fault.epoch === epoch) fault.applied++;

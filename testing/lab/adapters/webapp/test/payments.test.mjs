@@ -9,7 +9,7 @@ class Page extends EventEmitter {
  url(){return 'http://console.test/customer/customers'}
  async route(_,h){this.handler=h} async unroute(){this.handler=undefined}
  getByText(){return {filter(){return {async waitFor(){}}}}}
- getByRole(){return {filter(){return {async isVisible(){return true}}}}}
+ locator(selector){assert.match(selector,/dialog/);return {filter(){return {async isVisible(){return true}}}}}
 }
 function page(){const p=new Page();trackCommerceReads(p);p.emit('request',{method:()=> 'POST',url:()=> 'http://bff.test/graphql',postDataJSON:()=>({operationName:'isPackageNameAvailable',query:'query isPackageNameAvailable($name: String!) {}',variables:{name:'owned'}})});return p;}
 const inputs={plan:{id:'plan-1',amount:25,currency:'USD'},customer:{sim_id:'sim-1',email:'owned@example.test'}};

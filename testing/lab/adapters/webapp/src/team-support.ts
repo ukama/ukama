@@ -73,7 +73,7 @@ export class TeamSupport {
     if(await passRead(route))return;
     const r=route.request(),b=envelope(r),data=b?.variables.data as Record<string,unknown>|undefined;
     const correct=this.page.url()===path&&r.url()===endpoint&&r.method()==='POST'&&b?.name==='CreateInvitation'&&/^mutation\s+CreateInvitation(?:\s|\()/.test(b.query)&&Object.keys(b.variables).join()==='data'&&data&&Object.keys(data).sort().join()==='email,name,role'&&data.email===value&&data.name===value.split('@')[0]&&data.role===roles[label];
-    if(correct&&++matched===1)await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({errors:[{message:'Lab controlled invitation rejection'}],data:null})});
+    if(correct&&++matched===1)await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':new URL(this.page.url()).origin,'access-control-allow-credentials':'true'},body:JSON.stringify({errors:[{message:'Lab controlled invitation rejection'}],data:null})});
     else{blocked++;await route.abort('blockedbyclient');}
    };
    await readOnly(this.page);
@@ -152,7 +152,7 @@ export class TeamSupport {
     const policy=await budget.poll(async()=>{
      if(writes)return 'unguarded';
      const dialog=this.dialog();if(await dialog.count()!==1)return null;
-     const title=await singleText(dialog.getByRole('heading'));
+     const title=await singleText(dialog.locator(':scope > div:first-child > .MuiTypography-root, :scope > h1, :scope > h2'));
      return title===value&&await dialog.getByRole('button',{name:'Cancel',exact:true}).isVisible()?'confirmation':null;
     },v=>v!==null,'Support restart did not show confirmation or a blocked write');
     if(policy==='confirmation')await click(this.dialog().getByRole('button',{name:'Cancel',exact:true}));
@@ -170,7 +170,7 @@ export class TeamSupport {
    if(sources.some(s=>!s.url))throw new WorkerError('MISSING_OBSERVER','Support fault requires its observed scoped query endpoints');
    const path=this.page.url();const record={path,count:0,handler:async(route:Route)=>{
     const r=route.request(),b=namedQuery(r);
-    if(this.page.url()===path&&r.method()==='POST'&&b&&Object.keys(b.variables).join()==='networkId'&&b.variables.networkId===networkId&&sources.some(s=>s.name===b.name&&s.url===r.url())) {record.count++;await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({errors:[{message:'Lab controlled support read failure'}],data:null})});}
+    if(this.page.url()===path&&r.method()==='POST'&&b&&Object.keys(b.variables).join()==='networkId'&&b.variables.networkId===networkId&&sources.some(s=>s.name===b.name&&s.url===r.url())) {record.count++;await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':new URL(this.page.url()).origin,'access-control-allow-credentials':'true'},body:JSON.stringify({errors:[{message:'Lab controlled support read failure'}],data:null})});}
     else await route.fallback();
    }};
    faults.set(this.page,record);await this.page.route('**/*',record.handler);await this.page.reload({waitUntil:'domcontentloaded',timeout:budget.remaining()});return;

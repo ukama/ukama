@@ -41,7 +41,7 @@ function client(){
     }else if(path==='/network/nodes'&&bad==='foreign-node'){
       const foreign=db.nodes.find(n=>n.site&&!sites.some(s=>s.id===n.site));if(foreign){const e=document.createElement('div');e.className='ecard';e.role='button';e.innerHTML=`<div class="tnum">Tower node · ${foreign.id}</div>`;main.append(e);}
     }else if(path==='/network'){
-      const req=async op=>{const r=await fetch('/graphql',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({operationName:op,query:`query ${op} { placeholder }`,variables:{networkId:selected}})});return (await r.json()).data};
+      const req=async op=>{const r=await fetch('/graphql',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({operationName:op,query:`query ${op} { placeholder }`,variables:op==='GetKpiValues'?{data:{networkId:selected}}:{networkId:selected}})});return (await r.json()).data};
       const k=await req('GetKpiValues'),registry=await req('SitesList');
       const unavailable=!k.getKpiValues.values.length,missing=!!registry.sitesView.sites.error;
       const count=sites.filter(s=>!db.nodes.some(n=>n.site===s.id&&n.offline)).length;

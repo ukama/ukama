@@ -3,9 +3,30 @@
  */
 import { closeSync, fsyncSync, openSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import type { Page, Response } from 'playwright';
+import { errors, type Page, type Response } from 'playwright';
 import { ConsoleApp } from './console-app.js';
-import { Budget, WorkerError, keys, object, str, type ObjectValue } from './contract.js';
+import { Budget, WorkerError, keys, normalize, object, str, type ObjectValue } from './contract.js';
+
+// The name step copies the current address into the settings URL on click.
+// The button is already enabled while reverse geocoding is still pending.
+export async function advanceSiteName(page: Page, budget: Budget): Promise<void> {
+  const field = page.locator('label.ff').filter({ has: page.getByText('Site location', { exact: true }) });
+  const resolved = field.locator('.cfg-readonly').filter({
+    hasText: /\S/, hasNotText: /^\s*Resolving location(?:…|\.{3})\s*$/i,
+  });
+  try {
+    await resolved.waitFor({ state: 'visible', timeout: Math.max(1, Math.min(60_000, budget.remaining() - 250)) });
+  } catch (error) {
+    if (!(error instanceof errors.TimeoutError)) throw error;
+    throw new WorkerError('SITE_LOCATION_UNAVAILABLE', 'The console did not display a site address or coordinates before naming the site');
+  }
+  const displayed = normalize(await resolved.innerText({ timeout: budget.remaining() }));
+  await page.getByRole('button', { name: 'Name site', exact: true }).click({ timeout: budget.remaining() });
+  await page.getByRole('heading', { name: 'Configure site settings', exact: true }).waitFor({ timeout: budget.remaining() });
+  const carried = new URL(page.url()).searchParams.get('location');
+  if (!carried || normalize(carried) !== displayed)
+    throw new WorkerError('SITE_LOCATION_MISMATCH', 'The site settings did not carry the location displayed by the console');
+}
 
 // A durable receipt establishes ownership, never acceptance. It is updated
 // before a submit and on passive UI response metadata, including late failures.
@@ -151,14 +172,14 @@ export class Creation {
       throw new WorkerError('SITE_COMPONENT_UNAVAILABLE', `No selectable ${field} component in the Console inventory`);
 
     let choice = options.find(o => o.selected) ?? options[0]!;
-    if (requested === 'first-named') {
+    if (requested === 'first-named' || requested === undefined || requested === '') {
       const named = options.find(o => o.label.trim() && !/^others?\b/i.test(o.label.trim()));
-      if (!named)
+      if (!named && requested === 'first-named')
         throw new WorkerError('SITE_COMPONENT_UNAVAILABLE',
           `No named ${field} component in the Console dropdown`,
           { field, available_labels: options.map(o => o.label) });
-      choice = named;
-    } else if (requested !== undefined && requested !== '') {
+      if (named) choice = named;
+    } else {
       const label = str(requested, `${field}_component`);
       const matches = options.filter(o => o.label === label);
       if (matches.length !== 1)
@@ -193,8 +214,7 @@ export class Creation {
     await this.page.getByRole('button', { name: 'Next', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('heading', { name: 'Name your site', exact: true }).waitFor({ timeout: budget.remaining() });
     await this.page.getByPlaceholder('site-name', { exact: true }).fill(name, { timeout: budget.remaining() });
-    await this.page.getByRole('button', { name: 'Name site', exact: true }).click({ timeout: budget.remaining() });
-    await this.page.getByRole('heading', { name: 'Configure site settings', exact: true }).waitFor({ timeout: budget.remaining() });
+    await advanceSiteName(this.page, budget);
     const params = new URL(this.page.url()).searchParams;
     const urlTower = params.get('nid'), urlNetwork = params.get('networkid');
     const shown = (await this.page.locator('.cfg-readonly:visible').allInnerTexts()).map(value => value.trim());

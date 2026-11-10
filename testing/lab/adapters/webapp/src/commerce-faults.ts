@@ -52,9 +52,10 @@ export async function commerceFault(page: Page, mode: string, name: string | und
         r?.operation !== operation || (name && r.variables.name !== name) || (operation === 'SimPoolOverview' && r.variables.simType !== simType)) { await route.fallback(); return; }
     fault.applied++;
     if (mode === 'name_pending') { await held; await route.abort('failed').catch(() => {}); return; }
-    const body = mode === 'pool_failure' ? {data: {simPoolView: {simType: r.variables.simType,
-      stats: {error: {code: 'LAB_READ_FAILURE', message: 'Lab controlled inventory read failure'}, total: null, available: null, consumed: null, failed: null},
-      sims: {error: {code: 'LAB_READ_FAILURE', message: 'Lab controlled inventory read failure'}, sims: []}}}} :
+    const sectionError = (section: string) => ({__typename:'SectionError', section, code:'UPSTREAM_ERROR', message:'Lab controlled inventory read failure'});
+    const body = mode === 'pool_failure' ? {data: {simPoolView: {__typename:'SimPoolView', simType: r.variables.simType,
+      stats: {__typename:'SimPoolStatsSection', error:sectionError('stats'), total:null, available:null, consumed:null, failed:null, esim:null, physical:null, pctAssigned:null, lowStock:null},
+      sims: {__typename:'PoolSimsSection', error:sectionError('sims'), sims:[]}}}} :
       {errors: [{message: 'Lab controlled plan-name read failure'}]};
     await route.fulfill({status: 200, contentType: 'application/json', headers: {'access-control-allow-origin': new URL(page.url()).origin, 'access-control-allow-credentials': 'true'}, body: JSON.stringify(body)});
   }};

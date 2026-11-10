@@ -13,11 +13,12 @@ export class Artifacts {
   private diagnostics: unknown[] = [];
   private step?: {command_id:number; action:string};
   private dropped = 0;
-  private problems = new WeakMap<Page,number>();
+  private firstProblem = new WeakMap<Page,string>();
   private requestSteps = new WeakMap<Request,unknown>();
   begin(command:Command):void { this.step={command_id:command.command_id,action:command.action}; }
   end():void { this.step=undefined; }
-  health(page:Page):string { return (this.problems.get(page)??0)===0?'clean':'errors'; }
+  health(page:Page):string { return this.firstProblem.has(page)?'errors':'clean'; }
+  healthDetail(page:Page):string | undefined { return this.firstProblem.get(page); }
   private tracing = new Map<BrowserContext, string>();
   private captured = false;
   constructor(root: string, run: string) { this.directory = resolve(root, run); }
@@ -37,13 +38,36 @@ export class Artifacts {
     // they can contain session tokens and customer data. Trace is separate,
     // private raw evidence, not a sanitized/shareable report.
     page.on('console', message => this.note({ type: 'console', level: message.type(), source: safeURL(message.location().url) }));
-    const problem=()=>this.problems.set(page,(this.problems.get(page)??0)+1);
-    const critical=(r:Request)=>['document','fetch','xhr'].includes(r.resourceType());
+    const problem = (summary:string) => {
+      if (!this.firstProblem.has(page)) this.firstProblem.set(page,summary);
+    };
+    const critical = (r:Request) => ['document','fetch','xhr'].includes(r.resourceType());
     page.on('request',request=>this.requestSteps.set(request,this.step??null));
-    page.on('pageerror', () => {problem();this.note({ type: 'pageerror', message: 'Uncaught browser exception; inspect private trace' });});
-    page.on('requestfailed', request => {if(critical(request))problem();this.note({ type: 'requestfailed', critical:critical(request), method: request.method(), url: safeURL(request.url()) },this.requestSteps.get(request));});
+    page.on('pageerror', () => {
+      problem('Uncaught JavaScript exception (see private trace)');
+      this.note({type:'pageerror',message:'Uncaught browser exception; inspect private trace'});
+    });
+    page.on('requestfailed', request => {
+      const failure=request.failure()?.errorText ?? '';
+      // Keep arbitrary browser text private. Network error codes are safe for the step report.
+      const reason=failure.match(/^(?:net::ERR_[A-Z0-9_]+|NS_[A-Z0-9_]+)$/)?.[0] ??
+        (/^(?:Load cancelled|cancelled)$/i.test(failure)?'cancelled':'unknown');
+      const headers=request.headers(), url=safeURL(request.url());
+      const prefetch=request.method()==='GET' && request.resourceType()==='fetch' &&
+        new URL(request.url()).origin===new URL(page.url()).origin && headers.rsc==='1' &&
+        ['1','2','3'].includes(headers['next-router-prefetch'] ?? '');
+      const cancelled=['net::ERR_ABORTED','NS_BINDING_ABORTED','cancelled'].includes(reason);
+      const required=critical(request) && !(prefetch && cancelled);
+      if (required) problem(`${request.method()} ${url} (${reason})`);
+      this.note({type:'requestfailed',critical:required,method:request.method(),resource:request.resourceType(),
+        prefetch,reason,url},this.requestSteps.get(request));
+    });
     page.on('response', response => {
-      if (response.status() >= 400) {if(critical(response.request()))problem();this.note({ type: 'http_error', critical:critical(response.request()), status: response.status(), url: safeURL(response.url()) },this.requestSteps.get(response.request()));}
+      const status=response.status();
+      if (status < 400) return;
+      const r=response.request(), url=safeURL(response.url());
+      if (critical(r)) problem(`${r.method()} ${url} (HTTP ${status})`);
+      this.note({type:'http_error',critical:critical(r),method:r.method(),resource:r.resourceType(),status,url},this.requestSteps.get(r));
     });
   }
   async start(context: BrowserContext): Promise<void> {

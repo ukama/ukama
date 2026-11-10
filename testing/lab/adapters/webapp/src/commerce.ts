@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Copyright (c) 2026-present, Ukama Inc.
  */
+import { visibleModal } from './modal.js';
 import { closeSync, fsyncSync, openSync, renameSync, writeFileSync } from 'node:fs';
 import { lstat } from 'node:fs/promises';
 import { join, isAbsolute } from 'node:path';
@@ -115,7 +116,7 @@ class MutationReceipt {
 export class Commerce {
   constructor(private page: Page) {}
   private main() { return this.page.locator('main.main'); }
-  private dialog() { return this.page.getByRole('dialog').filter({ visible: true }); }
+  private dialog() { return visibleModal(this.page); }
   private drawer() { return this.page.locator('.MuiDrawer-paper:visible'); }
   private card(name: string) { return this.main().locator('.card').filter({ has: this.page.getByText(name, { exact: true }) }); }
   private packages(name: string) { return this.drawer().locator('.card.card-pad').filter({ has: this.page.getByRole('button', { name: 'Package options', exact: true }) }).filter({ has: this.page.getByText(name, { exact: true }) }); }
@@ -123,6 +124,18 @@ export class Commerce {
   private async customer(customer: ObjectValue, budget: Budget, requireSim = true) {
     await budget.poll(() => visibleText(this.drawer().getByText(String(customer.name), { exact: true })), v => v === customer.name, 'Wrong customer drawer');
     if (requireSim) await budget.poll(() => visibleText(this.detail('ICCID')), v => v === customer.iccid, 'Wrong customer SIM');
+  }
+  // SubscribersScreen refetches its list after a write, but the open drawer
+  // holds the row selected before that write. Wait for its new visible state.
+  private async reopenCustomer(customer: ObjectValue, updatedCell: string, budget: Budget) {
+    await this.customer(customer, budget, false);
+    await this.drawer().getByRole('button', { name: 'Close', exact: true }).click({ timeout: budget.remaining() });
+    await this.drawer().waitFor({ state: 'hidden', timeout: budget.remaining() });
+    const row = this.main().locator('tbody > tr')
+      .filter({ has: this.page.getByText(String(customer.name), { exact: true }) })
+      .filter({ has: this.page.getByRole('cell', { name: updatedCell, exact: true }) });
+    await row.click({ timeout: budget.remaining() });
+    await this.customer(customer, budget);
   }
   async run(inputs: ObjectValue, directory: string, command: number, budget: Budget): Promise<unknown[]> {
     keys(inputs, ['view', 'network_name', 'network_id', 'action', 'plan', 'customer', 'creation', 'new_name']);
@@ -207,17 +220,23 @@ export class Commerce {
           await this.dialog().waitFor({state:'hidden',timeout:budget.remaining()});
         } else if (action === 'cancel_top_up') { await click(this.dialog(), 'Cancel'); await this.dialog().waitFor({ state: 'hidden', timeout: budget.remaining() }); }
         else await submit(action.startsWith('allocate_') ? 'Allocate SIM' : 'Top up');
+        if (action.startsWith('allocate_') && await visibleText(this.detail('ICCID')) !== c.iccid) {
+          await this.reopenCustomer(c, String(p.name), budget);
+        }
       } else if (action === 'open_receipt' && c && p) {
         await this.customer(c, budget); await click(this.packages(String(p.name)), 'Package options');
         await this.page.getByRole('menuitem', { name: 'View receipt', exact: true }).click({ timeout: budget.remaining() });
         await this.dialog().getByText('Payment receipt', { exact: true }).waitFor({ timeout: budget.remaining() });
       } else if (action === 'close_dialog') {
         const d = this.dialog();
-        if (await d.getByRole('button', { name: 'Cancel', exact: true }).count()) await click(d, 'Cancel'); else await click(d, 'Close');
+        if (await d.getByRole('button', { name: 'Cancel', exact: true }).count()) await click(d, 'Cancel');
+        else await d.getByRole('button', { name: 'Close', exact: true }).filter({ hasText: /^Close$/ }).click({ timeout: budget.remaining() });
         await d.waitFor({ state: 'hidden', timeout: budget.remaining() });
       } else if (['activate_sim', 'deactivate_sim'].includes(action) && c) {
         await this.customer(c, budget); const name = action === 'activate_sim' ? 'Activate SIM' : 'Deactivate SIM';
         await click(this.drawer(), name); await submit(name);
+        const status = action === 'activate_sim' ? 'Active' : 'Inactive';
+        if (await visibleText(this.detail('SIM status')) !== status) await this.reopenCustomer(c, status, budget);
       } else throw new WorkerError('INVALID_INPUT', 'Unknown commerce action or missing inputs');
       return receipt && action !== 'failed_top_up' ? await receipt.result(budget) : [];
     } finally { await receipt?.close(); }
@@ -266,7 +285,7 @@ export class Commerce {
         const rows=this.main().locator('tbody > tr:visible'), count=await rows.count();
         if (!count && !await this.main().getByText('No SIMs',{exact:true}).isVisible()) return null;
         const footer=await visibleText(this.main().locator('.tbl-foot .tnum'));
-        if (footer !== `Showing ${count} of ${count.toLocaleString('en-US')}`) return 'incomplete inventory';
+        if (footer !== `${count.toLocaleString('en-US')} SIMs` && footer !== `Showing ${count} of ${count.toLocaleString('en-US')}`) return 'incomplete inventory';
         const totals: Record<string,number>={Available:0,Assigned:0,Faulty:0}, ids=new Set<string>();
         for (let n=0;n<count;n++) {
           const row=rows.nth(n), id=await visibleText(row.locator('td').first()), status=await visibleText(row.locator('.MuiChip-label'));

@@ -34,7 +34,7 @@ function client() {
     const refresh=async()=>{Object.assign(db,await (await fetch('/state')).json());await render();};
     function drawer(sub) {
       document.querySelectorAll('.MuiDrawer-paper').forEach(e=>e.remove());
-      const d=document.createElement('div');d.className='MuiDrawer-paper';document.body.append(d);d.innerHTML=`<div>${sub.name}</div>`;
+      const d=document.createElement('div');d.className='MuiDrawer-paper';d.role='dialog';document.body.append(d);d.innerHTML=`<div>${sub.name}</div>`;
       const sim=db.sims.find(s=>s.subscriber_id===sub.uuid), entries=db.entitlements.filter(p=>p.sim===sim?.id);
       const active=entries.find(e=>e.active),plan=db.plans.find(p=>p.uuid===active?.packageId);
       const cap=plan?plan.dataVolume*(plan.dataUnit==='GB'?1073741824:1048576):0;
@@ -48,7 +48,7 @@ function client() {
       const after=async()=>{await refresh();drawer(db.subscribers.find(s=>s.uuid===sub.uuid))};
       if(!sim) button('Allocate a SIM',()=>{
         const dialog=modal('Allocate a SIM'), p=field(dialog,'Data plan',`<select>${planOptions()}</select>`), i=field(dialog,'SIM',`<select><option value="">Auto-assign from pool</option>${db.pool.filter(s=>db.mode==='allocated-option-leak'||!s.assigned&&!s.failed).map(s=>`<option value="${s.iccid}">${s.iccid}</option>`).join('')}</select>`);addCancel(dialog);
-        button('Allocate SIM',async()=>{await graphql('allocateSim',{subscriber_id:sub.uuid,network_id:selected,package_id:p.value,iccid:i.value});if(db.mode==='late-sim')return;dialog.remove();await after()},dialog);
+        button('Allocate SIM',async()=>{await graphql('allocateSim',{subscriber_id:sub.uuid,network_id:selected,package_id:p.value,iccid:i.value});if(db.mode==='late-sim')return;dialog.remove();await refresh()},dialog);
       },d);
       else {
         button('Top up',()=>{
@@ -61,11 +61,12 @@ function client() {
             if(db.mode==='late-payment')return;dialog.remove();await after();
           },dialog);submit.disabled=true;p.onchange=()=>{submit.disabled=!p.value};
         },d);
-        const name=sim.status==='active'?'Deactivate SIM':'Activate SIM';button(name,()=>{const dialog=modal(name);addCancel(dialog);button(name,async()=>{await graphql('toggleSimServiceStatus',{sim_id:sim.id,status:sim.status==='active'?'service_off':'service_on'});dialog.remove();await after()},dialog)},d);
+        const name=sim.status==='active'?'Deactivate SIM':'Activate SIM';button(name,()=>{const dialog=modal(name);addCancel(dialog);button(name,async()=>{await graphql('toggleSimServiceStatus',{sim_id:sim.id,status:sim.status==='active'?'service_off':'service_on'});dialog.remove();await refresh()},dialog)},d);
       }
     }
     function receipt(sim,plan) {
       const d=modal('Payment receipt'),p=db.payments.find(p=>p.sim===sim.id&&p.itemId===plan.uuid);
+      button('×',()=>d.remove(),d).setAttribute('aria-label','Close');
       if(!p) d.innerHTML+='<div>No receipt found for this package. It may have been allocated without a recorded payment.</div>';
       else {
         const date=new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'UTC',hour12:false}).format(new Date(p.paidAt))+' UTC';
@@ -164,7 +165,7 @@ function client() {
         const validate=()=>{email.parentNode.querySelector('.ff-err')?.remove();const invalid=email.value&&!/^[^@]+@[^@]+\.[^@]+$/.test(email.value);if(invalid){const err=document.createElement('div');err.className='ff-err';err.textContent='Enter a valid email';email.parentNode.append(err)}submit.disabled=!first.value.trim()||!!invalid};d.addEventListener('input',validate);validate();
       },main.firstChild);
       let search='',descending=false,simFilter='All',planFilter='All';
-      const rows=()=>{let source=db.subscribers.filter(s=>db.mode==='customer-leak'||s.network_id===selected);let shown=source.filter(s=>s.name.toLowerCase().includes(search.toLowerCase())).filter(s=>{const sim=db.sims.find(x=>x.subscriber_id===s.uuid);return(simFilter==='All'||sim?.status===simFilter.toLowerCase())&&(planFilter!=='No plan'||!sim)}).sort((a,b)=>a.name.localeCompare(b.name)*(descending?-1:1));main.querySelector('tbody').innerHTML='';main.querySelector('table').hidden=!shown.length;main.querySelector('.empty').textContent=shown.length?'':source.length?'No customers match':'No customers yet';for(const sub of shown){const row=document.createElement('tr');row.role='button';row.tabIndex=0;row.innerHTML=`<td><div><span>LU</span><div><div>${sub.name}</div><div></div></div></div></td><td>${db.mode==='wrong-customer-plan'?'Foreign plan':db.plans.find(p=>p.uuid===db.entitlements.find(e=>e.active&&e.sim===db.sims.find(s=>s.subscriber_id===sub.uuid)?.id)?.packageId)?.name||'No plan'}</td><td>—</td><td>Inactive</td><td>—</td>`;row.onclick=()=>drawer(sub);main.querySelector('tbody').append(row)}};
+      const rows=()=>{let source=db.subscribers.filter(s=>db.mode==='customer-leak'||s.network_id===selected);let shown=source.filter(s=>s.name.toLowerCase().includes(search.toLowerCase())).filter(s=>{const sim=db.sims.find(x=>x.subscriber_id===s.uuid);return(simFilter==='All'||sim?.status===simFilter.toLowerCase())&&(planFilter!=='No plan'||!sim)}).sort((a,b)=>a.name.localeCompare(b.name)*(descending?-1:1));main.querySelector('tbody').innerHTML='';main.querySelector('table').hidden=!shown.length;main.querySelector('.empty').textContent=shown.length?'':source.length?'No customers match':'No customers yet';for(const sub of shown){const row=document.createElement('tr');row.role='button';row.tabIndex=0;const status=db.sims.find(x=>x.subscriber_id===sub.uuid)?.status;row.innerHTML=`<td><div><span>LU</span><div><div>${sub.name}</div><div></div></div></div></td><td>${db.mode==='wrong-customer-plan'?'Foreign plan':db.plans.find(p=>p.uuid===db.entitlements.find(e=>e.active&&e.sim===db.sims.find(s=>s.subscriber_id===sub.uuid)?.id)?.packageId)?.name||'No plan'}</td><td>—</td><td>${status==='active'?'Active':'Inactive'}</td><td>—</td>`;row.onclick=()=>drawer(sub);main.querySelector('tbody').append(row)}};
       main.querySelector('input').oninput=e=>{search=e.target.value;rows()};main.querySelector('th').onclick=()=>{descending=!descending;rows()};
       for(const [column,opts] of [['SIM',['All','active','inactive','suspended']],['Active plan',['All','No plan']]]){const opener=[...main.querySelectorAll('th button')].find(b=>b.textContent===column);opener.onclick=()=>{for(const val of opts){const item=button(val,()=>{if(column==='SIM')simFilter=val;else planFilter=val;menu.innerHTML='';rows()},menu);item.role='menuitem'}}}rows();
     } else if(path.endsWith('/manage/sim-pool')) {
@@ -177,7 +178,7 @@ function client() {
       for(const name of ['Assigned','Available','Faulty']) {const n=db.pool.filter(s=>status(s)===name).length;main.querySelector('.kpis').innerHTML+=`<div class="MuiCard-root"><div><span>${name}</span></div><div>${failed?'—':db.mode==='wrong-pool-count'?n+1:n}</div></div>`;}
       if(failed && db.mode!=='pool-fail-empty'){main.querySelector('.pool-empty').textContent="Couldn't load SIMs";return;}
       const sims=failed?[]:db.pool;
-      const show=filter=>{main.querySelector('tbody').innerHTML='';const rows=sims.filter(s=>filter==='All statuses'||status(s)===filter);for(const sim of rows){const row=document.createElement('tr');row.innerHTML=`<td>${sim.iccid}</td><td><span class="MuiChip-label">${status(sim)}</span></td>`;main.querySelector('tbody').append(row)}main.querySelector('.pool-empty').textContent=rows.length?'':sims.length?'No SIMs match':'No SIMs';main.querySelector('.tbl-foot .tnum').textContent=`Showing ${rows.length} of ${sims.length}`};
+      const show=filter=>{main.querySelector('tbody').innerHTML='';const rows=sims.filter(s=>filter==='All statuses'||status(s)===filter);for(const sim of rows){const row=document.createElement('tr');row.innerHTML=`<td>${sim.iccid}</td><td><span class="MuiChip-label">${status(sim)}</span></td>`;main.querySelector('tbody').append(row)}main.querySelector('.pool-empty').textContent=rows.length?'':sims.length?'No SIMs match':'No SIMs';main.querySelector('.tbl-foot .tnum').textContent=`${rows.length} SIMs`};
       for(const filter of ['All statuses','Available','Assigned','Faulty'])button(filter,()=>show(filter),main.querySelector('.filters'));show('All statuses');
     }
   };

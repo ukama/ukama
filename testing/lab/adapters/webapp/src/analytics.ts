@@ -54,11 +54,11 @@ export class Analytics {
     }
     if (action !== 'chart_hover' || !/^(?:0|[1-9]\d?)(?:\.\d+)?$|^100$/.test(input))
       throw new WorkerError('INVALID_INPUT','Chart hover is a percentage from 0 to 100 of the rendered plot');
-    const surface = await unique(card.locator('svg.recharts-surface'));
-    if (!surface) throw new WorkerError('UNSUPPORTED_LOCATOR','Chart has no unique rendered SVG');
+    const surface = card.locator('svg.recharts-surface:visible');
+    await surface.waitFor({state:'visible',timeout:budget.remaining()});
     // Recharts publishes its clipping rectangle in SVG coordinates. This is
     // visible plot geometry, not hidden application data or a tooltip oracle.
-    const plot = await surface.evaluate(svg => {
+    const plot = await budget.poll(() => surface.evaluate(svg => {
       const rects = svg.querySelectorAll('defs clipPath rect');
       if (rects.length !== 1) return null;
       const rect = rects[0] as SVGRectElement, matrix = rect.getScreenCTM();
@@ -66,8 +66,8 @@ export class Analytics {
       const a = new DOMPoint(rect.x.baseVal.value,rect.y.baseVal.value).matrixTransform(matrix);
       const z = new DOMPoint(rect.x.baseVal.value+rect.width.baseVal.value,rect.y.baseVal.value+rect.height.baseVal.value).matrixTransform(matrix);
       return {x:a.x,y:a.y,width:z.x-a.x,height:z.y-a.y};
-    });
-    if (!plot || plot.width<=2 || plot.height<=2) throw new WorkerError('UNSUPPORTED_LOCATOR','Chart plot bounds are absent or ambiguous');
+    }), rect => !!rect && rect.width>2 && rect.height>2, 'Waiting for chart plot bounds');
+    if (!plot) throw new WorkerError('UNSUPPORTED_LOCATOR','Chart plot bounds are absent');
     // Move out first: an old tooltip must not satisfy the next sample check.
     await this.page.mouse.move(0,0);
     await this.page.mouse.move(plot.x+Math.max(1,Math.min(plot.width-1,plot.width*Number(input)/100)),plot.y+plot.height/2);
@@ -79,7 +79,7 @@ export class Analytics {
       const target = await unique(row);
       return target ? value(target.locator(':scope > span > .tnum')) : null;
     }
-    if (label === 'App identity') return value(this.page.getByRole('dialog').getByRole('heading'));
+    if (label === 'App identity') return value(this.page.getByRole('dialog').locator(':scope > div:first-child > .MuiTypography-root, :scope > h1, :scope > h2'));
     if (label === 'App resource') {
       const dialog = this.page.getByRole('dialog').filter({visible:true});
       // Anchor to the label's direct parent to avoid including dialog wrappers.

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MPL-2.0
  * Receipt acceptance reads the rendered dialog and the browser's real download.
  */
+import { visibleModal } from './modal.js';
 import {execFile} from 'node:child_process';
 import {promisify} from 'node:util';
 import {writeFile,chmod} from 'node:fs/promises';
@@ -35,7 +36,7 @@ async function visible(target:Locator) {
   return value;
 }
 export async function receiptFields(page:Page,plan:string) {
-  const d=page.getByRole('dialog').filter({visible:true});
+  const d=visibleModal(page);
   await visible(d.getByText('Payment receipt',{exact:true}));
   const meta=(label:string)=>d.getByText(label,{exact:true}).locator('..').locator(':scope > div').nth(1);
   const billed=d.getByText('Billed to',{exact:true}).locator('..');
@@ -53,7 +54,7 @@ export async function downloadReceipt(page:Page,plan:string,payment:string,direc
   pdfs.delete(page);
   const fields=await receiptFields(page,plan);
   if(fields.id!==payment||fields.number!==payment.slice(0,8))throw new WorkerError('WRONG_RECEIPT','Receipt does not match the owned payment');
-  const d=page.getByRole('dialog').filter({visible:true});
+  const d=visibleModal(page);
   const pending=page.waitForEvent('download',{timeout:budget.remaining()});
   // Attach a rejection handler immediately if the click itself fails.
   void pending.catch(()=>{});
@@ -124,7 +125,7 @@ export async function rejectPayment(page:Page,inputs:ObjectValue,submit:()=>Prom
     await budget.poll(async()=>state.count,v=>v>0,'No owned payment request was rejected');
     if(invalid||state.count!==1)throw new WorkerError('REJECTION_SCOPE','Unexpected or duplicate writes attempted during controlled rejection');
     await page.getByText('Lab controlled payment rejection',{exact:true}).filter({visible:true}).waitFor({timeout:budget.remaining()});
-    if(!await page.getByRole('dialog').filter({visible:true}).isVisible())throw new WorkerError('PAYMENT_ERROR_HIDDEN','Rejected payment closed its form');
+    if(!await visibleModal(page).isVisible())throw new WorkerError('PAYMENT_ERROR_HIDDEN','Rejected payment closed its form');
     if(invalid||state.count!==1)throw new WorkerError('REJECTION_SCOPE','Unexpected or duplicate writes attempted during controlled rejection');
   } finally {await page.unroute('**/*',handler);}
 }

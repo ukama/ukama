@@ -34,4 +34,16 @@ function install() {
   bind();
  };
 }
-export const analyticsFixture=mode=>provisioningFixture(mode,{script:`${chartMarkup.toString()};(${install.toString()})()`});
+export async function analyticsFixture(mode) {
+  const app=await provisioningFixture(mode,{script:`${chartMarkup.toString()};(${install.toString()})()`});
+  app.prepare=async()=>({
+    ULAB_WEBAPP_NODE_TEMPERATURE: '55.50 °C',
+    ULAB_WEBAPP_NODE_TOOLTIP: 'Mon, Oct 5, 2026, 12:15 PM Temperature: 55.50 °C (normal)',
+    ULAB_WEBAPP_BATTERY_TOOLTIP: 'Mon, Oct 5, 2026, 12:15 PM Battery charge: 55.50 % (normal)',
+    ULAB_WEBAPP_APP_CPU: '12.5%',
+    ULAB_WEBAPP_APP_RSS: '64.0 MB',
+    ULAB_WEBAPP_APP_DISK_READ: '2.0 KB',
+    ULAB_WEBAPP_REVENUE_TOOLTIP: 'Oct 5 Revenue: $25.5',
+  });
+  return app;
+}

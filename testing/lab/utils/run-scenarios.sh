@@ -1054,6 +1054,10 @@ PY_VERSION
     fi
 fi
 
+if [[ "$suite" == webapp ]]; then
+    python3 "$WEBAPP_UTILS/profile.py" --inputs "${selected_scenarios[@]}" || exit 2
+fi
+
 printf '\n============================================================\n'
 printf '%s batch: %s\n' "${suite^^}" "$BATCH_STAMP"
 printf 'Selectors (%s):' "${#selected_selectors[@]}"

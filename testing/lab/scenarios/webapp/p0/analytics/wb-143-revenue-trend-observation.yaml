@@ -1,6 +1,6 @@
 version: 2
 name: "p0-webapp-revenue-trend-observation"
-description: "revenue trend observation. Read analytics.md for the required controlled telemetry profile; never infer live qualification from fixtures."
+description: "revenue trend observation. Requires independently prepared telemetry or sales data for the selected network and time window."
 seed: 4804
 suite: "webapp"
 priority: "p0"
@@ -41,5 +41,5 @@ phases:
         view: "business_revenue"
         label: "Chart tooltip"
         subject: "Revenue trend"
-        expected: "Oct 5 Revenue: $25.5"
+        expected: "${ULAB_WEBAPP_REVENUE_TOOLTIP}"
         requirement: "WEB-BIZ-005"

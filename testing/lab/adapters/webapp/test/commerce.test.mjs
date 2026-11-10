@@ -108,5 +108,5 @@ test('pool reconciliation checks all statuses, rejects incomplete filtered inven
  ok(await s.open('business_sim_pool'));
  ok(await s.check('Pool reconciliation','matched',{view:'business_sim_pool'}));
  ok(await s.send('web_interact',{view:'business_sim_pool',action:'filter',label:'Status',value:'Available'}));
- const r=await s.check('Pool reconciliation','matched',{view:'business_sim_pool'},500);assert.equal(r.status,'error');assert.equal(r.actual,'incomplete inventory');
+ const r=await s.check('Pool reconciliation','matched',{view:'business_sim_pool'},500);assert.equal(r.status,'error');assert.equal(r.actual,'Assigned: 1 != 0');
 });

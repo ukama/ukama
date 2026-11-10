@@ -58,7 +58,7 @@ export class Session {
     }
     if (u.pathname === '/unauthorized' && await this.page.getByText(unauthorized, {exact:true}).isVisible()) return 'unauthorized';
     if (u.pathname === '/welcome' && await this.page.locator('main.welcome-root').getByRole('heading', {name:'Welcome to Ukama!',exact:true}).isVisible()) return 'welcome';
-    if (this.document?.url === u.origin + u.pathname && this.document.status === 404 && await this.page.getByRole('heading', {name:'404', exact:true}).isVisible()) return 'not_found';
+    if (this.document?.url === u.origin + u.pathname && await this.page.getByRole('heading', {name:'404', exact:true}).isVisible() && await this.page.getByText('This page could not be found.', {exact:true}).isVisible()) return 'not_found';
     return await this.dashboard() ? 'dashboard' : null;
   }
   private async blocked() { const surface = await this.surface(); return surface === 'auth' || surface === 'unauthorized'; }

@@ -44,20 +44,25 @@ export class UIQuality {
    const endpoint=endpoints.get(this.page);if(!endpoint)throw new WorkerError('MISSING_OBSERVER','Requires one observed TeamList endpoint');
    const f:Fault={url:this.page.url(),endpoint,mode:value,count:0,pending:[],handler:async()=>{}};
    f.handler=async route=>{
-    if(this.page.url()!==f.url||route.request().url()!==f.endpoint||!teamRead(route)){await route.fallback();return}
+    if(faults.get(this.page)!==f||this.page.url()!==f.url||route.request().url()!==f.endpoint||!teamRead(route)){await route.fallback();return}
     f.count++;
     if(f.mode==='loading'){let release!:()=>void;const gate=new Promise<void>(resolve=>{release=resolve});const done=gate.then(async()=>{if(!this.page.isClosed())await route.continue()});f.pending.push({release,done});await done;return}
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({data:{membersView:{orgName:'',team:{rows:[],error:{code:'LAB_CONTROLLED',message:'Lab controlled member read failure',service:'lab'}}}}})});
+    const error={__typename:'SectionError',section:'team',code:'UPSTREAM_ERROR',message:'Lab controlled member read failure'};
+    await route.fulfill({status:200,contentType:'application/json',
+     headers:{'access-control-allow-origin':new URL(f.url).origin,'access-control-allow-credentials':'true'},
+     json:{data:{membersView:{__typename:'MembersView',orgName:'',team:{__typename:'TeamSection',rows:[],error}}}}});
    };
    this.page.once('close',()=>f.pending.forEach(p=>p.release()));
-   faults.set(this.page,f);await this.page.route('**/*',f.handler);
+   faults.set(this.page,f);await this.page.route(f.endpoint,f.handler);
    await this.page.reload({waitUntil:'domcontentloaded',timeout:budget.remaining()});
    await budget.poll(async()=>f.count,n=>n>0,'Member read fault was not consumed');return;
   }
   if(action==='member_release') {
    const f=faults.get(this.page);if(!f||!f.count||this.page.url()!==f.url)throw new WorkerError('FAULT_PRECONDITION','No consumed member fault on this page');
-   for(const p of f.pending)p.release();await Promise.all(f.pending.map(p=>p.done));
-   await this.page.unroute('**/*',f.handler);faults.delete(this.page);return;
+   faults.delete(this.page);
+   for(const p of f.pending)p.release();
+   await Promise.all(f.pending.map(p=>p.done));
+   await this.page.unroute(f.endpoint,f.handler);return;
   }
   if(action==='member_retry') {
    if(faults.has(this.page))throw new WorkerError('FAULT_PRECONDITION','Release the controlled fault before retry');
@@ -72,7 +77,8 @@ export class UIQuality {
    const loading=await this.main().locator('.MuiSkeleton-root:visible').count()>0;
    const error=await this.main().getByText("Couldn't load members",{exact:true}).isVisible();
    const empty=await this.main().getByText('No members yet',{exact:true}).isVisible();
-   const data=await this.main().locator('tbody > tr:visible').count()>0;
+   const memberTable=this.main().getByRole('table').filter({has:this.page.getByRole('columnheader',{name:'Member',exact:true})});
+   const data=await memberTable.locator('tbody > tr:visible').count()>0;
    if([loading,error,empty,data].filter(Boolean).length!==1)return 'ambiguous';
    return loading?'loading':error?'error':empty?'empty':'data';
   }

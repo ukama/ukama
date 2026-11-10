@@ -137,7 +137,7 @@ export class Operations {
       throw new WorkerError('INVALID_INPUT', 'Action has unrelated parameters');
     if (action === 'status_fault') return statusFault(this.page,this.site,inputs,budget);
     if (action === 'watch_restart' || action === 'watch_timeout') return watchOperation(this.page,action === 'watch_restart' ? 'restart' : 'timeout',inputs);
-    if (action === 'open_ports' || action === 'open_nodes') return this.click(this.main().locator('.comp-tile').filter({has:this.page.locator('.comp-tile-label').getByText(action === 'open_ports' ? 'Switch' : 'Node',{exact:true})}),budget);
+    if (action === 'open_ports' || action === 'open_nodes') return this.click(this.main().locator('.comp-tile').filter({has:this.page.locator('.comp-tile-label').filter({hasText:action === 'open_ports' ? /^Switch$/ : /^Node$/})}),budget);
     if (action === 'set_port') {
       const value = str(inputs.value,'value');
       if (!/^[1239]:(on|off)$/.test(value)) throw new WorkerError('INVALID_INPUT','Invalid switch port/value');

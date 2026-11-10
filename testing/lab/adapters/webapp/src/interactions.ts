@@ -2,6 +2,7 @@
  * Copyright (c) 2026-present, Ukama Inc.
  * UI-only interactions. Selectors are derived from the unchanged console.
  */
+import { visibleModal } from './modal.js';
 import type { Locator, Page } from 'playwright';
 import { Budget, WorkerError, keys, normalize, str, type ObjectValue } from './contract.js';
 import {UIQuality, QUALITY_ACTIONS, QUALITY_LABELS} from './ui-quality.js';
@@ -17,7 +18,7 @@ async function text(target: Locator): Promise<string | null> {
 export class Interactions {
   constructor(private page: Page, private origin: string, private app?: ConsoleApp) {}
   private main() { return this.page.locator('main.main'); }
-  private dialog() { return this.page.getByRole('dialog').filter({ visible: true }); }
+  private dialog() { return visibleModal(this.page); }
   private field(label: string) { return this.dialog().locator('.ff').filter({ has: this.page.locator('.ff-label').filter({ hasText: new RegExp(`^${escape(label)}(?:\\s*\\*)?$`) }) }); }
   private async scope() { return await this.dialog().count() ? this.dialog() : this.main(); }
   private async route(view: string) {
@@ -142,7 +143,7 @@ export class Interactions {
       if (label==='Selected network') return text(this.page.locator('header .netswitch .nm'));
       if (label==='Dialog open') return String(await this.dialog().count()===1);
       if (label==='Mobile navigation open') return String(await this.page.locator('.mobile-nav').isVisible());
-      if (label==='Dialog title') return text(this.dialog().getByRole('heading'));
+      if (label==='Dialog title') return text(this.dialog().locator(':scope > div:first-child > .MuiTypography-root, :scope > h1, :scope > h2'));
       if (label==='Field error') return text(this.field(subject).locator('.ff-err'));
       if (label==='Field options') {
         const select=this.field(subject).locator('select');
@@ -153,7 +154,10 @@ export class Interactions {
       if (label==='Field readonly') return text(this.field(subject).locator('.ff-readonly'));
       if (label==='Text visible') return String(await this.page.getByText(subject,{exact:true}).filter({visible:true}).count()>0);
       if (label==='Button enabled' || label==='Button visible' || label==='Focus on button') {
-        const b=(await this.scope()).getByRole('button',{name:subject,exact:true}).filter({visible:true});
+        const dialog=this.dialog();
+        const opener=['Create plan','Add customer','Invite member'].includes(subject);
+        const scope=await dialog.count()?dialog:opener?this.main().locator('.pagehead'):this.main();
+        const b=scope.getByRole('button',{name:subject,exact:true}).filter({visible:true});
         if (await b.count()>1) throw new WorkerError('AMBIGUOUS_LOCATOR','Button is ambiguous');
         if (label==='Button visible') return String(await b.count()===1);
         if (await b.count()!==1)return null;

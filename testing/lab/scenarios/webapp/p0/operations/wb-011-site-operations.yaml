@@ -39,6 +39,11 @@ phases:
         view: "network_site_detail"
         networks: "net-001"
         sites: "site-001"
+        action: "prepare_ue_service"
+      - type: "web_action"
+        view: "network_site_detail"
+        networks: "net-001"
+        sites: "site-001"
         action: "open_site_actions"
     checks:
       - type: "web_action_available"

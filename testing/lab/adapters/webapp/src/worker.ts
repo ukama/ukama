@@ -233,7 +233,7 @@ export class Worker {
       if(c.inputs.expected!=='clean')throw new WorkerError('INVALID_INPUT','Browser health expects clean');
       await this.app.assertView(str(c.inputs.view,'view'),c.inputs.network_name as string|undefined);
       const actual=this.evidence!.health(this.page!);
-      if(actual!=='clean')throw new WorkerError('BROWSER_HEALTH','JavaScript or critical transport errors occurred; inspect step diagnostics',actual);
+      if(actual!=='clean')throw new WorkerError('BROWSER_HEALTH',this.evidence!.healthDetail(this.page!) ?? 'Critical browser error',actual);
       return {expected:'clean',actual};
     }
     if (c.action === 'web_interact' || c.action === 'web_ui_equals') {

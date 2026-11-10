@@ -30,7 +30,7 @@ export class Inventory {
   private async ready(c:Scope){const u=new URL(this.page.url());return u.origin===this.origin&&u.pathname===c.path&&await this.main().isVisible()&&await text(this.page.locator('header .netswitch .nm'))===c.network.name;}
   private async require(c:Scope,b:Budget){await b.poll(()=>this.ready(c),Boolean,'Inventory route/network differs from the expected world scope');}
   private siteCard(c:Scope){if(!c.site)throw new WorkerError('INVALID_INPUT','Site field requires a site');return this.main().locator('.ecard[role="button"]').filter({has:this.page.getByText(c.site.name!,{exact:true})});}
-  private info(){return this.main().locator('.card').filter({has:this.page.locator('.sec-title').getByText('Site information',{exact:true})});}
+  private info(){return this.main().locator('.card').filter({has:this.page.locator('.sec-title').filter({hasText:/^Site information$/})});}
   private location(){return this.info().getByText('Location',{exact:true}).locator('..');}
   private panel(){return this.main().getByRole('button',{name:'Open site',exact:true}).locator('..');}
   private async arm(c:Scope){
@@ -48,20 +48,24 @@ export class Inventory {
       const tick=()=>{sample();record.frame=requestAnimationFrame(tick);};tick();
     },{name:c.network.name!,foreign});
   }
-  private async mask(value:string){
+  private async mask(value:string,c:Scope){
     if(!['kpis','registry','reset'].includes(value))throw new WorkerError('INVALID_INPUT','Unknown controlled home fault');
     const epoch=(this.s.epoch??0)+1;this.s.epoch=epoch;
     if(this.s.handler)await this.page.unroute('**/graphql',this.s.handler);
     this.s.handler=undefined;this.s.fault=value;this.s.applied=0;
     if(value==='reset')return;
     this.s.handler=async route=>{
-      let body;try{body=route.request().postDataJSON();}catch{await route.continue();return;}
+      const request=route.request();
+      if(request.method()!=='POST'||this.page.url()!==this.origin+c.path){await route.fallback();return;}
+      let body;try{body=request.postDataJSON();}catch{await route.fallback();return;}
       const query=String(body?.query??''),op=body?.operationName;
-      if(!/^\s*(?:#[^\n]*\n\s*)*(?:query|fragment)\b/.test(query)||!((value==='kpis'&&op==='GetKpiValues')||(value==='registry'&&op==='SitesList'))){await route.continue();return;}
+      const operation=value==='kpis'?'GetKpiValues':'SitesList';
+      const network=value==='kpis'?body?.variables?.data?.networkId:body?.variables?.networkId;
+      if(op!==operation||network!==c.network.id||!new RegExp('^\\s*query\\s+'+operation+'(?:\\s|\\()').test(query)){await route.fallback();return;}
       const response=await route.fetch();const json=await response.json();
       if(this.s.epoch!==epoch){await route.fulfill({response,json});return;}
       if(value==='kpis'&&json.data?.getKpiValues){json.data.getKpiValues.values=[];this.s.applied++;}
-      else if(value==='registry'&&json.data?.sitesView?.sites){json.data.sitesView.sites={sites:[],error:{code:'INVENTORY_TEST_UNAVAILABLE',message:'Controlled registry unavailable'}};this.s.applied++;}
+      else if(value==='registry'&&json.data?.sitesView?.sites){json.data.sitesView.sites={...json.data.sitesView.sites,sites:[],error:{__typename:'SectionError',section:'sites',code:'UPSTREAM_ERROR',message:'Controlled registry unavailable'}};this.s.applied++;}
       await route.fulfill({response,json});
     };
     await this.page.route('**/graphql',this.s.handler);
@@ -86,7 +90,7 @@ export class Inventory {
       await this.page.evaluate(()=>{const key='uk-ui-prefs',raw=localStorage.getItem(key);if(!raw)throw Error('Missing persisted UI preference');const p=JSON.parse(raw);if(!p.state||typeof p.state.networkId!=='string')throw Error('Unknown UI preference schema');p.state.networkId='ulab-removed-network-selection';localStorage.setItem(key,JSON.stringify(p));});
       this.app.forgetView();await this.page.reload({waitUntil:'domcontentloaded',timeout:b.remaining()});return;
     }
-    if(action==='mask_home'){if(c.view!=='network_home')throw new WorkerError('INVALID_INPUT','Home faults require Home');await this.mask(value);return;}
+    if(action==='mask_home'){if(c.view!=='network_home')throw new WorkerError('INVALID_INPUT','Home faults require Home');await this.mask(value,c);return;}
     if(c.view!=='network_home')throw new WorkerError('INVALID_INPUT','Map actions require Home');
     if(action==='map_clear'){await this.panel().getByRole('button',{name:'Clear',exact:true}).click({timeout:b.remaining()});this.s.selection=undefined;this.s.pin=undefined;return;}
     if(!c.site)throw new WorkerError('INVALID_INPUT','Map selection requires site');

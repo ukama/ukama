@@ -12,7 +12,7 @@ import {teamSupportFixture} from './team-support-fixture.mjs';
 async function setup(t,mode=''){
  const app=await teamSupportFixture(mode);t.after(()=>app.close());
  const browser=await chromium.launch({executablePath:process.env.ULAB_WEBAPP_EXECUTABLE_PATH,headless:true});t.after(()=>browser.close());
- const page=await browser.newPage({serviceWorkers:'block'});trackQualityReads(page);await page.goto(app.origin+'/business/manage/members');await page.locator('tbody tr').first().waitFor();
+ const page=await browser.newPage({serviceWorkers:'block'});trackQualityReads(page);await page.goto(app.origin+'/business/manage/members');await page.getByRole('columnheader',{name:'Member',exact:true}).waitFor();
  return {page,app,ui:new UIQuality(page)};
 }
 test('member loading and errors stay distinct; UI retry recovers after releasing exact query fault',async t=>{
@@ -57,4 +57,20 @@ test('step diagnostics retain request origin, omit secrets and preserve health a
 test('ambiguous loading plus rows is not an empty/data success',async t=>{
  const {page,ui}=await setup(t);await page.locator('main').evaluate(e=>e.insertAdjacentHTML('beforeend','<div class="MuiSkeleton-root">loading</div>'));
  assert.equal(await ui.observe('Members state',''),'ambiguous');
+});
+test('only an explicitly cancelled Next prefetch is noncritical',async t=>{
+ const {page}=await setup(t);
+ const headers={rsc:'1','next-router-prefetch':'1'};
+ const evidence=new Artifacts('unused','run');evidence.attach(page);
+ async function fail(path,headers,reason){
+  await page.route('**/'+path,route=>route.abort(reason));
+  const failed=page.waitForEvent('requestfailed',{predicate:r=>new URL(r.url()).pathname==='/'+path,timeout:3500});
+  await Promise.all([failed,page.evaluate(({path,headers})=>fetch('/'+path,{headers}).then(()=>{},()=>{}),{path,headers})]);
+  await page.unroute('**/'+path);
+ }
+ await fail('prefetch',headers,'aborted');assert.equal(evidence.health(page),'clean');
+ await fail('page-read',{rsc:'1'},'aborted');assert.equal(evidence.health(page),'errors');
+ assert.match(evidence.healthDetail(page),/page-read.*ERR_ABORTED/);
+ const later=new Artifacts('unused','run');later.attach(page);
+ await fail('broken-prefetch',headers,'connectionrefused');assert.equal(later.health(page),'errors');
 });

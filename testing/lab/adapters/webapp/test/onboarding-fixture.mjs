@@ -20,7 +20,7 @@ function client(){
  async function submit(){
   const submit=body().querySelector('button');submit.disabled=true;body().querySelector('.cfg-error')?.remove();states(0);await wait(100);states(1);await wait(100);
   try{
-   const data={name:siteName,network_id:selected,access_id:tower,...settings};
+   const data={name:siteName,network_id:selected,access_id:tower,location:params().get('location')||'',...settings};
    try{await gql('addSite',data);if(db.mode==='duplicate-site')await gql('addSite',data)}catch(e){if(e.message==='Lab controlled site rejection')throw e;if(db.mode==='duplicate-site')await gql('addSite',data);const sites=await gql('getSites',{networkId:selected});if(!sites.sites.some(s=>s.name===siteName))throw e}
    if(db.mode!=='missing-confirm')states(2);await wait(100);states(3,true);await wait(100);await move('/configure/sims');
   }catch(e){const err=document.createElement('div');err.className='cfg-error';err.textContent=e.message;body().append(err);submit.textContent='Try again';submit.disabled=false}
@@ -32,7 +32,9 @@ function client(){
   tower=db.mode==='wrong-tower'?'other-tower':t?.id;const ok=flags.every(Boolean);
   title(ok||db.mode==='premature'?'Name your site':'Bring your site online');
   if(ok||db.mode==='premature'){
-   const input=field('Site name');btn('Name site',()=>{if(valid(input)){siteName=input.value;void move(route('/configure/site/settings')+'&nid='+tower+'&sitename='+siteName)}});
+   const address='-1.67000, 29.22000';
+   body().insertAdjacentHTML('beforeend',`<label class="ff"><div class="ff-label">Site location</div><div class="cfg-readonly">${address}</div></label>`);
+   const input=field('Site name');btn('Name site',()=>{if(valid(input)){siteName=input.value;void move(route('/configure/site/settings')+'&nid='+tower+'&sitename='+siteName+'&location='+encodeURIComponent(address))}});
   }else{
    const names=['Turn on your tower unit','Turn on your amplifier unit','Turn on your controller unit','Confirming your site location'];let active=false;
    body().insertAdjacentHTML('beforeend',`<div class="cfg-checklist-count">${flags.filter(Boolean).length}/4 done</div><ul class="cfg-steps-list">${names.map((n,i)=>{const state=flags[i]?'done':!active?'active':'pending';if(!flags[i])active=true;return `<li class="cfg-step-item" data-state="${state}"><span class="cfg-step-title">${n}</span></li>`}).join('')}</ul>`);btn('Check now',readiness);
@@ -62,9 +64,9 @@ function client(){
   else if(path==='/network/sites'){
    for(const s of db.sites.filter(s=>s.network_id===selected)){const card=document.createElement('div');card.className='ecard';card.role='button';card.textContent=s.name;card.onclick=()=>move('/network/sites/'+s.id);main.append(card)}
   }else if(path.startsWith('/network/sites/')){
-   const s=db.sites.find(s=>path.endsWith('/'+s.id));main.innerHTML=`<h1>${s.name}</h1><div class="site-top">${db.nodes.map(n=>`<span class="tnum">${n.id}</span>`).join('')}<span class="tnum">${db.mode==='wrong-coordinates'?'0, 0':'-1.67, 29.22'}</span></div>`;
+   const s=db.sites.find(s=>path.endsWith('/'+s.id));main.innerHTML=`<div class="pagehead"><div class="pagetitle">${s.name}</div></div><div class="site-top">${db.nodes.map(n=>`<span class="tnum">${n.id}</span>`).join('')}<span class="tnum">${db.mode==='wrong-coordinates'?'0, 0':'-1.67, 29.22'}</span></div>`;
    for(const[k,label]of[['switch','Switch'],['backhaul','Backhaul'],['power','Charge controller']]){main.insertAdjacentHTML('beforeend',`<div class="comp-tile"><span class="comp-tile-label">${label}</span><span class="comp-tile-sub">${db.mode==='wrong-component'?'Default':db.saved[k+'_id'].endsWith('-b')?'Test':'Default'} ${k}</span></div>`)}
-  }else{main.innerHTML='<h1>Network</h1>'}
+  }else{main.innerHTML='<div class="pagehead"><div class="pagetitle">Network</div></div>'}
  }
  document.querySelector('.netswitch').onclick=()=>{const menu=document.querySelector('#menu');menu.innerHTML='';for(const n of db.networks){const b=btn(n.name,()=>{selected=n.id;remember();menu.innerHTML='';void render()},menu);b.role='menuitem'}};
  document.querySelectorAll('.viewseg button').forEach(b=>b.onclick=()=>move('/'+b.textContent.toLowerCase()));

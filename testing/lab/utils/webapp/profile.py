@@ -10,6 +10,11 @@ import sys
 from urllib.parse import urlsplit
 
 
+def missing_inputs(path, environment):
+    names = re.findall(r"\$\{([A-Za-z_]\w*)\}", path.read_text())
+    return sorted({name for name in names if not environment.get(name)})
+
+
 def prepare(source, environment):
     url = environment["ULAB_WEBAPP_BASE_URL"].rstrip("/")
     parsed = urlsplit(url)
@@ -48,6 +53,12 @@ def prepare(source, environment):
 if __name__ == "__main__":
     os.umask(0o077)
     try:
+        if sys.argv[1:2] == ["--inputs"]:
+            for path in map(Path, sys.argv[2:]):
+                missing = missing_inputs(path, os.environ)
+                if missing:
+                    print(f"WEBAPP inputs  {path.name} requires {', '.join(missing)}")
+            sys.exit(0)
         source, destination = map(Path, sys.argv[1:])
         result = prepare(source.read_text(), os.environ)
         with destination.open("x") as stream:

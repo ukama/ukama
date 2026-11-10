@@ -89,11 +89,23 @@ function client() {
       main.innerHTML = '<h1>Install your site</h1><label><input type="checkbox">I\'ve installed and powered on all my units</label>';
       button('Next', () => move('/configure/site?networkid=' + selected + '&nid=' + tower));
     } else if (path === '/configure/site') {
-      main.innerHTML = '<h1>Name your site</h1><input placeholder="site-name">';
+      main.innerHTML = '<h1>Name your site</h1><label class="ff"><span class="ff-label">Site location</span><div class="cfg-readonly"></div></label><input placeholder="site-name">';
+      const locationField = main.querySelector('.cfg-readonly');
+      let address = 'Calgary';
+      if (db.mode === 'slow-location') {
+        address = '';
+        main.querySelector('input').addEventListener('input', () => setTimeout(() => {
+          address = '51.05000, -114.07000';
+          locationField.textContent = address;
+        }, 750), { once: true });
+      }
+      locationField.textContent = address || 'Resolving location…';
       button('Name site', () => {
         siteName = main.querySelector('input').value;
         if (db.mode === 'wrong-detected-tower') tower = 'other-tnode-999';
-        void move('/configure/site/settings?networkid=' + selected + '&nid=' + tower);
+        const query = new URLSearchParams({networkid: selected, nid: tower, sitename: siteName});
+        if (address && db.mode !== 'dropped-location') query.set('location', address);
+        void move('/configure/site/settings?' + query);
       });
     } else if (path === '/configure/site/settings') {
       main.innerHTML = `<h1>Configure site settings</h1><div class="cfg-readonly">${params().get('nid')}</div><div class="cfg-fields"></div>`;
@@ -108,6 +120,7 @@ function client() {
             const disabled = new Option('Unavailable', category + '-disabled');
             disabled.disabled = true;
             select.add(disabled);
+            select.add(new Option('Others', category + '-other', true, true));
             select.add(new Option('First ' + category, category + '-1'));
             select.add(new Option('Second ' + category, category + '-2'));
           } else {
@@ -117,7 +130,7 @@ function client() {
         fields.append(select);
       }
       button('Create site', async () => {
-        const data = { name: siteName, network_id: selected, access_id: tower };
+        const data = { name: siteName, network_id: selected, access_id: tower, location: params().get('location') || '' };
         for (const category of categories) {
           const value = fields.querySelector(`select[name="${category}Id"]`).value;
           if (!value) {
@@ -186,7 +199,7 @@ export async function provisioningFixture(mode = '', extension = {}) {
           })) };
         }
         if (op === 'addNetwork') { const n = { id: `network-${db.networks.length}`, name: data.name }; db.networks.push(n); result = mode==='opaque-network' ? {id:n.id} : n; }
-        if (op === 'addSite' && mode === 'rejected-site') {
+        if (op === 'addSite' && (mode === 'rejected-site' || data.location === '')) {
           res.setHeader('content-type','application/json'); res.end(JSON.stringify({errors:[{message:'Argument Validation Error'}]})); return;
         }
         if (op === 'addSite') { const s = { id: `site-${db.sites.length+1}`, name:data.name, network_id:data.network_id }; db.sites.push(s); for (const n of db.nodes.filter(n=>n.id.replace(/-(a|c)node-/,'-tnode-')===data.access_id)) n.site = s.id; result=mode==='opaque-site' ? {} : s; }

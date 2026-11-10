@@ -1,6 +1,6 @@
 version: 2
 name: "p0-webapp-site-metric-observations"
-description: "site metric observations. Read analytics.md for the required controlled telemetry profile; never infer live qualification from fixtures."
+description: "site metric observations. Requires independently prepared telemetry or sales data for the selected network and time window."
 seed: 4804
 suite: "webapp"
 priority: "p0"
@@ -56,7 +56,7 @@ phases:
         view: "network_site_detail"
         label: "Chart tooltip"
         subject: "Battery charge"
-        expected: "Mon, Oct 5, 2026, 12:15 PM Battery charge: 55.50 % (normal)"
+        expected: "${ULAB_WEBAPP_BATTERY_TOOLTIP}"
         requirement: "WEB-SITE-008"
   - name: "unavailable-component"
     events:

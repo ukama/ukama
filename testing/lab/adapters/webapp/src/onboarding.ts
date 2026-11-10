@@ -4,7 +4,7 @@
  */
 import type { Locator, Page, Route } from 'playwright';
 import { ConsoleApp } from './console-app.js';
-import { Creation } from './provisioning.js';
+import { advanceSiteName, Creation } from './provisioning.js';
 import { Budget, WorkerError, keys, normalize, object, str, type ObjectValue } from './contract.js';
 const headings = ['Let\'s set up your network','Name your network','Select a network','Install your site','Bring your site online','Name your site','Configure site settings','Upload SIMs',"You're all set!"];
 const fields = ['Network name','Site name'];
@@ -55,7 +55,7 @@ export class Onboarding {
    if(this.fault==='rejection'&&/\baddSite\s*\(/.test(query)) {
     const job=this.jobs.get('site');if(!job||body.variables?.data?.name!==this.site().name||body.variables?.data?.network_id!==this.net().id)throw new WorkerError('FAULT_SCOPE','Rejection fault must match its planned site');
     this.fault='';this.consumed=true;job.intercepted=true;job.creation.markIntercepted();
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({errors:[{message:'Lab controlled site rejection'}],data:{addSite:null}})});return;
+    await route.fulfill({status:200,contentType:'application/json',headers:{'access-control-allow-origin':new URL(this.page.url()).origin,'access-control-allow-credentials':'true'},body:JSON.stringify({errors:[{message:'Lab controlled site rejection'}],data:{addSite:null}})});return;
    }
    if(this.fault==='transport'&&/\baddSite\s*\(/.test(query)) {
     if(body.variables?.data?.name!==this.site().name||body.variables?.data?.network_id!==this.net().id)throw new WorkerError('FAULT_SCOPE','Transport fault must match its planned site');
@@ -122,6 +122,7 @@ export class Onboarding {
     await click(label==='Network name'?'Create network':'Name site');
    } else if(action==='click'){
     if(value==='Installed'){await this.cfg().getByRole('checkbox',{name:"I've installed and powered on all my units",exact:true}).check({timeout:b.remaining()});}
+    else if(value==='Name site')await advanceSiteName(this.page,b);
     else {if(!buttons.includes(value))throw new WorkerError('INVALID_INPUT','Unsupported onboarding button');await click(value);}
    } else if(action==='choose_network') {
     await this.title('Select a network',b);const radio=this.cfg().getByRole('radio').filter({has:this.page.getByText(String(this.net().name),{exact:true})});await radio.click({timeout:b.remaining()});
@@ -155,7 +156,7 @@ export class Onboarding {
     const site=this.site();if(!site.id)throw new WorkerError('WRONG_STATE','Site has not completed');
     await this.app.open({view:'network_sites',network_name:this.net().name},b);const card=this.page.locator('main.main .ecard[role="button"]').filter({has:this.page.getByText(String(site.name),{exact:true})});
     await card.click({timeout:b.remaining()});await b.poll(()=>Promise.resolve(new URL(this.page.url()).pathname),v=>v==='/network/sites/'+site.id,'Site detail identity differs');
-    await this.page.locator('main.main').getByRole('heading',{name:String(site.name),exact:true}).waitFor({timeout:b.remaining()});
+    await b.poll(()=>textOne(this.page.locator('main.main .pagehead .pagetitle')),v=>v===site.name,'Site detail title differs from the created site');
    } else throw new WorkerError('INVALID_INPUT','Unknown onboarding action');
   }
   return {actual:{executed:true,...(pending?{pending:true}:{}),...(creation_command_id?{creation_command_id}:{}),controlled:this.controlled},bindings};
@@ -175,7 +176,7 @@ export class Onboarding {
    }
    const cfg=await this.cfg().isVisible(),dashboard=await this.page.locator('header.topbar').isVisible()&&await this.page.locator('main.main').isVisible();
    if(!cfg&&!dashboard)return null;
-   if(label==='Heading')return textOne(cfg?this.cfg().locator('h1'):this.page.locator('main.main h1'));
+   if(label==='Heading')return textOne(cfg?this.cfg().locator('h1'):this.page.locator('main.main .pagehead .pagetitle'));
    if(label==='Path')return new URL(this.page.url()).pathname;
    if(label==='Step')return cfg?textOne(this.page.locator('.cfg-step-label')):null;
    if(label==='Network ID'){if(!cfg)return null;return new URL(this.page.url()).searchParams.get('networkid');}
@@ -195,7 +196,7 @@ export class Onboarding {
    if(label==='SIM upload present')return new URL(this.page.url()).pathname==='/configure/sims'?String(await this.cfg().locator('input[type=file]').count()>0):null;
    if(['Site name','Site nodes','Coordinates','Saved component'].includes(label)){
     if(!dashboard||new URL(this.page.url()).pathname!=='/network/sites/'+this.site().id)return null;
-    if(label==='Site name')return textOne(this.page.locator('main.main h1'));
+    if(label==='Site name')return textOne(this.page.locator('main.main .pagehead .pagetitle'));
     const main=this.page.locator('main.main');
     if(label==='Site nodes'){
      const ids=[this.site().tower_id,this.site().amplifier_id,this.site().controller_id];
