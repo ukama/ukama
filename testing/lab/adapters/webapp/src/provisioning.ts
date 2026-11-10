@@ -151,7 +151,14 @@ export class Creation {
       throw new WorkerError('SITE_COMPONENT_UNAVAILABLE', `No selectable ${field} component in the Console inventory`);
 
     let choice = options.find(o => o.selected) ?? options[0]!;
-    if (requested !== undefined && requested !== '') {
+    if (requested === 'first-named') {
+      const named = options.find(o => o.label.trim() && !/^others?\b/i.test(o.label.trim()));
+      if (!named)
+        throw new WorkerError('SITE_COMPONENT_UNAVAILABLE',
+          `No named ${field} component in the Console dropdown`,
+          { field, available_labels: options.map(o => o.label) });
+      choice = named;
+    } else if (requested !== undefined && requested !== '') {
       const label = str(requested, `${field}_component`);
       const matches = options.filter(o => o.label === label);
       if (matches.length !== 1)
@@ -178,7 +185,8 @@ export class Creation {
     // Some Console versions auto-detect the trio after network selection. In
     // either flow the settings screen must identify our exact tower before submit.
     const selectedTower = new URL(this.page.url()).searchParams.get('nid');
-    if (selectedTower !== null && selectedTower !== tower) throw new WorkerError('WRONG_TOWER', 'Configure lost the selected tower; console defect, no mutation submitted');
+    if (selectedTower !== null && selectedTower !== tower)
+      throw new WorkerError('WRONG_TOWER', `Configure lost the selected tower: expected ${tower}, observed ${selectedTower}`);
     await this.page.getByRole('radio').filter({ has: this.page.getByText(network, { exact: true }) }).click({ timeout: budget.remaining() });
     await this.page.getByRole('button', { name: 'Continue', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('checkbox', { name: "I've installed and powered on all my units", exact: true }).check({ timeout: budget.remaining() });
@@ -188,9 +196,13 @@ export class Creation {
     await this.page.getByRole('button', { name: 'Name site', exact: true }).click({ timeout: budget.remaining() });
     await this.page.getByRole('heading', { name: 'Configure site settings', exact: true }).waitFor({ timeout: budget.remaining() });
     const params = new URL(this.page.url()).searchParams;
-    if (params.get('nid') !== tower || params.get('networkid') !== this.inputs.network_id ||
-        (await this.page.locator('.cfg-readonly').innerText({ timeout: budget.remaining() })).trim() !== tower)
-      throw new WorkerError('WRONG_TOWER', 'Site wizard identity differs from the planned tower/network');
+    const urlTower = params.get('nid'), urlNetwork = params.get('networkid');
+    const shown = (await this.page.locator('.cfg-readonly:visible').allInnerTexts()).map(value => value.trim());
+    if (urlTower !== tower || urlNetwork !== this.inputs.network_id || shown.length !== 1 || shown[0] !== tower)
+      throw new WorkerError('WRONG_TOWER',
+        `Site wizard identity differs: expected tower=${tower} network=${this.inputs.network_id}; ` +
+        `observed nid=${urlTower ?? '<missing>'} displayed=${shown.join(',') || '<missing>'} networkid=${urlNetwork ?? '<missing>'}`,
+        { url_tower: urlTower, displayed: shown, url_network: urlNetwork });
     const components = object(this.inputs.components ?? {}, 'components'); keys(components, ['switch', 'backhaul', 'power']);
     for (const field of ['switch', 'backhaul', 'power'])
       await this.selectSiteComponent(field, components[field], budget);

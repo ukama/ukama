@@ -11,7 +11,9 @@ function client() {
   const move = async path => { history.pushState({}, '', path); await render(); };
   const graphql = async (op, data) => {
     const r = await fetch('/graphql', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ operationName: op, query: `mutation ${op}($data: Input!) { ${op}(data: $data) { id name } }`, variables: { data } }) });
-    return (await r.json()).data[op];
+    const body = await r.json();
+    if (body.errors?.length) throw new Error(body.errors[0].message);
+    return body.data[op];
   };
   const read = async () => { db = await (await fetch('/state')).json(); };
   const kv = (label, value) => `<div class="kv-row"><span>${label}</span><span><span class="tnum">${value}</span></span></div>`;
@@ -128,7 +130,8 @@ function client() {
           fields.insertAdjacentHTML('beforeend', '<p class="cfg-error">No spectrum component found in your inventory. Please contact support.</p>');
           return;
         }
-        await graphql('addSite', data);
+        try { await graphql('addSite', data); }
+        catch (e) { const error = document.createElement('p'); error.className = 'cfg-error'; error.textContent = e.message; fields.append(error); return; }
         if (db.mode === 'late-site') return;
         await move('/configure/sims');
       });
@@ -156,6 +159,10 @@ export async function provisioningFixture(mode = '', extension = {}) {
       let text = ''; for await (const chunk of req) text += chunk;
       const body = JSON.parse(text); let result = {};
       if (extension.request?.(req.url, body, db)) { res.setHeader('content-type','application/json'); res.end(JSON.stringify({accepted:true})); return; }
+      if (body.query?.includes('getNodes(') && body.variables?.data?.id) {
+        const nodes = db.nodes.filter(n => n.id === body.variables.data.id).map(n => ({ id: n.id, site: {siteId: n.site} }));
+        res.setHeader('content-type','application/json'); res.end(JSON.stringify({data:{getNodes:{nodes}}})); return;
+      }
       const custom = extension.graphql?.(body, db);
       if (custom) { res.setHeader('content-type','application/json'); res.end(JSON.stringify(custom)); return; }
       if (req.url === '/runtime') {
@@ -167,21 +174,29 @@ export async function provisioningFixture(mode = '', extension = {}) {
           const n = db.nodes.find(n=>n.id === body.id); if(n) { n.offline = body.action === 'disconnect-node.sh'; extension.connectivity?.(n,db); }
         }
       } else {
-        const op = /\b(getNodes|addNetwork|addSite|deleteNetwork|deleteSite|deleteNode|releaseNodeFromSite)\s*\(/.exec(body.query)?.[1];
+        const op = /\bgetNetworks\s*\{/.test(body.query) ? 'getNetworks' : /\b(getSites|getNodes|addNetwork|addSite|deleteNetwork|deleteSite|deleteNode|releaseNodeFromSite)\s*\(/.exec(body.query)?.[1];
         const data = body.variables?.data;
         const id = /id:\s*"([^"]+)"/.exec(body.query)?.[1];
         db.operations.push({ op, data, id });
+        if (op === 'getNetworks') result = {networks: db.networks};
+        if (op === 'getSites') result = {sites: db.sites.filter(s => s.network_id === data.networkId).map(s => ({...s, networkId:s.network_id}))};
         if (op === 'getNodes') {
           result = { nodes: db.nodes.filter(n => !n.site && n.type === 'Tower node').map(n => ({
             id: n.id, status: {state: 'Ready', connectivity: 'Online'}, latitude: '51.05', longitude: '-114.07',
           })) };
         }
         if (op === 'addNetwork') { const n = { id: `network-${db.networks.length}`, name: data.name }; db.networks.push(n); result = mode==='opaque-network' ? {id:n.id} : n; }
-        if (op === 'addSite') { const s = { id: `site-${db.sites.length+1}`, name:data.name, network_id:data.network_id }; db.sites.push(s); for (const n of db.nodes.filter(n=>n.id.replace(/-(a|c)node-/,'-tnode-')===data.access_id)) n.site = s.id; result=s; }
+        if (op === 'addSite' && mode === 'rejected-site') {
+          res.setHeader('content-type','application/json'); res.end(JSON.stringify({errors:[{message:'Argument Validation Error'}]})); return;
+        }
+        if (op === 'addSite') { const s = { id: `site-${db.sites.length+1}`, name:data.name, network_id:data.network_id }; db.sites.push(s); for (const n of db.nodes.filter(n=>n.id.replace(/-(a|c)node-/,'-tnode-')===data.access_id)) n.site = s.id; result=mode==='opaque-site' ? {} : s; }
         if (op === 'releaseNodeFromSite') { result={success:true}; }
         if (op === 'deleteNode') { db.nodes=db.nodes.filter(n=>n.id!==id); result={id}; }
         if (op === 'deleteSite') { db.sites=db.sites.filter(n=>n.id!==id); result={success:true}; }
-        if (op === 'deleteNetwork') { db.networks=db.networks.filter(n=>n.id!==id); result={success:mode!=='cleanup-false'}; }
+        if (op === 'deleteNetwork') {
+          if (mode !== 'retained-network') db.networks=db.networks.filter(n=>n.id!==id);
+          result={success:mode!=='cleanup-false'};
+        }
         result = { data: { [op]: result } };
       }
       res.setHeader('content-type','application/json'); res.end(JSON.stringify(result)); return;

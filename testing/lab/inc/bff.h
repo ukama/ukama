@@ -684,8 +684,12 @@ int bff_backend_contains(bff_client_t *c,
                          int *found,
                          ulab_error_t *err);
 
+int bff_cleanup_list(bff_client_t *c, const char *target, const network_t *network,
+                     const char *sim_type, json_t **rows, ulab_error_t *err);
+int bff_cleanup_node_state(bff_client_t *c, const char *id, const char *site_id,
+                           int *present, int *assigned, ulab_error_t *err);
 int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
-                         int linked, ulab_error_t *err);
+                         const char *site_id, ulab_error_t *err);
 int bff_cleanup_world(bff_client_t *c,
                       const world_t *w,
                       ulab_error_t *err);

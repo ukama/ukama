@@ -25,7 +25,7 @@ int report_cleanup_errors_suppressed(void) {
 
 static const char *cleanup_status(const report_t *r) {
     return r->cleanup_failed ?
-        (report_cleanup_errors_suppressed() ? "warning" : "failed") : "ok";
+        (!r->webapp_artifacts[0] && report_cleanup_errors_suppressed() ? "warning" : "failed") : "ok";
 }
 
 static void json_str(FILE *f, const char *key, const char *value,

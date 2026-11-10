@@ -3,6 +3,7 @@
  */
 #include "webapp.h"
 #include "util.h"
+#include "log.h"
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -69,6 +70,9 @@ static int binding_target(world_t *w, const char *kind, const char *ref,
     } else if (!strcmp(kind, "subscriber")) {
         subscriber_t *s = world_subscriber_by_ref(w, ref);
         if (s) { *id = s->bff_id; *name = s->name; return ULAB_OK; }
+    } else if (!strcmp(kind, "pool_sim")) {
+        ue_t *ue = world_ue_by_ref(w, ref);
+        if (ue) { *id = ue->pool_sim_id; *name = ue->iccid; return ULAB_OK; }
     } else if (!strcmp(kind, "sim") || !strcmp(kind, "payment")) {
         ue_t *ue = world_ue_by_ref(w, ref);
         if (ue) { *id = !strcmp(kind, "sim") ? ue->bff_id : ue->last_payment_id; *name = ue->iccid; return ULAB_OK; }
@@ -106,7 +110,7 @@ int webapp_journal_bind(webapp_journal_t *j, json_t *bindings,
             return webapp_error(err, "invalid entity binding");
         for (p = (const unsigned char *)id; *p; p++)
             if (!isalnum(*p) && *p != '-' && *p != '_') return webapp_error(err, "invalid binding ID");
-        if (strcmp(source, created == 2 ? "runtime_claim" : created ? "ui_result" : "url")) return webapp_error(err, "binding source does not establish requested ownership");
+        if (strcmp(source, created == 3 ? "cleanup_lookup" : created == 2 ? "runtime_claim" : created ? "ui_result" : "url")) return webapp_error(err, "binding source does not establish requested ownership");
         if (binding_target(j->world, kind, ref, &target, &name, err) || !target || !name) return ULAB_ERR;
         if (created == 2 && (strcmp(kind, "node") || !*target || strcmp(target, id)))
             return webapp_error(err, "runtime claim requires an established factory node identity");
@@ -138,6 +142,26 @@ int webapp_journal_bind(webapp_journal_t *j, json_t *bindings,
          * caller can still attempt bounded cleanup before reporting failure. */
         if (created) ulab_copy(target, ULAB_MAX_ID, id);
         if (webapp_journal_save(j, err)) return ULAB_ERR;
+    }
+    return ULAB_OK;
+}
+int webapp_journal_restore(webapp_journal_t *j, ulab_error_t *err) {
+    json_t *r;
+    size_t i;
+    json_array_foreach(json_object_get(j->root, "resources"), i, r) {
+        const char *kind = json_string_value(json_object_get(r, "kind"));
+        const char *ref = json_string_value(json_object_get(r, "ref"));
+        const char *id = json_string_value(json_object_get(r, "id"));
+        const char *name;
+        const unsigned char *p;
+        char *target;
+        if (!json_is_true(json_object_get(r, "owned")) || !kind || !ref || !id || !*id ||
+            strlen(id) >= ULAB_MAX_ID || binding_target(j->world, kind, ref, &target, &name, err) ||
+            !ulab_streq(name, json_string_value(json_object_get(r, "name"))) || (*target && strcmp(target, id)))
+            return webapp_error(err, "journaled resource does not match the original world");
+        for (p = (const unsigned char *)id; *p; p++)
+            if (!isalnum(*p) && *p != '-' && *p != '_') return webapp_error(err, "invalid journaled ID");
+        ulab_copy(target, ULAB_MAX_ID, id);
     }
     return ULAB_OK;
 }
@@ -218,8 +242,9 @@ static int delete_resource(void *arg, ulab_error_t *err) {
 }
 int webapp_journal_cleanup(webapp_journal_t *j, const webapp_hooks_t *hooks,
                             double deadline, ulab_error_t *err) {
-    const char *kinds[] = {"sim", "subscriber", "package", "node", "site", "network"};
+    const char *kinds[] = {"sim", "pool_sim", "subscriber", "package", "node", "site", "network"};
     json_t *resources;
+    json_t *pool;
     json_t *r;
     const char *kind;
     const char *id;
@@ -228,12 +253,16 @@ int webapp_journal_cleanup(webapp_journal_t *j, const webapp_hooks_t *hooks,
     size_t i;
     int failed = 0;
     int rc;
+    int pool_failed;
+    double end;
     ulab_error_t local;
     if (!j->root) return ULAB_OK;
     if (json_is_true(json_object_get(j->root, "uncertain_creation"))) {
         failed = 1; webapp_error(err, "unresolved creation requires manual reconciliation; cleanup is incomplete");
     }
     resources = json_object_get(j->root, "resources");
+    pool = json_object_get(j->root, "sim_inventory");
+    pool_failed = ulab_streq(json_string_value(json_object_get(pool, "cleanup")), "failed");
     for (k = 0; k < sizeof(kinds) / sizeof(kinds[0]); k++) {
         for (i = json_array_size(resources); i > 0; i--) {
             r = json_array_get(resources, i - 1);
@@ -243,13 +272,24 @@ int webapp_journal_cleanup(webapp_journal_t *j, const webapp_hooks_t *hooks,
                 ulab_streq(json_string_value(json_object_get(r, "cleanup")), "deleted")) continue;
             memset(&local, 0, sizeof(local));
             job.hooks = hooks; job.kind = kind; job.id = id;
+            end = webapp_now() + 120;
+            if (deadline > 0 && end > deadline) end = deadline;
             rc = !hooks || !hooks->cleanup_resource ? webapp_error(&local, "owned resource has no cleanup handler") :
-                webapp_bounded_job(delete_resource, &job, deadline, NULL, &local);
+                webapp_bounded_job(delete_resource, &job, end, NULL, &local);
             json_object_set_new(r, "cleanup", json_string(rc ? "failed" : "deleted"));
-            if (rc) { failed = 1; *err = local; json_object_set_new(r, "cleanup_error", json_string(local.msg)); }
+            if (rc) {
+                failed = 1;
+                *err = local;
+                if (ulab_streq(kind, "pool_sim")) pool_failed = 1;
+                ulab_log_error("cleanup %s %s: %s", kind, id, local.msg);
+                json_object_set_new(r, "cleanup_error", json_string(local.msg));
+            } else {
+                json_object_del(r, "cleanup_error");
+            }
             if (webapp_journal_save(j, &local)) { failed = 1; *err = local; }
         }
     }
+    if (pool) json_object_set_new(pool, "cleanup", json_string(pool_failed ? "failed" : "complete"));
     json_object_set_new(j->root, "cleanup", json_string(failed ? "failed" : "complete"));
     if (webapp_journal_save(j, &local)) { failed = 1; *err = local; }
     return failed ? ULAB_ERR : ULAB_OK;

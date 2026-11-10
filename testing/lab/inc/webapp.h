@@ -59,10 +59,11 @@ int webapp_client_stop(webapp_client_t *client, int failed, ulab_error_t *err);
 
 int webapp_journal_open(webapp_journal_t *journal, world_t *world,
                          const char *run_dir, ulab_error_t *err);
-/* Provisioning uses created=1 (UI receipt), 2 (mapped runtime claim); navigation 0. */
+/* Provisioning uses created=1 (UI receipt), 2 (mapped runtime claim), 3 (cleanup lookup); navigation 0. */
 int webapp_journal_bind(webapp_journal_t *journal, json_t *bindings,
                          int created, unsigned int command_id, ulab_error_t *err);
 int webapp_journal_save(webapp_journal_t *journal, ulab_error_t *err);
+int webapp_journal_restore(webapp_journal_t *j, ulab_error_t *err);
 void webapp_journal_close(webapp_journal_t *journal);
 int webapp_journal_cleanup(webapp_journal_t *journal,
                             const webapp_hooks_t *hooks, double deadline,
@@ -71,6 +72,7 @@ typedef int (*webapp_job_fn)(void *ctx, ulab_error_t *err);
 int webapp_bounded_job(webapp_job_fn fn, void *ctx, double deadline,
                         volatile sig_atomic_t *cancel, ulab_error_t *err);
 
+int webapp_cleanup_backend(const runner_opts_t *opts, ulab_error_t *err);
 int webapp_run_local(const runner_opts_t *opts, const scenario_t *scenario,
                      world_t *world, report_t *report, const char *run_dir, ulab_error_t *err);
 int webapp_execute(const runner_opts_t *opts, const scenario_t *scenario,

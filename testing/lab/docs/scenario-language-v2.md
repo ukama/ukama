@@ -223,7 +223,9 @@ read from the visible dot's native tooltip (`title`), independently of lifecycle
 
 The `webapp` block additionally accepts optional `switch_component`,
 `backhaul_component`, and `power_component` visible option labels. Each supplied
-label must match one selectable option. With no label, site setup keeps the
+label must match one selectable option. The special value `first-named` picks
+the first enabled inventory option with a nonempty label and value, skipping
+labels that start with the word Other or Others. With no label, site setup keeps the
 Console selection or picks the first available inventory entry in the dropdown.
 An empty category fails site setup before submission. Creation commands
 and each runtime setup script receive at most 900 seconds, capped by the

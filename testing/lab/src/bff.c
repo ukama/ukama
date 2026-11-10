@@ -4523,6 +4523,46 @@ static int direct_network_list_call(bff_client_t *c,
     return ULAB_ERR;
 }
 
+/* Return the complete list or an error. An unreadable inventory must never
+ * be interpreted as proof that a run-owned resource is absent. */
+int bff_cleanup_list(bff_client_t *c, const char *target, const network_t *network,
+                     const char *sim_type, json_t **rows, ulab_error_t *err) {
+    const char *op;
+    const char *key;
+    char vars[ULAB_MAX_QUERY];
+    json_t *root = NULL;
+    int rc;
+
+    *rows = NULL;
+    if (ulab_streq(target, "pool")) {
+        char escaped[ULAB_MAX_REF * 2];
+        ulab_json_escape(sim_type, escaped, sizeof(escaped));
+        snprintf(vars, sizeof(vars), "{\"type\":\"%s\"}", escaped);
+        op = "getSimsFromPool";
+        key = "sims";
+        rc = bff_call(c, op, "query($type: SIM_TYPES!) { getSimsFromPool(data:"
+                      "{type:$type,status:ALL}) { sims { id iccid } } }", vars, &root, err);
+    } else if (ulab_streq(target, "sims") && network && network->bff_id[0]) {
+        char escaped[ULAB_MAX_ID * 2];
+        ulab_json_escape(network->bff_id, escaped, sizeof(escaped));
+        snprintf(vars, sizeof(vars), "{\"networkId\":\"%s\"}", escaped);
+        op = "getSimsByNetwork";
+        key = "sims";
+        rc = bff_call(c, op, "query($networkId: String!) { getSimsByNetwork(networkId:$networkId)"
+                      " { sims { id iccid subscriberId networkId } } }", vars, &root, err);
+    } else {
+        rc = direct_network_list_call(c, target, network, &root, &op, &key, err);
+    }
+    if (rc) return rc;
+    *rows = json_incref(json_object_get(dig(root, "data", op), key));
+    json_decref(root);
+    if (json_is_array(*rows)) return ULAB_OK;
+    json_decref(*rows);
+    *rows = NULL;
+    snprintf(err->msg, sizeof(err->msg), "%s missing %s during cleanup", op, key);
+    return ULAB_ERR;
+}
+
 int bff_get_list_count(bff_client_t *c,
                        const char *target,
                        const network_t *network,
@@ -6187,10 +6227,41 @@ int bff_cleanup_world(bff_client_t *c,
     return ULAB_OK;
 }
 
+int bff_cleanup_node_state(bff_client_t *c, const char *id, const char *site_id,
+                           int *present, int *assigned, ulab_error_t *err) {
+    json_t *root = NULL;
+    json_t *nodes;
+    json_t *node;
+    json_t *site;
+    const char *linked;
+    char vars[ULAB_MAX_QUERY];
+    char escaped[ULAB_MAX_ID * 2];
+
+    *present = *assigned = 0;
+    ulab_json_escape(id, escaped, sizeof(escaped));
+    snprintf(vars, sizeof(vars), "{\"data\":{\"id\":\"%s\"}}", escaped);
+    if (bff_call(c, "getNodes", BFF_GET_NODES, vars, &root, err)) return ULAB_ERR;
+    nodes = json_object_get(dig(root, "data", "getNodes"), "nodes");
+    if (json_is_array(nodes) && json_array_size(nodes) == 0) { json_decref(root); return ULAB_OK; }
+    node = json_array_get(nodes, 0);
+    site = json_object_get(node, "site");
+    linked = json_string_value(json_object_get(site, "siteId"));
+    if (json_array_size(nodes) != 1 || !ulab_streq(json_string_value(json_object_get(node, "id")), id) ||
+        (!json_is_null(site) && !json_is_object(site)) || (linked && *linked && !ulab_streq(linked, site_id))) {
+        json_decref(root);
+        snprintf(err->msg, sizeof(err->msg), "cannot confirm run ownership of node %s at its current site", id);
+        return ULAB_ERR;
+    }
+    *present = 1;
+    *assigned = linked && *linked;
+    json_decref(root);
+    return ULAB_OK;
+}
+
 /* Strict teardown for individually journaled webapp resources. No reads or
  * creation calls from this path may be used as browser acceptance evidence. */
 int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
-                         int linked, ulab_error_t *err) {
+                         const char *site_id, ulab_error_t *err) {
     char query[1024];
     json_t *root = NULL;
     json_t *value;
@@ -6200,12 +6271,17 @@ int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
     if (!id || !*id || strlen(id) >= ULAB_MAX_ID) return ULAB_ERR;
     for (p = (const unsigned char *)id; *p; p++)
         if (!isalnum(*p) && *p != '-' && *p != '_') return ULAB_ERR;
-    if (!strcmp(kind, "node") && linked) {
-        snprintf(query, sizeof(query), "mutation { releaseNodeFromSite(data: {id: \"%s\"}) { success } }", id);
-        if (bff_call(c, "releaseNodeFromSite", query, "{}", &root, err)) return ULAB_ERR;
-        ok = json_is_true(json_object_get(json_object_get(json_object_get(root, "data"), "releaseNodeFromSite"), "success"));
-        json_decref(root); root = NULL;
-        if (!ok) { snprintf(err->msg, sizeof(err->msg), "releaseNodeFromSite did not confirm success"); return ULAB_ERR; }
+    if (!strcmp(kind, "node")) {
+        int present;
+        if (bff_cleanup_node_state(c, id, site_id, &present, &ok, err)) return ULAB_ERR;
+        if (!present) return ULAB_OK;
+        if (ok) {
+            snprintf(query, sizeof(query), "mutation { releaseNodeFromSite(data: {id: \"%s\"}) { success } }", id);
+            if (bff_call(c, "releaseNodeFromSite", query, "{}", &root, err)) return ULAB_ERR;
+            ok = json_is_true(json_object_get(json_object_get(json_object_get(root, "data"), "releaseNodeFromSite"), "success"));
+            json_decref(root); root = NULL;
+            if (!ok) { snprintf(err->msg, sizeof(err->msg), "releaseNodeFromSite did not confirm success"); return ULAB_ERR; }
+        }
     }
     if (!strcmp(kind, "node")) {
         op = "deleteNode";
@@ -6216,6 +6292,9 @@ int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
     } else if (!strcmp(kind, "subscriber")) {
         op = "deleteSubscriber";
         snprintf(query, sizeof(query), "mutation { deleteSubscriber(subscriberId: \"%s\") { success } }", id);
+    } else if (!strcmp(kind, "pool_sim")) {
+        op = "deleteSimFromPool";
+        snprintf(query, sizeof(query), "mutation { deleteSimFromPool(simId: \"%s\") { success } }", id);
     } else if (!strcmp(kind, "sim")) {
         ue_t ue;
         int failures = 0;
@@ -6224,8 +6303,12 @@ int bff_cleanup_resource(bff_client_t *c, const char *kind, const char *id,
             snprintf(err->msg, sizeof(err->msg), "cannot remove owned SIM packages during teardown"); return ULAB_ERR;
         }
         snprintf(query, sizeof(query), "mutation { toggleSimServiceStatus(data: {sim_id: \"%s\", status: \"service_off\"}) { success } }", id);
-        if (bff_call(c, "toggleSimServiceStatus", query, "{}", &root, err)) return ULAB_ERR;
-        ok = json_is_true(json_object_get(json_object_get(json_object_get(root, "data"), "toggleSimServiceStatus"), "success"));
+        if (bff_call(c, "toggleSimServiceStatus", query, "{}", &root, err)) {
+            if (!strstr(err->msg, "is invalid for turning off")) return ULAB_ERR;
+            ok = 1;
+        } else {
+            ok = json_is_true(json_object_get(dig(root, "data", "toggleSimServiceStatus"), "success"));
+        }
         json_decref(root); root = NULL;
         if (!ok) { snprintf(err->msg, sizeof(err->msg), "owned SIM service-off was not confirmed"); return ULAB_ERR; }
         op = "deleteSim";

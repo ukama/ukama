@@ -216,9 +216,14 @@ export const commerceFixture = (mode, extension = {}) => provisioningFixture(mod
     }
     if(body.operationName==='isPackageNameAvailable')return {data:{isPackageNameAvailable:{name:body.variables.name,isAvailable:!db.plans.some(p=>p.name===body.variables.name)}}};
     if(body.operationName==='SimPoolOverview')return {data:{simPoolView:{sims:{error:null}}}};
-    const op=/\b(fixtureEntitlement|updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;
+    const op=/\b(getPackages|getSubscribersByNetwork|getSimsByNetwork|getSimsFromPool|deleteSimFromPool|fixtureEntitlement|updatePackage|addPackage|deletePackage|addSubscriber|deleteSubscriber|allocateSim|addPayment|toggleSimServiceStatus|uploadSims|getPackagesForSim|unsetPackageInUseForSim|removePackageForSim|deleteSim)\s*\(/.exec(body.query)?.[1];if(!op)return;
     const data=body.variables?.data||{},id=/\w+(?:Id|_id):\s*"([^"]+)"/.exec(body.query)?.[1];let value;
     db.operations.push({op,data,id});
+    if(op==='getPackages')value={packages:db.plans.filter(p=>!body.variables.networkId||p.networkId===body.variables.networkId)};
+    if(op==='getSubscribersByNetwork')value={subscribers:db.subscribers.map(s=>({...s,networkId:s.network_id}))};
+    if(op==='getSimsByNetwork')value={sims:db.sims.map(s=>({...s,networkId:s.network_id,subscriberId:s.subscriber_id}))};
+    if(op==='getSimsFromPool')value={sims:db.pool};
+    if(op==='deleteSimFromPool'){db.pool=db.pool.filter(s=>s.id!==id);value={success:true}}
     if(op==='fixtureEntitlement'){db.entitlements.push({sim:data.sim,packageId:data.itemId,active:false});value={ok:true};}
     if(op==='updatePackage'){value=db.plans.find(p=>p.uuid===data.packageId);if(mode!=='rename-lost')value.name=data.name;if(mode==='rename-terms-drift')value.amount++;}
     if(op==='addPackage'){value={...data,uuid:'plan-'+(db.plans.length+1)};if(mode==='wrong-minutes')value.duration/=1440;db.plans.push(value);if(mode==='opaque-plan')value={name:data.name};}
@@ -228,7 +233,7 @@ export const commerceFixture = (mode, extension = {}) => provisioningFixture(mod
     if(op==='allocateSim'){data.iccid ||= db.pool.find(s=>!s.assigned&&!s.failed)?.iccid;value={...data,id:'sim-'+(db.sims.length+1),status:'active'};db.sims.push(value);db.pool.find(s=>s.iccid===data.iccid).assigned=true;db.entitlements.push({sim:value.id,packageId:data.package_id,active:true})}
     if(op==='addPayment'){value={...data,paidAt:mode==='old-receipt-date'?0:Date.now(),id:'payment-'+(db.payments.length+1)};db.payments.push(value);if(mode!=='no-entitlement')db.entitlements.push({sim:data.sim,packageId:data.itemId,active:false});if(mode==='opaque-payment')value={}}
     if(op==='toggleSimServiceStatus'){const sim=db.sims.find(s=>s.id===(data.sim_id||id));if(sim)sim.status=data.status==='service_on'?'active':'inactive';value={success:true}}
-    if(op==='uploadSims'){for(const line of data.csv.trim().split('\n').slice(1)){const iccid=line.split(',')[0];db.pool.push({iccid})}value={iccid:db.pool.map(s=>s.iccid)}}
+    if(op==='uploadSims'){for(const line of data.csv.trim().split('\n').slice(1)){const iccid=line.split(',')[0];db.pool.push({iccid,id:'pool-'+iccid})}value={iccid:db.pool.map(s=>s.iccid)}}
     if(op==='getPackagesForSim')value={packages:[]};
     if(op==='deleteSim'){db.sims=db.sims.filter(s=>s.id!==id);value={simId:id}}
     return {data:{[op]:value}};

@@ -12,6 +12,7 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -24,8 +25,11 @@ typedef struct {
     webapp_client_t *client;
     int started;
     int child;
-    int uncertain;
-    int site_creation_attempted;
+    int teardown;
+    bff_client_t bff;
+    int bff_open;
+    int replay;
+    json_t *resources;
     const char *run_dir;
 } local_t;
 typedef struct { local_t *local; const char *name; const char *args; } script_t;
@@ -81,6 +85,196 @@ static int execute_script(void *ctx, const char *name, const char *args, ulab_er
     if (end > local->client->deadline) end = local->client->deadline;
     return webapp_bounded_job(script_job, &job, end, local->client->cancel, err);
 }
+/* These reads are used only to establish ownership and reconcile teardown.
+ * No backend result can satisfy a browser event or assertion. */
+static const char *field(json_t *obj, const char *key) {
+    return json_string_value(json_object_get(obj, key));
+}
+
+static int open_cleanup_bff(local_t *local, ulab_error_t *err) {
+    char path[ULAB_MAX_PATH];
+    if (local->bff_open) return ULAB_OK;
+    if (webapp_path(path, sizeof(path), local->run_dir, "cleanup-bff-XXXXXX", err) || !mkdtemp(path))
+        return webapp_error(err, "cannot open cleanup BFF log directory");
+    if (bff_init(&local->bff, local->opts->bff_url, path)) {
+        bff_close(&local->bff);
+        return webapp_error(err, "cannot initialize BFF teardown authentication");
+    }
+    local->bff_open = 1;
+    return ULAB_OK;
+}
+
+static int inventory(local_t *local, const char *target, network_t *network,
+                     json_t **rows, ulab_error_t *err) {
+    if (open_cleanup_bff(local, err)) return ULAB_ERR;
+    return bff_cleanup_list(&local->bff, target, network, local->opts->sim_type, rows, err);
+}
+
+/* Match every supplied field. A duplicate identity or malformed ID is an
+ * error, even if the first entry would have been a plausible candidate. */
+static int lookup_id(json_t *rows, json_t *match, const char *key, const char **id,
+                     ulab_error_t *err) {
+    size_t i;
+    json_t *row;
+    json_t *expected;
+    const char *field_name;
+    *id = NULL;
+    if (!match || !json_object_size(match)) return webapp_error(err, "empty cleanup identity");
+    json_array_foreach(rows, i, row) {
+        json_object_foreach(match, field_name, expected) {
+            if (!json_object_get(row, field_name))
+                return webapp_error(err, "backend cleanup inventory is missing %s", field_name);
+            if (!json_equal(json_object_get(row, field_name), expected)) break;
+        }
+        if (field_name) continue;
+        if (*id) return webapp_error(err, "multiple backend rows match the planned resource");
+        *id = field(row, key);
+        if (!*id || !**id) return webapp_error(err, "backend resource has no cleanup ID");
+    }
+    return ULAB_OK;
+}
+
+static int check_absent(json_t *rows, const char *name, const char *key, ulab_error_t *err) {
+    const char *id;
+    json_t *match = json_pack("{s:s}", "name", name);
+    int rc = lookup_id(rows, match, key, &id, err);
+    json_decref(match);
+    if (!rc && id) return webapp_error(err, "planned resource already exists: %s", name);
+    return rc;
+}
+
+static int check_global_names(local_t *local, webapp_journal_t *journal, ulab_error_t *err) {
+    world_t *w = local->world;
+    json_t *rows = NULL;
+    size_t i;
+    int rc = inventory(local, "networks", NULL, &rows, err);
+    for (i = 0; !rc && i < w->network_count; i++)
+        rc = check_absent(rows, w->networks[i].name, "id", err);
+    json_decref(rows);
+    rows = NULL;
+    for (i = 0; !rc && i < w->package_count; i++) {
+        if (w->packages[i].network_ref[0]) continue;
+        if (!rows) rc = inventory(local, "packages", NULL, &rows, err);
+        if (!rc) rc = check_absent(rows, w->packages[i].name, "uuid", err);
+    }
+    json_decref(rows);
+    if (rc) return rc;
+    json_object_set_new(journal->root, "global_names_absent", json_true());
+    return webapp_journal_save(journal, err);
+}
+
+static int bind_lookup(webapp_journal_t *j, const char *kind, const char *ref,
+                       const char *name, const char *id, unsigned int command, ulab_error_t *err) {
+    json_t *bindings = json_pack("[{s:s,s:s,s:s,s:s,s:s}]", "kind", kind, "ref", ref,
+                                 "name", name, "id", id, "observed_via", "cleanup_lookup");
+    int rc = webapp_journal_bind(j, bindings, 3, command, err);
+    json_decref(bindings);
+    return rc;
+}
+
+static int resolve_submitted(local_t *local, webapp_journal_t *j, json_t *intent,
+                             ulab_error_t *err) {
+    world_t *w = local->world;
+    const char *kind = field(intent, "kind");
+    const char *ref = field(intent, "ref");
+    const char *name = field(intent, "name");
+    const char *target;
+    const char *id_key = "id";
+    const char *network_ref = NULL;
+    const char *id = NULL;
+    network_t *net = NULL;
+    json_t *match;
+    json_t *rows = NULL;
+    int rc;
+    int attempt;
+
+    if (!kind || !ref || !name) return webapp_error(err, "invalid cleanup intent");
+    if (ulab_streq(kind, "network") && world_network_by_ref(w, ref)) {
+        target = "networks";
+        match = json_pack("{s:s}", "name", name);
+    } else if (ulab_streq(kind, "site") && world_site_by_ref(w, ref)) {
+        target = "sites";
+        network_ref = world_site_by_ref(w, ref)->network_ref;
+        match = json_pack("{s:s}", "name", name);
+    } else if (ulab_streq(kind, "package") && world_package_by_ref(w, ref)) {
+        package_t *p = world_package_by_ref(w, ref);
+        target = "packages";
+        id_key = "uuid";
+        if (p->network_ref[0]) network_ref = p->network_ref;
+        match = json_pack("{s:s}", "name", name);
+    } else if (ulab_streq(kind, "subscriber") && world_subscriber_by_ref(w, ref)) {
+        subscriber_t *s = world_subscriber_by_ref(w, ref);
+        target = "subscribers";
+        id_key = "uuid";
+        network_ref = s->network_ref;
+        match = json_pack("{s:s,s:s}", "name", name, "email", s->email);
+    } else if (ulab_streq(kind, "sim") && world_ue_by_ref(w, ref)) {
+        ue_t *ue = world_ue_by_ref(w, ref);
+        subscriber_t *s = world_subscriber_by_ref(w, ue->subscriber_ref);
+        if (!s || !s->bff_id[0]) return webapp_error(err, "unresolved SIM subscriber");
+        target = "sims";
+        network_ref = ue->network_ref;
+        /* Auto-assignment lets the backend choose the ICCID. Its allocation
+         * belongs to our subscriber; its original pool entry may be shared. */
+        match = json_pack("{s:s}", "subscriberId", s->bff_id);
+        if (!json_is_true(json_object_get(intent, "auto_assign")))
+            json_object_set_new(match, "iccid", json_string(name));
+    } else {
+        return webapp_error(err, "unresolved %s creation for %s", kind, ref);
+    }
+    if (network_ref) net = world_network_by_ref(w, network_ref);
+    if (network_ref && net && net->bff_id[0]) {
+        json_object_set_new(match, "networkId", json_string(net->bff_id));
+    } else if (network_ref || !json_is_true(json_object_get(j->root, "global_names_absent"))) {
+        json_decref(match);
+        return webapp_error(err, "no ownership scope for %s %s", kind, ref);
+    }
+    /* A lost response can precede visibility in the inventory. */
+    for (attempt = 0; attempt < 3; attempt++) {
+        if (attempt) sleep(1);
+        rc = inventory(local, target, net, &rows, err);
+        if (rc) break;
+        rc = lookup_id(rows, match, id_key, &id, err);
+        if (!rc && id)
+            rc = bind_lookup(j, kind, ref, name, id, json_integer_value(json_object_get(intent, "command_id")), err);
+        if (rc || id) break;
+        json_decref(rows);
+        rows = NULL;
+    }
+    if (!rc && !id && !json_is_true(json_object_get(intent, "validation_rejected")))
+        rc = webapp_error(err, "submitted %s %s has no confirmed outcome", kind, ref);
+    if (!rc) json_object_set_new(intent, "state", json_string(id ? "reconciled" : "not_found"));
+    json_decref(rows);
+    json_decref(match);
+    return rc;
+}
+
+static int pool_inventory(local_t *local, webapp_journal_t *j, int cleanup, ulab_error_t *err) {
+    json_t *rows = NULL;
+    json_t *sim_inventory = json_object_get(j->root, "sim_inventory");
+    size_t i;
+    int failed = 0;
+
+    if (cleanup && local->replay && !json_is_true(json_object_get(sim_inventory, "absent_before_import")))
+        return webapp_error(err, "legacy SIM pool journal lacks a pre-import ownership check");
+    if (inventory(local, "pool", NULL, &rows, err)) return ULAB_ERR;
+    for (i = 0; i < local->world->ue_count; i++) {
+        ue_t *ue = &local->world->ues[i];
+        json_t *match = json_pack("{s:s}", "iccid", ue->iccid);
+        const char *id;
+        int rc = lookup_id(rows, match, "id", &id, err);
+        json_decref(match);
+        if (!rc && id && !cleanup) rc = webapp_error(err, "factory ICCID already in the SIM pool: %s", ue->iccid);
+        if (!rc && !id && cleanup && !ue->pool_sim_id[0])
+            rc = webapp_error(err, "could not confirm SIM pool import outcome for %s", ue->iccid);
+        if (!rc && id && cleanup) rc = bind_lookup(j, "pool_sim", ue->ref, ue->iccid, id, 0, err);
+        if (rc) failed = 1;
+    }
+    json_decref(rows);
+    if (cleanup) json_object_set_new(sim_inventory, "cleanup", json_string(failed ? "failed" : "pending"));
+    return failed ? ULAB_ERR : ULAB_OK;
+}
+
 static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
     local_t *local = ctx;
     json_t *intents;
@@ -97,7 +291,8 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
     if (!journal->root) return ULAB_OK;
     intents = json_object_get(journal->root, "creation_intents");
     json_array_foreach(intents, i, intent) {
-        if (ulab_streq(json_string_value(json_object_get(intent, "kind")), "site")) local->site_creation_attempted = 1;
+        if (local->replay && (ulab_streq(field(intent, "state"), "reconciled") ||
+            ulab_streq(field(intent, "state"), "identified") || ulab_streq(field(intent, "state"), "not_submitted"))) continue;
         snprintf(suffix, sizeof(suffix), "browser/%.80s/creation-%lld.json", local->world->run_id,
                  (long long)json_integer_value(json_object_get(intent, "command_id")));
         if (webapp_path(path, sizeof(path), local->run_dir, suffix, err)) return ULAB_ERR;
@@ -109,7 +304,7 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
             !json_equal(json_object_get(receipt, "kind"), json_object_get(intent, "kind")) ||
             !json_equal(json_object_get(receipt, "ref"), json_object_get(intent, "ref")) ||
             !json_equal(json_object_get(receipt, "name"), json_object_get(intent, "name"))) {
-            local->uncertain = failed = 1;
+            failed = 1;
         } else if (ulab_streq(state, "identified") && json_array_size(bindings) == 1 &&
                    json_equal(json_object_get(b, "kind"), json_object_get(intent, "kind")) &&
                    json_equal(json_object_get(b, "ref"), json_object_get(intent, "ref")) &&
@@ -117,7 +312,12 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
             json_object_set_new(intent, "state", json_string("identified"));
         } else if ((ulab_streq(state, "prepared") || ulab_streq(state,"intercepted")) && json_is_array(bindings) && !json_array_size(bindings)) {
             json_object_set_new(intent, "state", json_string("not_submitted"));
-        } else { local->uncertain = failed = 1; }
+        } else if (local->teardown && ulab_streq(state, "submitted") &&
+                   json_is_array(bindings) && !json_array_size(bindings)) {
+            if (resolve_submitted(local, journal, intent, err)) failed = 1;
+        } else { failed = 1; }
+        if (failed && !err->msg[0]) webapp_error(err, "could not reconcile %s %s (command %lld)",
+            field(intent, "kind"), field(intent, "ref"), (long long)json_integer_value(json_object_get(intent, "command_id")));
         json_decref(receipt);
     }
     if (local->started) {
@@ -131,10 +331,27 @@ static int recover(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
             json_decref(bindings);
         }
     }
-    json_object_set_new(journal->root, "uncertain_creation", json_boolean(local->uncertain));
+    if (local->teardown && json_object_get(journal->root, "sim_inventory") &&
+        pool_inventory(local, journal, 1, err)) {
+        json_object_set_new(json_object_get(journal->root, "sim_inventory"), "cleanup", json_string("failed"));
+        failed = 1;
+    }
+    json_object_set_new(journal->root, "uncertain_creation", json_boolean(failed));
     if (webapp_journal_save(journal, err)) failed = 1;
     if (failed && !err->msg[0]) webapp_error(err, "creation ownership is unresolved; retain journal and investigate planned names before manual cleanup");
     return failed ? ULAB_ERR : ULAB_OK;
+}
+static int recover_cleanup(void *ctx, webapp_journal_t *journal, ulab_error_t *err) {
+    local_t *local = ctx;
+    int rc;
+    /* A long browser run can outlive its original BFF session. */
+    if (local->bff_open) { bff_close(&local->bff); local->bff_open = 0; }
+    local->teardown = 1;
+    local->resources = json_object_get(journal->root, "resources");
+    rc = recover(local, journal, err);
+    if (json_array_size(json_object_get(journal->root, "resources")) && open_cleanup_bff(local, err))
+        rc = ULAB_ERR;
+    return rc;
 }
 static int create(local_t *local, webapp_journal_t *journal, const char *kind, json_t *inputs, ulab_error_t *err) {
     json_t *reply = NULL;
@@ -148,6 +365,10 @@ static int create(local_t *local, webapp_journal_t *journal, const char *kind, j
     if (!intent || json_array_append_new(intents, intent) || webapp_journal_save(journal, err)) { json_decref(inputs); return ULAB_ERR; }
     ulab_status("WEBAPP", "%s %s", action, json_string_value(json_object_get(inputs, "name")));
     rc = webapp_call(local->client, action, inputs, 900, &reply, err);
+    if (rc && !local->client->broken &&
+        ulab_streq(field(json_object_get(reply, "error"), "code"), "SITE_CREATE_FAILED") &&
+        ulab_streq(field(json_object_get(reply, "error"), "message"), "Argument Validation Error"))
+        json_object_set_new(intent, "validation_rejected", json_true());
     if (!rc) {
         json_t *bindings = json_object_get(reply, "bindings");
         json_t *binding = json_array_get(bindings, 0);
@@ -180,10 +401,12 @@ static int import_sims(local_t *local, webapp_journal_t *journal, ulab_error_t *
     if (webapp_bounded_job(prepare_sims, local, end, local->client->cancel, err) ||
         webapp_path(csv, sizeof(csv), local->run_dir, "factory-sims.csv", err) ||
         sim_factory_load_world_csv(local->world, csv, err)) return ULAB_ERR;
+    if (pool_inventory(local, journal, 0, err)) return ULAB_ERR;
     iccids = json_array();
     for (i = 0; i < local->world->ue_count; i++) json_array_append_new(iccids, json_string(local->world->ues[i].iccid));
     json_object_set_new(journal->root, "sim_inventory", json_pack("{s:O,s:s,s:s}", "iccids", iccids,
-        "state", "import_pending", "cleanup", "retained_factory_pool"));
+        "state", "import_pending", "cleanup", "pending"));
+    json_object_set_new(json_object_get(journal->root, "sim_inventory"), "absent_before_import", json_true());
     if (webapp_journal_save(journal, err)) { json_decref(iccids); return ULAB_ERR; }
     inputs = json_pack("{s:s,s:o}", "csv_path", csv, "iccids", iccids);
     rc = webapp_call(local->client, "web_import_sims", inputs, 900, &reply, err);
@@ -234,6 +457,8 @@ static int provision(void *ctx, webapp_client_t *client, webapp_journal_t *journ
     json_t *inputs;
     json_t *components;
     local->client = client;
+    json_object_set_new(journal->root, "bff_url", json_string(local->opts->bff_url));
+    if (check_global_names(local, journal, err)) return ULAB_ERR;
     json_object_set_new(journal->root, "creation_intents", json_array());
     if (start_nodes(local, err)) return ULAB_ERR;
     if (world->site_count && !ulab_streq(profile->session_mode, "onboarding") &&
@@ -295,32 +520,97 @@ static int reconnect(void *ctx, ulab_error_t *err) {
 }
 static int cleanup_runtime(void *ctx, ulab_error_t *err) {
     local_t *local = ctx;
+    int rc;
     if (!local->started) return ULAB_OK;
     local->child = 1;
-    if (local->world->ue_count && runtime_cleanup_ues(&local->runtime, local->world, err)) return ULAB_ERR;
-    return runtime_cleanup_infra(&local->runtime, local->world, err);
+    rc = runtime_cleanup_ues(&local->runtime, local->world, err);
+    if (runtime_cleanup_infra(&local->runtime, local->world, err)) rc = ULAB_ERR;
+    return rc;
 }
+/* Read by journaled ID so teardown can verify a delete or safely replay it. */
+static int recorded_present(local_t *local, const char *kind, const char *id,
+                            int *present, ulab_error_t *err) {
+    const char *target;
+    const char *key = "id";
+    const char *ref = NULL;
+    const char *network_ref = NULL;
+    network_t *network = NULL;
+    json_t *r;
+    json_t *rows = NULL;
+    size_t i;
+    int rc;
+
+    *present = 0;
+    json_array_foreach(local->resources, i, r) {
+        if (ulab_streq(field(r, "kind"), kind) && ulab_streq(field(r, "id"), id)) {
+            ref = field(r, "ref");
+            break;
+        }
+    }
+    if (!ref) return webapp_error(err, "missing journal reference for %s", id);
+    if (ulab_streq(kind, "network")) target = "networks";
+    else if (ulab_streq(kind, "package")) {
+        package_t *p = world_package_by_ref(local->world, ref);
+        target = "packages";
+        key = "uuid";
+        if (p->network_ref[0]) network_ref = p->network_ref;
+    } else if (ulab_streq(kind, "pool_sim")) target = "pool";
+    else if (ulab_streq(kind, "site")) {
+        target = "sites";
+        network_ref = world_site_by_ref(local->world, ref)->network_ref;
+    } else if (ulab_streq(kind, "subscriber")) {
+        target = "subscribers";
+        key = "uuid";
+        network_ref = world_subscriber_by_ref(local->world, ref)->network_ref;
+    } else if (ulab_streq(kind, "sim")) {
+        target = "sims";
+        network_ref = world_ue_by_ref(local->world, ref)->network_ref;
+    } else return webapp_error(err, "unknown cleanup resource %s", kind);
+    if (network_ref) network = world_network_by_ref(local->world, network_ref);
+    rc = inventory(local, target, network, &rows, err);
+    if (rc) return rc;
+    json_array_foreach(rows, i, r) {
+        if (!field(r, key)) { rc = webapp_error(err, "missing ID in %s", target); break; }
+        if (ulab_streq(field(r, key), id)) { *present = 1; break; }
+    }
+    json_decref(rows);
+    return rc;
+}
+
 static int cleanup_resource(void *ctx, const char *kind, const char *id, ulab_error_t *err) {
     local_t *local = ctx;
-    bff_client_t bff;
-    char path[ULAB_MAX_PATH];
-    char suffix[ULAB_MAX_ID + 40];
     int rc;
-    int linked = 0;
+    int present;
+    int assigned;
+    int attempt;
     size_t i;
-    /* Before the first site mutation, claimed nodes cannot be linked to an unresolved site. */
-    if (local->uncertain && (!ulab_streq(kind, "node") || local->site_creation_attempted))
-        return webapp_error(err, "unresolved creation: retain resources for reconciliation using the journal");
-    snprintf(suffix, sizeof(suffix), "cleanup-%s-%s", kind, id);
-    if (webapp_path(path, sizeof(path), local->run_dir, suffix, err) || mkdir(path, 0700)) return webapp_error(err, "cannot open cleanup log directory");
-    for (i = 0; i < local->world->node_count; i++) if (!strcmp(local->world->nodes[i].bff_id, id)) {
-        site_t *site = world_site_by_ref(local->world, local->world->nodes[i].site_ref);
-        linked = site && site->bff_id[0];
+    const char *site_id = NULL;
+
+    if (open_cleanup_bff(local, err)) return ULAB_ERR;
+    if (local->replay && !ulab_streq(kind, "node")) {
+        rc = recorded_present(local, kind, id, &present, err);
+        if (rc || !present) return rc;
     }
-    rc = bff_init(&bff, local->opts->bff_url, path);
-    if (!rc) rc = bff_cleanup_resource(&bff, kind, id, linked, err);
-    else webapp_error(err, "cannot initialize BFF teardown authentication");
-    bff_close(&bff); return rc;
+    if (ulab_streq(kind, "node")) {
+        for (i = 0; i < local->world->node_count; i++) {
+            node_t *node = &local->world->nodes[i];
+            if (ulab_streq(node->bff_id, id)) {
+                site_t *site = world_site_by_ref(local->world, node->site_ref);
+                if (site) site_id = site->bff_id;
+                break;
+            }
+        }
+    }
+    if (bff_cleanup_resource(&local->bff, kind, id, site_id, err)) return ULAB_ERR;
+    for (attempt = 0; attempt < 3; attempt++) {
+        if (attempt) sleep(1);
+        if (ulab_streq(kind, "node"))
+            rc = bff_cleanup_node_state(&local->bff, id, site_id, &present, &assigned, err);
+        else rc = recorded_present(local, kind, id, &present, err);
+        if (!rc && !present) return ULAB_OK;
+    }
+    if (rc) return rc;
+    return webapp_error(err, "%s %s is still in backend inventory after deletion", kind, id);
 }
 int webapp_run_local(const runner_opts_t *opts, const scenario_t *scenario,
                      world_t *world, report_t *report, const char *run_dir, ulab_error_t *err) {
@@ -335,8 +625,100 @@ int webapp_run_local(const runner_opts_t *opts, const scenario_t *scenario,
     local.opts = opts; local.scenario = scenario; local.world = world; local.run_dir = run_dir;
     runtime_init(&local.runtime, "virtual", opts->script_dir, run_dir, opts->repo);
     local.runtime.execute = execute_script; local.runtime.execute_ctx = &local;
-    hooks.ctx = &local; hooks.provision = provision; hooks.recover = recover; hooks.prepare_cleanup = reconnect;
+    hooks.ctx = &local; hooks.provision = provision; hooks.recover = recover_cleanup; hooks.prepare_cleanup = reconnect;
     hooks.runtime_event = runtime_event; hooks.cleanup_resource = cleanup_resource; hooks.cleanup_runtime = cleanup_runtime;
     rc = webapp_execute(opts, scenario, world, report, run_dir, &hooks, err);
+    if (local.bff_open) bff_close(&local.bff);
     runtime_close(&local.runtime); return rc;
+}
+
+/* Retry only backend teardown for a finished run. The scenario regenerates
+ * world references; the journal and creation receipts supply backend IDs. */
+int webapp_cleanup_backend(const runner_opts_t *opts, ulab_error_t *err) {
+    scenario_t *scenario = NULL;
+    world_t world = {0};
+    webapp_journal_t j = {0};
+    webapp_hooks_t hooks = {0};
+    local_t local = {0};
+    char run_dir[ULAB_MAX_PATH];
+    char path[ULAB_MAX_PATH];
+    json_t *report = NULL;
+    json_t *pool;
+    json_t *recorded;
+    const char *endpoint;
+    size_t i;
+    int fd = -1;
+    int rc = ULAB_ERR;
+
+    if (!webapp_valid_run_id(opts->run_id)) return webapp_error(err, "cleanup requires the original --run-id");
+    if (webapp_path(run_dir, sizeof(run_dir), opts->out_dir, opts->run_id, err) ||
+        webapp_path(j.path, sizeof(j.path), run_dir, "webapp-resources.json", err) ||
+        webapp_path(path, sizeof(path), run_dir, "report.json", err)) return ULAB_ERR;
+    fd = open(run_dir, O_RDONLY | O_DIRECTORY | O_CLOEXEC);
+    if (fd < 0) return webapp_error(err, "cannot open the original run directory");
+    if (flock(fd, LOCK_EX | LOCK_NB)) {
+        webapp_error(err, "another cleanup is active for this run");
+        goto done;
+    }
+    j.root = json_load_file(j.path, JSON_REJECT_DUPLICATES, NULL);
+    report = json_load_file(path, JSON_REJECT_DUPLICATES, NULL);
+    scenario = calloc(1, sizeof(*scenario));
+    if (!scenario) { webapp_error(err, "cannot allocate scenario"); goto done; }
+    if (scenario_load(opts->scenario_path, scenario, err)) goto done;
+    if (scenario->version != ULAB_WEBAPP_SCHEMA_VER || json_integer_value(json_object_get(j.root, "version")) != 1 ||
+        !field(j.root, "run_result") || !json_is_array(json_object_get(j.root, "resources")) ||
+        !ulab_streq(field(j.root, "run_id"), opts->run_id) || !ulab_streq(field(report, "run_id"), opts->run_id) ||
+        !ulab_streq(field(report, "scenario"), scenario->name)) {
+        webapp_error(err, "cleanup requires the matching scenario and a completed webapp run");
+        goto done;
+    }
+    endpoint = field(j.root, "bff_url");
+    if (endpoint && !ulab_streq(endpoint, opts->bff_url)) {
+        webapp_error(err, "BFF endpoint differs from the recorded run");
+        goto done;
+    }
+    if (ulab_streq(field(j.root, "cleanup"), "complete") && (!json_object_get(j.root, "sim_inventory") ||
+        ulab_streq(field(json_object_get(j.root, "sim_inventory"), "cleanup"), "complete"))) {
+        rc = ULAB_OK;
+        goto done;
+    }
+    /* Version-one journals predate the validation_rejected flag. The final
+     * provisioning error identifies the rejected site command in these runs. */
+    if (!endpoint && ulab_streq(field(report, "error"), "web-app: Argument Validation Error")) {
+        json_t *intents = json_object_get(j.root, "creation_intents");
+        json_t *last = json_array_get(intents, json_array_size(intents) - 1);
+        if (ulab_streq(field(last, "kind"), "site"))
+            json_object_set_new(last, "validation_rejected", json_true());
+    }
+    if (opts->has_seed_override) scenario->seed = opts->seed_override;
+    if (world_generate(scenario, opts->run_id, &world, err)) goto done;
+    j.world = &world;
+    pool = json_object_get(j.root, "sim_inventory");
+    if (pool) {
+        if (webapp_path(path, sizeof(path), run_dir, "factory-sims.csv", err) ||
+            sim_factory_load_world_csv(&world, path, err)) goto done;
+        recorded = json_object_get(pool, "iccids");
+        for (i = 0; i < world.ue_count; i++)
+            if (!ulab_streq(json_string_value(json_array_get(recorded, i)), world.ues[i].iccid)) break;
+        if (i != world.ue_count || i != json_array_size(recorded)) {
+            webapp_error(err, "factory batch differs from the journaled ICCIDs");
+            goto done;
+        }
+    }
+    if (webapp_journal_restore(&j, err)) goto done;
+    local.opts = opts; local.world = &world; local.run_dir = run_dir;
+    local.replay = 1;
+    hooks.ctx = &local; hooks.cleanup_resource = cleanup_resource;
+    ulab_status("CLEANUP", "retry backend cleanup for %s", opts->run_id);
+    rc = recover_cleanup(&local, &j, err);
+    if (webapp_journal_cleanup(&j, &hooks, 0, err)) rc = ULAB_ERR;
+done:
+    if (!rc) ulab_status("CLEANUP", "backend cleanup complete for %s", opts->run_id);
+    if (local.bff_open) bff_close(&local.bff);
+    webapp_journal_close(&j);
+    json_decref(report);
+    world_free(&world);
+    free(scenario);
+    close(fd);
+    return rc;
 }

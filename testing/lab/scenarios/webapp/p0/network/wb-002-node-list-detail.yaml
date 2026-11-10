@@ -11,6 +11,9 @@ provider:
 webapp:
   base_url: http://localhost:3000
   auth_state: .auth/owner.json
+  switch_component: first-named
+  backhaul_component: first-named
+  power_component: first-named
 world:
   networks: 1
   sites_per_network: 1

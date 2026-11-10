@@ -17,6 +17,7 @@
 #include "util.h"
 #include "generator.h"
 #include "workload.h"
+#include "webapp.h"
 
 static void usage(void) {
     printf("ukama-lab %s\n", ULAB_VERSION);
@@ -26,6 +27,7 @@ static void usage(void) {
     printf("  ukama-lab preflight <scenario.yaml> [options] (offline; no resources created)\n");
     printf("  ukama-lab lint <scenario.yaml|dir> [...] (offline; no resources created)\n");
     printf("  ukama-lab plan <workload.yaml> [options] (offline; no resources created)\n");
+    printf("  ukama-lab cleanup-webapp <scenario.yaml> --out <runs-dir> --run-id <id> --bff <url> (backend only)\n");
     printf("  ukama-lab cleanup-workload <run-dir> [options] (recorded resources only)\n");
     printf("  ukama-lab generate --model <name|all> --mode <name|all> [options]\n");
     printf("  ukama-lab list-checks\n");
@@ -196,6 +198,13 @@ int main(int argc, char **argv) {
     rc = parse_opts(argc, argv, 3, &opts);
     if (rc != ULAB_OK) {
         usage();
+        return rc;
+    }
+
+    if (ulab_streq(argv[1], "cleanup-webapp")) {
+        ulab_error_t err = {{0}};
+        rc = webapp_cleanup_backend(&opts, &err);
+        if (rc) ulab_log_error("%s", err.msg);
         return rc;
     }
 

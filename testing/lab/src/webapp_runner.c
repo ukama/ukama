@@ -349,6 +349,8 @@ static int event_one(webapp_client_t *client, webapp_journal_t *journal,
         if (!intents) { intents = json_array(); json_object_set_new(journal->root, "creation_intents", intents); }
         intent = json_deep_copy(json_object_get(inputs, "creation"));
         json_object_set_new(intent, "command_id", json_integer(client->sequence + 1));
+        if (event->type == EVT_WEB_COMMERCE && !strcmp(event->target, "allocate_auto"))
+            json_object_set_new(intent, "auto_assign", json_true());
         json_object_set_new(intent, "state", json_string("pending"));
         if (json_array_append_new(intents, intent) || webapp_journal_save(journal, err)) { json_decref(inputs); return ULAB_ERR; }
     }
@@ -496,7 +498,7 @@ done:
     if (hooks && hooks->recover && hooks->recover(hooks->ctx, &journal, &cleanup_error)) cleanup_failed = 1;
     if (hooks && hooks->prepare_cleanup && webapp_bounded_job(hooks->prepare_cleanup, hooks->ctx,
         webapp_now() + 30, NULL, &cleanup_error)) cleanup_failed = 1;
-    if (webapp_journal_cleanup(&journal, hooks, webapp_now() + 120, &cleanup_error)) cleanup_failed = 1;
+    if (webapp_journal_cleanup(&journal, hooks, 0, &cleanup_error)) cleanup_failed = 1;
     /* Teardown stops the containers serially, removes their per-node images
      * and waits for the run's mesh resources. Allow the full runtime job budget. */
     if (hooks && hooks->cleanup_runtime && webapp_bounded_job(hooks->cleanup_runtime, hooks->ctx,
@@ -512,19 +514,15 @@ done:
     if (stopped && rc == ULAB_OK)
         rc = webapp_error(err, "web-app scenario cancelled during cleanup");
     if (journal.root) {
-        json_object_set_new(journal.root, "run_result", json_string(rc || (cleanup_failed && !report_cleanup_errors_suppressed()) ? "failed" : "passed"));
+        json_object_set_new(journal.root, "run_result", json_string(rc || cleanup_failed ? "failed" : "passed"));
         json_object_set_new(journal.root, "worker_cleanup", json_string(worker_cleanup_failed ? "unconfirmed" : browser_started ? "complete" : "not_started"));
         json_object_set_new(journal.root, "runtime_cleanup", json_string(runtime_cleanup_failed ? "failed" : hooks && hooks->cleanup_runtime ? "complete" : "not_requested"));
         if (webapp_journal_save(&journal, &cleanup_error)) cleanup_failed = 1;
     }
     if (cleanup_failed) {
         report_set_cleanup(report, 1);
-        if (report_cleanup_errors_suppressed()) {
-            ulab_log_warn("web-app cleanup: %s", cleanup_error.msg);
-        } else {
-            if (rc == ULAB_OK) { *err = cleanup_error; rc = ULAB_ERR; }
-            ulab_log_error("web-app cleanup: %s", cleanup_error.msg);
-        }
+        if (rc == ULAB_OK) { *err = cleanup_error; rc = ULAB_ERR; }
+        ulab_log_error("web-app cleanup: %s", cleanup_error.msg);
     }
     if (rc) ulab_copy(report->error, sizeof(report->error), err->msg);
     webapp_journal_close(&journal);
