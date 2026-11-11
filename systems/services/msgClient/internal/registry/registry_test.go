@@ -20,6 +20,7 @@ type fakeTopo struct {
 	ensured [][]string
 	deleted []string
 	owned   []string
+	inUse   map[string]bool
 }
 
 func (f *fakeTopo) EnsureQueue(queue string, routes []string) error {
@@ -32,6 +33,16 @@ func (f *fakeTopo) EnsureQueue(queue string, routes []string) error {
 func (f *fakeTopo) DeleteQueue(queue string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	f.deleted = append(f.deleted, queue)
+	return nil
+}
+
+func (f *fakeTopo) DeleteUnusedQueue(queue string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.inUse[queue] {
+		return ErrQueueInUse
+	}
 	f.deleted = append(f.deleted, queue)
 	return nil
 }
@@ -199,6 +210,34 @@ func TestQueuesFoundAtStartupFlushFromStartTime(t *testing.T) {
 	h.r.sweep()
 	if len(h.topo.deleted) != 1 || h.topo.deleted[0] != "retired" {
 		t.Fatalf("expected retired queue flushed, got %v", h.topo.deleted)
+	}
+}
+
+func TestFlushSkipsQueueWithConsumer(t *testing.T) {
+	h := newHarness(t)
+	h.topo.owned = []string{"state"}
+	h.topo.inUse = map[string]bool{"state": true}
+	if err := h.r.LoadOwned(); err != nil {
+		t.Fatal(err)
+	}
+
+	h.clock = h.clock.Add(61 * time.Minute)
+	h.r.sweep()
+	if len(h.topo.deleted) != 0 {
+		t.Fatalf("queue with a consumer was flushed")
+	}
+
+	h.topo.inUse = nil
+	h.clock = h.clock.Add(30 * time.Minute)
+	h.r.sweep()
+	if len(h.topo.deleted) != 0 {
+		t.Fatalf("expected flush timer restarted after the skipped flush")
+	}
+
+	h.clock = h.clock.Add(31 * time.Minute)
+	h.r.sweep()
+	if len(h.topo.deleted) != 1 || h.topo.deleted[0] != "state" {
+		t.Fatalf("expected unused queue flushed, got %v", h.topo.deleted)
 	}
 }
 

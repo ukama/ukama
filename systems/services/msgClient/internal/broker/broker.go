@@ -10,6 +10,7 @@ package broker
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -22,6 +23,8 @@ import (
 	"github.com/wagslane/go-rabbitmq"
 
 	mb "github.com/ukama/ukama/systems/common/msgbus"
+
+	"github.com/ukama/ukama/systems/services/msgClient/internal/registry"
 )
 
 // Every service queue is bound here so msgclient can find the queues it owns after a restart.
@@ -33,6 +36,7 @@ type Broker struct {
 	mgmtUri  string
 	user     string
 	password string
+	system   string
 	http     *http.Client
 
 	Listen  *rabbitmq.Conn
@@ -40,7 +44,7 @@ type Broker struct {
 }
 
 // New blocks until both RabbitMQ connections are up.
-func New(uri, mgmtUri, user, password string) (*Broker, error) {
+func New(uri, mgmtUri, user, password, system string) (*Broker, error) {
 	u, err := amqp.ParseURI(uri)
 	if err != nil {
 		return nil, fmt.Errorf("invalid queue uri: %w", err)
@@ -52,6 +56,7 @@ func New(uri, mgmtUri, user, password string) (*Broker, error) {
 		mgmtUri:  strings.TrimSuffix(mgmtUri, "/"),
 		user:     user,
 		password: password,
+		system:   system,
 		http:     &http.Client{Timeout: 10 * time.Second},
 	}
 
@@ -98,8 +103,12 @@ func (b *Broker) EnsureQueue(queue string, routes []string) error {
 			return fmt.Errorf("declare exchange %s: %w", ownedExchange, err)
 		}
 
-		if err := ch.QueueBind(queue, "", ownedExchange, false, nil); err != nil {
+		if err := ch.QueueBind(queue, b.system, ownedExchange, false, nil); err != nil {
 			return fmt.Errorf("bind queue %s to %s: %w", queue, ownedExchange, err)
+		}
+
+		if err := ch.QueueUnbind(queue, "", ownedExchange, nil); err != nil {
+			return fmt.Errorf("unbind queue %s from %s: %w", queue, ownedExchange, err)
 		}
 
 		for _, r := range routes {
@@ -137,6 +146,23 @@ func (b *Broker) DeleteQueue(queue string) error {
 	return b.SetMaxLength(queue, 0)
 }
 
+func (b *Broker) DeleteUnusedQueue(queue string) error {
+	err := b.withChannel(func(ch *amqp.Channel) error {
+		_, err := ch.QueueDelete(queue, true, false, false)
+		return err
+	})
+
+	var amqpErr *amqp.Error
+	if errors.As(err, &amqpErr) && amqpErr.Code == amqp.PreconditionFailed {
+		return fmt.Errorf("delete queue %s: %w", queue, registry.ErrQueueInUse)
+	}
+	if err != nil {
+		return fmt.Errorf("delete queue %s: %w", queue, err)
+	}
+
+	return b.SetMaxLength(queue, 0)
+}
+
 // SetMaxLength caps the queue through an operator policy; RabbitMQ drops the oldest event when full. 0 removes the cap.
 func (b *Broker) SetMaxLength(queue string, max int64) error {
 	path := "/api/operator-policies/" + url.PathEscape(b.vhost) + "/" + url.PathEscape("msgclient-"+queue)
@@ -159,6 +185,7 @@ func (b *Broker) SetMaxLength(queue string, max int64) error {
 func (b *Broker) OwnedQueues() ([]string, error) {
 	var bindings []struct {
 		Destination string `json:"destination"`
+		RoutingKey  string `json:"routing_key"`
 	}
 
 	path := "/api/exchanges/" + url.PathEscape(b.vhost) + "/" + ownedExchange + "/bindings/source"
@@ -168,7 +195,9 @@ func (b *Broker) OwnedQueues() ([]string, error) {
 
 	queues := make([]string, 0, len(bindings))
 	for _, bd := range bindings {
-		queues = append(queues, bd.Destination)
+		if bd.RoutingKey == b.system {
+			queues = append(queues, bd.Destination)
+		}
 	}
 
 	return queues, nil

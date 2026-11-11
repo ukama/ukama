@@ -76,7 +76,7 @@ func initConfig() {
 }
 
 func runGrpcServer() {
-	b, err := broker.New(serviceConfig.Queue.Uri, serviceConfig.MsgBus.ManagementUri, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password)
+	b, err := broker.New(serviceConfig.Queue.Uri, serviceConfig.MsgBus.ManagementUri, serviceConfig.MsgBus.User, serviceConfig.MsgBus.Password, serviceConfig.System)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ. Error: %s", err.Error())
 	}
