@@ -29,6 +29,7 @@ CNODE_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/cnode.config"
 
 IMAGE_NAME="cnode-image.img"
 IMG_SIZE="28800M"
+ALPINE_RELEASE="v3.24"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 BUILDENV_DIR=${UKAMA_ROOT}/builder/scripts/build-system/buildenv
@@ -215,7 +216,7 @@ build_apps() {
         fi
     done
     log "INFO" "Building the apps the cnode uses: ${APPS[*]}"
-    TEMP_DIR="${ALPINE_TMP}" ./build-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}"
+    TEMP_DIR="${ALPINE_TMP}" ./build-env-setup.sh -a aarch64 -v "$ALPINE_RELEASE" -i "${UKAMA_ROOT}"
     restore_configs
     log "SUCCESS" "Apps built"
 }
@@ -225,8 +226,7 @@ build_rootfs() {
     mkdir -p mocksysfs
     [ -n "$(ls -A mocksysfs)" ] || touch mocksysfs/README
     log "INFO" "Building the rootfs"
-    TEMP_DIR="${ALPINE_TMP}" ./rootfs-env-setup.sh -a aarch64 -i "${UKAMA_ROOT}" || \
-        log "INFO" "rootfs-env-setup.sh always exits 1 on aarch64, checking the rootfs instead"
+    TEMP_DIR="${ALPINE_TMP}" ./rootfs-env-setup.sh -a aarch64 -v "$ALPINE_RELEASE" -i "${UKAMA_ROOT}"
 }
 
 download_firmware() {
