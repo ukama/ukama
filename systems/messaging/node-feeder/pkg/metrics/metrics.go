@@ -25,6 +25,31 @@ func RecordFailedRequestMetric() {
 	}()
 }
 
+func RecordRetiredRequestMetric() {
+	go func() {
+		opsRetired.Inc()
+	}()
+}
+
+func RecordSupersededRequestMetric() {
+	go func() {
+		opsSuperseded.Inc()
+	}()
+}
+
+var (
+	opsRetired = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "node_feeder_requests_dropped_total",
+		Help:        "Requests dropped instead of retried",
+		ConstLabels: map[string]string{"reason": "retired"},
+	})
+	opsSuperseded = promauto.NewCounter(prometheus.CounterOpts{
+		Name:        "node_feeder_requests_dropped_total",
+		Help:        "Requests dropped instead of retried",
+		ConstLabels: map[string]string{"reason": "superseded"},
+	})
+)
+
 var (
 	opsSuccessProcessed = promauto.NewCounter(prometheus.CounterOpts{
 		Name:        "node_feeder_requests_total",

@@ -16,6 +16,8 @@ import (
 type ListenerConfig struct {
 	ExecutionRetryCount int64           // max retries count
 	RetryPeriodSec      int             // how long request waits after failure to try again
+	RetryBackoffSec     []int           // wait before each retry of a failed request
+	MaxRequestAgeSec    int             // a request older than this is dropped instead of retried
 	Threads             int             // how many go routines run message processor
 	Exchange            string          // exchange
 	Routes              []mb.RoutingKey // routes
@@ -51,6 +53,8 @@ func NewConfig(name string) *Config {
 		Listener: ListenerConfig{
 			ExecutionRetryCount: 3,
 			RetryPeriodSec:      30,
+			RetryBackoffSec:     []int{2, 5, 15, 30},
+			MaxRequestAgeSec:    60,
 			Threads:             3,
 			Routes:              []mb.RoutingKey{"request.cloud.local.*.*.*.nodefeeder.publish"},
 			Exchange:            "amq.topic",

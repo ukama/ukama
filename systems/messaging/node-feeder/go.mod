@@ -16,6 +16,7 @@ require (
 	github.com/num30/config v0.1.3
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.24.1
+	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/sirupsen/logrus v1.10.1
 	github.com/streadway/amqp v1.1.0
 	github.com/stretchr/testify v1.12.0
@@ -82,7 +83,6 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.70.1 // indirect
 	github.com/prometheus/procfs v0.21.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
