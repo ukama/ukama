@@ -29,7 +29,7 @@ CNODE_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/cnode.config"
 
 IMAGE_NAME="cnode-image.img"
 IMG_SIZE="28800M"
-ALPINE_RELEASE="v3.24"
+ALPINE_RELEASE="v3.17"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 BUILDENV_DIR=${UKAMA_ROOT}/builder/scripts/build-system/buildenv
