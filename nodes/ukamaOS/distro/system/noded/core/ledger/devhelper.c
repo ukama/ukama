@@ -19,18 +19,15 @@
 #include "usys_mem.h"
 #include "usys_string.h"
 
-/* dev ->hw_aatr type is still not known at this will can only be type casted by driver file.*/
-#define HWATTR_GET(hwattr, dev, prop)                                   \
-    {                                                                   \
-        if (IF_SYSFS_SUPPORT(dev->sysFile)) {                           \
-            char sysf[MAX_PATH_LENGTH] = { '\0' };                      \
-            usys_memcpy(sysf, dev->sysFile, usys_strlen(dev->sysFile)); \
-            usys_strcat(sysf, prop->sysFname);                          \
-            hwattr = sysf;                                              \
-        } else {                                                        \
-            hwattr = dev->hwAttr;                                       \
-        }                                                               \
+static void *get_hwattr(Device *dev, Property *prop, char *path) {
+    if (!IF_SYSFS_SUPPORT(dev->sysFile)) {
+        return dev->hwAttr;
     }
+
+    int len = snprintf(path, MAX_PATH_LENGTH, "%s%s", dev->sysFile,
+                       prop->sysFname);
+    return len >= 0 && len < MAX_PATH_LENGTH ? path : NULL;
+}
 
 int dhelper_validate_property(Property *prop, int pidx) {
     int ret = -1;
@@ -94,10 +91,10 @@ void dhelper_irq_callback(DevObj *obj, void *prop, void *data) {
 int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
                       int pidx, void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     Property *pdata = &prop[pidx];
     if (!(dhelper_validate_property(prop, pidx))) {
-        HWATTR_GET(hwattr, dev, pdata);
+        void *hwattr = get_hwattr(dev, pdata, path);
         if (hwattr) {
             if (drvr->configure) {
                 ret = drvr->configure(hwattr, pdata, data);
@@ -115,10 +112,10 @@ int dhelper_configure(const DrvrOps *drvr, Device *dev, Property *prop,
 int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
                  void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     Property *pdata = &prop[pidx];
     if (!(dhelper_validate_property(prop, pidx))) {
-        HWATTR_GET(hwattr, dev, pdata);
+        void *hwattr = get_hwattr(dev, pdata, path);
         if (hwattr) {
             if (drvr->read) {
                 ret = drvr->read(hwattr, pdata, data);
@@ -136,14 +133,14 @@ int dhelper_read(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
 int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
                   void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     Property *pdata = &prop[pidx];
     if (!(dhelper_validate_property(prop, pidx))) {
         /* check for write permissions */
         if (dhelper_validate_permissions(prop, pidx, PERM_WR)) {
             return ERR_NODED_DEV_PERMISSION_DENIED;
         }
-        HWATTR_GET(hwattr, dev, pdata);
+        void *hwattr = get_hwattr(dev, pdata, path);
         if (hwattr) {
             if (drvr->write) {
                 ret = drvr->write(hwattr, pdata, data);
@@ -161,10 +158,10 @@ int dhelper_write(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
 int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
                    void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     Property *pdata = &prop[pidx];
     if (!(dhelper_validate_property(prop, pidx))) {
-        HWATTR_GET(hwattr, dev, pdata);
+        void *hwattr = get_hwattr(dev, pdata, path);
         if (hwattr) {
             if (drvr->enable) {
                 ret = drvr->enable(hwattr, pdata, data);
@@ -182,10 +179,10 @@ int dhelper_enable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
 int dhelper_disable(const DrvrOps *drvr, Device *dev, Property *prop, int pidx,
                     void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     Property *pdata = &prop[pidx];
     if (!(dhelper_validate_property(prop, pidx))) {
-        HWATTR_GET(hwattr, dev, pdata);
+        void *hwattr = get_hwattr(dev, pdata, path);
         if (hwattr) {
             if (drvr->disable) {
                 ret = drvr->disable(hwattr, pdata, data);
@@ -204,7 +201,7 @@ int dhelper_enable_irq(const DrvrOps *drvr, SensorCallbackFxn sensorCb,
                        Device *dev, Property *prop, int pidx, void *data) {
     //TODO: check if IRQ has to enable and disabled here or in driver layer below it.
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     if (!(dhelper_validate_property(prop, pidx))) {
 
         /* Check if property is alert type */
@@ -213,16 +210,14 @@ int dhelper_enable_irq(const DrvrOps *drvr, SensorCallbackFxn sensorCb,
         }
 
         /* IRQSrc config for interrupts.*/
+        void *hwattr = get_hwattr(dev, &prop[pidx], path);
+        if (!hwattr) {
+            return ERR_NODED_DEV_HWATTR_MISSING;
+        }
         IRQSrcInfo *irqSrc = usys_zmalloc(sizeof(IRQSrcInfo));
         if (irqSrc) {
-            Property *aprop = &prop[pidx];
-            HWATTR_GET(hwattr, dev, aprop);
-            if (hwattr) {
-                usys_strcpy(irqSrc->src.sysFsName, hwattr);
-                irqSrc->type = IRQ_SYSFS;
-            } else {
-                /* Still need to figure out about drivers hwattr */
-            }
+            usys_strcpy(irqSrc->src.sysFsName, hwattr);
+            irqSrc->type = IRQ_SYSFS;
             usys_memcpy(&irqSrc->obj, &dev->obj, sizeof(DevObj));
             /* Enabling IRQ */
             ret = irqdb_register_for_device_irq(irqSrc, sensorCb, NULL);
@@ -249,19 +244,17 @@ int dhelper_enable_irq(const DrvrOps *drvr, SensorCallbackFxn sensorCb,
 int dhelper_disable_irq(const DrvrOps *drvr, Device *dev, Property *prop,
                         int pidx, void *data) {
     int ret = 0;
-    void *hwattr = NULL;
+    char path[MAX_PATH_LENGTH];
     if (!(dhelper_validate_property(prop, pidx))) {
         /* IRQSrc config for interrupts.*/
+        void *hwattr = get_hwattr(dev, &prop[pidx], path);
+        if (!hwattr) {
+            return ERR_NODED_DEV_HWATTR_MISSING;
+        }
         IRQSrcInfo *irqSrc = usys_zmalloc(sizeof(IRQSrcInfo));
         if (irqSrc) {
-            Property *aprop = &prop[pidx];
-            HWATTR_GET(hwattr, dev, aprop);
-            if (hwattr) {
-                usys_strcpy(irqSrc->src.sysFsName, hwattr);
-                irqSrc->type = IRQ_SYSFS;
-            } else {
-                /* Still need to figure out about drivers hwattr */
-            }
+            usys_strcpy(irqSrc->src.sysFsName, hwattr);
+            irqSrc->type = IRQ_SYSFS;
             usys_memcpy(&irqSrc->obj, &dev->obj, sizeof(DevObj));
             /* Disable IRQ */
             ret = irqdb_deregister_for_device_irq(irqSrc, NULL);

@@ -11,7 +11,7 @@
 
 #include "device.h"
 
-int ads1015_wrapper_init ();
+int ads1015_wrapper_init(Device* p_dev);
 int ads1015_wrapper_registration(Device* p_dev);
 int ads1015_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
 int ads1015_wrapper_configure(void* p_dev, void* prop, void* data );

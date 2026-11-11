@@ -32,7 +32,9 @@ copy_all_libs() {
     bin="$1"
     dest="$2"
 
-    ldd "$bin" | awk '
+    repo_root="${UKAMA_ROOT:-$(CDPATH= cd -- "$(dirname -- "$0")/../.." && pwd)}"
+    platform_lib="$repo_root/nodes/ukamaOS/distro/platform/build"
+    LD_LIBRARY_PATH="$platform_lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" ldd "$bin" | awk '
         /=>/ && $3 ~ /^\// { print $3 }
         $1 ~ /^\// { print $1 }
     ' | while IFS= read -r lib; do

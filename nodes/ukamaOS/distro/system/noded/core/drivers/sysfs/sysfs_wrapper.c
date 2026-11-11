@@ -30,7 +30,8 @@ const DrvrOps *sysfs_wrapper_get_ops() {
     return &drvrSysFsOps;
 }
 
-int sysfs_wrapper_init() {
+int sysfs_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

@@ -7,7 +7,8 @@
  */
 #include "drivers/dat31r5a_wrapper.h"
 
-int dat31r5a_wrapper_init() {
+int dat31r5a_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

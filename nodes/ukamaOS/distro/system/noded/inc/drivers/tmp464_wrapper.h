@@ -11,7 +11,7 @@
 
 #include "device.h"
 
-int tmp464_wrapper_init ();
+int tmp464_wrapper_init(Device* p_dev);
 int tmp464_wrapper_registration(Device* p_dev);
 int tmp464_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
 int tmp464_wrapper_configure(void* p_dev, void* prop, void* data );

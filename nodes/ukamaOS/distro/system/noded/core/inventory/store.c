@@ -116,7 +116,7 @@ static int update_module_list(ModuleMap *map) {
         if (ret) {
             usys_log_error("Module UUID %s and Name %s update "
                            "to module list in store failed.",
-                           ret, map->modUuid, map->modName);
+                           map->modUuid, map->modName);
         } else {
             usys_log_trace("Module UUID %s and Name %s update "
                            "to module list in sore completed.",
@@ -169,7 +169,7 @@ int store_register_module(NodeCfg *pcfg) {
                             usys_strlen(pcfg->modName));
 
                 /* If the eeprom data is exposed as sysfs files */
-                if ((pcfg->sysFs != NULL) || (!usys_strcmp(pcfg->sysFs, ""))) {
+                if (pcfg->sysFs[0]) {
                     fname = usys_zmalloc(sizeof(char) * PATH_LENGTH);
                     if (fname) {
                         usys_memcpy(fname, pcfg->sysFs,
@@ -186,7 +186,11 @@ int store_register_module(NodeCfg *pcfg) {
                 } else {
                     /* If the eeprom data has to be read using
                      * user space driver */
-                    icfg = usys_zmalloc(sizeof(icfg));
+                    if (!pcfg->eepromCfg) {
+                        ret = ERR_NODED_INVALID_POINTER;
+                        goto cleanup;
+                    }
+                    icfg = usys_zmalloc(sizeof(*icfg));
                     if (icfg) {
                         usys_memcpy(icfg, pcfg->eepromCfg, sizeof(DevI2cCfg));
                     } else {
@@ -275,13 +279,11 @@ int store_register_update_module(char *puuid, NodeCfg *pcfg, uint8_t count) {
             usys_memcpy(pmap->modName, pcfg->modName,
                         usys_strlen(pcfg->modName));
 
-            /* Need to free the storeAttr as we don't know new one
-             *  could be same or different.*/
-            usys_free(pmap->storeAttr);
+            void *oldAttr = pmap->storeAttr;
 
             /* If the eeprom data is exposed as sysfs files */
-            if ((pcfg->sysFs != NULL) || (!usys_strcmp(pcfg->sysFs, ""))) {
-                fname = usys_zmalloc(sizeof(char));
+            if (pcfg->sysFs[0]) {
+                fname = usys_strdup(pcfg->sysFs);
                 if (fname) {
                     pmap->storeAttr = fname;
                 } else {
@@ -295,7 +297,11 @@ int store_register_update_module(char *puuid, NodeCfg *pcfg, uint8_t count) {
 
             } else {
                 /* If the eeprom data needs a custom driver */
-                icfg = usys_zmalloc(sizeof(icfg));
+                if (!pcfg->eepromCfg) {
+                    ret = ERR_NODED_INVALID_POINTER;
+                    goto cleanuppmap;
+                }
+                icfg = usys_zmalloc(sizeof(*icfg));
                 if (icfg) {
                     usys_memcpy(icfg, pcfg->eepromCfg, sizeof(DevI2cCfg));
                 } else {
@@ -311,20 +317,19 @@ int store_register_update_module(char *puuid, NodeCfg *pcfg, uint8_t count) {
 
             /* Update module list */
             ret = update_module_list(pmap);
-            if (!ret) {
-                usys_log_error("Updating module UUID %s to store failed.", ret,
-                               puuid);
+            if (ret) {
+                usys_log_error("Updating module UUID %s to store failed.", puuid);
                 goto cleanup;
             } else {
                 usys_log_debug("Module %s update success.", pcfg->modUuid);
             }
 
+            usys_free(oldAttr);
             /* Rename module name */
             ret = pmap->storeOps->rename(puuid, pcfg->modName);
-            if (!ret) {
-                usys_log_error("Renaming store for module UUID %s failed.", ret,
-                               puuid);
-                goto cleanup;
+            if (ret) {
+                usys_log_error("Renaming store for module UUID %s failed.", puuid);
+                goto cleanuppmap;
             } else {
                 usys_log_debug("Module %s update success.", pcfg->modUuid);
             }

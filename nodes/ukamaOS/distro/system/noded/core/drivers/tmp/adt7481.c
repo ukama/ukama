@@ -8,7 +8,8 @@
 
 #include "drivers/adt7481_wrapper.h"
 
-int adt7841_wrapper_init() {
+int adt7841_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

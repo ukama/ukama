@@ -8,7 +8,8 @@
 
 #include "drivers/ina226_wrapper.h"
 
-int ina226_wrapper_init() {
+int ina226_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

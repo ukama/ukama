@@ -6,8 +6,6 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
-#include <netdb.h>
-
 #include "web_service.h"
 
 #include "device.h"
@@ -35,24 +33,6 @@ static char gNotifServer[MAX_URL_LENGTH] = {0};
 static uint16_t endPointCount = 0;
 WebServiceAPI gApi[MAX_END_POINTS] = { 0 };
 
-static int find_service_port(char *serviceName) {
-
-    struct servent *entry = NULL;
-
-    entry = getservbyname(serviceName, NULL);
-    if (entry == NULL) {
-        usys_log_error("Unable to find port entry for service: %s", serviceName);
-        return 0;
-    }
-
-    usys_log_debug("Service entry found. Name: %s port: %d proto: %s",
-                   entry->s_name,
-                   ntohs(entry->s_port),
-                   entry->s_proto);
-
-    return ntohs(entry->s_port);
-}
-
 /**
  * @fn      void clean_noded_notif(NodedNotifDetails*)
  * @brief   Clean all the memory allocated while assingemnt.
@@ -68,11 +48,9 @@ void clean_noded_notification(Notification *ptr) {
     usys_free(ptr->module);
     usys_free(ptr->device);
     usys_free(ptr->propertyName);
-    usys_free(ptr->propertyValue);
+    o_free(ptr->propertyValue);
     usys_free(ptr->propertyUnit);
     usys_free(ptr->details);
-    usys_free(ptr);
-    ptr = NULL;
 }
 
 /**
@@ -189,21 +167,24 @@ void web_service_alert_cb(DevObj *obj,
     nodeAlerts.module      = usys_strdup(obj->modUuid);
     nodeAlerts.device      = usys_strdup(obj->name);
     nodeAlerts.propertyName = usys_strdup(prop[didx].name);
-    sprintf(nodeAlerts.propertyValue, "%d", value);
+    nodeAlerts.propertyValue = msprintf("%.17g", value);
+    if (!nodeAlerts.propertyValue) {
+        goto cleanup;
+    }
     nodeAlerts.propertyUnit = usys_strdup(prop[didx].units);
 
     /* Report alert */
     ret = json_serialize_notification_data(&json, &nodeAlerts);
-    if (ret != JSON_ENCODING_OK) {
+    if (!ret) {
         usys_log_error( "Web service alert callback function for "
                         "Device name %s Disc: %s Module UUID %s called "
                         "with %d alerts failed to serialize alert",
                         obj->name, obj->desc, obj->modUuid, *count);
         goto cleanup;
     } else {
-        char urlWithEp[MAX_URL_LENGTH] = {0};
-        usys_sprintf(urlWithEp, "%s%s%s",gNotifServer, NOTIFY_ALERT_EP,
-                     SERVICE_NAME);
+        char urlWithEp[sizeof(gNotifServer) + sizeof(NOTIFY_ALERT_EP SERVICE_NAME) - 1];
+        snprintf(urlWithEp, sizeof(urlWithEp), "%s" NOTIFY_ALERT_EP SERVICE_NAME,
+                 gNotifServer);
         
         ulfius_init_request(&alertNotification);
         ulfius_init_response(&alertNotificationResp);
@@ -216,7 +197,7 @@ void web_service_alert_cb(DevObj *obj,
         if(json) {
             if(STATUS_OK != ulfius_set_json_body_request(&alertNotification,
                                                          json)) {
-                goto cleanup;
+                goto cleanup_http;
             }
         }
         
@@ -230,18 +211,17 @@ void web_service_alert_cb(DevObj *obj,
                             " notification  response is %d.",
                             alertNotificationResp.status);
         }
+cleanup_http:
         ulfius_clean_request(&alertNotification);
+        ulfius_clean_response(&alertNotificationResp);
     }
     
-    usys_free(prop);
-    
 cleanup:
+    usys_free(prop);
     usys_free(adata->sValue);
     usys_free(adata);
     clean_noded_notification(&nodeAlerts);
     json_free(&json);
-    ulfius_clean_request(&alertNotification);
-    ulfius_clean_response(&alertNotificationResp);
 
     return;
 }
@@ -1506,6 +1486,9 @@ int web_service_start() {
  */
 int web_service_init(char *notifServer) {
     /* Notification server */
+    if (strlen(notifServer) >= sizeof(gNotifServer)) {
+        return STATUS_NOK;
+    }
     usys_strcpy(gNotifServer, notifServer);
     usys_log_info("Added notification server  %s", gNotifServer);
 

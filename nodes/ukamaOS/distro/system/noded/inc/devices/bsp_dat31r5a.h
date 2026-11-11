@@ -53,14 +53,14 @@ int bsp_dat31r5a_enable(void* p_dev, void* prop, void* data);
 int bsp_dat31r5a_configure(void* p_dev, void* prop, void* data );
 
 /**
- * @fn      int bsp_dat31r5a_init()
+ * @fn      int bsp_dat31r5a_init(Device*)
  * @brief   Read sensor properties from the property config parsed during
  *          startup and then initialization request to driver wrapper layer.
  *
  * @return  On success, 0
  *          On failure, non zero value
  */
-int bsp_dat31r5a_init ();
+int bsp_dat31r5a_init(Device* p_dev);
 
 /**
  * @fn      int bsp_dat31r5a_registration(Device*)

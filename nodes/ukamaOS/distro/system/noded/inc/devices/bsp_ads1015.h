@@ -15,7 +15,7 @@ extern "C" {
 
 #include "device.h"
 
-int bsp_ads1015_init();
+int bsp_ads1015_init(Device* p_dev);
 int bsp_ads1015_registration(Device* p_dev);
 int bsp_ads1015_read_prop_count(Device* p_dev, uint16_t * count);
 int bsp_ads1015_read_properties(Device* p_dev, void* prop);
