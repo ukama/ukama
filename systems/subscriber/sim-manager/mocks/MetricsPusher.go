@@ -48,6 +48,11 @@ func (_m *MetricsPusher) GetPushMetricsHost() string {
 	return r0
 }
 
+// PushMetrics provides a mock function with given fields: configMetrics, systemName
+func (_m *MetricsPusher) PushMetrics(configMetrics []metrics.MetricConfig, systemName string) {
+	_m.Called(configMetrics, systemName)
+}
+
 // NewMetricsPusher creates a new instance of MetricsPusher. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewMetricsPusher(t interface {

@@ -10,6 +10,7 @@ package metrics
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/push"
@@ -58,7 +59,10 @@ func MetricTypeFromString(s string) MetricType {
 	}
 }
 
-var metricCollectors = make(map[string][]*Metrics)
+var (
+	collectorsMu     sync.Mutex
+	metricCollectors = make(map[string][]*Metrics)
+)
 
 func NewMetrics(name string, mtype string) *Metrics {
 	m := new(Metrics)
@@ -146,6 +150,7 @@ func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName st
 		labelDimensions = append(labelDimensions, key)
 	}
 
+	collectorsMu.Lock()
 	for _, metric := range metrics {
 		if _, ok := metricCollectors[metric.Name]; !ok {
 			// Metric does not exist, create a new one
@@ -175,6 +180,8 @@ func PushMetrics(pushMetricHost string, metrics []MetricConfig, metricJobName st
 			pusher.Collector(m.collector)
 		}
 	}
+	collectorsMu.Unlock()
+
 	if err := pusher.Push(); err != nil {
 		log.Errorf("Could not push metrics to Pushgateway: %s", err.Error())
 	}
@@ -188,6 +195,7 @@ func RemoveSeries(pushMetricHost string, labels map[string]string, metricJobName
 	removed := 0
 	pusher := push.New(pushMetricHost, metricJobName)
 
+	collectorsMu.Lock()
 	for _, metrics := range metricCollectors {
 		for _, m := range metrics {
 			switch met := m.collector.(type) {
@@ -204,6 +212,7 @@ func RemoveSeries(pushMetricHost string, labels map[string]string, metricJobName
 			pusher.Collector(m.collector)
 		}
 	}
+	collectorsMu.Unlock()
 
 	if removed == 0 {
 		return 0, nil

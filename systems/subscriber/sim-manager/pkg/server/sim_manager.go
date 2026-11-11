@@ -1683,23 +1683,64 @@ func expireAllPackagesForSim(simId string, packageRepo sims.PackageRepo, msgbus 
 // so a restarted instance re-declares all networks instead of only the ones
 // its later events touch.
 func (s *SimManagerServer) PushSimMetrics() {
-	sims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
+	allSims, err := s.simRepo.List("", "", "", "", ukama.SimTypeUnknown, ukama.SimStatusUnknown, 0, false, 0, false)
 	if err != nil {
 		log.Errorf("Error while listing sims for metrics push: %v", err)
 
 		return
 	}
 
-	networks := map[string]struct{}{}
-	for _, sim := range sims {
-		networks[sim.NetworkId.String()] = struct{}{}
+	type simCounts struct {
+		total, active, inactive, terminated int
 	}
 
-	for networkId := range networks {
-		_ = pushTotalSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
-		_ = pushActiveSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
-		_ = pushInactiveSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
-		_ = pushTerminatedSimsCountMetric(networkId, s.simRepo, s.orgId, s.metricsPusher)
+	counts := map[string]*simCounts{}
+	for _, sim := range allSims {
+		networkId := sim.NetworkId.String()
+
+		c, ok := counts[networkId]
+		if !ok {
+			c = &simCounts{}
+			counts[networkId] = c
+		}
+
+		c.total++
+
+		switch sim.Status {
+		case ukama.SimStatusServiceOn:
+			c.active++
+		case ukama.SimStatusServiceOff:
+			c.inactive++
+		case ukama.SimStatusTerminated:
+			c.terminated++
+		}
+	}
+
+	if len(counts) == 0 {
+		return
+	}
+
+	configs := make([]pmetric.MetricConfig, 0, 4*len(counts))
+	for networkId, c := range counts {
+		configs = append(configs,
+			simCountMetric(pkg.NumberOfSims, c.total, networkId, s.orgId),
+			simCountMetric(pkg.ActiveCount, c.active, networkId, s.orgId),
+			simCountMetric(pkg.InactiveCount, c.inactive, networkId, s.orgId),
+			simCountMetric(pkg.TerminatedCount, c.terminated, networkId, s.orgId))
+	}
+
+	log.Infof("Pushing sim count metrics of %d networks to push gateway host: %s",
+		len(counts), s.metricsPusher.GetPushMetricsHost())
+
+	s.metricsPusher.PushMetrics(configs, pkg.SystemName)
+}
+
+func simCountMetric(name string, value int, networkId, orgId string) pmetric.MetricConfig {
+	return pmetric.MetricConfig{
+		Name:   name,
+		Type:   pkg.GaugeType,
+		Labels: map[string]string{"network": networkId, "org": orgId},
+		Value:  float64(value),
 	}
 }
 
@@ -1887,6 +1928,7 @@ func dbPackagesToPbPackages(packages []sims.Package) []*pb.Package {
 type MetricsPusher interface {
 	CollectAndPushSimMetrics(configMetrics []pmetric.MetricConfig,
 		selectedMetric string, Value float64, Labels map[string]string, systemName string) error
+	PushMetrics(configMetrics []pmetric.MetricConfig, systemName string)
 	GetPushMetricsHost() string
 }
 
@@ -1905,6 +1947,10 @@ func (m *metricsPusher) CollectAndPushSimMetrics(configMetrics []pmetric.MetricC
 	return pmetric.CollectAndPushSystemMetrics(m.pushMetricHost, configMetrics, selectedMetric,
 		value, labels, systemName)
 
+}
+
+func (m *metricsPusher) PushMetrics(configMetrics []pmetric.MetricConfig, systemName string) {
+	pmetric.PushMetrics(m.pushMetricHost, configMetrics, systemName)
 }
 
 func (m *metricsPusher) GetPushMetricsHost() string {
