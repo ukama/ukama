@@ -27,11 +27,7 @@ APP_CONFIGS_DIR="${UKAMA_ROOT}/nodes/configs/apps"
 COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 CNODE_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/cnode.config"
 
-BOOT_MOUNT="/media/boot"
-PRIMARY_MOUNT="/media/primary"
-PASSIVE_MOUNT="/media/passive"
-
-RAW_IMG="cnode-image.img"
+IMAGE_NAME="cnode-image.img"
 IMG_SIZE="28800M"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
@@ -42,6 +38,7 @@ BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
 HIDDEN_CONFIGS=""
 ALPINE_TMP=""
+WORK_DIR=""
 
 if [ $# -ne 0 ]; then
     echo "Usage: $0"
@@ -70,59 +67,121 @@ check_status() {
 }
 
 restore_configs() {
-    if [ -n "${HIDDEN_CONFIGS}" ] && [ -d "${HIDDEN_CONFIGS}" ]; then
-        mv "${HIDDEN_CONFIGS}"/*.toml "${UKAMA_ROOT}/builder/configs/" 2>/dev/null || true
-        rmdir "${HIDDEN_CONFIGS}"
-        HIDDEN_CONFIGS=""
-    fi
+    local config
+    [ -n "$HIDDEN_CONFIGS" ] || return 0
+    for config in "$HIDDEN_CONFIGS"/*.toml; do
+        [ -f "$config" ] || continue
+        mv -- "$config" "${UKAMA_ROOT}/builder/configs/" || return 1
+    done
+    rmdir "$HIDDEN_CONFIGS" || return 1
+    HIDDEN_CONFIGS=""
+}
+
+clean_build_outputs() {
+    local distro="${UKAMA_ROOT}/nodes/ukamaOS/distro"
+    local vendor="${distro}/vendor"
+    local recipe failed=0
+
+    log INFO "Cleaning Ukama apps, builder, platform and vendor libraries"
+    for recipe in "${UKAMA_ROOT}"/nodes/apps/*/Makefile "$distro"/system/*/Makefile \
+                  "${UKAMA_ROOT}/builder/Makefile" "$distro/platform/Makefile" \
+                  "$vendor"/{orcania/src,yder/src,ulfius/src,tomlc,libcap}/Makefile \
+                  "$vendor/Makefile"; do
+        [ -f "$recipe" ] || continue
+        make -C "${recipe%/Makefile}" clean || failed=1
+    done
+
+    # The vendor clean target removes the installed libs. Interrupted builds
+    # can also leave CMake or configure outputs inside individual libraries.
+    rm -rf -- "$vendor"/{jansson,amqp,libuuid,casync}/tmpbuild \
+              "$vendor"/prometheus-client/{prom,promhttp}/build \
+              "$UKAMA_REPO_APP_PKG" || failed=1
+    rm -f -- "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" || failed=1
+    return "$failed"
 }
 
 remove_build_dirs() {
-    local dir
-    for dir in "${BUILDENV_DIR}" "${ROOTFS_DIR}"; do
-        if [ -x "${dir}/destroy" ]; then
-            "${dir}/destroy" --remove || log "ERROR" "Could not remove ${dir}"
-        elif [ -d "${dir}" ]; then
-            rm -rf --one-file-system "${dir}" || log "ERROR" "Could not remove ${dir}"
+    local dir mounts target failed=0
+    for dir in "$BUILDENV_DIR" "$ROOTFS_DIR"; do
+        [ -d "$dir" ] || continue
+        if [ -x "$dir/destroy" ]; then
+            "$dir/destroy" --remove || failed=1
+        else
+            # A partially installed chroot may still have the checkout bind-mounted.
+            # --one-file-system alone cannot distinguish a bind on the same filesystem.
+            mounts=$(findmnt -rn -o TARGET) || return 1
+            while IFS= read -r target; do
+                printf -v target '%b' "$target"
+                if [[ "$target" == "$dir" || "$target" == "$dir/"* ]]; then
+                    log ERROR "Still mounted: $target"
+                    failed=1
+                    continue 2
+                fi
+            done <<< "$mounts"
+            rm -rf --one-file-system -- "$dir" || failed=1
         fi
     done
-    rm -rf "${SCRIPT_DIR}/mocksysfs" || log "ERROR" "Could not remove ${SCRIPT_DIR}/mocksysfs"
+    rm -rf -- "${SCRIPT_DIR}/mocksysfs" || failed=1
+    return "$failed"
 }
 
-give_files_back() {
-    local owner
-    owner=$(stat -c '%u:%g' "${UKAMA_ROOT}")
-    log "INFO" "Giving the build files back to ${owner}"
-    find "${UKAMA_ROOT}" -xdev \( -path "${BUILDENV_DIR}" -o -path "${ROOTFS_DIR}" \) -prune \
-        -o -uid 0 -exec chown -h "${owner}" {} + || log "ERROR" "Could not give all files back to ${owner}"
+release_image() {
+    local dir
+    [ -n "$LOOPDISK" ] || return 0
+    for dir in "$PASSIVE_MOUNT" "$PRIMARY_MOUNT" "$BOOT_MOUNT"; do
+        if mountpoint -q "$dir"; then
+            sudo umount "$dir" || return 1
+        fi
+    done
+    sudo kpartx -d "$LOOPDISK" || return 1
+    sudo losetup -d "$LOOPDISK" || return 1
+    LOOPDISK=""
 }
 
 cleanup() {
-    local status=$?
-    restore_configs
-    if [ -n "$LOOPDISK" ]; then
-        log "INFO" "Cleaning up resources..."
-        for mount in ${BOOT_MOUNT} ${PRIMARY_MOUNT} ${PASSIVE_MOUNT}; do
-            sudo umount "${mount}" 2>/dev/null || true
-        done
-        sudo kpartx -d "${LOOPDISK}" 2>/dev/null || true
-        sudo losetup -d "${LOOPDISK}" 2>/dev/null || true
-        LOOPDISK=""
-    fi
+    local status=$1 failed=0 owner dir
+    trap - EXIT
+    trap '' HUP INT TERM
+    restore_configs || failed=1
+    release_image || failed=1
+    remove_build_dirs || failed=1
+    clean_build_outputs || failed=1
     if [ -n "$ALPINE_TMP" ]; then
-        rm -rf "${ALPINE_TMP}"
-        ALPINE_TMP=""
+        rm -rf -- "$ALPINE_TMP" || failed=1
     fi
-    remove_build_dirs
-    give_files_back
-    if [ "${status}" -ne 0 ]; then
-        log "ERROR" "Script failed at stage: ${STAGE}"
+
+    owner=$(stat -c '%u:%g' "$UKAMA_ROOT") || failed=1
+    # Vendor configure scripts can regenerate source-tree files as root.
+    find "${UKAMA_ROOT}/nodes/ukamaOS/distro/vendor" "${UKAMA_ROOT}/nodes/ukamaOS/distro/system" \
+         "${UKAMA_ROOT}/nodes/ukamaOS/distro/platform" "${UKAMA_ROOT}/nodes/apps" \
+         -xdev -name .git -prune -o -uid 0 -exec chown -h "$owner" {} + || failed=1
+
+    for dir in "${UKAMA_ROOT}/build" "$UKAMA_REPO_LIB_PKG"; do
+        [ -d "$dir" ] || continue
+        chown --from=0 "$owner" "$dir" || failed=1
+    done
+
+    if [ "$status" -eq 0 ] && [ "$failed" -eq 0 ]; then
+        chown "$owner" "$RAW_IMG" && mv -fT -- "$RAW_IMG" "$IMAGE_NAME" || failed=1
     fi
+    if [ -z "$LOOPDISK" ]; then
+        rm -rf -- "$WORK_DIR" || failed=1
+    fi
+
+    if [ "$failed" -ne 0 ]; then
+        log ERROR "Cleanup or publication of the image failed"
+        [ "$status" -ne 0 ] || status=1
+    fi
+    if [ "$status" -eq 0 ]; then
+        log SUCCESS "Image ${IMAGE_NAME} created (bootstrap: ${BOOTSTRAP_SERVER})"
+    else
+        log ERROR "Script failed at stage: ${STAGE}"
+    fi
+    exit "$status"
 }
-trap cleanup EXIT
 
 check_tools() {
-    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip truncate jq readelf; do
+    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip truncate jq readelf make flock findmnt mountpoint; do
         command -v "$cmd" >/dev/null || { log "ERROR" "'$cmd' not found"; exit 1; }
     done
 }
@@ -188,7 +247,6 @@ download_firmware() {
 create_disk_image() {
     STAGE="create_disk_image"
     log "INFO" "Creating raw image ${RAW_IMG} (${IMG_SIZE})"
-    rm -f "${RAW_IMG}"
     truncate -s "${IMG_SIZE}" "${RAW_IMG}"
     check_status $? "Raw image created" ${STAGE}
 }
@@ -391,6 +449,7 @@ deploy_to_rootfs() {
 }
 
 # Main
+[ "$EUID" -eq 0 ] || { log ERROR "Run the cnode image build with sudo"; exit 1; }
 check_tools
 
 get_enabled_apps "$COMMON_CONFIG_FILE" "$CNODE_CONFIG_FILE"
@@ -400,6 +459,22 @@ if [[ ${#APPS[@]} -eq 0 ]]; then
 fi
 log "INFO" "Apps: ${APPS[*]}"
 
+# A second cnode build in this checkout would clean the first one's objects.
+exec 9<"$SCRIPT_DIR"
+flock -n 9 || { log ERROR "Another cnode build is using this checkout"; exit 1; }
+WORK_DIR=$(mktemp -d "${SCRIPT_DIR}/.cnode.XXXXXXXX")
+RAW_IMG="${WORK_DIR}/${IMAGE_NAME}"
+BOOT_MOUNT="${WORK_DIR}/boot"
+PRIMARY_MOUNT="${WORK_DIR}/primary"
+PASSIVE_MOUNT="${WORK_DIR}/passive"
+trap 'cleanup $?' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+STAGE="clean_build_outputs"
+remove_build_dirs
+clean_build_outputs
 ALPINE_TMP=$(mktemp -d)
 build_apps
 build_rootfs
@@ -430,12 +505,6 @@ for target in "${PRIMARY_MOUNT}" "${PASSIVE_MOUNT}"; do
 done
 
 sync
-cleanup
-trap - EXIT
-
-./validate-cnode-image.sh "${RAW_IMG}" || {
-    log "ERROR" "Image ${RAW_IMG} failed validation"
-    exit 1
-}
-log "SUCCESS" "Image ${RAW_IMG} created (bootstrap: ${BOOTSTRAP_SERVER})"
-exit 0
+release_image
+STAGE="validate_image"
+./validate-cnode-image.sh "$RAW_IMG"

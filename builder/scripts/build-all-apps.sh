@@ -34,9 +34,11 @@ export UKAMA_ROOT
 }
 
 cd "${BUILDER_ROOT}"
+package_work=$(mktemp -d)
 
 cleanup() {
-    make clean >/dev/null 2>&1 || true
+    rm -rf -- "$package_work"
+    make -C "$BUILDER_ROOT" clean >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -52,7 +54,7 @@ found=0
 for config in "${CONFIG_DIR}"/*.toml; do
     [ -f "${config}" ] || continue
     found=1
-    ./app_builder --create --config "${config}"
+    (cd "$package_work" && "${BUILDER_ROOT}/app_builder" --create --config "${config}")
 done
 
 [ "${found}" -eq 1 ] || {
