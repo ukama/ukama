@@ -72,6 +72,11 @@ sleep 2;
 sync;
 
 # start build
+BOARD=""
+if [[ "$ARCH" == "armv7" ]]; then
+    BOARD="controller"
+fi
+
 "${INSTALL_DIR}/enter-chroot" /ukamarepo/builder/scripts/build-system/build-distro.sh \
-    "$VERSION" /ukamarepo
+    "$VERSION" /ukamarepo "$BOARD"
 echo "Build completed successfully."
