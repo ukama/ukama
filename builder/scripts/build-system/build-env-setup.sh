@@ -72,14 +72,6 @@ sleep 2;
 sync;
 
 # start build
-${INSTALL_DIR}/enter-chroot /bin/ash -c '/ukamarepo/builder/scripts/build-system/build-distro.sh "$@"' "${VERSION} /ukamarepo"
-if [ $? -eq 0 ]; then
-    echo "Build completed successfully."
-    ${INSTALL_DIR}/destroy
-else
-    echo "Build failed."
-    ${INSTALL_DIR}/destroy
-    exit 1
-fi
-
-echo "Closing ${0}"
+"${INSTALL_DIR}/enter-chroot" /ukamarepo/builder/scripts/build-system/build-distro.sh \
+    "$VERSION" /ukamarepo
+echo "Build completed successfully."

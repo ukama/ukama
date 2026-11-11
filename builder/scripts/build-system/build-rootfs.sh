@@ -497,6 +497,9 @@ setup_openrc_service "${SERVICE_NAME}" "${SERVICE_CMD}"
 copy_misc_files
 
 case "${ARCH}" in
+    aarch64)
+        # The Pi image builder installs the kernel, modules and boot firmware.
+        ;;
     x86_64)
         copy_x86_64_boot
         copy_x86_64_kernel
