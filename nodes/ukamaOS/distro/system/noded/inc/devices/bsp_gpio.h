@@ -66,14 +66,14 @@ int bsp_gpio_disable(void* p_dev, void* prop, void* data);
 int bsp_gpio_enable(void* p_dev, void* prop, void* data);
 
 /**
- * @fn      int bsp_gpio_init()
+ * @fn      int bsp_gpio_init(Device*)
  * @brief   Read sensor properties from the property config parsed during
  *          startup and then initialization request to driver wrapper layer.
  *
  * @return  On success, 0
  *          On failure, non zero value
  */
-int bsp_gpio_init ();
+int bsp_gpio_init(Device* p_dev);
 
 /**
  * @fn      int bsp_gpio_registration(Device*)

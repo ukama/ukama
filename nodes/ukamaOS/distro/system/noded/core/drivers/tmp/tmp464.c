@@ -8,7 +8,8 @@
 
 #include "drivers/tmp464_wrapper.h"
 
-int tmp464_wrapper_init() {
+int tmp464_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

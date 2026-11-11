@@ -108,9 +108,12 @@ else
 	@echo -e '\t' ${LIGHT_GREEN}Skipping${NO_COLOR}
 endif
 
+PROMETHEUS_FILES = $(addprefix $(DEP_DIR)/,include/prom.h include/promhttp.h \
+                   lib/libprom.a lib/libpromhttp.a)
+
 prometheus-client:
 	$(call print_msg,"prometheus-client")
-ifeq (,$(wildcard ${DEP_DIR}/lib/libprom*.*))
+ifneq ($(filter-out $(wildcard $(PROMETHEUS_FILES)),$(PROMETHEUS_FILES)),)
 	@echo "Building prom"
 	mkdir -p $@/prom/build
 	cd $@/prom/build && \

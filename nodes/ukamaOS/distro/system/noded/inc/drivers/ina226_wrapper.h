@@ -11,7 +11,7 @@
 
 #include "device.h"
 
-int ina226_wrapper_init ();
+int ina226_wrapper_init(Device* p_dev);
 int ina226_wrapper_registration(Device* p_dev);
 int ina226_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
 int ina226_wrapper_configure(void* p_dev, void* prop, void* data );

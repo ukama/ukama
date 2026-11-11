@@ -11,7 +11,7 @@
 
 #include "device.h"
 
-int dat31r5a_wrapper_init ();
+int dat31r5a_wrapper_init(Device* p_dev);
 int dat31r5a_wrapper_registration(Device* p_dev);
 int dat31r5a_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
 int dat31r5a_wrapper_configure(void* p_dev, void* prop, void* data );

@@ -15,7 +15,7 @@ extern "C" {
 
 #include "device.h"
 
-typedef int (*DevInitFxn)();
+typedef int (*DevInitFxn)(Device* p_dev);
 typedef int (*DevRegisterFxn)(Device* p_dev);
 typedef int (*DevReadPropCountFxn)(Device* obj, uint16_t* count);
 typedef int (*DevReadPropFxn)(Device* obj, void* prop);

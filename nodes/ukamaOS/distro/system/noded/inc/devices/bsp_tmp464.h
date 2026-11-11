@@ -112,14 +112,14 @@ int bsp_tmp464_enable_irq(void* p_dev, void* prop, void* data);
 int bsp_tmp464_get_irq_type(int bsp_pidx, uint8_t* alertstate);
 
 /**
- * @fn      int bsp_tmp464_init()
+ * @fn      int bsp_tmp464_init(Device*)
  * @brief   Read sensor properties from the property config parsed during
  *          startup and then initialization request to driver wrapper layer.
  *
  * @return  On success, 0
  *          On failure, non zero value
  */
-int bsp_tmp464_init ();
+int bsp_tmp464_init(Device* p_dev);
 
 /**
  * @fn      int bsp_tmp464_read(void*, void*, void*)

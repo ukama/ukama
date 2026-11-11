@@ -11,7 +11,7 @@
 
 #include "device.h"
 
-int gpio_wrapper_init ();
+int gpio_wrapper_init(Device* p_dev);
 int gpio_wrapper_registration(Device* p_dev);
 int gpio_wrapper_read_properties(DevObj* obj, void* prop, uint16_t* count);
 int gpio_wrapper_configure(void* p_dev, void* prop, void* data );

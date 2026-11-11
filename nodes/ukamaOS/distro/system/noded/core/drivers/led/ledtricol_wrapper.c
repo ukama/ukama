@@ -8,7 +8,8 @@
 
 #include "drivers/ledtricol_wrapper.h"
 
-int led_tricol_wrapper_init() {
+int led_tricol_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

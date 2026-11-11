@@ -8,7 +8,8 @@
 
 #include "drivers/gpio_wrapper.h"
 
-int gpio_wrapper_init() {
+int gpio_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

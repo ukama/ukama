@@ -6,6 +6,8 @@
  * Copyright (c) 2021-present, Ukama Inc.
  */
 
+#include <inttypes.h>
+
 #include "drivers/sysfs.h"
 #include "errorcode.h"
 
@@ -208,7 +210,7 @@ void sysfs_typetostr(void *data, int type, char *val) {
     case TYPE_FLOAT: {
         /* TODO: Sysfs won't understand float and double so rounding */
         int64_t val64 = usys_round(*(float *)data);
-        usys_sprintf(val, "%ld", val64);
+        usys_sprintf(val, "%" PRId64, val64);
         break;
     }
     case TYPE_ENUM: {
@@ -218,7 +220,7 @@ void sysfs_typetostr(void *data, int type, char *val) {
     case TYPE_DOUBLE: {
         /*TODO: Sysfs won't understand float and double so rounding */
         int64_t val64 = usys_round(*(double *)data);
-        usys_sprintf(val, "%ld", val64);
+        usys_sprintf(val, "%" PRId64, val64);
         break;
     }
     case TYPE_STRING: {

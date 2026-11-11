@@ -29,7 +29,7 @@ extern "C" {
 int bsp_led_tricol_configure(void* p_dev, void* prop, void* data );
 
 /**
- * @fn      int bsp_led_tricol_init()
+ * @fn      int bsp_led_tricol_init(Device*)
  * @brief   Read sensor properties from the property config parsed during
  *          startup and then initialization request to driver wrapper layer.
  *
@@ -37,7 +37,7 @@ int bsp_led_tricol_configure(void* p_dev, void* prop, void* data );
  *          On failure, non zero value  On success, 0
  *          On failure, non zero value
  */
-int bsp_led_tricol_init ();
+int bsp_led_tricol_init(Device* p_dev);
 
 /**
  * @fn      int bsp_led_tricol_registration(Device*)

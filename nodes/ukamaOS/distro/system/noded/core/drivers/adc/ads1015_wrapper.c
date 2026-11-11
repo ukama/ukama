@@ -8,7 +8,8 @@
 
 #include "drivers/ads1015_wrapper.h"
 
-int ads1015_wrapper_init() {
+int ads1015_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

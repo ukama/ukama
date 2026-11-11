@@ -90,13 +90,13 @@ int sysfs_wrapper_disable_irq( void* hwAttrs, void* prop , void* data);
 int sysfs_wrapper_dreg_cb( void* hwAttrs, SensorCallbackFxn fun );
 
 /**
- * @fn      int sysfs_wrapper_init()
+ * @fn      int sysfs_wrapper_init(Device*)
  * @brief   Wrapper to sysfs driver for Initialization of driver and device.
  *
  * @return  On success, 0
  *          On failure, non zero value
  */
-int sysfs_wrapper_init ();
+int sysfs_wrapper_init(Device* p_dev);
 
 /**
  * @fn      int sysfs_wrapper_read(void*, void*, void*)

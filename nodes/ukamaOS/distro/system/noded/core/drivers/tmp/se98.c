@@ -8,7 +8,8 @@
 
 #include "drivers/se98_wrapper.h"
 
-int se98_wrapper_init() {
+int se98_wrapper_init(Device *p_dev) {
+    (void)p_dev;
     return 0;
 }
 

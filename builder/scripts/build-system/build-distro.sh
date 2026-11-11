@@ -11,6 +11,7 @@ set -e
 
 MAJOR_VERSION=${1:-v3.17}
 UKAMA_REPO=${2:-/ukamarepo}
+BOARD=${3:-}
 export BUILD_MODE=release
 
 # set up resolv.conf
@@ -51,7 +52,7 @@ export PATH="/usr/local/go/bin:${PATH}"
 go version
 
 # build apps
-${UKAMA_REPO}/builder/scripts/build-all-apps.sh ${UKAMA_REPO}
+"${UKAMA_REPO}/builder/scripts/build-all-apps.sh" "$UKAMA_REPO" "$BOARD"
 if [ $? -eq 0 ]; then
     echo "Apps build:"
     ls -ltr "${UKAMA_REPO}/build/pkgs/"*
