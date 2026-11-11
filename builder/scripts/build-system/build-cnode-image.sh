@@ -32,8 +32,9 @@ IMG_SIZE="28800M"
 
 ROOTFS_DIR=${UKAMA_ROOT}/builder/scripts/build-system/rootfs
 BUILDENV_DIR=${UKAMA_ROOT}/builder/scripts/build-system/buildenv
-FIRMWARE_ZIP_URL="https://github.com/raspberrypi/firmware/archive/refs/heads/master.zip"
-FIRMWARE_DIR="/tmp/rpi-firmware"
+# raspberrypi/firmware release 1.20260915 (CM4 and CM5).
+RPI_FIRMWARE_COMMIT="6f0881cba8bea8ec24956a5718714730e9936ec5"
+RPI_FIRMWARE_SHA256="848bdbe2870e627a0b35c1de772cb66c24b7cb1069494630f863caf51b2bf7b0"
 BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 LOOPDISK=""
 HIDDEN_CONFIGS=""
@@ -181,7 +182,7 @@ cleanup() {
 }
 
 check_tools() {
-    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip truncate jq readelf make flock findmnt mountpoint; do
+    for cmd in sfdisk kpartx losetup mkfs.vfat mkfs.ext4 mkswap rsync wget unzip sha256sum truncate jq readelf make flock findmnt mountpoint; do
         command -v "$cmd" >/dev/null || { log "ERROR" "'$cmd' not found"; exit 1; }
     done
 }
@@ -230,18 +231,18 @@ build_rootfs() {
 
 download_firmware() {
     STAGE="download_firmware"
-    if [ -d "${FIRMWARE_DIR}/firmware-master/boot" ]; then
-        log "INFO" "Using cached firmware in ${FIRMWARE_DIR}"
-        return
-    fi
-    log "INFO" "Downloading Raspberry Pi firmware (boot files, kernel, modules)"
-    rm -rf "${FIRMWARE_DIR}"
-    mkdir -p "${FIRMWARE_DIR}"
-    wget -qO "${FIRMWARE_DIR}/master.zip" "${FIRMWARE_ZIP_URL}"
-    unzip -q "${FIRMWARE_DIR}/master.zip" -d "${FIRMWARE_DIR}"
-    rm -f "${FIRMWARE_DIR}/master.zip"
-    [ -f "${FIRMWARE_DIR}/firmware-master/boot/kernel8.img" ]
-    check_status $? "Firmware downloaded" ${STAGE}
+    local zip="${WORK_DIR}/firmware.zip"
+    local url="https://codeload.github.com/raspberrypi/firmware/zip/${RPI_FIRMWARE_COMMIT}"
+
+    log INFO "Downloading Raspberry Pi firmware ${RPI_FIRMWARE_COMMIT}"
+    wget -O "$zip" "$url"
+    printf '%s  %s\n' "$RPI_FIRMWARE_SHA256" "$zip" | sha256sum --check --status || {
+        log ERROR "SHA-256 mismatch for Raspberry Pi firmware ${RPI_FIRMWARE_COMMIT}"
+        return 1
+    }
+    unzip -q "$zip" -d "$WORK_DIR"
+    rm -f -- "$zip"
+    log SUCCESS "Raspberry Pi firmware verified"
 }
 
 create_disk_image() {
@@ -300,7 +301,7 @@ mount_partition() {
 
 copy_boot() {
     STAGE="copy_boot"
-    local fw="${FIRMWARE_DIR}/firmware-master/boot"
+    local fw="${FIRMWARE_DIR}/boot"
 
     log "INFO" "Copying firmware boot files to boot partition"
     sudo cp -r "${fw}/." "${BOOT_MOUNT}/"
@@ -344,7 +345,7 @@ copy_rootfs() {
 
 copy_kernel_modules() {
     STAGE="copy_kernel_modules"
-    local src="${FIRMWARE_DIR}/firmware-master/modules"
+    local src="${FIRMWARE_DIR}/modules"
     local target dir found=0
 
     for target in "${PRIMARY_MOUNT}" "${PASSIVE_MOUNT}"; do
@@ -463,6 +464,7 @@ log "INFO" "Apps: ${APPS[*]}"
 exec 9<"$SCRIPT_DIR"
 flock -n 9 || { log ERROR "Another cnode build is using this checkout"; exit 1; }
 WORK_DIR=$(mktemp -d "${SCRIPT_DIR}/.cnode.XXXXXXXX")
+FIRMWARE_DIR="${WORK_DIR}/firmware-${RPI_FIRMWARE_COMMIT}"
 RAW_IMG="${WORK_DIR}/${IMAGE_NAME}"
 BOOT_MOUNT="${WORK_DIR}/boot"
 PRIMARY_MOUNT="${WORK_DIR}/primary"
@@ -475,12 +477,12 @@ trap 'exit 143' TERM
 STAGE="clean_build_outputs"
 remove_build_dirs
 clean_build_outputs
+download_firmware
 ALPINE_TMP=$(mktemp -d)
 build_apps
 build_rootfs
 
 check_prerequisites
-download_firmware
 
 create_disk_image
 setup_loop_device
