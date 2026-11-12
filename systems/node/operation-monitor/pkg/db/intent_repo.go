@@ -86,6 +86,7 @@ func (r *intentRepo) FindExpired(now time.Time, limit int) ([]MonitoredIntent, e
 	var intents []MonitoredIntent
 	err := r.db.GetGormDb().
 		Where("deadline < ? AND status = ?", now, IntentWatching).
+		Order("deadline ASC").
 		Limit(limit).
 		Find(&intents).Error
 	return intents, err

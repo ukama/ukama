@@ -19,6 +19,7 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/uuid"
@@ -86,7 +87,7 @@ func (s *MonitorServer) RegisterIntent(ctx context.Context, req *pb.RegisterInte
 		Deadline:       time.Now().UTC().Add(deadline),
 	}
 	if err := s.repo.Add(intent); err != nil {
-		return nil, status.Errorf(codes.Internal, "register intent: %v", err)
+		return nil, grpc.StoreErrorToGrpc(err, "intent")
 	}
 
 	log.Infof("monitor: registered intent op=%s resource=%s rule=%q deadline=%s",
@@ -115,7 +116,7 @@ func (s *MonitorServer) CancelIntent(ctx context.Context, req *pb.CancelIntentRe
 		return nil, status.Errorf(codes.InvalidArgument, "invalid operation id: %v", err)
 	}
 	if _, err := s.repo.MarkTerminal(opId, db.IntentCancelled); err != nil {
-		return nil, status.Errorf(codes.Internal, "cancel intent: %v", err)
+		return nil, grpc.StoreErrorToGrpc(err, "intent")
 	}
 	return &pb.CancelIntentResponse{}, nil
 }

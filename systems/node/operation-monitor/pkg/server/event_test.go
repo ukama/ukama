@@ -16,6 +16,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	evt "github.com/ukama/ukama/systems/common/events"
@@ -36,8 +38,13 @@ const (
 
 func transitionEvent(t *testing.T, state, substate string) *epb.Event {
 	t.Helper()
+	return transitionEventFor(t, testNodeId, state, substate)
+}
+
+func transitionEventFor(t *testing.T, nodeId, state, substate string) *epb.Event {
+	t.Helper()
 	msg, err := anypb.New(&epb.NodeStateChangeEvent{
-		NodeId:   testNodeId,
+		NodeId:   nodeId,
 		State:    state,
 		Substate: substate,
 	})
@@ -144,7 +151,7 @@ func TestHandleStateTransition_PublishFailureCanRetry(t *testing.T) {
 	s := newEventServer(repo, mb)
 	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
 
-	assert.ErrorIs(t, err, publishErr)
+	assertRetryable(t, err)
 	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
 
 	mb.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
@@ -174,7 +181,7 @@ func TestHandleStateTransition_TerminalWriteFailureCanRetry(t *testing.T) {
 
 	s := newEventServer(repo, mb)
 	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
-	assert.ErrorIs(t, err, writeErr)
+	assertRetryable(t, err)
 
 	repo.On("MarkTerminal", intent.OperationId, db.IntentCompleted).
 		Return(&intent, nil).Once()
@@ -197,7 +204,7 @@ func TestHandleStateTransition_ArmFailureCanRetry(t *testing.T) {
 
 	s := newEventServer(repo, mb)
 	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "off"))
-	assert.ErrorIs(t, err, writeErr)
+	assertRetryable(t, err)
 
 	repo.On("Arm", intent.OperationId).Return(nil).Once()
 	_, err = s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "off"))
@@ -205,6 +212,84 @@ func TestHandleStateTransition_ArmFailureCanRetry(t *testing.T) {
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 	mb.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+}
+
+func assertRetryable(t *testing.T, err error) {
+	t.Helper()
+	assert.Equal(t, codes.Unavailable, status.Code(err))
+}
+
+func TestHandleStateTransition_LookupFailureIsRetryable(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return(nil, errors.New("database unavailable")).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Operational", "on"))
+
+	assertRetryable(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestHandleStateTransition_EmptySubstateDoesNotArm(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(false)
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, "Configured", ""))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	repo.AssertNotCalled(t, "Arm", mock.Anything)
+	repo.AssertNotCalled(t, "MarkTerminal", mock.Anything, mock.Anything)
+}
+
+func TestHandleStateTransition_UppercaseNodeIdMatchesIntent(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(false)
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return([]db.MonitoredIntent{intent}, nil).Once()
+	repo.On("Arm", intent.OperationId).Return(nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(),
+		transitionEventFor(t, strings.ToUpper(testNodeId), "Configured", "off"))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestHandleAppsChanged_LookupFailureIsRetryable(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+
+	repo.On("FindWatchingByResource", "node:"+testNodeId).
+		Return(nil, errors.New("database unavailable")).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(),
+		appsChangedEvent(t, map[string]string{"example": "1.2.4"}))
+
+	assertRetryable(t, err)
+	repo.AssertExpectations(t)
+}
+
+func TestRuleObserved(t *testing.T) {
+	assert.True(t, ruleObserved("substate=on", map[string]string{"substate": "off"}))
+	assert.True(t, ruleObserved("state=Configured,substate=on",
+		map[string]string{"state": "Faulty", "substate": "off"}))
+	assert.False(t, ruleObserved("substate=on", map[string]string{"substate": ""}))
+	assert.False(t, ruleObserved("substate=on", map[string]string{"state": "Configured"}))
+	assert.False(t, ruleObserved("state=Configured,substate=on",
+		map[string]string{"state": "Configured", "substate": ""}))
 }
 
 func TestRuleMatches(t *testing.T) {
