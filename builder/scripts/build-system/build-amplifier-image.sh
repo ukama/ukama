@@ -12,6 +12,12 @@ for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc fle
     command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
 done
 
+CROSS_GCC_VERSION=$(arm-linux-gnueabihf-gcc -dumpversion)
+if (( ${CROSS_GCC_VERSION%%.*} >= 15 )); then
+    echo "ERROR: arm-linux-gnueabihf-gcc ${CROSS_GCC_VERSION} is too new for at91bootstrap, build on Ubuntu 22.04 or 24.04"
+    exit 1
+fi
+
 # Load helper utilities
 PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
 if [[ ! -f "$PKG_UTILS" ]]; then
@@ -52,6 +58,8 @@ APP_NAMES=()
 ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
 ALPINE_VERSION="3.21"
 ALPINE_ARCH="x86_64"
+APPS_ALPINE_RELEASE="v3.17"
+ROOTFS_ALPINE_RELEASE="v3.21"
 
 # Loop device handle
 LOOPDEV=""
@@ -79,17 +87,35 @@ check_status() {
     log SUCCESS "$msg"
 }
 
-check_pre_requisite() {
-    if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
-        log "INFO" "ROOTFS exist."
-    else
-        log "INFO"  "Make sure you have ran build-env-setup and rootfs-env-setup.sh scripts"
-        log "ERROR" "${ROOTFS_DIR} does not exist"
-        exit 1
-    fi
-
+check_sources() {
     if [ ! -f "${FIRMWARE_DIR}/Makefile" ] || [ ! -f "${KERNEL_SRC}/arch/arm/configs/ukama_anode_defconfig" ]; then
         log "ERROR" "firmware or kernel source missing, run: git submodule update --init nodes/ukamaOS/firmware nodes/ukamaOS/kernel"
+        exit 1
+    fi
+}
+
+build_apps() {
+    STAGE="build_apps"
+    log INFO "Building the amplifier apps on Alpine ${APPS_ALPINE_RELEASE}"
+    ./build-env-setup.sh -a armv7 -v "${APPS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
+
+    get_enabled_apps "$COMMON_CONFIG_FILE" "$AMPLIFIER_CONFIG_FILE"
+    for app in "${APPS[@]}"; do
+        [[ -f "${UKAMA_REPO_APP_PKG}/${app}_latest.tar.gz" ]] || { log ERROR "App package not built: ${app}"; exit 1; }
+    done
+    [[ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ]] || { log ERROR "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz not built"; exit 1; }
+    log SUCCESS "Apps built: ${APPS[*]}"
+}
+
+build_rootfs() {
+    STAGE="build_rootfs"
+    log INFO "Building the rootfs on Alpine ${ROOTFS_ALPINE_RELEASE}"
+    ./rootfs-env-setup.sh -a armv7 -v "${ROOTFS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
+
+    if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
+        log SUCCESS "Rootfs built"
+    else
+        log ERROR "${ROOTFS_DIR} was not created"
         exit 1
     fi
 }
@@ -483,7 +509,9 @@ copy_misc_files() {
 }
 
 # Main
-check_pre_requisite
+check_sources
+build_apps
+build_rootfs
 build_emmc_firmware
 build_envtools
 build_kernel
