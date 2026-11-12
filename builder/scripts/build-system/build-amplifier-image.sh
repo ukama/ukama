@@ -7,8 +7,13 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "${SCRIPT_DIR}"
+
+[ "$EUID" -eq 0 ] || { echo "ERROR: Run the amplifier image build with sudo"; exit 1; }
+
 # all tools available?
-for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc flex bison arm-linux-gnueabihf-gcc; do
+for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc flex bison rsync wget arm-linux-gnueabihf-gcc; do
     command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
 done
 
@@ -19,7 +24,7 @@ if (( ${CROSS_GCC_VERSION%%.*} >= 15 )); then
 fi
 
 # Load helper utilities
-PKG_UTILS="$(dirname "$0")/pkg-utils.sh"
+PKG_UTILS="${SCRIPT_DIR}/pkg-utils.sh"
 if [[ ! -f "$PKG_UTILS" ]]; then
     echo "ERROR: Missing $PKG_UTILS"
     exit 1
@@ -55,17 +60,15 @@ BOOTSTRAP_SERVER="${BOOTSTRAP_SERVER:-dev.bootstrap.ukama.com}"
 APP_NAMES=()
 
 # Alpine parameters
-ALPINE_URL="http://dl-cdn.alpinelinux.org/alpine"
-ALPINE_VERSION="3.21"
-ALPINE_ARCH="x86_64"
 APPS_ALPINE_RELEASE="v3.17"
 ROOTFS_ALPINE_RELEASE="v3.21"
 
 # Loop device handle
 LOOPDEV=""
+STAGE="start"
+IMAGE_VERSION=""
 
 # Logging and status helpers
-test -n "\${LOG_LEVEL-}" || LOG_LEVEL=INFO
 log() {
     local type="$1" msg="$2"
     local color
@@ -88,10 +91,36 @@ check_status() {
 }
 
 check_sources() {
-    if [ ! -f "${FIRMWARE_DIR}/Makefile" ] || [ ! -f "${KERNEL_SRC}/arch/arm/configs/ukama_anode_defconfig" ]; then
-        log "ERROR" "firmware or kernel source missing, run: git submodule update --init nodes/ukamaOS/firmware nodes/ukamaOS/kernel"
-        exit 1
-    fi
+    STAGE="check_sources"
+    local f
+    for f in "${FIRMWARE_DIR}/Makefile" \
+             "${KERNEL_SRC}/arch/arm/configs/ukama_anode_defconfig" \
+             "${UKAMA_OS}/distro/vendor/jansson/CMakeLists.txt"; do
+        [[ -f "$f" ]] || { log ERROR "${f} is missing, run: git submodule update --init --recursive"; exit 1; }
+    done
+    IMAGE_VERSION=$("${UKAMA_ROOT}/nodes/utils/scripts/generate_version.sh" --print)
+    log INFO "Image version: ${IMAGE_VERSION}"
+}
+
+clean_build_outputs() {
+    STAGE="clean_build_outputs"
+    local distro="${UKAMA_OS}/distro"
+    local vendor="${distro}/vendor"
+    local recipe
+
+    log INFO "Cleaning old app, platform and vendor library builds"
+    for recipe in "${UKAMA_ROOT}"/nodes/apps/*/Makefile "$distro"/system/*/Makefile \
+                  "${UKAMA_ROOT}/builder/Makefile" "$distro/platform/Makefile" \
+                  "$vendor"/{orcania/src,yder/src,ulfius/src,tomlc,libcap}/Makefile \
+                  "$vendor/Makefile"; do
+        [ -f "$recipe" ] || continue
+        make -C "${recipe%/Makefile}" clean > /dev/null
+    done
+    rm -rf -- "$vendor"/{jansson,amqp,libuuid,casync}/tmpbuild \
+              "$vendor"/prometheus-client/{prom,promhttp}/build \
+              "$UKAMA_REPO_APP_PKG"
+    rm -f -- "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz"
+    log SUCCESS "Old builds cleaned"
 }
 
 build_apps() {
@@ -99,6 +128,7 @@ build_apps() {
     log INFO "Building the amplifier apps on Alpine ${APPS_ALPINE_RELEASE}"
     ./build-env-setup.sh -a armv7 -v "${APPS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
 
+    local app
     get_enabled_apps "$COMMON_CONFIG_FILE" "$AMPLIFIER_CONFIG_FILE"
     for app in "${APPS[@]}"; do
         [[ -f "${UKAMA_REPO_APP_PKG}/${app}_latest.tar.gz" ]] || { log ERROR "App package not built: ${app}"; exit 1; }
@@ -109,15 +139,14 @@ build_apps() {
 
 build_rootfs() {
     STAGE="build_rootfs"
+    local f
     log INFO "Building the rootfs on Alpine ${ROOTFS_ALPINE_RELEASE}"
     ./rootfs-env-setup.sh -a armv7 -v "${ROOTFS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
 
-    if [ -d "${ROOTFS_DIR}" ] && [ "$(ls -A ${ROOTFS_DIR})" ]; then
-        log SUCCESS "Rootfs built"
-    else
-        log ERROR "${ROOTFS_DIR} was not created"
-        exit 1
-    fi
+    for f in "${ROOTFS_DIR}/boot/BOOT.BIN" "${ROOTFS_DIR}/boot/u-boot.bin"; do
+        [[ -f "$f" ]] || { log ERROR "Rootfs build did not produce ${f}"; exit 1; }
+    done
+    log SUCCESS "Rootfs built"
 }
 
 build_emmc_firmware() {
@@ -162,6 +191,7 @@ build_kernel() {
 
 # Cleanup function ensures mounts and loop are detached
 cleanup() {
+    local status=$?
     log INFO "Cleaning up mounts and loop device"
     sudo umount "$BOOT_MNT"     2>/dev/null || true
     sudo umount "$PASSIVE_MNT"  2>/dev/null || true
@@ -170,13 +200,18 @@ cleanup() {
         sudo kpartx -dv "$LOOPDEV" 2>/dev/null || true
         sudo losetup -d "$LOOPDEV"  2>/dev/null || true
     fi
+    rm -f "${DIR}/${RAW_IMG}"
     if [[ -n "$KERNEL_OUT" ]]; then
         sudo rm -rf "$KERNEL_OUT"
+    fi
+    if [[ $status -ne 0 ]]; then
+        log ERROR "Build failed at stage: ${STAGE}"
     fi
 }
 trap cleanup EXIT
 
 create_disk_image() {
+    STAGE="create_disk_image"
     log INFO "Creating sparse image ${RAW_IMG} (28 GiB)"
     rm -f "$RAW_IMG"
     sudo rm -f "${DIR}/boot.tgz" "${DIR}/rootfsA.tgz" "${DIR}/rootfsB.tgz"
@@ -185,6 +220,7 @@ create_disk_image() {
 }
 
 attach_loop() {
+    STAGE="attach_loop"
     log INFO "Attaching ${RAW_IMG} to loop device"
     LOOPDEV=$(sudo losetup --show --find --partscan "$RAW_IMG")
     if [[ -z "$LOOPDEV" ]]; then
@@ -195,6 +231,7 @@ attach_loop() {
 }
 
 partition_image() {
+    STAGE="partition_image"
     log INFO "Partitioning $LOOPDEV: boot, recovery, primary, passive, data, swap"
     sudo parted -s "$LOOPDEV" mklabel msdos \
          mkpart primary fat32      1MiB     1025MiB  \
@@ -209,6 +246,7 @@ partition_image() {
 }
 
 map_partitions() {
+    STAGE="map_partitions"
     log INFO "Mapping partitions for $LOOPDEV"
     sudo kpartx -av "$LOOPDEV" | tee /dev/stderr
     sleep 1
@@ -235,6 +273,7 @@ format_partitions() {
 }
 
 mount_partition() {
+    STAGE="mount_partition"
     local part=$1 mp=$2
     log INFO "Mounting $part → $mp"
     sudo mkdir -p "$mp"
@@ -348,6 +387,7 @@ copy_rootfs() {
 }
 
 install_kernel() {
+    STAGE="install_kernel"
     local rootfs="$1"
     sudo cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${rootfs}/boot/zImage"
     sudo cp "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${rootfs}/boot/ukama_anode.dtb"
@@ -357,6 +397,7 @@ install_kernel() {
 }
 
 install_envtools() {
+    STAGE="install_envtools"
     local rootfs="$1"
     sudo install -m 0755 "${FIRMWARE_DIR}/u-boot/tools/env/fw_printenv" "${rootfs}/usr/sbin/fw_printenv"
     sudo ln -sfn fw_printenv "${rootfs}/usr/sbin/fw_setenv"
@@ -391,6 +432,7 @@ FSTAB
 }
 
 setup_network() {
+    STAGE="setup_network"
     local rootfs="$1"
     sudo tee "${rootfs}/etc/dhcpcd.conf" > /dev/null <<EOF
 hostname
@@ -407,6 +449,7 @@ EOF
 }
 
 setup_serial_console() {
+    STAGE="setup_serial_console"
     local rootfs="$1"
     grep -q '^ttyS0:' "${rootfs}/etc/inittab" || \
         echo 'ttyS0::respawn:/sbin/getty -L 115200 ttyS0 vt100' | sudo tee -a "${rootfs}/etc/inittab" > /dev/null
@@ -414,6 +457,7 @@ setup_serial_console() {
 }
 
 setup_noded_sysfs() {
+    STAGE="setup_noded_sysfs"
     local rootfs="$1"
     sudo tee "${rootfs}/etc/init.d/ukama-sysfs" > /dev/null <<'EOF'
 #!/sbin/openrc-run
@@ -443,6 +487,7 @@ EOF
 }
 
 deploy_to_rootfs() {
+    STAGE="deploy_to_rootfs"
     local rootfs="$1"
 
     log INFO "Deploying apps/libs + manifest into ${rootfs}"
@@ -477,6 +522,9 @@ deploy_to_rootfs() {
             "${rootfs}/ukama/configs/aggregator/config.toml"
     check_status $? "App configs copied to ${rootfs}" "deploy_to_rootfs"
 
+    echo "${IMAGE_VERSION}" | sudo tee "${rootfs}/ukama/image-version" > /dev/null
+    check_status $? "Image version ${IMAGE_VERSION} set in ${rootfs}" "deploy_to_rootfs"
+
     echo "${BOOTSTRAP_SERVER}" | sudo tee "${rootfs}/ukama/bootstrap" > /dev/null
     check_status $? "Bootstrap server ${BOOTSTRAP_SERVER} set in ${rootfs}" "deploy_to_rootfs"
 }
@@ -497,6 +545,7 @@ pack_tarballs() {
 }
 
 copy_misc_files() {
+	STAGE="copy_misc_files"
 	DEST_DIR=$1
 	# MISC FILES Copy
 	if [ -d "${MISC_FILES_DIR}" ] && [ "$(ls -A ${MISC_FILES_DIR})" ]; then
@@ -510,6 +559,7 @@ copy_misc_files() {
 
 # Main
 check_sources
+clean_build_outputs
 build_apps
 build_rootfs
 build_emmc_firmware
@@ -560,5 +610,5 @@ copy_misc_files  "${PRIMARY_MNT}"
 copy_misc_files  "${PASSIVE_MNT}"
 pack_tarballs
 
-log "SUCCESS" "Disk image creation completed successfully! (bootstrap: ${BOOTSTRAP_SERVER})"
+log "SUCCESS" "Disk image creation completed successfully! (version: ${IMAGE_VERSION}, bootstrap: ${BOOTSTRAP_SERVER})"
 exit 0
