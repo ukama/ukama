@@ -19,6 +19,7 @@ require (
 	github.com/golang/protobuf v1.5.4
 	github.com/mwitkow/go-proto-validators v0.3.2
 	github.com/num30/config v0.1.3
+	github.com/prometheus/client_model v0.5.0
 	github.com/sirupsen/logrus v1.10.2
 	github.com/stretchr/testify v1.12.1
 	github.com/tj/assert v0.0.3
@@ -85,7 +86,6 @@ require (
 	github.com/penglongli/gin-metrics v0.1.10 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.19.1 // indirect
-	github.com/prometheus/client_model v0.5.0 // indirect
 	github.com/prometheus/common v0.48.0 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect

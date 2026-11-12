@@ -118,3 +118,33 @@ func TestRemoveSeries(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestPushMetricsConcurrent(t *testing.T) {
+	resetCollectors(t)
+	stub, host := newPushgatewayStub(t)
+
+	const workers = 8
+
+	var wg sync.WaitGroup
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+
+		go func(i int) {
+			defer wg.Done()
+
+			PushMetrics(host, []MetricConfig{{
+				Name:   "test_concurrent_gauge_" + string(rune('a'+i)),
+				Type:   "gauge",
+				Labels: map[string]string{"node_id": "node", "site": "site"},
+				Value:  float64(i),
+			}}, "test")
+		}(i)
+	}
+	wg.Wait()
+
+	stub.Lock()
+	defer stub.Unlock()
+
+	assert.Equal(t, workers, stub.pushes)
+	assert.Len(t, metricCollectors, workers)
+}
