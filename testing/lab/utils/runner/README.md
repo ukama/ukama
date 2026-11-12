@@ -372,6 +372,24 @@ assignments, and the worker shows as `SPOT_INTERRUPTED` in `batch-report.txt`.
 They are never reported as FAIL. The worker type and market for each worker
 are recorded in `batch-report.json`.
 
+Before the first worker launches, the controller scales the dev cluster's
+`kube-system/capacity-placeholder` deployment to `CAPACITY_PLACEHOLDER_REPLICAS`
+(default 20) with your local kubectl and kubeconfig. Each replica holds one
+spare t3.large, so the autoscaler adds nodes while worker-001 boots instead of
+during the opening mesh-pod burst. Real pods preempt the placeholders. When
+the batch finishes, or on `--cleanup`, it scales back to
+`CAPACITY_PLACEHOLDER_IDLE_REPLICAS` (default 2); the autoscaler removes the
+extra nodes an hour later. `--resume` scales back when the resumed batch
+finishes. A detached controller (Ctrl-C) leaves the buffer in place. Set
+`CAPACITY_PLACEHOLDER_REPLICAS` to 0 to leave the cluster alone. Your kubectl
+identity needs permission to scale deployments in `kube-system`; if the scale
+fails, the batch continues without spare nodes and `aws-lifecycle.log` says so.
+If scaling back fails, the log prints the command to run by hand:
+
+```bash
+kubectl -n kube-system scale deploy capacity-placeholder --replicas=2
+```
+
 The VPC, role and bucket are reused across batches. EC2 instances and root
 disks are disposable. S3 inputs expire after two days, results/control files
 after `RESULT_RETENTION_DAYS` (default 30), and image cache after 90 days.

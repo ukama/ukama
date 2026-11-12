@@ -20,6 +20,7 @@ import uuid
 from common import AWS, RunnerError, atomic_json, now, read_json, run, sha256
 from config import HERE, ROOT, environment, executable, load_config, portable_vpn
 from artifacts import image_archive, payload, relative_scenarios
+import capacity
 from batch_summary import format_summary, summarize
 import cluster_metrics
 import software_version
@@ -372,6 +373,7 @@ def launch(args):
             "instance_type": cfg["INSTANCE_TYPE"],
             "network_mode": cfg["NETWORK_MODE"],
         })
+    capacity.scale_up(work, state, cfg, lifecycle)
     lifecycle(work, "AWS", f"workers requested={args.workers}, launching={len(assignments)} for {len(scenarios)} selected scenarios; no SSH required")
     if len(assignments) > 1:
         print("Starting worker-001 first; remaining workers launch after its infrastructure is ready", flush=True)
@@ -798,6 +800,7 @@ def monitor(work, state, dashboard=False):
         if iid:
             console_diagnostics(aws, work, name, iid)
     confirm_termination(aws, work, state)
+    capacity.scale_down(work, state, lifecycle)
     print_report(work / "batch-report.txt")
     print(f"Reports: {work / 'batch-report.json'}", flush=True)
     cluster_metrics.safe_collect(
@@ -825,6 +828,7 @@ def cleanup(work, state, dashboard=False):
                 state["workers"][name]["termination_requested_at"] = now()
                 lifecycle(work, name, f"EC2 {instance['InstanceId']} termination requested (explicit cleanup)")
         confirm_termination(aws, work, state)
+    capacity.scale_down(work, state, lifecycle)
     print(f"Requested termination of {len(active)} batch instances. Available results: {work}")
     cluster_metrics.safe_collect(work, wait=False, partial=True,
                                  dashboard=dashboard)

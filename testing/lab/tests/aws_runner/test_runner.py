@@ -20,6 +20,7 @@ from unittest.mock import patch
 LAB = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(LAB / "utils/runner"))
 import artifacts
+import capacity
 import common
 import config
 import controller
@@ -201,6 +202,16 @@ class ConfigurationTests(Fixture):
         for overrides in ({"SPOT": "yes"}, {"SPOT_FALLBACK_ON_DEMAND": 1}, {"SPOT_INSTANCE_TYPES": "c7i.xlarge"},
                           {"SPOT_INSTANCE_TYPES": ["c7i.xlarge", "c7i.xlarge"]}, {"SPOT_INSTANCE_TYPES": ["c7i xlarge"]},
                           {"SPOT_INSTANCE_TYPES": []}, {"INSTANCE_TYPE": "c7i"}):
+            with self.subTest(overrides=overrides), self.assertRaises(common.RunnerError):
+                self.cfg = json.loads((LAB / "utils/runner/aws.example.json").read_text())
+                self.load(**overrides)
+
+    def test_capacity_placeholder_defaults_and_validation(self):
+        cfg = self.load()
+        self.assertEqual((cfg["CAPACITY_PLACEHOLDER_REPLICAS"], cfg["CAPACITY_PLACEHOLDER_IDLE_REPLICAS"]), (20, 2))
+        self.assertEqual(self.load(CAPACITY_PLACEHOLDER_REPLICAS=0)["CAPACITY_PLACEHOLDER_REPLICAS"], 0)
+        for overrides in ({"CAPACITY_PLACEHOLDER_REPLICAS": -1}, {"CAPACITY_PLACEHOLDER_REPLICAS": 41},
+                          {"CAPACITY_PLACEHOLDER_REPLICAS": "20"}, {"CAPACITY_PLACEHOLDER_IDLE_REPLICAS": True}):
             with self.subTest(overrides=overrides), self.assertRaises(common.RunnerError):
                 self.cfg = json.loads((LAB / "utils/runner/aws.example.json").read_text())
                 self.load(**overrides)
@@ -907,13 +918,20 @@ exit 0
 
 
 class StartupMonitorTests(Fixture):
-    def exercise(self, output, *, status=None, console_error=False, stops=True, cleanup=False):
+    def exercise(self, output, *, status=None, console_error=False, stops=True, cleanup=False,
+                 placeholder=None, kubectl_rc=0):
         state = {"region": "us-east-1", "bucket": "bucket", "batch": "test", "suite": "p0",
                  "started_epoch": 700, "boot_minutes": 45, "max_hours": 24, "fail_fast": False,
                  "scenarios": ["scenarios/p0/demo/a.yaml"],
                  "workers": {"worker-001": {"batch_id": "test-w001", "instance_id": "i-test",
                              "scenarios": ["scenarios/p0/demo/a.yaml"], "launched_epoch": 700}}}
+        if placeholder:
+            state["capacity_placeholder"] = placeholder
         calls = []
+        self.kubectl_calls = []
+        def kubectl(command, **kwargs):
+            self.kubectl_calls.append(list(map(str, command)))
+            return subprocess.CompletedProcess(command, kubectl_rc, "", "connection refused" if kubectl_rc else "")
         instance = {"InstanceId": "i-test", "State": {"Name": "running"}}
         class Cloud:
             def optional_json(self, bucket, key):
@@ -930,6 +948,7 @@ class StartupMonitorTests(Fixture):
         captured = io.StringIO()
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch.object(controller, "AWS", lambda region: cloud))
+            stack.enter_context(patch.object(capacity, "run", kubectl))
             stack.enter_context(patch.object(controller, "verify_account"))
             stack.enter_context(patch.object(controller, "instances", return_value={"worker-001": instance}))
             stack.enter_context(patch.object(controller.time, "time", return_value=1000))
@@ -989,6 +1008,34 @@ class StartupMonitorTests(Fixture):
         self.assertEqual(calls[0][1], "get-console-output")
         self.assertEqual(calls[-1][1], "terminate-instances")
         self.assertEqual((self.root / "worker-001-console.log").read_text(), output)
+
+    FINISHED = "UKAMA_RUNNER_BOOTSTRAP_ERROR stage=aws-cli exit=42\n"
+    PLACEHOLDER = {"kubectl": ["/usr/local/bin/kubectl"], "replicas": 20, "idle_replicas": 2, "scaled_up_at": "earlier"}
+    SCALE_DOWN = ["/usr/local/bin/kubectl", "-n", "kube-system", "scale", "deployment/capacity-placeholder", "--replicas=2"]
+
+    def test_finished_batch_scales_placeholder_back(self):
+        _, _, state = self.exercise(self.FINISHED, placeholder=dict(self.PLACEHOLDER))
+        self.assertEqual(self.kubectl_calls, [self.SCALE_DOWN])
+        self.assertIn("scaled_down_at", common.read_json(self.root / "state.json")["capacity_placeholder"])
+        self.assertIn("capacity-placeholder scaled back to 2", (self.root / "aws-lifecycle.log").read_text())
+
+    def test_cleanup_scales_placeholder_back(self):
+        self.exercise(self.FINISHED, cleanup=True, placeholder=dict(self.PLACEHOLDER))
+        self.assertEqual(self.kubectl_calls, [self.SCALE_DOWN])
+
+    def test_placeholder_already_scaled_back_is_left_alone(self):
+        self.exercise(self.FINISHED, placeholder={**self.PLACEHOLDER, "scaled_down_at": "earlier"})
+        self.assertEqual(self.kubectl_calls, [])
+
+    def test_batch_without_scale_up_does_not_touch_placeholder(self):
+        self.exercise(self.FINISHED)
+        self.assertEqual(self.kubectl_calls, [])
+
+    def test_failed_scale_down_prints_the_manual_command(self):
+        _, text, state = self.exercise(self.FINISHED, placeholder=dict(self.PLACEHOLDER), kubectl_rc=1)
+        self.assertIn("capacity-placeholder still at 20: connection refused", text)
+        self.assertIn("kubectl -n kube-system scale deploy capacity-placeholder --replicas=2", text)
+        self.assertNotIn("scaled_down_at", state["capacity_placeholder"])
 
     def test_console_timeout_is_nonfatal(self):
         aws = common.AWS("us-east-1")
@@ -1169,7 +1216,7 @@ SPOT_PRICES = {"c7i.xlarge": "0.0554", "c5.xlarge": "0.0608", "c6i.xlarge": "0.0
 
 
 class LaunchContractTests(Fixture):
-    def exercise(self, *, ready=True, rejected=(), expect_error=False, **overrides):
+    def exercise(self, *, ready=True, rejected=(), expect_error=False, kubectl_rc=0, **overrides):
         """rejected: (instance type, market) pairs that EC2 answers with InsufficientInstanceCapacity."""
         self.write("lab/scenarios/p0/demo/a.yaml", "name: a")
         self.write("lab/scenarios/p0/demo/b.yaml", "name: b")
@@ -1219,8 +1266,15 @@ class LaunchContractTests(Fixture):
         def admission(*values):
             self.assertEqual(len(started), 1)
             return ready
+        # Each kubectl call is recorded with how many workers had started at that point.
+        self.kubectl_calls = []
+        def kubectl(command, **kwargs):
+            self.kubectl_calls.append((list(map(str, command)), len(started)))
+            return subprocess.CompletedProcess(command, kubectl_rc, "", "forbidden" if kubectl_rc else "")
         with contextlib.ExitStack() as stack:
-            stack.enter_context(patch.dict(os.environ, {"UKAMA_IDENTIFIER": "test", "UKAMA_PASSWORD": "test"}))
+            stack.enter_context(patch.object(capacity, "run", kubectl))
+            stack.enter_context(patch.object(capacity, "executable", lambda value: Path("/usr/local/bin") / value))
+            stack.enter_context(patch.dict(os.environ, {"UKAMA_IDENTIFIER": "test", "UKAMA_PASSWORD": "test", "HOME": str(self.root)}))
             stack.enter_context(patch.object(sys, "stdin", io.StringIO(str(self.root / "lab/scenarios/p0/demo/a.yaml") + "\0" + str(self.root / "lab/scenarios/p0/demo/b.yaml") + "\0")))
             stack.enter_context(patch.object(controller, "AWS", lambda region: Cloud()))
             stack.enter_context(patch.object(controller, "executable", lambda value: Path(value)))
@@ -1300,6 +1354,25 @@ class LaunchContractTests(Fixture):
         state = common.read_json(self.root / "runs/test/state.json")
         self.assertIsNone(state["workers"]["worker-002"]["instance_id"])
         self.assertIn("not launched", state["workers"]["worker-002"]["not_started_reason"])
+
+    def test_placeholder_scales_up_before_the_first_worker_starts(self):
+        self.exercise(KUBECONFIG_FILE="cluster/config")
+        command = ["/usr/local/bin/kubectl", "--kubeconfig", str(self.root.resolve() / "cluster/config")]
+        self.assertEqual(self.kubectl_calls, [(command + ["-n", "kube-system", "scale", "deployment/capacity-placeholder", "--replicas=20"], 0)])
+        placeholder = common.read_json(self.root / "runs/test/state.json")["capacity_placeholder"]
+        self.assertEqual((placeholder["kubectl"], placeholder["replicas"], placeholder["idle_replicas"]), (command, 20, 2))
+        self.assertIn("capacity-placeholder scaled to 20", (self.root / "runs/test/aws-lifecycle.log").read_text())
+
+    def test_zero_placeholder_replicas_leaves_the_cluster_alone(self):
+        self.exercise(CAPACITY_PLACEHOLDER_REPLICAS=0)
+        self.assertEqual(self.kubectl_calls, [])
+        self.assertNotIn("capacity_placeholder", common.read_json(self.root / "runs/test/state.json"))
+
+    def test_placeholder_scale_failure_does_not_stop_the_batch(self):
+        launches, _ = self.exercise(kubectl_rc=1)
+        self.assertEqual(len(launches), 2)
+        self.assertNotIn("capacity_placeholder", common.read_json(self.root / "runs/test/state.json"))
+        self.assertIn("capacity-placeholder not scaled up: forbidden", (self.root / "runs/test/aws-lifecycle.log").read_text())
 
 
 

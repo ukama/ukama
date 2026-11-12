@@ -30,7 +30,8 @@ def load_config(filename):
         raise RunnerError("invalid STACK_NAME")
     for key, minimum, maximum in [("DISK_GB", 40, 16000), ("BOOT_TIMEOUT_MINUTES", 5, 180),
                                   ("MAX_WORKER_HOURS", 1, 36), ("UPLOAD_RETRY_MINUTES", 1, 120),
-                                  ("MIN_FREE_DISK_GB", 1, 1000), ("RESULT_RETENTION_DAYS", 1, 3650)]:
+                                  ("MIN_FREE_DISK_GB", 1, 1000), ("RESULT_RETENTION_DAYS", 1, 3650),
+                                  ("CAPACITY_PLACEHOLDER_REPLICAS", 0, 40), ("CAPACITY_PLACEHOLDER_IDLE_REPLICAS", 0, 40)]:
         if type(cfg[key]) is not int or not minimum <= cfg[key] <= maximum:
             raise RunnerError(f"{key} must be an integer between {minimum} and {maximum}")
     networks = {key: ipaddress.IPv4Network(cfg[key]) for key in ("VPC_CIDR", "SUBNET_CIDR", "PODMAN_CIDR")}

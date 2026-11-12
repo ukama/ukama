@@ -5,6 +5,8 @@
   "SPOT": true,
   "SPOT_INSTANCE_TYPES": ["c7i.xlarge", "c6i.xlarge", "m7i.xlarge", "c5.xlarge", "m6i.xlarge"],
   "SPOT_FALLBACK_ON_DEMAND": true,
+  "CAPACITY_PLACEHOLDER_REPLICAS": 20,
+  "CAPACITY_PLACEHOLDER_IDLE_REPLICAS": 2,
   "DISK_GB": 250,
   "AMI_ID": "",
   "VPC_CIDR": "10.240.0.0/16",
