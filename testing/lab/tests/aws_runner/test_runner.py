@@ -190,6 +190,24 @@ class ConfigurationTests(Fixture):
     def test_defaults_valid(self):
         self.assertEqual(self.load()["INSTANCE_TYPE"], "c7i.xlarge")
 
+    def test_spot_is_default_with_several_types_and_on_demand_fallback(self):
+        cfg = self.load()
+        self.assertIs(cfg["SPOT"], True)
+        self.assertIs(cfg["SPOT_FALLBACK_ON_DEMAND"], True)
+        self.assertGreaterEqual(len(cfg["SPOT_INSTANCE_TYPES"]), 3)
+        self.assertIn(cfg["INSTANCE_TYPE"], cfg["SPOT_INSTANCE_TYPES"])
+
+    def test_spot_settings_are_validated(self):
+        for overrides in ({"SPOT": "yes"}, {"SPOT_FALLBACK_ON_DEMAND": 1}, {"SPOT_INSTANCE_TYPES": "c7i.xlarge"},
+                          {"SPOT_INSTANCE_TYPES": ["c7i.xlarge", "c7i.xlarge"]}, {"SPOT_INSTANCE_TYPES": ["c7i xlarge"]},
+                          {"SPOT_INSTANCE_TYPES": []}, {"INSTANCE_TYPE": "c7i"}):
+            with self.subTest(overrides=overrides), self.assertRaises(common.RunnerError):
+                self.cfg = json.loads((LAB / "utils/runner/aws.example.json").read_text())
+                self.load(**overrides)
+
+    def test_spot_disabled_allows_an_empty_type_list(self):
+        self.assertEqual(self.load(SPOT=False, SPOT_INSTANCE_TYPES=[])["SPOT_INSTANCE_TYPES"], [])
+
     def test_overlapping_networks_rejected(self):
         with self.assertRaises(common.RunnerError):
             self.load(PODMAN_CIDR="10.240.0.0/16")
@@ -556,6 +574,19 @@ class ReportsTests(Fixture):
         self.assertEqual((result["completed"], result["passed"], result["failed"]), (1, 1, 0))
         self.assertEqual(result["unfinished"], ["scenarios/p0/demo/b.yaml"])
         self.assertEqual(result["infrastructure_errors"], ["worker-001"])
+
+    def test_spot_reclaimed_worker_is_interrupted_not_failed(self):
+        self.create_report()
+        (self.root / "workers/worker-001/complete.json").unlink()
+        state = self.state()
+        state["workers"]["worker-001"].update({"spot_interrupted": True, "instance_type": "c5.xlarge", "market": "spot"})
+        result = controller.aggregate(self.root, state)
+        self.assertEqual((result["completed"], result["passed"], result["failed"]), (1, 1, 0))
+        self.assertEqual(result["unfinished"], ["scenarios/p0/demo/b.yaml"])
+        worker = result["workers"]["worker-001"]
+        self.assertEqual((worker["phase"], worker["instance_type"], worker["market"]), ("SPOT_INTERRUPTED", "c5.xlarge", "spot"))
+        self.assertIn("Spot reclaimed", worker["error"])
+        self.assertIn("Spot reclaimed", (self.root / "batch-report.txt").read_text())
 
     def test_scenario_failure_does_not_mean_worker_failed(self):
         self.create_report(outcome="FAIL")
@@ -1134,23 +1165,35 @@ class WorkerContractTests(Fixture):
         self.assertFalse(any(kind == "scenario-start" for kind, _ in calls))
 
 
+SPOT_PRICES = {"c7i.xlarge": "0.0554", "c5.xlarge": "0.0608", "c6i.xlarge": "0.0846", "m7i.xlarge": "0.0854"}
+
+
 class LaunchContractTests(Fixture):
-    def exercise(self, *, ready=True):
+    def exercise(self, *, ready=True, rejected=(), expect_error=False, **overrides):
+        """rejected: (instance type, market) pairs that EC2 answers with InsufficientInstanceCapacity."""
         self.write("lab/scenarios/p0/demo/a.yaml", "name: a")
         self.write("lab/scenarios/p0/demo/b.yaml", "name: b")
         self.write("repo/testing/node/mk_local_vnode.sh", "#!/bin/sh\n", 0o755)
         self.write("repo/testing/ue/ue/Containerfile", "FROM alpine")
         self.write("repo/testing/ue/media/Containerfile", "FROM alpine")
         self.cfg["VPN_CONFIG_FILE"] = str(self.write("client.ovpn", "client\nremote vpn.example.test 1194\n<ca>\ncertificate\n</ca>\n"))
+        self.cfg.update(overrides)
         config_file = self.write("aws.json", json.dumps(self.cfg))
         image = self.write("images.tar.gz", "cached images")
-        captured, launches = {}, []
+        captured, launches, started = {}, [], []
+        self.price_lookups = []
+        test = self
         class Cloud:
             def json(self, *args):
                 if args[:2] == ("sts", "get-caller-identity"):
                     return {"Account": "account"}
                 if args[:2] == ("ec2", "describe-prefix-lists"):
                     return {"PrefixLists": [{"PrefixListName": "com.amazonaws.us-east-1.s3", "Cidrs": ["52.216.0.0/15"]}]}
+                if args[:2] == ("ec2", "describe-subnets"):
+                    return {"Subnets": [{"SubnetId": "subnet", "AvailabilityZone": "us-east-1b"}]}
+                if args[:2] == ("ec2", "describe-spot-price-history"):
+                    test.price_lookups.append(args)
+                    return {"SpotPriceHistory": [{"InstanceType": t, "SpotPrice": p, "AvailabilityZone": "us-east-1b"} for t, p in SPOT_PRICES.items()]}
                 raise AssertionError(args)
             def head(self, *args): return None
             def copy(self, *args): pass
@@ -1160,7 +1203,11 @@ class LaunchContractTests(Fixture):
                 assert args[:2] == ("ec2", "run-instances")
                 request = common.read_json(args[3].removeprefix("file://"))
                 launches.append(request)
-                return subprocess.CompletedProcess([], 0, json.dumps({"Instances": [{"InstanceId": "i-" + str(len(launches))}]}), "")
+                market = "spot" if "InstanceMarketOptions" in request else "on-demand"
+                if (request["InstanceType"], market) in rejected:
+                    return subprocess.CompletedProcess([], 254, "", "An error occurred (InsufficientInstanceCapacity) when calling the RunInstances operation: no capacity")
+                started.append(request)
+                return subprocess.CompletedProcess([], 0, json.dumps({"Instances": [{"InstanceId": "i-" + str(len(started))}]}), "")
         args = argparse.Namespace(config=str(config_file), lab_dir=str(self.root / "lab"), repo=str(self.root / "repo"),
                                   lab_bin=shutil.which("true"), scenario_root=str(self.root / "lab/scenarios/p0"),
                                   suite="p0", batch_id="test", out=str(self.root / "runs"), workers=2,
@@ -1170,7 +1217,7 @@ class LaunchContractTests(Fixture):
             target.write_text("sources")
             return target
         def admission(*values):
-            self.assertEqual(len(launches), 1)
+            self.assertEqual(len(started), 1)
             return ready
         with contextlib.ExitStack() as stack:
             stack.enter_context(patch.dict(os.environ, {"UKAMA_IDENTIFIER": "test", "UKAMA_PASSWORD": "test"}))
@@ -1184,13 +1231,27 @@ class LaunchContractTests(Fixture):
             stack.enter_context(patch.object(controller, "monitor", return_value=0))
             stack.enter_context(patch.object(controller, "wait_for_infrastructure", side_effect=admission))
             stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
-            self.assertEqual(controller.launch(args), 0)
+            if expect_error:
+                with self.assertRaises(common.RunnerError) as raised:
+                    controller.launch(args)
+                self.error = str(raised.exception)
+            else:
+                self.assertEqual(controller.launch(args), 0)
+        self.started = started
         return launches, captured
+
+    def launched(self, launches):
+        return [(r["InstanceType"], "spot" if "InstanceMarketOptions" in r else "on-demand") for r in launches]
 
     def test_launch_prepares_exact_worker_inputs_and_uses_no_ssh(self):
         launches, captured = self.exercise()
         self.assertEqual(len(launches), 2)
         self.assertEqual(len({r["ClientToken"] for r in launches}), 2)
+        self.assertEqual(self.launched(launches), [("c7i.xlarge", "spot")] * 2)
+        self.assertEqual(launches[0]["InstanceMarketOptions"]["SpotOptions"],
+                         {"SpotInstanceType": "one-time", "InstanceInterruptionBehavior": "terminate"})
+        self.assertEqual(len(self.price_lookups), 1)
+        self.assertIn("us-east-1b", self.price_lookups[0])
         for request in launches:
             self.assertNotIn("KeyName", request)
             self.assertEqual(request["MetadataOptions"]["HttpTokens"], "required")
@@ -1204,6 +1265,34 @@ class LaunchContractTests(Fixture):
         state = common.read_json(self.root / "runs/test/state.json")
         self.assertEqual(state["workers"]["worker-002"]["instance_id"], "i-2")
         self.assertNotIn("UKAMA_PASSWORD", json.dumps(state))
+
+    def test_spot_capacity_error_moves_to_next_cheapest_type_and_skips_it_for_later_workers(self):
+        launches, _ = self.exercise(rejected={("c7i.xlarge", "spot")})
+        self.assertEqual(self.launched(launches), [("c7i.xlarge", "spot"), ("c5.xlarge", "spot"), ("c5.xlarge", "spot")])
+        self.assertEqual(len({r["ClientToken"] for r in launches}), 3)
+        state = common.read_json(self.root / "runs/test/state.json")
+        self.assertEqual({w["instance_type"] for w in state["workers"].values()}, {"c5.xlarge"})
+        self.assertEqual({w["market"] for w in state["workers"].values()}, {"spot"})
+        self.assertIn("no spot capacity for c7i.xlarge", (self.root / "runs/test/aws-lifecycle.log").read_text())
+
+    def test_on_demand_fallback_when_no_spot_type_has_capacity(self):
+        rejected = {(t, "spot") for t in self.cfg["SPOT_INSTANCE_TYPES"]}
+        launches, _ = self.exercise(rejected=rejected)
+        self.assertEqual([r for r in self.launched(self.started)], [("c7i.xlarge", "on-demand")] * 2)
+        self.assertNotIn("InstanceMarketOptions", self.started[0])
+        # Every spot type was tried once for worker-001, then skipped for worker-002.
+        self.assertEqual(len(launches), len(rejected) + 2)
+
+    def test_without_fallback_no_spot_capacity_fails_the_launch(self):
+        rejected = {(t, "spot") for t in self.cfg["SPOT_INSTANCE_TYPES"]}
+        self.exercise(rejected=rejected, expect_error=True, SPOT_FALLBACK_ON_DEMAND=False)
+        self.assertEqual(self.started, [])
+        self.assertIn("InsufficientInstanceCapacity", self.error)
+
+    def test_spot_disabled_launches_instance_type_on_demand_without_price_lookup(self):
+        launches, _ = self.exercise(SPOT=False, INSTANCE_TYPE="c6i.xlarge")
+        self.assertEqual(self.launched(launches), [("c6i.xlarge", "on-demand")] * 2)
+        self.assertEqual(self.price_lookups, [])
 
     def test_first_worker_failure_prevents_remaining_launches(self):
         launches, _ = self.exercise(ready=False)
@@ -1307,6 +1396,21 @@ sys.exit(99)
         self.assertEqual(output.getvalue().count("EC2 i-test running"), 1)
         self.assertIn("EC2 i-test terminated; decommissioned", output.getvalue())
         self.assertIn("decommissioned", (self.root / "aws-lifecycle.log").read_text())
+
+    def test_spot_reclaim_is_recorded_once_and_ordinary_termination_is_not(self):
+        reclaimed, finished = {"instance_id": "i-spot"}, {"instance_id": "i-done"}
+        reason = {"Code": "Server.SpotInstanceTermination", "Message": "Server.SpotInstanceTermination: Spot instance termination"}
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output):
+            for state in ("shutting-down", "terminated"):
+                controller.observe_instance(self.root, "worker-001", reclaimed,
+                                            {"InstanceId": "i-spot", "State": {"Name": state}, "StateReason": reason})
+            controller.observe_instance(self.root, "worker-002", finished,
+                                        {"InstanceId": "i-done", "State": {"Name": "terminated"},
+                                         "StateReason": {"Code": "Client.UserInitiatedShutdown"}})
+        self.assertTrue(reclaimed["spot_interrupted"])
+        self.assertNotIn("spot_interrupted", finished)
+        self.assertEqual(output.getvalue().count("reclaimed by EC2 Spot"), 1)
 
     def test_unconfirmed_termination_does_not_claim_decommissioned(self):
         state = {"workers": {"worker-001": {"instance_id": "i-test", "termination_requested_at": "now"}}}

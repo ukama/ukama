@@ -37,6 +37,10 @@ def observe_instance(work, name, worker, instance):
     if not instance:
         return
     state = instance["State"]["Name"]
+    reason = (instance.get("StateReason") or {}).get("Code", "")
+    if state in ("shutting-down", "terminated") and reason == "Server.SpotInstanceTermination" and not worker.get("spot_interrupted"):
+        worker["spot_interrupted"] = True
+        lifecycle(work, name, f"EC2 {instance['InstanceId']} reclaimed by EC2 Spot; its unfinished scenarios did not run")
     if worker.get("observed_ec2_state") != state:
         suffix = "; decommissioned" if state == "terminated" else ""
         lifecycle(work, name, f"EC2 {instance['InstanceId']} {state}{suffix}")
@@ -138,10 +142,38 @@ def find_ami(aws, cfg):
     data = aws.json("ec2", "describe-images", "--image-ids", ami)["Images"]
     if len(data) != 1 or data[0]["Architecture"] != "x86_64" or data[0]["State"] != "available":
         raise RunnerError("AMI must be an available Ubuntu 24.04 x86_64 image")
-    instance_type = aws.json("ec2", "describe-instance-types", "--instance-types", cfg["INSTANCE_TYPE"])["InstanceTypes"][0]
-    if "x86_64" not in instance_type["ProcessorInfo"]["SupportedArchitectures"]:
-        raise RunnerError("INSTANCE_TYPE must support x86_64")
+    wanted = sorted({cfg["INSTANCE_TYPE"], *(cfg["SPOT_INSTANCE_TYPES"] if cfg["SPOT"] else [])})
+    found = aws.json("ec2", "describe-instance-types", "--instance-types", *wanted)["InstanceTypes"]
+    unsupported = sorted(t["InstanceType"] for t in found if "x86_64" not in t["ProcessorInfo"]["SupportedArchitectures"])
+    missing = sorted(set(wanted) - {t["InstanceType"] for t in found})
+    if unsupported or missing:
+        raise RunnerError(f"INSTANCE_TYPE and SPOT_INSTANCE_TYPES must be x86_64 types in {cfg['REGION']}: {', '.join(unsupported + missing)}")
     return ami, data[0]["RootDeviceName"]
+
+
+# run-instances errors that mean "no Spot capacity for this type right now"; the next type or on-demand may succeed.
+SPOT_CAPACITY_ERRORS = ("InsufficientInstanceCapacity", "SpotMaxPriceTooLow", "MaxSpotInstanceCountExceeded",
+                        "InstanceLimitExceeded", "VcpuLimitExceeded", "Unsupported", "UnfulfillableCapacity")
+
+
+def spot_order(aws, cfg, subnet):
+    """Spot types for the worker subnet's zone, cheapest current price first; types without a price go last."""
+    zone = aws.json("ec2", "describe-subnets", "--subnet-ids", subnet)["Subnets"][0]["AvailabilityZone"]
+    history = aws.json("ec2", "describe-spot-price-history", "--availability-zone", zone,
+                       "--product-descriptions", "Linux/UNIX", "--start-time", now(),
+                       "--instance-types", *cfg["SPOT_INSTANCE_TYPES"])["SpotPriceHistory"]
+    prices = {}
+    for entry in history:
+        prices.setdefault(entry["InstanceType"], float(entry["SpotPrice"]))
+    ranked = sorted(cfg["SPOT_INSTANCE_TYPES"], key=lambda t: (t not in prices, prices.get(t, 0.0)))
+    return zone, ranked, prices
+
+
+def launch_attempts(cfg, spot_types, exhausted):
+    attempts = [(t, "spot") for t in spot_types if t not in exhausted] if cfg["SPOT"] else []
+    if not cfg["SPOT"] or cfg["SPOT_FALLBACK_ON_DEMAND"]:
+        attempts.append((cfg["INSTANCE_TYPE"], "on-demand"))
+    return attempts
 
 
 def partition(scenarios, workers):
@@ -343,6 +375,12 @@ def launch(args):
     lifecycle(work, "AWS", f"workers requested={args.workers}, launching={len(assignments)} for {len(scenarios)} selected scenarios; no SSH required")
     if len(assignments) > 1:
         print("Starting worker-001 first; remaining workers launch after its infrastructure is ready", flush=True)
+    spot_types, exhausted = [], set()
+    if cfg["SPOT"]:
+        zone, spot_types, prices = spot_order(aws, cfg, infra["Subnet"])
+        listed = ", ".join(f"{t}=${prices[t]:.4f}" if t in prices else f"{t}=no price" for t in spot_types)
+        fallback = f"; on-demand {cfg['INSTANCE_TYPE']} if none has capacity" if cfg["SPOT_FALLBACK_ON_DEMAND"] else "; no on-demand fallback"
+        lifecycle(work, "AWS", f"spot in {zone}, cheapest first: {listed}{fallback}")
     for name, item in state["workers"].items():
         script = user_data(state, name)
         if len(script.encode()) > 16 * 1024:
@@ -350,8 +388,7 @@ def launch(args):
         tags = [{"Key": "Name", "Value": f"ukama-lab-{batch}-{name}"},
                 {"Key": "UkamaLabBatch", "Value": batch}, {"Key": "UkamaLabWorker", "Value": name},
                 {"Key": "UkamaLabStack", "Value": cfg["STACK_NAME"]}]
-        request = {"ImageId": ami, "InstanceType": cfg["INSTANCE_TYPE"], "MinCount": 1, "MaxCount": 1,
-                   "ClientToken": hashlib.sha256((state["account"] + batch + name).encode()).hexdigest(),
+        request = {"ImageId": ami, "MinCount": 1, "MaxCount": 1,
                    "IamInstanceProfile": {"Name": infra["InstanceProfile"]},
                    "NetworkInterfaces": [{"DeviceIndex": 0, "SubnetId": infra["Subnet"],
                                           "Groups": [infra["SecurityGroup"]], "AssociatePublicIpAddress": True}],
@@ -361,23 +398,43 @@ def launch(args):
                    "TagSpecifications": [{"ResourceType": "instance", "Tags": tags}, {"ResourceType": "volume", "Tags": tags}],
                    "UserData": base64.b64encode(script.encode()).decode()}
         request_file = work / (name + "-launch.json")
-        atomic_json(request_file, request)
-        # Retry the SAME client token/request for IAM propagation or transient launch errors.
-        result = None
-        for attempt in range(12):
-            p = aws.call("ec2", "run-instances", "--cli-input-json", "file://" + str(request_file), check=False)
-            if p.returncode == 0:
-                result = json.loads(p.stdout)
+        result, capacity_errors = None, []
+        for instance_type, market in launch_attempts(cfg, spot_types, exhausted):
+            # Each type/market gets its own client token: EC2 rejects a reused token whose parameters changed.
+            request["InstanceType"] = instance_type
+            request["ClientToken"] = hashlib.sha256((state["account"] + batch + name + instance_type + market).encode()).hexdigest()
+            request.pop("InstanceMarketOptions", None)
+            if market == "spot":
+                request["InstanceMarketOptions"] = {"MarketType": "spot", "SpotOptions": {
+                    "SpotInstanceType": "one-time", "InstanceInterruptionBehavior": "terminate"}}
+            atomic_json(request_file, request)
+            # Retry the SAME client token/request for IAM propagation or transient launch errors.
+            for attempt in range(12):
+                p = aws.call("ec2", "run-instances", "--cli-input-json", "file://" + str(request_file), check=False)
+                if p.returncode == 0:
+                    result = json.loads(p.stdout)
+                    break
+                if market == "spot" and any(code in p.stderr for code in SPOT_CAPACITY_ERRORS):
+                    break
+                if not any(code in p.stderr for code in ("Invalid IAM Instance Profile", "InvalidParameterValue", "RequestLimitExceeded", "ServiceUnavailable")):
+                    raise RunnerError(f"EC2 launch failed: {p.stderr.strip()}; use --resume or --cleanup {work}")
+                time.sleep(5)
+            if result is not None:
                 break
-            if not any(code in p.stderr for code in ("Invalid IAM Instance Profile", "InvalidParameterValue", "RequestLimitExceeded", "ServiceUnavailable")):
-                raise RunnerError(f"EC2 launch failed: {p.stderr.strip()}; use --resume or --cleanup {work}")
-            time.sleep(5)
+            if market == "spot" and p.returncode != 0 and any(code in p.stderr for code in SPOT_CAPACITY_ERRORS):
+                exhausted.add(instance_type)
+                capacity_errors.append(f"{instance_type}: {p.stderr.strip().splitlines()[-1] if p.stderr.strip() else 'no capacity'}")
+                lifecycle(work, name, f"no spot capacity for {instance_type}; trying the next type")
+                continue
+            break
         if result is None:
-            raise RunnerError(f"EC2 launch did not succeed; state retained at {work}")
+            detail = "; ".join(capacity_errors) or "no launch attempt succeeded"
+            raise RunnerError(f"EC2 launch did not succeed ({detail}); state retained at {work}")
         item["instance_id"] = result["Instances"][0]["InstanceId"]
+        item["instance_type"], item["market"] = instance_type, market
         item["launched_epoch"] = time.time()
         atomic_json(work / "state.json", state)
-        lifecycle(work, name, f"EC2 {item['instance_id']} created; {len(item['scenarios'])} scenarios assigned")
+        lifecycle(work, name, f"EC2 {item['instance_id']} created ({market} {instance_type}); {len(item['scenarios'])} scenarios assigned")
         if "State" in result["Instances"][0]:
             observe_instance(work, name, item, result["Instances"][0])
         if name == "worker-001" and len(assignments) > 1:
@@ -538,9 +595,13 @@ def aggregate(work, state):
         directory = work / "workers" / name
         marker_path = directory / "complete.json"
         marker = read_json(marker_path) if marker_path.exists() else {}
-        fallback_phase = "NOT_STARTED" if worker.get("not_started_reason") else ("BOOTSTRAP_ERROR" if worker.get("bootstrap_error") else "INCOMPLETE")
-        workers[name] = {"instance_id": worker.get("instance_id"), "phase": marker.get("phase", fallback_phase),
-                         "lab_exit": marker.get("lab_exit"), "error": marker.get("error", worker.get("not_started_reason") or worker.get("bootstrap_error", ""))}
+        fallback_phase = "NOT_STARTED" if worker.get("not_started_reason") else ("BOOTSTRAP_ERROR" if worker.get("bootstrap_error") else (
+            "SPOT_INTERRUPTED" if worker.get("spot_interrupted") else "INCOMPLETE"))
+        fallback_error = worker.get("not_started_reason") or worker.get("bootstrap_error") or (
+            "EC2 Spot reclaimed the instance before it finished; rerun its unfinished scenarios" if worker.get("spot_interrupted") else "")
+        workers[name] = {"instance_id": worker.get("instance_id"), "instance_type": worker.get("instance_type"),
+                         "market": worker.get("market"), "phase": marker.get("phase", fallback_phase),
+                         "lab_exit": marker.get("lab_exit"), "error": marker.get("error", fallback_error)}
         path = directory / "batch" / worker["batch_id"] / "batch-report.json"
         if path.exists():
             report = read_json(path)
