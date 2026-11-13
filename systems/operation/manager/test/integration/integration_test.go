@@ -14,6 +14,7 @@ package integration
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -365,6 +366,111 @@ func TestStartConflict(t *testing.T) {
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
 		assert.Nil(t, resp)
 		assertLockHeldBy(t, ctx, c, op)
+	})
+}
+
+func startWithKey(t *testing.T, ctx context.Context,
+	c pb.OperationManagerServiceClient, resourceKey,
+	key string) (*pb.StartOperationResponse, error) {
+	t.Helper()
+
+	resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+		Type:           "IntegrationTest",
+		System:         "operation",
+		ResourceKey:    resourceKey,
+		RequestedBy:    actor,
+		IdempotencyKey: key,
+	})
+	if err == nil {
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+				Id: resp.Operation.Id, Actor: actor, Reason: reason,
+			})
+		})
+	}
+
+	return resp, err
+}
+
+func TestStartIdempotency(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+	resource := func() string { return "test:integration:" + uuid.NewV4().String() }
+
+	t.Run("RetryReturnsTheSameOperation", func(t *testing.T) {
+		key, res := uuid.NewV4().String(), resource()
+		first, err := startWithKey(t, ctx, c, res, key)
+		assert.NoError(t, err)
+
+		retry, err := startWithKey(t, ctx, c, res, key)
+
+		assert.NoError(t, err)
+		assert.Equal(t, first.Operation.Id, retry.Operation.Id)
+		assert.Equal(t, first.Operation.FencingToken, retry.Operation.FencingToken)
+		assertLockHeldBy(t, ctx, c, first.Operation)
+	})
+
+	t.Run("RetryAfterFinishReturnsTheFinishedOperation", func(t *testing.T) {
+		key, res := uuid.NewV4().String(), resource()
+		first, err := startWithKey(t, ctx, c, res, key)
+		assert.NoError(t, err)
+		_, err = c.MarkRunning(ctx, &pb.MarkRunningRequest{
+			Id: first.Operation.Id, FencingToken: first.Operation.FencingToken,
+			Actor: actor,
+		})
+		assert.NoError(t, err)
+		_, err = completeOperation(ctx, c, first.Operation, first.Operation.FencingToken)
+		assert.NoError(t, err)
+
+		retry, err := startWithKey(t, ctx, c, res, key)
+
+		assert.NoError(t, err)
+		assert.Equal(t, first.Operation.Id, retry.Operation.Id)
+		assert.Equal(t, pb.OperationStatus_SUCCESS, retry.Operation.Status)
+		assertLockFree(t, ctx, c, first.Operation)
+	})
+
+	t.Run("KeyOnAnotherResourceIsInvalidArgument", func(t *testing.T) {
+		key := uuid.NewV4().String()
+		first, err := startWithKey(t, ctx, c, resource(), key)
+		assert.NoError(t, err)
+		other := resource()
+
+		resp, err := startWithKey(t, ctx, c, other, key)
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.Nil(t, resp)
+		assertLockHeldBy(t, ctx, c, first.Operation)
+		assertLockFree(t, ctx, c, &pb.Operation{ResourceKey: other})
+	})
+
+	t.Run("ConcurrentStartsReturnOneOperation", func(t *testing.T) {
+		const callers = 10
+		key, res := uuid.NewV4().String(), resource()
+		ids := make([]string, callers)
+		errs := make([]error, callers)
+
+		var wg sync.WaitGroup
+		for i := 0; i < callers; i++ {
+			wg.Add(1)
+			go func(i int) {
+				defer wg.Done()
+				resp, err := startWithKey(t, ctx, c, res, key)
+				errs[i] = err
+				if err == nil {
+					ids[i] = resp.Operation.Id
+				}
+			}(i)
+		}
+		wg.Wait()
+
+		for i := 0; i < callers; i++ {
+			assert.NoError(t, errs[i])
+			assert.Equal(t, ids[0], ids[i])
+		}
+		assertLockHeldBy(t, ctx, c, &pb.Operation{Id: ids[0], ResourceKey: res})
 	})
 }
 

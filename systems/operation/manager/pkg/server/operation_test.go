@@ -127,6 +127,110 @@ func TestStartOperation(t *testing.T) {
 	})
 }
 
+func TestStartOperationIdempotency(t *testing.T) {
+	request := func() *pb.StartOperationRequest {
+		return &pb.StartOperationRequest{
+			RequestedBy: "controller", Type: "RestartNode", System: "node",
+			ResourceKey: "node:abc", IdempotencyKey: "key",
+		}
+	}
+	held := func(edit func(*db.Operation)) *db.Operation {
+		op := &db.Operation{
+			Id: uuid.NewV4(), Type: "RestartNode", System: "node",
+			ResourceKey: "node:abc", FencingToken: 3,
+		}
+		if edit != nil {
+			edit(op)
+		}
+		return op
+	}
+	startTaken := func(repo *mocks.OperationRepo) {
+		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
+			mock.AnythingOfType("time.Duration")).
+			Return(nil, db.ErrIdempotencyKeyTaken).Once()
+	}
+
+	for name, edit := range map[string]func(*db.Operation){
+		"AnotherResource": func(op *db.Operation) { op.ResourceKey = "node:other" },
+		"AnotherType":     func(op *db.Operation) { op.Type = "ToggleRadio" },
+		"AnotherSystem":   func(op *db.Operation) { op.System = "operation" },
+	} {
+		t.Run("KeyUsedFor"+name+"IsInvalidArgument", func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("GetByIdempotencyKey", mock.Anything, "key").
+				Return(held(edit), nil)
+
+			resp, err := s.StartOperation(context.Background(), request())
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			assert.Nil(t, resp)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything,
+				mock.Anything)
+		})
+	}
+
+	t.Run("ConcurrentStartReturnsTheWinner", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		winner := held(nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
+		startTaken(repo)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(winner, nil).Once()
+
+		resp, err := s.StartOperation(context.Background(), request())
+
+		assert.NoError(t, err)
+		assert.Equal(t, winner.Id.String(), resp.Operation.Id)
+		assert.Equal(t, uint64(3), resp.Operation.FencingToken)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("ConcurrentStartForAnotherResourceIsInvalidArgument", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
+		startTaken(repo)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").
+			Return(held(func(op *db.Operation) { op.ResourceKey = "node:other" }), nil).
+			Once()
+
+		resp, err := s.StartOperation(context.Background(), request())
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("ConcurrentWinnerNotFoundIsAborted", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Twice()
+		startTaken(repo)
+
+		resp, err := s.StartOperation(context.Background(), request())
+
+		assert.Equal(t, codes.Aborted, status.Code(err))
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+
+	t.Run("ConcurrentWinnerReadFailureIsInternal", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
+		startTaken(repo)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").
+			Return(nil, fmt.Errorf("db down")).Once()
+
+		resp, err := s.StartOperation(context.Background(), request())
+
+		assert.Equal(t, codes.Internal, status.Code(err))
+		assert.Nil(t, resp)
+		repo.AssertExpectations(t)
+	})
+}
+
 func TestGetByResource(t *testing.T) {
 	t.Run("ReturnsEmptyWhenFree", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
