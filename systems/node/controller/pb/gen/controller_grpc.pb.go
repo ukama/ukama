@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ControllerService_RestartNode_FullMethodName      = "/ukama.node.controller.v1.ControllerService/RestartNode"
-	ControllerService_ToggleRadio_FullMethodName      = "/ukama.node.controller.v1.ControllerService/ToggleRadio"
+	ControllerService_RestartNodes_FullMethodName     = "/ukama.node.controller.v1.ControllerService/RestartNodes"
+	ControllerService_ToggleRadios_FullMethodName     = "/ukama.node.controller.v1.ControllerService/ToggleRadios"
 	ControllerService_ToggleSwitchPort_FullMethodName = "/ukama.node.controller.v1.ControllerService/ToggleSwitchPort"
 	ControllerService_ToggleService_FullMethodName    = "/ukama.node.controller.v1.ControllerService/ToggleService"
 	ControllerService_PingNode_FullMethodName         = "/ukama.node.controller.v1.ControllerService/PingNode"
@@ -35,8 +35,8 @@ const (
 //
 // Defines the service for controller operations
 type ControllerServiceClient interface {
-	RestartNode(ctx context.Context, in *RestartNodeRequest, opts ...grpc.CallOption) (*RestartNodeResponse, error)
-	ToggleRadio(ctx context.Context, in *ToggleRadioRequest, opts ...grpc.CallOption) (*ToggleRadioResponse, error)
+	RestartNodes(ctx context.Context, in *RestartNodesRequest, opts ...grpc.CallOption) (*RestartNodesResponse, error)
+	ToggleRadios(ctx context.Context, in *ToggleRadiosRequest, opts ...grpc.CallOption) (*ToggleRadiosResponse, error)
 	ToggleSwitchPort(ctx context.Context, in *ToggleSwitchPortRequest, opts ...grpc.CallOption) (*ToggleSwitchPortResponse, error)
 	ToggleService(ctx context.Context, in *ToggleServiceRequest, opts ...grpc.CallOption) (*ToggleServiceResponse, error)
 	PingNode(ctx context.Context, in *PingNodeRequest, opts ...grpc.CallOption) (*PingNodeResponse, error)
@@ -53,20 +53,20 @@ func NewControllerServiceClient(cc grpc.ClientConnInterface) ControllerServiceCl
 	return &controllerServiceClient{cc}
 }
 
-func (c *controllerServiceClient) RestartNode(ctx context.Context, in *RestartNodeRequest, opts ...grpc.CallOption) (*RestartNodeResponse, error) {
+func (c *controllerServiceClient) RestartNodes(ctx context.Context, in *RestartNodesRequest, opts ...grpc.CallOption) (*RestartNodesResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(RestartNodeResponse)
-	err := c.cc.Invoke(ctx, ControllerService_RestartNode_FullMethodName, in, out, cOpts...)
+	out := new(RestartNodesResponse)
+	err := c.cc.Invoke(ctx, ControllerService_RestartNodes_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *controllerServiceClient) ToggleRadio(ctx context.Context, in *ToggleRadioRequest, opts ...grpc.CallOption) (*ToggleRadioResponse, error) {
+func (c *controllerServiceClient) ToggleRadios(ctx context.Context, in *ToggleRadiosRequest, opts ...grpc.CallOption) (*ToggleRadiosResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ToggleRadioResponse)
-	err := c.cc.Invoke(ctx, ControllerService_ToggleRadio_FullMethodName, in, out, cOpts...)
+	out := new(ToggleRadiosResponse)
+	err := c.cc.Invoke(ctx, ControllerService_ToggleRadios_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -139,8 +139,8 @@ func (c *controllerServiceClient) DeleteNodeConfig(ctx context.Context, in *Dele
 //
 // Defines the service for controller operations
 type ControllerServiceServer interface {
-	RestartNode(context.Context, *RestartNodeRequest) (*RestartNodeResponse, error)
-	ToggleRadio(context.Context, *ToggleRadioRequest) (*ToggleRadioResponse, error)
+	RestartNodes(context.Context, *RestartNodesRequest) (*RestartNodesResponse, error)
+	ToggleRadios(context.Context, *ToggleRadiosRequest) (*ToggleRadiosResponse, error)
 	ToggleSwitchPort(context.Context, *ToggleSwitchPortRequest) (*ToggleSwitchPortResponse, error)
 	ToggleService(context.Context, *ToggleServiceRequest) (*ToggleServiceResponse, error)
 	PingNode(context.Context, *PingNodeRequest) (*PingNodeResponse, error)
@@ -157,11 +157,11 @@ type ControllerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedControllerServiceServer struct{}
 
-func (UnimplementedControllerServiceServer) RestartNode(context.Context, *RestartNodeRequest) (*RestartNodeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RestartNode not implemented")
+func (UnimplementedControllerServiceServer) RestartNodes(context.Context, *RestartNodesRequest) (*RestartNodesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RestartNodes not implemented")
 }
-func (UnimplementedControllerServiceServer) ToggleRadio(context.Context, *ToggleRadioRequest) (*ToggleRadioResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method ToggleRadio not implemented")
+func (UnimplementedControllerServiceServer) ToggleRadios(context.Context, *ToggleRadiosRequest) (*ToggleRadiosResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ToggleRadios not implemented")
 }
 func (UnimplementedControllerServiceServer) ToggleSwitchPort(context.Context, *ToggleSwitchPortRequest) (*ToggleSwitchPortResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ToggleSwitchPort not implemented")
@@ -202,38 +202,38 @@ func RegisterControllerServiceServer(s grpc.ServiceRegistrar, srv ControllerServ
 	s.RegisterService(&ControllerService_ServiceDesc, srv)
 }
 
-func _ControllerService_RestartNode_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(RestartNodeRequest)
+func _ControllerService_RestartNodes_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RestartNodesRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControllerServiceServer).RestartNode(ctx, in)
+		return srv.(ControllerServiceServer).RestartNodes(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ControllerService_RestartNode_FullMethodName,
+		FullMethod: ControllerService_RestartNodes_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).RestartNode(ctx, req.(*RestartNodeRequest))
+		return srv.(ControllerServiceServer).RestartNodes(ctx, req.(*RestartNodesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _ControllerService_ToggleRadio_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ToggleRadioRequest)
+func _ControllerService_ToggleRadios_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleRadiosRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(ControllerServiceServer).ToggleRadio(ctx, in)
+		return srv.(ControllerServiceServer).ToggleRadios(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: ControllerService_ToggleRadio_FullMethodName,
+		FullMethod: ControllerService_ToggleRadios_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ControllerServiceServer).ToggleRadio(ctx, req.(*ToggleRadioRequest))
+		return srv.(ControllerServiceServer).ToggleRadios(ctx, req.(*ToggleRadiosRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -354,12 +354,12 @@ var ControllerService_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*ControllerServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "RestartNode",
-			Handler:    _ControllerService_RestartNode_Handler,
+			MethodName: "RestartNodes",
+			Handler:    _ControllerService_RestartNodes_Handler,
 		},
 		{
-			MethodName: "ToggleRadio",
-			Handler:    _ControllerService_ToggleRadio_Handler,
+			MethodName: "ToggleRadios",
+			Handler:    _ControllerService_ToggleRadios_Handler,
 		},
 		{
 			MethodName: "ToggleSwitchPort",

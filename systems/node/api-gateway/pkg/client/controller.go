@@ -10,6 +10,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"google.golang.org/grpc"
@@ -62,7 +63,16 @@ func (c *Controller) RestartNode(nodeId string) (*pb.RestartNodeResponse, error)
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.RestartNode(ctx, &pb.RestartNodeRequest{NodeId: nodeId})
+	resp, err := c.client.RestartNodes(ctx, &pb.RestartNodesRequest{
+		NodeIds: []string{nodeId},
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Operations) == 0 {
+		return nil, fmt.Errorf("restart node %s: no operation returned", nodeId)
+	}
+	return resp.Operations[0], nil
 }
 
 func (c *Controller) ToggleSwitchPort(status bool, port int32, nodeId string) (*pb.ToggleSwitchPortResponse, error) {
@@ -76,7 +86,16 @@ func (c *Controller) ToggleRadio(nodeId string, state string) (*pb.ToggleRadioRe
 	ctx, cancel := context.WithTimeout(context.Background(), c.timeout)
 	defer cancel()
 
-	return c.client.ToggleRadio(ctx, &pb.ToggleRadioRequest{NodeId: nodeId, State: state})
+	resp, err := c.client.ToggleRadios(ctx, &pb.ToggleRadiosRequest{
+		NodeIds: []string{nodeId}, State: state,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if len(resp.Operations) == 0 {
+		return nil, fmt.Errorf("toggle radio on node %s: no operation returned", nodeId)
+	}
+	return resp.Operations[0], nil
 }
 
 func (c *Controller) ToggleService(nodeId string, state string) (*pb.ToggleServiceResponse, error) {

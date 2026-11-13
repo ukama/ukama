@@ -40,6 +40,25 @@ func onlineNodeClient() creg.NodeClient {
 	return c
 }
 
+func restartNode(s *ControllerServer, nodeID string) (*pb.RestartNodeResponse, error) {
+	resp, err := s.RestartNodes(context.TODO(),
+		&pb.RestartNodesRequest{NodeIds: []string{nodeID}})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Operations[0], nil
+}
+
+func toggleRadio(s *ControllerServer, nodeID, state string) (*pb.ToggleRadioResponse,
+	error) {
+	resp, err := s.ToggleRadios(context.TODO(),
+		&pb.ToggleRadiosRequest{NodeIds: []string{nodeID}, State: state})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Operations[0], nil
+}
+
 func TestControllerServer_RestartNode(t *testing.T) {
 	msgclientRepo := &mbmocks.MsgBusServiceClient{}
 	conRepo := &mocks.NodeLogRepo{}
@@ -69,7 +88,7 @@ func TestControllerServer_RestartNode(t *testing.T) {
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	resp, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{NodeId: nodeId})
+	resp, err := restartNode(s, nodeId)
 
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
@@ -114,7 +133,7 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
+	_, err = toggleRadio(s, nodeId, "on")
 
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
@@ -265,7 +284,7 @@ func TestControllerServer_ToggleSwitchPort_Validation(t *testing.T) {
 func TestControllerServer_ToggleRadio_InvalidNodeId(t *testing.T) {
 	s := NewControllerServer(testOrgName, &mocks.NodeLogRepo{}, &mbmocks.MsgBusServiceClient{}, nil, nil, nil, nil, nil, 0, 0, pkg.IsDebugMode)
 
-	_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: "not-a-node-id", State: "on"})
+	_, err := toggleRadio(s, "not-a-node-id", "on")
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "invalid format of node id")
 }
@@ -307,7 +326,7 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
 
-	_, err = s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
+	_, err = toggleRadio(s, nodeId, "on")
 
 	msgclientRepo.AssertExpectations(t)
 	opMgr.AssertExpectations(t)
@@ -330,11 +349,11 @@ func TestControllerServer_OfflineNodeIsRejectedWithoutLocking(t *testing.T) {
 		call func(*ControllerServer) error
 	}{
 		{"RestartNode", func(s *ControllerServer) error {
-			_, err := s.RestartNode(context.TODO(), &pb.RestartNodeRequest{NodeId: nodeId})
+			_, err := restartNode(s, nodeId)
 			return err
 		}},
 		{"ToggleRadio", func(s *ControllerServer) error {
-			_, err := s.ToggleRadio(context.TODO(), &pb.ToggleRadioRequest{NodeId: nodeId, State: "on"})
+			_, err := toggleRadio(s, nodeId, "on")
 			return err
 		}},
 		{"ToggleService", func(s *ControllerServer) error {
@@ -428,8 +447,9 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, mock.Anything).
 			Return(&copr.OperationInfo{}, nil).Once()
 
-		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
-		_, err := c.acquireAndRegister("ToggleRadio", "node:x")
+		c := &ControllerServer{opManager: opMgr, opMonitor: opMon,
+			nodeClient: onlineNodeClient()}
+		_, err := c.lockNodes("ToggleRadio", "x")
 
 		assert.Error(t, err)
 		opMon.AssertNotCalled(t, "Cancel", mock.Anything)

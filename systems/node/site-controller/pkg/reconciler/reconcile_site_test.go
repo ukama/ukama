@@ -170,7 +170,7 @@ func TestReconcileSite_DoesNotActWhenObservedMatchesDesired(t *testing.T) {
 
 	require.NoError(t, err)
 	h.controller.AssertNotCalled(t, "ToggleService", mock.Anything, mock.Anything)
-	h.controller.AssertNotCalled(t, "ToggleRadio", mock.Anything, mock.Anything)
+	h.controller.AssertNotCalled(t, "ToggleRadios", mock.Anything, mock.Anything)
 }
 
 func TestReconcileSite_ReappliesRadioAfterDrift(t *testing.T) {
@@ -179,9 +179,11 @@ func TestReconcileSite_ReappliesRadioAfterDrift(t *testing.T) {
 		withState(StateOff, StateOff).
 		withFlight(db.IntentFlightStatusSucceeded, 0, time.Now().UTC())
 
-	h.controller.On("ToggleRadio", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleRadioRequest) bool {
-		return req.NodeId == testAmpID && req.State == StateOn
-	})).Return(&contpb.ToggleRadioResponse{}, nil).Once()
+	h.controller.On("ToggleRadios", mock.Anything,
+		mock.MatchedBy(func(req *contpb.ToggleRadiosRequest) bool {
+			return len(req.NodeIds) == 1 && req.NodeIds[0] == testAmpID &&
+				req.State == StateOn
+		})).Return(&contpb.ToggleRadiosResponse{}, nil).Once()
 
 	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, false)
 
@@ -197,7 +199,7 @@ func TestReconcileSite_ExhaustedFlightBacksOffBeforeRetrying(t *testing.T) {
 	err := h.reconciler.ReconcileSite(context.Background(), testSiteID, false)
 
 	require.NoError(t, err)
-	h.controller.AssertNotCalled(t, "ToggleRadio", mock.Anything, mock.Anything)
+	h.controller.AssertNotCalled(t, "ToggleRadios", mock.Anything, mock.Anything)
 }
 
 func TestReconcileSite_ExhaustedFlightRetriesOnceBackoffElapsed(t *testing.T) {
@@ -206,8 +208,8 @@ func TestReconcileSite_ExhaustedFlightRetriesOnceBackoffElapsed(t *testing.T) {
 		withState(StateOff, StateOff).
 		withFlight(db.IntentFlightStatusTimeout, 3, time.Now().UTC().Add(-2*time.Minute))
 
-	h.controller.On("ToggleRadio", mock.Anything, mock.Anything).
-		Return(&contpb.ToggleRadioResponse{}, nil).Once()
+	h.controller.On("ToggleRadios", mock.Anything, mock.Anything).
+		Return(&contpb.ToggleRadiosResponse{}, nil).Once()
 
 	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, false)
 
@@ -345,7 +347,7 @@ func TestApplyIntentState_ServiceAppliedWhenRadioFails(t *testing.T) {
 
 	h.controller.On("SendNodeCommand", mock.Anything, mock.Anything).
 		Return(&contpb.SendNodeCommandResponse{}, nil).Maybe()
-	h.controller.On("ToggleRadio", mock.Anything, mock.Anything).
+	h.controller.On("ToggleRadios", mock.Anything, mock.Anything).
 		Return(nil, assert.AnError).Once()
 	h.controller.On("ToggleService", mock.Anything, mock.MatchedBy(func(req *contpb.ToggleServiceRequest) bool {
 		return req.NodeId == testTowerID && req.State == StateOn
@@ -395,8 +397,8 @@ func TestRadioOnPowersAmplifierPort(t *testing.T) {
 		withState(StateOff, StateOff).
 		withFlight(db.IntentFlightStatusSucceeded, 0, time.Now().UTC())
 
-	h.controller.On("ToggleRadio", mock.Anything, mock.Anything).
-		Return(&contpb.ToggleRadioResponse{}, nil).Maybe()
+	h.controller.On("ToggleRadios", mock.Anything, mock.Anything).
+		Return(&contpb.ToggleRadiosResponse{}, nil).Maybe()
 
 	_ = h.reconciler.ReconcileSite(context.Background(), testSiteID, true)
 

@@ -67,25 +67,45 @@ func (this *ToggleSwitchPortRequest) Validate() error {
 func (this *ToggleSwitchPortResponse) Validate() error {
 	return nil
 }
-func (this *ToggleRadioRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+func (this *ToggleRadioResponse) Validate() error {
+	return nil
+}
+func (this *RestartNodeResponse) Validate() error {
+	return nil
+}
+func (this *RestartNodesRequest) Validate() error {
+	if len(this.NodeIds) < 1 {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must contain at least 1 elements`, this.NodeIds))
+	}
+	return nil
+}
+func (this *RestartNodesResponse) Validate() error {
+	for _, item := range this.Operations {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Operations", err)
+			}
+		}
+	}
+	return nil
+}
+func (this *ToggleRadiosRequest) Validate() error {
+	if len(this.NodeIds) < 1 {
+		return github_com_mwitkow_go_proto_validators.FieldError("NodeIds", fmt.Errorf(`value '%v' must contain at least 1 elements`, this.NodeIds))
 	}
 	if this.State == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("State", fmt.Errorf(`value '%v' must not be an empty string`, this.State))
 	}
 	return nil
 }
-func (this *ToggleRadioResponse) Validate() error {
-	return nil
-}
-func (this *RestartNodeRequest) Validate() error {
-	if this.NodeId == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("NodeId", fmt.Errorf(`value '%v' must not be an empty string`, this.NodeId))
+func (this *ToggleRadiosResponse) Validate() error {
+	for _, item := range this.Operations {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Operations", err)
+			}
+		}
 	}
-	return nil
-}
-func (this *RestartNodeResponse) Validate() error {
 	return nil
 }
 func (this *ToggleServiceRequest) Validate() error {

@@ -228,24 +228,34 @@ func (s *SoftwareServer) GetReleaseCatalog(ctx context.Context, req *pb.GetRelea
 	return &pb.GetReleaseCatalogResponse{Releases: out}, nil
 }
 
-func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey, completionRule string) (*copr.OperationInfo, error) {
+func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey, siteID,
+	completionRule string) (*copr.OperationInfo, error) {
 	if s.opManager == nil || s.opMonitor == nil {
 		log.Warnf("%s running without operation manager/monitor for %s", actionType, resourceKey)
 		return &copr.OperationInfo{Id: "", ResourceKey: resourceKey}, nil
 	}
 
-	startResp, err := s.opManager.Start(copr.StartRequest{
-		Type:         actionType,
-		System:       "node",
-		ResourceKey:  resourceKey,
-		RequestedBy:  pkg.ServiceName,
-		LeaseSeconds: s.opLeaseSecs,
-	})
+	siblings, err := s.siteNodeKeys(siteID)
 	if err != nil {
-		log.Warnf("%s lock acquire for %s rejected: %v", actionType, resourceKey, err)
 		return nil, err
 	}
-	op := startResp.Operation
+	ops, err := copr.LockThenCheck(s.opManager, copr.LockRequest{
+		Type:         actionType,
+		System:       "node",
+		RequestedBy:  pkg.ServiceName,
+		LeaseSeconds: s.opLeaseSecs,
+		Targets:      []string{resourceKey},
+		Siblings:     siblings,
+	})
+	if errors.Is(err, copr.ErrBusy) {
+		log.Warnf("%s rejected for %s: %v", actionType, resourceKey, err)
+		return nil, status.Errorf(codes.AlreadyExists, "%s rejected: %v", actionType, err)
+	}
+	if err != nil {
+		log.Errorf("%s lock for %s failed: %v", actionType, resourceKey, err)
+		return nil, status.Errorf(codes.Unavailable, "%s: lock node: %v", actionType, err)
+	}
+	op := ops[0]
 	if _, err := s.opMonitor.Register(&opmonpb.RegisterIntentRequest{
 		OperationId:     op.Id,
 		ResourceKey:     resourceKey,
@@ -359,18 +369,41 @@ func (s *SoftwareServer) GetSoftwareList(ctx context.Context, req *pb.GetSoftwar
 	return &pb.GetSoftwareListResponse{Software: softwarePb}, nil
 }
 
-func (s *SoftwareServer) ensureNodeOnline(nodeID string) error {
+func (s *SoftwareServer) onlineNode(nodeID string) (*creg.NodeInfo, error) {
 	node, err := s.nodeClient.Get(nodeID)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to resolve node %s: %v", nodeID, err)
+		return nil, status.Errorf(codes.Internal, "failed to resolve node %s: %v",
+			nodeID, err)
 	}
 
-	if !strings.EqualFold(node.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
-		return status.Errorf(codes.NotFound, "node %s is not available for updates: connectivity is %s",
+	if !strings.EqualFold(node.Status.Connectivity,
+		ukama.NodeConnectivityOnline.String()) {
+		return nil, status.Errorf(codes.NotFound,
+			"node %s is not available for updates: connectivity is %s",
 			nodeID, node.Status.Connectivity)
 	}
 
-	return nil
+	return node, nil
+}
+
+func (s *SoftwareServer) siteNodeKeys(siteID string) ([]string, error) {
+	if siteID == "" {
+		return nil, nil
+	}
+	resp, err := s.nodeClient.GetNodesBySite(siteID)
+	if err != nil {
+		return nil, status.Errorf(codes.Unavailable, "read nodes of site %s: %v",
+			siteID, err)
+	}
+	keys := make([]string, 0, len(resp.Nodes))
+	for _, n := range resp.Nodes {
+		id := n.Id
+		if nId, err := ukama.ValidateNodeId(n.Id); err == nil {
+			id = nId.String()
+		}
+		keys = append(keys, "node:"+id)
+	}
+	return keys, nil
 }
 
 func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftwareRequest) (*pb.UpdateSoftwareResponse, error) {
@@ -381,7 +414,8 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.InvalidArgument, "invalid node id: %s", err.Error())
 	}
 
-	if err := s.ensureNodeOnline(nId.String()); err != nil {
+	node, err := s.onlineNode(nId.String())
+	if err != nil {
 		return nil, err
 	}
 
@@ -436,7 +470,8 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 		return nil, status.Errorf(codes.Internal, "failed to marshal update request: %v", err)
 	}
 
-	op, err := s.acquireAndRegister("UpdateSoftware", "node:"+nId.String(), "app."+req.Name+"="+req.Tag)
+	op, err := s.acquireAndRegister("UpdateSoftware", "node:"+nId.String(),
+		node.Site.SiteId, "app."+req.Name+"="+req.Tag)
 	if err != nil {
 		return nil, err
 	}

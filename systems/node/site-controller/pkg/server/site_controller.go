@@ -16,7 +16,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
 	contpb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -39,12 +38,26 @@ type SiteControllerServer struct {
 	nodeClient     creg.NodeClient
 	healthClient   providers.HealthClientProvider
 	controller     providers.ControllerClientProvider
-	opManager      copr.ManagerClient
 	baseRoutingKey msgbus.RoutingKeyBuilder
 }
 
-func NewSiteControllerServer(orgName string, r *reconciler.Reconciler, mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient, siteClient creg.SiteClient, healthClient providers.HealthClientProvider, controller providers.ControllerClientProvider, opManager copr.ManagerClient, dbStructs *db.DBStruct) *SiteControllerServer {
-	return &SiteControllerServer{reconciler: r, msgBus: mb, baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName), nodeClient: nodeClient, siteRegistry: siteClient, healthClient: healthClient, controller: controller, opManager: opManager, orgName: orgName, dbStructs: dbStructs}
+func NewSiteControllerServer(orgName string, r *reconciler.Reconciler,
+	mb msgBusServiceClient.MsgBusServiceClient, nodeClient creg.NodeClient,
+	siteClient creg.SiteClient, healthClient providers.HealthClientProvider,
+	controller providers.ControllerClientProvider,
+	dbStructs *db.DBStruct) *SiteControllerServer {
+	return &SiteControllerServer{
+		reconciler: r,
+		msgBus:     mb,
+		baseRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().
+			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		nodeClient:   nodeClient,
+		siteRegistry: siteClient,
+		healthClient: healthClient,
+		controller:   controller,
+		orgName:      orgName,
+		dbStructs:    dbStructs,
+	}
 }
 
 func (s *SiteControllerServer) SetSite(ctx context.Context, req *pb.SetSiteRequest) (*pb.SetSiteResponse, error) {
@@ -88,12 +101,10 @@ func (s *SiteControllerServer) SetRadio(ctx context.Context, req *pb.SetRadioReq
 		return nil, err
 	}
 
-	for _, nodeType := range []string{ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE} {
-		for _, nodeID := range nodes[nodeType] {
-			if _, err := client.ToggleRadio(ctx, &contpb.ToggleRadioRequest{NodeId: nodeID, State: req.State}); err != nil {
-				return nil, mapErr(err)
-			}
-		}
+	if _, err := client.ToggleRadios(ctx, &contpb.ToggleRadiosRequest{
+		NodeIds: radioNodes(nodes), State: req.State,
+	}); err != nil {
+		return nil, mapErr(err)
 	}
 
 	log.Infof("site-controller: forwarded RADIO %s for site %s to tnode=%v, anode=%v", req.State, req.SiteId, nodes[ukama.NODE_ID_TYPE_TOWERNODE], nodes[ukama.NODE_ID_TYPE_AMPNODE])
@@ -110,16 +121,17 @@ func (s *SiteControllerServer) RestartSite(ctx context.Context, req *pb.RestartS
 		return nil, err
 	}
 
-	operationIds := make([]string, 0)
-	for _, nodeType := range []string{ukama.NODE_ID_TYPE_TOWERNODE, ukama.NODE_ID_TYPE_AMPNODE} {
-		for _, nodeID := range nodes[nodeType] {
-			resp, err := client.RestartNode(ctx, &contpb.RestartNodeRequest{NodeId: nodeID})
-			if err != nil {
-				return nil, mapErr(err)
-			}
-			log.Infof("site-controller: restarted node %s for site %s, op=%s", nodeID, req.SiteId, resp.GetOperationId())
-			operationIds = append(operationIds, resp.GetOperationId())
-		}
+	resp, err := client.RestartNodes(ctx, &contpb.RestartNodesRequest{
+		NodeIds: radioNodes(nodes),
+	})
+	if err != nil {
+		return nil, mapErr(err)
+	}
+	operationIds := make([]string, 0, len(resp.GetOperations()))
+	for _, op := range resp.GetOperations() {
+		log.Infof("site-controller: restarting %s for site %s, op=%s",
+			op.GetResourceKey(), req.SiteId, op.GetOperationId())
+		operationIds = append(operationIds, op.GetOperationId())
 	}
 
 	log.Infof("site-controller: forwarded RESTART for site %s", req.SiteId)
@@ -176,10 +188,6 @@ func (s *SiteControllerServer) readySiteNodes(siteID, action string, required ..
 		}
 	}
 
-	if s.opManager == nil {
-		return nil, status.Errorf(codes.Unavailable, "%s: operation manager is not set", action)
-	}
-
 	checked := required
 	if !slices.Contains(required, ukama.NODE_ID_TYPE_CNODE) {
 		checked = append(slices.Clone(required), ukama.NODE_ID_TYPE_CNODE)
@@ -191,14 +199,6 @@ func (s *SiteControllerServer) readySiteNodes(siteID, action string, required ..
 			id := canonicalNodeID(n.Id)
 			if !strings.EqualFold(n.Status.Connectivity, ukama.NodeConnectivityOnline.String()) {
 				return nil, status.Errorf(codes.FailedPrecondition, "%s rejected: node %s is not online, connectivity is %q", action, id, n.Status.Connectivity)
-			}
-			op, err := s.opManager.GetByResource("node:" + id)
-			if err != nil {
-				return nil, status.Errorf(codes.Unavailable, "%s: failed to read operation lock for node %s: %v", action, id, err)
-			}
-			if op != nil && !isTerminalOperation(op.Status) {
-				log.Warnf("site-controller: %s rejected, node %s busy with %s op=%s", action, id, op.Type, op.Id)
-				return nil, status.Errorf(codes.FailedPrecondition, "%s rejected: node %s is busy with %s operation %s", action, id, op.Type, op.Id)
 			}
 			ids[t] = append(ids[t], id)
 		}
@@ -223,12 +223,9 @@ func nodeTypeOf(n creg.NodeInfo) string {
 	return ""
 }
 
-func isTerminalOperation(opStatus string) bool {
-	switch strings.ToUpper(opStatus) {
-	case copr.StatusSuccess, copr.StatusFailed, copr.StatusTimeout, copr.StatusCancelled:
-		return true
-	}
-	return false
+func radioNodes(nodes map[string][]string) []string {
+	out := append([]string{}, nodes[ukama.NODE_ID_TYPE_TOWERNODE]...)
+	return append(out, nodes[ukama.NODE_ID_TYPE_AMPNODE]...)
 }
 
 func (s *SiteControllerServer) GetSiteState(ctx context.Context, req *pb.GetSiteStateRequest) (*pb.GetSiteStateResponse, error) {

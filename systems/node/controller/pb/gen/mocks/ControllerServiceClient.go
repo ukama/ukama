@@ -127,8 +127,8 @@ func (_m *ControllerServiceClient) PingNode(ctx context.Context, in *gen.PingNod
 	return r0, r1
 }
 
-// RestartNode provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.RestartNodeRequest, opts ...grpc.CallOption) (*gen.RestartNodeResponse, error) {
+// RestartNodes provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) RestartNodes(ctx context.Context, in *gen.RestartNodesRequest, opts ...grpc.CallOption) (*gen.RestartNodesResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -139,23 +139,23 @@ func (_m *ControllerServiceClient) RestartNode(ctx context.Context, in *gen.Rest
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RestartNode")
+		panic("no return value specified for RestartNodes")
 	}
 
-	var r0 *gen.RestartNodeResponse
+	var r0 *gen.RestartNodesResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) (*gen.RestartNodeResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) (*gen.RestartNodesResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) *gen.RestartNodeResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) *gen.RestartNodesResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.RestartNodeResponse)
+			r0 = ret.Get(0).(*gen.RestartNodesResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodeRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.RestartNodesRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
@@ -201,8 +201,8 @@ func (_m *ControllerServiceClient) SendNodeCommand(ctx context.Context, in *gen.
 	return r0, r1
 }
 
-// ToggleRadio provides a mock function with given fields: ctx, in, opts
-func (_m *ControllerServiceClient) ToggleRadio(ctx context.Context, in *gen.ToggleRadioRequest, opts ...grpc.CallOption) (*gen.ToggleRadioResponse, error) {
+// ToggleRadios provides a mock function with given fields: ctx, in, opts
+func (_m *ControllerServiceClient) ToggleRadios(ctx context.Context, in *gen.ToggleRadiosRequest, opts ...grpc.CallOption) (*gen.ToggleRadiosResponse, error) {
 	_va := make([]interface{}, len(opts))
 	for _i := range opts {
 		_va[_i] = opts[_i]
@@ -213,23 +213,23 @@ func (_m *ControllerServiceClient) ToggleRadio(ctx context.Context, in *gen.Togg
 	ret := _m.Called(_ca...)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ToggleRadio")
+		panic("no return value specified for ToggleRadios")
 	}
 
-	var r0 *gen.ToggleRadioResponse
+	var r0 *gen.ToggleRadiosResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) (*gen.ToggleRadioResponse, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadiosRequest, ...grpc.CallOption) (*gen.ToggleRadiosResponse, error)); ok {
 		return rf(ctx, in, opts...)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) *gen.ToggleRadioResponse); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.ToggleRadiosRequest, ...grpc.CallOption) *gen.ToggleRadiosResponse); ok {
 		r0 = rf(ctx, in, opts...)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*gen.ToggleRadioResponse)
+			r0 = ret.Get(0).(*gen.ToggleRadiosResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadioRequest, ...grpc.CallOption) error); ok {
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.ToggleRadiosRequest, ...grpc.CallOption) error); ok {
 		r1 = rf(ctx, in, opts...)
 	} else {
 		r1 = ret.Error(1)
