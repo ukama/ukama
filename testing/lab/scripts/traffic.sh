@@ -146,11 +146,13 @@ exhaust_traffic() {
         fi
     ) &
     sent_at=""
+    stopped=""
     while [ ! -s "$rc_file" ]; do
         if [ -z "$sent_at" ] && [ "$(sent_bytes "$out")" -ge "$want" ]; then
             sent_at="$(date +%s)"
         fi
         if [ -n "$sent_at" ] && [ $(( $(date +%s) - sent_at )) -ge "$EXHAUST_GRACE_SEC" ]; then
+            stopped=1
             podman exec "$UE_CONTAINER" pkill -x iperf3 >/dev/null 2>&1 || true
         fi
         sleep 1
@@ -160,7 +162,8 @@ exhaust_traffic() {
     traffic_rc="$(cat "$rc_file")"
     sent="$(sent_bytes "$out")"
     rm -f "$out" "$rc_file"
-    if [ "$traffic_rc" -eq 0 ]; then
+    # iperf3 exits 0 on SIGTERM, so a stopped client is never a completion.
+    if [ "$traffic_rc" -eq 0 ] && [ -z "$stopped" ]; then
         echo "traffic-complete ue=$UE_KEY imsi=$IMSI mb=$AMOUNT_MB"
         return 0
     fi

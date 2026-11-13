@@ -48,6 +48,7 @@ case "$FAKE_IPERF" in
     done) echo "iperf Done."; exit 0 ;;
     timeout) exit 124 ;;
     hang) sleep 30 & wait ;;
+    hang-exit0) trap 'echo "iperf3: interrupt - the client has terminated by signal Terminated(15)"; exit 0' TERM; sleep 30 & wait ;;
 esac
 """
 
@@ -99,6 +100,21 @@ class TrafficExhaustion(unittest.TestCase):
         self.assertIn('exec ue-001 pkill -x iperf3', self.podman_calls())
         self.assertIn('exec media-001 sh -c', self.podman_calls())
         self.assertFalse(list((self.dir / 'run/runtime-ues').glob('traffic-*')))
+
+    # Batch 101053z: iperf3 exited 0 on SIGTERM, the server was not restarted
+    # and the successor traffic got "the server is busy running a test".
+    def test_stopped_client_exiting_zero_still_checks_and_resets(self):
+        result = self.run_traffic('hang-exit0', '2.00 MBytes', 'exhaust', mb='2',
+                                  delivered=2193669)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn('traffic-exhausted ue=ue-1', result.stdout)
+        self.assertIn('exec media-001 sh -c', self.podman_calls())
+
+    def test_stopped_client_exiting_zero_with_early_cut_fails(self):
+        result = self.run_traffic('hang-exit0', '2.00 MBytes', 'exhaust', mb='2',
+                                  delivered=600000)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn('traffic cut before the allowance was used', result.stderr)
 
     def test_backend_cutting_user_early_fails_even_if_client_sent_all(self):
         result = self.run_traffic('hang', '1.00 MBytes', 'exhaust',
