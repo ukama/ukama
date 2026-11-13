@@ -13,9 +13,20 @@ cd "${SCRIPT_DIR}"
 [ "$EUID" -eq 0 ] || { echo "ERROR: Run the amplifier image build with sudo"; exit 1; }
 
 # all tools available?
-for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc flex bison rsync wget arm-linux-gnueabihf-gcc; do
+for cmd in losetup parted kpartx mkfs.vfat mkfs.ext4 mkswap truncate make bc flex bison rsync wget groupadd usermod ssh-keygen arm-linux-gnueabihf-gcc; do
     command -v $cmd >/dev/null || { echo "ERROR: '$cmd' not found in PATH"; exit 1; }
 done
+
+UKAMA_SSH_CA_PUB="${UKAMA_SSH_CA_PUB:-}"
+if [[ -z "${UKAMA_SSH_CA_PUB}" ]] || ! ssh-keygen -l -f "${UKAMA_SSH_CA_PUB}" >/dev/null 2>&1; then
+    echo "ERROR: set UKAMA_SSH_CA_PUB to the public key of the Ukama SSH CA (sudo UKAMA_SSH_CA_PUB=/path/ukama_ca.pub $0)"
+    exit 1
+fi
+if grep -q 'PRIVATE KEY' "${UKAMA_SSH_CA_PUB}"; then
+    echo "ERROR: ${UKAMA_SSH_CA_PUB} is a private key, give the .pub file"
+    exit 1
+fi
+UKAMA_SSH_CA_PUB="$(realpath "${UKAMA_SSH_CA_PUB}")"
 
 CROSS_GCC_VERSION=$(arm-linux-gnueabihf-gcc -dumpversion)
 if (( ${CROSS_GCC_VERSION%%.*} >= 15 )); then
@@ -456,12 +467,56 @@ setup_serial_console() {
     check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
 }
 
-setup_device_access() {
-    STAGE="setup_device_access"
+setup_ukama_user() {
+    STAGE="setup_ukama_user"
     local rootfs="$1"
-    sudo mkdir -p "${rootfs}/etc/udev/rules.d"
-    echo 'SUBSYSTEM=="i2c-dev", GROUP="wheel", MODE="0660"' | sudo tee "${rootfs}/etc/udev/rules.d/90-ukama-i2c.rules" > /dev/null
-    check_status $? "I2C access for the wheel group in ${rootfs}" "setup_device_access"
+    local owner
+    grep -q '^ukama:' "${rootfs}/etc/passwd" || { log ERROR "The rootfs has no ukama user"; exit 1; }
+    sudo rm -f "${rootfs}/etc/sudoers.d/wheel" "${rootfs}/etc/doas.d/doas.conf" &&
+        sudo groupadd -R "${rootfs}" -f ukama &&
+        sudo groupadd -R "${rootfs}" -f i2c &&
+        sudo groupadd -R "${rootfs}" -f gpio &&
+        sudo groupadd -R "${rootfs}" -f spi &&
+        sudo usermod -R "${rootfs}" -g ukama -G i2c,gpio,spi,dialout ukama &&
+        owner="$(awk -F: '$1 == "ukama" {print $3 ":" $4}' "${rootfs}/etc/passwd")" &&
+        sudo chown -R "${owner}" "${rootfs}/home/ukama" &&
+        sudo mkdir -p "${rootfs}/etc/udev/rules.d" "${rootfs}/lib/udev" &&
+        printf '%s\n' \
+            '#!/bin/sh' \
+            'find "$1" -maxdepth 1 -type f -perm -200 ! -name uevent ! -name driver_override -exec chgrp gpio {} + -exec chmod g+w {} +' \
+            | sudo tee "${rootfs}/lib/udev/ukama-gpio-access" > /dev/null &&
+        sudo chmod 0755 "${rootfs}/lib/udev/ukama-gpio-access" &&
+        printf '%s\n' \
+            'SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0660"' \
+            'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' \
+            'SUBSYSTEM=="spidev", GROUP="spi", MODE="0660"' \
+            'ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="fema*-gpios|controller-gpios", RUN+="/lib/udev/ukama-gpio-access %S%p"' \
+            | sudo tee "${rootfs}/etc/udev/rules.d/90-ukama-devices.rules" > /dev/null
+    check_status $? "ukama user with I2C, GPIO, SPI and serial access in ${rootfs}" "setup_ukama_user"
+    if grep -rqs . "${rootfs}/etc/sudoers.d" "${rootfs}/etc/doas.d" || grep -Eq '^wheel:.*[:,]ukama(,|$)' "${rootfs}/etc/group"; then
+        log ERROR "The ukama user can still become root in ${rootfs}"
+        exit 1
+    fi
+}
+
+setup_ssh_login() {
+    STAGE="setup_ssh_login"
+    local rootfs="$1"
+    grep -q '^Include /etc/ssh/sshd_config.d/\*.conf' "${rootfs}/etc/ssh/sshd_config" \
+        || { log ERROR "sshd_config in ${rootfs} does not read /etc/ssh/sshd_config.d"; exit 1; }
+    sudo rm -f "${rootfs}"/etc/ssh/ssh_host_*_key "${rootfs}"/etc/ssh/ssh_host_*_key.pub &&
+        sudo mkdir -p "${rootfs}/etc/ssh/sshd_config.d" &&
+        sudo install -m 0644 "${UKAMA_SSH_CA_PUB}" "${rootfs}/etc/ssh/ukama_user_ca.pub" &&
+        printf '%s\n' \
+            'PasswordAuthentication no' \
+            'KbdInteractiveAuthentication no' \
+            'PermitRootLogin no' \
+            'AllowUsers ukama' \
+            'AuthorizedKeysFile none' \
+            'TrustedUserCAKeys /etc/ssh/ukama_user_ca.pub' \
+            'SetEnv PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin' \
+            | sudo tee "${rootfs}/etc/ssh/sshd_config.d/10-ukama.conf" > /dev/null
+    check_status $? "SSH login only for ukama with a certificate from the Ukama CA in ${rootfs}" "setup_ssh_login"
 }
 
 setup_noded_sysfs() {
@@ -598,8 +653,10 @@ update_fstab "${PRIMARY_MNT}" 5
 update_fstab "${PASSIVE_MNT}" 6
 setup_serial_console "${PRIMARY_MNT}"
 setup_serial_console "${PASSIVE_MNT}"
-setup_device_access "${PRIMARY_MNT}"
-setup_device_access "${PASSIVE_MNT}"
+setup_ukama_user "${PRIMARY_MNT}"
+setup_ukama_user "${PASSIVE_MNT}"
+setup_ssh_login "${PRIMARY_MNT}"
+setup_ssh_login "${PASSIVE_MNT}"
 setup_network "${PRIMARY_MNT}"
 setup_network "${PASSIVE_MNT}"
 setup_noded_sysfs "${PRIMARY_MNT}"
