@@ -456,6 +456,14 @@ setup_serial_console() {
     check_status $? "Serial login on ttyS0 in ${rootfs}" "setup_serial_console"
 }
 
+setup_device_access() {
+    STAGE="setup_device_access"
+    local rootfs="$1"
+    sudo mkdir -p "${rootfs}/etc/udev/rules.d"
+    echo 'SUBSYSTEM=="i2c-dev", GROUP="wheel", MODE="0660"' | sudo tee "${rootfs}/etc/udev/rules.d/90-ukama-i2c.rules" > /dev/null
+    check_status $? "I2C access for the wheel group in ${rootfs}" "setup_device_access"
+}
+
 setup_noded_sysfs() {
     STAGE="setup_noded_sysfs"
     local rootfs="$1"
@@ -590,6 +598,8 @@ update_fstab "${PRIMARY_MNT}" 5
 update_fstab "${PASSIVE_MNT}" 6
 setup_serial_console "${PRIMARY_MNT}"
 setup_serial_console "${PASSIVE_MNT}"
+setup_device_access "${PRIMARY_MNT}"
+setup_device_access "${PASSIVE_MNT}"
 setup_network "${PRIMARY_MNT}"
 setup_network "${PASSIVE_MNT}"
 setup_noded_sysfs "${PRIMARY_MNT}"
