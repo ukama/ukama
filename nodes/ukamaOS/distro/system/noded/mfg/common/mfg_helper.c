@@ -19,7 +19,7 @@ static char* boardname[MODULE_TYPE_MAX] = {
     "ctrl",
     "fe1",
     "fe2",
-    "cm4"
+    "cm5"
 };
 
 int verify_uuid(char* uuid) {

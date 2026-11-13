@@ -138,8 +138,8 @@
         "UUID":"uk-sa2602-cnode-v0-344c",
         "name":"cNode",
         "type":6,
-        "partNumber":"RPI-CM4-0XXXX",
-        "skew":"UK_CNODE-RPI-CM4-0001",
+        "partNumber":"RPI-CM5-0XXXX",
+        "skew":"UK_CNODE-RPI-CM5-0001",
         "mac":"10:20:30:20:50:66",
         "swVersion":{
             "major":0,
@@ -155,8 +155,8 @@
     },
     "nodeConfig":[
         {
-            "UUID":"UK-SA2602-CM4-1102",
-            "name":"cm4",
+            "UUID":"UK-SA2602-CM5-1102",
+            "name":"cm5",
             "invtSysFsFile":"/tmp/sys/bus/i2c/devices/i2c-0/0-0050/eeprom",
             "invtDeviceInfo":{
                 "bus":0,
@@ -165,10 +165,10 @@
         }
     ],
     "moduleInfo":{
-        "UUID":"UK-SA2602-CM4-1102",
-        "name":"cm4",
+        "UUID":"UK-SA2602-CM5-1102",
+        "name":"cm5",
         "type":0,
-        "partNumber":"RPI-CM4",
+        "partNumber":"RPI-CM5",
         "hwVersion":"REV-A",
         "mac":"10:20:30:20:50:66",
         "swVersion":{
@@ -186,10 +186,10 @@
     "moduleConfig":[
         {
             "name":"TMP464",
-            "description":"CM4 CPU temperature",
+            "description":"Mock CNode temperature",
             "type":1,
             "class":2,
-            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/0/tmp464_1/",
+            "devSysFsFile":"/tmp/sys/class/hwmon/hwmon0/",
             "devHwAttrs":{
                 "bus":0,
                 "address":72

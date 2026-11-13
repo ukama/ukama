@@ -81,7 +81,7 @@ mk_hwmon() {
     local base="$ROOT/class/hwmon/hwmon0"
 
     mkdirp "$base"
-    mkfile "$base/name" "cnode-cm4-mock"
+    mkfile "$base/name" "cnode-cm5-mock"
     mkfile "$base/temp1_input" "42000"
 }
 
@@ -100,7 +100,7 @@ init_cnode_tree() {
     mk_i2c_bus 0
 
     inv="$(mk_i2c_dev 0 0x50)"
-    mkfile "$inv/name" "cm4-inventory-eeprom"
+    mkfile "$inv/name" "cm5-inventory-eeprom"
     mk_eeprom_file "$inv"
 
     mklink "$ROOT/bus/i2c/devices/i2c-0/0-0050/eeprom" \
