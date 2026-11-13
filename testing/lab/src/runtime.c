@@ -1105,6 +1105,43 @@ int runtime_generate_traffic(runtime_t *rt,
     return ULAB_OK;
 }
 
+int runtime_generate_exhausting_traffic(runtime_t *rt,
+                                        const world_t *w,
+                                        const selector_result_t *ues,
+                                        uint64_t amount_mb,
+                                        ulab_error_t *err) {
+    size_t i;
+
+    if (runtime_is_hardware(rt)) {
+        snprintf(err->msg, sizeof(err->msg),
+                 "expect_exhaustion traffic needs the virtual runtime");
+        return ULAB_ERR;
+    }
+
+    for (i = 0; i < ues->count; i++) {
+        const ue_t *ue = &w->ues[ues->idx[i]];
+        char args[4096];
+        int rc;
+
+        rc = snprintf(args, sizeof(args), "%s %llu %s exhaust",
+                      ue->id,
+                      (unsigned long long)amount_mb,
+                      rt->run_dir);
+
+        if (rc < 0 || (size_t)rc >= sizeof(args)) {
+            snprintf(err->msg, sizeof(err->msg),
+                     "traffic args too long for ue %s", ue->id);
+            return ULAB_ERR;
+        }
+
+        if (run_script(rt, "traffic.sh", args, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    return ULAB_OK;
+}
+
 int runtime_virtual_restart_nodes(runtime_t *rt,
                                   const world_t *w,
                                   const selector_result_t *nodes,

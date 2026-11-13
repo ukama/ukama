@@ -63,8 +63,12 @@ int event_traffic(event_ctx_t *ctx, const event_spec_t *event,
         }
     }
     if (event->type == EVT_TRAFFIC) {
-        if (runtime_generate_traffic(ctx->runtime, ctx->world, &ues,
-            event->amount_mb, err)) {
+        int rc = event->expect_exhaustion
+            ? runtime_generate_exhausting_traffic(ctx->runtime, ctx->world,
+                                                  &ues, event->amount_mb, err)
+            : runtime_generate_traffic(ctx->runtime, ctx->world, &ues,
+                                       event->amount_mb, err);
+        if (rc) {
             selector_result_free(&ues);
             return ULAB_ERR;
         }

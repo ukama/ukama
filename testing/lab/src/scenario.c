@@ -1179,6 +1179,10 @@ static int apply_event_field(event_spec_t *e, const char *key,
         e->retry_busy_seconds = (uint32_t)seconds;
         return ULAB_OK;
     }
+    if (ulab_streq(key, "expect_exhaustion")) {
+        if (e->type != EVT_TRAFFIC) return ULAB_ERR;
+        return web_bool(val, &e->expect_exhaustion);
+    }
     if (ulab_streq(key, "profile")) return ulab_copy(e->profile,
         sizeof(e->profile), val);
     if (ulab_streq(key, "target")) return ulab_copy(e->target,

@@ -102,6 +102,10 @@ int runtime_verify_ue_policy_blocks(runtime_t *rt, const world_t *w,
 int runtime_generate_traffic(runtime_t *rt, const world_t *w,
                              const selector_result_t *ues,
                              uint64_t amount_mb, ulab_error_t *err);
+int runtime_generate_exhausting_traffic(runtime_t *rt, const world_t *w,
+                                        const selector_result_t *ues,
+                                        uint64_t amount_mb,
+                                        ulab_error_t *err);
 int runtime_set_service(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_set_radio(runtime_t *rt, int enabled, ulab_error_t *err);
 int runtime_mark_node_offline(runtime_t *rt, ulab_error_t *err);

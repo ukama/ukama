@@ -275,6 +275,13 @@ int scenario_validate(const scenario_t *s, ulab_error_t *err) {
                 return fail(err, "APN override requires virtual start_ues "
                             "and ASCII letters, digits, dots or hyphens");
             }
+            if (event->expect_exhaustion &&
+                (!ulab_streq(s->provider.type, "virtual") ||
+                 event->type != EVT_TRAFFIC ||
+                 ulab_streq(event->expect_result, "failure"))) {
+                return fail(err, "expect_exhaustion requires a virtual "
+                            "traffic event that is expected to succeed");
+            }
             if (event->retry_busy_seconds > 0 &&
                 (event->type != EVT_TOGGLE_SERVICE ||
                  event->retry_busy_seconds > 300 ||

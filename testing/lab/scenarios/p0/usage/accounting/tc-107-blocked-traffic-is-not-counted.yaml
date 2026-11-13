@@ -41,6 +41,7 @@ phases:
       - type: traffic
         ues: all
         amount_mb: 2
+        expect_exhaustion: true
       - type: finalize_ue_sessions
         ues: all
         seconds: 60

@@ -409,6 +409,30 @@ accepts a `nodes:` selector and derives the unique sites from those nodes.
 responses include the BFF failure message, so operation-lock scenarios can
 assert the reason with `expect.error_contains`.
 
+A traffic event that spends a package's whole allowance sets
+`expect_exhaustion`:
+
+```yaml
+- type: traffic
+  ues: all
+  amount_mb: 2
+  expect_exhaustion: true
+```
+
+This is a subscriber using up their plan. TCP/IP headers push PCRF usage past
+the allowance before iperf3 finishes, so the PCRF can close the PDN before
+iperf3 exchanges its results, the same stall a phone app sees at the cap. With
+`expect_exhaustion: true`, a run where iperf3 completes passes as before. If
+iperf3 hangs, `traffic.sh` stops it `ULAB_TRAFFIC_EXHAUST_GRACE_SEC` (default
+10) after the client has written the payload. It then passes only if the media
+container's `eth0` received at least 95% of the allowance during the transfer,
+which proves the backend let the user spend their whole plan. ACKs count
+against the quota too, hence 95% rather than 100%. A backend that cuts the
+user early fails the step even when the client wrote the full payload. On a
+pass it restarts the media iperf3 server so the next traffic event is not
+refused as busy. The field needs the virtual runtime and a traffic event
+expected to succeed.
+
 For a service toggle after restart, opt in to a bounded operation-lock retry:
 
 ```yaml
