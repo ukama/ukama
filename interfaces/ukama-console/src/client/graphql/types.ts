@@ -1131,6 +1131,8 @@ export type NodeLatestMetric = {
 
 export type NodeOperationStatusDto = {
   __typename?: 'NodeOperationStatusDto';
+  blocked: Scalars['Boolean']['output'];
+  blockingOperation?: Maybe<OperationDto>;
   busy: Scalars['Boolean']['output'];
   nodeId: Scalars['String']['output'];
   operation?: Maybe<OperationDto>;

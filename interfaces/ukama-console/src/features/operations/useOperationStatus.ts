@@ -104,11 +104,15 @@ function usePollWhileBusy(poller: Poller, busy: boolean) {
   }, [visible, refetch]);
 }
 
+type OperationView =
+  | { id: string; type: string; status: string; requestedBy?: string | null; startedAt?: string | null }
+  | undefined;
+
 export interface NodeOperationView {
   busy: boolean;
-  operation:
-    | { id: string; type: string; status: string; requestedBy?: string | null; startedAt?: string | null }
-    | undefined;
+  operation: OperationView;
+  blocked: boolean;
+  blockingOperation: OperationView;
   markBusy: () => void;
   refetch: () => void;
 }
@@ -125,12 +129,16 @@ export function useNodeOperationStatus(nodeId: string | null | undefined): NodeO
   const status = q.data?.getNodeOperationStatus;
   const serverBusy = !!status?.busy;
   const { busy, markBusy } = useOptimisticBusy(serverBusy);
+  const blocked = busy || !!status?.blocked;
 
-  usePollWhileBusy(q, busy);
+  usePollWhileBusy(q, blocked);
 
   return {
     busy,
     operation: status?.operation ?? undefined,
+    blocked,
+    blockingOperation:
+      status?.blockingOperation ?? status?.operation ?? undefined,
     markBusy,
     refetch: () => void q.refetch(),
   };

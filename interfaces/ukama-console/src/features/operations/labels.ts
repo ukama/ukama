@@ -12,10 +12,11 @@ import { useEffect, useState } from 'react';
 /** Short human label for an operation type; falls back to the raw type. */
 const OP_LABELS: Record<string, string> = {
   restartnode: 'Restart',
-  restartsite: 'Site restart',
-  togglerf: 'RF change',
-  togglerfstatus: 'RF change',
+  toggleradio: 'RF change',
   toggleservice: 'Service change',
+  toggleinternetswitch: 'Internet switch change',
+  updatesoftware: 'Software update',
+  applyconfig: 'Config update',
 };
 
 export function prettyOpType(type?: string | null): string {

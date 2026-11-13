@@ -78,9 +78,26 @@ export interface NodeLockRead {
   failed?: boolean;
 }
 
-export interface SiteNodeStatus extends NodeOperationStatusDto {
+export type NodeLockStatus = Omit<
+  NodeOperationStatusDto,
+  "blocked" | "blockingOperation"
+>;
+
+export interface SiteNodeStatus extends NodeLockStatus {
   connectivity?: string;
 }
+
+export const withBlocking = <T extends NodeLockStatus>(
+  node: T,
+  siteNodes: NodeLockStatus[]
+): T & Pick<NodeOperationStatusDto, "blocked" | "blockingOperation"> => {
+  const blocker = node.busy ? node : siteNodes.find(s => s.busy);
+  return {
+    ...node,
+    blocked: !!blocker,
+    blockingOperation: blocker?.operation,
+  };
+};
 
 export const toNodeStatus = (
   n: NodeLockRead,
@@ -114,10 +131,11 @@ export const busyReason = (op?: OperationDto): string => {
 };
 
 /**
- * Per-action availability for the site page, derived from node roles:
- *  - restartSite depends on EVERY node (all must be idle)
- *  - rf         depends on the amplifier and tower nodes (anode, tnode)
- *  - service    depends on the tower node (tnode)
+ * Per-action availability for the site page. Every action is refused while
+ * any node of the site is busy; connectivity is checked per action:
+ *  - restartSite needs every node online
+ *  - rf          needs the amplifier, tower and controller nodes online
+ *  - service     needs the tower and controller nodes online
  */
 export const buildSiteActions = (
   statuses: SiteNodeStatus[]
@@ -125,9 +143,9 @@ export const buildSiteActions = (
   const tower = statuses.find(s => s.type === NODE_TYPE.tnode);
   const amp = statuses.find(s => s.type === NODE_TYPE.anode);
   const controllers = statuses.filter(s => s.type === NODE_TYPE.cnode);
+  const busy = statuses.find(s => s.busy);
 
   const unavailableReason = (nodes: SiteNodeStatus[]): string | undefined => {
-    const busy = nodes.find(n => n.busy);
     if (busy) return busyReason(busy.operation);
     const notOnline = nodes.find(
       n =>
