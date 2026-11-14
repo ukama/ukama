@@ -490,6 +490,7 @@ setup_ukama_user() {
             'SUBSYSTEM=="i2c-dev", GROUP="i2c", MODE="0660"' \
             'SUBSYSTEM=="gpio", KERNEL=="gpiochip*", GROUP="gpio", MODE="0660"' \
             'SUBSYSTEM=="spidev", GROUP="spi", MODE="0660"' \
+            'ACTION=="add|bind", SUBSYSTEM=="i2c", DRIVER=="at24", RUN+="/bin/chgrp i2c %S%p/eeprom", RUN+="/bin/chmod 0640 %S%p/eeprom"' \
             'ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="fema*-gpios|controller-gpios", RUN+="/lib/udev/ukama-gpio-access %S%p"' \
             | sudo tee "${rootfs}/etc/udev/rules.d/90-ukama-devices.rules" > /dev/null
     check_status $? "ukama user with I2C, GPIO, SPI and serial access in ${rootfs}" "setup_ukama_user"
