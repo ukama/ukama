@@ -169,8 +169,8 @@ int create_db_hook(char **puuid, char **name, char **schema, int count) {
             .addr    = 0x50
         },
         {
-            .modUuid = "UK-SA2602-CM4-1102",
-            .modName = "cm4",
+            .modUuid = "UK-SA2602-CM5-1102",
+            .modName = "cm5",
             .sysFs   = "/bus/i2c/devices/i2c-0/0-0050/eeprom",
             .bus     = 0,
             .addr    = 0x50
