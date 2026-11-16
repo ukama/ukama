@@ -285,6 +285,17 @@ func (s *SoftwareServer) markRunning(op *copr.OperationInfo, actionType string) 
 	return nil
 }
 
+func markRunningCode(err error) codes.Code {
+	switch {
+	case errors.Is(err, copr.ErrNotRunnable):
+		return codes.Aborted
+	case errors.Is(err, copr.ErrUnavailable):
+		return codes.Unavailable
+	default:
+		return codes.Internal
+	}
+}
+
 func (s *SoftwareServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
 	if s.markFailed(op, actionType, reason) {
 		s.cancelIntent(op, actionType)
@@ -477,7 +488,7 @@ func (s *SoftwareServer) UpdateSoftware(ctx context.Context, req *pb.UpdateSoftw
 	}
 	if err := s.markRunning(op, "UpdateSoftware"); err != nil {
 		s.failOperation(op, "UpdateSoftware", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
 	if err := s.publishMessage(target, "POST", path, nId.String(), data); err != nil {
 		log.Errorf("Failed to publish update message: %v", err)

@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -265,6 +266,28 @@ func TestRestartNodes(t *testing.T) {
 		f.bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 	})
 
+	t.Run("MarkRunningRejectedIsAborted", func(t *testing.T) {
+		f := newSiteFixture(busySite())
+		f.startOK(siteTnode, "op-t", 1)
+		f.startOK(siteAnode, "op-a", 2)
+		f.idle(siteCnode)
+		f.mon.On("Register", mock.Anything).
+			Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
+		f.mgr.On("MarkRunning", "op-t", uint64(1), pkg.ServiceName).
+			Return(nil, fmt.Errorf("MarkRunning failure: %w: lease expired",
+				copr.ErrNotRunnable)).Once()
+		f.mgr.On("Fail", mock.Anything, mock.Anything, pkg.ServiceName,
+			mock.Anything).Return(&copr.OperationInfo{}, nil).Twice()
+		f.mon.On("Cancel", mock.Anything).
+			Return(&opmonpb.CancelIntentResponse{}, nil).Twice()
+
+		_, err := f.server().RestartNodes(context.TODO(),
+			&pb.RestartNodesRequest{NodeIds: []string{siteTnode, siteAnode}})
+
+		assert.Equal(t, codes.Aborted, status.Code(err))
+		f.bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	})
+
 	t.Run("UnregisteredNodeIsRejected", func(t *testing.T) {
 		f := newSiteFixture(nil)
 		repo := &mocks.NodeLogRepo{}
@@ -324,4 +347,24 @@ func TestLockNodes_WithoutManagerIsUnavailable(t *testing.T) {
 	c := &ControllerServer{nodeClient: onlineNodeClient()}
 	_, err := c.lockNodes("RestartNode", siteTnode)
 	assert.Equal(t, codes.Unavailable, status.Code(err))
+}
+
+func TestMarkRunningCode(t *testing.T) {
+	for name, tc := range map[string]struct {
+		err  error
+		code codes.Code
+	}{
+		"NotRunnableIsAborted": {
+			fmt.Errorf("MarkRunning failure: %w", copr.ErrNotRunnable), codes.Aborted,
+		},
+		"UnavailableIsUnavailable": {
+			fmt.Errorf("MarkRunning failure: %w", copr.ErrUnavailable),
+			codes.Unavailable,
+		},
+		"OtherIsInternal": {errors.New("MarkRunning deserialize"), codes.Internal},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.code, markRunningCode(tc.err))
+		})
+	}
 }

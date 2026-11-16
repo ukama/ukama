@@ -117,7 +117,7 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 	op := ops[0]
 	if err := c.markRunning(op, "SendNodeCommand"); err != nil {
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
 	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("publish failed: %v", err))
@@ -214,7 +214,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 	op := ops[0]
 	if err := c.markRunning(op, "ToggleInternetSwitch"); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
 	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
@@ -282,7 +282,7 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 	op := ops[0]
 	if err := c.markRunning(op, "ToggleService"); err != nil {
 		c.failOperation(op, "ToggleService", fmt.Sprintf("mark running failed: %v", err))
-		return nil, status.Errorf(codes.Internal, "mark running: %v", err)
+		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
 	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
 		c.failOperation(op, "ToggleService", fmt.Sprintf("publish failed: %v", err))
@@ -414,7 +414,7 @@ func (c *ControllerServer) markAllRunning(ops []*copr.OperationInfo,
 	for _, op := range ops {
 		if err := c.markRunning(op, actionType); err != nil {
 			c.failAll(ops, actionType, fmt.Sprintf("mark running failed: %v", err))
-			return status.Errorf(codes.Internal, "mark running: %v", err)
+			return status.Errorf(markRunningCode(err), "mark running: %v", err)
 		}
 	}
 	return nil
@@ -438,6 +438,17 @@ func (c *ControllerServer) markRunning(op *copr.OperationInfo, actionType string
 		return err
 	}
 	return nil
+}
+
+func markRunningCode(err error) codes.Code {
+	switch {
+	case errors.Is(err, copr.ErrNotRunnable):
+		return codes.Aborted
+	case errors.Is(err, copr.ErrUnavailable):
+		return codes.Unavailable
+	default:
+		return codes.Internal
+	}
 }
 
 func (c *ControllerServer) failOperation(op *copr.OperationInfo, actionType, reason string) {
