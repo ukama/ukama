@@ -10,6 +10,7 @@ package operation_test
 
 import (
 	"bytes"
+	"errors"
 	"io"
 	"net/http"
 	"testing"
@@ -341,29 +342,41 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 		assert.Equal(tt, fencingToken, op.FencingToken)
 	})
 
-	t.Run("MarkRunningFailed", func(tt *testing.T) {
-		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
-			assert.Equal(tt, "POST", req.Method)
-
-			resp := `{"error":"invalid fencing token"}`
-
-			return &http.Response{
-				StatusCode: 409,
-				Status:     "409 CONFLICT",
-				Body:       io.NopCloser(bytes.NewBufferString(resp)),
-				Header:     http.Header{"Content-Type": []string{"application/json"}},
+	for code, want := range map[int]error{
+		http.StatusBadRequest:          operation.ErrNotRunnable,
+		http.StatusNotFound:            operation.ErrNotRunnable,
+		http.StatusConflict:            operation.ErrNotRunnable,
+		http.StatusPreconditionFailed:  operation.ErrNotRunnable,
+		http.StatusServiceUnavailable:  operation.ErrUnavailable,
+		http.StatusGatewayTimeout:      operation.ErrUnavailable,
+		http.StatusInternalServerError: nil,
+	} {
+		t.Run("MarkRunningFailed"+http.StatusText(code), func(tt *testing.T) {
+			mockTransport := func(req *http.Request) *http.Response {
+				body := bytes.NewBufferString(`{"error":"rejected"}`)
+				return &http.Response{
+					StatusCode: code,
+					Body:       io.NopCloser(body),
+					Header:     http.Header{"Content-Type": []string{"application/json"}},
+				}
 			}
-		}
 
-		testManagerClient := operation.NewManagerClient("")
-		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+			testManagerClient := operation.NewManagerClient("")
+			testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
-		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
+			op, err := testManagerClient.MarkRunning(testOperationId, fencingToken,
+				"controller")
 
-		assert.Error(tt, err)
-		assert.Nil(tt, op)
-	})
+			var status *client.ErrorStatus
+			assert.True(tt, errors.As(err, &status), err)
+			assert.Equal(tt, code, status.StatusCode)
+			assert.Equal(tt, want == operation.ErrNotRunnable,
+				errors.Is(err, operation.ErrNotRunnable), err)
+			assert.Equal(tt, want == operation.ErrUnavailable,
+				errors.Is(err, operation.ErrUnavailable), err)
+			assert.Nil(tt, op)
+		})
+	}
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
@@ -400,7 +413,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 
 		op, err := testManagerClient.MarkRunning(testOperationId, fencingToken, "controller")
 
-		assert.Error(tt, err)
+		assert.True(tt, errors.Is(err, operation.ErrUnavailable), err)
 		assert.Nil(tt, op)
 	})
 }
