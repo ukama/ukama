@@ -460,6 +460,46 @@ func TestMarkRunning(t *testing.T) {
 		assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
 		repo.AssertExpectations(t)
 	})
+
+	for name, tc := range map[string]struct {
+		err  error
+		code codes.Code
+	}{
+		"UnknownIsNotFound": {
+			fmt.Errorf("operation: %w", store.ErrNotFound), codes.NotFound,
+		},
+		"RejectedIsFailedPrecondition": {
+			fmt.Errorf("lease expired: %w", store.ErrPrecondition),
+			codes.FailedPrecondition,
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			id := uuid.NewV4()
+			repo.On("MarkRunning", mock.Anything, id, uint64(3), "controller").
+				Return(nil, tc.err).Once()
+
+			_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+				Actor: "controller", Id: id.String(), FencingToken: 3,
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+	}
+
+	t.Run("ZeroTokenIsInvalid", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+
+		_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+			Actor: "controller", Id: uuid.NewV4().String(),
+		})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+		repo.AssertNotCalled(t, "MarkRunning", mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything)
+	})
 }
 
 func TestRepoErrorCodes(t *testing.T) {
@@ -541,6 +581,19 @@ func TestRepoErrorCodes(t *testing.T) {
 			assert.Equal(t, tc.code, status.Code(err))
 		})
 
+		t.Run("MarkRunning"+name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			repo.On("MarkRunning", mock.Anything, id, uint64(3), "controller").
+				Return(nil, tc.err).Once()
+
+			_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
+				Actor: "controller", Id: id.String(), FencingToken: 3,
+			})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+
 		t.Run("ForceUnlock"+name, func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			s := NewOperationServer(orgName, "", repo, nil)
@@ -556,19 +609,6 @@ func TestRepoErrorCodes(t *testing.T) {
 		})
 	}
 
-	t.Run("MarkRunningLockTimeoutIsUnavailable", func(t *testing.T) {
-		repo := &mocks.OperationRepo{}
-		s := NewOperationServer(orgName, "", repo, nil)
-		repo.On("MarkRunning", mock.Anything, id, uint64(3), "controller").
-			Return(nil, lockTimeout).Once()
-
-		_, err := s.MarkRunning(context.Background(), &pb.MarkRunningRequest{
-			Actor: "controller",
-			Id:    id.String(), FencingToken: 3,
-		})
-
-		assert.Equal(t, codes.Unavailable, status.Code(err))
-	})
 }
 
 var invalidResourceKeys = map[string]string{

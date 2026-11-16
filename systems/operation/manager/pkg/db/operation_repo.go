@@ -139,27 +139,54 @@ func (r *operationRepo) GetByIdempotencyKey(ctx context.Context,
 func (r *operationRepo) MarkRunning(ctx context.Context, id uuid.UUID,
 	fencingToken uint64, actor string) (*Operation, error) {
 	var op Operation
+	var rejectErr error
+
 	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		if err := lockOperation(tx, &op, "id = ? AND fencing_token = ?", id,
-			fencingToken); err != nil {
+		if err := lockOperation(tx, &op, "id = ?", id); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("operation %s: %w", id, store.ErrNotFound)
+			}
 			return err
 		}
-		if op.Status != OperationPending {
-			return fmt.Errorf("operation %s not in pending state (was %s)", id, op.Status)
-		}
+
 		now := time.Now().UTC()
+		writeAudit := func(prefix, reason string, cause error) error {
+			rejectErr = cause
+			return tx.Create(&OperationAudit{
+				Id: uuid.NewV4(), OperationId: op.Id, ResourceKey: op.ResourceKey,
+				Event: prefix + "running", Actor: actor, Reason: reason, At: now,
+			}).Error
+		}
+		reject := func(cause error) error {
+			return writeAudit("rejected_", cause.Error(), cause)
+		}
+
+		switch {
+		case op.FencingToken != fencingToken:
+			return reject(fmt.Errorf("fencing token mismatch (op=%d, given=%d): %w",
+				op.FencingToken, fencingToken, store.ErrPrecondition))
+		case op.Status.IsTerminal():
+			return reject(fmt.Errorf("operation %s is already %s: %w",
+				id, op.Status, store.ErrPrecondition))
+		case !op.LeaseExpiresAt.After(now):
+			return reject(fmt.Errorf("operation %s lease expired at %s: %w",
+				id, op.LeaseExpiresAt.Format(time.RFC3339), store.ErrPrecondition))
+		case op.Status == OperationRunning:
+			return writeAudit("ignored_", "", nil)
+		}
+
 		op.Status = OperationRunning
 		op.StartedAt = &now
 		if err := tx.Save(&op).Error; err != nil {
 			return err
 		}
-		return tx.Create(&OperationAudit{
-			Id: uuid.NewV4(), OperationId: op.Id, ResourceKey: op.ResourceKey,
-			Event: "running", Actor: actor, At: now,
-		}).Error
+		return writeAudit("", "", nil)
 	})
 	if err != nil {
 		return nil, lockTimeoutErr(err)
+	}
+	if rejectErr != nil {
+		return nil, rejectErr
 	}
 	return &op, nil
 }
