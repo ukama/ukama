@@ -31,8 +31,10 @@ func TestManagerClient_Start(t *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint)
 			assert.Equal(tt, "POST", req.Method)
+			sent, _ := io.ReadAll(req.Body)
+			assert.Contains(tt, string(sent), `"resource_keys":["`+testResourceKey+`"]`)
 
-			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"PENDING","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
+			body := `{"operations":[{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"PENDING","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}]}`
 
 			return &http.Response{
 				StatusCode: 200,
@@ -46,25 +48,25 @@ func TestManagerClient_Start(t *testing.T) {
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		resp, err := testManagerClient.Start(operation.StartRequest{
-			Type:        "deploy",
-			System:      "node",
-			ResourceKey: testResourceKey,
+			Type:         "deploy",
+			System:       "node",
+			ResourceKeys: []string{testResourceKey},
 		})
 
 		assert.NoError(tt, err)
-		assert.NotNil(tt, resp.Operation)
-		assert.Equal(tt, testOperationId, resp.Operation.Id)
-		assert.Equal(tt, operation.StatusPending, resp.Operation.Status)
-		assert.Equal(tt, uint64(1), resp.Operation.FencingToken)
-		assert.Equal(tt, testResourceKey, resp.Operation.ResourceKey)
+		assert.Len(tt, resp.Operations, 1)
+		assert.Equal(tt, testOperationId, resp.Operations[0].Id)
+		assert.Equal(tt, operation.StatusPending, resp.Operations[0].Status)
+		assert.Equal(tt, uint64(1), resp.Operations[0].FencingToken)
+		assert.Equal(tt, testResourceKey, resp.Operations[0].ResourceKey)
 	})
 
-	t.Run("StartFailed", func(tt *testing.T) {
+	t.Run("BusyIsBusyError", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint)
 			assert.Equal(tt, "POST", req.Method)
 
-			resp := `{"error":"conflict"}`
+			resp := `{"error":"node:c is busy with RestartNode operation op-1"}`
 
 			return &http.Response{
 				StatusCode: 409,
@@ -78,12 +80,38 @@ func TestManagerClient_Start(t *testing.T) {
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		resp, err := testManagerClient.Start(operation.StartRequest{
-			Type:        "deploy",
-			System:      "node",
-			ResourceKey: testResourceKey,
+			Type:         "deploy",
+			System:       "node",
+			ResourceKeys: []string{testResourceKey},
+		})
+
+		var busy *operation.BusyError
+		assert.True(tt, errors.As(err, &busy), err)
+		assert.True(tt, errors.Is(err, operation.ErrBusy), err)
+		assert.Equal(tt, "node:c is busy with RestartNode operation op-1", err.Error())
+		assert.Nil(tt, resp)
+	})
+
+	t.Run("ServerErrorIsNotBusy", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			return &http.Response{
+				StatusCode: 500,
+				Body:       io.NopCloser(bytes.NewBufferString(`{"error":"db down"}`)),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testManagerClient := operation.NewManagerClient("")
+		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		resp, err := testManagerClient.Start(operation.StartRequest{
+			Type:         "deploy",
+			System:       "node",
+			ResourceKeys: []string{testResourceKey},
 		})
 
 		assert.Error(tt, err)
+		assert.False(tt, errors.Is(err, operation.ErrBusy), err)
 		assert.Nil(tt, resp)
 	})
 
@@ -104,9 +132,9 @@ func TestManagerClient_Start(t *testing.T) {
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		resp, err := testManagerClient.Start(operation.StartRequest{
-			Type:        "deploy",
-			System:      "node",
-			ResourceKey: testResourceKey,
+			Type:         "deploy",
+			System:       "node",
+			ResourceKeys: []string{testResourceKey},
 		})
 
 		assert.Error(tt, err)
@@ -125,9 +153,9 @@ func TestManagerClient_Start(t *testing.T) {
 		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
 
 		resp, err := testManagerClient.Start(operation.StartRequest{
-			Type:        "deploy",
-			System:      "node",
-			ResourceKey: testResourceKey,
+			Type:         "deploy",
+			System:       "node",
+			ResourceKeys: []string{testResourceKey},
 		})
 
 		assert.Error(tt, err)

@@ -186,7 +186,8 @@ func TestPostStartHandler(t *testing.T) {
 	req := &StartOperationRequest{
 		Type:           "RestartNode",
 		System:         "node",
-		ResourceKey:    "node:uk-sa2450-tnode-v0-4e86",
+		ResourceKeys:   []string{"node:uk-sa2450-tnode-v0-4e86"},
+		MustBeFree:     []string{"node:uk-sa2450-cnode-v0-4e86"},
 		RequestedBy:    "user-1",
 		IdempotencyKey: "idem-1",
 		LeaseSeconds:   300,
@@ -194,8 +195,12 @@ func TestPostStartHandler(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		op := sampleProtoOperation()
+		member := sampleProtoOperation()
+		member.GroupId = op.Id
 		mgr := &fakeManager{
-			startResp: &pb.StartOperationResponse{Operation: op},
+			startResp: &pb.StartOperationResponse{
+				Operations: []*pb.Operation{op, member},
+			},
 		}
 		r := newTestRouter(mgr)
 
@@ -204,11 +209,15 @@ func TestPostStartHandler(t *testing.T) {
 		assert.NotNil(t, resp)
 		assert.Equal(t, req.Type, mgr.lastStartReq.Type)
 		assert.Equal(t, req.System, mgr.lastStartReq.System)
-		assert.Equal(t, req.ResourceKey, mgr.lastStartReq.ResourceKey)
+		assert.Equal(t, req.ResourceKeys, mgr.lastStartReq.ResourceKeys)
+		assert.Equal(t, req.MustBeFree, mgr.lastStartReq.MustBeFree)
 		assert.Equal(t, req.RequestedBy, mgr.lastStartReq.RequestedBy)
 		assert.Equal(t, req.IdempotencyKey, mgr.lastStartReq.IdempotencyKey)
 		assert.Equal(t, req.LeaseSeconds, mgr.lastStartReq.LeaseSeconds)
-		assertOperationMapped(t, op, resp.Operation)
+		assert.Len(t, resp.Operations, 2)
+		assertOperationMapped(t, op, resp.Operations[0])
+		assert.Empty(t, resp.Operations[0].GroupId)
+		assert.Equal(t, op.Id, resp.Operations[1].GroupId)
 	})
 
 	t.Run("ManagerError", func(t *testing.T) {

@@ -46,21 +46,25 @@ message Operation {
     google.protobuf.Timestamp startedAt = 11;
     google.protobuf.Timestamp terminalAt = 12;
     google.protobuf.Timestamp createdAt = 13;
+    string groupId = 14;
 }
 
 message StartOperationRequest {
+    reserved 3;
+    reserved "resourceKey";
     string type = 1 [(validator.field) = {string_not_empty: true}];
     string system = 2 [(validator.field) = {string_not_empty: true}];
-    string resourceKey = 3 [(validator.field) = {string_not_empty: true}];
     string requestedBy = 4 [(validator.field) = {string_not_empty: true}];
     string idempotencyKey = 5;
     uint32 leaseSeconds = 6;
+    repeated string resourceKeys = 7;
+    repeated string mustBeFree = 8;
 }
 
 message StartOperationResponse {
-    reserved 2;
-    reserved "conflictingOperation";
-    Operation operation = 1;
+    reserved 1, 2;
+    reserved "operation", "conflictingOperation";
+    repeated Operation operations = 3;
 }
 
 message GetOperationRequest {

@@ -323,14 +323,17 @@ func (c *ControllerServer) lockNodes(actionType string,
 		return nil, err
 	}
 
-	ops, err := copr.LockThenCheck(c.opManager, copr.LockRequest{
+	resp, err := c.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
 		RequestedBy:  pkg.ServiceName,
 		LeaseSeconds: c.opLeaseSecs,
-		Targets:      targets,
-		Siblings:     siblings,
+		ResourceKeys: targets,
+		MustBeFree:   siblings,
 	})
+	if err == nil && (resp == nil || len(resp.Operations) == 0) {
+		err = fmt.Errorf("start returned no operations")
+	}
 	if errors.Is(err, copr.ErrBusy) {
 		log.Warnf("%s rejected for %v: %v", actionType, nodeIDs, err)
 		return nil, status.Errorf(codes.AlreadyExists, "%s rejected: %v",
@@ -342,6 +345,7 @@ func (c *ControllerServer) lockNodes(actionType string,
 			actionType, err)
 	}
 
+	ops := resp.Operations
 	for i, op := range ops {
 		if _, err := c.opMonitor.Register(&opmonpb.RegisterIntentRequest{
 			OperationId:     op.Id,

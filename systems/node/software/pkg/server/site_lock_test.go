@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -83,47 +84,40 @@ func (f *updateFixture) update(t *testing.T) error {
 }
 
 func TestUpdateSoftware_SiteLock(t *testing.T) {
-	t.Run("BusySiblingIsAlreadyExists", func(t *testing.T) {
+	t.Run("SiteNodesAreSentAsMustBeFree", func(t *testing.T) {
 		f := newUpdateFixture(t)
 		f.siteNodes(nil)
-		op := &copr.OperationInfo{Id: "op-update", FencingToken: 9,
-			ResourceKey: "node:" + testNodeIdNormalized}
 		f.mgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-			return req.ResourceKey == "node:"+testNodeIdNormalized &&
-				req.LeaseSeconds == 360
-		})).Return(&copr.StartResponse{Operation: op}, nil).Once()
-		f.mgr.On("GetByResource", "node:"+siblingTower).Return(&copr.OperationInfo{
-			Id: "op-restart", Type: "RestartNode", Status: copr.StatusRunning,
-		}, nil).Once()
-		f.mgr.On("Fail", "op-update", uint64(9), pkg.ServiceName,
-			mock.MatchedBy(func(r string) bool {
-				return strings.HasPrefix(r, "not started: ") &&
-					strings.Contains(r, "RestartNode")
-			})).Return(op, nil).Once()
+			return reflect.DeepEqual(req.ResourceKeys,
+				[]string{"node:" + testNodeIdNormalized}) &&
+				reflect.DeepEqual(req.MustBeFree, []string{
+					"node:" + testNodeIdNormalized, "node:" + siblingTower,
+				}) && req.LeaseSeconds == 360
+		})).Return(nil, &copr.BusyError{
+			Reason: "node:" + siblingTower +
+				" is busy with RestartNode operation op-restart",
+		}).Once()
 
 		err := f.update(t)
 
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
 		assert.Contains(t, status.Convert(err).Message(), "op-restart")
 		f.mgr.AssertExpectations(t)
-		f.mgr.AssertNotCalled(t, "GetByResource", "node:"+testNodeIdNormalized)
+		f.mgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything)
 		f.mon.AssertNotCalled(t, "Register", mock.Anything)
 		f.bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 	})
 
-	t.Run("LockedNodeIsAlreadyExists", func(t *testing.T) {
+	t.Run("EmptyStartResponseIsUnavailable", func(t *testing.T) {
 		f := newUpdateFixture(t)
 		f.siteNodes(nil)
-		f.mgr.On("Start", mock.Anything).Return(nil, &client.ErrorStatus{
-			StatusCode: http.StatusConflict, RawError: errors.New("locked"),
-		}).Once()
+		f.mgr.On("Start", mock.Anything).Return(&copr.StartResponse{}, nil).Once()
 
 		err := f.update(t)
 
-		assert.Equal(t, codes.AlreadyExists, status.Code(err))
-		f.mgr.AssertNotCalled(t, "GetByResource", mock.Anything)
-		f.mgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything)
+		assert.Equal(t, codes.Unavailable, status.Code(err))
+		f.mon.AssertNotCalled(t, "Register", mock.Anything)
 	})
 
 	t.Run("ManagerFailureIsUnavailable", func(t *testing.T) {
@@ -144,8 +138,8 @@ func TestUpdateSoftware_SiteLock(t *testing.T) {
 		op := &copr.OperationInfo{Id: "op-update", FencingToken: 9,
 			ResourceKey: "node:" + testNodeIdNormalized}
 		f.mgr.On("Start", mock.Anything).
-			Return(&copr.StartResponse{Operation: op}, nil).Once()
-		f.mgr.On("GetByResource", "node:"+siblingTower).Return(nil, nil).Once()
+			Return(&copr.StartResponse{Operations: []*copr.OperationInfo{op}}, nil).
+			Once()
 		f.mon.On("Register", mock.Anything).
 			Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 		f.mgr.On("MarkRunning", "op-update", uint64(9), pkg.ServiceName).

@@ -79,23 +79,23 @@ func (_m *OperationRepo) Get(ctx context.Context, id uuid.UUID) (*db.Operation, 
 }
 
 // GetByIdempotencyKey provides a mock function with given fields: ctx, key
-func (_m *OperationRepo) GetByIdempotencyKey(ctx context.Context, key string) (*db.Operation, error) {
+func (_m *OperationRepo) GetByIdempotencyKey(ctx context.Context, key string) ([]*db.Operation, error) {
 	ret := _m.Called(ctx, key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByIdempotencyKey")
 	}
 
-	var r0 *db.Operation
+	var r0 []*db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.Operation, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*db.Operation, error)); ok {
 		return rf(ctx, key)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Operation); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []*db.Operation); ok {
 		r0 = rf(ctx, key)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Operation)
+			r0 = ret.Get(0).([]*db.Operation)
 		}
 	}
 
@@ -168,29 +168,29 @@ func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingT
 	return r0, r1
 }
 
-// Start provides a mock function with given fields: ctx, op, lockTTL
-func (_m *OperationRepo) Start(ctx context.Context, op *db.Operation, lockTTL time.Duration) (*db.Operation, error) {
-	ret := _m.Called(ctx, op, lockTTL)
+// Start provides a mock function with given fields: ctx, ops, mustBeFree, lockTTL
+func (_m *OperationRepo) Start(ctx context.Context, ops []*db.Operation, mustBeFree []string, lockTTL time.Duration) ([]*db.Operation, error) {
+	ret := _m.Called(ctx, ops, mustBeFree, lockTTL)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Start")
 	}
 
-	var r0 *db.Operation
+	var r0 []*db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Operation, time.Duration) (*db.Operation, error)); ok {
-		return rf(ctx, op, lockTTL)
+	if rf, ok := ret.Get(0).(func(context.Context, []*db.Operation, []string, time.Duration) ([]*db.Operation, error)); ok {
+		return rf(ctx, ops, mustBeFree, lockTTL)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *db.Operation, time.Duration) *db.Operation); ok {
-		r0 = rf(ctx, op, lockTTL)
+	if rf, ok := ret.Get(0).(func(context.Context, []*db.Operation, []string, time.Duration) []*db.Operation); ok {
+		r0 = rf(ctx, ops, mustBeFree, lockTTL)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Operation)
+			r0 = ret.Get(0).([]*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *db.Operation, time.Duration) error); ok {
-		r1 = rf(ctx, op, lockTTL)
+	if rf, ok := ret.Get(1).(func(context.Context, []*db.Operation, []string, time.Duration) error); ok {
+		r1 = rf(ctx, ops, mustBeFree, lockTTL)
 	} else {
 		r1 = ret.Error(1)
 	}

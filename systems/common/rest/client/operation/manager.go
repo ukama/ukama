@@ -26,9 +26,27 @@ import (
 const OperationsEndpoint = "/v1/operations"
 
 var (
+	ErrBusy        = errors.New("resource busy")
 	ErrNotRunnable = errors.New("operation not runnable")
 	ErrUnavailable = errors.New("operation manager unavailable")
 )
+
+type BusyError struct {
+	Reason string
+	Err    error
+}
+
+func (e *BusyError) Error() string {
+	return e.Reason
+}
+
+func (e *BusyError) Is(target error) bool {
+	return target == ErrBusy
+}
+
+func (e *BusyError) Unwrap() error {
+	return e.Err
+}
 
 const (
 	terminateAttempts = 3
@@ -46,6 +64,7 @@ const (
 
 type OperationInfo struct {
 	Id             string    `json:"id"`
+	GroupId        string    `json:"group_id,omitempty"`
 	Type           string    `json:"type"`
 	System         string    `json:"system"`
 	Status         string    `json:"status"`
@@ -61,16 +80,17 @@ type OperationInfo struct {
 }
 
 type StartRequest struct {
-	Type           string `json:"type"`
-	System         string `json:"system"`
-	ResourceKey    string `json:"resource_key"`
-	RequestedBy    string `json:"requested_by,omitempty"`
-	IdempotencyKey string `json:"idempotency_key,omitempty"`
-	LeaseSeconds   uint32 `json:"lease_seconds,omitempty"`
+	Type           string   `json:"type"`
+	System         string   `json:"system"`
+	ResourceKeys   []string `json:"resource_keys"`
+	MustBeFree     []string `json:"must_be_free,omitempty"`
+	RequestedBy    string   `json:"requested_by,omitempty"`
+	IdempotencyKey string   `json:"idempotency_key,omitempty"`
+	LeaseSeconds   uint32   `json:"lease_seconds,omitempty"`
 }
 
 type StartResponse struct {
-	Operation *OperationInfo `json:"operation,omitempty"`
+	Operations []*OperationInfo `json:"operations,omitempty"`
 }
 
 type GetResponse struct {
@@ -131,6 +151,10 @@ func (m *managerClient) Start(req StartRequest) (*StartResponse, error) {
 	}
 	resp, err := m.R.Post(m.u.String()+OperationsEndpoint, b)
 	if err != nil {
+		var status *client.ErrorStatus
+		if errors.As(err, &status) && status.StatusCode == http.StatusConflict {
+			return nil, &BusyError{Reason: status.RawError.Error(), Err: err}
+		}
 		return nil, fmt.Errorf("StartOperation failure: %w", err)
 	}
 	out := &StartResponse{}

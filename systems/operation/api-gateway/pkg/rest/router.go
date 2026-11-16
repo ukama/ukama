@@ -125,7 +125,7 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 	auth.Use()
 	{
 		ops := auth.Group("/operations", "Operations", "Lock + operation lifecycle")
-		ops.POST("", formatDoc("Start an operation", "Acquires a lock and creates an operation in pending state. Returns 409 if the resource is already locked."), tonic.Handler(r.postStartHandler, http.StatusCreated))
+		ops.POST("", formatDoc("Start operations", "Locks every resource_keys entry and creates one pending operation per key, in one transaction, provided no must_be_free key is held by an active operation. Returns 409 if any key is busy."), tonic.Handler(r.postStartHandler, http.StatusCreated))
 		ops.GET("", formatDoc("Get operation by resource", "Returns explicit lock state for resource_key. When free: locked=false and operation=null. When locked: locked=true and operation is populated."), tonic.Handler(r.getByResourceHandler, http.StatusOK))
 		ops.GET("/:id", formatDoc("Get operation by id", "Returns the current state of an operation."), tonic.Handler(r.getOperationHandler, http.StatusOK))
 		ops.POST("/:id/run", formatDoc("Mark operation running", "Transitions a pending operation to running. Caller must pass the fencing token."), tonic.Handler(r.postMarkRunningHandler, http.StatusOK))
@@ -141,7 +141,8 @@ func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*
 	resp, err := r.clients.Manager.Start(&pb.StartOperationRequest{
 		Type:           req.Type,
 		System:         req.System,
-		ResourceKey:    req.ResourceKey,
+		ResourceKeys:   req.ResourceKeys,
+		MustBeFree:     req.MustBeFree,
 		RequestedBy:    req.RequestedBy,
 		IdempotencyKey: req.IdempotencyKey,
 		LeaseSeconds:   req.LeaseSeconds,
@@ -150,9 +151,11 @@ func (r *Router) postStartHandler(c *gin.Context, req *StartOperationRequest) (*
 		return nil, err
 	}
 
-	return &StartOperationResponse{
-		Operation: operationFromProto(resp.Operation),
-	}, nil
+	ops := make([]*Operation, 0, len(resp.Operations))
+	for _, op := range resp.Operations {
+		ops = append(ops, operationFromProto(op))
+	}
+	return &StartOperationResponse{Operations: ops}, nil
 }
 
 func (r *Router) getOperationHandler(c *gin.Context, req *GetOperationRequest) (*GetOperationResponse, error) {
@@ -231,6 +234,7 @@ func operationFromProto(op *pb.Operation) *Operation {
 
 	return &Operation{
 		Id:             op.Id,
+		GroupId:        op.GroupId,
 		Type:           op.Type,
 		System:         op.System,
 		Status:         op.Status.String(),

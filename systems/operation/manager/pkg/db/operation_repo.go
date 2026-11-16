@@ -12,6 +12,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
@@ -30,14 +31,41 @@ var (
 
 const (
 	lockTimeoutStmt       = "SET LOCAL lock_timeout = '2s'"
+	advisoryLockStmt      = "SELECT pg_advisory_xact_lock(hashtextextended(?, 0))"
 	pgErrLockNotAvailable = "55P03"
 )
 
+type ConflictError struct {
+	ResourceKey string
+	HolderId    uuid.UUID
+	HolderType  string
+}
+
+func (e *ConflictError) Error() string {
+	if e.HolderId == uuid.Nil {
+		return fmt.Sprintf("%s is locked by an active operation", e.ResourceKey)
+	}
+	return fmt.Sprintf("%s is busy with %s operation %s", e.ResourceKey,
+		e.HolderType, e.HolderId)
+}
+
+func (e *ConflictError) Is(target error) bool {
+	return target == ErrLockConflict
+}
+
+type heldLock struct {
+	ResourceKey string
+	OperationId uuid.UUID
+	Type        string
+	Status      OperationStatus
+}
+
 type OperationRepo interface {
-	Start(ctx context.Context, op *Operation, lockTTL time.Duration) (*Operation, error)
+	Start(ctx context.Context, ops []*Operation, mustBeFree []string,
+		lockTTL time.Duration) ([]*Operation, error)
 	Get(ctx context.Context, id uuid.UUID) (*Operation, error)
 	GetByResource(ctx context.Context, resourceKey string) (*Operation, error)
-	GetByIdempotencyKey(ctx context.Context, key string) (*Operation, error)
+	GetByIdempotencyKey(ctx context.Context, key string) ([]*Operation, error)
 	MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64,
 		actor string) (*Operation, error)
 	Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64,
@@ -53,41 +81,54 @@ func NewOperationRepo(db sql.Db) OperationRepo {
 	return &operationRepo{db: db}
 }
 
-func (r *operationRepo) Start(ctx context.Context, op *Operation,
-	lockTTL time.Duration) (*Operation, error) {
+func (r *operationRepo) Start(ctx context.Context, ops []*Operation,
+	mustBeFree []string, lockTTL time.Duration) ([]*Operation, error) {
+	targets := make([]string, 0, len(ops))
+	for _, op := range ops {
+		targets = append(targets, op.ResourceKey)
+	}
+
 	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		if err := tx.Exec(lockTimeoutStmt).Error; err != nil {
 			return err
 		}
-		if err := tx.Create(op).Error; err != nil {
-			if sql.IsDuplicateKeyError(err) {
-				return ErrIdempotencyKeyTaken
+		for _, key := range sortedUnique(targets, mustBeFree) {
+			if err := tx.Exec(advisoryLockStmt, key).Error; err != nil {
+				return err
 			}
+		}
+		if err := checkFree(tx, targets, mustBeFree); err != nil {
 			return err
 		}
 
-		lock := &ResourceLock{
-			ResourceKey:  op.ResourceKey,
-			OperationId:  op.Id,
-			FencingToken: op.FencingToken,
-			AcquiredAt:   time.Now().UTC(),
-			ExpiresAt:    time.Now().UTC().Add(lockTTL),
-		}
-		if err := tx.Create(lock).Error; err != nil {
-			if sql.IsDuplicateKeyError(err) {
-				return ErrLockConflict
+		now := time.Now().UTC()
+		for _, op := range ops {
+			if err := tx.Create(op).Error; err != nil {
+				if sql.IsDuplicateKeyError(err) {
+					return ErrIdempotencyKeyTaken
+				}
+				return err
 			}
-			return err
+			if err := tx.Create(&ResourceLock{
+				ResourceKey:  op.ResourceKey,
+				OperationId:  op.Id,
+				FencingToken: op.FencingToken,
+				AcquiredAt:   now,
+				ExpiresAt:    now.Add(lockTTL),
+			}).Error; err != nil {
+				if sql.IsDuplicateKeyError(err) {
+					return &ConflictError{ResourceKey: op.ResourceKey}
+				}
+				return err
+			}
+			if err := tx.Create(&OperationAudit{
+				Id: uuid.NewV4(), OperationId: op.Id, ResourceKey: op.ResourceKey,
+				Event: "lock_acquired", Actor: op.RequestedBy, At: now,
+			}).Error; err != nil {
+				return err
+			}
 		}
-
-		return tx.Create(&OperationAudit{
-			Id:          uuid.NewV4(),
-			OperationId: op.Id,
-			ResourceKey: op.ResourceKey,
-			Event:       "lock_acquired",
-			Actor:       op.RequestedBy,
-			At:          time.Now().UTC(),
-		}).Error
+		return nil
 	})
 
 	if errors.Is(err, ErrLockConflict) || errors.Is(err, ErrIdempotencyKeyTaken) {
@@ -96,7 +137,47 @@ func (r *operationRepo) Start(ctx context.Context, op *Operation,
 	if err != nil {
 		return nil, fmt.Errorf("start operation: %w", lockTimeoutErr(err))
 	}
-	return op, nil
+	return ops, nil
+}
+
+func checkFree(tx *gorm.DB, targets, mustBeFree []string) error {
+	var held []heldLock
+	if err := tx.Table("resource_locks").
+		Select("resource_locks.resource_key, resource_locks.operation_id, "+
+			"operations.type, operations.status").
+		Joins("LEFT JOIN operations ON operations.id = resource_locks.operation_id").
+		Where("resource_locks.resource_key IN ?", sortedUnique(targets, mustBeFree)).
+		Order("resource_locks.resource_key").
+		Scan(&held).Error; err != nil {
+		return err
+	}
+
+	isTarget := make(map[string]bool, len(targets))
+	for _, key := range targets {
+		isTarget[key] = true
+	}
+	for _, h := range held {
+		if isTarget[h.ResourceKey] || !h.Status.IsTerminal() {
+			return &ConflictError{ResourceKey: h.ResourceKey,
+				HolderId: h.OperationId, HolderType: h.Type}
+		}
+	}
+	return nil
+}
+
+func sortedUnique(lists ...[]string) []string {
+	seen := map[string]bool{}
+	out := []string{}
+	for _, list := range lists {
+		for _, key := range list {
+			if !seen[key] {
+				seen[key] = true
+				out = append(out, key)
+			}
+		}
+	}
+	sort.Strings(out)
+	return out
 }
 
 func (r *operationRepo) Get(ctx context.Context, id uuid.UUID) (*Operation, error) {
@@ -123,17 +204,24 @@ func (r *operationRepo) GetByResource(ctx context.Context,
 }
 
 func (r *operationRepo) GetByIdempotencyKey(ctx context.Context,
-	key string) (*Operation, error) {
-	var op Operation
-	err := r.db.GetGormDb().WithContext(ctx).
-		Where("idempotency_key = ?", key).First(&op).Error
+	key string) ([]*Operation, error) {
+	gdb := r.db.GetGormDb().WithContext(ctx)
+
+	var leader Operation
+	err := gdb.Where("idempotency_key = ?", key).First(&leader).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, nil
 	}
 	if err != nil {
 		return nil, err
 	}
-	return &op, nil
+
+	var members []*Operation
+	if err := gdb.Where("group_id = ?", leader.Id).Order("resource_key").
+		Find(&members).Error; err != nil {
+		return nil, err
+	}
+	return append([]*Operation{&leader}, members...), nil
 }
 
 func (r *operationRepo) MarkRunning(ctx context.Context, id uuid.UUID,

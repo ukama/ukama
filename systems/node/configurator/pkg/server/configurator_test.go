@@ -105,9 +105,10 @@ func TestConfiguratorServer_ApplyConfigMarksRunningAsConfigurator(t *testing.T) 
 	req := &pb.ApplyConfigRequest{Hash: "4f6e609"}
 
 	opMgr.On("Start", mock.MatchedBy(func(r *opmgrpb.StartOperationRequest) bool {
-		return r.RequestedBy == pkg.ServiceName
+		return r.RequestedBy == pkg.ServiceName &&
+			len(r.ResourceKeys) == 1 && r.ResourceKeys[0] == "config:apply"
 	})).Return(&opmgrpb.StartOperationResponse{
-		Operation: &opmgrpb.Operation{Id: "op-cfg", FencingToken: 4},
+		Operations: []*opmgrpb.Operation{{Id: "op-cfg", FencingToken: 4}},
 	}, nil).Once()
 	configStore.On("HandleConfigCommitReq", mock.Anything, req.Hash).Return(nil).Once()
 	opMgr.On("MarkRunning", "op-cfg", uint64(4), pkg.ServiceName).

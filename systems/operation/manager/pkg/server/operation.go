@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"sort"
 	"strings"
 	"time"
 	"unicode"
@@ -72,7 +73,16 @@ func validateResourceKey(key string) error {
 }
 
 func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
-	if err := validateResourceKey(req.ResourceKey); err != nil {
+	targets, err := validateResourceKeys("resourceKeys", req.ResourceKeys)
+	if err != nil {
+		return nil, err
+	}
+	if len(targets) == 0 {
+		return nil, status.Error(codes.InvalidArgument,
+			"resourceKeys must contain at least one key")
+	}
+	mustBeFree, err := validateResourceKeys("mustBeFree", req.MustBeFree)
+	if err != nil {
 		return nil, err
 	}
 	if err := requireText("requestedBy", req.RequestedBy); err != nil {
@@ -89,63 +99,115 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	if req.IdempotencyKey != "" {
-		resp, err := s.replay(ctx, req)
+		resp, err := s.replay(ctx, req, targets)
 		if resp != nil || err != nil {
 			return resp, err
 		}
 	}
 
-	op := &db.Operation{
-		Id:             uuid.NewV4(),
-		Type:           req.Type,
-		System:         req.System,
-		Status:         db.OperationPending,
-		RequestedBy:    req.RequestedBy,
-		ResourceKey:    req.ResourceKey,
-		LeaseExpiresAt: time.Now().UTC().Add(lease),
-	}
-	if req.IdempotencyKey != "" {
-		k := req.IdempotencyKey
-		op.IdempotencyKey = &k
-	}
-
-	op, err := s.repo.Start(ctx, op, lease)
-	if errors.Is(err, db.ErrIdempotencyKeyTaken) {
-		resp, err := s.replay(ctx, req)
-		if resp == nil && err == nil {
-			err = status.Errorf(codes.Aborted,
+	ops, err := s.repo.Start(ctx, newGroup(req, targets, lease), mustBeFree, lease)
+	if req.IdempotencyKey != "" && (errors.Is(err, db.ErrIdempotencyKeyTaken) ||
+		errors.Is(err, db.ErrLockConflict)) {
+		resp, rerr := s.replay(ctx, req, targets)
+		if resp != nil || rerr != nil {
+			return resp, rerr
+		}
+		if errors.Is(err, db.ErrIdempotencyKeyTaken) {
+			return nil, status.Errorf(codes.Aborted,
 				"idempotency key %q is in use by a concurrent start", req.IdempotencyKey)
 		}
-		return resp, err
 	}
 	if errors.Is(err, db.ErrLockConflict) {
-		return nil, status.Error(codes.AlreadyExists,
-			"resource is locked by an active operation")
+		return nil, status.Error(codes.AlreadyExists, err.Error())
 	}
 	if err != nil {
 		return nil, repoErr(err)
 	}
 
-	log.Infof("operation %s started: type=%s resource=%s token=%d", op.Id, op.Type, op.ResourceKey, op.FencingToken)
-	return &pb.StartOperationResponse{Operation: toPb(op)}, nil
+	for _, op := range ops {
+		log.Infof("operation %s started: type=%s resource=%s token=%d", op.Id, op.Type,
+			op.ResourceKey, op.FencingToken)
+	}
+	return &pb.StartOperationResponse{Operations: toPbList(ops)}, nil
 }
 
-func (s *OperationServer) replay(ctx context.Context,
-	req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
-	op, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
+func newGroup(req *pb.StartOperationRequest, targets []string,
+	lease time.Duration) []*db.Operation {
+	expires := time.Now().UTC().Add(lease)
+	ops := make([]*db.Operation, 0, len(targets))
+	for _, key := range targets {
+		ops = append(ops, &db.Operation{
+			Id:             uuid.NewV4(),
+			Type:           req.Type,
+			System:         req.System,
+			Status:         db.OperationPending,
+			RequestedBy:    req.RequestedBy,
+			ResourceKey:    key,
+			LeaseExpiresAt: expires,
+		})
+	}
+
+	leader := ops[0]
+	if req.IdempotencyKey != "" {
+		k := req.IdempotencyKey
+		leader.IdempotencyKey = &k
+	}
+	for _, member := range ops[1:] {
+		member.GroupId = &leader.Id
+	}
+	return ops
+}
+
+func (s *OperationServer) replay(ctx context.Context, req *pb.StartOperationRequest,
+	targets []string) (*pb.StartOperationResponse, error) {
+	ops, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
 	if err != nil {
 		return nil, repoErr(err)
 	}
-	if op == nil {
+	if len(ops) == 0 {
 		return nil, nil
 	}
-	if op.ResourceKey != req.ResourceKey || op.Type != req.Type ||
-		op.System != req.System {
+	if !sameRequest(ops, req, targets) {
+		keys := make([]string, 0, len(ops))
+		for _, op := range ops {
+			keys = append(keys, op.ResourceKey)
+		}
 		return nil, status.Errorf(codes.InvalidArgument,
 			"idempotency key %q belongs to %s %s operation on %s",
-			req.IdempotencyKey, op.System, op.Type, op.ResourceKey)
+			req.IdempotencyKey, ops[0].System, ops[0].Type, strings.Join(keys, ","))
 	}
-	return &pb.StartOperationResponse{Operation: toPb(op)}, nil
+	return &pb.StartOperationResponse{Operations: toPbList(ops)}, nil
+}
+
+func sameRequest(ops []*db.Operation, req *pb.StartOperationRequest,
+	targets []string) bool {
+	if len(ops) != len(targets) {
+		return false
+	}
+	for i, op := range ops {
+		if op.Type != req.Type || op.System != req.System ||
+			op.ResourceKey != targets[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func validateResourceKeys(field string, keys []string) ([]string, error) {
+	seen := make(map[string]bool, len(keys))
+	out := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if err := validateResourceKey(key); err != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "%s: %s", field,
+				status.Convert(err).Message())
+		}
+		if !seen[key] {
+			seen[key] = true
+			out = append(out, key)
+		}
+	}
+	sort.Strings(out)
+	return out, nil
 }
 
 func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperationRequest) (*pb.GetOperationResponse, error) {
@@ -294,6 +356,14 @@ func repoErr(err error) error {
 	return cgrpc.StoreErrorToGrpc(err, "operation")
 }
 
+func toPbList(ops []*db.Operation) []*pb.Operation {
+	out := make([]*pb.Operation, 0, len(ops))
+	for _, op := range ops {
+		out = append(out, toPb(op))
+	}
+	return out
+}
+
 func toPb(o *db.Operation) *pb.Operation {
 	if o == nil {
 		return nil
@@ -312,6 +382,9 @@ func toPb(o *db.Operation) *pb.Operation {
 	}
 	if o.IdempotencyKey != nil {
 		out.IdempotencyKey = *o.IdempotencyKey
+	}
+	if o.GroupId != nil {
+		out.GroupId = o.GroupId.String()
 	}
 	if o.StartedAt != nil {
 		out.StartedAt = timestamppb.New(*o.StartedAt)

@@ -11,12 +11,13 @@ package rest
 import "time"
 
 type StartOperationRequest struct {
-	Type           string `json:"type" validate:"required" example:"RestartNode"`
-	System         string `json:"system" validate:"required" example:"node"`
-	ResourceKey    string `json:"resource_key" validate:"required" example:"node:uk-sa2450-tnode-v0-4e86"`
-	RequestedBy    string `json:"requested_by" validate:"required" example:"controller"`
-	IdempotencyKey string `json:"idempotency_key"`
-	LeaseSeconds   uint32 `json:"lease_seconds"`
+	Type           string   `json:"type" validate:"required" example:"RestartNode"`
+	System         string   `json:"system" validate:"required" example:"node"`
+	ResourceKeys   []string `json:"resource_keys" validate:"required,min=1" example:"node:uk-sa2450-tnode-v0-4e86"`
+	MustBeFree     []string `json:"must_be_free" example:"node:uk-sa2450-cnode-v0-4e86"`
+	RequestedBy    string   `json:"requested_by" validate:"required" example:"controller"`
+	IdempotencyKey string   `json:"idempotency_key"`
+	LeaseSeconds   uint32   `json:"lease_seconds"`
 }
 
 type GetOperationRequest struct {
@@ -75,6 +76,7 @@ type FailOperationRequest struct {
 
 type Operation struct {
 	Id             string     `json:"id"`
+	GroupId        string     `json:"group_id,omitempty"`
 	Type           string     `json:"type"`
 	System         string     `json:"system"`
 	Status         string     `json:"status"`
@@ -90,7 +92,7 @@ type Operation struct {
 }
 
 type StartOperationResponse struct {
-	Operation *Operation `json:"operation"`
+	Operations []*Operation `json:"operations"`
 }
 
 type GetOperationResponse struct {

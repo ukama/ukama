@@ -643,7 +643,9 @@ func TestUpdateSoftware_RegistersTargetVersionRule(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: uuid.NewV4().String(), FencingToken: 7}
 	opMgr := &mbmocks.ManagerClient{}
-	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{Operation: op}, nil).Once()
+	opMgr.On("Start", mock.Anything).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMgr.On("Fail", op.Id, uint64(7), pkg.ServiceName,
 		mock.MatchedBy(func(reason string) bool {
 			return strings.HasPrefix(reason, "register intent failed")

@@ -103,6 +103,7 @@ type Operation struct {
 	StartedAt      *timestamppb.Timestamp `protobuf:"bytes,11,opt,name=startedAt,proto3" json:"startedAt,omitempty"`
 	TerminalAt     *timestamppb.Timestamp `protobuf:"bytes,12,opt,name=terminalAt,proto3" json:"terminalAt,omitempty"`
 	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,13,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	GroupId        string                 `protobuf:"bytes,14,opt,name=groupId,proto3" json:"groupId,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -228,14 +229,22 @@ func (x *Operation) GetCreatedAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Operation) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
 type StartOperationRequest struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Type           string                 `protobuf:"bytes,1,opt,name=type,proto3" json:"type,omitempty"`
 	System         string                 `protobuf:"bytes,2,opt,name=system,proto3" json:"system,omitempty"`
-	ResourceKey    string                 `protobuf:"bytes,3,opt,name=resourceKey,proto3" json:"resourceKey,omitempty"`
 	RequestedBy    string                 `protobuf:"bytes,4,opt,name=requestedBy,proto3" json:"requestedBy,omitempty"`
 	IdempotencyKey string                 `protobuf:"bytes,5,opt,name=idempotencyKey,proto3" json:"idempotencyKey,omitempty"`
 	LeaseSeconds   uint32                 `protobuf:"varint,6,opt,name=leaseSeconds,proto3" json:"leaseSeconds,omitempty"`
+	ResourceKeys   []string               `protobuf:"bytes,7,rep,name=resourceKeys,proto3" json:"resourceKeys,omitempty"`
+	MustBeFree     []string               `protobuf:"bytes,8,rep,name=mustBeFree,proto3" json:"mustBeFree,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -284,13 +293,6 @@ func (x *StartOperationRequest) GetSystem() string {
 	return ""
 }
 
-func (x *StartOperationRequest) GetResourceKey() string {
-	if x != nil {
-		return x.ResourceKey
-	}
-	return ""
-}
-
 func (x *StartOperationRequest) GetRequestedBy() string {
 	if x != nil {
 		return x.RequestedBy
@@ -312,9 +314,23 @@ func (x *StartOperationRequest) GetLeaseSeconds() uint32 {
 	return 0
 }
 
+func (x *StartOperationRequest) GetResourceKeys() []string {
+	if x != nil {
+		return x.ResourceKeys
+	}
+	return nil
+}
+
+func (x *StartOperationRequest) GetMustBeFree() []string {
+	if x != nil {
+		return x.MustBeFree
+	}
+	return nil
+}
+
 type StartOperationResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Operation     *Operation             `protobuf:"bytes,1,opt,name=operation,proto3" json:"operation,omitempty"`
+	Operations    []*Operation           `protobuf:"bytes,3,rep,name=operations,proto3" json:"operations,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -349,9 +365,9 @@ func (*StartOperationResponse) Descriptor() ([]byte, []int) {
 	return file_operation_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *StartOperationResponse) GetOperation() *Operation {
+func (x *StartOperationResponse) GetOperations() []*Operation {
 	if x != nil {
-		return x.Operation
+		return x.Operations
 	}
 	return nil
 }
@@ -968,7 +984,7 @@ var File_operation_proto protoreflect.FileDescriptor
 
 const file_operation_proto_rawDesc = "" +
 	"\n" +
-	"\x0foperation.proto\x12\x1aukama.operation.manager.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa6\x04\n" +
+	"\x0foperation.proto\x12\x1aukama.operation.manager.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xc0\x04\n" +
 	"\tOperation\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x16\n" +
@@ -985,16 +1001,22 @@ const file_operation_proto_rawDesc = "" +
 	"\n" +
 	"terminalAt\x18\f \x01(\v2\x1a.google.protobuf.TimestampR\n" +
 	"terminalAt\x128\n" +
-	"\tcreatedAt\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\xf3\x01\n" +
+	"\tcreatedAt\x18\r \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x18\n" +
+	"\agroupId\x18\x0e \x01(\tR\agroupId\"\xa0\x02\n" +
 	"\x15StartOperationRequest\x12\x1a\n" +
 	"\x04type\x18\x01 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x04type\x12\x1e\n" +
 	"\x06system\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06system\x12(\n" +
-	"\vresourceKey\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\x12(\n" +
 	"\vrequestedBy\x18\x04 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vrequestedBy\x12&\n" +
 	"\x0eidempotencyKey\x18\x05 \x01(\tR\x0eidempotencyKey\x12\"\n" +
-	"\fleaseSeconds\x18\x06 \x01(\rR\fleaseSeconds\"y\n" +
-	"\x16StartOperationResponse\x12C\n" +
-	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperationJ\x04\b\x02\x10\x03R\x14conflictingOperation\"0\n" +
+	"\fleaseSeconds\x18\x06 \x01(\rR\fleaseSeconds\x12\"\n" +
+	"\fresourceKeys\x18\a \x03(\tR\fresourceKeys\x12\x1e\n" +
+	"\n" +
+	"mustBeFree\x18\b \x03(\tR\n" +
+	"mustBeFreeJ\x04\b\x03\x10\x04R\vresourceKey\"\x8c\x01\n" +
+	"\x16StartOperationResponse\x12E\n" +
+	"\n" +
+	"operations\x18\x03 \x03(\v2%.ukama.operation.manager.v1.OperationR\n" +
+	"operationsJ\x04\b\x01\x10\x02J\x04\b\x02\x10\x03R\toperationR\x14conflictingOperation\"0\n" +
 	"\x13GetOperationRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\"[\n" +
 	"\x14GetOperationResponse\x12C\n" +
@@ -1085,7 +1107,7 @@ var file_operation_proto_depIdxs = []int32{
 	16, // 2: ukama.operation.manager.v1.Operation.startedAt:type_name -> google.protobuf.Timestamp
 	16, // 3: ukama.operation.manager.v1.Operation.terminalAt:type_name -> google.protobuf.Timestamp
 	16, // 4: ukama.operation.manager.v1.Operation.createdAt:type_name -> google.protobuf.Timestamp
-	1,  // 5: ukama.operation.manager.v1.StartOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
+	1,  // 5: ukama.operation.manager.v1.StartOperationResponse.operations:type_name -> ukama.operation.manager.v1.Operation
 	1,  // 6: ukama.operation.manager.v1.GetOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
 	1,  // 7: ukama.operation.manager.v1.GetByResourceResponse.operation:type_name -> ukama.operation.manager.v1.Operation
 	1,  // 8: ukama.operation.manager.v1.MarkRunningResponse.operation:type_name -> ukama.operation.manager.v1.Operation

@@ -32,49 +32,100 @@ import (
 
 const orgName = "ukama"
 
+func startRequest(keys ...string) *pb.StartOperationRequest {
+	return &pb.StartOperationRequest{
+		RequestedBy: "controller", Type: "RestartNode", System: "node",
+		ResourceKeys: keys,
+	}
+}
+
+func startsGroup(repo *mocks.OperationRepo, mustBeFree []string) {
+	repo.On("Start", mock.Anything, mock.Anything, mustBeFree,
+		mock.AnythingOfType("time.Duration")).
+		Return(func(_ context.Context, ops []*db.Operation, _ []string,
+			_ time.Duration) []*db.Operation {
+			for i, op := range ops {
+				op.FencingToken = uint64(i + 1)
+			}
+			return ops
+		}, nil).Once()
+}
+
 func TestStartOperation(t *testing.T) {
-	t.Run("Success", func(t *testing.T) {
+	t.Run("SingleTargetIsLeaderWithoutGroup", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
+		startsGroup(repo, []string{})
 
-		repo.On("GetByIdempotencyKey", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
-			mock.AnythingOfType("time.Duration")).
-			Return(func(_ context.Context, op *db.Operation,
-				_ time.Duration) *db.Operation {
-				op.FencingToken = 1
-				return op
-			}, nil)
-
-		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-			RequestedBy: "controller",
-			Type:        "RestartNode",
-			System:      "node",
-			ResourceKey: "node:abc",
-		})
+		resp, err := s.StartOperation(context.Background(), startRequest("node:abc"))
 
 		assert.NoError(t, err)
-		assert.NotNil(t, resp.Operation)
-		assert.Equal(t, "node:abc", resp.Operation.ResourceKey)
+		assert.Len(t, resp.Operations, 1)
+		assert.Equal(t, "node:abc", resp.Operations[0].ResourceKey)
+		assert.Empty(t, resp.Operations[0].GroupId)
 		repo.AssertExpectations(t)
 	})
 
-	t.Run("ConflictReturnsAlreadyExists", func(t *testing.T) {
+	t.Run("GroupSortsTargetsAndLinksMembersToLeader", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
+		startsGroup(repo, []string{"node:c", "node:t"})
+		req := startRequest("node:t", "node:a", "node:t")
+		req.MustBeFree = []string{"node:t", "node:c"}
+		req.IdempotencyKey = "key"
 
-		repo.On("GetByIdempotencyKey", mock.Anything, mock.Anything).Return(nil, nil).Maybe()
-		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
-			mock.AnythingOfType("time.Duration")).Return(nil, db.ErrLockConflict)
+		resp, err := s.StartOperation(context.Background(), req)
 
-		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-			RequestedBy: "controller",
-			Type:        "RestartNode",
-			System:      "node",
-			ResourceKey: "node:abc",
+		assert.NoError(t, err)
+		ops := repo.Calls[1].Arguments.Get(1).([]*db.Operation)
+		assert.Len(t, ops, 2)
+		assert.Equal(t, "node:a", ops[0].ResourceKey)
+		assert.Nil(t, ops[0].GroupId)
+		assert.Equal(t, "key", *ops[0].IdempotencyKey)
+		assert.Equal(t, "node:t", ops[1].ResourceKey)
+		assert.Equal(t, ops[0].Id, *ops[1].GroupId)
+		assert.Nil(t, ops[1].IdempotencyKey)
+		assert.Equal(t, ops[0].LeaseExpiresAt, ops[1].LeaseExpiresAt)
+		assert.Len(t, resp.Operations, 2)
+		assert.Equal(t, ops[0].Id.String(), resp.Operations[1].GroupId)
+		repo.AssertExpectations(t)
+	})
+
+	for name, req := range map[string]*pb.StartOperationRequest{
+		"NoTargets":     startRequest(),
+		"InvalidTarget": startRequest("node abc"),
+		"InvalidMustBeFree": {RequestedBy: "controller", Type: "RestartNode",
+			System: "node", ResourceKeys: []string{"node:a"},
+			MustBeFree: []string{""}},
+		"BlankRequestedBy": {Type: "RestartNode", System: "node",
+			ResourceKeys: []string{"node:a"}, RequestedBy: " "},
+	} {
+		t.Run(name+"IsInvalidArgument", func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			_, err := s.StartOperation(context.Background(), req)
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything)
 		})
+	}
+
+	t.Run("ConflictReturnsAlreadyExistsWithHolder", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		holder := uuid.NewV4()
+		repo.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, &db.ConflictError{ResourceKey: "node:c", HolderId: holder,
+				HolderType: "UpdateSoftware"}).Once()
+
+		resp, err := s.StartOperation(context.Background(), startRequest("node:abc"))
 
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.Contains(t, status.Convert(err).Message(), holder.String())
+		assert.Contains(t, status.Convert(err).Message(), "UpdateSoftware")
 		assert.Nil(t, resp)
 		repo.AssertExpectations(t)
 	})
@@ -82,107 +133,120 @@ func TestStartOperation(t *testing.T) {
 	t.Run("RepoFailureIsInternal", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
+		repo.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, fmt.Errorf("db down")).Once()
 
-		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
-			mock.AnythingOfType("time.Duration")).Return(nil, fmt.Errorf("db down"))
-
-		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-			RequestedBy: "controller",
-			Type:        "RestartNode",
-			System:      "node",
-			ResourceKey: "node:abc",
-		})
+		resp, err := s.StartOperation(context.Background(), startRequest("node:abc"))
 
 		assert.Equal(t, codes.Internal, status.Code(err))
 		assert.Nil(t, resp)
-		repo.AssertExpectations(t)
-	})
-
-	t.Run("IdempotencyShortCircuits", func(t *testing.T) {
-		repo := &mocks.OperationRepo{}
-		s := NewOperationServer(orgName, "", repo, nil)
-
-		existing := &db.Operation{
-			Id:           uuid.NewV4(),
-			Type:         "RestartNode",
-			System:       "node",
-			FencingToken: 2,
-			ResourceKey:  "node:abc",
-		}
-		repo.On("GetByIdempotencyKey", mock.Anything, "key-123").Return(existing, nil)
-
-		resp, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-			RequestedBy:    "controller",
-			Type:           "RestartNode",
-			System:         "node",
-			ResourceKey:    "node:abc",
-			IdempotencyKey: "key-123",
-		})
-
-		assert.NoError(t, err)
-		assert.Equal(t, existing.Id.String(), resp.Operation.Id)
-		// Start must NOT be called when idempotency key matches
-		repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
 		repo.AssertExpectations(t)
 	})
 }
 
 func TestStartOperationIdempotency(t *testing.T) {
 	request := func() *pb.StartOperationRequest {
-		return &pb.StartOperationRequest{
-			RequestedBy: "controller", Type: "RestartNode", System: "node",
-			ResourceKey: "node:abc", IdempotencyKey: "key",
-		}
+		req := startRequest("node:t", "node:a")
+		req.IdempotencyKey = "key"
+		return req
 	}
-	held := func(edit func(*db.Operation)) *db.Operation {
-		op := &db.Operation{
-			Id: uuid.NewV4(), Type: "RestartNode", System: "node",
-			ResourceKey: "node:abc", FencingToken: 3,
-		}
+	group := func(edit func([]*db.Operation) []*db.Operation) []*db.Operation {
+		leader := &db.Operation{Id: uuid.NewV4(), Type: "RestartNode",
+			System: "node", ResourceKey: "node:a", FencingToken: 3}
+		member := &db.Operation{Id: uuid.NewV4(), GroupId: &leader.Id,
+			Type: "RestartNode", System: "node", ResourceKey: "node:t",
+			FencingToken: 4}
+		ops := []*db.Operation{leader, member}
 		if edit != nil {
-			edit(op)
+			ops = edit(ops)
 		}
-		return op
+		return ops
 	}
-	startTaken := func(repo *mocks.OperationRepo) {
-		repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"),
-			mock.AnythingOfType("time.Duration")).
-			Return(nil, db.ErrIdempotencyKeyTaken).Once()
+	startFails := func(repo *mocks.OperationRepo, err error) {
+		repo.On("Start", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, err).Once()
 	}
 
-	for name, edit := range map[string]func(*db.Operation){
-		"AnotherResource": func(op *db.Operation) { op.ResourceKey = "node:other" },
-		"AnotherType":     func(op *db.Operation) { op.Type = "ToggleRadio" },
-		"AnotherSystem":   func(op *db.Operation) { op.System = "operation" },
+	t.Run("ReplayReturnsTheWholeGroup", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		existing := group(nil)
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(existing, nil)
+
+		resp, err := s.StartOperation(context.Background(), request())
+
+		assert.NoError(t, err)
+		assert.Len(t, resp.Operations, 2)
+		assert.Equal(t, existing[0].Id.String(), resp.Operations[0].Id)
+		assert.Equal(t, existing[0].Id.String(), resp.Operations[1].GroupId)
+		repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything)
+	})
+
+	for name, edit := range map[string]func([]*db.Operation) []*db.Operation{
+		"AnotherResource": func(ops []*db.Operation) []*db.Operation {
+			ops[1].ResourceKey = "node:other"
+			return ops
+		},
+		"AnotherType": func(ops []*db.Operation) []*db.Operation {
+			ops[0].Type = "ToggleRadio"
+			return ops
+		},
+		"AnotherSystem": func(ops []*db.Operation) []*db.Operation {
+			ops[1].System = "operation"
+			return ops
+		},
+		"FewerTargets": func(ops []*db.Operation) []*db.Operation {
+			return ops[:1]
+		},
 	} {
 		t.Run("KeyUsedFor"+name+"IsInvalidArgument", func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			s := NewOperationServer(orgName, "", repo, nil)
 			repo.On("GetByIdempotencyKey", mock.Anything, "key").
-				Return(held(edit), nil)
+				Return(group(edit), nil)
 
 			resp, err := s.StartOperation(context.Background(), request())
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			assert.Nil(t, resp)
 			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything,
-				mock.Anything)
+				mock.Anything, mock.Anything)
 		})
 	}
 
-	t.Run("ConcurrentStartReturnsTheWinner", func(t *testing.T) {
+	for name, startErr := range map[string]error{
+		"TakenKey":         db.ErrIdempotencyKeyTaken,
+		"ConflictOnTarget": &db.ConflictError{ResourceKey: "node:a"},
+	} {
+		t.Run("Concurrent"+name+"ReturnsTheWinner", func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			winner := group(nil)
+			repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
+			startFails(repo, startErr)
+			repo.On("GetByIdempotencyKey", mock.Anything, "key").
+				Return(winner, nil).Once()
+
+			resp, err := s.StartOperation(context.Background(), request())
+
+			assert.NoError(t, err)
+			assert.Equal(t, winner[0].Id.String(), resp.Operations[0].Id)
+			assert.Equal(t, uint64(4), resp.Operations[1].FencingToken)
+			repo.AssertExpectations(t)
+		})
+	}
+
+	t.Run("ConflictWithoutGroupIsAlreadyExists", func(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
-		winner := held(nil)
-		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
-		startTaken(repo)
-		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(winner, nil).Once()
+		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Twice()
+		startFails(repo, &db.ConflictError{ResourceKey: "node:a"})
 
 		resp, err := s.StartOperation(context.Background(), request())
 
-		assert.NoError(t, err)
-		assert.Equal(t, winner.Id.String(), resp.Operation.Id)
-		assert.Equal(t, uint64(3), resp.Operation.FencingToken)
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.Nil(t, resp)
 		repo.AssertExpectations(t)
 	})
 
@@ -190,10 +254,12 @@ func TestStartOperationIdempotency(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
-		startTaken(repo)
+		startFails(repo, db.ErrIdempotencyKeyTaken)
 		repo.On("GetByIdempotencyKey", mock.Anything, "key").
-			Return(held(func(op *db.Operation) { op.ResourceKey = "node:other" }), nil).
-			Once()
+			Return(group(func(ops []*db.Operation) []*db.Operation {
+				ops[0].ResourceKey = "node:other"
+				return ops
+			}), nil).Once()
 
 		resp, err := s.StartOperation(context.Background(), request())
 
@@ -206,7 +272,7 @@ func TestStartOperationIdempotency(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Twice()
-		startTaken(repo)
+		startFails(repo, db.ErrIdempotencyKeyTaken)
 
 		resp, err := s.StartOperation(context.Background(), request())
 
@@ -219,7 +285,7 @@ func TestStartOperationIdempotency(t *testing.T) {
 		repo := &mocks.OperationRepo{}
 		s := NewOperationServer(orgName, "", repo, nil)
 		repo.On("GetByIdempotencyKey", mock.Anything, "key").Return(nil, nil).Once()
-		startTaken(repo)
+		startFails(repo, db.ErrIdempotencyKeyTaken)
 		repo.On("GetByIdempotencyKey", mock.Anything, "key").
 			Return(nil, fmt.Errorf("db down")).Once()
 
@@ -532,12 +598,14 @@ func TestRepoErrorCodes(t *testing.T) {
 		t.Run("Start"+name, func(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			s := NewOperationServer(orgName, "", repo, nil)
-			repo.On("Start", mock.Anything, mock.Anything, mock.Anything).
+			repo.On("Start", mock.Anything, mock.Anything, mock.Anything,
+				mock.Anything).
 				Return(nil, tc.err).Once()
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 				RequestedBy: "controller",
-				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
+				Type:        "RestartNode", System: "node",
+				ResourceKeys: []string{"node:abc"},
 			})
 
 			assert.Equal(t, tc.code, status.Code(err))
@@ -550,12 +618,14 @@ func TestRepoErrorCodes(t *testing.T) {
 				Return(nil, tc.err).Once()
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-				Type: "RestartNode", System: "node", ResourceKey: "node:abc",
-				RequestedBy: "controller", IdempotencyKey: "key",
+				Type: "RestartNode", System: "node",
+				ResourceKeys: []string{"node:abc"},
+				RequestedBy:  "controller", IdempotencyKey: "key",
 			})
 
 			assert.Equal(t, tc.code, status.Code(err))
-			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything,
+				mock.Anything)
 		})
 
 		t.Run("GetOperation"+name, func(t *testing.T) {
@@ -648,13 +718,15 @@ func TestInvalidResourceKeyIsRejected(t *testing.T) {
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 				RequestedBy: "controller",
-				Type:        "RestartNode", System: "node", ResourceKey: key,
+				Type:        "RestartNode", System: "node",
+				ResourceKeys:   []string{key},
 				IdempotencyKey: "key",
 			})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything, mock.Anything)
-			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything,
+				mock.Anything)
 		})
 
 		t.Run("GetByResource"+name, func(t *testing.T) {
@@ -682,15 +754,16 @@ func TestStartOperationLease(t *testing.T) {
 			repo := &mocks.OperationRepo{}
 			s := NewOperationServer(orgName, "", repo, nil)
 
-			repo.On("Start", mock.Anything, mock.AnythingOfType("*db.Operation"), tc.lease).
-				Return(func(_ context.Context, op *db.Operation,
-					_ time.Duration) *db.Operation {
-					return op
+			repo.On("Start", mock.Anything, mock.Anything, mock.Anything, tc.lease).
+				Return(func(_ context.Context, ops []*db.Operation, _ []string,
+					_ time.Duration) []*db.Operation {
+					return ops
 				}, nil).Once()
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 				RequestedBy: "controller",
-				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
+				Type:        "RestartNode", System: "node",
+				ResourceKeys: []string{"node:abc"},
 				LeaseSeconds: tc.seconds,
 			})
 
@@ -709,13 +782,15 @@ func TestStartOperationLease(t *testing.T) {
 
 			_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
 				RequestedBy: "controller",
-				Type:        "RestartNode", System: "node", ResourceKey: "node:abc",
+				Type:        "RestartNode", System: "node",
+				ResourceKeys:   []string{"node:abc"},
 				IdempotencyKey: "key", LeaseSeconds: seconds,
 			})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
 			repo.AssertNotCalled(t, "GetByIdempotencyKey", mock.Anything, mock.Anything)
-			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything)
+			repo.AssertNotCalled(t, "Start", mock.Anything, mock.Anything, mock.Anything,
+				mock.Anything)
 		})
 	}
 }
@@ -727,8 +802,9 @@ func TestBlankActorsAreRejected(t *testing.T) {
 		calls := map[string]func(s *OperationServer) error{
 			"StartRequestedBy": func(s *OperationServer) error {
 				_, err := s.StartOperation(context.Background(), &pb.StartOperationRequest{
-					Type: "RestartNode", System: "node", ResourceKey: "node:abc",
-					RequestedBy: blank,
+					Type: "RestartNode", System: "node",
+					ResourceKeys: []string{"node:abc"},
+					RequestedBy:  blank,
 				})
 				return err
 			},
