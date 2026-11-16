@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -79,18 +80,24 @@ func (f *siteFixture) server() *ControllerServer {
 		f.mon, 180, 120, pkg.IsDebugMode)
 }
 
-func (f *siteFixture) startOK(nodeID, opID string, token uint64) {
-	f.mgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeID
-	})).Return(&copr.StartResponse{Operation: &copr.OperationInfo{
-		Id: opID, FencingToken: token, ResourceKey: "node:" + nodeID,
-	}}, nil).Once()
+func siteKeys() []string {
+	return []string{nodeKey(siteTnode), nodeKey(siteAnode), nodeKey(siteCnode)}
 }
 
-func (f *siteFixture) idle(nodeIDs ...string) {
+func lockedOp(nodeID, opID string, token uint64) *copr.OperationInfo {
+	return &copr.OperationInfo{Id: opID, FencingToken: token,
+		ResourceKey: nodeKey(nodeID)}
+}
+
+func (f *siteFixture) startGroup(nodeIDs []string, ops ...*copr.OperationInfo) {
+	targets := make([]string, 0, len(nodeIDs))
 	for _, id := range nodeIDs {
-		f.mgr.On("GetByResource", "node:"+id).Return(nil, nil).Once()
+		targets = append(targets, nodeKey(id))
 	}
+	f.mgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return reflect.DeepEqual(req.ResourceKeys, targets) &&
+			reflect.DeepEqual(req.MustBeFree, siteKeys())
+	})).Return(&copr.StartResponse{Operations: ops}, nil).Once()
 }
 
 func busySite() map[string]string {
@@ -99,37 +106,46 @@ func busySite() map[string]string {
 
 func TestLockNodes_BusySiblingRejectsDirectAction(t *testing.T) {
 	f := newSiteFixture(busySite())
-	f.startOK(siteTnode, "op-restart", 5)
-	f.idle(siteAnode)
-	f.mgr.On("GetByResource", "node:"+siteCnode).Return(&copr.OperationInfo{
-		Id: "op-update", Type: "UpdateSoftware", Status: copr.StatusRunning,
-	}, nil).Once()
-	f.mgr.On("Fail", "op-restart", uint64(5), pkg.ServiceName,
-		mock.MatchedBy(func(reason string) bool {
-			return strings.HasPrefix(reason, "not started: ") &&
-				strings.Contains(reason, "UpdateSoftware")
-		})).Return(&copr.OperationInfo{}, nil).Once()
+	f.mgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+		return reflect.DeepEqual(req.ResourceKeys, []string{nodeKey(siteTnode)}) &&
+			reflect.DeepEqual(req.MustBeFree, siteKeys())
+	})).Return(nil, &copr.BusyError{
+		Reason: nodeKey(siteCnode) + " is busy with UpdateSoftware operation op-update",
+	}).Once()
 
 	_, err := restartNode(f.server(), siteTnode)
 
 	assert.Equal(t, codes.AlreadyExists, status.Code(err))
 	assert.Contains(t, status.Convert(err).Message(), "op-update")
 	f.mgr.AssertExpectations(t)
+	f.mgr.AssertNotCalled(t, "Fail", mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything)
 	f.mon.AssertNotCalled(t, "Register", mock.Anything)
 	f.bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 }
 
-func TestLockNodes_LockedTargetIsAlreadyExists(t *testing.T) {
+func TestLockNodes_ManagerFailureIsUnavailable(t *testing.T) {
 	f := newSiteFixture(busySite())
 	f.mgr.On("Start", mock.Anything).Return(nil, &client.ErrorStatus{
-		StatusCode: http.StatusConflict, RawError: errors.New("locked"),
+		StatusCode: http.StatusServiceUnavailable, RawError: errors.New("down"),
 	}).Once()
 
 	_, err := f.server().ToggleService(context.TODO(),
 		&pb.ToggleServiceRequest{NodeId: siteTnode, State: "on"})
 
-	assert.Equal(t, codes.AlreadyExists, status.Code(err))
-	f.mgr.AssertNotCalled(t, "GetByResource", mock.Anything)
+	assert.Equal(t, codes.Unavailable, status.Code(err))
+	f.mon.AssertNotCalled(t, "Register", mock.Anything)
+}
+
+func TestLockNodes_EmptyStartResponseIsUnavailable(t *testing.T) {
+	f := newSiteFixture(busySite())
+	f.mgr.On("Start", mock.Anything).Return(&copr.StartResponse{}, nil).Once()
+
+	_, err := f.server().ToggleService(context.TODO(),
+		&pb.ToggleServiceRequest{NodeId: siteTnode, State: "on"})
+
+	assert.Equal(t, codes.Unavailable, status.Code(err))
+	f.mon.AssertNotCalled(t, "Register", mock.Anything)
 }
 
 func TestLockNodes_SiteReadFailureIsUnavailable(t *testing.T) {
@@ -159,9 +175,8 @@ func TestLockNodes_NodesFromDifferentSitesAreRejected(t *testing.T) {
 
 func TestLockNodes_RegisterFailureReleasesEveryLock(t *testing.T) {
 	f := newSiteFixture(busySite())
-	f.startOK(siteTnode, "op-t", 1)
-	f.startOK(siteAnode, "op-a", 2)
-	f.idle(siteCnode)
+	f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+		lockedOp(siteAnode, "op-a", 2))
 	f.mon.On("Register", mock.MatchedBy(func(r *opmonpb.RegisterIntentRequest) bool {
 		return r.OperationId == "op-t"
 	})).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
@@ -187,9 +202,8 @@ func TestLockNodes_RegisterFailureReleasesEveryLock(t *testing.T) {
 func TestRestartNodes(t *testing.T) {
 	t.Run("LocksTheSiteOnceAndRestartsEveryNode", func(t *testing.T) {
 		f := newSiteFixture(busySite())
-		f.startOK(siteTnode, "op-t", 1)
-		f.startOK(siteAnode, "op-a", 2)
-		f.idle(siteCnode)
+		f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+			lockedOp(siteAnode, "op-a", 2))
 		f.mon.On("Register", mock.Anything).
 			Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
 		f.mgr.On("MarkRunning", "op-t", uint64(1), pkg.ServiceName).
@@ -207,15 +221,13 @@ func TestRestartNodes(t *testing.T) {
 			assert.Equal(t, opmgrpb.OperationStatus_RUNNING.String(), op.Status)
 		}
 		f.mgr.AssertExpectations(t)
-		f.mgr.AssertNotCalled(t, "GetByResource", "node:"+siteTnode)
-		f.mgr.AssertNotCalled(t, "GetByResource", "node:"+siteAnode)
+		f.mgr.AssertNumberOfCalls(t, "Start", 1)
 	})
 
 	t.Run("PublishFailureFailsTheRemainingNodes", func(t *testing.T) {
 		f := newSiteFixture(busySite())
-		f.startOK(siteTnode, "op-t", 1)
-		f.startOK(siteAnode, "op-a", 2)
-		f.idle(siteCnode)
+		f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+			lockedOp(siteAnode, "op-a", 2))
 		f.mon.On("Register", mock.Anything).
 			Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
 		f.mgr.On("MarkRunning", mock.Anything, mock.Anything, pkg.ServiceName).
@@ -244,9 +256,8 @@ func TestRestartNodes(t *testing.T) {
 
 	t.Run("MarkRunningFailureFailsEveryNode", func(t *testing.T) {
 		f := newSiteFixture(busySite())
-		f.startOK(siteTnode, "op-t", 1)
-		f.startOK(siteAnode, "op-a", 2)
-		f.idle(siteCnode)
+		f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+			lockedOp(siteAnode, "op-a", 2))
 		f.mon.On("Register", mock.Anything).
 			Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
 		f.mgr.On("MarkRunning", "op-t", uint64(1), pkg.ServiceName).
@@ -268,9 +279,8 @@ func TestRestartNodes(t *testing.T) {
 
 	t.Run("MarkRunningRejectedIsAborted", func(t *testing.T) {
 		f := newSiteFixture(busySite())
-		f.startOK(siteTnode, "op-t", 1)
-		f.startOK(siteAnode, "op-a", 2)
-		f.idle(siteCnode)
+		f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+			lockedOp(siteAnode, "op-a", 2))
 		f.mon.On("Register", mock.Anything).
 			Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
 		f.mgr.On("MarkRunning", "op-t", uint64(1), pkg.ServiceName).
@@ -304,9 +314,8 @@ func TestRestartNodes(t *testing.T) {
 
 func TestToggleRadios(t *testing.T) {
 	f := newSiteFixture(busySite())
-	f.startOK(siteTnode, "op-t", 1)
-	f.startOK(siteAnode, "op-a", 2)
-	f.idle(siteCnode)
+	f.startGroup([]string{siteTnode, siteAnode}, lockedOp(siteTnode, "op-t", 1),
+		lockedOp(siteAnode, "op-a", 2))
 	f.mon.On("Register", mock.Anything).
 		Return(&opmonpb.RegisterIntentResponse{}, nil).Twice()
 	f.mgr.On("MarkRunning", mock.Anything, mock.Anything, pkg.ServiceName).

@@ -74,8 +74,21 @@ func (m *JSONMap) Scan(v interface{}) error {
 	return json.Unmarshal(b, m)
 }
 
+// Operation is one locked action on one resource key.
+//
+// One StartOperation request creates a group of operations, one per target key.
+// The group convention keeps everything in this table:
+//   - The leader is the operation on the first target in sorted key order. Its
+//     GroupId is nil and it carries the request's IdempotencyKey, if any.
+//   - Every other member points GroupId at the leader's Id and has a nil
+//     IdempotencyKey, so idx_op_idem stays one key per request.
+//   - A single-target request is a leader with no members.
+//
+// A group is loaded with "id = leader OR group_id = leader". Locks and audits stay
+// per operation.
 type Operation struct {
 	Id             uuid.UUID       `gorm:"primaryKey;type:uuid" json:"id"`
+	GroupId        *uuid.UUID      `gorm:"type:uuid;index" json:"groupId,omitempty"`
 	Type           string          `gorm:"not null;index" json:"type"`
 	System         string          `gorm:"not null;index" json:"system"`
 	Status         OperationStatus `gorm:"not null;index" json:"status"`

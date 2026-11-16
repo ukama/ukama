@@ -77,30 +77,31 @@ func startOperation(t *testing.T, ctx context.Context,
 	t.Helper()
 
 	resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
-		Type:        "IntegrationTest",
-		System:      "operation",
-		ResourceKey: "test:integration:" + uuid.NewV4().String(),
-		RequestedBy: actor,
+		Type:         "IntegrationTest",
+		System:       "operation",
+		ResourceKeys: []string{"test:integration:" + uuid.NewV4().String()},
+		RequestedBy:  actor,
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, pb.OperationStatus_PENDING, resp.Operation.Status)
-	assert.True(t, resp.Operation.FencingToken > 0)
-	assertLockHeldBy(t, ctx, c, resp.Operation)
+	assert.Equal(t, pb.OperationStatus_PENDING, resp.Operations[0].Status)
+	assert.True(t, resp.Operations[0].FencingToken > 0)
+	assertLockHeldBy(t, ctx, c, resp.Operations[0])
 
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		cur, err := c.GetOperation(ctx, &pb.GetOperationRequest{Id: resp.Operation.Id})
+		cur, err := c.GetOperation(ctx,
+			&pb.GetOperationRequest{Id: resp.Operations[0].Id})
 		if err != nil || !unfinished(cur.Operation.Status) {
 			return
 		}
 		_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
-			Id: resp.Operation.Id, Actor: actor, Reason: reason,
+			Id: resp.Operations[0].Id, Actor: actor, Reason: reason,
 		})
 	})
 
-	return resp.Operation
+	return resp.Operations[0]
 }
 
 func unfinished(st pb.OperationStatus) bool {
@@ -297,10 +298,10 @@ func TestInvalidResourceKey(t *testing.T) {
 	} {
 		t.Run("Start"+name, func(t *testing.T) {
 			_, err := c.StartOperation(ctx, &pb.StartOperationRequest{
-				Type:        "IntegrationTest",
-				System:      "operation",
-				ResourceKey: key,
-				RequestedBy: actor,
+				Type:         "IntegrationTest",
+				System:       "operation",
+				ResourceKeys: []string{key},
+				RequestedBy:  actor,
 			})
 
 			assert.Equal(t, codes.InvalidArgument, status.Code(err))
@@ -322,7 +323,7 @@ func TestStartLease(t *testing.T) {
 		return c.StartOperation(ctx, &pb.StartOperationRequest{
 			Type:         "IntegrationTest",
 			System:       "operation",
-			ResourceKey:  "test:integration:" + uuid.NewV4().String(),
+			ResourceKeys: []string{"test:integration:" + uuid.NewV4().String()},
 			RequestedBy:  actor,
 			LeaseSeconds: seconds,
 		})
@@ -333,13 +334,13 @@ func TestStartLease(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.WithinDuration(t, time.Now().Add(time.Hour),
-			resp.Operation.LeaseExpiresAt.AsTime(), time.Minute)
+			resp.Operations[0].LeaseExpiresAt.AsTime(), time.Minute)
 
 		_, err = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
-			Id: resp.Operation.Id, Actor: actor, Reason: reason,
+			Id: resp.Operations[0].Id, Actor: actor, Reason: reason,
 		})
 		assert.NoError(t, err)
-		assertLockFree(t, ctx, c, resp.Operation)
+		assertLockFree(t, ctx, c, resp.Operations[0])
 	})
 
 	t.Run("AboveMaxIsRejected", func(t *testing.T) {
@@ -357,10 +358,10 @@ func TestStartConflict(t *testing.T) {
 		op := startOperation(t, ctx, c)
 
 		resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
-			Type:        "IntegrationTest",
-			System:      "operation",
-			ResourceKey: op.ResourceKey,
-			RequestedBy: actor,
+			Type:         "IntegrationTest",
+			System:       "operation",
+			ResourceKeys: []string{op.ResourceKey},
+			RequestedBy:  actor,
 		})
 
 		assert.Equal(t, codes.AlreadyExists, status.Code(err))
@@ -377,7 +378,7 @@ func startWithKey(t *testing.T, ctx context.Context,
 	resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
 		Type:           "IntegrationTest",
 		System:         "operation",
-		ResourceKey:    resourceKey,
+		ResourceKeys:   []string{resourceKey},
 		RequestedBy:    actor,
 		IdempotencyKey: key,
 	})
@@ -386,7 +387,7 @@ func startWithKey(t *testing.T, ctx context.Context,
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
 			_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
-				Id: resp.Operation.Id, Actor: actor, Reason: reason,
+				Id: resp.Operations[0].Id, Actor: actor, Reason: reason,
 			})
 		})
 	}
@@ -407,9 +408,10 @@ func TestStartIdempotency(t *testing.T) {
 		retry, err := startWithKey(t, ctx, c, res, key)
 
 		assert.NoError(t, err)
-		assert.Equal(t, first.Operation.Id, retry.Operation.Id)
-		assert.Equal(t, first.Operation.FencingToken, retry.Operation.FencingToken)
-		assertLockHeldBy(t, ctx, c, first.Operation)
+		assert.Equal(t, first.Operations[0].Id, retry.Operations[0].Id)
+		assert.Equal(t, first.Operations[0].FencingToken,
+			retry.Operations[0].FencingToken)
+		assertLockHeldBy(t, ctx, c, first.Operations[0])
 	})
 
 	t.Run("RetryAfterFinishReturnsTheFinishedOperation", func(t *testing.T) {
@@ -417,19 +419,20 @@ func TestStartIdempotency(t *testing.T) {
 		first, err := startWithKey(t, ctx, c, res, key)
 		assert.NoError(t, err)
 		_, err = c.MarkRunning(ctx, &pb.MarkRunningRequest{
-			Id: first.Operation.Id, FencingToken: first.Operation.FencingToken,
+			Id: first.Operations[0].Id, FencingToken: first.Operations[0].FencingToken,
 			Actor: actor,
 		})
 		assert.NoError(t, err)
-		_, err = completeOperation(ctx, c, first.Operation, first.Operation.FencingToken)
+		_, err = completeOperation(ctx, c, first.Operations[0],
+			first.Operations[0].FencingToken)
 		assert.NoError(t, err)
 
 		retry, err := startWithKey(t, ctx, c, res, key)
 
 		assert.NoError(t, err)
-		assert.Equal(t, first.Operation.Id, retry.Operation.Id)
-		assert.Equal(t, pb.OperationStatus_SUCCESS, retry.Operation.Status)
-		assertLockFree(t, ctx, c, first.Operation)
+		assert.Equal(t, first.Operations[0].Id, retry.Operations[0].Id)
+		assert.Equal(t, pb.OperationStatus_SUCCESS, retry.Operations[0].Status)
+		assertLockFree(t, ctx, c, first.Operations[0])
 	})
 
 	t.Run("KeyOnAnotherResourceIsInvalidArgument", func(t *testing.T) {
@@ -442,7 +445,7 @@ func TestStartIdempotency(t *testing.T) {
 
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 		assert.Nil(t, resp)
-		assertLockHeldBy(t, ctx, c, first.Operation)
+		assertLockHeldBy(t, ctx, c, first.Operations[0])
 		assertLockFree(t, ctx, c, &pb.Operation{ResourceKey: other})
 	})
 
@@ -460,7 +463,7 @@ func TestStartIdempotency(t *testing.T) {
 				resp, err := startWithKey(t, ctx, c, res, key)
 				errs[i] = err
 				if err == nil {
-					ids[i] = resp.Operation.Id
+					ids[i] = resp.Operations[0].Id
 				}
 			}(i)
 		}
@@ -480,10 +483,10 @@ func TestBlankActors(t *testing.T) {
 
 	t.Run("StartWithoutRequestedBy", func(t *testing.T) {
 		_, err := c.StartOperation(ctx, &pb.StartOperationRequest{
-			Type:        "IntegrationTest",
-			System:      "operation",
-			ResourceKey: "test:integration:" + uuid.NewV4().String(),
-			RequestedBy: "   ",
+			Type:         "IntegrationTest",
+			System:       "operation",
+			ResourceKeys: []string{"test:integration:" + uuid.NewV4().String()},
+			RequestedBy:  "   ",
 		})
 
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
@@ -508,5 +511,136 @@ func TestBlankActors(t *testing.T) {
 
 		assert.Equal(t, codes.InvalidArgument, status.Code(err))
 		assertLockHeldBy(t, ctx, c, op)
+	})
+}
+
+func startGroup(t *testing.T, ctx context.Context, c pb.OperationManagerServiceClient,
+	targets, mustBeFree []string, key string) (*pb.StartOperationResponse, error) {
+	t.Helper()
+
+	resp, err := c.StartOperation(ctx, &pb.StartOperationRequest{
+		Type:           "IntegrationTest",
+		System:         "operation",
+		ResourceKeys:   targets,
+		MustBeFree:     mustBeFree,
+		RequestedBy:    actor,
+		IdempotencyKey: key,
+	})
+	if err == nil {
+		t.Cleanup(func() {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			for _, op := range resp.Operations {
+				_, _ = c.ForceUnlock(ctx, &pb.ForceUnlockRequest{
+					Id: op.Id, Actor: actor, Reason: reason,
+				})
+			}
+		})
+	}
+
+	return resp, err
+}
+
+func TestStartGroup(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+	site := func() (string, string, string) {
+		id := uuid.NewV4().String()
+		return "test:integration:" + id + ":a", "test:integration:" + id + ":c",
+			"test:integration:" + id + ":t"
+	}
+
+	t.Run("LocksEveryTargetAndLinksMembersToLeader", func(t *testing.T) {
+		amp, ctl, tower := site()
+
+		resp, err := startGroup(t, ctx, c, []string{tower, amp},
+			[]string{amp, ctl, tower}, "")
+
+		assert.NoError(t, err)
+		assert.Len(t, resp.Operations, 2)
+		leader, member := resp.Operations[0], resp.Operations[1]
+		assert.Equal(t, amp, leader.ResourceKey)
+		assert.Empty(t, leader.GroupId)
+		assert.Equal(t, tower, member.ResourceKey)
+		assert.Equal(t, leader.Id, member.GroupId)
+		assertLockHeldBy(t, ctx, c, leader)
+		assertLockHeldBy(t, ctx, c, member)
+		assertLockFree(t, ctx, c, &pb.Operation{ResourceKey: ctl})
+	})
+
+	t.Run("BusySiblingRejectsTheWholeGroup", func(t *testing.T) {
+		amp, ctl, tower := site()
+		holder, err := startGroup(t, ctx, c, []string{ctl}, nil, "")
+		assert.NoError(t, err)
+
+		resp, err := startGroup(t, ctx, c, []string{tower, amp},
+			[]string{amp, ctl, tower}, "")
+
+		assert.Equal(t, codes.AlreadyExists, status.Code(err))
+		assert.Contains(t, status.Convert(err).Message(), holder.Operations[0].Id)
+		assert.Nil(t, resp)
+		assertLockFree(t, ctx, c, &pb.Operation{ResourceKey: tower})
+		assertLockFree(t, ctx, c, &pb.Operation{ResourceKey: amp})
+	})
+
+	t.Run("FinishedSiblingDoesNotBlock", func(t *testing.T) {
+		amp, ctl, tower := site()
+		holder, err := startGroup(t, ctx, c, []string{ctl}, nil, "")
+		assert.NoError(t, err)
+		_, err = c.FailOperation(ctx, &pb.FailOperationRequest{
+			Id: holder.Operations[0].Id, FencingToken: holder.Operations[0].FencingToken,
+			Actor: actor, Reason: reason,
+		})
+		assert.NoError(t, err)
+
+		_, err = startGroup(t, ctx, c, []string{tower, amp},
+			[]string{amp, ctl, tower}, "")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("RetryWithKeyReturnsTheWholeGroup", func(t *testing.T) {
+		amp, ctl, tower := site()
+		key := uuid.NewV4().String()
+		first, err := startGroup(t, ctx, c, []string{tower, amp},
+			[]string{amp, ctl, tower}, key)
+		assert.NoError(t, err)
+
+		retry, err := startGroup(t, ctx, c, []string{amp, tower},
+			[]string{amp, ctl, tower}, key)
+
+		assert.NoError(t, err)
+		assert.Len(t, retry.Operations, 2)
+		assert.Equal(t, first.Operations[0].Id, retry.Operations[0].Id)
+		assert.Equal(t, first.Operations[1].Id, retry.Operations[1].Id)
+	})
+
+	t.Run("OverlappingConcurrentGroupsNeverBothWin", func(t *testing.T) {
+		const rounds = 20
+		for i := 0; i < rounds; i++ {
+			amp, ctl, tower := site()
+			all := []string{amp, ctl, tower}
+			errs := make([]error, 2)
+
+			var wg sync.WaitGroup
+			for j, target := range []string{tower, amp} {
+				wg.Add(1)
+				go func(j int, target string) {
+					defer wg.Done()
+					_, errs[j] = startGroup(t, ctx, c, []string{target}, all, "")
+				}(j, target)
+			}
+			wg.Wait()
+
+			won := 0
+			for _, err := range errs {
+				if err == nil {
+					won++
+					continue
+				}
+				assert.Equal(t, codes.AlreadyExists, status.Code(err))
+			}
+			assert.Equal(t, 1, won)
+		}
 	})
 }

@@ -72,7 +72,7 @@ func (c *ConfiguratorServer) ApplyConfig(ctx context.Context, req *pb.ApplyConfi
 		startResp, err := c.opManager.Start(&opmgrpb.StartOperationRequest{
 			Type:         "ApplyConfig",
 			System:       "node",
-			ResourceKey:  "config:apply",
+			ResourceKeys: []string{"config:apply"},
 			RequestedBy:  pkg.ServiceName,
 			LeaseSeconds: c.opLeaseSecs,
 		})
@@ -80,11 +80,11 @@ func (c *ConfiguratorServer) ApplyConfig(ctx context.Context, req *pb.ApplyConfi
 			log.Warnf("ApplyConfig lock acquire rejected: %v", err)
 			return nil, err
 		}
-		if startResp == nil || startResp.Operation == nil {
+		if startResp == nil || len(startResp.Operations) == 0 {
 			return nil, status.Errorf(codes.Internal, "ApplyConfig lock acquire returned empty operation")
 		}
 
-		op = startResp.Operation
+		op = startResp.Operations[0]
 		log.Infof("ApplyConfig acquired lock op=%s token=%d", op.Id, op.FencingToken)
 	} else {
 		log.Warnf("ApplyConfig running without operation manager")

@@ -31,7 +31,7 @@ func (f *fakeManagerClient) StartOperation(ctx context.Context,
 	error) {
 	_, f.deadline = ctx.Deadline()
 	f.start = req
-	return &pb.StartOperationResponse{Operation: &pb.Operation{Id: "op"}}, nil
+	return &pb.StartOperationResponse{Operations: []*pb.Operation{{Id: "op"}}}, nil
 }
 
 func (f *fakeManagerClient) MarkRunning(ctx context.Context,
@@ -50,7 +50,7 @@ func TestOperationManager(t *testing.T) {
 		resp, err := m.Start(&pb.StartOperationRequest{RequestedBy: "configurator"})
 
 		assert.NoError(t, err)
-		assert.Equal(t, "op", resp.Operation.Id)
+		assert.Equal(t, "op", resp.Operations[0].Id)
 		assert.Equal(t, "configurator", fake.start.RequestedBy)
 		assert.True(t, fake.deadline)
 	})

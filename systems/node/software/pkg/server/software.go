@@ -239,14 +239,17 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey, siteID,
 	if err != nil {
 		return nil, err
 	}
-	ops, err := copr.LockThenCheck(s.opManager, copr.LockRequest{
+	resp, err := s.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
 		RequestedBy:  pkg.ServiceName,
 		LeaseSeconds: s.opLeaseSecs,
-		Targets:      []string{resourceKey},
-		Siblings:     siblings,
+		ResourceKeys: []string{resourceKey},
+		MustBeFree:   siblings,
 	})
+	if err == nil && (resp == nil || len(resp.Operations) == 0) {
+		err = fmt.Errorf("start returned no operations")
+	}
 	if errors.Is(err, copr.ErrBusy) {
 		log.Warnf("%s rejected for %s: %v", actionType, resourceKey, err)
 		return nil, status.Errorf(codes.AlreadyExists, "%s rejected: %v", actionType, err)
@@ -255,7 +258,7 @@ func (s *SoftwareServer) acquireAndRegister(actionType, resourceKey, siteID,
 		log.Errorf("%s lock for %s failed: %v", actionType, resourceKey, err)
 		return nil, status.Errorf(codes.Unavailable, "%s: lock node: %v", actionType, err)
 	}
-	op := ops[0]
+	op := resp.Operations[0]
 	if _, err := s.opMonitor.Register(&opmonpb.RegisterIntentRequest{
 		OperationId:     op.Id,
 		ResourceKey:     resourceKey,

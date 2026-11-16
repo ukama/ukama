@@ -7,8 +7,8 @@ import (
 	fmt "fmt"
 	math "math"
 	proto "github.com/golang/protobuf/proto"
-	_ "github.com/mwitkow/go-proto-validators"
 	_ "google.golang.org/protobuf/types/known/timestamppb"
+	_ "github.com/mwitkow/go-proto-validators"
 	regexp "regexp"
 	github_com_mwitkow_go_proto_validators "github.com/mwitkow/go-proto-validators"
 )
@@ -48,18 +48,17 @@ func (this *StartOperationRequest) Validate() error {
 	if this.System == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("System", fmt.Errorf(`value '%v' must not be an empty string`, this.System))
 	}
-	if this.ResourceKey == "" {
-		return github_com_mwitkow_go_proto_validators.FieldError("ResourceKey", fmt.Errorf(`value '%v' must not be an empty string`, this.ResourceKey))
-	}
 	if this.RequestedBy == "" {
 		return github_com_mwitkow_go_proto_validators.FieldError("RequestedBy", fmt.Errorf(`value '%v' must not be an empty string`, this.RequestedBy))
 	}
 	return nil
 }
 func (this *StartOperationResponse) Validate() error {
-	if this.Operation != nil {
-		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Operation); err != nil {
-			return github_com_mwitkow_go_proto_validators.FieldError("Operation", err)
+	for _, item := range this.Operations {
+		if item != nil {
+			if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(item); err != nil {
+				return github_com_mwitkow_go_proto_validators.FieldError("Operations", err)
+			}
 		}
 	}
 	return nil

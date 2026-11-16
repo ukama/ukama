@@ -73,8 +73,11 @@ func TestControllerServer_RestartNode(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: "op-restart", FencingToken: 1, ResourceKey: "node:" + nodeId}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == "node:"+nodeId
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-restart", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -114,8 +117,11 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: "op-rf", FencingToken: 1, ResourceKey: "node:" + nodeId}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == "node:"+nodeId
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-rf", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -157,8 +163,11 @@ func TestControllerServer_ToggleService(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: "op-svc", FencingToken: 1, ResourceKey: "node:" + nodeId}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == "node:"+nodeId
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-svc", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -220,8 +229,11 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: resourceKey}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == resourceKey
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == resourceKey
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -253,8 +265,11 @@ func TestControllerServer_ToggleSwitchPort_PublishFailureFailsOperation(t *testi
 
 	op := &copr.OperationInfo{Id: "op-i", FencingToken: 1, ResourceKey: resourceKey}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == resourceKey
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == resourceKey
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -307,8 +322,11 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 
 	op := &copr.OperationInfo{Id: "op-radio", FencingToken: 1, ResourceKey: "node:" + nodeId}
 	opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
-		return req.ResourceKey == "node:"+nodeId
-	})).Return(&copr.StartResponse{Operation: op}, nil).Once()
+		return len(req.ResourceKeys) == 1 &&
+			req.ResourceKeys[0] == "node:"+nodeId
+	})).Return(&copr.StartResponse{
+		Operations: []*copr.OperationInfo{op},
+	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-radio", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
@@ -443,7 +461,9 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 		opMgr := &mbmocks.ManagerClient{}
 		opMon := &mocks.OperationMonitor{}
 		opMgr.On("Start", mock.Anything).
-			Return(&copr.StartResponse{Operation: op}, nil).Once()
+			Return(&copr.StartResponse{
+				Operations: []*copr.OperationInfo{op},
+			}, nil).Once()
 		opMon.On("Register", mock.Anything).Return(nil, assert.AnError).Once()
 		opMgr.On("Fail", "op-x", uint64(3), pkg.ServiceName, mock.Anything).
 			Return(&copr.OperationInfo{}, nil).Once()
@@ -489,7 +509,9 @@ func TestControllerServer_MarkRunningRejectedIsAborted(t *testing.T) {
 				ResourceKey: nodeKey(nodeId)}
 			repo.On("Get", nodeId).Return(&db.NodeLog{}, nil).Maybe()
 			opMgr.On("Start", mock.Anything).
-				Return(&copr.StartResponse{Operation: op}, nil).Once()
+				Return(&copr.StartResponse{
+					Operations: []*copr.OperationInfo{op},
+				}, nil).Once()
 			opMon.On("Register", mock.Anything).
 				Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 			opMgr.On("MarkRunning", "op-1", uint64(1), "controller").
