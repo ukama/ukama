@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -25,6 +26,7 @@ import (
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/ukama"
+	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/mocks"
 	pb "github.com/ukama/ukama/systems/node/software/pb/gen"
 	"github.com/ukama/ukama/systems/node/software/pkg"
@@ -136,6 +138,31 @@ func TestUpdateSoftware_SiteLock(t *testing.T) {
 		assert.Equal(t, codes.Unavailable, status.Code(err))
 	})
 
+	t.Run("MarkRunningRejectedIsAborted", func(t *testing.T) {
+		f := newUpdateFixture(t)
+		f.siteNodes(nil)
+		op := &copr.OperationInfo{Id: "op-update", FencingToken: 9,
+			ResourceKey: "node:" + testNodeIdNormalized}
+		f.mgr.On("Start", mock.Anything).
+			Return(&copr.StartResponse{Operation: op}, nil).Once()
+		f.mgr.On("GetByResource", "node:"+siblingTower).Return(nil, nil).Once()
+		f.mon.On("Register", mock.Anything).
+			Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+		f.mgr.On("MarkRunning", "op-update", uint64(9), pkg.ServiceName).
+			Return(nil, fmt.Errorf("MarkRunning failure: %w: lease expired",
+				copr.ErrNotRunnable)).Once()
+		f.mgr.On("Fail", "op-update", uint64(9), pkg.ServiceName, mock.Anything).
+			Return(op, nil).Once()
+		f.mon.On("Cancel", mock.Anything).
+			Return(&opmonpb.CancelIntentResponse{}, nil).Once()
+
+		err := f.update(t)
+
+		assert.Equal(t, codes.Aborted, status.Code(err))
+		f.mgr.AssertExpectations(t)
+		f.bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+	})
+
 	t.Run("SiteReadFailureIsUnavailable", func(t *testing.T) {
 		f := newUpdateFixture(t)
 		f.siteNodes(errors.New("registry down"))
@@ -145,4 +172,24 @@ func TestUpdateSoftware_SiteLock(t *testing.T) {
 		assert.Equal(t, codes.Unavailable, status.Code(err))
 		f.mgr.AssertNotCalled(t, "Start", mock.Anything)
 	})
+}
+
+func TestMarkRunningCode(t *testing.T) {
+	for name, tc := range map[string]struct {
+		err  error
+		code codes.Code
+	}{
+		"NotRunnableIsAborted": {
+			fmt.Errorf("MarkRunning failure: %w", copr.ErrNotRunnable), codes.Aborted,
+		},
+		"UnavailableIsUnavailable": {
+			fmt.Errorf("MarkRunning failure: %w", copr.ErrUnavailable),
+			codes.Unavailable,
+		},
+		"OtherIsInternal": {errors.New("MarkRunning deserialize"), codes.Internal},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.code, markRunningCode(tc.err))
+		})
+	}
 }

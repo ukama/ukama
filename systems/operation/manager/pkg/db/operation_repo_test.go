@@ -236,27 +236,33 @@ func Test_Start(t *testing.T) {
 }
 
 func Test_MarkRunning(t *testing.T) {
-	t.Run("TransitionsPendingToRunning", func(t *testing.T) {
-		mock, repo := setupTestDB(t)
-
-		op := &Operation{
-			Id:           uuid.NewV4(),
-			Type:         "RestartNode",
-			System:       "node",
-			Status:       OperationPending,
-			FencingToken: 3,
-			ResourceKey:  "node:abc",
+	pending := func() *Operation {
+		return &Operation{
+			Id:             uuid.NewV4(),
+			Type:           "RestartNode",
+			System:         "node",
+			Status:         OperationPending,
+			FencingToken:   3,
+			ResourceKey:    "node:abc",
+			LeaseExpiresAt: time.Now().Add(time.Minute),
 		}
-
-		mock.ExpectBegin()
-		expectLockedSelect(mock).
-			WillReturnRows(operationRow(op))
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
-			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+	expectAudit := func(mock sqlmock.Sqlmock, op *Operation, event string) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
-			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "running", "controller",
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, event, "controller",
 				sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
+	}
+
+	t.Run("TransitionsPendingToRunning", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := pending()
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations"`)).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		expectAudit(mock, op, "running")
 		mock.ExpectCommit()
 
 		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken, "controller")
@@ -265,6 +271,74 @@ func Test_MarkRunning(t *testing.T) {
 		assert.Equal(t, OperationRunning, out.Status)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
+
+	t.Run("RepeatIsAuditedAndSucceeds", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := pending()
+		op.Status = OperationRunning
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).WillReturnRows(operationRow(op))
+		expectAudit(mock, op, "ignored_running")
+		mock.ExpectCommit()
+
+		out, err := repo.MarkRunning(ctx, op.Id, op.FencingToken, "controller")
+
+		assert.NoError(t, err)
+		assert.Equal(t, OperationRunning, out.Status)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	for name, change := range map[string]func(op *Operation) uint64{
+		"RejectsStaleFencingToken": func(op *Operation) uint64 {
+			return op.FencingToken - 1
+		},
+		"RejectsFinishedOperation": func(op *Operation) uint64 {
+			op.Status = OperationTimeout
+			return op.FencingToken
+		},
+		"RejectsExpiredLease": func(op *Operation) uint64 {
+			op.LeaseExpiresAt = time.Now().Add(-time.Second)
+			return op.FencingToken
+		},
+		"RejectsExpiredLeaseWhileRunning": func(op *Operation) uint64 {
+			op.Status = OperationRunning
+			op.LeaseExpiresAt = time.Now().Add(-time.Second)
+			return op.FencingToken
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			mock, repo := setupTestDB(t)
+			op := pending()
+			token := change(op)
+
+			mock.ExpectBegin()
+			expectLockedSelect(mock).WillReturnRows(operationRow(op))
+			expectAudit(mock, op, "rejected_running")
+			mock.ExpectCommit()
+
+			out, err := repo.MarkRunning(ctx, op.Id, token, "controller")
+
+			assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+			assert.Nil(t, out)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+
+	t.Run("UnknownOperationIsNotFound", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).WillReturnError(gorm.ErrRecordNotFound)
+		mock.ExpectRollback()
+
+		out, err := repo.MarkRunning(ctx, uuid.NewV4(), 3, "controller")
+
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
+		assert.Nil(t, out)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
 	t.Run("ReturnsLockTimeout", func(t *testing.T) {
 		mock, repo := setupTestDB(t)
 

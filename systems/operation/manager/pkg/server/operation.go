@@ -185,12 +185,12 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	if err := requireText("actor", req.Actor); err != nil {
 		return nil, err
 	}
-	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken, req.Actor)
-	if isTransient(err) {
-		return nil, repoErr(err)
+	if req.FencingToken == 0 {
+		return nil, status.Error(codes.InvalidArgument, "fencing token must be set")
 	}
+	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken, req.Actor)
 	if err != nil {
-		return nil, status.Errorf(codes.FailedPrecondition, "%v", err)
+		return nil, repoErr(err)
 	}
 	return &pb.MarkRunningResponse{Operation: toPb(op)}, nil
 }
@@ -285,12 +285,6 @@ func requireActorAndReason(actor, reason string) error {
 		return err
 	}
 	return requireText("reason", reason)
-}
-
-func isTransient(err error) bool {
-	return errors.Is(err, db.ErrLockTimeout) ||
-		errors.Is(err, context.Canceled) ||
-		errors.Is(err, context.DeadlineExceeded)
 }
 
 func repoErr(err error) error {

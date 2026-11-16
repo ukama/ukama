@@ -25,6 +25,11 @@ import (
 
 const OperationsEndpoint = "/v1/operations"
 
+var (
+	ErrNotRunnable = errors.New("operation not runnable")
+	ErrUnavailable = errors.New("operation manager unavailable")
+)
+
 const (
 	terminateAttempts = 3
 	terminateBackoff  = 500 * time.Millisecond
@@ -167,13 +172,31 @@ func (m *managerClient) MarkRunning(id string, fencingToken uint64,
 	}
 	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/run", b)
 	if err != nil {
-		return nil, fmt.Errorf("MarkRunning failure: %w", err)
+		return nil, fmt.Errorf("MarkRunning failure: %w", markRunningErr(err))
 	}
 	out := &GetResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
 		return nil, fmt.Errorf("MarkRunning deserialize: %w", uerr)
 	}
 	return out.Operation, nil
+}
+
+func markRunningErr(err error) error {
+	var status *client.ErrorStatus
+	var urlErr *url.Error
+	switch {
+	case errors.As(err, &status):
+		switch status.StatusCode {
+		case http.StatusBadRequest, http.StatusNotFound, http.StatusConflict,
+			http.StatusPreconditionFailed:
+			return fmt.Errorf("%w: %w", ErrNotRunnable, err)
+		case http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+			return fmt.Errorf("%w: %w", ErrUnavailable, err)
+		}
+	case errors.As(err, &urlErr):
+		return fmt.Errorf("%w: %w", ErrUnavailable, err)
+	}
+	return err
 }
 
 func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, error) {
