@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -455,4 +456,58 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
 		opMgr.AssertExpectations(t)
 	})
+}
+
+func TestControllerServer_MarkRunningRejectedIsAborted(t *testing.T) {
+	const nodeId = "uk-983794-tnode-78-7830"
+
+	for name, call := range map[string]func(s *ControllerServer) error{
+		"SendNodeCommand": func(s *ControllerServer) error {
+			_, err := s.SendNodeCommand(context.TODO(), &pb.SendNodeCommandRequest{
+				NodeId: nodeId, Method: "POST", Path: "/device/v1/reboot",
+			})
+			return err
+		},
+		"ToggleSwitchPort": func(s *ControllerServer) error {
+			_, err := s.ToggleSwitchPort(context.TODO(),
+				&pb.ToggleSwitchPortRequest{NodeId: nodeId, Status: true, Port: 2})
+			return err
+		},
+		"ToggleService": func(s *ControllerServer) error {
+			_, err := s.ToggleService(context.TODO(),
+				&pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
+			return err
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			bus := &mbmocks.MsgBusServiceClient{}
+			repo := &mocks.NodeLogRepo{}
+			opMgr := &mbmocks.ManagerClient{}
+			opMon := &mocks.OperationMonitor{}
+
+			op := &copr.OperationInfo{Id: "op-1", FencingToken: 1,
+				ResourceKey: nodeKey(nodeId)}
+			repo.On("Get", nodeId).Return(&db.NodeLog{}, nil).Maybe()
+			opMgr.On("Start", mock.Anything).
+				Return(&copr.StartResponse{Operation: op}, nil).Once()
+			opMon.On("Register", mock.Anything).
+				Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
+			opMgr.On("MarkRunning", "op-1", uint64(1), "controller").
+				Return(nil, fmt.Errorf("MarkRunning failure: %w: lease expired",
+					copr.ErrNotRunnable)).Once()
+			opMgr.On("Fail", "op-1", uint64(1), mock.Anything, mock.Anything).
+				Return(&copr.OperationInfo{}, nil).Once()
+			opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-1"}).
+				Return(&opmonpb.CancelIntentResponse{}, nil).Once()
+
+			s := NewControllerServer(testOrgName, repo, bus, nil, &mbmocks.SiteClient{},
+				onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
+
+			err := call(s)
+
+			assert.Equal(t, codes.Aborted, status.Code(err))
+			opMgr.AssertExpectations(t)
+			bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+		})
+	}
 }
