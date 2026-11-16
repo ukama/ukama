@@ -1,0 +1,29 @@
+#!/sbin/openrc-run
+
+description="Give user space access to the FEM linearizers on SPI"
+
+depend() {
+    need localmount
+    after modules
+}
+
+start() {
+    local dev path failed=0
+
+    ebegin "Binding spidev to spi0.0 and spi1.0"
+    modprobe spidev 2>/dev/null
+    for dev in spi0.0 spi1.0; do
+        path="/sys/bus/spi/devices/${dev}"
+        if [ ! -e "${path}" ]; then
+            eerror "${dev} is not in the device tree"
+            failed=1
+            continue
+        fi
+        [ "$(basename "$(readlink "${path}/driver" 2>/dev/null)")" = "spidev" ] && continue
+        if ! echo spidev > "${path}/driver_override" || ! echo "${dev}" > /sys/bus/spi/drivers/spidev/bind; then
+            eerror "spidev was not bound to ${dev}"
+            failed=1
+        fi
+    done
+    eend ${failed} "The linearizers cannot be reached on SPI"
+}

@@ -55,11 +55,23 @@ UKAMA_REPO_APP_PKG="${UKAMA_ROOT}/build/pkgs"
 UKAMA_REPO_LIB_PKG="${UKAMA_ROOT}/build/libs"
 COMMON_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/common.config"
 AMPLIFIER_CONFIG_FILE="${UKAMA_ROOT}/builder/boards/controller.config"
-BOOT1_BIN="${UKAMA_OS}/firmware/build/boot/at91bootstrap/at91bootstrap.bin"
-BOOT2_BIN="${UKAMA_OS}/firmware/build/boot/uboot/u-boot.bin"
 FIRMWARE_DIR="${UKAMA_OS}/firmware"
 KERNEL_SRC="${UKAMA_OS}/kernel/linux"
 KERNEL_OUT=""
+CACHE_DIR="${UKAMA_ROOT}/build/cache/amplifier"
+FIRMWARE_CACHE="${CACHE_DIR}/firmware"
+KERNEL_CACHE="${CACHE_DIR}/kernel"
+APPS_CACHE="${CACHE_DIR}/apps"
+APPS_SOURCES=(nodes builder/Makefile builder/src builder/inc builder/configs builder/boards
+              builder/scripts/build-all-apps.sh builder/scripts/build-system/build-distro.sh
+              builder/scripts/build-system/build-env-setup.sh builder/scripts/build-system/chroot-utils.sh
+              builder/scripts/build-system/pkg-utils.sh)
+ROOTFS_CACHE="${CACHE_DIR}/rootfs"
+ROOTFS_SOURCES=("${APPS_SOURCES[@]}" builder/scripts/build-system/build-rootfs.sh
+                builder/scripts/build-system/rootfs-env-setup.sh)
+FULL_REBUILD="${FULL_REBUILD:-0}"
+BOOT1_BIN="${FIRMWARE_CACHE}/at91bootstrap.bin"
+BOOT2_BIN="${FIRMWARE_CACHE}/u-boot.bin"
 CROSS_COMPILE="arm-linux-gnueabihf-"
 AT91_CONFIG="sama5d27_ukama_emmc_uboot_defconfig"
 UBOOT_CONFIG="sama5d27_ukama_anode_emmc_defconfig"
@@ -87,6 +99,7 @@ log() {
         INFO)    color="\033[1;34m";;
         SUCCESS) color="\033[1;32m";;
         ERROR)   color="\033[1;31m";;
+        WARNING) color="\033[1;33m";;
         *)       color="\033[1;37m";;
     esac
     echo -e "${color}${type}: ${msg}\033[0m"
@@ -134,23 +147,81 @@ clean_build_outputs() {
     log SUCCESS "Old builds cleaned"
 }
 
+repo_stamp() {
+    local -n sources="$1"
+    local head dirty
+    shift
+    head=$(git -C "${UKAMA_ROOT}" -c safe.directory='*' rev-parse HEAD 2>/dev/null) || return 1
+    dirty=$(git -C "${UKAMA_ROOT}" -c safe.directory='*' status --porcelain --untracked-files=no \
+                --ignore-submodules=dirty -- "${sources[@]}" 2>/dev/null) || return 1
+    [[ -z "$dirty" ]] || return 1
+    printf '%s\n' "$head" "${IMAGE_VERSION}" "$@" | sha256sum | cut -d' ' -f1
+}
+
+apps_stamp() {
+    repo_stamp APPS_SOURCES "${APPS_ALPINE_RELEASE}"
+}
+
+rootfs_stamp() {
+    local apps_sum
+    [[ -f "${APPS_CACHE}/outputs.sha256" ]] || return 1
+    apps_sum=$(sha256sum < "${APPS_CACHE}/outputs.sha256") || return 1
+    repo_stamp ROOTFS_SOURCES "${ROOTFS_ALPINE_RELEASE}" "$apps_sum"
+}
+
+rootfs_tree_sum() {
+    find "${ROOTFS_DIR}" -xdev \( -path "${ROOTFS_DIR}/proc" -o -path "${ROOTFS_DIR}/sys" -o -path "${ROOTFS_DIR}/dev" \) -prune \
+         -o -printf '%P %y %s %T@ %l\n' | LC_ALL=C sort | sha256sum | cut -d' ' -f1
+}
+
+apps_are_current() {
+    local stamp="$1"
+    saved_build_is_current "${APPS_CACHE}" "$stamp" outputs.sha256 || return 1
+    [[ -n "$(ls -A "${DIR}/mocksysfs" 2>/dev/null)" ]] || return 1
+    (cd "${UKAMA_ROOT}/build" && sha256sum --status -c "${APPS_CACHE}/outputs.sha256")
+}
+
 build_apps() {
+    STAGE="build_apps"
+    local stamp app
+
+    stamp=$(apps_stamp) || stamp=""
+    if apps_are_current "$stamp"; then
+        log SUCCESS "Apps did not change since this commit was built, using the packages in ${UKAMA_REPO_APP_PKG}"
+        return 0
+    fi
+    rm -rf "${APPS_CACHE}"
+    clean_build_outputs
+
     STAGE="build_apps"
     log INFO "Building the amplifier apps on Alpine ${APPS_ALPINE_RELEASE}"
     ./build-env-setup.sh -a armv7 -v "${APPS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
 
-    local app
     get_enabled_apps "$COMMON_CONFIG_FILE" "$AMPLIFIER_CONFIG_FILE"
     for app in "${APPS[@]}"; do
         [[ -f "${UKAMA_REPO_APP_PKG}/${app}_latest.tar.gz" ]] || { log ERROR "App package not built: ${app}"; exit 1; }
     done
     [[ -f "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz" ]] || { log ERROR "${UKAMA_REPO_LIB_PKG}/vendor_libs.tgz not built"; exit 1; }
     log SUCCESS "Apps built: ${APPS[*]}"
+
+    mkdir -p "${APPS_CACHE}"
+    (cd "${UKAMA_ROOT}/build" && sha256sum pkgs/* libs/vendor_libs.tgz) > "${APPS_CACHE}/outputs.sha256"
+    stamp=$(apps_stamp) || stamp=""
+    save_stamp "${APPS_CACHE}" "$stamp"
 }
 
 build_rootfs() {
     STAGE="build_rootfs"
-    local f
+    local f stamp
+
+    stamp=$(rootfs_stamp) || stamp=""
+    if saved_build_is_current "${ROOTFS_CACHE}" "$stamp" tree.sha256 && \
+       [[ -d "${ROOTFS_DIR}" && "$(rootfs_tree_sum)" == "$(cat "${ROOTFS_CACHE}/tree.sha256")" ]]; then
+        log SUCCESS "Rootfs did not change since this commit was built, using ${ROOTFS_DIR}"
+        return 0
+    fi
+    rm -rf "${ROOTFS_CACHE}"
+
     log INFO "Building the rootfs on Alpine ${ROOTFS_ALPINE_RELEASE}"
     ./rootfs-env-setup.sh -a armv7 -v "${ROOTFS_ALPINE_RELEASE}" -i "${UKAMA_ROOT}"
 
@@ -158,20 +229,89 @@ build_rootfs() {
         [[ -f "$f" ]] || { log ERROR "Rootfs build did not produce ${f}"; exit 1; }
     done
     log SUCCESS "Rootfs built"
+
+    mkdir -p "${ROOTFS_CACHE}"
+    rootfs_tree_sum > "${ROOTFS_CACHE}/tree.sha256"
+    stamp=$(rootfs_stamp) || stamp=""
+    save_stamp "${ROOTFS_CACHE}" "$stamp"
+}
+
+source_stamp() {
+    local root="$1" repo head dirty data found=0
+    shift
+    data="$(printf '%s\n' "$@" "$("${CROSS_COMPILE}gcc" --version | head -n1)")"
+    for repo in "$root" "$root"/*/; do
+        repo="${repo%/}"
+        [[ -e "${repo}/.git" ]] || continue
+        head=$(git -C "$repo" -c safe.directory='*' rev-parse HEAD 2>/dev/null) || return 1
+        dirty=$(git -C "$repo" -c safe.directory='*' status --porcelain --untracked-files=no --ignore-submodules=dirty 2>/dev/null) || return 1
+        [[ -z "$dirty" ]] || return 1
+        data+=$'\n'"${repo#"$root"} ${head}"
+        found=1
+    done
+    (( found )) || return 1
+    printf '%s' "$data" | sha256sum | cut -d' ' -f1
+}
+
+saved_build_is_current() {
+    local dir="$1" stamp="$2" f
+    shift 2
+    [[ "${FULL_REBUILD}" != "1" && -n "$stamp" ]] || return 1
+    [[ -f "${dir}/stamp" && "$(cat "${dir}/stamp")" == "$stamp" ]] || return 1
+    for f in "$@"; do
+        [[ -e "${dir}/${f}" ]] || return 1
+    done
+}
+
+save_stamp() {
+    local dir="$1" stamp="$2"
+    if [[ -n "$stamp" ]]; then
+        echo "$stamp" > "${dir}/stamp"
+    else
+        log INFO "The sources of ${dir##*/} have local changes or no git history, this build is not saved for the next run"
+    fi
 }
 
 build_emmc_firmware() {
     STAGE="build_emmc_firmware"
+    local built1="${FIRMWARE_DIR}/build/boot/at91bootstrap/at91bootstrap.bin"
+    local built2="${FIRMWARE_DIR}/build/boot/uboot/u-boot.bin"
+    local stamp f
+
+    stamp=$(source_stamp "${FIRMWARE_DIR}" "${AT91_CONFIG}" "${UBOOT_CONFIG}") || stamp=""
+    if saved_build_is_current "${FIRMWARE_CACHE}" "$stamp" at91bootstrap.bin u-boot.bin mkenvimage fw_printenv uboot-env.txt; then
+        log SUCCESS "eMMC boot firmware did not change, using the saved build in ${FIRMWARE_CACHE}"
+        return 0
+    fi
+    rm -rf "${FIRMWARE_CACHE}"
+
     log INFO "Building at91bootstrap (${AT91_CONFIG}) and u-boot (${UBOOT_CONFIG})"
 
     make -C "${FIRMWARE_DIR}" distclean TARGET=amplifier ROOTFSPATH="${FIRMWARE_DIR}/build" > /dev/null 2>&1 || true
     make -C "${FIRMWARE_DIR}" TARGET=amplifier ROOTFSPATH="${FIRMWARE_DIR}/build" \
          AT91CONFIG="${AT91_CONFIG}" UBOOTCONFIG="${UBOOT_CONFIG}"
 
-    for f in "${BOOT1_BIN}" "${BOOT2_BIN}" "${FIRMWARE_DIR}/u-boot/tools/mkenvimage"; do
+    for f in "${built1}" "${built2}" "${FIRMWARE_DIR}/u-boot/tools/mkenvimage"; do
         [[ -f "$f" ]] || { log ERROR "Firmware build did not produce ${f}"; exit 1; }
     done
     log SUCCESS "eMMC boot firmware built"
+
+    build_envtools
+
+    mkdir -p "${FIRMWARE_CACHE}"
+    cp "${built1}" "${BOOT1_BIN}"
+    cp "${built2}" "${BOOT2_BIN}"
+    cp "${FIRMWARE_DIR}/u-boot/tools/mkenvimage" "${FIRMWARE_DIR}/u-boot/tools/env/fw_printenv" "${FIRMWARE_CACHE}/"
+    (cd "${FIRMWARE_CACHE}" && CROSS_COMPILE="${CROSS_COMPILE}" \
+        "${FIRMWARE_DIR}/u-boot/scripts/get_default_envs.sh" "${FIRMWARE_DIR}/u-boot") |
+        awk -F= '!($1 in v) { k[++n] = $1 } { v[$1] = $0 } END { for (i = 1; i <= n; i++) print v[k[i]] }' \
+        > "${FIRMWARE_CACHE}/uboot-env.txt"
+    if ! grep -q '^bootcmd=run emmc_boot;' "${FIRMWARE_CACHE}/uboot-env.txt"; then
+        log ERROR "u-boot default env has no A/B bootcmd (run emmc_boot)"
+        exit 1
+    fi
+    stamp=$(source_stamp "${FIRMWARE_DIR}" "${AT91_CONFIG}" "${UBOOT_CONFIG}") || stamp=""
+    save_stamp "${FIRMWARE_CACHE}" "$stamp"
 }
 
 build_envtools() {
@@ -189,6 +329,15 @@ build_envtools() {
 
 build_kernel() {
     STAGE="build_kernel"
+    local stamp
+
+    stamp=$(source_stamp "${UKAMA_OS}/kernel" ukama_anode_defconfig) || stamp=""
+    if saved_build_is_current "${KERNEL_CACHE}" "$stamp" zImage ukama_anode.dtb modules; then
+        log SUCCESS "Kernel $(ls "${KERNEL_CACHE}/modules") did not change, using the saved build in ${KERNEL_CACHE}"
+        return 0
+    fi
+    rm -rf "${KERNEL_CACHE}"
+
     KERNEL_OUT=$(mktemp -d)
     local kmake=(make -C "${KERNEL_SRC}" O="${KERNEL_OUT}" ARCH=arm CROSS_COMPILE="${CROSS_COMPILE}")
 
@@ -197,7 +346,17 @@ build_kernel() {
     "${kmake[@]}" -j"$(nproc)" zImage modules dtbs
     "${kmake[@]}" INSTALL_MOD_PATH="${KERNEL_OUT}/modroot" modules_install
 
-    log SUCCESS "Kernel $(ls "${KERNEL_OUT}/modroot/lib/modules") built"
+    mkdir -p "${KERNEL_CACHE}/modules"
+    cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${KERNEL_CACHE}/"
+    cp -a "${KERNEL_OUT}/modroot/lib/modules/." "${KERNEL_CACHE}/modules/"
+    if ! find "${KERNEL_CACHE}/modules" -name 'spidev.ko*' | grep -q . && \
+       ! grep -qs 'kernel/drivers/spi/spidev.ko' "${KERNEL_CACHE}"/modules/*/modules.builtin; then
+        log WARNING "The kernel has no spidev driver, the linearizer tests need CONFIG_SPI_SPIDEV in ukama_anode_defconfig"
+    fi
+    stamp=$(source_stamp "${UKAMA_OS}/kernel" ukama_anode_defconfig) || stamp=""
+    save_stamp "${KERNEL_CACHE}" "$stamp"
+
+    log SUCCESS "Kernel $(ls "${KERNEL_CACHE}/modules") built"
 }
 
 # Cleanup function ensures mounts and loop are detached
@@ -294,25 +453,11 @@ mount_partition() {
 
 write_uboot_env() {
     local dst="$1"
-    local work env_txt
+    local env_txt="${FIRMWARE_CACHE}/uboot-env.txt"
     STAGE="write_uboot_env"
 
-    work=$(mktemp -d)
-    env_txt="${work}/uboot-env.txt"
-    (cd "$work" && CROSS_COMPILE="${CROSS_COMPILE}" \
-        "${FIRMWARE_DIR}/u-boot/scripts/get_default_envs.sh" "${FIRMWARE_DIR}/u-boot") |
-        awk -F= '!($1 in v) { k[++n] = $1 } { v[$1] = $0 } END { for (i = 1; i <= n; i++) print v[k[i]] }' \
-        > "$env_txt"
-
-    if ! grep -q '^bootcmd=run emmc_boot;' "$env_txt"; then
-        log ERROR "u-boot default env has no A/B bootcmd (run emmc_boot)"
-        rm -rf "$work"
-        exit 1
-    fi
-
-    sudo "${FIRMWARE_DIR}/u-boot/tools/mkenvimage" -s 0x4000 -o "${dst}/uboot.env" "$env_txt"
+    sudo "${FIRMWARE_CACHE}/mkenvimage" -s 0x4000 -o "${dst}/uboot.env" "$env_txt"
     check_status $? "uboot.env written with $(grep '^bootcmd=' "$env_txt")" "${STAGE}"
-    rm -rf "$work"
 }
 
 copy_boot() {
@@ -400,17 +545,17 @@ copy_rootfs() {
 install_kernel() {
     STAGE="install_kernel"
     local rootfs="$1"
-    sudo cp "${KERNEL_OUT}/arch/arm/boot/zImage" "${rootfs}/boot/zImage"
-    sudo cp "${KERNEL_OUT}/arch/arm/boot/dts/microchip/ukama_anode.dtb" "${rootfs}/boot/ukama_anode.dtb"
+    sudo cp "${KERNEL_CACHE}/zImage" "${rootfs}/boot/zImage"
+    sudo cp "${KERNEL_CACHE}/ukama_anode.dtb" "${rootfs}/boot/ukama_anode.dtb"
     sudo mkdir -p "${rootfs}/lib/modules"
-    sudo cp -a "${KERNEL_OUT}/modroot/lib/modules/." "${rootfs}/lib/modules/"
+    sudo cp -a "${KERNEL_CACHE}/modules/." "${rootfs}/lib/modules/"
     check_status $? "zImage, ukama_anode.dtb and modules installed in ${rootfs}" "install_kernel"
 }
 
 install_envtools() {
     STAGE="install_envtools"
     local rootfs="$1"
-    sudo install -m 0755 "${FIRMWARE_DIR}/u-boot/tools/env/fw_printenv" "${rootfs}/usr/sbin/fw_printenv"
+    sudo install -m 0755 "${FIRMWARE_CACHE}/fw_printenv" "${rootfs}/usr/sbin/fw_printenv"
     sudo ln -sfn fw_printenv "${rootfs}/usr/sbin/fw_setenv"
     check_status $? "fw_printenv and fw_setenv installed in ${rootfs}" "install_envtools"
 }
@@ -492,6 +637,7 @@ setup_ukama_user() {
             'SUBSYSTEM=="spidev", GROUP="spi", MODE="0660"' \
             'ACTION=="add|bind", SUBSYSTEM=="i2c", DRIVER=="at24", RUN+="/bin/chgrp i2c %S%p/eeprom", RUN+="/bin/chmod 0640 %S%p/eeprom"' \
             'ACTION=="add|bind", SUBSYSTEM=="platform", KERNEL=="fema*-gpios|controller-gpios", RUN+="/lib/udev/ukama-gpio-access %S%p"' \
+            'ACTION=="add", SUBSYSTEM=="leds", KERNEL=="red*|green*|blue*", RUN+="/bin/chgrp gpio %S%p/brightness", RUN+="/bin/chmod 0664 %S%p/brightness"' \
             | sudo tee "${rootfs}/etc/udev/rules.d/90-ukama-devices.rules" > /dev/null
     check_status $? "ukama user with I2C, GPIO, SPI and serial access in ${rootfs}" "setup_ukama_user"
     if grep -rqs . "${rootfs}/etc/sudoers.d" "${rootfs}/etc/doas.d" || grep -Eq '^wheel:.*[:,]ukama(,|$)' "${rootfs}/etc/group"; then
@@ -623,11 +769,9 @@ copy_misc_files() {
 
 # Main
 check_sources
-clean_build_outputs
 build_apps
 build_rootfs
 build_emmc_firmware
-build_envtools
 build_kernel
 
 mkdir -p "$BOOT_MNT" "$PASSIVE_MNT" "$PRIMARY_MNT"
