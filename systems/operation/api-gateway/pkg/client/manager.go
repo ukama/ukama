@@ -108,3 +108,9 @@ func (m *Manager) Fail(id string, fencingToken uint64,
 		Id: id, FencingToken: fencingToken, Actor: actor, Reason: reason,
 	})
 }
+
+func (m *Manager) Delete(id, actor string) (*pb.DeleteOperationResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	return m.client.DeleteOperation(ctx, &pb.DeleteOperationRequest{Id: id, Actor: actor})
+}

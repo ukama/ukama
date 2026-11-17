@@ -980,6 +980,94 @@ func (x *ForceUnlockResponse) GetOperation() *Operation {
 	return nil
 }
 
+type DeleteOperationRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Actor         string                 `protobuf:"bytes,2,opt,name=actor,proto3" json:"actor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOperationRequest) Reset() {
+	*x = DeleteOperationRequest{}
+	mi := &file_operation_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOperationRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOperationRequest) ProtoMessage() {}
+
+func (x *DeleteOperationRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_operation_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOperationRequest.ProtoReflect.Descriptor instead.
+func (*DeleteOperationRequest) Descriptor() ([]byte, []int) {
+	return file_operation_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *DeleteOperationRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeleteOperationRequest) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
+}
+
+type DeleteOperationResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteOperationResponse) Reset() {
+	*x = DeleteOperationResponse{}
+	mi := &file_operation_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteOperationResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteOperationResponse) ProtoMessage() {}
+
+func (x *DeleteOperationResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_operation_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteOperationResponse.ProtoReflect.Descriptor instead.
+func (*DeleteOperationResponse) Descriptor() ([]byte, []int) {
+	return file_operation_proto_rawDescGZIP(), []int{16}
+}
+
 var File_operation_proto protoreflect.FileDescriptor
 
 const file_operation_proto_rawDesc = "" +
@@ -1050,7 +1138,11 @@ const file_operation_proto_rawDesc = "" +
 	"\x05actor\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05actor\x12\x1e\n" +
 	"\x06reason\x18\x03 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x06reason\"Z\n" +
 	"\x13ForceUnlockResponse\x12C\n" +
-	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation*`\n" +
+	"\toperation\x18\x01 \x01(\v2%.ukama.operation.manager.v1.OperationR\toperation\"Q\n" +
+	"\x16DeleteOperationRequest\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\x02id\x12\x1c\n" +
+	"\x05actor\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\x05actor\"\x19\n" +
+	"\x17DeleteOperationResponse*`\n" +
 	"\x0fOperationStatus\x12\v\n" +
 	"\aPENDING\x10\x00\x12\v\n" +
 	"\aRUNNING\x10\x01\x12\v\n" +
@@ -1058,7 +1150,7 @@ const file_operation_proto_rawDesc = "" +
 	"\n" +
 	"\x06FAILED\x10\x03\x12\v\n" +
 	"\aTIMEOUT\x10\x04\x12\r\n" +
-	"\tCANCELLED\x10\x052\xd4\x06\n" +
+	"\tCANCELLED\x10\x052\xd0\a\n" +
 	"\x17OperationManagerService\x12w\n" +
 	"\x0eStartOperation\x121.ukama.operation.manager.v1.StartOperationRequest\x1a2.ukama.operation.manager.v1.StartOperationResponse\x12q\n" +
 	"\fGetOperation\x12/.ukama.operation.manager.v1.GetOperationRequest\x1a0.ukama.operation.manager.v1.GetOperationResponse\x12t\n" +
@@ -1066,7 +1158,8 @@ const file_operation_proto_rawDesc = "" +
 	"\vMarkRunning\x12..ukama.operation.manager.v1.MarkRunningRequest\x1a/.ukama.operation.manager.v1.MarkRunningResponse\x12\x80\x01\n" +
 	"\x11CompleteOperation\x124.ukama.operation.manager.v1.CompleteOperationRequest\x1a5.ukama.operation.manager.v1.CompleteOperationResponse\x12t\n" +
 	"\rFailOperation\x120.ukama.operation.manager.v1.FailOperationRequest\x1a1.ukama.operation.manager.v1.FailOperationResponse\x12n\n" +
-	"\vForceUnlock\x12..ukama.operation.manager.v1.ForceUnlockRequest\x1a/.ukama.operation.manager.v1.ForceUnlockResponseB9Z7github.com/ukama/ukama/systems/operation/manager/pb/genb\x06proto3"
+	"\vForceUnlock\x12..ukama.operation.manager.v1.ForceUnlockRequest\x1a/.ukama.operation.manager.v1.ForceUnlockResponse\x12z\n" +
+	"\x0fDeleteOperation\x122.ukama.operation.manager.v1.DeleteOperationRequest\x1a3.ukama.operation.manager.v1.DeleteOperationResponseB9Z7github.com/ukama/ukama/systems/operation/manager/pb/genb\x06proto3"
 
 var (
 	file_operation_proto_rawDescOnce sync.Once
@@ -1081,7 +1174,7 @@ func file_operation_proto_rawDescGZIP() []byte {
 }
 
 var file_operation_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_operation_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_operation_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
 var file_operation_proto_goTypes = []any{
 	(OperationStatus)(0),              // 0: ukama.operation.manager.v1.OperationStatus
 	(*Operation)(nil),                 // 1: ukama.operation.manager.v1.Operation
@@ -1099,14 +1192,16 @@ var file_operation_proto_goTypes = []any{
 	(*FailOperationResponse)(nil),     // 13: ukama.operation.manager.v1.FailOperationResponse
 	(*ForceUnlockRequest)(nil),        // 14: ukama.operation.manager.v1.ForceUnlockRequest
 	(*ForceUnlockResponse)(nil),       // 15: ukama.operation.manager.v1.ForceUnlockResponse
-	(*timestamppb.Timestamp)(nil),     // 16: google.protobuf.Timestamp
+	(*DeleteOperationRequest)(nil),    // 16: ukama.operation.manager.v1.DeleteOperationRequest
+	(*DeleteOperationResponse)(nil),   // 17: ukama.operation.manager.v1.DeleteOperationResponse
+	(*timestamppb.Timestamp)(nil),     // 18: google.protobuf.Timestamp
 }
 var file_operation_proto_depIdxs = []int32{
 	0,  // 0: ukama.operation.manager.v1.Operation.status:type_name -> ukama.operation.manager.v1.OperationStatus
-	16, // 1: ukama.operation.manager.v1.Operation.leaseExpiresAt:type_name -> google.protobuf.Timestamp
-	16, // 2: ukama.operation.manager.v1.Operation.startedAt:type_name -> google.protobuf.Timestamp
-	16, // 3: ukama.operation.manager.v1.Operation.terminalAt:type_name -> google.protobuf.Timestamp
-	16, // 4: ukama.operation.manager.v1.Operation.createdAt:type_name -> google.protobuf.Timestamp
+	18, // 1: ukama.operation.manager.v1.Operation.leaseExpiresAt:type_name -> google.protobuf.Timestamp
+	18, // 2: ukama.operation.manager.v1.Operation.startedAt:type_name -> google.protobuf.Timestamp
+	18, // 3: ukama.operation.manager.v1.Operation.terminalAt:type_name -> google.protobuf.Timestamp
+	18, // 4: ukama.operation.manager.v1.Operation.createdAt:type_name -> google.protobuf.Timestamp
 	1,  // 5: ukama.operation.manager.v1.StartOperationResponse.operations:type_name -> ukama.operation.manager.v1.Operation
 	1,  // 6: ukama.operation.manager.v1.GetOperationResponse.operation:type_name -> ukama.operation.manager.v1.Operation
 	1,  // 7: ukama.operation.manager.v1.GetByResourceResponse.operation:type_name -> ukama.operation.manager.v1.Operation
@@ -1121,15 +1216,17 @@ var file_operation_proto_depIdxs = []int32{
 	10, // 16: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:input_type -> ukama.operation.manager.v1.CompleteOperationRequest
 	12, // 17: ukama.operation.manager.v1.OperationManagerService.FailOperation:input_type -> ukama.operation.manager.v1.FailOperationRequest
 	14, // 18: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:input_type -> ukama.operation.manager.v1.ForceUnlockRequest
-	3,  // 19: ukama.operation.manager.v1.OperationManagerService.StartOperation:output_type -> ukama.operation.manager.v1.StartOperationResponse
-	5,  // 20: ukama.operation.manager.v1.OperationManagerService.GetOperation:output_type -> ukama.operation.manager.v1.GetOperationResponse
-	7,  // 21: ukama.operation.manager.v1.OperationManagerService.GetByResource:output_type -> ukama.operation.manager.v1.GetByResourceResponse
-	9,  // 22: ukama.operation.manager.v1.OperationManagerService.MarkRunning:output_type -> ukama.operation.manager.v1.MarkRunningResponse
-	11, // 23: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:output_type -> ukama.operation.manager.v1.CompleteOperationResponse
-	13, // 24: ukama.operation.manager.v1.OperationManagerService.FailOperation:output_type -> ukama.operation.manager.v1.FailOperationResponse
-	15, // 25: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:output_type -> ukama.operation.manager.v1.ForceUnlockResponse
-	19, // [19:26] is the sub-list for method output_type
-	12, // [12:19] is the sub-list for method input_type
+	16, // 19: ukama.operation.manager.v1.OperationManagerService.DeleteOperation:input_type -> ukama.operation.manager.v1.DeleteOperationRequest
+	3,  // 20: ukama.operation.manager.v1.OperationManagerService.StartOperation:output_type -> ukama.operation.manager.v1.StartOperationResponse
+	5,  // 21: ukama.operation.manager.v1.OperationManagerService.GetOperation:output_type -> ukama.operation.manager.v1.GetOperationResponse
+	7,  // 22: ukama.operation.manager.v1.OperationManagerService.GetByResource:output_type -> ukama.operation.manager.v1.GetByResourceResponse
+	9,  // 23: ukama.operation.manager.v1.OperationManagerService.MarkRunning:output_type -> ukama.operation.manager.v1.MarkRunningResponse
+	11, // 24: ukama.operation.manager.v1.OperationManagerService.CompleteOperation:output_type -> ukama.operation.manager.v1.CompleteOperationResponse
+	13, // 25: ukama.operation.manager.v1.OperationManagerService.FailOperation:output_type -> ukama.operation.manager.v1.FailOperationResponse
+	15, // 26: ukama.operation.manager.v1.OperationManagerService.ForceUnlock:output_type -> ukama.operation.manager.v1.ForceUnlockResponse
+	17, // 27: ukama.operation.manager.v1.OperationManagerService.DeleteOperation:output_type -> ukama.operation.manager.v1.DeleteOperationResponse
+	20, // [20:28] is the sub-list for method output_type
+	12, // [12:20] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
 	12, // [12:12] is the sub-list for extension extendee
 	0,  // [0:12] is the sub-list for field type_name
@@ -1146,7 +1243,7 @@ func file_operation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_operation_proto_rawDesc), len(file_operation_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   15,
+			NumMessages:   17,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

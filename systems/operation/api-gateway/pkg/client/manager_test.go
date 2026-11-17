@@ -23,6 +23,15 @@ type fakeServiceClient struct {
 	completeReq *pb.CompleteOperationRequest
 	failReq     *pb.FailOperationRequest
 	runningReq  *pb.MarkRunningRequest
+	deleteReq   *pb.DeleteOperationRequest
+}
+
+func (f *fakeServiceClient) DeleteOperation(_ context.Context,
+	in *pb.DeleteOperationRequest,
+	_ ...grpc.CallOption) (*pb.DeleteOperationResponse, error) {
+	f.deleteReq = in
+
+	return &pb.DeleteOperationResponse{}, nil
 }
 
 func (f *fakeServiceClient) MarkRunning(_ context.Context, in *pb.MarkRunningRequest,
@@ -82,4 +91,14 @@ func TestManager_MarkRunning(t *testing.T) {
 	assert.Equal(t, "op-1", resp.Operation.Id)
 	assert.Equal(t, uint64(7), fake.runningReq.FencingToken)
 	assert.Equal(t, "controller", fake.runningReq.Actor)
+}
+
+func TestManager_Delete(t *testing.T) {
+	fake := &fakeServiceClient{}
+
+	_, err := NewManagerFromClient(fake).Delete("op-1", "admin")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "op-1", fake.deleteReq.Id)
+	assert.Equal(t, "admin", fake.deleteReq.Actor)
 }

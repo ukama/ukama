@@ -866,3 +866,62 @@ func TestBlankActorsAreRejected(t *testing.T) {
 		}
 	}
 }
+
+func TestDeleteOperation(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
+		repo := &mocks.OperationRepo{}
+		s := NewOperationServer(orgName, "", repo, nil)
+		id := uuid.NewV4()
+		repo.On("Delete", mock.Anything, id, "admin").Return(nil).Once()
+
+		_, err := s.DeleteOperation(context.Background(),
+			&pb.DeleteOperationRequest{Id: id.String(), Actor: "admin"})
+
+		assert.NoError(t, err)
+		repo.AssertExpectations(t)
+	})
+
+	for name, req := range map[string]*pb.DeleteOperationRequest{
+		"InvalidId":  {Id: "nope", Actor: "admin"},
+		"BlankActor": {Id: uuid.NewV4().String(), Actor: "  "},
+	} {
+		t.Run(name+"IsInvalidArgument", func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+
+			_, err := s.DeleteOperation(context.Background(), req)
+
+			assert.Equal(t, codes.InvalidArgument, status.Code(err))
+			repo.AssertNotCalled(t, "Delete", mock.Anything, mock.Anything,
+				mock.Anything)
+		})
+	}
+
+	for name, tc := range map[string]struct {
+		err  error
+		code codes.Code
+	}{
+		"UnknownIsNotFound": {
+			fmt.Errorf("operation: %w", store.ErrNotFound), codes.NotFound,
+		},
+		"ActiveIsFailedPrecondition": {
+			fmt.Errorf("running: %w", store.ErrPrecondition), codes.FailedPrecondition,
+		},
+		"LockTimeoutIsUnavailable": {
+			fmt.Errorf("delete: %w", db.ErrLockTimeout), codes.Unavailable,
+		},
+		"OtherErrorIsInternal": {fmt.Errorf("db down"), codes.Internal},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.OperationRepo{}
+			s := NewOperationServer(orgName, "", repo, nil)
+			id := uuid.NewV4()
+			repo.On("Delete", mock.Anything, id, "admin").Return(tc.err).Once()
+
+			_, err := s.DeleteOperation(context.Background(),
+				&pb.DeleteOperationRequest{Id: id.String(), Actor: "admin"})
+
+			assert.Equal(t, tc.code, status.Code(err))
+		})
+	}
+}

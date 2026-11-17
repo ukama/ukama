@@ -18,6 +18,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/tj/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -51,6 +53,18 @@ type fakeManager struct {
 	markRunningErr    error
 	forceUnlockResp   *pb.ForceUnlockResponse
 	forceUnlockErr    error
+	lastDeleteId      string
+	lastDeleteActor   string
+	deleteErr         error
+}
+
+func (f *fakeManager) Delete(id, actor string) (*pb.DeleteOperationResponse, error) {
+	f.lastDeleteId = id
+	f.lastDeleteActor = actor
+	if f.deleteErr != nil {
+		return nil, f.deleteErr
+	}
+	return &pb.DeleteOperationResponse{}, nil
 }
 
 func (f *fakeManager) Start(req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
@@ -297,158 +311,184 @@ func TestGetByResourceHandler(t *testing.T) {
 	})
 }
 
-func TestPostMarkRunningHandler(t *testing.T) {
+func TestPatchOperationHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
-	req := &MarkRunningRequest{
-		Id:           "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f",
-		FencingToken: 42,
-		Actor:        "controller",
+	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
+	request := func(status string) *UpdateOperationRequest {
+		return &UpdateOperationRequest{Id: uid, Status: status, FencingToken: 7,
+			Actor: "controller", Reason: "dispatched"}
 	}
 
-	t.Run("Success", func(t *testing.T) {
+	t.Run("RunningMarksRunning", func(t *testing.T) {
 		op := sampleProtoOperation()
-		mgr := &fakeManager{
-			markRunningResp: &pb.MarkRunningResponse{Operation: op},
-		}
-		r := newTestRouter(mgr)
+		mgr := &fakeManager{markRunningResp: &pb.MarkRunningResponse{Operation: op}}
 
-		resp, err := r.postMarkRunningHandler(&gin.Context{}, req)
+		resp, err := newTestRouter(mgr).patchOperationHandler(&gin.Context{},
+			request("RUNNING"))
+
 		assert.NoError(t, err)
-		assert.Equal(t, req.Id, mgr.lastMarkRunningId)
-		assert.Equal(t, req.FencingToken, mgr.lastMarkRunningToken)
-		assert.Equal(t, req.Actor, mgr.lastMarkRunningActor)
+		assert.Equal(t, uid, mgr.lastMarkRunningId)
+		assert.Equal(t, uint64(7), mgr.lastMarkRunningToken)
+		assert.Equal(t, "controller", mgr.lastMarkRunningActor)
 		assertOperationMapped(t, op, resp.Operation)
 	})
 
-	t.Run("ManagerError", func(t *testing.T) {
-		mgr := &fakeManager{markRunningErr: errors.New("stale token")}
-		r := newTestRouter(mgr)
+	for _, st := range []string{"SUCCESS", "FAILED"} {
+		t.Run(st+"Terminates", func(t *testing.T) {
+			mgr := &fakeManager{}
 
-		_, err := r.postMarkRunningHandler(&gin.Context{}, req)
-		assert.Error(t, err)
-		assert.Equal(t, req.Id, mgr.lastMarkRunningId)
-		assert.Equal(t, req.FencingToken, mgr.lastMarkRunningToken)
+			resp, err := newTestRouter(mgr).patchOperationHandler(&gin.Context{},
+				request(st))
+
+			assert.NoError(t, err)
+			assert.Equal(t, uid, resp.Operation.Id)
+			assert.Equal(t, uint64(7), mgr.lastTerminateToken)
+			assert.Equal(t, "controller", mgr.lastTerminateActor)
+			assert.Equal(t, "dispatched", mgr.lastTerminateReason)
+		})
+	}
+
+	t.Run("OtherStatusIsBadRequest", func(t *testing.T) {
+		_, err := newTestRouter(&fakeManager{}).patchOperationHandler(&gin.Context{},
+			request("CANCELLED"))
+
+		assert.Equal(t, rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: `status "CANCELLED" cannot be set`}, err)
+	})
+
+	t.Run("PreconditionIsConflict", func(t *testing.T) {
+		mgr := &fakeManager{markRunningErr: status.Error(codes.FailedPrecondition,
+			"lease expired")}
+
+		_, err := newTestRouter(mgr).patchOperationHandler(&gin.Context{},
+			request("RUNNING"))
+
+		assert.Equal(t, rest.HttpError{HttpCode: http.StatusConflict,
+			Message: "lease expired"}, err)
+	})
+
+	t.Run("OtherErrorIsPassedThrough", func(t *testing.T) {
+		mgr := &fakeManager{terminateErr: status.Error(codes.NotFound, "unknown")}
+
+		_, err := newTestRouter(mgr).patchOperationHandler(&gin.Context{},
+			request("FAILED"))
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
 	})
 }
 
-func TestPostForceUnlockHandler(t *testing.T) {
+func TestDeleteLockHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
-	req := &ForceUnlockRequest{Id: uid, Actor: "controller", Reason: "stuck"}
+	req := &ReleaseLockRequest{Id: uid, Actor: "admin", Reason: "stuck"}
 
 	t.Run("Success", func(t *testing.T) {
 		op := sampleProtoOperation()
-		mgr := &fakeManager{
-			forceUnlockResp: &pb.ForceUnlockResponse{Operation: op},
-		}
-		r := newTestRouter(mgr)
+		mgr := &fakeManager{forceUnlockResp: &pb.ForceUnlockResponse{Operation: op}}
 
-		resp, err := r.postForceUnlockHandler(&gin.Context{}, req)
+		resp, err := newTestRouter(mgr).deleteLockHandler(&gin.Context{}, req)
+
 		assert.NoError(t, err)
-		assert.Equal(t, req.Id, mgr.lastForceUnlockId)
-		assert.Equal(t, "controller", mgr.lastForceUnlockActor)
+		assert.Equal(t, uid, mgr.lastForceUnlockId)
+		assert.Equal(t, "admin", mgr.lastForceUnlockActor)
 		assert.Equal(t, "stuck", mgr.lastForceUnlockReason)
 		assertOperationMapped(t, op, resp.Operation)
 	})
 
-	t.Run("ManagerError", func(t *testing.T) {
-		mgr := &fakeManager{forceUnlockErr: errors.New("manager down")}
-		r := newTestRouter(mgr)
+	t.Run("FinishedOperationIsConflict", func(t *testing.T) {
+		mgr := &fakeManager{forceUnlockErr: status.Error(codes.FailedPrecondition,
+			"already finished")}
 
-		_, err := r.postForceUnlockHandler(&gin.Context{}, req)
-		assert.Error(t, err)
-		assert.Equal(t, req.Id, mgr.lastForceUnlockId)
+		_, err := newTestRouter(mgr).deleteLockHandler(&gin.Context{}, req)
+
+		assert.Equal(t, rest.HttpError{HttpCode: http.StatusConflict,
+			Message: "already finished"}, err)
 	})
 }
 
-func TestPostCompleteHandler(t *testing.T) {
+func TestDeleteOperationHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
-	req := &CompleteOperationRequest{
-		Id: uid, FencingToken: 7, Actor: "controller", Reason: "dispatched",
-	}
+	req := &DeleteOperationRequest{Id: uid, Actor: "admin"}
 
-	t.Run("PassesFencingToken", func(t *testing.T) {
+	t.Run("Success", func(t *testing.T) {
 		mgr := &fakeManager{}
-		r := newTestRouter(mgr)
 
-		resp, err := r.postCompleteHandler(&gin.Context{}, req)
+		err := newTestRouter(mgr).deleteOperationHandler(&gin.Context{}, req)
 
 		assert.NoError(t, err)
-		assert.Equal(t, uid, resp.Operation.Id)
-		assert.Equal(t, uint64(7), mgr.lastTerminateToken)
-		assert.Equal(t, "controller", mgr.lastTerminateActor)
-		assert.Equal(t, "dispatched", mgr.lastTerminateReason)
+		assert.Equal(t, uid, mgr.lastDeleteId)
+		assert.Equal(t, "admin", mgr.lastDeleteActor)
 	})
 
-	t.Run("ManagerError", func(t *testing.T) {
-		r := newTestRouter(&fakeManager{terminateErr: errors.New("manager down")})
+	t.Run("ActiveOperationIsConflict", func(t *testing.T) {
+		mgr := &fakeManager{deleteErr: status.Error(codes.FailedPrecondition,
+			"operation is RUNNING")}
 
-		_, err := r.postCompleteHandler(&gin.Context{}, req)
+		err := newTestRouter(mgr).deleteOperationHandler(&gin.Context{}, req)
 
-		assert.Error(t, err)
-	})
-}
-
-func TestPostFailHandler(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-	uid := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
-	req := &FailOperationRequest{
-		Id: uid, FencingToken: 7, Actor: "controller", Reason: "publish failed",
-	}
-
-	t.Run("PassesFencingToken", func(t *testing.T) {
-		mgr := &fakeManager{}
-		r := newTestRouter(mgr)
-
-		resp, err := r.postFailHandler(&gin.Context{}, req)
-
-		assert.NoError(t, err)
-		assert.Equal(t, uid, resp.Operation.Id)
-		assert.Equal(t, uint64(7), mgr.lastTerminateToken)
-		assert.Equal(t, "controller", mgr.lastTerminateActor)
-		assert.Equal(t, "publish failed", mgr.lastTerminateReason)
+		assert.Equal(t, rest.HttpError{HttpCode: http.StatusConflict,
+			Message: "operation is RUNNING"}, err)
 	})
 
-	t.Run("ManagerError", func(t *testing.T) {
-		r := newTestRouter(&fakeManager{terminateErr: errors.New("manager down")})
+	t.Run("UnknownIsPassedThrough", func(t *testing.T) {
+		mgr := &fakeManager{deleteErr: status.Error(codes.NotFound, "unknown")}
 
-		_, err := r.postFailHandler(&gin.Context{}, req)
+		err := newTestRouter(mgr).deleteOperationHandler(&gin.Context{}, req)
 
-		assert.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
 	})
 }
 
 func TestRouterOperationRoutes(t *testing.T) {
 	id := "8e13fa4b-a8a7-40aa-8c61-2891cd16dc7f"
+	busy := status.Error(codes.FailedPrecondition, "operation is RUNNING")
 
 	for _, tc := range []struct {
-		name string
-		path string
-		body string
-		code int
+		name   string
+		method string
+		path   string
+		body   string
+		mgr    *fakeManager
+		code   int
 	}{
-		{"CompleteWithToken", "/complete",
-			`{"fencing_token":7,"actor":"controller","reason":"dispatched"}`, http.StatusOK},
-		{"CompleteWithoutToken", "/complete",
-			`{"actor":"controller","reason":"dispatched"}`, http.StatusBadRequest},
-		{"FailWithToken", "/fail",
-			`{"fencing_token":7,"actor":"controller","reason":"failed"}`, http.StatusOK},
-		{"FailWithoutToken", "/fail",
-			`{"actor":"controller","reason":"failed"}`, http.StatusBadRequest},
-		{"ForceUnlockWithServiceActor", "/force-unlock",
-			`{"actor":"controller","reason":"stuck"}`, http.StatusOK},
+		{"PatchRunningWithToken", http.MethodPatch, "",
+			`{"status":"RUNNING","fencing_token":7,"actor":"controller"}`,
+			&fakeManager{}, http.StatusOK},
+		{"PatchSuccessWithToken", http.MethodPatch, "",
+			`{"status":"SUCCESS","fencing_token":7,"actor":"controller","reason":"ok"}`,
+			&fakeManager{}, http.StatusOK},
+		{"PatchWithoutToken", http.MethodPatch, "",
+			`{"status":"FAILED","actor":"controller","reason":"failed"}`,
+			&fakeManager{}, http.StatusBadRequest},
+		{"PatchUnknownStatus", http.MethodPatch, "",
+			`{"status":"PAUSED","fencing_token":7,"actor":"controller"}`,
+			&fakeManager{}, http.StatusBadRequest},
+		{"PatchPreconditionIsConflict", http.MethodPatch, "",
+			`{"status":"RUNNING","fencing_token":7,"actor":"controller"}`,
+			&fakeManager{markRunningErr: busy}, http.StatusConflict},
+		{"ReleaseLock", http.MethodDelete, "/lock?actor=admin&reason=stuck", "",
+			&fakeManager{}, http.StatusOK},
+		{"ReleaseLockWithoutReason", http.MethodDelete, "/lock?actor=admin", "",
+			&fakeManager{}, http.StatusBadRequest},
+		{"DeleteFinished", http.MethodDelete, "?actor=admin", "",
+			&fakeManager{}, http.StatusOK},
+		{"DeleteActiveIsConflict", http.MethodDelete, "?actor=admin", "",
+			&fakeManager{deleteErr: busy}, http.StatusConflict},
+		{"OldRunRouteIsGone", http.MethodPost, "/run",
+			`{"fencing_token":7,"actor":"controller"}`,
+			&fakeManager{}, http.StatusNotFound},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			serverConf := rest.DefaultHTTPConfig()
 
-			r := NewRouter(&Clients{Manager: &fakeManager{}}, &RouterConfig{
+			r := NewRouter(&Clients{Manager: tc.mgr}, &RouterConfig{
 				serverConf: &serverConf,
 				auth:       &config.Auth{BypassAuthMode: true},
 			}, nil)
 
 			w := httptest.NewRecorder()
-			req := httptest.NewRequest(http.MethodPost, "/v1/operations/"+id+tc.path,
+			req := httptest.NewRequest(tc.method, "/v1/operations/"+id+tc.path,
 				strings.NewReader(tc.body))
 			req.Header.Set("Content-Type", "application/json")
 

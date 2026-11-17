@@ -28,30 +28,23 @@ type GetByResourceRequest struct {
 	ResourceKey string `json:"resource_key" query:"resource_key" validate:"required"`
 }
 
-type MarkRunningRequest struct {
+type UpdateOperationRequest struct {
 	Id           string `json:"id" path:"id" validate:"required,uuid"`
+	Status       string `json:"status" validate:"required,oneof=RUNNING SUCCESS FAILED" example:"RUNNING"`
 	FencingToken uint64 `json:"fencing_token" validate:"required"`
 	Actor        string `json:"actor" validate:"required" example:"controller"`
+	Reason       string `json:"reason"`
 }
 
-type ForceUnlockRequest struct {
+type ReleaseLockRequest struct {
 	Id     string `json:"id" path:"id" validate:"required,uuid"`
-	Actor  string `json:"actor" validate:"required"`
-	Reason string `json:"reason" validate:"required"`
+	Actor  string `json:"actor" query:"actor" validate:"required"`
+	Reason string `json:"reason" query:"reason" validate:"required"`
 }
 
-type CompleteOperationRequest struct {
-	Id           string `json:"id" path:"id" validate:"required,uuid"`
-	FencingToken uint64 `json:"fencing_token" validate:"required"`
-	Actor        string `json:"actor" validate:"required"`
-	Reason       string `json:"reason" validate:"required"`
-}
-
-type FailOperationRequest struct {
-	Id           string `json:"id" path:"id" validate:"required,uuid"`
-	FencingToken uint64 `json:"fencing_token" validate:"required"`
-	Actor        string `json:"actor" validate:"required"`
-	Reason       string `json:"reason" validate:"required"`
+type DeleteOperationRequest struct {
+	Id    string `json:"id" path:"id" validate:"required,uuid"`
+	Actor string `json:"actor" query:"actor" validate:"required"`
 }
 
 /*
@@ -104,10 +97,6 @@ type GetByResourceResponse struct {
 	Operation *Operation `json:"operation"`
 }
 
-type MarkRunningResponse struct {
-	Operation *Operation `json:"operation"`
-}
-
-type ForceUnlockResponse struct {
+type UpdateOperationResponse struct {
 	Operation *Operation `json:"operation"`
 }

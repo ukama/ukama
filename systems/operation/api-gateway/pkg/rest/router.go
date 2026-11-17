@@ -18,6 +18,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/wI2L/fizz"
 	"github.com/wI2L/fizz/openapi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/config"
@@ -61,6 +63,7 @@ type manager interface {
 		reason string) (*pb.CompleteOperationResponse, error)
 	Fail(id string, fencingToken uint64, actor,
 		reason string) (*pb.FailOperationResponse, error)
+	Delete(id, actor string) (*pb.DeleteOperationResponse, error)
 }
 
 func NewClientsSet(endpoints *pkg.GrpcEndpoints) *Clients {
@@ -128,12 +131,19 @@ func (r *Router) init(f func(*gin.Context, string) error) {
 		ops.POST("", formatDoc("Start operations", "Locks every resource_keys entry and creates one pending operation per key, in one transaction, provided no must_be_free key is held by an active operation. Returns 409 if any key is busy."), tonic.Handler(r.postStartHandler, http.StatusCreated))
 		ops.GET("", formatDoc("Get operation by resource", "Returns explicit lock state for resource_key. When free: locked=false and operation=null. When locked: locked=true and operation is populated."), tonic.Handler(r.getByResourceHandler, http.StatusOK))
 		ops.GET("/:id", formatDoc("Get operation by id", "Returns the current state of an operation."), tonic.Handler(r.getOperationHandler, http.StatusOK))
-		ops.POST("/:id/run", formatDoc("Mark operation running", "Transitions a pending operation to running. Caller must pass the fencing token."), tonic.Handler(r.postMarkRunningHandler, http.StatusOK))
-		ops.POST("/:id/force-unlock", formatDoc("Force-unlock an operation", "Privileged. Cancels the operation and releases its lock with audit reason."), tonic.Handler(r.postForceUnlockHandler, http.StatusOK))
-		ops.POST("/:id/complete", formatDoc("Complete an operation", "Marks a running operation successful and releases its lock."), tonic.Handler(r.postCompleteHandler, http.StatusOK))
-		ops.POST("/:id/fail", formatDoc("Fail an operation",
-			"Marks an operation failed and releases its lock. Caller must pass the fencing token."),
-			tonic.Handler(r.postFailHandler, http.StatusOK))
+		ops.PATCH("/:id", formatDoc("Change operation status",
+			"Moves an operation to RUNNING, SUCCESS or FAILED. Caller must pass the "+
+				"fencing token; SUCCESS and FAILED also need a reason. Returns 409 if "+
+				"the token, lease or current status does not allow it."),
+			tonic.Handler(r.patchOperationHandler, http.StatusOK))
+		ops.DELETE("/:id/lock", formatDoc("Release an operation lock",
+			"Privileged. Cancels the operation and releases its lock without a "+
+				"fencing token; actor and reason are recorded in the audit."),
+			tonic.Handler(r.deleteLockHandler, http.StatusOK))
+		ops.DELETE("/:id", formatDoc("Delete an operation",
+			"Soft-deletes a finished operation. Returns 409 while the operation is "+
+				"pending or running."),
+			tonic.Handler(r.deleteOperationHandler, http.StatusOK))
 	}
 }
 
@@ -183,48 +193,65 @@ func (r *Router) getByResourceHandler(c *gin.Context, req *GetByResourceRequest)
 	}, nil
 }
 
-func (r *Router) postMarkRunningHandler(c *gin.Context, req *MarkRunningRequest) (*MarkRunningResponse, error) {
-	resp, err := r.clients.Manager.MarkRunning(req.Id, req.FencingToken, req.Actor)
+func (r *Router) patchOperationHandler(c *gin.Context,
+	req *UpdateOperationRequest) (*UpdateOperationResponse, error) {
+	var (
+		op  *pb.Operation
+		err error
+	)
+	switch req.Status {
+	case pb.OperationStatus_RUNNING.String():
+		var resp *pb.MarkRunningResponse
+		if resp, err = r.clients.Manager.MarkRunning(req.Id, req.FencingToken,
+			req.Actor); err == nil {
+			op = resp.Operation
+		}
+	case pb.OperationStatus_SUCCESS.String():
+		var resp *pb.CompleteOperationResponse
+		if resp, err = r.clients.Manager.Complete(req.Id, req.FencingToken, req.Actor,
+			req.Reason); err == nil {
+			op = resp.Operation
+		}
+	case pb.OperationStatus_FAILED.String():
+		var resp *pb.FailOperationResponse
+		if resp, err = r.clients.Manager.Fail(req.Id, req.FencingToken, req.Actor,
+			req.Reason); err == nil {
+			op = resp.Operation
+		}
+	default:
+		return nil, rest.HttpError{HttpCode: http.StatusBadRequest,
+			Message: fmt.Sprintf("status %q cannot be set", req.Status)}
+	}
 	if err != nil {
-		return nil, err
+		return nil, restErr(err)
 	}
 
-	return &MarkRunningResponse{
-		Operation: operationFromProto(resp.Operation),
-	}, nil
+	return &UpdateOperationResponse{Operation: operationFromProto(op)}, nil
 }
 
-func (r *Router) postForceUnlockHandler(c *gin.Context, req *ForceUnlockRequest) (*ForceUnlockResponse, error) {
+func (r *Router) deleteLockHandler(c *gin.Context,
+	req *ReleaseLockRequest) (*UpdateOperationResponse, error) {
 	resp, err := r.clients.Manager.ForceUnlock(req.Id, req.Actor, req.Reason)
 	if err != nil {
-		return nil, err
+		return nil, restErr(err)
 	}
 
-	return &ForceUnlockResponse{
-		Operation: operationFromProto(resp.Operation),
-	}, nil
+	return &UpdateOperationResponse{Operation: operationFromProto(resp.Operation)}, nil
 }
 
-func (r *Router) postCompleteHandler(c *gin.Context, req *CompleteOperationRequest) (*ForceUnlockResponse, error) {
-	resp, err := r.clients.Manager.Complete(req.Id, req.FencingToken, req.Actor, req.Reason)
-	if err != nil {
-		return nil, err
+func (r *Router) deleteOperationHandler(c *gin.Context,
+	req *DeleteOperationRequest) error {
+	if _, err := r.clients.Manager.Delete(req.Id, req.Actor); err != nil {
+		return restErr(err)
 	}
-
-	return &ForceUnlockResponse{
-		Operation: operationFromProto(resp.Operation),
-	}, nil
+	return nil
 }
 
-func (r *Router) postFailHandler(c *gin.Context, req *FailOperationRequest) (*ForceUnlockResponse, error) {
-	resp, err := r.clients.Manager.Fail(req.Id, req.FencingToken, req.Actor, req.Reason)
-	if err != nil {
-		return nil, err
+func restErr(err error) error {
+	if st, ok := status.FromError(err); ok && st.Code() == codes.FailedPrecondition {
+		return rest.HttpError{HttpCode: http.StatusConflict, Message: st.Message()}
 	}
-
-	return &ForceUnlockResponse{
-		Operation: operationFromProto(resp.Operation),
-	}, nil
+	return err
 }
 
 func operationFromProto(op *pb.Operation) *Operation {

@@ -33,6 +33,7 @@ const (
 	OperationManagerService_CompleteOperation_FullMethodName = "/ukama.operation.manager.v1.OperationManagerService/CompleteOperation"
 	OperationManagerService_FailOperation_FullMethodName     = "/ukama.operation.manager.v1.OperationManagerService/FailOperation"
 	OperationManagerService_ForceUnlock_FullMethodName       = "/ukama.operation.manager.v1.OperationManagerService/ForceUnlock"
+	OperationManagerService_DeleteOperation_FullMethodName   = "/ukama.operation.manager.v1.OperationManagerService/DeleteOperation"
 )
 
 // OperationManagerServiceClient is the client API for OperationManagerService service.
@@ -46,6 +47,7 @@ type OperationManagerServiceClient interface {
 	CompleteOperation(ctx context.Context, in *CompleteOperationRequest, opts ...grpc.CallOption) (*CompleteOperationResponse, error)
 	FailOperation(ctx context.Context, in *FailOperationRequest, opts ...grpc.CallOption) (*FailOperationResponse, error)
 	ForceUnlock(ctx context.Context, in *ForceUnlockRequest, opts ...grpc.CallOption) (*ForceUnlockResponse, error)
+	DeleteOperation(ctx context.Context, in *DeleteOperationRequest, opts ...grpc.CallOption) (*DeleteOperationResponse, error)
 }
 
 type operationManagerServiceClient struct {
@@ -126,6 +128,16 @@ func (c *operationManagerServiceClient) ForceUnlock(ctx context.Context, in *For
 	return out, nil
 }
 
+func (c *operationManagerServiceClient) DeleteOperation(ctx context.Context, in *DeleteOperationRequest, opts ...grpc.CallOption) (*DeleteOperationResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteOperationResponse)
+	err := c.cc.Invoke(ctx, OperationManagerService_DeleteOperation_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OperationManagerServiceServer is the server API for OperationManagerService service.
 // All implementations must embed UnimplementedOperationManagerServiceServer
 // for forward compatibility.
@@ -137,6 +149,7 @@ type OperationManagerServiceServer interface {
 	CompleteOperation(context.Context, *CompleteOperationRequest) (*CompleteOperationResponse, error)
 	FailOperation(context.Context, *FailOperationRequest) (*FailOperationResponse, error)
 	ForceUnlock(context.Context, *ForceUnlockRequest) (*ForceUnlockResponse, error)
+	DeleteOperation(context.Context, *DeleteOperationRequest) (*DeleteOperationResponse, error)
 	mustEmbedUnimplementedOperationManagerServiceServer()
 }
 
@@ -167,6 +180,9 @@ func (UnimplementedOperationManagerServiceServer) FailOperation(context.Context,
 }
 func (UnimplementedOperationManagerServiceServer) ForceUnlock(context.Context, *ForceUnlockRequest) (*ForceUnlockResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ForceUnlock not implemented")
+}
+func (UnimplementedOperationManagerServiceServer) DeleteOperation(context.Context, *DeleteOperationRequest) (*DeleteOperationResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteOperation not implemented")
 }
 func (UnimplementedOperationManagerServiceServer) mustEmbedUnimplementedOperationManagerServiceServer() {
 }
@@ -316,6 +332,24 @@ func _OperationManagerService_ForceUnlock_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OperationManagerService_DeleteOperation_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteOperationRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OperationManagerServiceServer).DeleteOperation(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OperationManagerService_DeleteOperation_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OperationManagerServiceServer).DeleteOperation(ctx, req.(*DeleteOperationRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OperationManagerService_ServiceDesc is the grpc.ServiceDesc for OperationManagerService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -350,6 +384,10 @@ var OperationManagerService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ForceUnlock",
 			Handler:    _OperationManagerService_ForceUnlock_Handler,
+		},
+		{
+			MethodName: "DeleteOperation",
+			Handler:    _OperationManagerService_DeleteOperation_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

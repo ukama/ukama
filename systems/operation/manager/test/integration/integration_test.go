@@ -644,3 +644,41 @@ func TestStartGroup(t *testing.T) {
 		}
 	})
 }
+
+func TestDeleteOperation(t *testing.T) {
+	c := newClient(t)
+	ctx := newContext(t)
+
+	t.Run("ActiveOperationIsRejected", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+
+		_, err := c.DeleteOperation(ctx,
+			&pb.DeleteOperationRequest{Id: op.Id, Actor: actor})
+
+		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
+		assertLockHeldBy(t, ctx, c, op)
+	})
+
+	t.Run("FinishedOperationIsDeleted", func(t *testing.T) {
+		op := startOperation(t, ctx, c)
+		_, err := c.FailOperation(ctx, &pb.FailOperationRequest{
+			Id: op.Id, FencingToken: op.FencingToken, Actor: actor, Reason: reason,
+		})
+		assert.NoError(t, err)
+
+		_, err = c.DeleteOperation(ctx,
+			&pb.DeleteOperationRequest{Id: op.Id, Actor: actor})
+
+		assert.NoError(t, err)
+		_, err = c.GetOperation(ctx, &pb.GetOperationRequest{Id: op.Id})
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("UnknownOperationIsNotFound", func(t *testing.T) {
+		_, err := c.DeleteOperation(ctx, &pb.DeleteOperationRequest{
+			Id: uuid.NewV4().String(), Actor: actor,
+		})
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+}
