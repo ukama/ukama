@@ -319,12 +319,12 @@ build_sysfs() {
                                           --f mfgdata/schema/mask.json
     elif [ "$node_type" = "cnode" ]; then
         "${BUILD_DIR}/utils/genSchema" --u "${node_uuid}" \
-                                       --n cm4 \
-                                       --m UK-SA2602-CM4-1102 \
+                                       --n cm5 \
+                                       --m UK-SA2602-CM5-1102 \
                                        --f mfgdata/schema/cnode.json
 
-        "${BUILD_DIR}/utils/genInventory" --n cm4 \
-                                          --m UK-SA2602-CM4-1102 \
+        "${BUILD_DIR}/utils/genInventory" --n cm5 \
+                                          --m UK-SA2602-CM5-1102 \
                                           --f mfgdata/schema/cnode.json
     else
         log "ERROR" "Tmp sysfs not setup"
