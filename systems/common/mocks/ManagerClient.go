@@ -42,6 +42,24 @@ func (_m *ManagerClient) Complete(id string, fencingToken uint64, actor string, 
 	return r0, r1
 }
 
+// Delete provides a mock function with given fields: id, actor
+func (_m *ManagerClient) Delete(id string, actor string) error {
+	ret := _m.Called(id, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(string, string) error); ok {
+		r0 = rf(id, actor)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // Fail provides a mock function with given fields: id, fencingToken, actor, reason
 func (_m *ManagerClient) Fail(id string, fencingToken uint64, actor string, reason string) (*operation.OperationInfo, error) {
 	ret := _m.Called(id, fencingToken, actor, reason)

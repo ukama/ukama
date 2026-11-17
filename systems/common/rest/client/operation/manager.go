@@ -97,26 +97,11 @@ type GetResponse struct {
 	Operation *OperationInfo `json:"operation,omitempty"`
 }
 
-type MarkRunningRequest struct {
+type UpdateRequest struct {
+	Status       string `json:"status"`
 	FencingToken uint64 `json:"fencing_token"`
 	Actor        string `json:"actor"`
-}
-
-type ForceUnlockRequest struct {
-	Actor  string `json:"actor"`
-	Reason string `json:"reason"`
-}
-
-type CompleteRequest struct {
-	FencingToken uint64 `json:"fencing_token"`
-	Actor        string `json:"actor"`
-	Reason       string `json:"reason"`
-}
-
-type FailRequest struct {
-	FencingToken uint64 `json:"fencing_token"`
-	Actor        string `json:"actor"`
-	Reason       string `json:"reason"`
+	Reason       string `json:"reason,omitempty"`
 }
 
 type ManagerClient interface {
@@ -127,6 +112,7 @@ type ManagerClient interface {
 	ForceUnlock(id, actor, reason string) (*OperationInfo, error)
 	Complete(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
 	Fail(id string, fencingToken uint64, actor, reason string) (*OperationInfo, error)
+	Delete(id, actor string) error
 }
 
 type managerClient struct {
@@ -190,11 +176,13 @@ func (m *managerClient) GetByResource(resourceKey string) (*OperationInfo, error
 
 func (m *managerClient) MarkRunning(id string, fencingToken uint64,
 	actor string) (*OperationInfo, error) {
-	b, err := json.Marshal(MarkRunningRequest{FencingToken: fencingToken, Actor: actor})
+	b, err := json.Marshal(UpdateRequest{
+		Status: StatusRunning, FencingToken: fencingToken, Actor: actor,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/run", b)
+	resp, err := m.R.Patch(m.operationURL(id), b)
 	if err != nil {
 		return nil, fmt.Errorf("MarkRunning failure: %w", markRunningErr(err))
 	}
@@ -211,8 +199,7 @@ func markRunningErr(err error) error {
 	switch {
 	case errors.As(err, &status):
 		switch status.StatusCode {
-		case http.StatusBadRequest, http.StatusNotFound, http.StatusConflict,
-			http.StatusPreconditionFailed:
+		case http.StatusNotFound, http.StatusConflict, http.StatusPreconditionFailed:
 			return fmt.Errorf("%w: %w", ErrNotRunnable, err)
 		case http.StatusServiceUnavailable, http.StatusGatewayTimeout:
 			return fmt.Errorf("%w: %w", ErrUnavailable, err)
@@ -224,11 +211,8 @@ func markRunningErr(err error) error {
 }
 
 func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, error) {
-	b, err := json.Marshal(ForceUnlockRequest{Actor: actor, Reason: reason})
-	if err != nil {
-		return nil, fmt.Errorf("request marshal error: %w", err)
-	}
-	resp, err := m.R.Post(m.u.String()+OperationsEndpoint+"/"+id+"/force-unlock", b)
+	q := url.Values{"actor": {actor}, "reason": {reason}}
+	resp, err := m.R.Delete(m.operationURL(id) + "/lock?" + q.Encode())
 	if err != nil {
 		return nil, fmt.Errorf("ForceUnlock failure: %w", err)
 	}
@@ -239,52 +223,64 @@ func (m *managerClient) ForceUnlock(id, actor, reason string) (*OperationInfo, e
 	return out.Operation, nil
 }
 
+func (m *managerClient) Delete(id, actor string) error {
+	q := url.Values{"actor": {actor}}
+	if _, err := m.R.Delete(m.operationURL(id) + "?" + q.Encode()); err != nil {
+		return fmt.Errorf("DeleteOperation failure: %w", err)
+	}
+	return nil
+}
+
 func (m *managerClient) Complete(id string, fencingToken uint64,
 	actor, reason string) (*OperationInfo, error) {
-	b, err := json.Marshal(CompleteRequest{
-		FencingToken: fencingToken, Actor: actor, Reason: reason,
+	op, err := m.terminate(id, UpdateRequest{
+		Status: StatusSuccess, FencingToken: fencingToken, Actor: actor, Reason: reason,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("request marshal error: %w", err)
+		return nil, fmt.Errorf("CompleteOperation %w", err)
 	}
-	resp, err := m.postWithRetry(m.u.String()+OperationsEndpoint+"/"+id+"/complete", b)
-	if err != nil {
-		return nil, fmt.Errorf("CompleteOperation failure: %w", err)
-	}
-	out := &GetResponse{}
-	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
-		return nil, fmt.Errorf("CompleteOperation deserialize: %w", uerr)
-	}
-	return out.Operation, nil
+	return op, nil
 }
 
 func (m *managerClient) Fail(id string, fencingToken uint64,
 	actor, reason string) (*OperationInfo, error) {
-	b, err := json.Marshal(FailRequest{
-		FencingToken: fencingToken, Actor: actor, Reason: reason,
+	op, err := m.terminate(id, UpdateRequest{
+		Status: StatusFailed, FencingToken: fencingToken, Actor: actor, Reason: reason,
 	})
+	if err != nil {
+		return nil, fmt.Errorf("FailOperation %w", err)
+	}
+	return op, nil
+}
+
+func (m *managerClient) terminate(id string, req UpdateRequest) (*OperationInfo, error) {
+	b, err := json.Marshal(req)
 	if err != nil {
 		return nil, fmt.Errorf("request marshal error: %w", err)
 	}
-	resp, err := m.postWithRetry(m.u.String()+OperationsEndpoint+"/"+id+"/fail", b)
+	resp, err := m.patchWithRetry(m.operationURL(id), b)
 	if err != nil {
-		return nil, fmt.Errorf("FailOperation failure: %w", err)
+		return nil, fmt.Errorf("failure: %w", err)
 	}
 	out := &GetResponse{}
 	if uerr := json.Unmarshal(resp.Body(), out); uerr != nil {
-		return nil, fmt.Errorf("FailOperation deserialize: %w", uerr)
+		return nil, fmt.Errorf("deserialize: %w", uerr)
 	}
 	return out.Operation, nil
 }
 
-func (m *managerClient) postWithRetry(url string, b []byte) (*resty.Response, error) {
+func (m *managerClient) patchWithRetry(url string, b []byte) (*resty.Response, error) {
 	for attempt := 1; ; attempt++ {
-		resp, err := m.R.Post(url, b)
+		resp, err := m.R.Patch(url, b)
 		if err == nil || attempt == terminateAttempts || !isRetryable(err) {
 			return resp, err
 		}
 		time.Sleep(time.Duration(attempt) * m.backoff)
 	}
+}
+
+func (m *managerClient) operationURL(id string) string {
+	return m.u.String() + OperationsEndpoint + "/" + url.PathEscape(id)
 }
 
 func isRetryable(err error) bool {

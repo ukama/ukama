@@ -344,8 +344,9 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 
 	t.Run("OperationMarkedRunning", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
-			assert.Equal(tt, "POST", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId)
+			assert.Equal(tt, "PATCH", req.Method)
 			sent, _ := io.ReadAll(req.Body)
 			assert.Contains(tt, string(sent), `"actor":"controller"`)
 
@@ -371,7 +372,7 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 	})
 
 	for code, want := range map[int]error{
-		http.StatusBadRequest:          operation.ErrNotRunnable,
+		http.StatusBadRequest:          nil,
 		http.StatusNotFound:            operation.ErrNotRunnable,
 		http.StatusConflict:            operation.ErrNotRunnable,
 		http.StatusPreconditionFailed:  operation.ErrNotRunnable,
@@ -408,8 +409,9 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
-			assert.Equal(tt, "POST", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId)
+			assert.Equal(tt, "PATCH", req.Method)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -430,8 +432,9 @@ func TestManagerClient_MarkRunning(t *testing.T) {
 
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
-			assert.Equal(tt, req.URL.String(), operation.OperationsEndpoint+"/"+testOperationId+"/run")
-			assert.Equal(tt, "POST", req.Method)
+			assert.Equal(tt, req.URL.String(),
+				operation.OperationsEndpoint+"/"+testOperationId)
+			assert.Equal(tt, "PATCH", req.Method)
 
 			return nil
 		}
@@ -455,12 +458,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 	t.Run("OperationForceUnlocked", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(),
-				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
-			assert.Equal(tt, "POST", req.Method)
-
-			sent, err := io.ReadAll(req.Body)
-			assert.NoError(tt, err)
-			assert.JSONEq(tt, `{"actor":"admin","reason":"stale lock"}`, string(sent))
+				operation.OperationsEndpoint+"/"+testOperationId+
+					"/lock?actor=admin&reason=stale+lock")
+			assert.Equal(tt, "DELETE", req.Method)
 
 			body := `{"operation":{"id":"03cb753f-5e03-4c97-8e47-625115476c72","type":"deploy","system":"node","status":"CANCELLED","fencing_token":1,"resource_key":"node/03cb753f-5e03-4c97-8e47-625115476c72","lease_expires_at":"2026-06-29T12:00:00Z","created_at":"2026-06-29T11:00:00Z"}}`
 
@@ -485,8 +485,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 	t.Run("ForceUnlockFailed", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(),
-				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
-			assert.Equal(tt, "POST", req.Method)
+				operation.OperationsEndpoint+"/"+testOperationId+
+					"/lock?actor=admin&reason=stale+lock")
+			assert.Equal(tt, "DELETE", req.Method)
 
 			resp := `{"error":"not found"}`
 
@@ -510,8 +511,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 	t.Run("InvalidResponsePayload", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(),
-				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
-			assert.Equal(tt, "POST", req.Method)
+				operation.OperationsEndpoint+"/"+testOperationId+
+					"/lock?actor=admin&reason=stale+lock")
+			assert.Equal(tt, "DELETE", req.Method)
 
 			return &http.Response{
 				StatusCode: 200,
@@ -533,8 +535,9 @@ func TestManagerClient_ForceUnlock(t *testing.T) {
 	t.Run("RequestFailure", func(tt *testing.T) {
 		mockTransport := func(req *http.Request) *http.Response {
 			assert.Equal(tt, req.URL.String(),
-				operation.OperationsEndpoint+"/"+testOperationId+"/force-unlock")
-			assert.Equal(tt, "POST", req.Method)
+				operation.OperationsEndpoint+"/"+testOperationId+
+					"/lock?actor=admin&reason=stale+lock")
+			assert.Equal(tt, "DELETE", req.Method)
 
 			return nil
 		}
@@ -559,15 +562,16 @@ func TestManagerClient_CompleteAndFail(t *testing.T) {
 	type terminate func(operation.ManagerClient) (*operation.OperationInfo, error)
 
 	calls := []struct {
-		name string
-		path string
-		call terminate
+		name   string
+		status string
+		call   terminate
 	}{
-		{"Complete", "/complete", func(c operation.ManagerClient) (*operation.OperationInfo,
+		{"Complete", "SUCCESS", func(c operation.ManagerClient) (*operation.OperationInfo,
 			error) {
 			return c.Complete(testOperationId, fencingToken, actor, reason)
 		}},
-		{"Fail", "/fail", func(c operation.ManagerClient) (*operation.OperationInfo, error) {
+		{"Fail", "FAILED", func(c operation.ManagerClient) (*operation.OperationInfo,
+			error) {
 			return c.Fail(testOperationId, fencingToken, actor, reason)
 		}},
 	}
@@ -576,12 +580,13 @@ func TestManagerClient_CompleteAndFail(t *testing.T) {
 		t.Run(tc.name+"SendsFencingToken", func(tt *testing.T) {
 			mockTransport := func(req *http.Request) *http.Response {
 				assert.Equal(tt, req.URL.String(),
-					operation.OperationsEndpoint+"/"+testOperationId+tc.path)
-				assert.Equal(tt, "POST", req.Method)
+					operation.OperationsEndpoint+"/"+testOperationId)
+				assert.Equal(tt, "PATCH", req.Method)
 
 				sent, err := io.ReadAll(req.Body)
 				assert.NoError(tt, err)
-				assert.JSONEq(tt, `{"fencing_token":7,"actor":"controller","reason":"done"}`,
+				assert.JSONEq(tt, `{"status":"`+tc.status+
+					`","fencing_token":7,"actor":"controller","reason":"done"}`,
 					string(sent))
 
 				body := `{"operation":{"id":"` + testOperationId + `","fencing_token":7}}`
@@ -641,4 +646,45 @@ func TestManagerClient_CompleteAndFail(t *testing.T) {
 			assert.Nil(tt, op)
 		})
 	}
+}
+
+func TestManagerClient_Delete(t *testing.T) {
+	t.Run("SendsActorAsQuery", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			assert.Equal(tt, operation.OperationsEndpoint+"/"+testOperationId+
+				"?actor=admin", req.URL.String())
+			assert.Equal(tt, "DELETE", req.Method)
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Body:       io.NopCloser(bytes.NewBufferString("")),
+				Header:     make(http.Header),
+			}
+		}
+
+		testManagerClient := operation.NewManagerClient("")
+		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		assert.NoError(tt, testManagerClient.Delete(testOperationId, "admin"))
+	})
+
+	t.Run("ActiveOperationIsRejected", func(tt *testing.T) {
+		mockTransport := func(req *http.Request) *http.Response {
+			body := bytes.NewBufferString(`{"error":"operation is RUNNING"}`)
+			return &http.Response{
+				StatusCode: http.StatusConflict,
+				Body:       io.NopCloser(body),
+				Header:     http.Header{"Content-Type": []string{"application/json"}},
+			}
+		}
+
+		testManagerClient := operation.NewManagerClient("")
+		testManagerClient.R.C.SetTransport(client.RoundTripFunc(mockTransport))
+
+		err := testManagerClient.Delete(testOperationId, "admin")
+
+		var status *client.ErrorStatus
+		assert.True(tt, errors.As(err, &status), err)
+		assert.Equal(tt, http.StatusConflict, status.StatusCode)
+	})
 }
