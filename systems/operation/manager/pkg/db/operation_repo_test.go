@@ -816,3 +816,73 @@ func expectLockedSelect(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
 }
 
 var ctx = context.Background()
+
+func Test_Delete(t *testing.T) {
+	finished := func(status OperationStatus) *Operation {
+		return &Operation{Id: uuid.NewV4(), Status: status, FencingToken: 2,
+			ResourceKey: "node:abc", LeaseExpiresAt: time.Now()}
+	}
+
+	t.Run("SoftDeletesFinishedOperationWithAudit", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+		op := finished(OperationSuccess)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).WillReturnRows(operationRow(op))
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "operations" SET "deleted_at"`)).
+			WillReturnResult(sqlmock.NewResult(0, 1))
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
+			WithArgs(sqlmock.AnyArg(), op.Id, op.ResourceKey, "deleted", "admin",
+				sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		err := repo.Delete(ctx, op.Id, "admin")
+
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	for _, status := range []OperationStatus{OperationPending, OperationRunning} {
+		t.Run("Rejects"+string(status), func(t *testing.T) {
+			mock, repo := setupTestDB(t)
+			op := finished(status)
+
+			mock.ExpectBegin()
+			expectLockedSelect(mock).WillReturnRows(operationRow(op))
+			mock.ExpectRollback()
+
+			err := repo.Delete(ctx, op.Id, "admin")
+
+			assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+			assert.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+
+	t.Run("UnknownOperationIsNotFound", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).WillReturnError(gorm.ErrRecordNotFound)
+		mock.ExpectRollback()
+
+		err := repo.Delete(ctx, uuid.NewV4(), "admin")
+
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("ReturnsLockTimeout", func(t *testing.T) {
+		mock, repo := setupTestDB(t)
+
+		mock.ExpectBegin()
+		expectLockedSelect(mock).
+			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
+		mock.ExpectRollback()
+
+		err := repo.Delete(ctx, uuid.NewV4(), "admin")
+
+		assert.True(t, errors.Is(err, ErrLockTimeout), err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}

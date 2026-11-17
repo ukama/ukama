@@ -44,6 +44,36 @@ func (_m *OperationManagerServiceServer) CompleteOperation(_a0 context.Context, 
 	return r0, r1
 }
 
+// DeleteOperation provides a mock function with given fields: _a0, _a1
+func (_m *OperationManagerServiceServer) DeleteOperation(_a0 context.Context, _a1 *gen.DeleteOperationRequest) (*gen.DeleteOperationResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteOperation")
+	}
+
+	var r0 *gen.DeleteOperationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteOperationRequest) (*gen.DeleteOperationResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteOperationRequest) *gen.DeleteOperationResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteOperationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteOperationRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FailOperation provides a mock function with given fields: _a0, _a1
 func (_m *OperationManagerServiceServer) FailOperation(_a0 context.Context, _a1 *gen.FailOperationRequest) (*gen.FailOperationResponse, error) {
 	ret := _m.Called(_a0, _a1)

@@ -53,6 +53,43 @@ func (_m *OperationManagerServiceClient) CompleteOperation(ctx context.Context, 
 	return r0, r1
 }
 
+// DeleteOperation provides a mock function with given fields: ctx, in, opts
+func (_m *OperationManagerServiceClient) DeleteOperation(ctx context.Context, in *gen.DeleteOperationRequest, opts ...grpc.CallOption) (*gen.DeleteOperationResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteOperation")
+	}
+
+	var r0 *gen.DeleteOperationResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteOperationRequest, ...grpc.CallOption) (*gen.DeleteOperationResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DeleteOperationRequest, ...grpc.CallOption) *gen.DeleteOperationResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DeleteOperationResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DeleteOperationRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // FailOperation provides a mock function with given fields: ctx, in, opts
 func (_m *OperationManagerServiceClient) FailOperation(ctx context.Context, in *gen.FailOperationRequest, opts ...grpc.CallOption) (*gen.FailOperationResponse, error) {
 	_va := make([]interface{}, len(opts))

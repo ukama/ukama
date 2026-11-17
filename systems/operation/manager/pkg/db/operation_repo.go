@@ -71,6 +71,7 @@ type OperationRepo interface {
 	Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64,
 		status OperationStatus, audit OperationAudit, opErr string) (*Operation, error)
 	FindExpired(ctx context.Context, now time.Time, limit int) ([]Operation, error)
+	Delete(ctx context.Context, id uuid.UUID, actor string) error
 }
 
 type operationRepo struct {
@@ -375,4 +376,28 @@ func (r *operationRepo) FindExpired(ctx context.Context, now time.Time,
 		Limit(limit).
 		Find(&ops).Error
 	return ops, err
+}
+
+func (r *operationRepo) Delete(ctx context.Context, id uuid.UUID, actor string) error {
+	err := r.db.GetGormDb().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var op Operation
+		if err := lockOperation(tx, &op, "id = ?", id); err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return fmt.Errorf("operation %s: %w", id, store.ErrNotFound)
+			}
+			return err
+		}
+		if !op.Status.IsTerminal() {
+			return fmt.Errorf("operation %s is %s and cannot be deleted: %w",
+				id, op.Status, store.ErrPrecondition)
+		}
+		if err := tx.Delete(&op).Error; err != nil {
+			return err
+		}
+		return tx.Create(&OperationAudit{
+			Id: uuid.NewV4(), OperationId: op.Id, ResourceKey: op.ResourceKey,
+			Event: "deleted", Actor: actor, At: time.Now().UTC(),
+		}).Error
+	})
+	return lockTimeoutErr(err)
 }

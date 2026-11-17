@@ -18,6 +18,24 @@ type OperationRepo struct {
 	mock.Mock
 }
 
+// Delete provides a mock function with given fields: ctx, id, actor
+func (_m *OperationRepo) Delete(ctx context.Context, id uuid.UUID, actor string) error {
+	ret := _m.Called(ctx, id, actor)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
+		r0 = rf(ctx, id, actor)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
 // FindExpired provides a mock function with given fields: ctx, now, limit
 func (_m *OperationRepo) FindExpired(ctx context.Context, now time.Time, limit int) ([]db.Operation, error) {
 	ret := _m.Called(ctx, now, limit)

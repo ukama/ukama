@@ -335,6 +335,23 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 	return &pb.ForceUnlockResponse{Operation: toPb(op)}, nil
 }
 
+func (s *OperationServer) DeleteOperation(ctx context.Context,
+	req *pb.DeleteOperationRequest) (*pb.DeleteOperationResponse, error) {
+	id, err := uuid.FromString(req.Id)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
+	}
+	if err := requireText("actor", req.Actor); err != nil {
+		return nil, err
+	}
+	if err := s.repo.Delete(ctx, id, req.Actor); err != nil {
+		return nil, repoErr(err)
+	}
+
+	log.Infof("operation %s deleted by %s", id, req.Actor)
+	return &pb.DeleteOperationResponse{}, nil
+}
+
 func requireText(field, value string) error {
 	if strings.TrimSpace(value) == "" {
 		return status.Errorf(codes.InvalidArgument, "%s must not be blank", field)
