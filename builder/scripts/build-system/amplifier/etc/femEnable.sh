@@ -25,26 +25,32 @@ for dev in 1-000c 1-0018 1-0049 1-0048 2-000c 2-0018 2-0049 2-0048; do
     fi
 done
 
-echo "Enable PA1 Bias settings"
+band=$(sed -n 's/.*"FEM_BAND": *"\([^"]*\)".*/\1/p' /ukama/manifest.json 2>/dev/null | head -n 1)
 
-echo "Writing PA1 init"
-i2cset -y 1 0x0c 0x7F 0xFF 0xFF i 
+case "$band" in
+B41)
+    carrier="0x73 0x33"
+    peak="0x4C 0xCD"
+    ;;
+B1)
+    carrier="0x80 0x00"
+    peak="0x51 0xEC"
+    ;;
+*)
+    echo "No PA bias values for band '${band}', the PA bias is not set"
+    exit 0
+    ;;
+esac
 
-echo "Writing PA1 carrier data."
-i2cset -y 1 0x0c 0x59 0x78 0x15 i 
+for fe in 1 2; do
+    echo "Writing PA${fe} init"
+    i2cset -y ${fe} 0x0c 0x7F 0xFF 0xFF i
 
-echo "Writing PA1 peak"
-i2cset -y 1 0x0c 0x58 0x4C 0xDC i 
+    echo "Writing PA${fe} ${band} carrier ${carrier}"
+    i2cset -y ${fe} 0x0c 0x59 ${carrier} i
 
-echo "Enable PA2 Bias settings"
-
-echo "Writing PA2 init"
-i2cset -y 2 0x0c 0x7F 0xFF 0xFF i
-
-echo "Writing PA2 carrier data."
-i2cset -y 2 0x0c 0x59 0x78 0x15 i
-
-echo "Writing PA2 peak"
-i2cset -y 2 0x0c 0x58 0x4C 0xDC i
+    echo "Writing PA${fe} ${band} peak ${peak}"
+    i2cset -y ${fe} 0x0c 0x58 ${peak} i
+done
 
 exit 0
