@@ -30,7 +30,8 @@ def load_config(filename):
         raise RunnerError("invalid STACK_NAME")
     for key, minimum, maximum in [("DISK_GB", 40, 16000), ("BOOT_TIMEOUT_MINUTES", 5, 180),
                                   ("MAX_WORKER_HOURS", 1, 36), ("UPLOAD_RETRY_MINUTES", 1, 120),
-                                  ("MIN_FREE_DISK_GB", 1, 1000), ("RESULT_RETENTION_DAYS", 1, 3650)]:
+                                  ("MIN_FREE_DISK_GB", 1, 1000), ("RESULT_RETENTION_DAYS", 1, 3650),
+                                  ("CAPACITY_PLACEHOLDER_REPLICAS", 0, 40), ("CAPACITY_PLACEHOLDER_IDLE_REPLICAS", 0, 40)]:
         if type(cfg[key]) is not int or not minimum <= cfg[key] <= maximum:
             raise RunnerError(f"{key} must be an integer between {minimum} and {maximum}")
     networks = {key: ipaddress.IPv4Network(cfg[key]) for key in ("VPC_CIDR", "SUBNET_CIDR", "PODMAN_CIDR")}
@@ -38,6 +39,18 @@ def load_config(filename):
         raise RunnerError("SUBNET_CIDR must be within VPC_CIDR")
     if networks["VPC_CIDR"].overlaps(networks["PODMAN_CIDR"]) or networks["PODMAN_CIDR"].prefixlen > 23:
         raise RunnerError("PODMAN_CIDR must not overlap VPC_CIDR and must contain multiple /24 networks")
+    for key in ("SPOT", "SPOT_FALLBACK_ON_DEMAND"):
+        if type(cfg[key]) is not bool:
+            raise RunnerError(f"{key} must be true or false")
+    instance_type = r"[a-z][a-z0-9-]*\.[a-z0-9]+"
+    if not isinstance(cfg["INSTANCE_TYPE"], str) or not re.fullmatch(instance_type, cfg["INSTANCE_TYPE"]):
+        raise RunnerError("invalid INSTANCE_TYPE")
+    spot_types = cfg["SPOT_INSTANCE_TYPES"]
+    if not isinstance(spot_types, list) or not all(isinstance(t, str) and re.fullmatch(instance_type, t) for t in spot_types) \
+            or len(set(spot_types)) != len(spot_types):
+        raise RunnerError("SPOT_INSTANCE_TYPES must be an array of distinct EC2 instance types")
+    if cfg["SPOT"] and not spot_types:
+        raise RunnerError("SPOT_INSTANCE_TYPES must name at least one type when SPOT is true")
     if cfg["NETWORK_MODE"] not in ("vpn", "direct"):
         raise RunnerError("NETWORK_MODE must be vpn or direct")
     for key in ("VPN_CONFIG_FILES", "VPN_DOMAINS", "VPN_DNS_SERVERS", "VPN_ROUTES", "EXTRA_APT_PACKAGES", "EXTRA_PROBE_URLS", "REPO_PATHS"):

@@ -355,6 +355,41 @@ The maximum lifetime is a hard limit and can interrupt a long scenario.
 `INSTANCE_TYPE`, `DISK_GB`, and `MIN_FREE_DISK_GB` are configurable for the
 largest scenario you intend to run.
 
+Workers run on EC2 Spot by default (`SPOT: true`), which costs 55-70% less
+than on-demand. Before the first launch the controller reads the current Spot
+price of each `SPOT_INSTANCE_TYPES` entry in the worker subnet's zone and tries
+them cheapest first. A type that has no Spot capacity is skipped for the rest
+of the batch. When no listed type has capacity, the worker starts on-demand as
+`INSTANCE_TYPE` (`SPOT_FALLBACK_ON_DEMAND: true`); set it to `false` to fail
+the launch instead. Keep several types of the same size in the list: one type
+alone scores 1/10 for Spot capacity at 30 workers in a single zone, while five
+score 9/10. Set `SPOT: false` to launch every worker on-demand as
+`INSTANCE_TYPE`, as before.
+
+AWS can reclaim a Spot worker with two minutes' notice. Its completed
+scenarios keep their results; the rest are listed under unfinished
+assignments, and the worker shows as `SPOT_INTERRUPTED` in `batch-report.txt`.
+They are never reported as FAIL. The worker type and market for each worker
+are recorded in `batch-report.json`.
+
+Before the first worker launches, the controller scales the dev cluster's
+`kube-system/capacity-placeholder` deployment to `CAPACITY_PLACEHOLDER_REPLICAS`
+(default 20) with your local kubectl and kubeconfig. Each replica holds one
+spare t3.large, so the autoscaler adds nodes while worker-001 boots instead of
+during the opening mesh-pod burst. Real pods preempt the placeholders. When
+the batch finishes, or on `--cleanup`, it scales back to
+`CAPACITY_PLACEHOLDER_IDLE_REPLICAS` (default 2); the autoscaler removes the
+extra nodes an hour later. `--resume` scales back when the resumed batch
+finishes. A detached controller (Ctrl-C) leaves the buffer in place. Set
+`CAPACITY_PLACEHOLDER_REPLICAS` to 0 to leave the cluster alone. Your kubectl
+identity needs permission to scale deployments in `kube-system`; if the scale
+fails, the batch continues without spare nodes and `aws-lifecycle.log` says so.
+If scaling back fails, the log prints the command to run by hand:
+
+```bash
+kubectl -n kube-system scale deploy capacity-placeholder --replicas=2
+```
+
 The VPC, role and bucket are reused across batches. EC2 instances and root
 disks are disposable. S3 inputs expire after two days, results/control files
 after `RESULT_RETENTION_DAYS` (default 30), and image cache after 90 days.
