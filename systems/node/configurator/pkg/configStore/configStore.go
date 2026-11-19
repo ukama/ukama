@@ -11,9 +11,11 @@ package configstore
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -47,9 +49,30 @@ type FilesToUpdate struct {
 }
 
 type ConfigStoreProvider interface {
-	HandleConfigStoreEvent(ctx context.Context) error
-	HandleConfigCommitReq(ctx context.Context, rVer string) error
-	HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error
+	PlanConfigStoreEvent(ctx context.Context) (*CommitPlan, error)
+	PlanConfigCommit(ctx context.Context, rVer string) (*CommitPlan, error)
+	PlanConfigCommitForNode(ctx context.Context, rVer string,
+		nodeid string) (*CommitPlan, error)
+	Apply(plan *CommitPlan) map[string]error
+}
+
+type CommitPlan struct {
+	Version   string
+	configs   map[string]*ConfigData
+	NodeFiles map[string][]string
+	metaData  map[string]*ConfigMetaData
+}
+
+func (p *CommitPlan) Nodes() []string {
+	if p == nil {
+		return nil
+	}
+	nodes := make([]string, 0, len(p.NodeFiles))
+	for n := range p.NodeFiles {
+		nodes = append(nodes, n)
+	}
+	sort.Strings(nodes)
+	return nodes
 }
 
 const (
@@ -95,14 +118,14 @@ func NewConfigStore(msgB mb.MsgBusServiceClient, cnet creg.NetworkClient, csite 
 	}
 }
 
-func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
-	log.Infof("HandleConfigStoreEvent")
+func (c *ConfigStore) PlanConfigStoreEvent(ctx context.Context) (*CommitPlan, error) {
+	log.Infof("PlanConfigStoreEvent")
 
 	dir := DIR_PREFIX + utils.RandomDirName()
 
 	err := utils.CreateDir(dir, PERM)
 	if err != nil {
-		return fmt.Errorf("error creating directory: %v", err)
+		return nil, fmt.Errorf("error creating directory: %v", err)
 	}
 
 	defer func() {
@@ -116,46 +139,46 @@ func (c *ConfigStore) HandleConfigStoreEvent(ctx context.Context) error {
 	lVer, err := c.Store.GetLatestRemoteConfigs(dir)
 	if err != nil {
 		log.Errorf("Failed to get latest remote configs: %v", err)
-		return err
+		return nil, err
 	}
 
 	/* Get current commit */
 	cVerRec, err := c.commitRepo.GetLatest()
 	if err != nil {
 		log.Errorf("Failed to get latest commit: %v", err)
-		return err
+		return nil, err
 	}
 
 	// Get current committed version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get current remote configs: %v", err)
-		return err
+		return nil, err
 	}
 
 	if lVer == cVerRec.Hash {
 		log.Infof("HandleConfigStoreEvent remote config and current commit are same %s", cVerRec.Hash)
-		return nil
+		return nil, nil
 	}
 
 	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, lVer)
 	if err != nil {
 		log.Errorf("Failed to get change list for version %s from version %s.", lVer, cVerRec.Hash)
-		return err
+		return nil, err
 	}
 
-	return c.ProcessConfigStoreEvent(files, lVer, dir)
-
+	return c.PlanCommit(files, lVer, dir), nil
 }
 
-func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) error {
-	log.Infof("HandleConfigCommitReq")
+func (c *ConfigStore) PlanConfigCommit(ctx context.Context,
+	rVer string) (*CommitPlan, error) {
+	log.Infof("PlanConfigCommit")
 
 	dir := DIR_PREFIX + utils.RandomDirName()
 
 	err := utils.CreateDir(dir, PERM)
 	if err != nil {
-		return fmt.Errorf("error creating directory: %v", err)
+		return nil, fmt.Errorf("error creating directory: %v", err)
 	}
 
 	defer func() {
@@ -169,44 +192,45 @@ func (c *ConfigStore) HandleConfigCommitReq(ctx context.Context, rVer string) er
 	err = c.Store.GetRemoteConfigVersion(dir, rVer)
 	if err != nil {
 		log.Errorf("Failed to get requested remote configs: %v", err)
-		return err
+		return nil, err
 	}
 
 	cVerRec, err := c.commitRepo.GetLatest()
 	if err != nil {
 		log.Errorf("Failed to get latest commit: %v", err)
-		return err
+		return nil, err
 	}
 
 	if rVer == cVerRec.Hash {
 		log.Infof("HandleConfigCommitReq remote config and requested commit are same %s", cVerRec.Hash)
-		return nil
+		return nil, nil
 	}
 
 	// Get current committed version
 	err = c.Store.GetRemoteConfigVersion(dir, cVerRec.Hash)
 	if err != nil {
 		log.Errorf("Failed to get current remote configs: %v", err)
-		return err
+		return nil, err
 	}
 
 	files, dir, err := c.LookingForChanges(dir, cVerRec.Hash, rVer)
 	if err != nil {
 		log.Errorf("Failed to get change list for version %s from version %s.", rVer, cVerRec.Hash)
-		return err
+		return nil, err
 	}
 
-	return c.ProcessConfigStoreEvent(files, rVer, dir)
+	return c.PlanCommit(files, rVer, dir), nil
 }
 
-func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer string, nodeid string) error {
-	log.Infof("HandleConfigCommitReqForNode")
+func (c *ConfigStore) PlanConfigCommitForNode(ctx context.Context, rVer string,
+	nodeid string) (*CommitPlan, error) {
+	log.Infof("PlanConfigCommitForNode")
 
 	dir := DIR_PREFIX + utils.RandomDirName()
 
 	err := utils.CreateDir(dir, PERM)
 	if err != nil {
-		return fmt.Errorf("error creating directory: %v", err)
+		return nil, fmt.Errorf("error creating directory: %v", err)
 	}
 
 	defer func() {
@@ -220,16 +244,16 @@ func (c *ConfigStore) HandleConfigCommitReqForNode(ctx context.Context, rVer str
 	err = c.Store.GetRemoteConfigVersion(dir, rVer)
 	if err != nil {
 		log.Errorf("Failed to get requested remote configs: %v", err)
-		return err
+		return nil, err
 	}
 
 	files, dir, err := c.LookingForNodeConfigs(dir, nodeid, rVer)
 	if err != nil {
 		log.Errorf("Failed to get change list of configs for node %s in rev %s.", nodeid, rVer)
-		return err
+		return nil, err
 	}
 
-	return c.ProcessConfigStoreEvent(files, rVer, dir)
+	return c.PlanCommit(files, rVer, dir), nil
 }
 
 func (c *ConfigStore) LookingForNodeConfigs(dir string, nodeId string, rVer string) ([]FilesToUpdate, string, error) {
@@ -286,12 +310,16 @@ func (c *ConfigStore) LookingForChanges(dir string, cVer string, rVer string) ([
 	return filesToUpdate, lfPrefix, nil
 }
 
-func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVer string, dir string) error {
+func (c *ConfigStore) PlanCommit(filesToUpdate []FilesToUpdate, rVer string,
+	dir string) *CommitPlan {
+	plan := &CommitPlan{
+		Version:   rVer,
+		configs:   make(map[string]*ConfigData, len(filesToUpdate)),
+		NodeFiles: make(map[string][]string),
+		metaData:  make(map[string]*ConfigMetaData),
+	}
 
 	if len(filesToUpdate) > 0 {
-		prepCommit := make(map[string]*ConfigData, len(filesToUpdate)) /* /* Map from file to config app, and real config files data*/
-		prepNodeCommit := make(map[string][]string)                    /* Map from nodeId to config files*/
-		prepMetaData := make(map[string]*ConfigMetaData)
 		for _, file := range filesToUpdate {
 			/* Get the meta information about config from the path of the filename
 			  networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json
@@ -317,21 +345,23 @@ func (c *ConfigStore) ProcessConfigStoreEvent(filesToUpdate []FilesToUpdate, rVe
 			configToCommit.Reason = file.Reason
 			configToCommit.Version = rVer
 
-			prepMetaData[file.Name] = cMetaData
-			prepCommit[file.Name] = configToCommit
-			prepNodeCommit[cMetaData.node] = append(prepNodeCommit[cMetaData.node], file.Name)
+			plan.metaData[file.Name] = cMetaData
+			plan.configs[file.Name] = configToCommit
+			plan.NodeFiles[cMetaData.node] = append(plan.NodeFiles[cMetaData.node],
+				file.Name)
 		}
 
-		err := c.CommitConfig(prepCommit, prepNodeCommit, prepMetaData, rVer)
-		if err != nil {
-			return err
+		for n := range plan.NodeFiles {
+			if _, err := c.configRepo.Get(n); err != nil {
+				log.Errorf("Failed to get configuration data for node %s: %v", n, err)
+				delete(plan.NodeFiles, n)
+			}
 		}
-
 	} else {
 		log.Info("No changes to commit.")
 	}
 
-	return nil
+	return plan
 }
 
 /* Parse ukama/networkABC/site123/uk-sa1000-HNODE-2145/epc/sctp.json */
@@ -430,91 +460,87 @@ func (c *ConfigStore) PrepareConfigCommit(d *ConfigMetaData, file string, reason
 	return configReq, nil
 }
 
-func (c *ConfigStore) CommitConfig(m map[string]*ConfigData, nodes map[string][]string, md map[string]*ConfigMetaData, commit string) error {
+func (c *ConfigStore) Apply(plan *CommitPlan) map[string]error {
+	results := make(map[string]error, len(plan.Nodes()))
+	for _, n := range plan.Nodes() {
+		results[n] = c.commitNode(plan, n)
+	}
+	return results
+}
 
+func (c *ConfigStore) commitNode(plan *CommitPlan, n string) error {
+	state, pubErr := c.publishNode(plan, n)
+	if err := c.recordState(n, plan.Version, state); err != nil {
+		log.Errorf("Failed to update latest commit for node %s: %v", n, err)
+		return errors.Join(pubErr, err)
+	}
+	return pubErr
+}
+
+func (c *ConfigStore) publishNode(plan *CommitPlan, n string) (db.CommitState, error) {
 	route := c.NodeFeederRoutingKey.SetObject("node").SetAction("publish").MustBuild()
+	files := plan.NodeFiles[n]
+	state := db.Failed
+	metaData := &ConfigMetaData{}
+	t := (uint32)(time.Now().Unix())
+	count := len(files) + 1
+	log.Infof("Pushing configs %+v for node %s with timestamp %d", files, n, t)
+	for _, f := range files {
+		metaData = plan.metaData[f]
 
-	for n, files := range nodes {
-		state := db.Failed
+		cd := plan.configs[f]
+		cd.Timestamp = t
+		cd.FileCount = count
 
-		/* Check if node existes in configuration db */
-		_, err := c.configRepo.Get(n)
+		jd, err := json.Marshal(cd)
 		if err != nil {
-			log.Errorf("Failed to get configuration data for node %s: %v", n, err)
-			continue
+			log.Errorf("Failed to marshal configdata %+v. Errors %s", cd, err.Error())
+			return state, fmt.Errorf("marshal %s: %w", f, err)
 		}
 
-		metaData := &ConfigMetaData{}
-		t := (uint32)(time.Now().Unix())
-		count := len(files) + 1
-		log.Infof("Pushing configs %+v for node %s with timestamp %d", files, n, t)
-		for _, f := range files {
-
-			metaData = md[f]
-
-			cd := m[f]
-			cd.Timestamp = t
-			cd.FileCount = count
-
-			jd, err := json.Marshal(cd)
-			if err != nil {
-				log.Errorf("Failed to marshal configdata %+v. Errors %s", cd, err.Error())
-				return err
-			}
-
-			msg := &epb.NodeFeederMessage{
-				Target:     c.OrgName + "." + metaData.network + "." + metaData.site + "." + n,
-				HttpMethod: "POST",
-				Path:       "configd/v1/config",
-				Msg:        jd,
-			}
-
-			err = c.msgbus.PublishRequest(route, msg)
-			if err != nil {
-				log.Errorf("Failed to publish message %+v with key %+v. Errors %s", m[f], route, err.Error())
-				goto RecordState
-			}
-			log.Infof("Published config %s  with timestamp %d on route %s for node %s ", msg, t, route, n)
-
-			/* Atleast one is success */
-			state = db.Partial
+		msg := &epb.NodeFeederMessage{
+			Target: c.OrgName + "." + metaData.network + "." + metaData.site +
+				"." + n,
+			HttpMethod: "POST",
+			Path:       "configd/v1/config",
+			Msg:        jd,
 		}
 
-		/* Publish config version information */
-		err = c.PublishCommitInfo(metaData, route, commit, t, count)
+		err = c.msgbus.PublishRequest(route, msg)
 		if err != nil {
-			log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
-			goto RecordState
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s",
+				cd, route, err.Error())
+			return state, fmt.Errorf("publish %s: %w", f, err)
 		}
+		log.Infof("Published config %s  with timestamp %d on route %s for node %s ",
+			msg, t, route, n)
 
-		/* Publish the config commit info */
-		state = db.Published
-
-	RecordState:
-		/* Update the version for committed config on node */
-		cRec, err := c.configRepo.Get(n)
-		if err != nil {
-			log.Errorf("Failed to get last config for node %s.Error: %v", n, err)
-			return err
-		}
-
-		cRec.Commit = db.Commit{Hash: commit}
-
-		/* Get commit */
-		cmt, err := c.commitRepo.Get(commit)
-		if err == nil {
-			cRec.Commit = *cmt
-		}
-
-		err = c.configRepo.UpdateLastCommit(*cRec, &state)
-		if err != nil {
-			log.Errorf("Failed to update latest commit: %v", err)
-			return err
-		}
-
+		state = db.Partial
 	}
 
-	return nil
+	err := c.PublishCommitInfo(metaData, route, plan.Version, t, count)
+	if err != nil {
+		log.Errorf("Failed to pusblish the config version info.Erorr: %s", err.Error())
+		return state, fmt.Errorf("publish version: %w", err)
+	}
+
+	return db.Published, nil
+}
+
+func (c *ConfigStore) recordState(n string, commit string, state db.CommitState) error {
+	cRec, err := c.configRepo.Get(n)
+	if err != nil {
+		return err
+	}
+
+	cRec.Commit = db.Commit{Hash: commit}
+
+	cmt, err := c.commitRepo.Get(commit)
+	if err == nil {
+		cRec.Commit = *cmt
+	}
+
+	return c.configRepo.UpdateLastCommit(*cRec, &state)
 }
 
 func (c *ConfigStore) PublishCommitInfo(m *ConfigMetaData, route string, ver string, t uint32, count int) error {
