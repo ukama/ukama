@@ -8,8 +8,6 @@ replace github.com/ukama/ukama/systems/common => ../../common
 
 replace github.com/ukama/ukama/systems/services/msgClient => ../../services/msgClient
 
-replace github.com/ukama/ukama/systems/operation/manager => ../../operation/manager
-
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
 	github.com/go-git/go-git/v5 v5.19.2
@@ -17,9 +15,7 @@ require (
 	github.com/num30/config v0.1.3
 	github.com/sirupsen/logrus v1.10.1
 	github.com/stretchr/testify v1.12.0
-	github.com/tj/assert v0.0.3
 	github.com/ukama/ukama/systems/common v0.0.0-00010101000000-000000000000
-	github.com/ukama/ukama/systems/operation/manager v0.0.0-00010101000000-000000000000
 	github.com/wI2L/jsondiff v0.7.1
 	google.golang.org/grpc v1.83.1
 	google.golang.org/protobuf v1.36.12

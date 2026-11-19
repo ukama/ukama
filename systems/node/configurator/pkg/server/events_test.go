@@ -63,7 +63,8 @@ func TestConfiguratorServer_EventNotification(t *testing.T) {
 
 		assert.NoError(t, err)
 		// Registration must not configure an unassigned node.
-		configStore.AssertNotCalled(t, "HandleConfigCommitReqForNode", mock.Anything, mock.Anything, mock.Anything)
+		configStore.AssertNotCalled(t, "PlanConfigCommitForNode", mock.Anything,
+			mock.Anything, mock.Anything)
 		configStore.AssertExpectations(t)
 		assert.NoError(t, err)
 	})

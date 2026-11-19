@@ -32,13 +32,16 @@ import (
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/rest/client"
 	ic "github.com/ukama/ukama/systems/common/rest/client/initclient"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/configurator/pb/gen"
-	cfgclient "github.com/ukama/ukama/systems/node/configurator/pkg/client"
 	configstore "github.com/ukama/ukama/systems/node/configurator/pkg/configStore"
 )
 
-const registrySystemName = "registry"
+const (
+	registrySystemName  = "registry"
+	operationSystemName = "operation"
+)
 
 var serviceConfig *pkg.Config
 
@@ -91,6 +94,14 @@ func runGrpcServer(gormdb sql.Db) {
 		log.Errorf("Failed to resolve registry address: %v", err)
 	}
 
+	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient,
+		client.WithDebug(serviceConfig.DebugMode)),
+		ic.CreateHostString(serviceConfig.OrgName, operationSystemName),
+		&serviceConfig.OrgName)
+	if err != nil {
+		log.Fatalf("Failed to resolve operation address: %v", err)
+	}
+
 	cnet := creg.NewNetworkClient(regUrl.String())
 	csite := creg.NewSiteClient(regUrl.String())
 	cnode := creg.NewNodeClient(regUrl.String())
@@ -107,7 +118,8 @@ func runGrpcServer(gormdb sql.Db) {
 	configStore := configstore.NewConfigStore(mbClient, cnet, csite, cnode, db.NewConfigRepo(gormdb),
 		db.NewCommitRepo(gormdb), serviceConfig.OrgName, s, serviceConfig.Timeout)
 
-	opMgr := cfgclient.NewOperationManager(serviceConfig.Operation.ManagerHost, serviceConfig.Operation.Timeout)
+	opMgr := copr.NewManagerClient(operationUrl.String(),
+		client.WithTimeout(serviceConfig.Operation.Timeout))
 
 	configuratorServer := server.NewConfiguratorServer(mbClient, db.NewConfigRepo(gormdb), db.NewCommitRepo(gormdb), configStore,
 		serviceConfig.OrgName, pkg.IsDebugMode, opMgr, serviceConfig.Operation.LeaseSecs)
