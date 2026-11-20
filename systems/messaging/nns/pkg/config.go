@@ -29,6 +29,8 @@ type Config struct {
 	EtcdHost          string
 	OrgName           string
 	NodeMetricsPort   int
+	MeshWatch         bool `default:"true"`
+	MeshNamespace     string
 }
 
 type HttpServices struct {

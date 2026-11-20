@@ -154,6 +154,18 @@ func TestNnsServerGetMesh(t *testing.T) {
 		assert.Equal(t, "10.0.0.5", resp.MeshIp)
 		assert.Equal(t, int32(5000), resp.MeshPort)
 	})
+
+	t.Run("knownNodeWithoutMeshIsUnavailable", func(t *testing.T) {
+		fake := &fakeNnsStore{
+			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+				return &pkg.NodeMeshMap{MeshIp: "", MeshPort: 5000}, nil
+			},
+		}
+		srv := NewNnsServer(fake, testConfig(), testDns())
+		_, err := srv.GetMesh(ctx, &pb.GetMeshRequest{NodeId: testValidNodeID})
+		require.Error(t, err)
+		assert.Equal(t, codes.Unavailable, status.Code(err))
+	})
 }
 
 func TestNnsServerSet(t *testing.T) {

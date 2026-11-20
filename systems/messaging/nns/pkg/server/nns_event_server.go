@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -167,6 +168,20 @@ func (l *NnsEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOff
 
 func (l *NnsEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
+
+	marked, err := l.Nns.markMeshDown(context.Background(), msg.GetNodeId(), "")
+	if err != nil {
+		if errors.Is(err, pkg.ErrNodeNotFound) {
+			log.Warnf("Offline for unknown node %s", msg.GetNodeId())
+			return nil
+		}
+		log.Errorf("Failed to mark node %s as having no mesh. Error: %v", msg.GetNodeId(), err)
+		return err
+	}
+	if marked {
+		log.Infof("Node %s has no mesh connection", msg.GetNodeId())
+	}
+
 	return nil
 }
 

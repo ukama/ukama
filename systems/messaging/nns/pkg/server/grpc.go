@@ -69,10 +69,27 @@ func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetM
 	if err != nil {
 		return nil, err
 	}
+	if mesh.MeshIp == "" {
+		return nil, status.Errorf(codes.Unavailable, "node %s has no mesh connection", req.GetNodeId())
+	}
 	return &pb.GetMeshResponse{
 		MeshIp:   mesh.MeshIp,
 		MeshPort: mesh.MeshPort,
 	}, nil
+}
+
+func (n *NnsServer) markMeshDown(ctx context.Context, nodeId, meshIp string) (bool, error) {
+	node, err := n.nns.Get(ctx, nodeId)
+	if err != nil {
+		return false, err
+	}
+	if node.MeshIp == "" || (meshIp != "" && node.MeshIp != meshIp) {
+		return false, nil
+	}
+	if err := n.nns.UpdateNodeMesh(ctx, nodeId, "", node.MeshPort); err != nil {
+		return false, err
+	}
+	return true, nil
 }
 
 func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse, error) {

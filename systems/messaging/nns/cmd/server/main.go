@@ -9,10 +9,14 @@
 package main
 
 import (
+	"context"
 	"os"
+	"strings"
 
 	"github.com/num30/config"
 	"google.golang.org/grpc"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 
 	"github.com/ukama/ukama/systems/common/metrics"
 	"github.com/ukama/ukama/systems/common/rest/client"
@@ -93,8 +97,9 @@ func runGrpcServer(nns *pkg.Nns) {
 
 	nodeClient := creg.NewNodeClient(regUrl.String())
 
+	srv := server.NewNnsServer(nns, serviceConfig, serviceConfig.Dns)
+
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
-		srv := server.NewNnsServer(nns, serviceConfig, serviceConfig.Dns)
 		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, nodeClient, srv, serviceConfig.OrgId)
 		pb.RegisterNnsServer(s, srv)
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
@@ -105,7 +110,45 @@ func runGrpcServer(nns *pkg.Nns) {
 
 	go msgBusListener(mbClient)
 
+	startMeshWatcher(srv, mbClient)
+
 	grpcServer.StartServer()
+}
+
+const namespaceFile = "/var/run/secrets/kubernetes.io/serviceaccount/namespace"
+
+func startMeshWatcher(srv *server.NnsServer, m mb.MsgBusServiceClient) {
+	if !serviceConfig.MeshWatch {
+		log.Infof("Mesh pod watch is disabled")
+		return
+	}
+
+	kubeConfig, err := rest.InClusterConfig()
+	if err != nil {
+		log.Warnf("Mesh pod watch not started: %v", err)
+		return
+	}
+
+	clientSet, err := kubernetes.NewForConfig(kubeConfig)
+	if err != nil {
+		log.Warnf("Mesh pod watch not started: %v", err)
+		return
+	}
+
+	namespace := serviceConfig.MeshNamespace
+	if namespace == "" {
+		b, err := os.ReadFile(namespaceFile)
+		if err != nil {
+			log.Warnf("Mesh pod watch not started: %v", err)
+			return
+		}
+		namespace = strings.TrimSpace(string(b))
+	}
+
+	err = server.NewMeshWatcher(srv, m, serviceConfig.OrgName).Start(context.Background(), clientSet, namespace)
+	if err != nil {
+		log.Warnf("Mesh pod watch not started: %v", err)
+	}
 }
 
 func msgBusListener(m mb.MsgBusServiceClient) {

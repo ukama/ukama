@@ -10,6 +10,7 @@ package pkg
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -20,6 +21,8 @@ import (
 )
 
 var separator = "|"
+
+var ErrNodeNotFound = errors.New("node not found")
 
 type Nns struct {
 	etcd    *clientv3.Client
@@ -116,7 +119,7 @@ func (n *Nns) Get(ctx context.Context, nodeId string) (*NodeMeshMap, error) {
 	}
 	if len(val.Kvs) == 0 {
 		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("node not found: %s", key)
+		return nil, fmt.Errorf("%w: %s", ErrNodeNotFound, key)
 	}
 	nodeMesh := NodeMeshMap{}
 	err = nodeMesh.parse(string(val.Kvs[0].Value))

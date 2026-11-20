@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -28,6 +29,7 @@ const (
 	assignRoute   = "event.cloud.local.{{ .Org}}.registry.node.node.assign"
 	releaseRoute  = "event.cloud.local.{{ .Org}}.registry.node.node.release"
 	assignedRoute = "event.cloud.local.{{ .Org}}.registry.node.node.assigned"
+	offlineRoute  = "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"
 )
 
 func testEvent(t *testing.T, route string, msg proto.Message) *epb.Event {
@@ -159,5 +161,77 @@ func TestNnsEventServerNodeSiteEvents(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Zero(t, added)
+	})
+}
+
+func TestNnsEventServerNodeOffline(t *testing.T) {
+	offline := func(t *testing.T, store *fakeNnsStore) error {
+		srv := NewNnsEventServer(testEventOrg, nil, NewNnsServer(store, nil, nil), testEventOrg)
+		_, err := srv.EventNotification(context.Background(),
+			testEvent(t, offlineRoute, &epb.NodeOfflineEvent{NodeId: testValidNodeID}))
+		return err
+	}
+
+	t.Run("clearsMeshIpAndKeepsEntry", func(t *testing.T) {
+		var clearedIp *string
+		var clearedPort int32
+		deleted := 0
+		store := &fakeNnsStore{
+			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+				return storedNode(), nil
+			},
+			updateMesh: func(_ context.Context, _ string, ip string, port int32) error {
+				clearedIp, clearedPort = &ip, port
+				return nil
+			},
+			delete: func(_ context.Context, _ string) error {
+				deleted++
+				return nil
+			},
+		}
+
+		require.NoError(t, offline(t, store))
+		require.NotNil(t, clearedIp)
+		assert.Empty(t, *clearedIp)
+		assert.Equal(t, int32(4000), clearedPort)
+		assert.Zero(t, deleted)
+	})
+
+	t.Run("alreadyWithoutMeshIsNoOp", func(t *testing.T) {
+		updates := 0
+		store := &fakeNnsStore{
+			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+				n := storedNode()
+				n.MeshIp = ""
+				return n, nil
+			},
+			updateMesh: func(_ context.Context, _ string, _ string, _ int32) error {
+				updates++
+				return nil
+			},
+		}
+
+		require.NoError(t, offline(t, store))
+		assert.Zero(t, updates)
+	})
+
+	t.Run("unknownNodeIsAcked", func(t *testing.T) {
+		store := &fakeNnsStore{
+			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+				return nil, fmt.Errorf("%w: mesh|x", pkg.ErrNodeNotFound)
+			},
+		}
+
+		assert.NoError(t, offline(t, store))
+	})
+
+	t.Run("storeFailureIsReturnedForRequeue", func(t *testing.T) {
+		store := &fakeNnsStore{
+			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+				return nil, errFakeNotImplemented
+			},
+		}
+
+		assert.Error(t, offline(t, store))
 	})
 }
