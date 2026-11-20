@@ -13,12 +13,13 @@ import (
 	"sync"
 
 	log "github.com/sirupsen/logrus"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	"github.com/ukama/ukama/systems/node/site-controller/pkg"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
-
 
 type ControllerClientProvider interface {
 	GetClient() (pb.ControllerServiceClient, error)
@@ -44,7 +45,8 @@ func (o *controllerClientProvider) GetClient() (pb.ControllerServiceClient, erro
 		log.Infoln("Connecting to Controller service ", o.controllerHost)
 
 		conn, err := grpc.NewClient(o.controllerHost,
-			grpc.WithTransportCredentials(insecure.NewCredentials()))
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(ugrpc.RequestedByInterceptor(pkg.ServiceName)))
 		if err != nil {
 			log.Errorf("Failed to connect to Controller service %s. Error: %v", o.controllerHost, err)
 

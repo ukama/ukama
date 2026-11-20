@@ -16,12 +16,14 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
@@ -470,7 +472,7 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 
 		c := &ControllerServer{opManager: opMgr, opMonitor: opMon,
 			nodeClient: onlineNodeClient()}
-		_, err := c.lockNodes("ToggleRadio", "x")
+		_, err := c.lockNodes(context.TODO(), "ToggleRadio", "x")
 
 		assert.Error(t, err)
 		opMon.AssertNotCalled(t, "Cancel", mock.Anything)
@@ -530,6 +532,34 @@ func TestControllerServer_MarkRunningRejectedIsAborted(t *testing.T) {
 			assert.Equal(t, codes.Aborted, status.Code(err))
 			opMgr.AssertExpectations(t)
 			bus.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
+		})
+	}
+}
+
+func TestLockNodes_RequestedBy(t *testing.T) {
+	for name, tc := range map[string]struct {
+		ctx  context.Context
+		want string
+	}{
+		"FromCaller": {
+			ctx: metadata.NewIncomingContext(context.TODO(),
+				metadata.Pairs(ugrpc.RequestedByKey, "site_controller")),
+			want: "site_controller",
+		},
+		"DefaultsToService": {ctx: context.TODO(), want: pkg.ServiceName},
+	} {
+		t.Run(name, func(t *testing.T) {
+			opMgr := &mbmocks.ManagerClient{}
+			opMgr.On("Start", mock.MatchedBy(func(req copr.StartRequest) bool {
+				return req.RequestedBy == tc.want
+			})).Return(nil, copr.ErrBusy).Once()
+
+			c := &ControllerServer{opManager: opMgr, opMonitor: &mocks.OperationMonitor{},
+				nodeClient: onlineNodeClient()}
+			_, err := c.lockNodes(tc.ctx, "RestartNode", "x")
+
+			assert.Equal(t, codes.AlreadyExists, status.Code(err))
+			opMgr.AssertExpectations(t)
 		})
 	}
 }
