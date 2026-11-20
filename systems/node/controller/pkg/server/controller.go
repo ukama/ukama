@@ -24,6 +24,7 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
@@ -110,7 +111,7 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		return nil, status.Errorf(codes.InvalidArgument, "Node has not been registered yet: %s", err.Error())
 	}
 
-	ops, err := c.lockNodes("SendNodeCommand", nId.String())
+	ops, err := c.lockNodes(ctx, "SendNodeCommand", nId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +145,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context,
 		}
 	}
 
-	ops, err := c.lockNodes("RestartNode", ids...)
+	ops, err := c.lockNodes(ctx, "RestartNode", ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -207,7 +208,7 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		return nil, err
 	}
 
-	ops, err := c.lockNodes("ToggleInternetSwitch", nId.String())
+	ops, err := c.lockNodes(ctx, "ToggleInternetSwitch", nId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -237,7 +238,7 @@ func (c *ControllerServer) ToggleRadios(ctx context.Context,
 		return nil, err
 	}
 
-	ops, err := c.lockNodes("ToggleRadio", ids...)
+	ops, err := c.lockNodes(ctx, "ToggleRadio", ids...)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +276,7 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		return nil, err
 	}
 
-	ops, err := c.lockNodes("ToggleService", nId.String())
+	ops, err := c.lockNodes(ctx, "ToggleService", nId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +297,7 @@ func nodeKey(nodeID string) string {
 	return "node:" + nodeID
 }
 
-func (c *ControllerServer) lockNodes(actionType string,
+func (c *ControllerServer) lockNodes(ctx context.Context, actionType string,
 	nodeIDs ...string) ([]*copr.OperationInfo, error) {
 	targets := make([]string, 0, len(nodeIDs))
 	siteID := ""
@@ -326,7 +327,7 @@ func (c *ControllerServer) lockNodes(actionType string,
 	resp, err := c.opManager.Start(copr.StartRequest{
 		Type:         actionType,
 		System:       "node",
-		RequestedBy:  pkg.ServiceName,
+		RequestedBy:  ugrpc.RequestedBy(ctx, pkg.ServiceName),
 		LeaseSeconds: c.opLeaseSecs,
 		ResourceKeys: targets,
 		MustBeFree:   siblings,

@@ -354,7 +354,7 @@ func TestValidNodeIds(t *testing.T) {
 
 func TestLockNodes_WithoutManagerIsUnavailable(t *testing.T) {
 	c := &ControllerServer{nodeClient: onlineNodeClient()}
-	_, err := c.lockNodes("RestartNode", siteTnode)
+	_, err := c.lockNodes(context.TODO(), "RestartNode", siteTnode)
 	assert.Equal(t, codes.Unavailable, status.Code(err))
 }
 
