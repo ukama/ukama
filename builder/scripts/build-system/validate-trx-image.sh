@@ -23,6 +23,9 @@ declare -A capacity=(
     [env]=131072
 )
 payloads=(startup.cfg lsmD dsp.tgz LFMSOFT_OCT_D.tgz)
+# octeon_trx.h defaults used by the 20 MHz end-to-end application.
+# rcS runs ubootenvdump to expose these settings to the Linux init scripts.
+app_defaults=(startapp=1 mode=e2e bw=20 target=zen syncby=gps BAUDRATE_UART1=9600 tcxo=pwm)
 
 die() {
     echo "ERROR: $*" >&2
@@ -311,6 +314,30 @@ check_network_settings() {
     done
 }
 
+check_application_settings() {
+    local setting key value
+    local -a values
+    for setting in "${app_defaults[@]}"; do
+        key=${setting%%=*}
+        mapfile -t values < <(sed -n "s/^$key=//p" "$temp/env.settings")
+        (( ${#values[@]} == 1 )) || die "Expected one $key in flash_env.img"
+        value=${values[0]}
+        [[ -n $value ]] || die "Empty application setting $key in flash_env.img"
+        case $key in
+            startapp|mode|bw|target)
+                [[ $value == "${setting#*=}" ]] ||
+                    die "The 20 MHz TRX end-to-end release requires $setting (found $key=$value)"
+                ;;
+            syncby)
+                case $value in
+                    gps|ptp|ptp1pps|internal) ;;
+                    *) die "Unknown TRX synchronization source: $value" ;;
+                esac
+                ;;
+        esac
+    done
+}
+
 check_firmware_member() {
     local payload=$1
     local partition=$2
@@ -465,6 +492,7 @@ validate_release() {
     env_size=$(<env.size)
     check_environment flash_env.img "$env_size"
     check_network_settings
+    check_application_settings
 
     check_firmware_member lsm_os_trx.gz flash_os0.img 03_lsm_os.gz LSM_OS "${capacity[os0]}"
     # The TRX boot command copies at most 40 MiB of ramdisk into RAM.

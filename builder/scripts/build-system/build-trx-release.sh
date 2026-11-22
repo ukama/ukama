@@ -65,43 +65,45 @@ ENV
     write_partition "$temp/env.record" "$release/flash_env.img" "${capacity[env]}"
 }
 
-# S06network takes eth0 down before it applies the release IP and netmask.
-# Complete older builder records too. Keep explicit site values and boot commands.
-complete_network_environment() {
-    local record_size entry key value used=0 terminated=no end extra crc
-    local -A defaults=([ipaddr]=10.102.81.61 [netmask]=255.255.255.0 [gatewayip]=10.102.81.1)
-    local -A seen=()
-    local entries="$temp/network.entries" data="$temp/network.data"
+# Fill the inputs to S06network and S90startapp, including when upgrading an
+# existing release. Preserve explicit settings, boot commands and record padding.
+complete_boot_environment() {
+    local record_size entry key value setting used=0 terminated=no end extra crc
+    local -a settings=(ipaddr=10.102.81.61 netmask=255.255.255.0 gatewayip=10.102.81.1 "${app_defaults[@]}")
+    local -A defaults=() seen=()
+    local entries="$temp/boot.entries" data="$temp/boot.data"
     record_size=$(<env.size)
     check_environment flash_env.img "$record_size"
+    for setting in "${settings[@]}"; do
+        defaults[${setting%%=*}]=${setting#*=}
+    done
 
     while IFS= read -r -d '' entry; do
         used=$((used + ${#entry} + 1))
         if [[ -z $entry ]]; then terminated=yes; break; fi
         [[ $entry == ?*=* ]] || die "Malformed U-Boot environment entry"
         key=${entry%%=*}
-        case $key in
-            ipaddr|netmask|gatewayip)
-                [[ -z ${seen[$key]:-} ]] || die "Duplicate U-Boot setting $key"
-                seen[$key]=yes
-                value=${entry#*=}
-                entry="$key=${value:-${defaults[$key]}}"
-                ;;
-        esac
+        if [[ -n ${defaults[$key]+set} ]]; then
+            [[ -z ${seen[$key]:-} ]] || die "Duplicate U-Boot setting $key"
+            seen[$key]=yes
+            value=${entry#*=}
+            entry="$key=${value:-${defaults[$key]}}"
+        fi
         printf '%s\0' "$entry"
     done < "$temp/env.data" > "$entries"
     [[ $terminated == yes ]] || die "Unterminated U-Boot environment"
-    for key in ipaddr netmask gatewayip; do
-        if [[ -z ${seen[$key]:-} ]]; then printf '%s=%s\0' "$key" "${defaults[$key]}" >> "$entries"; fi
+    for setting in "${settings[@]}"; do
+        key=${setting%%=*}
+        if [[ -z ${seen[$key]:-} ]]; then printf '%s\0' "$setting" >> "$entries"; fi
     done
     printf '\0' >> "$entries"
 
     end=$(file_size "$entries")
-    (( end <= record_size - 4 )) || die "Network settings exceed the U-Boot environment record"
+    (( end <= record_size - 4 )) || die "Boot settings exceed the U-Boot environment record"
     if cmp -s -n "$end" "$entries" "$temp/env.data"; then return 0; fi
     extra=$((end - used))
     if (( extra > 0 )) && [[ $(read_region "$temp/env.data" "$used" "$extra" | tr -d '\000\377' | wc -c) -ne 0 ]]; then
-        die "Network settings would overwrite occupied environment bytes"
+        die "Boot settings would overwrite occupied environment bytes"
     fi
     { cat "$entries"; tail -c "+$((end + 1))" "$temp/env.data"; } > "$data"
     crc=$(file_crc32 "$data")
@@ -110,8 +112,8 @@ complete_network_environment() {
         printf '%b' "\\x${crc:0:2}\\x${crc:2:2}\\x${crc:4:2}\\x${crc:6:2}"
         cat "$data"
         tail -c "+$((record_size + 1))" flash_env.img
-    } > "$temp/network.img"
-    mv -f -- "$temp/network.img" flash_env.img
+    } > "$temp/boot.img"
+    mv -f -- "$temp/boot.img" flash_env.img
 }
 
 # Reuse the builder's JFFS2 layout. Reproducing the old slot first protects
@@ -178,7 +180,7 @@ publish_release() {
 
 finish_release() {
     local part
-    complete_network_environment
+    complete_boot_environment
     install_ethernet_hook
     for part in "${partitions[@]}"; do
         cat "flash_$part.img"
