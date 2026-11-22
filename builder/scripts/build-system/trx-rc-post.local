@@ -1,0 +1,17 @@
+#!/bin/sh
+# rcS runs this TRX hook after eth0 and the application have started.
+reg=0x00011800B0001000
+value=$(devmem "$reg" 64) || exit 1
+case "$value" in
+    0x0000000000000140) exit 0 ;;
+    0x0000000000001140) ;;
+    *) echo "TRX eth0: unexpected register value $value, leaving it unchanged" >&2; exit 1 ;;
+esac
+
+devmem "$reg" 64 0x0140 || exit 1
+value=$(devmem "$reg" 64) || exit 1
+if [ "$value" != 0x0000000000000140 ]; then
+    echo "TRX eth0: expected 0x0140 after write, read $value" >&2
+    exit 1
+fi
+echo "TRX eth0: set Ethernet register to $value"
