@@ -209,6 +209,31 @@ check_uboot() {
     fi
 }
 
+# The OCTEON scanner starts on the next 64 KiB boundary, even for an
+# exactly aligned image. Use the next full TRX NOR erase sector (128 KiB).
+normal_uboot_offset() {
+    local bytes=$1
+    echo $(( (bytes / 0x20000 + 1) * 0x20000 ))
+}
+
+check_uboot_partition() {
+    local binary=$1 partition=$2
+    local size offset
+    size=$(file_size "$binary")
+    offset=$(normal_uboot_offset "$size")
+    if (( offset + size > capacity[uboot] )) || [[ $(file_size "$partition") != "${capacity[uboot]}" ]]; then
+        die "Invalid TRX U-Boot partition size"
+    fi
+    # check_uboot has already validated the binary's board ID and both CRCs.
+    cmp -s -n "$size" "$binary" "$partition" || die "Wrong reset U-Boot in $partition"
+    cmp -s -n "$size" "$binary" "$partition" 0 "$offset" ||
+        die "Missing or corrupt normal U-Boot at offset $(printf '0x%x' "$offset") in $partition"
+    if [[ $(read_region "$partition" "$size" "$((offset - size))" | tr -d '\377' | wc -c) -ne 0 ]]; then
+        die "Unexpected data between the two U-Boot copies in $partition"
+    fi
+    check_erased_padding "$partition" "$((offset + size))"
+}
+
 check_env_size() {
     local record_size=$1
 
@@ -260,6 +285,30 @@ check_padded_copy() {
         die "$partition differs from $payload"
     fi
     check_erased_padding "$partition" "$size"
+}
+
+# S06network needs all three static IPv4 settings even as a DHCP fallback.
+# check_environment has already decoded the CRC-verified record.
+check_network_settings() {
+    local key value octet bits hostmask
+    local -a values octets
+    for key in ipaddr netmask gatewayip; do
+        mapfile -t values < <(sed -n "s/^$key=//p" "$temp/env.settings")
+        (( ${#values[@]} == 1 )) || die "Expected one $key in flash_env.img"
+        value=${values[0]}
+        [[ $value =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]] || die "Invalid U-Boot $key='$value'"
+        IFS=. read -r -a octets <<< "$value"
+        bits=0
+        for octet in "${octets[@]}"; do
+            (( 10#$octet <= 255 )) || die "Invalid U-Boot $key='$value'"
+            bits=$(( (bits << 8) | 10#$octet ))
+        done
+        (( bits != 0 )) || die "Unspecified U-Boot $key"
+        if [[ $key == netmask ]]; then
+            hostmask=$(( 0xffffffff ^ bits ))
+            (( (hostmask & (hostmask + 1)) == 0 )) || die "Noncontiguous netmask '$value'"
+        fi
+    done
 }
 
 check_firmware_member() {
@@ -371,6 +420,9 @@ check_application() {
     local mode
 
     extract_app flash_app0.img "$temp/app"
+    local hook="$temp/app/rc_post.local"
+    [[ -f $hook && ! -L $hook ]] && cmp -s -- "$hook" "$scripts/trx-rc-post.local" ||
+        die "Missing or incorrect Ethernet startup hook in the application image"
     if ! cmp -s startup.cfg "$temp/app/startup.cfg"; then
         die "Wrong startup.cfg in application image"
     fi
@@ -409,9 +461,10 @@ validate_release() {
     echo "PASS  Partition sizes, full-image offsets, A/B slots and checksums"
 
     check_uboot u-boot-octeon_trx.bin
-    check_padded_copy u-boot-octeon_trx.bin flash_uboot.img
+    check_uboot_partition u-boot-octeon_trx.bin flash_uboot.img
     env_size=$(<env.size)
     check_environment flash_env.img "$env_size"
+    check_network_settings
 
     check_firmware_member lsm_os_trx.gz flash_os0.img 03_lsm_os.gz LSM_OS "${capacity[os0]}"
     # The TRX boot command copies at most 40 MiB of ramdisk into RAM.
@@ -430,6 +483,7 @@ if [[ ${BASH_SOURCE[0]} == "$0" ]]; then
         die "Usage: $0 <release-dir>"
     fi
 
+    scripts=$(dirname -- "$(realpath -- "$0")")
     host_env=${XDG_CACHE_HOME:-$HOME/.cache}/ukama/trx-host
     export PATH="$host_env/bin:$PATH:/usr/sbin:/sbin"
     need crc32
