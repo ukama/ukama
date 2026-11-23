@@ -30,6 +30,17 @@ write_partition() {
     head -c "$padding" /dev/zero | tr '\000' '\377' >> "$image"
 }
 
+write_uboot_partition() {
+    local binary=$1 size offset
+    check_uboot "$binary"
+    size=$(file_size "$binary")
+    offset=$(normal_uboot_offset "$size")
+    (( offset + size <= capacity[uboot] )) || die "Both U-Boot copies must fit in flash_uboot.img"
+    write_partition "$binary" flash_uboot.img "${capacity[uboot]}"
+    dd if="$binary" of=flash_uboot.img bs=65536 seek="$((offset / 65536))" conv=notrunc status=none
+    printf 'TRX U-Boot: reset at 0x0, normal boot at 0x%x\n' "$offset"
+}
+
 write_environment() {
     local record_size
     record_size=$(<"$input/env.size")
@@ -52,6 +63,94 @@ ENV
     # mkenvimage writes the big-endian CRC and terminates the environment entries.
     mkenvimage -b -p 0xff -s "$record_size" -o "$temp/env.record" "$temp/env.txt"
     write_partition "$temp/env.record" "$release/flash_env.img" "${capacity[env]}"
+}
+
+# Fill the inputs to S06network and S90startapp, including when upgrading an
+# existing release. Preserve explicit settings, boot commands and record padding.
+complete_boot_environment() {
+    local record_size entry key value setting used=0 terminated=no end extra crc
+    local -a settings=(ipaddr=10.102.81.61 netmask=255.255.255.0 gatewayip=10.102.81.1 "${app_defaults[@]}")
+    local -A defaults=() seen=()
+    local entries="$temp/boot.entries" data="$temp/boot.data"
+    record_size=$(<env.size)
+    check_environment flash_env.img "$record_size"
+    for setting in "${settings[@]}"; do
+        defaults[${setting%%=*}]=${setting#*=}
+    done
+
+    while IFS= read -r -d '' entry; do
+        used=$((used + ${#entry} + 1))
+        if [[ -z $entry ]]; then terminated=yes; break; fi
+        [[ $entry == ?*=* ]] || die "Malformed U-Boot environment entry"
+        key=${entry%%=*}
+        if [[ -n ${defaults[$key]+set} ]]; then
+            [[ -z ${seen[$key]:-} ]] || die "Duplicate U-Boot setting $key"
+            seen[$key]=yes
+            value=${entry#*=}
+            entry="$key=${value:-${defaults[$key]}}"
+        fi
+        printf '%s\0' "$entry"
+    done < "$temp/env.data" > "$entries"
+    [[ $terminated == yes ]] || die "Unterminated U-Boot environment"
+    for setting in "${settings[@]}"; do
+        key=${setting%%=*}
+        if [[ -z ${seen[$key]:-} ]]; then printf '%s\0' "$setting" >> "$entries"; fi
+    done
+    printf '\0' >> "$entries"
+
+    end=$(file_size "$entries")
+    (( end <= record_size - 4 )) || die "Boot settings exceed the U-Boot environment record"
+    if cmp -s -n "$end" "$entries" "$temp/env.data"; then return 0; fi
+    extra=$((end - used))
+    if (( extra > 0 )) && [[ $(read_region "$temp/env.data" "$used" "$extra" | tr -d '\000\377' | wc -c) -ne 0 ]]; then
+        die "Boot settings would overwrite occupied environment bytes"
+    fi
+    { cat "$entries"; tail -c "+$((end + 1))" "$temp/env.data"; } > "$data"
+    crc=$(file_crc32 "$data")
+    [[ $crc =~ ^[[:xdigit:]]{8}$ ]] || die "Invalid environment CRC result"
+    {
+        printf '%b' "\\x${crc:0:2}\\x${crc:2:2}\\x${crc:4:2}\\x${crc:6:2}"
+        cat "$data"
+        tail -c "+$((record_size + 1))" flash_env.img
+    } > "$temp/boot.img"
+    mv -f -- "$temp/boot.img" flash_env.img
+}
+
+# Reuse the builder's JFFS2 layout. Reproducing the old slot first protects
+# file contents and metadata that an extractor might otherwise omit.
+pack_application() {
+    mkfs.jffs2 --big-endian --pagesize=0x1000 --eraseblock=0x20000 \
+        --pad="${capacity[app0]}" --faketime --squash-uids --root="$1" --output="$2"
+}
+
+install_ethernet_hook() {
+    local tree="$temp/app-tree" image="$temp/app-slot.img"
+    local hook="$tree/rc_post.local" source_hook="$scripts/trx-rc-post.local"
+
+    extract_app flash_app0.img "$tree"
+    # extract_app also expands this file for validation. NOR stores lsmD.gz.
+    rm -- "$tree/lsmD"
+    if [[ -e $hook || -L $hook ]]; then
+        [[ -f $hook && ! -L $hook ]] && cmp -s -- "$source_hook" "$hook" ||
+            die "Existing rc_post.local differs. Preserve its logic when merging the TRX Ethernet hook."
+        # Some host extractors strip execute bits. Repack with the intended
+        # mode and compare the image itself before accepting an existing hook.
+        chmod 0755 "$hook"
+        pack_application "$tree" "$image"
+        if cmp -s -- "$image" flash_app0.img; then return 0; fi
+        die "Cannot reproduce the application slot with its executable Ethernet hook"
+    fi
+
+    pack_application "$tree" "$image"
+    cmp -s -- "$image" flash_app0.img ||
+        die "Cannot reproduce the original application slot with this host's mkfs.jffs2"
+    install -m 0755 -- "$source_hook" "$hook"
+    pack_application "$tree" "$image"
+    [[ $(file_size "$image") == "${capacity[app0]}" ]] || die "Ethernet hook exceeds the application slot"
+    # Replace both private staging files (the published inputs may be read-only).
+    rm -- flash_app0.img flash_app1.img
+    mv -- "$image" flash_app0.img
+    cp -- flash_app0.img flash_app1.img
 }
 
 publish_release() {
@@ -79,27 +178,38 @@ publish_release() {
     echo "Built and verified $out"
 }
 
+finish_release() {
+    local part
+    complete_boot_environment
+    install_ethernet_hook
+    for part in "${partitions[@]}"; do
+        cat "flash_$part.img"
+    done > flash-trx.img
+    release_hashes > SHA256SUMS
+    "$scripts/validate-trx-image.sh" "$release"
+    publish_release
+}
+
+from_release=no
+if [[ ${1:-} == --from-release ]]; then
+    from_release=yes
+    shift
+fi
 if [[ $# != 2 ]]; then
-    die "Usage: $0 <built-input-dir> <release-dir>"
+    die "Usage: $0 <built-input-dir> <release-dir> or $0 --from-release <existing-builder-release> <new-release-dir>"
 fi
 input=$(realpath -e -- "$1")
 out=$(realpath -m -- "$2")
-if [[ $input == "$out" ]]; then
-    die "Input and release directories must differ"
+if [[ $input == "$out" || $from_release == yes && ( $out == "$input/"* || $input == "$out/"* ) ]]; then
+    die "Use a separate output directory for the new release"
 fi
 
-need mkenvimage
+host_env=${XDG_CACHE_HOME:-$HOME/.cache}/ukama/trx-host
+export PATH="$host_env/bin:$PATH:/usr/sbin:/sbin"
 need crc32
-required_files=(
-    u-boot-octeon_trx.bin lsm_os.gz lsm_rd.gz fw.bin
-    jffs2.bin startup.cfg inputs.sha256 env.size build.info
-    host-tools/oct-remote-boot
-)
-for file in "${required_files[@]}"; do
-    if [[ ! -s $input/$file ]]; then
-        die "Missing packaging input: $input/$file"
-    fi
-done
+need jefferson
+need jffs2dump
+need mkfs.jffs2
 
 parent=$(dirname -- "$out")
 mkdir -p -- "$parent"
@@ -112,9 +222,42 @@ release=$temp/release
 mkdir "$release"
 cd "$release"
 
+if [[ $from_release == yes ]]; then
+    # Work on a snapshot. Validate the old partition and combined image
+    # before changing either, then run the full validator on the result.
+    cp -R --reflink=auto -- "$input/." .
+    [[ -z $(find . ! -type d ! -type f -print -quit) ]] || die "Expected only regular release files and directories"
+    release_hashes > "$temp/source.sha256"
+    cmp -s SHA256SUMS "$temp/source.sha256" || die "Source release checksum mismatch"
+    check_partitions
+    # Accept the original single-copy layout or the verified V26 layout.
+    check_uboot u-boot-octeon_trx.bin
+    normal_offset=$(normal_uboot_offset "$(file_size u-boot-octeon_trx.bin)")
+    if [[ $(hex_bytes flash_uboot.img "$normal_offset" 4) == ffffffff ]]; then
+        check_padded_copy u-boot-octeon_trx.bin flash_uboot.img
+    else
+        check_uboot_partition u-boot-octeon_trx.bin flash_uboot.img
+    fi
+    # Published inputs may be read-only. Replace files in the snapshot.
+    chmod u+w .
+    rm -- flash_uboot.img flash-trx.img SHA256SUMS
+    write_uboot_partition u-boot-octeon_trx.bin
+    finish_release
+    exit 0
+fi
+
+need mkenvimage
+required_files=(
+    u-boot-octeon_trx.bin lsm_os.gz lsm_rd.gz fw.bin
+    jffs2.bin startup.cfg inputs.sha256 env.size build.info
+    host-tools/oct-remote-boot
+)
+for file in "${required_files[@]}"; do
+    [[ -s $input/$file ]] || die "Missing packaging input: $input/$file"
+done
+
 # Construct the bootloader, environment and primary partitions.
-check_uboot "$input/u-boot-octeon_trx.bin"
-write_partition "$input/u-boot-octeon_trx.bin" flash_uboot.img "${capacity[uboot]}"
+write_uboot_partition "$input/u-boot-octeon_trx.bin"
 write_environment
 write_partition "$input/lsm_os.gz" flash_os0.img "${capacity[os0]}"
 write_partition "$input/lsm_rd.gz" flash_rd0.img "${capacity[rd0]}"
@@ -125,12 +268,9 @@ if (( app_size != capacity[app0] )); then
 fi
 cp -- "$input/jffs2.bin" flash_app0.img
 
-# Populate slot 1, then assemble the combined image in physical NOR order.
+# Populate slot 1.
 for part in os rd app; do
     cp -- "flash_${part}0.img" "flash_${part}1.img"
-done
-for part in "${partitions[@]}"; do
-    cat "flash_$part.img" >> flash-trx.img
 done
 
 # Include the unpadded bootstrap images, flash tools and build records.
@@ -140,7 +280,4 @@ cp -- "$input/lsm_os.gz" lsm_os_trx.gz
 cp -- "$input/lsm_rd.gz" lsm_rd_trx.gz
 cp -R -- "$input/host-tools" .
 radio_profile startup.cfg > radio.conf
-release_hashes > SHA256SUMS
-
-"$scripts/validate-trx-image.sh" "$release"
-publish_release
+finish_release
