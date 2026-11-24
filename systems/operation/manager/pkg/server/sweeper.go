@@ -19,14 +19,14 @@ import (
 )
 
 type Sweeper struct {
-	repo     db.OperationRepo
+	repos    Repos
 	interval time.Duration
 	batch    int
 }
 
-func NewSweeper(repo db.OperationRepo) *Sweeper {
+func NewSweeper(repos Repos) *Sweeper {
 	return &Sweeper{
-		repo:     repo,
+		repos:    repos,
 		interval: pkg.SweeperInterval,
 		batch:    100,
 	}
@@ -51,18 +51,23 @@ func (s *Sweeper) sweepOnce(parent context.Context) {
 	ctx, cancel := context.WithTimeout(parent, s.interval)
 	defer cancel()
 
-	expired, err := s.repo.FindExpired(ctx, time.Now().UTC(), s.batch)
+	now := time.Now().UTC()
+	expired, err := s.repos.Operations.List(ctx, db.OperationFilter{
+		Statuses:           []db.OperationStatus{db.OperationPending, db.OperationRunning},
+		LeaseExpiresBefore: &now,
+		OrderBy:            db.OrderByLeaseExpiry,
+		Limit:              s.batch,
+	})
 	if err != nil {
-		log.Errorf("sweeper: FindExpired error: %v", err)
+		log.Errorf("sweeper: list expired operations: %v", err)
 		return
 	}
 	if len(expired) == 0 {
 		return
 	}
 	log.Infof("sweeper: timing out %d expired operation(s)", len(expired))
-	for i := range expired {
-		op := &expired[i]
-		_, err := s.repo.Terminate(ctx, op.Id, op.FencingToken, db.OperationTimeout,
+	for _, op := range expired {
+		_, err := s.repos.terminate(ctx, op.Id, op.FencingToken, db.OperationTimeout,
 			db.OperationAudit{
 				Event:  "timeout",
 				Actor:  pkg.OperationManagerSweeperActor,

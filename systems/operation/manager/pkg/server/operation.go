@@ -11,6 +11,7 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 	"time"
@@ -25,6 +26,7 @@ import (
 	cgrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
 
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
@@ -36,16 +38,17 @@ type OperationServer struct {
 	pb.UnimplementedOperationManagerServiceServer
 	orgName    string
 	orgId      string
-	repo       db.OperationRepo
+	repos      Repos
 	msgbus     mb.MsgBusServiceClient
 	routingKey msgbus.RoutingKeyBuilder
 }
 
-func NewOperationServer(orgName, orgId string, repo db.OperationRepo, msgBus mb.MsgBusServiceClient) *OperationServer {
+func NewOperationServer(orgName, orgId string, repos Repos,
+	msgBus mb.MsgBusServiceClient) *OperationServer {
 	return &OperationServer{
 		orgName: orgName,
 		orgId:   orgId,
-		repo:    repo,
+		repos:   repos,
 		msgbus:  msgBus,
 		routingKey: msgbus.NewRoutingKeyBuilder().
 			SetCloudSource().
@@ -105,7 +108,21 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 		}
 	}
 
-	ops, err := s.repo.Start(ctx, newGroup(req, targets, lease), mustBeFree, lease)
+	ops := newGroup(req, targets, lease)
+	err = s.repos.Operations.Add(ctx, ops, func(tx *gorm.DB) error {
+		if err := s.repos.Locks.Acquire(tx, ops, mustBeFree, lease); err != nil {
+			return err
+		}
+		for _, op := range ops {
+			if err := s.repos.Audits.AddInTx(tx, &db.OperationAudit{
+				OperationId: op.Id, ResourceKey: op.ResourceKey,
+				Event: "lock_acquired", Actor: op.RequestedBy,
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 	if req.IdempotencyKey != "" && (errors.Is(err, db.ErrIdempotencyKeyTaken) ||
 		errors.Is(err, db.ErrLockConflict)) {
 		resp, rerr := s.replay(ctx, req, targets)
@@ -160,7 +177,7 @@ func newGroup(req *pb.StartOperationRequest, targets []string,
 
 func (s *OperationServer) replay(ctx context.Context, req *pb.StartOperationRequest,
 	targets []string) (*pb.StartOperationResponse, error) {
-	ops, err := s.repo.GetByIdempotencyKey(ctx, req.IdempotencyKey)
+	ops, err := s.groupByIdempotencyKey(ctx, req.IdempotencyKey)
 	if err != nil {
 		return nil, repoErr(err)
 	}
@@ -177,6 +194,21 @@ func (s *OperationServer) replay(ctx context.Context, req *pb.StartOperationRequ
 			req.IdempotencyKey, ops[0].System, ops[0].Type, strings.Join(keys, ","))
 	}
 	return &pb.StartOperationResponse{Operations: toPbList(ops)}, nil
+}
+
+func (s *OperationServer) groupByIdempotencyKey(ctx context.Context,
+	key string) ([]*db.Operation, error) {
+	leaders, err := s.repos.Operations.List(ctx, db.OperationFilter{IdempotencyKey: key})
+	if err != nil || len(leaders) == 0 {
+		return nil, err
+	}
+	members, err := s.repos.Operations.List(ctx, db.OperationFilter{
+		GroupId: &leaders[0].Id, OrderBy: db.OrderByResourceKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+	return append([]*db.Operation{leaders[0]}, members...), nil
 }
 
 func sameRequest(ops []*db.Operation, req *pb.StartOperationRequest,
@@ -215,7 +247,7 @@ func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperation
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	op, err := s.repo.Get(ctx, id)
+	op, err := s.repos.Operations.Get(ctx, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.NotFound, "operation not found")
 	}
@@ -229,12 +261,16 @@ func (s *OperationServer) GetByResource(ctx context.Context, req *pb.GetByResour
 	if err := validateResourceKey(req.ResourceKey); err != nil {
 		return nil, err
 	}
-	op, err := s.repo.GetByResource(ctx, req.ResourceKey)
+	lock, err := s.repos.Locks.Holder(ctx, req.ResourceKey)
 	if err != nil {
 		return nil, repoErr(err)
 	}
-	if op == nil {
+	if lock == nil {
 		return &pb.GetByResourceResponse{}, nil
+	}
+	op, err := s.repos.Operations.Get(ctx, lock.OperationId)
+	if err != nil {
+		return nil, repoErr(err)
 	}
 	return &pb.GetByResourceResponse{Operation: toPb(op)}, nil
 }
@@ -250,7 +286,7 @@ func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRe
 	if req.FencingToken == 0 {
 		return nil, status.Error(codes.InvalidArgument, "fencing token must be set")
 	}
-	op, err := s.repo.MarkRunning(ctx, id, req.FencingToken, req.Actor)
+	op, err := s.repos.markRunning(ctx, id, req.FencingToken, req.Actor)
 	if err != nil {
 		return nil, repoErr(err)
 	}
@@ -267,7 +303,7 @@ func (s *OperationServer) CompleteOperation(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
 
-	op, err := s.repo.Terminate(ctx, id, req.FencingToken, db.OperationSuccess,
+	op, err := s.repos.terminate(ctx, id, req.FencingToken, db.OperationSuccess,
 		db.OperationAudit{
 			Event:  "completed",
 			Actor:  req.Actor,
@@ -291,7 +327,7 @@ func (s *OperationServer) FailOperation(ctx context.Context,
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
 
-	op, err := s.repo.Terminate(ctx, id, req.FencingToken, db.OperationFailed,
+	op, err := s.repos.terminate(ctx, id, req.FencingToken, db.OperationFailed,
 		db.OperationAudit{
 			Event:  "failed",
 			Actor:  req.Actor,
@@ -313,7 +349,7 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
 	}
-	current, err := s.repo.Get(ctx, id)
+	current, err := s.repos.Operations.Get(ctx, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, status.Error(codes.NotFound, "operation not found")
 	}
@@ -321,7 +357,7 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 		return nil, repoErr(err)
 	}
 
-	op, err := s.repo.Terminate(ctx, id, current.FencingToken, db.OperationCancelled,
+	op, err := s.repos.terminate(ctx, id, current.FencingToken, db.OperationCancelled,
 		db.OperationAudit{
 			Event:  "force_unlock",
 			Actor:  req.Actor,
@@ -344,7 +380,17 @@ func (s *OperationServer) DeleteOperation(ctx context.Context,
 	if err := requireText("actor", req.Actor); err != nil {
 		return nil, err
 	}
-	if err := s.repo.Delete(ctx, id, req.Actor); err != nil {
+	err = s.repos.Operations.Delete(ctx, id, func(op *db.Operation, tx *gorm.DB) error {
+		if !op.Status.IsTerminal() {
+			return fmt.Errorf("operation %s is %s and cannot be deleted: %w",
+				id, op.Status, store.ErrPrecondition)
+		}
+		return s.repos.Audits.AddInTx(tx, &db.OperationAudit{
+			OperationId: op.Id, ResourceKey: op.ResourceKey, Event: "deleted",
+			Actor: req.Actor,
+		})
+	})
+	if err != nil {
 		return nil, repoErr(err)
 	}
 
