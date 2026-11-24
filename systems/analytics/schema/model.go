@@ -77,11 +77,12 @@ type WindowLedger struct {
 // Components (Sum/Count/Min/Max) are mandatory — they are what make
 // higher-span rollups exact (weighted, never avg-of-avg).
 type KpiWindow struct {
-	ID          uint64 `gorm:"primaryKey;autoIncrement"`
-	KpiKey      string `gorm:"size:64;uniqueIndex:uq_kpiwin,priority:1;index"`
-	OrgID       string `gorm:"size:64;uniqueIndex:uq_kpiwin,priority:2"`
+	ID uint64 `gorm:"primaryKey;autoIncrement"`
+	// idx_kpiwin_range serves per-KPI window-range folds; uq_kpiwin has scope ahead of window_id.
+	KpiKey      string `gorm:"size:64;uniqueIndex:uq_kpiwin,priority:1;index;index:idx_kpiwin_range,priority:2"`
+	OrgID       string `gorm:"size:64;uniqueIndex:uq_kpiwin,priority:2;index:idx_kpiwin_range,priority:1"`
 	Scope       string `gorm:"size:512;uniqueIndex:uq_kpiwin,priority:3"` // canonical JSON, sorted keys
-	WindowID    int64  `gorm:"uniqueIndex:uq_kpiwin,priority:4;index"`
+	WindowID    int64  `gorm:"uniqueIndex:uq_kpiwin,priority:4;index;index:idx_kpiwin_range,priority:3"`
 	Value       float64
 	Sum         float64
 	Count       float64

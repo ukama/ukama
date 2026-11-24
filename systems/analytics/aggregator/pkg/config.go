@@ -45,6 +45,7 @@ type RollupConfig struct {
 	// SweepInterval recomputes current spans (covers lost events + partial
 	// span refresh).
 	SweepInterval time.Duration `default:"120s"`
+	FlushInterval time.Duration `default:"5s"`
 	// FlatThresholdPct: |change_pct| below this reads as a flat trend.
 	FlatThresholdPct float64 `default:"1.0"`
 	// ReportWindow is the trailing window the performance-report composer

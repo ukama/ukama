@@ -435,13 +435,13 @@ func composeCell(col schema.ReportColumn, rows []schema.KpiRollup, prevValue flo
 	return cell
 }
 
-// windowRollups reads raw kpi_windows for a KPI over [fromID,toID), keeps the
-// rows matching the report's scope filter, and adapts each to a KpiRollup so
-// the existing group/fold path aggregates it. This gives the report the same
-// precise trailing-window aggregation the values endpoint uses for rolling
-// spans (exact totals, not a coarse daily bucket).
+// windowRollups folds kpi_windows for a KPI over [fromID,toID) into one
+// KpiRollup per scope matching the report's scope filter, so the existing
+// group/fold path aggregates it. This gives the report the same precise
+// trailing-window aggregation the values endpoint uses for rolling spans
+// (exact totals, not a coarse daily bucket).
 func (c *Composer) windowRollups(kpiKey string, fromID, toID int64, filter map[string]string) ([]schema.KpiRollup, error) {
-	rows, err := c.windows.WindowsInRange(c.org, kpiKey, fromID, toID)
+	rows, err := c.windows.AggregateWindows(c.org, kpiKey, fromID, toID)
 	if err != nil {
 		return nil, err
 	}
@@ -454,13 +454,13 @@ func (c *Composer) windowRollups(kpiKey string, fromID, toID int64, filter map[s
 
 		out = append(out, schema.KpiRollup{
 			Scope:      w.Scope,
-			Value:      w.Value,
+			Value:      w.Last,
 			Sum:        w.Sum,
 			Count:      w.Count,
 			Min:        w.Min,
 			Max:        w.Max,
-			Last:       w.Value, // a window's value IS its level at that moment
-			SpanStart:  c.grid.Window(w.WindowID).Start,
+			Last:       w.Last,
+			SpanStart:  c.grid.Window(w.LastWindowID).Start,
 			Unit:       w.Unit,
 			Symbol:     w.Symbol,
 			ComputedAt: w.ComputedAt,

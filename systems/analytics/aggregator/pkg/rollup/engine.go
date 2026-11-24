@@ -10,7 +10,6 @@ package rollup
 
 import (
 	"fmt"
-	"math"
 	"sync"
 	"time"
 
@@ -20,9 +19,11 @@ import (
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
-// MinWindowRetention keeps every window the sweeper's previous-month recompute
-// (up to 62 days back) and a last_30d trend (60 days) read.
+// MinWindowRetention keeps every window a last_30d trend (60 days) reads.
 const MinWindowRetention = 63 * 24 * time.Hour
+
+// Windows may still land this long after a span closes, so an earlier rollup is not final.
+const daySettle = time.Hour
 
 // Engine materializes calendar-span rollups from kpi_windows components.
 //
@@ -34,27 +35,42 @@ const MinWindowRetention = 63 * 24 * time.Hour
 type Engine struct {
 	grid    schema.Grid
 	kpis    map[string]schema.KpiSpec
-	windows   db.KpiWindowReader
-	rollups   db.RollupRepo
-	retention db.RetentionRepo
-	org       string
-	loc       *time.Location
-	sweep     time.Duration
-	keep      time.Duration
-	stop      chan struct{}
+	windows db.KpiWindowReader
+	rollups db.RollupWriter
+	org     string
+	loc     *time.Location
+	sweep   time.Duration
+	flush   time.Duration
+	keep    time.Duration
+	stop    chan struct{}
+
+	// work serializes statements so overlapping upserts cannot deadlock.
+	work sync.Mutex
+
+	dirtyMu sync.Mutex
+	dirty   map[spanKey]struct{}
 
 	ready     chan struct{}
 	readyOnce sync.Once
 }
 
+type spanKey struct {
+	kpi   string
+	span  string
+	start int64
+}
+
 // keep is the kpi_windows retention (0 = forever). Spans that start before
 // now-keep may have lost windows, so they are never recomputed once they exist.
 func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowReader,
-	rollups db.RollupRepo, retention db.RetentionRepo, org, timezone string,
-	sweep, keep time.Duration) (*Engine, error) {
+	rollups db.RollupWriter, org, timezone string, sweep, flush, keep time.Duration) (*Engine, error) {
 	loc, err := time.LoadLocation(timezone)
 	if err != nil {
 		return nil, fmt.Errorf("loading rollup timezone %q: %w", timezone, err)
+	}
+
+	if flush <= 0 {
+		return nil, fmt.Errorf("rollup flush interval must be positive, got %s", flush)
 	}
 
 	byKey := map[string]schema.KpiSpec{}
@@ -63,44 +79,107 @@ func NewEngine(grid schema.Grid, kpis []schema.KpiSpec, windows db.KpiWindowRead
 	}
 
 	return &Engine{
-		grid:      grid,
-		kpis:      byKey,
-		windows:   windows,
-		rollups:   rollups,
-		retention: retention,
-		org:       org,
-		loc:       loc,
-		sweep:     sweep,
-		keep:      keep,
-		stop:      make(chan struct{}),
-		ready:     make(chan struct{}),
+		grid:    grid,
+		kpis:    byKey,
+		windows: windows,
+		rollups: rollups,
+		org:     org,
+		loc:     loc,
+		sweep:   sweep,
+		flush:   flush,
+		keep:    keep,
+		stop:    make(chan struct{}),
+		dirty:   map[spanKey]struct{}{},
+		ready:   make(chan struct{}),
 	}, nil
 }
 
-// OnKpiComputed is the event fast path: recompute every span containing the
-// window.
+// OnKpiComputed is the event fast path: queue the day containing the window.
 func (e *Engine) OnKpiComputed(kpiKey string, windowID int64) {
-	kpi, ok := e.kpis[kpiKey]
-	if !ok {
+	if _, ok := e.kpis[kpiKey]; !ok {
 		log.Warnf("kpi.computed for unknown kpi %q (spec not deployed here?)", kpiKey)
 
 		return
 	}
 
-	win := e.grid.Window(windowID)
+	day, err := SpanStart(SpanDaily, e.grid.Window(windowID).Start, e.loc)
+	if err != nil {
+		return
+	}
 
-	for _, span := range Spans {
-		if err := e.RecomputeSpan(kpi, span, win.Start); err != nil {
-			log.Errorf("recompute %s %s @ %s: %v", kpiKey, span, win.Start, err)
+	e.dirtyMu.Lock()
+	e.dirty[spanKey{kpi: kpiKey, span: SpanDaily, start: day.Unix()}] = struct{}{}
+	e.dirtyMu.Unlock()
+}
+
+func (e *Engine) FlushOnce() {
+	e.dirtyMu.Lock()
+	batch := e.dirty
+	e.dirty = map[spanKey]struct{}{}
+	e.dirtyMu.Unlock()
+
+	parents := map[spanKey]struct{}{}
+
+	for key := range batch {
+		day := time.Unix(key.start, 0)
+
+		if err := e.RecomputeSpan(e.kpis[key.kpi], SpanDaily, day); err != nil {
+			log.Errorf("recompute %s %s @ %s: %v", key.kpi, SpanDaily, day.UTC(), err)
+		}
+
+		for _, parent := range e.parentsOf(key.kpi, day) {
+			parents[parent] = struct{}{}
+		}
+	}
+
+	for key := range parents {
+		start := time.Unix(key.start, 0)
+
+		if err := e.RecomputeSpan(e.kpis[key.kpi], key.span, start); err != nil {
+			log.Errorf("recompute %s %s @ %s: %v", key.kpi, key.span, start.UTC(), err)
 		}
 	}
 }
 
-// StartSweeper first backfills every span covered by existing kpi_windows
-// (heals stale rows and gaps after downtime — cheap and idempotent), then
-// periodically recomputes the current spans to cover lost events and keep
+func (e *Engine) parentsOf(kpiKey string, day time.Time) []spanKey {
+	out := make([]spanKey, 0, len(Spans))
+
+	for _, span := range Spans {
+		if span == SpanDaily {
+			continue
+		}
+
+		start, err := SpanStart(span, day, e.loc)
+		if err != nil {
+			continue
+		}
+
+		out = append(out, spanKey{kpi: kpiKey, span: span, start: start.Unix()})
+	}
+
+	return out
+}
+
+func (e *Engine) flushLoop() {
+	ticker := time.NewTicker(e.flush)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			e.FlushOnce()
+		case <-e.stop:
+			return
+		}
+	}
+}
+
+// StartSweeper first backfills the spans downtime left missing or unfinished,
+// then periodically recomputes the current spans to cover lost events and keep
 // partial spans fresh.
 func (e *Engine) StartSweeper() {
+	go e.flushLoop()
+
 	clean := e.backfillOnce()
 
 	ticker := time.NewTicker(e.sweep)
@@ -136,9 +215,8 @@ func (e *Engine) frozen(spanStart, now time.Time) bool {
 	return e.keep > 0 && spanStart.Before(now.Add(-e.keep))
 }
 
-// backfillOnce re-materializes all spans intersecting each KPI's kpi_windows
-// history. Runs at boot: after this, every historical span carries the
-// current components-row shape regardless of what an older engine wrote.
+// backfillOnce materializes the spans of each KPI's kpi_windows history that
+// have no rollup, are still partial, or were rolled up before they settled.
 func (e *Engine) backfillOnce() bool {
 	now := time.Now().UTC()
 	clean := true
@@ -158,32 +236,21 @@ func (e *Engine) backfillOnce() bool {
 		}
 
 		start := e.grid.Window(minID).Start
+		touched := map[spanKey]struct{}{}
+		done := 0
 
 		for _, span := range Spans {
-			t := start
+			n, err := e.backfillSpans(kpi, span, start, now, touched)
+			if err != nil {
+				log.Errorf("backfill: %s %s: %v", kpi.Kpi, span, err)
 
-			for {
-				spanStart, err := SpanStart(span, t, e.loc)
-				if err != nil {
-					break
-				}
-
-				if err := e.backfillSpan(kpi, span, spanStart, now); err != nil {
-					log.Errorf("backfill: recompute %s %s @ %s: %v", kpi.Kpi, span, spanStart, err)
-
-					clean = false
-				}
-
-				next, err := SpanEnd(span, spanStart)
-				if err != nil || !next.Before(now) {
-					break
-				}
-
-				t = next
+				clean = false
 			}
+
+			done += n
 		}
 
-		log.Infof("backfill: %s rollups re-materialized from %s", kpi.Kpi, start)
+		log.Infof("backfill: %s re-materialized %d spans from %s", kpi.Kpi, done, start)
 	}
 
 	if clean {
@@ -193,24 +260,79 @@ func (e *Engine) backfillOnce() bool {
 	return clean
 }
 
-// backfillSpan recomputes a span, except a frozen one that already has a
-// rollup: its windows may be partly pruned, and the stored rollup is final.
-func (e *Engine) backfillSpan(kpi schema.KpiSpec, span string, spanStart, now time.Time) error {
-	if !e.frozen(spanStart, now) {
-		return e.RecomputeSpan(kpi, span, spanStart)
+func (e *Engine) backfillSpans(kpi schema.KpiSpec, span string, start, now time.Time,
+	touched map[spanKey]struct{}) (int, error) {
+	states, err := e.rollups.SpanStates(e.org, kpi.Kpi, span)
+	if err != nil {
+		return 0, err
 	}
 
-	exists, err := e.retention.HasSpan(e.org, kpi.Kpi, span, spanStart)
-	if err != nil || exists {
-		return err
+	byStart := make(map[int64]db.SpanState, len(states))
+	for _, st := range states {
+		byStart[st.SpanStart.Unix()] = st
 	}
 
-	return e.recompute(kpi, span, spanStart)
+	var firstErr error
+
+	done := 0
+	t := start
+
+	for {
+		spanStart, err := SpanStart(span, t, e.loc)
+		if err != nil {
+			return done, err
+		}
+
+		spanEnd, err := SpanEnd(span, spanStart)
+		if err != nil {
+			return done, err
+		}
+
+		key := spanKey{kpi: kpi.Kpi, span: span, start: spanStart.Unix()}
+		st, exists := byStart[key.start]
+		_, wasTouched := touched[key]
+
+		if e.needsBackfill(spanStart, spanEnd, now, st, exists, wasTouched) {
+			if err := e.recompute(kpi, span, spanStart); err != nil {
+				if firstErr == nil {
+					firstErr = fmt.Errorf("recompute @ %s: %w", spanStart, err)
+				}
+			} else {
+				done++
+			}
+
+			if span == SpanDaily {
+				for _, parent := range e.parentsOf(kpi.Kpi, spanStart) {
+					touched[parent] = struct{}{}
+				}
+			}
+		}
+
+		if !spanEnd.Before(now) {
+			return done, firstErr
+		}
+
+		t = spanEnd
+	}
+}
+
+// A frozen span is final once it exists: its windows may be partly pruned.
+func (e *Engine) needsBackfill(spanStart, spanEnd, now time.Time, st db.SpanState, exists, touched bool) bool {
+	if !exists {
+		return true
+	}
+
+	if e.frozen(spanStart, now) {
+		return false
+	}
+
+	return touched || st.IsPartial || st.ComputedAt.Before(spanEnd.Add(daySettle))
 }
 
 // sweepOnce recomputes the current AND previous span for every KPI: current
 // keeps partial spans fresh; previous closes out spans whose final
-// kpi.computed event was lost (clears stale is_partial rows).
+// kpi.computed event was lost (clears stale is_partial rows). Spans lists
+// daily first, so weekly and monthly fold days that were just refreshed.
 func (e *Engine) sweepOnce() {
 	now := time.Now().UTC()
 
@@ -260,97 +382,37 @@ func (e *Engine) recompute(kpi schema.KpiSpec, span string, spanStart time.Time)
 		return err
 	}
 
-	fromID, toID := e.windowRange(spanStart, spanEnd)
-
-	rows, err := e.windows.WindowsInRange(e.org, kpi.Kpi, fromID, toID)
-	if err != nil {
-		return err
-	}
-
-	if len(rows) == 0 {
-		return nil // nothing observed in this span yet
-	}
-
 	now := time.Now().UTC()
 	isPartial := spanEnd.After(now)
+	mode := valueMode(kpi)
 
-	// Aggregate components per scope.
-	type agg struct {
-		sum, count, min, max float64
-		lastWindow           int64
-		lastValue            float64
-		meta                 schema.KpiWindow
+	e.work.Lock()
+	defer e.work.Unlock()
+
+	if span == SpanDaily {
+		fromID, toID := e.windowRange(spanStart, spanEnd)
+
+		return e.rollups.RollupFromWindows(e.org, kpi.Kpi, mode, spanStart, spanEnd, fromID, toID, isPartial, now)
 	}
 
-	byScope := map[string]*agg{}
-
-	for _, row := range rows {
-		a, ok := byScope[row.Scope]
-		if !ok {
-			a = &agg{min: math.Inf(1), max: math.Inf(-1), lastWindow: -1}
-			byScope[row.Scope] = a
-		}
-
-		a.sum += row.Sum
-		a.count += row.Count
-		a.min = math.Min(a.min, row.Min)
-		a.max = math.Max(a.max, row.Max)
-
-		if row.WindowID > a.lastWindow {
-			a.lastWindow = row.WindowID
-			a.lastValue = row.Value
-		}
-
-		a.meta = row
-	}
-
-	upserts := make([]schema.KpiRollup, 0, len(byScope))
-
-	for scope, a := range byScope {
-		upserts = append(upserts, schema.KpiRollup{
-			KpiKey:     kpi.Kpi,
-			OrgID:      e.org,
-			Scope:      scope,
-			Span:       span,
-			SpanStart:  spanStart.UTC(),
-			SpanEnd:    spanEnd.UTC(),
-			Op:         schema.RollupRowOp,
-			Value:      defaultValue(kpi, a.sum, a.count, a.lastValue),
-			Sum:        a.sum,
-			Count:      a.count,
-			Min:        a.min,
-			Max:        a.max,
-			Last:       a.lastValue,
-			ValueType:  a.meta.ValueType,
-			Unit:       a.meta.Unit,
-			Symbol:     a.meta.Symbol,
-			IsPartial:  isPartial,
-			ComputedAt: now,
-		})
-	}
-
-	return e.rollups.Upsert(upserts)
+	return e.rollups.RollupFromDaily(e.org, kpi.Kpi, span, mode, spanStart, spanEnd, isPartial, now)
 }
 
 func (e *Engine) windowRange(spanStart, spanEnd time.Time) (int64, int64) {
 	return e.grid.WindowAt(spanStart.UTC()).ID, e.grid.WindowAt(spanEnd.UTC()).ID
 }
 
-// defaultValue caches the KPI's kind-default aggregation on the row: flows
+// valueMode picks the KPI's kind-default aggregation cached on the row: flows
 // sum over the span; ratio gauges take the weighted average; additive
 // gauges take the latest level.
-func defaultValue(kpi schema.KpiSpec, sum, count, last float64) float64 {
+func valueMode(kpi schema.KpiSpec) db.ValueMode {
 	if kpi.Kind == schema.KindGauge {
 		if kpi.ScopeAgg == schema.ScopeAggAvg {
-			if count == 0 {
-				return 0
-			}
-
-			return sum / count
+			return db.ValueAvg
 		}
 
-		return last
+		return db.ValueLast
 	}
 
-	return sum
+	return db.ValueSum
 }
