@@ -52,8 +52,9 @@ func (r *releaseRepo) Upsert(rel *ReleaseCatalog) error {
 	}
 	rel.Type = defType(rel.Type)
 	return r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}, {Name: "type"}, {Name: "version"}},
-		DoUpdates: clause.AssignmentColumns([]string{"digest", "size_bytes", "available", "uploaded_at", "updated_at"}),
+		Columns: []clause.Column{{Name: "name"}, {Name: "type"}, {Name: "version"}},
+		DoUpdates: clause.AssignmentColumns([]string{"digest", "size_bytes", "available",
+			"uploaded_at", "updated_at"}),
 	}).Create(rel).Error
 }
 
@@ -115,8 +116,9 @@ func (r *releaseRepo) SetDesired(d *AppDesiredRelease) error {
 	}
 	d.Type = defType(d.Type)
 	return r.Db.GetGormDb().Clauses(clause.OnConflict{
-		Columns:   []clause.Column{{Name: "name"}, {Name: "type"}},
-		DoUpdates: clause.AssignmentColumns([]string{"desired_version", "promoted_at", "promoted_by", "updated_at"}),
+		Columns: []clause.Column{{Name: "name"}, {Name: "type"}},
+		DoUpdates: clause.AssignmentColumns([]string{"desired_version", "promoted_at",
+			"promoted_by", "updated_at"}),
 	}).Create(d).Error
 }
 

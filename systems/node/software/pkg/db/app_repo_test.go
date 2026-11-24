@@ -26,9 +26,9 @@ import (
 
 // Test fixture constants and helpers to avoid hardcoding in each test.
 const (
-	defaultAppName       = "test-app"
-	defaultAppSpace      = "default-space"
-	defaultAppNotes      = "test notes"
+	defaultAppName         = "test-app"
+	defaultAppSpace        = "default-space"
+	defaultAppNotes        = "test notes"
 	defaultMetricsKeysJSON = `["key1","key2"]`
 )
 
@@ -39,11 +39,13 @@ type ukamaDbMock struct {
 
 func (u ukamaDbMock) Init(model ...interface{}) error { return nil }
 func (u ukamaDbMock) Connect() error                  { return nil }
-func (u ukamaDbMock) GetGormDb() *gorm.DB { return u.gormDb }
-func (u ukamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func() error) error {
+func (u ukamaDbMock) GetGormDb() *gorm.DB             { return u.gormDb }
+func (u ukamaDbMock) ExecuteInTransaction(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func() error) error {
 	return nil
 }
-func (u ukamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB, nestedFuncs ...func(tx *gorm.DB) error) error {
+func (u ukamaDbMock) ExecuteInTransaction2(dbOperation func(tx *gorm.DB) *gorm.DB,
+	nestedFuncs ...func(tx *gorm.DB) error) error {
 	return nil
 }
 
@@ -75,7 +77,10 @@ func setupTestDB(t *testing.T) *testDbResult {
 	return &testDbResult{Mock: mock, Repo: repo}
 }
 
-// defaultTestApp returns a single shared fixture for an App. Override fields in tests as needed.
+var appColumns = []string{"id", "name", "space", "notes", "metrics_keys"}
+
+// defaultTestApp returns a single shared fixture for an App. Override fields in tests
+// as needed.
 func defaultTestApp() softwaredb.App {
 	return softwaredb.App{
 		Id:          uuid.NewV4(),
@@ -101,7 +106,8 @@ func TestAppRepoCreate(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "apps" ("id","name","space","notes","metrics_keys") VALUES ($1,$2,$3,$4,$5)`)).
+		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "apps" ("id","name","space","notes",`+
+			`"metrics_keys") VALUES ($1,$2,$3,$4,$5)`)).
 			WithArgs(app.Id, app.Name, app.Space, app.Notes, defaultMetricsKeysJSON).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
@@ -118,7 +124,7 @@ func TestAppRepoGetAll(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps"`)).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "space", "notes", "metrics_keys"}))
+			WillReturnRows(sqlmock.NewRows(appColumns))
 
 		apps, err := repo.GetAll()
 		assert.NoError(t, err)
@@ -132,7 +138,7 @@ func TestAppRepoGetAll(t *testing.T) {
 		app := defaultTestApp()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps"`)).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "space", "notes", "metrics_keys"}).
+			WillReturnRows(sqlmock.NewRows(appColumns).
 				AddRow(app.Id, app.Name, app.Space, app.Notes, defaultMetricsKeysJSON))
 
 		apps, err := repo.GetAll()
@@ -166,9 +172,10 @@ func TestAppRepoGet(t *testing.T) {
 		res := setupTestDB(t)
 		mock, repo := res.Mock, res.Repo
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE name = $1 ORDER BY "apps"."id" LIMIT $2`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE name = $1 `+
+			`ORDER BY "apps"."id" LIMIT $2`)).
 			WithArgs(appName, 1).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "space", "notes", "metrics_keys"}).
+			WillReturnRows(sqlmock.NewRows(appColumns).
 				AddRow(app.Id, app.Name, app.Space, app.Notes, defaultMetricsKeysJSON))
 
 		got, err := repo.Get(appName)
@@ -182,7 +189,8 @@ func TestAppRepoGet(t *testing.T) {
 		res := setupTestDB(t)
 		mock, repo := res.Mock, res.Repo
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE name = $1 ORDER BY "apps"."id" LIMIT $2`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE name = $1 `+
+			`ORDER BY "apps"."id" LIMIT $2`)).
 			WithArgs("nonexistent", 1).
 			WillReturnError(gorm.ErrRecordNotFound)
 
