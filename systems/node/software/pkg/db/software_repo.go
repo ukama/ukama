@@ -46,7 +46,8 @@ func (r *softwareRepo) Get(id uuid.UUID) (Software, error) {
 	return software, nil
 }
 
-func (r *softwareRepo) List(nodeId string, status ukama.SoftwareStatusType, appName string) ([]*Software, error) {
+func (r *softwareRepo) List(nodeId string, status ukama.SoftwareStatusType,
+	appName string) ([]*Software, error) {
 	var software []*Software
 
 	tx := r.Db.GetGormDb().Model(&Software{}).Preload("App")
@@ -77,7 +78,8 @@ func (r *softwareRepo) SetDesiredForApp(appName, desired string) (int64, error) 
 		Where("app_name = ? AND status <> ?", appName, uint8(ukama.UpdateInProgress)).
 		Updates(map[string]interface{}{
 			"desired_version": desired,
-			"status": gorm.Expr("CASE WHEN current_version <> ? THEN CAST(? AS smallint) ELSE CAST(? AS smallint) END",
+			"status": gorm.Expr("CASE WHEN current_version <> ? THEN CAST(? AS smallint) "+
+				"ELSE CAST(? AS smallint) END",
 				desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate)),
 		})
 	return res.RowsAffected, res.Error

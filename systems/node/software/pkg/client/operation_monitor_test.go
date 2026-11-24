@@ -83,6 +83,13 @@ func TestOperationMonitor(t *testing.T) {
 		assert.Equal(t, codes.NotFound, status.Code(err))
 	})
 
+	t.Run("NewCreatesClientAndCloses", func(t *testing.T) {
+		m := NewOperationMonitor("operation-monitor:9090", time.Second)
+
+		assert.NotNil(t, m)
+		assert.NotPanics(t, m.Close)
+	})
+
 	t.Run("CloseWithoutConnection", func(t *testing.T) {
 		m := &operationMonitor{}
 

@@ -32,7 +32,8 @@ type operationMonitor struct {
 }
 
 func NewOperationMonitor(host string, timeout time.Duration) OperationMonitor {
-	conn, err := grpc.NewClient(host, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(host,
+		grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Failed to connect to operation monitor at %s: %v", host, err)
 	}
@@ -43,7 +44,8 @@ func NewOperationMonitor(host string, timeout time.Duration) OperationMonitor {
 	}
 }
 
-func (m *operationMonitor) Register(req *pb.RegisterIntentRequest) (*pb.RegisterIntentResponse, error) {
+func (m *operationMonitor) Register(req *pb.RegisterIntentRequest) (
+	*pb.RegisterIntentResponse, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 	return m.client.RegisterIntent(ctx, req)

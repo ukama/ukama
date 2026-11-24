@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-
 type HealthClientProvider interface {
 	GetClient() (pb.HealthServiceClient, error)
 }

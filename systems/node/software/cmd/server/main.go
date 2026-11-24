@@ -75,7 +75,8 @@ func initConfig() {
 	}
 	if raw != "" {
 		raw = strings.TrimSpace(raw)
-		// Trim surrounding quotes (e.g. from docker-compose: NODEGWIPS='["0.0.0.0", "1.1.1.1"]')
+		// Trim surrounding quotes (e.g. from docker-compose:
+		// NODEGWIPS='["0.0.0.0", "1.1.1.1"]')
 		raw = strings.TrimPrefix(raw, "'")
 		raw = strings.TrimSuffix(raw, "'")
 		raw = strings.TrimPrefix(raw, "\"")
@@ -100,7 +101,8 @@ func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
 
-	err := d.Init(&db.App{}, &db.Node{}, &db.Software{}, &db.ReleaseCatalog{}, &db.AppDesiredRelease{})
+	err := d.Init(&db.App{}, &db.Node{}, &db.Software{}, &db.ReleaseCatalog{},
+		&db.AppDesiredRelease{})
 	if err != nil {
 		log.Fatalf("Database initialization failed. Error: %v", err)
 	}
@@ -115,20 +117,27 @@ func runGrpcServer(gormdb sql.Db) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName, pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri, svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange, svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue, svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(svcConf.MsgClient.Timeout, svcConf.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, svcConf.Queue.Uri,
+		svcConf.Service.Uri, svcConf.MsgClient.Host, svcConf.MsgClient.Exchange,
+		svcConf.MsgClient.ListenQueue, svcConf.MsgClient.PublishQueue,
+		svcConf.MsgClient.RetryCount, svcConf.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+	operationUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient,
+		client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, operationSystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve operation address: %v", err)
 	}
 	opMgr := copr.NewManagerClient(operationUrl.String(),
 		client.WithTimeout(svcConf.Operation.Timeout))
-	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost, svcConf.Operation.Timeout)
+	opMon := swclient.NewOperationMonitor(svcConf.Operation.MonitorHost,
+		svcConf.Operation.Timeout)
 
-	registryUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient, client.WithDebug(svcConf.DebugMode)),
+	registryUrl, err := ic.GetHostAddress(ic.NewInitClient(svcConf.Http.InitClient,
+		client.WithDebug(svcConf.DebugMode)),
 		ic.CreateHostString(svcConf.OrgName, registrySystemName), &svcConf.OrgName)
 	if err != nil {
 		log.Fatalf("Failed to resolve registry address: %v", err)
@@ -152,7 +161,8 @@ func runGrpcServer(gormdb sql.Db) {
 	})
 
 	grpcServer.RegisterDependency("db", true, ugrpc.DBCheck(gormdb))
-	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+	grpcServer.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
 
 	go grpcServer.StartServer()
 
@@ -171,7 +181,8 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	}
 
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. "+
+			"Error %s", pkg.ServiceName, err.Error())
 	}
 }
 

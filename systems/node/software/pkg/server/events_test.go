@@ -30,9 +30,12 @@ import (
 
 // Routing keys (must match server logic).
 var (
-	routeChunkReady = msgbus.PrepareRoute(testOrgName, evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey)
-	routeNodeOnline = msgbus.PrepareRoute(testOrgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline])
-	routeUploaded   = msgbus.PrepareRoute(testOrgName, "event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded")
+	routeChunkReady = msgbus.PrepareRoute(testOrgName,
+		evt.NodeEventToEventConfig[evt.NodeAppChunkReady].RoutingKey)
+	routeNodeOnline = msgbus.PrepareRoute(testOrgName,
+		evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline])
+	routeUploaded = msgbus.PrepareRoute(testOrgName,
+		"event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded")
 )
 
 // fakeHealthProvider makes the node-online reconcile a no-op: GetClient errors, so
@@ -43,14 +46,16 @@ func (fakeHealthProvider) GetClient() (hpb.HealthServiceClient, error) {
 	return nil, errors.New("health disabled in test")
 }
 
-func newEventServer(t *testing.T, sRepo *mocks.SoftwareRepo, releaseRepo *mocks.ReleaseRepo) *SoftwareUpdateEventServer {
+func newEventServer(t *testing.T, sRepo *mocks.SoftwareRepo,
+	releaseRepo *mocks.ReleaseRepo) *SoftwareUpdateEventServer {
 	t.Helper()
 
 	nodeRepo := mocks.NewNodeRepo(t)
 	nodeRepo.On("Create", mock.Anything).Return(nil).Maybe()
 
-	swServer := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), nodeRepo, releaseRepo, nil,
-		fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0, nil)
+	swServer := NewSoftwareServer(testOrgName, sRepo, mocks.NewAppRepo(t), nodeRepo,
+		releaseRepo, nil, fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false,
+		[]string{testNodeGwIP}, nil, nil, 0, 0, nil)
 	return NewSoftwareEventServer(testOrgName, swServer)
 }
 
@@ -93,7 +98,8 @@ func TestEventNotification(t *testing.T) {
 		})).Return(nil)
 
 		s := newEventServer(t, mocks.NewSoftwareRepo(t), releaseRepo)
-		resp, err := s.EventNotification(ctx, uploadedEvent(t, testAppNameForUpdate, testTagVersion))
+		resp, err := s.EventNotification(ctx,
+			uploadedEvent(t, testAppNameForUpdate, testTagVersion))
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -114,7 +120,8 @@ func TestEventNotification(t *testing.T) {
 		releaseRepo.On("SetChunked", testAppNameForUpdate, "app", testTagVersion).Return(nil)
 
 		s := newEventServer(t, mocks.NewSoftwareRepo(t), releaseRepo)
-		resp, err := s.EventNotification(ctx, chunkReadyEvent(t, testAppNameForUpdate, testTagVersion))
+		resp, err := s.EventNotification(ctx,
+			chunkReadyEvent(t, testAppNameForUpdate, testTagVersion))
 
 		require.NoError(t, err)
 		require.NotNil(t, resp)
@@ -160,8 +167,10 @@ func TestApplyDesiredToNode_LeavesInFlightAndFailedRowsAlone(t *testing.T) {
 		status  ukama.SoftwareStatusType
 		updated bool
 	}{
-		{"in progress is owned by the update watcher", ukama.SoftwareStatusType(ukama.UpdateInProgress), false},
-		{"failed is a real outcome someone must see", ukama.SoftwareStatusType(ukama.UpdateFailed), false},
+		{"in progress is owned by the update watcher",
+			ukama.SoftwareStatusType(ukama.UpdateInProgress), false},
+		{"failed is a real outcome someone must see",
+			ukama.SoftwareStatusType(ukama.UpdateFailed), false},
 		{"idle rows are recomputed", ukama.SoftwareStatusType(ukama.UpToDate), true},
 	}
 
@@ -198,12 +207,14 @@ func TestApplyDesiredToNode_LeavesInFlightAndFailedRowsAlone(t *testing.T) {
 
 func TestHandleNodeDeleteEvent(t *testing.T) {
 	const nodeID = "uk-sa2643-tnode-v0-a60f"
-	routeNodeDelete := msgbus.PrepareRoute(testOrgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete])
+	routeNodeDelete := msgbus.PrepareRoute(testOrgName,
+		evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete])
 
 	newServer := func(t *testing.T, nodeRepo *mocks.NodeRepo) *SoftwareUpdateEventServer {
-		swServer := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t), mocks.NewAppRepo(t), nodeRepo,
-			mocks.NewReleaseRepo(t), nil, fakeHealthProvider{}, mbmocks.NewMsgBusServiceClient(t), false,
-			[]string{testNodeGwIP}, nil, nil, 0, 0, nil)
+		swServer := NewSoftwareServer(testOrgName, mocks.NewSoftwareRepo(t),
+			mocks.NewAppRepo(t), nodeRepo, mocks.NewReleaseRepo(t), nil, fakeHealthProvider{},
+			mbmocks.NewMsgBusServiceClient(t), false, []string{testNodeGwIP}, nil, nil, 0, 0,
+			nil)
 		return NewSoftwareEventServer(testOrgName, swServer)
 	}
 	deleteEvent := func(t *testing.T) *epb.Event {
@@ -216,7 +227,8 @@ func TestHandleNodeDeleteEvent(t *testing.T) {
 		nodeRepo := mocks.NewNodeRepo(t)
 		nodeRepo.On("Delete", nodeID).Return(nil).Once()
 
-		resp, err := newServer(t, nodeRepo).EventNotification(context.Background(), deleteEvent(t))
+		resp, err := newServer(t, nodeRepo).EventNotification(context.Background(),
+			deleteEvent(t))
 		require.NoError(t, err)
 		assert.NotNil(t, resp)
 	})

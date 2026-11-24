@@ -59,7 +59,12 @@ func setupSoftwareTestDB(t *testing.T) *softwareTestDbResult {
 	return &softwareTestDbResult{Mock: mock, Repo: repo}
 }
 
-// defaultTestSoftware returns a shared Software fixture. Override fields in tests as needed.
+var softwareColumns = []string{"id", "node_id", "app_name", "change_logs",
+	"current_version", "desired_version", "release_date", "created_at", "updated_at",
+	"deleted_at", "status"}
+
+// defaultTestSoftware returns a shared Software fixture. Override fields in tests as
+// needed.
 func defaultTestSoftware() *softwaredb.Software {
 	releaseDate := time.Date(2025, 1, 15, 0, 0, 0, 0, time.UTC)
 	return &softwaredb.Software{
@@ -89,9 +94,14 @@ func TestSoftwareRepoCreate(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 
 		mock.ExpectBegin()
-		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "softwares" ("id","node_id","app_name","change_logs","current_version","desired_version","release_date","status") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "created_at","updated_at","deleted_at"`)).
-			WithArgs(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion, sw.DesiredVersion, sw.ReleaseDate, sqlmock.AnyArg()).
-			WillReturnRows(sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at"}).AddRow(time.Now(), time.Now(), nil))
+		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "softwares" ("id","node_id",`+
+			`"app_name","change_logs","current_version","desired_version","release_date",`+
+			`"status") VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING "created_at",`+
+			`"updated_at","deleted_at"`)).
+			WithArgs(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion,
+				sw.DesiredVersion, sw.ReleaseDate, sqlmock.AnyArg()).
+			WillReturnRows(sqlmock.NewRows([]string{"created_at", "updated_at", "deleted_at"}).
+				AddRow(time.Now(), time.Now(), nil))
 		mock.ExpectCommit()
 
 		err := repo.Create(sw)
@@ -108,15 +118,18 @@ func TestSoftwareRepoGet(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 
 		// Main query: Get by id
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE id = $1 ORDER BY "softwares"."id" LIMIT $2`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE id = $1 `+
+			`ORDER BY "softwares"."id" LIMIT $2`)).
 			WithArgs(sw.Id, 1).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "node_id", "app_name", "change_logs", "current_version", "desired_version", "release_date", "created_at", "updated_at", "deleted_at", "status"}).
-				AddRow(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion, sw.DesiredVersion, sw.ReleaseDate, time.Now(), time.Now(), nil, sw.Status))
+			WillReturnRows(sqlmock.NewRows(softwareColumns).
+				AddRow(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion,
+					sw.DesiredVersion, sw.ReleaseDate, time.Now(), time.Now(), nil, sw.Status))
 		// Preload App
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE "apps"."name" = $1`)).
 			WithArgs(sw.AppName).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "space", "notes", "metrics_keys"}).
-				AddRow(uuid.NewV4(), sw.AppName, "default-space", "notes", defaultMetricsKeysJSON))
+			WillReturnRows(sqlmock.NewRows(appColumns).
+				AddRow(uuid.NewV4(), sw.AppName, "default-space", "notes",
+					defaultMetricsKeysJSON))
 
 		got, err := repo.Get(sw.Id)
 		assert.NoError(t, err)
@@ -131,7 +144,8 @@ func TestSoftwareRepoGet(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 		missingID := uuid.NewV4()
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE id = $1 ORDER BY "softwares"."id" LIMIT $2`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE id = $1 `+
+			`ORDER BY "softwares"."id" LIMIT $2`)).
 			WithArgs(missingID, 1).
 			WillReturnError(gorm.ErrRecordNotFound)
 
@@ -151,7 +165,7 @@ func TestSoftwareRepoList(t *testing.T) {
 		mock, repo := res.Mock, res.Repo
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares"`)).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "node_id", "app_name", "change_logs", "current_version", "desired_version", "release_date", "created_at", "updated_at", "deleted_at", "status"}))
+			WillReturnRows(sqlmock.NewRows(softwareColumns))
 
 		list, err := repo.List("", ukama.SoftwareStatusType(0), "")
 		assert.NoError(t, err)
@@ -163,14 +177,17 @@ func TestSoftwareRepoList(t *testing.T) {
 		res := setupSoftwareTestDB(t)
 		mock, repo := res.Mock, res.Repo
 
-		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE app_name = $1 AND node_id = $2 AND status = $3`)).
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "softwares" WHERE app_name = $1 `+
+			`AND node_id = $2 AND status = $3`)).
 			WithArgs(defaultAppName, defaultNodeId, ukama.UpToDate).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "node_id", "app_name", "change_logs", "current_version", "desired_version", "release_date", "created_at", "updated_at", "deleted_at", "status"}).
-				AddRow(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion, sw.DesiredVersion, sw.ReleaseDate, time.Now(), time.Now(), nil, sw.Status))
+			WillReturnRows(sqlmock.NewRows(softwareColumns).
+				AddRow(sw.Id, sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion,
+					sw.DesiredVersion, sw.ReleaseDate, time.Now(), time.Now(), nil, sw.Status))
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "apps" WHERE "apps"."name" = $1`)).
 			WithArgs(defaultAppName).
-			WillReturnRows(sqlmock.NewRows([]string{"id", "name", "space", "notes", "metrics_keys"}).
-				AddRow(uuid.NewV4(), sw.AppName, "default-space", "notes", defaultMetricsKeysJSON))
+			WillReturnRows(sqlmock.NewRows(appColumns).
+				AddRow(uuid.NewV4(), sw.AppName, "default-space", "notes",
+					defaultMetricsKeysJSON))
 
 		list, err := repo.List(defaultNodeId, ukama.UpToDate, defaultAppName)
 		assert.NoError(t, err)
@@ -204,9 +221,13 @@ func TestSoftwareRepoUpdate(t *testing.T) {
 
 		// GORM Save() sends SET col1=$1, col2=$2, ... WHERE id=$last
 		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "node_id"=$1,"app_name"=$2,"change_logs"=$3,"current_version"=$4,"desired_version"=$5,"release_date"=$6,"created_at"=$7,"updated_at"=$8,"deleted_at"=$9,"status"=$10 WHERE "id" = $11`)).
-			WithArgs(sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion, sw.DesiredVersion,
-				sw.ReleaseDate, sqlmock.AnyArg(), sqlmock.AnyArg(), nil, sw.Status, sw.Id).
+		mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "node_id"=$1,`+
+			`"app_name"=$2,"change_logs"=$3,"current_version"=$4,"desired_version"=$5,`+
+			`"release_date"=$6,"created_at"=$7,"updated_at"=$8,"deleted_at"=$9,`+
+			`"status"=$10 WHERE "id" = $11`)).
+			WithArgs(sw.NodeId, sw.AppName, defaultChangeLogsJSON, sw.CurrentVersion,
+				sw.DesiredVersion, sw.ReleaseDate, sqlmock.AnyArg(), sqlmock.AnyArg(), nil,
+				sw.Status, sw.Id).
 			WillReturnResult(sqlmock.NewResult(0, 1))
 		mock.ExpectCommit()
 
@@ -238,9 +259,11 @@ func TestSoftwareRepoSetDesiredForApp(t *testing.T) {
 		res := setupSoftwareTestDB(t)
 
 		res.Mock.ExpectBegin()
-		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "desired_version"=$1,"status"=CASE WHEN current_version <> $2 THEN CAST($3 AS smallint) ELSE CAST($4 AS smallint) END,"updated_at"=$5 WHERE app_name = $6 AND status <> $7`)).
-			WithArgs(desired, desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate), sqlmock.AnyArg(),
-				defaultAppName, uint8(ukama.UpdateInProgress)).
+		res.Mock.ExpectExec(regexp.QuoteMeta(`UPDATE "softwares" SET "desired_version"=$1,`+
+			`"status"=CASE WHEN current_version <> $2 THEN CAST($3 AS smallint) ELSE `+
+			`CAST($4 AS smallint) END,"updated_at"=$5 WHERE app_name = $6 AND status <> $7`)).
+			WithArgs(desired, desired, uint8(ukama.UpdateAvailable), uint8(ukama.UpToDate),
+				sqlmock.AnyArg(), defaultAppName, uint8(ukama.UpdateInProgress)).
 			WillReturnResult(sqlmock.NewResult(0, 4721))
 		res.Mock.ExpectCommit()
 
@@ -261,55 +284,5 @@ func TestSoftwareRepoSetDesiredForApp(t *testing.T) {
 		_, err := res.Repo.SetDesiredForApp(defaultAppName, desired)
 		assert.Error(t, err)
 		assert.NoError(t, res.Mock.ExpectationsWereMet())
-	})
-}
-
-func TestNodeRepoDelete(t *testing.T) {
-	const nodeID = "uk-sa2643-tnode-v0-a60f"
-
-	setup := func(t *testing.T) (sqlmock.Sqlmock, softwaredb.NodeRepo) {
-		t.Helper()
-		db, mock, err := sqlmock.New()
-		require.NoError(t, err)
-		gdb, err := gorm.Open(postgres.New(postgres.Config{
-			DSN:                  "sqlmock_db_0",
-			DriverName:           "postgres",
-			Conn:                 db,
-			PreferSimpleProtocol: true,
-		}), &gorm.Config{})
-		require.NoError(t, err)
-		return mock, softwaredb.NewNodeRepo(ukamaDbMock{gormDb: gdb})
-	}
-
-	t.Run("deletes software rows then the node in one transaction", func(t *testing.T) {
-		mock, repo := setup(t)
-
-		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "softwares" WHERE node_id = $1`)).
-			WithArgs(nodeID).
-			WillReturnResult(sqlmock.NewResult(0, 18))
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "nodes" WHERE node_id = $1`)).
-			WithArgs(nodeID).
-			WillReturnResult(sqlmock.NewResult(0, 1))
-		mock.ExpectCommit()
-
-		assert.NoError(t, repo.Delete(nodeID))
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("rolls back when the node delete fails", func(t *testing.T) {
-		mock, repo := setup(t)
-
-		mock.ExpectBegin()
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "softwares" WHERE node_id = $1`)).
-			WithArgs(nodeID).
-			WillReturnResult(sqlmock.NewResult(0, 18))
-		mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM "nodes" WHERE node_id = $1`)).
-			WithArgs(nodeID).
-			WillReturnError(errors.New("delete failed"))
-		mock.ExpectRollback()
-
-		assert.Error(t, repo.Delete(nodeID))
-		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

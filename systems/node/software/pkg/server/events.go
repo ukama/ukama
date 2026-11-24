@@ -35,24 +35,31 @@ type SoftwareUpdateEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewSoftwareEventServer(orgName string, s *SoftwareServer) *SoftwareUpdateEventServer {
+func NewSoftwareEventServer(orgName string,
+	s *SoftwareServer) *SoftwareUpdateEventServer {
 	return &SoftwareUpdateEventServer{
 		s:       s,
 		orgName: orgName,
 	}
 }
-func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	log.Infof(logMsgRoutingKey, e.RoutingKey, e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.global.{{ .Org}}.hub.artifactmanager.app.uploaded"):
 		return n.handleArtifactUploadedEvent(ctx, e)
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.global.{{ .Org}}.hub.distributor.app.chunkready"):
 		return n.handleNodeAppChunkReadyEvent(ctx, e)
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
+	case msgbus.PrepareRoute(n.orgName,
+		evt.NodeStateEventRoutingKey[evt.NodeStateEventOnline]):
 		return n.handleNodeOnlineEvent(ctx, e)
-	case msgbus.PrepareRoute(n.orgName, evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
+	case msgbus.PrepareRoute(n.orgName,
+		evt.NodeStateEventRoutingKey[evt.NodeStateEventDelete]):
 		return n.handleNodeDeleteEvent(ctx, e)
-	case msgbus.PrepareRoute(n.orgName, "event.cloud.local.{{ .Org}}.node.health.apps.changed"):
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.node.health.apps.changed"):
 		return n.handleHealthAppsChangedEvent(ctx, e)
 
 	default:
@@ -62,7 +69,8 @@ func (n *SoftwareUpdateEventServer) EventNotification(ctx context.Context, e *ep
 	return &epb.EventResponse{}, nil
 }
 
-// objectTypeFromRoutingKey extracts the artifact type from ...hub.<service>.<object>.<action>.
+// objectTypeFromRoutingKey extracts the artifact type from
+// ...hub.<service>.<object>.<action>.
 func objectTypeFromRoutingKey(rk string) string {
 	parts := strings.Split(rk, ".")
 	if len(parts) >= 2 {
@@ -71,7 +79,8 @@ func objectTypeFromRoutingKey(rk string) string {
 	return "app"
 }
 
-func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	msg, err := cpb.UnmarshalProtoEvent[epb.NodeOnlineEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node online event: %w", err)
@@ -111,7 +120,8 @@ func (n *SoftwareUpdateEventServer) handleNodeOnlineEvent(ctx context.Context, e
 	return &epb.EventResponse{}, nil
 }
 
-func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	msg, err := cpb.UnmarshalProtoEvent[epb.EventRegistryNodeDelete](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node delete event: %w", err)
@@ -129,7 +139,8 @@ func (n *SoftwareUpdateEventServer) handleNodeDeleteEvent(ctx context.Context, e
 // from health and applies the desired release. Driven by the health service's
 // change-only notification, so software need not listen to the periodic health
 // report firehose.
-func (n *SoftwareUpdateEventServer) handleHealthAppsChangedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) handleHealthAppsChangedEvent(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	p, err := cpb.UnmarshalProtoEvent[epb.HealthAppsChangedEvent](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal health apps changed event: %w", err)
@@ -184,7 +195,8 @@ func (n *SoftwareUpdateEventServer) applyDesiredToNode(nodeID string) error {
 
 // handleArtifactUploadedEvent records availability only — it does NOT set desired
 // or touch any node's status. Promotion is an explicit, separate action.
-func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	p, err := cpb.UnmarshalProtoEvent[epb.EventArtifactUploaded](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal artifact uploaded event: %w", err)
@@ -201,14 +213,16 @@ func (n *SoftwareUpdateEventServer) handleArtifactUploadedEvent(ctx context.Cont
 
 // handleNodeAppChunkReadyEvent only flags the catalog row as chunked — it no longer
 // drives any node's desired version.
-func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
+func (n *SoftwareUpdateEventServer) handleNodeAppChunkReadyEvent(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
 	p, err := cpb.UnmarshalProtoEvent[epb.EventArtifactChunkReady](e.Msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal node app chunk ready event: %w", err)
 	}
 	aType := objectTypeFromRoutingKey(e.RoutingKey)
 	// chunkready can arrive before uploaded — ensure the row exists, then flag it.
-	if err := n.s.releaseRepo.Upsert(&db.ReleaseCatalog{Name: p.Name, Type: aType, Version: p.Version, Available: true}); err != nil {
+	if err := n.s.releaseRepo.Upsert(&db.ReleaseCatalog{Name: p.Name, Type: aType,
+		Version: p.Version, Available: true}); err != nil {
 		return nil, fmt.Errorf("failed to upsert release catalog: %w", err)
 	}
 	if err := n.s.releaseRepo.SetChunked(p.Name, aType, p.Version); err != nil {
@@ -301,7 +315,8 @@ func (n *SoftwareUpdateEventServer) reconcileApps(nodeID string) error {
 	return nil
 }
 
-func findMissingApps(hrApps []*hpb.App, apps []db.App, nodeType *string) map[string]db.App {
+func findMissingApps(hrApps []*hpb.App, apps []db.App,
+	nodeType *string) map[string]db.App {
 	appNames := make(map[string]struct{}, len(apps))
 	for _, app := range apps {
 		appNames[strings.ToLower(app.Name)] = struct{}{}
@@ -334,7 +349,8 @@ func findMissingApps(hrApps []*hpb.App, apps []db.App, nodeType *string) map[str
 	return missingByName
 }
 
-func (n *SoftwareUpdateEventServer) createMissingApps(missingApps map[string]db.App) error {
+func (n *SoftwareUpdateEventServer) createMissingApps(
+	missingApps map[string]db.App) error {
 	for _, app := range missingApps {
 		if err := n.s.appRepo.Create(app); err != nil {
 			if strings.Contains(strings.ToLower(err.Error()), "duplicate") {
@@ -346,7 +362,8 @@ func (n *SoftwareUpdateEventServer) createMissingApps(missingApps map[string]db.
 	return nil
 }
 
-func (n *SoftwareUpdateEventServer) listApps(nodeId string) (*hpb.ListAppsResponse, error) {
+func (n *SoftwareUpdateEventServer) listApps(nodeId string) (*hpb.ListAppsResponse,
+	error) {
 	healthClient, err := n.s.healthClient.GetClient()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get health client: %w", err)
