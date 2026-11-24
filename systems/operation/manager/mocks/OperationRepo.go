@@ -5,10 +5,10 @@ package mocks
 import (
 	context "context"
 
-	mock "github.com/stretchr/testify/mock"
 	db "github.com/ukama/ukama/systems/operation/manager/pkg/db"
+	gorm "gorm.io/gorm"
 
-	time "time"
+	mock "github.com/stretchr/testify/mock"
 
 	uuid "github.com/ukama/ukama/systems/common/uuid"
 )
@@ -18,17 +18,17 @@ type OperationRepo struct {
 	mock.Mock
 }
 
-// Delete provides a mock function with given fields: ctx, id, actor
-func (_m *OperationRepo) Delete(ctx context.Context, id uuid.UUID, actor string) error {
-	ret := _m.Called(ctx, id, actor)
+// Add provides a mock function with given fields: ctx, ops, nestedFunc
+func (_m *OperationRepo) Add(ctx context.Context, ops []*db.Operation, nestedFunc func(*gorm.DB) error) error {
+	ret := _m.Called(ctx, ops, nestedFunc)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Delete")
+		panic("no return value specified for Add")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, string) error); ok {
-		r0 = rf(ctx, id, actor)
+	if rf, ok := ret.Get(0).(func(context.Context, []*db.Operation, func(*gorm.DB) error) error); ok {
+		r0 = rf(ctx, ops, nestedFunc)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -36,34 +36,22 @@ func (_m *OperationRepo) Delete(ctx context.Context, id uuid.UUID, actor string)
 	return r0
 }
 
-// FindExpired provides a mock function with given fields: ctx, now, limit
-func (_m *OperationRepo) FindExpired(ctx context.Context, now time.Time, limit int) ([]db.Operation, error) {
-	ret := _m.Called(ctx, now, limit)
+// Delete provides a mock function with given fields: ctx, id, nestedFunc
+func (_m *OperationRepo) Delete(ctx context.Context, id uuid.UUID, nestedFunc func(*db.Operation, *gorm.DB) error) error {
+	ret := _m.Called(ctx, id, nestedFunc)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FindExpired")
+		panic("no return value specified for Delete")
 	}
 
-	var r0 []db.Operation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, time.Time, int) ([]db.Operation, error)); ok {
-		return rf(ctx, now, limit)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, time.Time, int) []db.Operation); ok {
-		r0 = rf(ctx, now, limit)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, func(*db.Operation, *gorm.DB) error) error); ok {
+		r0 = rf(ctx, id, nestedFunc)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]db.Operation)
-		}
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, time.Time, int) error); ok {
-		r1 = rf(ctx, now, limit)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Get provides a mock function with given fields: ctx, id
@@ -96,29 +84,29 @@ func (_m *OperationRepo) Get(ctx context.Context, id uuid.UUID) (*db.Operation, 
 	return r0, r1
 }
 
-// GetByIdempotencyKey provides a mock function with given fields: ctx, key
-func (_m *OperationRepo) GetByIdempotencyKey(ctx context.Context, key string) ([]*db.Operation, error) {
-	ret := _m.Called(ctx, key)
+// List provides a mock function with given fields: ctx, filter
+func (_m *OperationRepo) List(ctx context.Context, filter db.OperationFilter) ([]*db.Operation, error) {
+	ret := _m.Called(ctx, filter)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByIdempotencyKey")
+		panic("no return value specified for List")
 	}
 
 	var r0 []*db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]*db.Operation, error)); ok {
-		return rf(ctx, key)
+	if rf, ok := ret.Get(0).(func(context.Context, db.OperationFilter) ([]*db.Operation, error)); ok {
+		return rf(ctx, filter)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []*db.Operation); ok {
-		r0 = rf(ctx, key)
+	if rf, ok := ret.Get(0).(func(context.Context, db.OperationFilter) []*db.Operation); ok {
+		r0 = rf(ctx, filter)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, key)
+	if rf, ok := ret.Get(1).(func(context.Context, db.OperationFilter) error); ok {
+		r1 = rf(ctx, filter)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -126,119 +114,29 @@ func (_m *OperationRepo) GetByIdempotencyKey(ctx context.Context, key string) ([
 	return r0, r1
 }
 
-// GetByResource provides a mock function with given fields: ctx, resourceKey
-func (_m *OperationRepo) GetByResource(ctx context.Context, resourceKey string) (*db.Operation, error) {
-	ret := _m.Called(ctx, resourceKey)
+// Update provides a mock function with given fields: ctx, id, nestedFunc
+func (_m *OperationRepo) Update(ctx context.Context, id uuid.UUID, nestedFunc func(*db.Operation, *gorm.DB) error) (*db.Operation, error) {
+	ret := _m.Called(ctx, id, nestedFunc)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetByResource")
+		panic("no return value specified for Update")
 	}
 
 	var r0 *db.Operation
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) (*db.Operation, error)); ok {
-		return rf(ctx, resourceKey)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, func(*db.Operation, *gorm.DB) error) (*db.Operation, error)); ok {
+		return rf(ctx, id, nestedFunc)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) *db.Operation); ok {
-		r0 = rf(ctx, resourceKey)
+	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, func(*db.Operation, *gorm.DB) error) *db.Operation); ok {
+		r0 = rf(ctx, id, nestedFunc)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*db.Operation)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = rf(ctx, resourceKey)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// MarkRunning provides a mock function with given fields: ctx, id, fencingToken, actor
-func (_m *OperationRepo) MarkRunning(ctx context.Context, id uuid.UUID, fencingToken uint64, actor string) (*db.Operation, error) {
-	ret := _m.Called(ctx, id, fencingToken, actor)
-
-	if len(ret) == 0 {
-		panic("no return value specified for MarkRunning")
-	}
-
-	var r0 *db.Operation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, string) (*db.Operation, error)); ok {
-		return rf(ctx, id, fencingToken, actor)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, string) *db.Operation); ok {
-		r0 = rf(ctx, id, fencingToken, actor)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Operation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64, string) error); ok {
-		r1 = rf(ctx, id, fencingToken, actor)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Start provides a mock function with given fields: ctx, ops, mustBeFree, lockTTL
-func (_m *OperationRepo) Start(ctx context.Context, ops []*db.Operation, mustBeFree []string, lockTTL time.Duration) ([]*db.Operation, error) {
-	ret := _m.Called(ctx, ops, mustBeFree, lockTTL)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Start")
-	}
-
-	var r0 []*db.Operation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, []*db.Operation, []string, time.Duration) ([]*db.Operation, error)); ok {
-		return rf(ctx, ops, mustBeFree, lockTTL)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, []*db.Operation, []string, time.Duration) []*db.Operation); ok {
-		r0 = rf(ctx, ops, mustBeFree, lockTTL)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*db.Operation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, []*db.Operation, []string, time.Duration) error); ok {
-		r1 = rf(ctx, ops, mustBeFree, lockTTL)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// Terminate provides a mock function with given fields: ctx, id, fencingToken, status, audit, opErr
-func (_m *OperationRepo) Terminate(ctx context.Context, id uuid.UUID, fencingToken uint64, status db.OperationStatus, audit db.OperationAudit, opErr string) (*db.Operation, error) {
-	ret := _m.Called(ctx, id, fencingToken, status, audit, opErr)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Terminate")
-	}
-
-	var r0 *db.Operation
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) (*db.Operation, error)); ok {
-		return rf(ctx, id, fencingToken, status, audit, opErr)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) *db.Operation); ok {
-		r0 = rf(ctx, id, fencingToken, status, audit, opErr)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*db.Operation)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, uint64, db.OperationStatus, db.OperationAudit, string) error); ok {
-		r1 = rf(ctx, id, fencingToken, status, audit, opErr)
+	if rf, ok := ret.Get(1).(func(context.Context, uuid.UUID, func(*db.Operation, *gorm.DB) error) error); ok {
+		r1 = rf(ctx, id, nestedFunc)
 	} else {
 		r1 = ret.Error(1)
 	}

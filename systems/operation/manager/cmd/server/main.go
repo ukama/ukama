@@ -80,9 +80,13 @@ func runGrpcServer(gormDb sql.Db) {
 	)
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	repo := db.NewOperationRepo(gormDb)
-	opServer := server.NewOperationServer(svcConf.OrgName, svcConf.OrgId, repo, mbClient)
-	eventServer := server.NewEventServer(svcConf.OrgName, repo)
+	repos := server.Repos{
+		Operations: db.NewOperationRepo(gormDb),
+		Locks:      db.NewLockRepo(gormDb),
+		Audits:     db.NewAuditRepo(gormDb),
+	}
+	opServer := server.NewOperationServer(svcConf.OrgName, svcConf.OrgId, repos, mbClient)
+	eventServer := server.NewEventServer(svcConf.OrgName, repos)
 
 	grpcSrv := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
 		pb.RegisterOperationManagerServiceServer(s, opServer)
@@ -94,7 +98,7 @@ func runGrpcServer(gormDb sql.Db) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	go server.NewSweeper(repo).Run(ctx)
+	go server.NewSweeper(repos).Run(ctx)
 
 	go grpcSrv.StartServer()
 	go msgBusListener(mbClient)

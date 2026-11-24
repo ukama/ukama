@@ -15,76 +15,76 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/tj/assert"
 
 	"github.com/ukama/ukama/systems/common/uuid"
-	"github.com/ukama/ukama/systems/operation/manager/mocks"
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 )
 
-func newTestSweeper(repo db.OperationRepo, interval time.Duration) *Sweeper {
-	return &Sweeper{repo: repo, interval: interval, batch: 10}
+func newTestSweeper(r *testRepos, interval time.Duration) *Sweeper {
+	return &Sweeper{repos: r.repos(), interval: interval, batch: 10}
 }
 
-func timeoutAudit() interface{} {
-	return mock.MatchedBy(func(a db.OperationAudit) bool {
-		return a.Event == "timeout" && a.Reason == "lease expired" &&
-			a.Actor == pkg.OperationManagerSweeperActor
+func expiredFilter() interface{} {
+	return mock.MatchedBy(func(f db.OperationFilter) bool {
+		return len(f.Statuses) == 2 && f.Statuses[0] == db.OperationPending &&
+			f.Statuses[1] == db.OperationRunning && f.LeaseExpiresBefore != nil &&
+			!f.LeaseExpiresBefore.After(time.Now()) &&
+			f.OrderBy == db.OrderByLeaseExpiry && f.Limit == 10
 	})
 }
 
 func TestSweeperSweepOnce(t *testing.T) {
-	t.Run("TimesOutEveryExpiredOperation", func(t *testing.T) {
-		repo := &mocks.OperationRepo{}
-		first := db.Operation{Id: uuid.NewV4(), FencingToken: 3}
-		second := db.Operation{Id: uuid.NewV4(), FencingToken: 4}
+	t.Run("TimesOutEveryExpiredOperationOldestFirst", func(t *testing.T) {
+		r := newTestRepos()
+		first := runningOp(3)
+		second := runningOp(4)
 
-		repo.On("FindExpired", mock.Anything, mock.Anything, 10).
-			Return([]db.Operation{first, second}, nil).Once()
-		repo.On("Terminate", mock.Anything, first.Id, first.FencingToken,
-			db.OperationTimeout, timeoutAudit(), "lease expired").
-			Return(nil, fmt.Errorf("db down")).Once()
-		repo.On("Terminate", mock.Anything, second.Id, second.FencingToken,
-			db.OperationTimeout, timeoutAudit(), "lease expired").
-			Return(&second, nil).Once()
+		r.ops.On("List", mock.Anything, expiredFilter()).
+			Return([]*db.Operation{&first, &second}, nil).Once()
+		r.updateFails(first.Id, fmt.Errorf("db down"))
+		r.updates(second)
 
-		newTestSweeper(repo, time.Minute).sweepOnce(context.Background())
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
 
-		repo.AssertExpectations(t)
+		assert.Equal(t, []uuid.UUID{second.Id}, r.released)
+		assert.Equal(t, []string{"timeout"}, r.events())
+		assert.Equal(t, "lease expired", r.saved[0].Reason)
+		assert.Equal(t, pkg.OperationManagerSweeperActor, r.saved[0].Actor)
+		r.assertExpectations(t)
 	})
 
 	t.Run("BoundsEachSweepByTheInterval", func(t *testing.T) {
-		repo := &mocks.OperationRepo{}
-		repo.On("FindExpired", mock.MatchedBy(func(ctx context.Context) bool {
+		r := newTestRepos()
+		r.ops.On("List", mock.MatchedBy(func(ctx context.Context) bool {
 			deadline, ok := ctx.Deadline()
 			return ok && time.Until(deadline) <= time.Minute
-		}), mock.Anything, 10).Return(nil, nil).Once()
+		}), expiredFilter()).Return(nil, nil).Once()
 
-		newTestSweeper(repo, time.Minute).sweepOnce(context.Background())
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
 
-		repo.AssertExpectations(t)
-		repo.AssertNotCalled(t, "Terminate", mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		r.assertExpectations(t)
+		assert.Empty(t, r.calls("Update"))
 	})
 
-	t.Run("FindExpiredErrorStopsTheSweep", func(t *testing.T) {
-		repo := &mocks.OperationRepo{}
-		repo.On("FindExpired", mock.Anything, mock.Anything, 10).
+	t.Run("ListErrorStopsTheSweep", func(t *testing.T) {
+		r := newTestRepos()
+		r.ops.On("List", mock.Anything, expiredFilter()).
 			Return(nil, fmt.Errorf("db down")).Once()
 
-		newTestSweeper(repo, time.Minute).sweepOnce(context.Background())
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
 
-		repo.AssertNotCalled(t, "Terminate", mock.Anything, mock.Anything,
-			mock.Anything, mock.Anything, mock.Anything, mock.Anything)
+		assert.Empty(t, r.calls("Update"))
 	})
 }
 
 func TestSweeperRun(t *testing.T) {
-	repo := &mocks.OperationRepo{}
+	r := newTestRepos()
 	ctx, cancel := context.WithCancel(context.Background())
 	swept := make(chan struct{})
 
-	repo.On("FindExpired", mock.Anything, mock.Anything, 10).
+	r.ops.On("List", mock.Anything, expiredFilter()).
 		Run(func(mock.Arguments) {
 			cancel()
 			close(swept)
@@ -92,7 +92,7 @@ func TestSweeperRun(t *testing.T) {
 
 	done := make(chan struct{})
 	go func() {
-		newTestSweeper(repo, 10*time.Millisecond).Run(ctx)
+		newTestSweeper(r, 10*time.Millisecond).Run(ctx)
 		close(done)
 	}()
 
@@ -106,5 +106,5 @@ func TestSweeperRun(t *testing.T) {
 	case <-time.After(5 * time.Second):
 		t.Fatal("sweeper did not stop after cancel")
 	}
-	repo.AssertExpectations(t)
+	r.assertExpectations(t)
 }

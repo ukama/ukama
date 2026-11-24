@@ -17,7 +17,6 @@ import (
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"gorm.io/gorm"
 
 	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
@@ -33,11 +32,11 @@ import (
 type EventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 	orgName string
-	repo    db.OperationRepo
+	repos   Repos
 }
 
-func NewEventServer(orgName string, repo db.OperationRepo) *EventServer {
-	return &EventServer{orgName: orgName, repo: repo}
+func NewEventServer(orgName string, repos Repos) *EventServer {
+	return &EventServer{orgName: orgName, repos: repos}
 }
 
 func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (*epb.EventResponse, error) {
@@ -94,14 +93,14 @@ func (e *EventServer) terminate(ctx context.Context, operationId string,
 		return nil, fmt.Errorf("invalid operation id %q: %w", operationId, err)
 	}
 
-	_, err = e.repo.Terminate(ctx, opId, fencingToken, st, audit, opErr)
+	_, err = e.repos.terminate(ctx, opId, fencingToken, st, audit, opErr)
 	switch {
 	case err == nil:
 		log.Infof("operation %s → %s (lock released)", opId, st)
 	case errors.Is(err, store.ErrPrecondition):
 		log.Warnf("operation/manager: ignoring %s event for op %s: %v",
 			audit.Event, opId, err)
-	case errors.Is(err, gorm.ErrRecordNotFound):
+	case errors.Is(err, store.ErrNotFound):
 		log.Warnf("operation/manager: ignoring %s event for unknown op %s",
 			audit.Event, opId)
 	default:
