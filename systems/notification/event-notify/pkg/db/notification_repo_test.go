@@ -9,6 +9,8 @@
 package db_test
 
 import (
+	"database/sql/driver"
+	"errors"
 	"regexp"
 	"testing"
 	"time"
@@ -127,4 +129,136 @@ func TestNotificationRepo_Update(t *testing.T) {
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
 	})
+}
+
+type uintConverter struct{}
+
+func (uintConverter) ConvertValue(v any) (driver.Value, error) {
+	if vr, ok := v.(driver.Valuer); ok {
+		val, err := vr.Value()
+		if err != nil {
+			return nil, err
+		}
+		v = val
+	}
+	if u, ok := v.(uint8); ok {
+		return int64(u), nil
+	}
+	return driver.DefaultParameterConverter.ConvertValue(v)
+}
+
+func newMockRepoDb(t *testing.T) (sqlmock.Sqlmock, *UkamaDbMock) {
+	t.Helper()
+	db, mock, err := sqlmock.New(sqlmock.ValueConverterOption(uintConverter{}))
+	assert.NoError(t, err)
+	gdb, err := gorm.Open(postgres.New(postgres.Config{
+		DSN:                  "sqlmock_db_0",
+		DriverName:           "postgres",
+		Conn:                 db,
+		PreferSimpleProtocol: true,
+	}), &gorm.Config{})
+	assert.NoError(t, err)
+	return mock, &UkamaDbMock{GormDb: gdb}
+}
+
+func TestNotificationRepo_Add(t *testing.T) {
+	mock, udb := newMockRepoDb(t)
+	notification := n
+
+	mock.ExpectBegin()
+	mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "notifications"`)).
+		WillReturnResult(sqlmock.NewResult(1, 1))
+	mock.ExpectCommit()
+
+	assert.NoError(t, int_db.NewNotificationRepo(udb).Add(&notification))
+	assert.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestNotificationRepo_AddWithEvent(t *testing.T) {
+	insertEvent := regexp.QuoteMeta(`INSERT INTO "event_msgs"`)
+	insertNotification := regexp.QuoteMeta(`INSERT INTO "notifications"`)
+	insertUsers := regexp.QuoteMeta(`INSERT INTO "user_notifications"`)
+	eventId := func() *sqlmock.Rows { return sqlmock.NewRows([]string{"id"}).AddRow(7) }
+	users := func() []*int_db.UserNotification {
+		return []*int_db.UserNotification{{Id: uuid.NewV4(), NotificationId: n.Id,
+			UserId: uuid.NewV4()}}
+	}
+
+	t.Run("StoresEventNotificationAndUsers", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		notification := n
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(insertEvent).WillReturnRows(eventId())
+		mock.ExpectExec(insertNotification).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectExec(insertUsers).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		err := int_db.NewNotificationRepo(udb).AddWithEvent(&int_db.EventMsg{Key: "k"},
+			&notification, users())
+
+		assert.NoError(t, err)
+		assert.Equal(t, uint(7), notification.EventMsgID)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("NoUsersSkipsUserRows", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		notification := n
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(insertEvent).WillReturnRows(eventId())
+		mock.ExpectExec(insertNotification).WillReturnResult(sqlmock.NewResult(1, 1))
+		mock.ExpectCommit()
+
+		err := int_db.NewNotificationRepo(udb).AddWithEvent(&int_db.EventMsg{Key: "k"},
+			&notification, nil)
+
+		assert.NoError(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("EventInsertErrorRollsBack", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		notification := n
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(insertEvent).WillReturnError(errors.New("db down"))
+		mock.ExpectRollback()
+
+		err := int_db.NewNotificationRepo(udb).AddWithEvent(&int_db.EventMsg{Key: "k"},
+			&notification, users())
+
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("NotificationInsertErrorRollsBack", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		notification := n
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(insertEvent).WillReturnRows(eventId())
+		mock.ExpectExec(insertNotification).WillReturnError(errors.New("db down"))
+		mock.ExpectRollback()
+
+		err := int_db.NewNotificationRepo(udb).AddWithEvent(&int_db.EventMsg{Key: "k"},
+			&notification, users())
+
+		assert.Error(t, err)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+}
+
+func TestNotificationRepo_GetNotFound(t *testing.T) {
+	mock, udb := newMockRepoDb(t)
+
+	mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WithArgs(n.Id, 1).
+		WillReturnError(gorm.ErrRecordNotFound)
+
+	out, err := int_db.NewNotificationRepo(udb).Get(n.Id)
+
+	assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+	assert.Nil(t, out)
+	assert.NoError(t, mock.ExpectationsWereMet())
 }

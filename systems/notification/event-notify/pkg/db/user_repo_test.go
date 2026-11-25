@@ -9,6 +9,7 @@
 package db_test
 
 import (
+	"errors"
 	"regexp"
 	"testing"
 
@@ -669,5 +670,75 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestUserRepo_ErrorPaths(t *testing.T) {
+	cols := []string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role",
+		"created_at", "updated_at", "deleted_at"}
+	empty := func() *sqlmock.Rows { return sqlmock.NewRows(cols) }
+	dbDown := errors.New("db down")
+
+	t.Run("GetUser", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		_, err := r.GetUser("")
+		assert.Error(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetUser(user.UserId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetUser(user.UserId)
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetSubscriber", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		_, err := r.GetSubscriber(int_db.EmptyUUID)
+		assert.Error(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetSubscriber(user.SubscriberId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetSubscriber(user.SubscriberId)
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetUsers", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+		networkId := uuid.NewV4().String()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`network_id = $2`)).WillReturnError(dbDown)
+		_, err := r.GetUsers(user.OrgId, networkId, "", "", uint8(roles.TYPE_INVALID))
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetUsers(user.OrgId, "", "", "", uint8(roles.TYPE_INVALID))
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetAllUsersAndRoles", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err := r.GetAllUsers(user.OrgId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetUserWithRoles(user.OrgId, []roles.RoleType{user.Role})
+		assert.True(t, errors.Is(err, dbDown))
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
