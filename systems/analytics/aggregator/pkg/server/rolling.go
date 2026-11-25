@@ -49,31 +49,24 @@ type windowAgg struct {
 	lastValue            float64
 }
 
-// aggregateWindows reads kpi_windows for a KPI in [fromID, toID) and folds
-// their components into one windowAgg per scope.
+// aggregateWindows folds kpi_windows components for a KPI in [fromID, toID)
+// into one windowAgg per scope.
 func (s *AggregatorServer) aggregateWindows(kpiKey string, fromID, toID int64) (map[string]*windowAgg, error) {
-	rows, err := s.windows.WindowsInRange(s.org, kpiKey, fromID, toID)
+	rows, err := s.windows.AggregateWindows(s.org, kpiKey, fromID, toID)
 	if err != nil {
 		return nil, err
 	}
 
-	out := map[string]*windowAgg{}
+	out := make(map[string]*windowAgg, len(rows))
 
 	for _, row := range rows {
-		a, ok := out[row.Scope]
-		if !ok {
-			a = &windowAgg{min: math.Inf(1), max: math.Inf(-1), lastWindow: -1}
-			out[row.Scope] = a
-		}
-
-		a.sum += row.Sum
-		a.count += row.Count
-		a.min = math.Min(a.min, row.Min)
-		a.max = math.Max(a.max, row.Max)
-
-		if row.WindowID > a.lastWindow {
-			a.lastWindow = row.WindowID
-			a.lastValue = row.Value
+		out[row.Scope] = &windowAgg{
+			sum:        row.Sum,
+			count:      row.Count,
+			min:        row.Min,
+			max:        row.Max,
+			lastWindow: row.LastWindowID,
+			lastValue:  row.Last,
 		}
 	}
 

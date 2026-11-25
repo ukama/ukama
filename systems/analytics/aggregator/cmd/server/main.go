@@ -110,8 +110,9 @@ func run(sDb sql.Db) {
 			keep, rollup.MinWindowRetention)
 	}
 
-	engine, err := rollup.NewEngine(grid, kpis, repo, repo, repo, serviceConfig.OrgName,
-		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.SweepInterval, keep)
+	engine, err := rollup.NewEngine(grid, kpis, repo, repo, serviceConfig.OrgName,
+		serviceConfig.Rollup.Timezone, serviceConfig.Rollup.SweepInterval,
+		serviceConfig.Rollup.FlushInterval, keep)
 	if err != nil {
 		log.Fatalf("Initializing rollup engine failed: %v", err)
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	pb "github.com/ukama/ukama/systems/analytics/aggregator/pb/gen"
+	"github.com/ukama/ukama/systems/analytics/aggregator/pkg/db"
 	"github.com/ukama/ukama/systems/analytics/schema"
 )
 
@@ -24,8 +25,37 @@ import (
 // the read path deterministically without a DB or a clock.
 type stubWindows struct{ rows []schema.KpiWindow }
 
-func (s stubWindows) WindowsInRange(_ string, _ string, _ int64, _ int64) ([]schema.KpiWindow, error) {
-	return s.rows, nil
+func (s stubWindows) AggregateWindows(_ string, _ string, _ int64, _ int64) ([]db.WindowAgg, error) {
+	byScope := map[string]*db.WindowAgg{}
+	order := []string{}
+
+	for _, r := range s.rows {
+		a, ok := byScope[r.Scope]
+		if !ok {
+			a = &db.WindowAgg{Scope: r.Scope, Min: r.Min, Max: r.Max, LastWindowID: -1}
+			byScope[r.Scope] = a
+			order = append(order, r.Scope)
+		}
+
+		a.Sum += r.Sum
+		a.Count += r.Count
+		a.Min = min(a.Min, r.Min)
+		a.Max = max(a.Max, r.Max)
+
+		if r.WindowID > a.LastWindowID {
+			a.LastWindowID = r.WindowID
+			a.Last = r.Value
+			a.Unit = r.Unit
+			a.Symbol = r.Symbol
+		}
+	}
+
+	out := make([]db.WindowAgg, 0, len(order))
+	for _, scope := range order {
+		out = append(out, *byScope[scope])
+	}
+
+	return out, nil
 }
 
 func (s stubWindows) WindowBounds(_ string, _ string) (int64, int64, bool, error) {
