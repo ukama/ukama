@@ -18,7 +18,7 @@ var _ = proto.Marshal
 var _ = fmt.Errorf
 var _ = math.Inf
 
-func (this *MonitoredIntent) Validate() error {
+func (this *Intent) Validate() error {
 	if this.Deadline != nil {
 		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.Deadline); err != nil {
 			return github_com_mwitkow_go_proto_validators.FieldError("Deadline", err)

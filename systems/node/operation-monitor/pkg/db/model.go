@@ -12,8 +12,9 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type IntentStatus uint8
@@ -50,21 +51,21 @@ func (s IntentStatus) IsTerminal() bool {
 		s == IntentExpired || s == IntentCancelled
 }
 
-type MonitoredIntent struct {
-	Id             uuid.UUID      `gorm:"primaryKey;type:uuid" json:"id"`
-	OperationId    uuid.UUID      `gorm:"type:uuid;not null;uniqueIndex" json:"operationId"`
-	ResourceKey    string         `gorm:"not null;index" json:"resourceKey"`
-	ActionType     string         `gorm:"not null;index" json:"actionType"`
-	FencingToken   uint64         `gorm:"not null" json:"fencingToken"`
-	CompletionRule string         `gorm:"not null" json:"completionRule"`
-	Status         IntentStatus   `gorm:"not null;index" json:"status"`
+type Intent struct {
+	Id             uuid.UUID    `gorm:"primaryKey;type:uuid" json:"id"`
+	OperationId    uuid.UUID    `gorm:"type:uuid;not null;uniqueIndex" json:"operationId"`
+	ResourceKey    string       `gorm:"not null;index" json:"resourceKey"`
+	ActionType     string       `gorm:"not null;index" json:"actionType"`
+	FencingToken   uint64       `gorm:"not null" json:"fencingToken"`
+	CompletionRule string       `gorm:"not null" json:"completionRule"`
+	Status         IntentStatus `gorm:"not null;index" json:"status"`
 	// Armed flips true once the node is observed OUTSIDE the rule's target
 	// state. A rule match only completes an armed intent, so a steady-state
 	// report (e.g. an online heartbeat before a reboot begins) can't
 	// prematurely complete a freshly registered intent.
-	Armed          bool           `gorm:"not null;default:false" json:"armed"`
-	Deadline       time.Time      `gorm:"not null;index" json:"deadline"`
-	CreatedAt      time.Time      `json:"createdAt"`
-	UpdatedAt      time.Time      `json:"updatedAt"`
-	DeletedAt      gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	Armed     bool           `gorm:"not null;default:false" json:"armed"`
+	Deadline  time.Time      `gorm:"not null;index" json:"deadline"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }

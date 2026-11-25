@@ -38,6 +38,10 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				evt.EventRoutingKey[evt.EventNodeStateTransition],
 				"event.cloud.local.{{ .Org}}.node.health.apps.changed",
+				evt.EventRoutingKey[evt.EventOperationCompleted],
+				evt.EventRoutingKey[evt.EventOperationFailed],
+				evt.EventRoutingKey[evt.EventOperationTimedOut],
+				evt.EventRoutingKey[evt.EventOperationCancelled],
 			},
 		},
 	}

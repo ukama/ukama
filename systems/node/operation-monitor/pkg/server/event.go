@@ -10,21 +10,25 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"gorm.io/gorm"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/events"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
+	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	evt "github.com/ukama/ukama/systems/common/events"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type EventServer struct {
@@ -37,7 +41,8 @@ func NewEventServer(orgName string, m *MonitorServer) *EventServer {
 	return &EventServer{orgName: orgName, monitor: m}
 }
 
-func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) EventNotification(ctx context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	if event == nil {
 		return nil, fmt.Errorf("nil event")
 	}
@@ -46,15 +51,28 @@ func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (
 	switch event.RoutingKey {
 	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
 		return e.handleStateTransition(ctx, event)
-	case msgbus.PrepareRoute(e.orgName, "event.cloud.local.{{ .Org}}.node.health.apps.changed"):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.local.{{ .Org}}.node.health.apps.changed"):
 		return e.handleAppsChanged(ctx, event)
+	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationCompleted]):
+		return e.handleResult(event, db.IntentCompleted,
+			operationIdOf[epb.OperationCompletedEvent])
+	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationFailed]):
+		return e.handleResult(event, db.IntentFailed, operationIdOf[epb.OperationFailedEvent])
+	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationTimedOut]):
+		return e.handleResult(event, db.IntentExpired,
+			operationIdOf[epb.OperationTimedOutEvent])
+	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationCancelled]):
+		return e.handleResult(event, db.IntentCancelled,
+			operationIdOf[epb.OperationCancelledEvent])
 	default:
 		log.Warnf("operation-monitor: unhandled routing key %s", event.RoutingKey)
 		return &epb.EventResponse{}, nil
 	}
 }
 
-func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) handleStateTransition(_ context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	msg, err := cpb.UnmarshalProtoEvent[epb.NodeStateChangeEvent](event.Msg)
 	if err != nil {
 		log.Errorf("operation-monitor: unmarshal NodeStateChangeEvent: %v", err)
@@ -62,8 +80,8 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 	}
 
 	nodeId := strings.ToLower(msg.NodeId)
-	resourceKey := "node:" + nodeId
-	intents, err := e.monitor.repo.FindWatchingByResource(resourceKey)
+	resourceKey := nodeResourcePrefix + nodeId
+	intents, err := e.monitor.repo.List(watchingOn(resourceKey))
 	if err != nil {
 		log.Errorf("operation-monitor: lookup intents for %s: %v", resourceKey, err)
 		return nil, retryable("lookup intents for %s: %v", resourceKey, err)
@@ -73,9 +91,9 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 	}
 
 	transition := map[string]string{
-		"state":    msg.State,
-		"substate": msg.Substate,
-		"node_id":  nodeId,
+		ruleKeyState:        msg.State,
+		pkg.RuleKeySubstate: msg.Substate,
+		ruleKeyNodeId:       nodeId,
 	}
 
 	for i := range intents {
@@ -87,7 +105,7 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 			if intent.Armed || !ruleObserved(intent.CompletionRule, transition) {
 				continue
 			}
-			if err := e.monitor.repo.Arm(intent.OperationId); err != nil {
+			if _, err := e.monitor.repo.Update(intent.OperationId, arm()); err != nil {
 				log.Errorf("operation-monitor: arm %s: %v", intent.OperationId, err)
 				return nil, retryable("arm %s: %v", intent.OperationId, err)
 			}
@@ -96,7 +114,8 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 			continue
 		}
 		if !intent.Armed {
-			log.Infof("operation-monitor: intent %s matched %v but not armed yet (no departure observed), skipping",
+			log.Infof("operation-monitor: intent %s matched %v but not armed yet (no departure "+
+				"observed), skipping",
 				intent.OperationId, transition)
 			continue
 		}
@@ -107,7 +126,8 @@ func (e *EventServer) handleStateTransition(_ context.Context, event *epb.Event)
 	return &epb.EventResponse{}, nil
 }
 
-func (e *EventServer) handleAppsChanged(_ context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) handleAppsChanged(_ context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	msg, err := cpb.UnmarshalProtoEvent[epb.HealthAppsChangedEvent](event.Msg)
 	if err != nil {
 		log.Errorf("operation-monitor: unmarshal HealthAppsChangedEvent: %v", err)
@@ -115,8 +135,8 @@ func (e *EventServer) handleAppsChanged(_ context.Context, event *epb.Event) (*e
 	}
 
 	nodeId := strings.ToLower(msg.NodeId)
-	resourceKey := "node:" + nodeId
-	intents, err := e.monitor.repo.FindWatchingByResource(resourceKey)
+	resourceKey := nodeResourcePrefix + nodeId
+	intents, err := e.monitor.repo.List(watchingOn(resourceKey))
 	if err != nil {
 		log.Errorf("operation-monitor: lookup intents for %s: %v", resourceKey, err)
 		return nil, retryable("lookup intents for %s: %v", resourceKey, err)
@@ -127,7 +147,7 @@ func (e *EventServer) handleAppsChanged(_ context.Context, event *epb.Event) (*e
 
 	inventory := make(map[string]string, len(msg.Apps))
 	for _, app := range msg.Apps {
-		inventory[pkg.AppRulePrefix+app.Name] = app.Version
+		inventory[appRulePrefix+app.Name] = app.Version
 	}
 
 	for i := range intents {
@@ -147,12 +167,49 @@ func (e *EventServer) handleAppsChanged(_ context.Context, event *epb.Event) (*e
 	return &epb.EventResponse{}, nil
 }
 
-func (e *EventServer) complete(intent *db.MonitoredIntent, observed map[string]string) error {
-	if err := e.publishCompleted(intent); err != nil {
-		log.Errorf("operation-monitor: publish completed for %s: %v", intent.OperationId, err)
-		return retryable("publish completed for %s: %v", intent.OperationId, err)
+func operationIdOf[T any, P interface {
+	*T
+	proto.Message
+	GetOperationId() string
+}](event *epb.Event) (string, error) {
+	msg, err := cpb.UnmarshalProtoEvent[T, P](event.Msg)
+	if err != nil {
+		return "", err
 	}
-	if _, err := e.monitor.repo.MarkTerminal(intent.OperationId, db.IntentCompleted); err != nil {
+	return P(msg).GetOperationId(), nil
+}
+
+func (e *EventServer) handleResult(event *epb.Event, st db.IntentStatus,
+	operationId func(*epb.Event) (string, error)) (*epb.EventResponse, error) {
+	id, err := operationId(event)
+	if err != nil {
+		log.Errorf("operation-monitor: unmarshal %s: %v", event.RoutingKey, err)
+		return nil, err
+	}
+	opId, err := uuid.FromString(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid operation id %q: %w", id, err)
+	}
+	intent, err := e.monitor.repo.Update(opId, closeAs(st))
+	switch {
+	case errors.Is(err, gorm.ErrRecordNotFound):
+		return &epb.EventResponse{}, nil
+	case err != nil:
+		log.Errorf("operation-monitor: close intent %s: %v", opId, err)
+		return nil, retryable("close intent %s: %v", opId, err)
+	}
+	log.Infof("operation-monitor: intent %s is %s after operation result", opId,
+		intent.Status)
+	return &epb.EventResponse{}, nil
+}
+
+func (e *EventServer) complete(intent *db.Intent, observed map[string]string) error {
+	if err := e.publishSatisfied(intent); err != nil {
+		log.Errorf("operation-monitor: publish satisfied for %s: %v", intent.OperationId, err)
+		return retryable("publish satisfied for %s: %v", intent.OperationId, err)
+	}
+	if _, err := e.monitor.repo.Update(intent.OperationId,
+		closeAs(db.IntentCompleted)); err != nil {
 		log.Errorf("operation-monitor: mark %s completed: %v", intent.OperationId, err)
 		return retryable("mark %s completed: %v", intent.OperationId, err)
 	}
@@ -176,17 +233,17 @@ func ruleObserved(rule string, transition map[string]string) bool {
 }
 
 func isAppRule(rule string) bool {
-	return strings.HasPrefix(strings.TrimSpace(rule), pkg.AppRulePrefix)
+	return strings.HasPrefix(strings.TrimSpace(rule), appRulePrefix)
 }
 
-func (e *EventServer) publishCompleted(intent *db.MonitoredIntent) error {
-	route := e.monitor.publishBuilder.SetAction("completed").SetObject("operation").MustBuild()
-	return e.monitor.msgbus.PublishRequest(route, &epb.OperationCompletedEvent{
+func (e *EventServer) publishSatisfied(intent *db.Intent) error {
+	route := e.monitor.publishBuilder.SetAction("satisfied").SetObject("intent").MustBuild()
+	return e.monitor.msgbus.PublishRequest(route, &epb.IntentSatisfiedEvent{
 		OperationId:  intent.OperationId.String(),
 		FencingToken: intent.FencingToken,
 		ResourceKey:  intent.ResourceKey,
-		CompletedAt:  timestamppb.Now(),
-		Actor:        pkg.OperationMonitorActor,
+		ObservedAt:   timestamppb.Now(),
+		Actor:        operationMonitorActor,
 	})
 }
 
