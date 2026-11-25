@@ -829,6 +829,14 @@ func (s *SimManagerServer) UnsetPackageInUseForSim(ctx context.Context, req *pb.
 		return nil, err
 	}
 
+	if err := setNextQueuedPackageInUseIfIdle(ctx, req.SimId, s.simRepo, s.packageRepo, s.agentFactory,
+		s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
+		log.Errorf("Package %s was unset on sim %s but the sim was not moved to its next package or turned off. Error: %v",
+			req.PackageId, req.SimId, err)
+
+		return nil, err
+	}
+
 	return &pb.PackageResponse{}, nil
 }
 

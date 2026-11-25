@@ -916,8 +916,21 @@ int bff_clear_sim_packages(bff_client_t *c,
     json_decref(root);
 
     for (i = 0; i < count; i++) {
+        if (package_active[i]) {
+            continue;
+        }
         if (sim_remove_package_from_sim(c, ue, package_record_ids[i],
-                                        package_active[i], err)) {
+                                        0, err)) {
+            return ULAB_ERR;
+        }
+    }
+
+    for (i = 0; i < count; i++) {
+        if (!package_active[i]) {
+            continue;
+        }
+        if (sim_remove_package_from_sim(c, ue, package_record_ids[i],
+                                        1, err)) {
             return ULAB_ERR;
         }
     }

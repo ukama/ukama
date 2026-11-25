@@ -11,6 +11,7 @@ package server_test
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 	"time"
 
@@ -2469,6 +2470,241 @@ func TestSimManagerServer_RemovePackageForSim(t *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, resp)
 		packageRepo.AssertExpectations(t)
+	})
+}
+
+func TestSimManagerServer_UnsetPackageInUseForSim(t *testing.T) {
+	routeEndsWith := func(suffix string) any {
+		return mock.MatchedBy(func(route string) bool {
+			return strings.HasSuffix(route, suffix)
+		})
+	}
+
+	packageIsUnset := mock.MatchedBy(func(p *sims.Package) bool {
+		return !p.IsCurrentlyInUse
+	})
+
+	t.Run("NoQueuedPackageTurnsServiceOff", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{Id: packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+			}, nil).Once()
+
+		packageRepo.On("Update", []uuid.UUID{packageId}, packageIsUnset, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{Id: simId,
+				Type:   ukama.SimTypeTest,
+				Status: ukama.SimStatusServiceOn,
+			}, nil).Once()
+
+		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{}, nil).Once()
+
+		simRepo.On("UpdateWithStatusGuard",
+			mock.MatchedBy(func(s *sims.Sim) bool {
+				return s.Id == simId && s.Status == ukama.SimStatusServiceOff
+			}), ukama.SimStatusServiceOn, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("List", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Sim{}, nil).Twice()
+
+		msgbusClient.On("PublishRequest", routeEndsWith("sim.serviceoff"), mock.Anything).
+			Return(nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.UnsetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
+			PackageId: packageId.String(),
+			SimId:     simId.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("QueuedPackageIsSetInUse", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		queuedPackageId := uuid.NewV4()
+
+		queuedPackage := sims.Package{
+			Id:              queuedPackageId,
+			SimId:           simId,
+			PackageId:       uuid.NewV4(),
+			InitialData:     1024,
+			DefaultDuration: 1,
+		}
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{Id: packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+			}, nil).Once()
+
+		packageRepo.On("Update", []uuid.UUID{packageId}, packageIsUnset, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{Id: simId,
+				Type:   ukama.SimTypeTest,
+				Status: ukama.SimStatusServiceOn,
+			}, nil).Twice()
+
+		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{queuedPackage}, nil).Once()
+
+		packageRepo.On("Get", queuedPackageId).Return(&queuedPackage, nil).Once()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeTest).
+			Return(&mocks.AgentAdapter{}, true).
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("UpdatePackage", mock.Anything,
+			mock.MatchedBy(func(r client.AgentRequestData) bool {
+				return r.SimPackageId == queuedPackageId.String()
+			})).Return(nil).Once()
+
+		packageRepo.On("Update", []uuid.UUID{queuedPackageId},
+			mock.MatchedBy(func(p *sims.Package) bool {
+				return p.IsCurrentlyInUse
+			}), mock.Anything).
+			Return(nil).Once()
+
+		msgbusClient.On("PublishRequest", routeEndsWith("sim.activepackage"), mock.Anything).
+			Return(nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.UnsetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
+			PackageId: packageId.String(),
+			SimId:     simId.String(),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		agentAdapter.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("QueuedPackageAgentSyncFails", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		agentFactory := &mocks.AgentFactory{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+		queuedPackageId := uuid.NewV4()
+
+		queuedPackage := sims.Package{
+			Id:              queuedPackageId,
+			SimId:           simId,
+			PackageId:       uuid.NewV4(),
+			InitialData:     1024,
+			DefaultDuration: 1,
+		}
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{Id: packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: true,
+			}, nil).Once()
+
+		packageRepo.On("Update", []uuid.UUID{packageId}, packageIsUnset, mock.Anything).
+			Return(nil).Once()
+
+		simRepo.On("Get", simId).
+			Return(&sims.Sim{Id: simId,
+				Type:   ukama.SimTypeTest,
+				Status: ukama.SimStatusServiceOn,
+			}, nil).Twice()
+
+		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
+			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return([]sims.Package{queuedPackage}, nil).Once()
+
+		packageRepo.On("Get", queuedPackageId).Return(&queuedPackage, nil).Once()
+
+		agentAdapter := agentFactory.On("GetAgentAdapter", ukama.SimTypeTest).
+			Return(&mocks.AgentAdapter{}, true).
+			ReturnArguments.Get(0).(*mocks.AgentAdapter)
+
+		agentAdapter.On("UpdatePackage", mock.Anything, mock.Anything).
+			Return(errors.New("agent unreachable")).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			agentFactory, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.UnsetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
+			PackageId: packageId.String(),
+			SimId:     simId.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		agentAdapter.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
+	})
+
+	t.Run("PackageNotInUse", func(t *testing.T) {
+		simRepo := &mocks.SimRepo{}
+		packageRepo := &mocks.PackageRepo{}
+		msgbusClient := &cmocks.MsgBusServiceClient{}
+
+		simId := uuid.NewV4()
+		packageId := uuid.NewV4()
+
+		packageRepo.On("Get", packageId).Return(
+			&sims.Package{Id: packageId,
+				SimId:            simId,
+				IsCurrentlyInUse: false,
+			}, nil).Once()
+
+		s := server.NewSimManagerServer(OrgName, simRepo, packageRepo,
+			nil, nil, nil, nil, nil, msgbusClient, "", "", nil, nil, nil, nil)
+
+		resp, err := s.UnsetPackageInUseForSim(context.TODO(), &pb.PackageRequest{
+			PackageId: packageId.String(),
+			SimId:     simId.String(),
+		})
+
+		assert.Error(t, err)
+		assert.Nil(t, resp)
+
+		simRepo.AssertExpectations(t)
+		packageRepo.AssertExpectations(t)
+		msgbusClient.AssertExpectations(t)
 	})
 }
 
