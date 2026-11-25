@@ -11,6 +11,7 @@ package server_test
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/jackc/pgconn"
@@ -23,6 +24,7 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/registry/node/mocks"
@@ -618,6 +620,30 @@ func TestNodeEventServer_handleAddNode(t *testing.T) {
 		nodeRepo := &mocks.NodeRepo{}
 		nodeRepo.On("Add", mock.Anything, mock.Anything).
 			Return(&pgconn.PgError{Code: "23505"}).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
+			nil, nil)
+		eventServer := server.NewNodeEventServer("testorg", s, nil)
+
+		resp, err := eventServer.EventNotification(context.TODO(), &epb.Event{
+			RoutingKey: routingKey,
+			Msg: mustAny(t, &epb.EventInventoryNodeComponentAdd{
+				PartNumber: nodeId.StringLowercase(),
+			}),
+		})
+
+		assert.NoError(t, err)
+		assert.NotNil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("RetiredNodeIdIsAcknowledged", func(t *testing.T) {
+		nodeId := ukama.NewVirtualHomeNodeId()
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeRepo.On("Add", mock.Anything, mock.Anything).
+			Return(fmt.Errorf("node id %s was deleted: %w", nodeId.StringLowercase(),
+				store.ErrPrecondition)).Once()
 
 		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
 			nil, nil)

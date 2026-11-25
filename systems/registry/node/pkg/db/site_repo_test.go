@@ -9,19 +9,20 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"errors"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/store"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/store"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
 	sidedb "github.com/ukama/ukama/systems/registry/node/pkg/db"
 )
 

@@ -242,14 +242,19 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string,
 		NodeId: nodeID.StringLowercase(),
 		Name:   ukama.GetPlaceholderNameByType(nodeID.GetNodeType()),
 	})
-	if status.Code(err) == codes.AlreadyExists {
+	switch status.Code(err) {
+	case codes.OK:
+		return nil
+	case codes.AlreadyExists:
 		log.Infof("Node %s is already registered", nodeID.StringLowercase())
 		return nil
-	}
-	if err != nil {
+	case codes.FailedPrecondition:
+		log.Warnf("Ignoring retired node id %s, it needs re-onboarding with a new id: %v",
+			nodeID.StringLowercase(), err)
+		return nil
+	default:
 		return fmt.Errorf("failed to add node: %w", err)
 	}
-	return nil
 }
 
 func parseCoordinates(coordinates string) (string, string, error) {
