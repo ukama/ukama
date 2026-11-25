@@ -19,12 +19,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	"github.com/ukama/ukama/systems/common/ukama"
-
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type Device5xxServerError struct {
@@ -35,37 +35,40 @@ type Device4xxServerError struct {
 	error
 }
 
+var ErrNodeNotFound = errors.New("node not found")
+
 type RequestExecutor interface {
-	Execute(req *epb.NodeFeederMessage) error
+	Execute(req *epb.NodeFeederMessage) (int, error)
 }
 
 type requestExecutor struct {
 	nodeResolver   NodeIpResolver
 	devicePort     int
 	timeoutSeconds int
+	transport      http.RoundTripper
 }
 
 func NewRequestExecutor(deviceNet NodeIpResolver, devicePort int, timeoutSeconds int) *requestExecutor {
 	return &requestExecutor{nodeResolver: deviceNet, devicePort: devicePort, timeoutSeconds: timeoutSeconds}
 }
 
-func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
+func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) (int, error) {
 	segs := strings.Split(req.Target, ".")
 	if len(segs) != 4 {
-		return fmt.Errorf("invalid target format")
+		return 0, fmt.Errorf("invalid target format")
 	}
 	nodeId, err := ukama.ValidateNodeId(segs[3])
 	if err != nil {
-		return errors.Wrap(err, "invalid node id format")
+		return 0, errors.Wrap(err, "invalid node id format")
 	}
 	ip, err := e.nodeResolver.Resolve(nodeId)
 	if err != nil {
 		if s, ok := status.FromError(err); ok && s.Code() == codes.NotFound {
 			logrus.Warningf("node %s not found", nodeId)
-			return nil
+			return 0, ErrNodeNotFound
 		}
 
-		return errors.Wrap(err, "error resolving device ip for device "+segs[1])
+		return 0, errors.Wrap(err, "error resolving device ip for device "+segs[1])
 	}
 	logrus.Infof("resolved device ip: %s", ip)
 
@@ -75,18 +78,19 @@ func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
 	}
 	u, err := url.Parse(strUrl)
 	if err != nil {
-		return errors.Wrap(err, "malformed url")
+		return 0, errors.Wrap(err, "malformed url")
 	}
 
 	c := http.Client{
-		Timeout: time.Duration(e.timeoutSeconds) * time.Second,
+		Timeout:   time.Duration(e.timeoutSeconds) * time.Second,
+		Transport: e.transport,
 	}
 
 	header := map[string][]string{
 		"Content-Type": {"application/json"},
 		"X-node-id":    {req.NodeId},
 	}
-	
+
 	var httpReq http.Request
 	if req.HttpMethod == "GET" || req.GetMsg() == nil {
 		httpReq = http.Request{
@@ -99,9 +103,9 @@ func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
 		httpReq = http.Request{
 			Body:          io.NopCloser(bytes.NewReader(body)),
 			ContentLength: int64(len(body)),
-			Header: header,
-			Method: req.HttpMethod,
-			URL:    u,
+			Header:        header,
+			Method:        req.HttpMethod,
+			URL:           u,
 		}
 	}
 
@@ -109,7 +113,7 @@ func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
 
 	resp, err := c.Do(&httpReq)
 	if err != nil {
-		return errors.Wrap(err, "error sending request")
+		return 0, errors.Wrap(err, "error sending request")
 	}
 
 	logrus.Infof("Response status: %d", resp.StatusCode)
@@ -123,18 +127,14 @@ func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) error {
 
 	// request with >500 status code considered as filed
 	if resp.StatusCode >= 500 {
-		return Device5xxServerError{
+		return resp.StatusCode, Device5xxServerError{
 			fmt.Errorf("server error: %d", resp.StatusCode),
 		}
 	} else if resp.StatusCode >= 400 {
-		return Device4xxServerError{
+		return resp.StatusCode, Device4xxServerError{
 			fmt.Errorf("server error: %d", resp.StatusCode),
 		}
 	}
 
-	if err != nil {
-		return errors.Wrap(err, "error sending request")
-	}
-
-	return nil
+	return resp.StatusCode, nil
 }

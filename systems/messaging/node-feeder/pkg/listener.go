@@ -9,6 +9,7 @@
 package pkg
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strings"
@@ -33,7 +34,15 @@ const (
 	deadLetterExchangeHeaderName   = "x-dead-letter-exchange"
 	errorCreatingWaitingQueueErr   = "error declaring waiting queue"
 	deadLetterRoutingKeyHeaderName = "x-dead-letter-routing-key"
+
+	reasonRetryLimitReached = "retry limit reached"
+	reasonSuperseded        = "a newer request replaced it"
+	reasonMaxAgeReached     = "max request age reached"
+	reasonRetriesExhausted  = "retries exhausted"
+	reasonRetryPassesMaxAge = "next retry would pass max request age"
 )
+
+const resultRouteFormat = "event.cloud.local.%s.messaging.nodefeeder.request.result"
 
 type QueueListener struct {
 	service        string
@@ -45,6 +54,7 @@ type QueueListener struct {
 	retryPeriodSec int
 	listenerConfig ListenerConfig
 	retryPub       RetryPublisher
+	results        ResultPublisher
 	retryBackoff   []time.Duration
 	maxRequestAge  time.Duration
 	latest         *latestRequests
@@ -55,7 +65,13 @@ type RequestMultiplier interface {
 	Process(body *epb.NodeFeederMessage) error
 }
 
-func NewQueueListener(service string, queueUri string, serviceId string, requestMult RequestMultiplier, requestExec RequestExecutor, conf ListenerConfig) (*QueueListener, error) {
+type ResultPublisher interface {
+	PublishProto(payload proto.Message, routingKey string) error
+}
+
+func NewQueueListener(service string, queueUri string, serviceId string,
+	requestMult RequestMultiplier, requestExec RequestExecutor, results ResultPublisher,
+	conf ListenerConfig) (*QueueListener, error) {
 
 	client, err := mb.NewConsumerClient(queueUri)
 	if err != nil {
@@ -78,6 +94,7 @@ func NewQueueListener(service string, queueUri string, serviceId string, request
 		retryPeriodSec: conf.RetryPeriodSec,
 		listenerConfig: conf,
 		retryPub:       retryPub,
+		results:        results,
 		retryBackoff:   backoffDurations(conf.RetryBackoffSec),
 		maxRequestAge:  maxRequestAge,
 		latest:         newLatestRequests(maxRequestAge),
@@ -225,6 +242,10 @@ func (q *QueueListener) StartQueueListening() (err error) {
 func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan<- bool) {
 	if q.isRetryLimitReached(delivery) {
 		metrics.RecordFailedRequestMetric()
+		if request, err := unmarshalNodeFeederMessage(delivery.Body); err == nil {
+			q.report(request, epb.NodeFeederRequestResult_DROPPED, 0,
+				reasonRetryLimitReached)
+		}
 		done <- true
 		return
 	}
@@ -240,7 +261,7 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 
 	attempt, firstSeen := retryState(delivery.Headers, q.now())
 	if q.maxRequestAge > 0 && q.now().Sub(firstSeen) > q.maxRequestAge {
-		q.retire(request, attempt, "max request age reached")
+		q.retire(request, attempt, reasonMaxAgeReached)
 		done <- true
 		return
 	}
@@ -252,6 +273,7 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 		} else if q.latest.superseded(key, firstSeen) {
 			log.Infof("Dropping retry %d of %s %s for %s: a newer request replaced it", attempt, request.HttpMethod, request.Path, request.Target)
 			metrics.RecordSupersededRequestMetric()
+			q.report(request, epb.NodeFeederRequestResult_DROPPED, 0, reasonSuperseded)
 			done <- true
 			return
 		}
@@ -278,13 +300,13 @@ func (q *QueueListener) scheduleRetry(delivery amqp.Delivery, request *epb.NodeF
 	}
 
 	if attempt >= len(q.retryBackoff) {
-		q.retire(request, attempt, "retries exhausted")
+		q.retire(request, attempt, reasonRetriesExhausted)
 		return true
 	}
 
 	delay := q.retryBackoff[attempt]
 	if q.maxRequestAge > 0 && q.now().Add(delay).Sub(firstSeen) > q.maxRequestAge {
-		q.retire(request, attempt, "next retry would pass max request age")
+		q.retire(request, attempt, reasonRetryPassesMaxAge)
 		return true
 	}
 
@@ -302,6 +324,44 @@ func (q *QueueListener) scheduleRetry(delivery amqp.Delivery, request *epb.NodeF
 func (q *QueueListener) retire(request *epb.NodeFeederMessage, attempt int, reason string) {
 	log.Warnf("Dropping %s %s for %s after %d retries: %s", request.HttpMethod, request.Path, request.Target, attempt, reason)
 	metrics.RecordRetiredRequestMetric()
+	q.report(request, epb.NodeFeederRequestResult_DROPPED, 0, reason)
+}
+
+func (q *QueueListener) report(request *epb.NodeFeederMessage,
+	outcome epb.NodeFeederRequestResult_Outcome, httpStatus int, reason string) {
+	if q.results == nil || request.OperationId == "" ||
+		strings.HasSuffix(request.Target, "*") {
+		return
+	}
+
+	org, _, _ := strings.Cut(request.Target, ".")
+	if org == "" {
+		log.Warnf("Cannot report %s for operation %s: target %q has no org", outcome,
+			request.OperationId, request.Target)
+		return
+	}
+
+	msg, err := anypb.New(&epb.NodeFeederRequestResult{
+		OperationId:  request.OperationId,
+		FencingToken: request.FencingToken,
+		NodeId:       request.NodeId,
+		HttpMethod:   request.HttpMethod,
+		Path:         request.Path,
+		HttpStatus:   int32(httpStatus),
+		Outcome:      outcome,
+		Reason:       reason,
+	})
+	if err != nil {
+		log.Errorf("Failed to wrap %s result for operation %s: %v", outcome,
+			request.OperationId, err)
+		return
+	}
+
+	err = q.results.PublishProto(msg, fmt.Sprintf(resultRouteFormat, org))
+	if err != nil {
+		log.Errorf("Failed to publish %s result for operation %s: %v", outcome,
+			request.OperationId, err)
+	}
 }
 
 func (q *QueueListener) isRetryLimitReached(delivery amqp.Delivery) bool {
@@ -367,13 +427,22 @@ func (q *QueueListener) processRequest(request *epb.NodeFeederMessage) error {
 		return q.requestMult.Process(request)
 	} else {
 		log.Infof("Direct node target: %s", request.Target)
-		err := q.requestExec.Execute(request)
+		httpStatus, err := q.requestExec.Execute(request)
+		if err == nil {
+			q.report(request, epb.NodeFeederRequestResult_DELIVERED, httpStatus, "")
+			return nil
+		}
 
-		if err != nil {
-			if dErr, ok := err.(Device4xxServerError); ok {
-				log.Warningf("Request failed but won't be retried. Error %v", dErr)
-				return nil
-			}
+		if dErr, ok := err.(Device4xxServerError); ok {
+			log.Warningf("Request failed but won't be retried. Error %v", dErr)
+			q.report(request, epb.NodeFeederRequestResult_REJECTED, httpStatus,
+				dErr.Error())
+			return nil
+		}
+
+		if errors.Is(err, ErrNodeNotFound) {
+			q.report(request, epb.NodeFeederRequestResult_DROPPED, 0, err.Error())
+			return nil
 		}
 
 		return err
