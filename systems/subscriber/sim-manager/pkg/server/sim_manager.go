@@ -829,7 +829,7 @@ func (s *SimManagerServer) UnsetPackageInUseForSim(ctx context.Context, req *pb.
 		return nil, err
 	}
 
-	if err := setNextQueuedPackageInUseIfIdle(ctx, req.SimId, s.simRepo, s.packageRepo, s.agentFactory,
+	if err := setNextQueuedPackageInUseIfIdleExcept(ctx, req.SimId, req.PackageId, s.simRepo, s.packageRepo, s.agentFactory,
 		s.orgId, s.metricsPusher, s.msgbus, s.baseRoutingKey); err != nil {
 		log.Errorf("Package %s was unset on sim %s but the sim was not moved to its next package or turned off. Error: %v",
 			req.PackageId, req.SimId, err)
@@ -1429,6 +1429,14 @@ func unsetPackageInuseForSim(reqSimId, reqPackageId string, packageRepo sims.Pac
 func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo sims.SimRepo, packageRepo sims.PackageRepo,
 	agentFactory adapters.AgentFactory, orgId string, metricsPusher MetricsPusher,
 	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
+	return setNextQueuedPackageInUseIfIdleExcept(ctx, simId, "", simRepo, packageRepo, agentFactory,
+		orgId, metricsPusher, msgbus, baseRoutingKey)
+}
+
+// An unset package is neither in use nor expired, so it lists as queued and sorts first by start date.
+func setNextQueuedPackageInUseIfIdleExcept(ctx context.Context, simId, skipPackageId string, simRepo sims.SimRepo,
+	packageRepo sims.PackageRepo, agentFactory adapters.AgentFactory, orgId string, metricsPusher MetricsPusher,
+	msgbus mb.MsgBusServiceClient, baseRoutingKey msgbus.RoutingKeyBuilder) error {
 	sim, err := getSim(simId, simRepo)
 	if err != nil {
 		return err
@@ -1446,6 +1454,10 @@ func setNextQueuedPackageInUseIfIdle(ctx context.Context, simId string, simRepo 
 	}
 
 	for _, p := range packages {
+		if p.Id.String() == skipPackageId {
+			continue
+		}
+
 		if p.InitialData > 0 && p.UsedDataAtExpiry >= p.InitialData {
 			continue
 		}

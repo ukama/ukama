@@ -2509,7 +2509,7 @@ func TestSimManagerServer_UnsetPackageInUseForSim(t *testing.T) {
 
 		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{}, nil).Once()
+			Return([]sims.Package{{Id: packageId, SimId: simId, InitialData: 1024, DefaultDuration: 1}}, nil).Once()
 
 		simRepo.On("UpdateWithStatusGuard",
 			mock.MatchedBy(func(s *sims.Sim) bool {
@@ -2575,7 +2575,7 @@ func TestSimManagerServer_UnsetPackageInUseForSim(t *testing.T) {
 
 		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{queuedPackage}, nil).Once()
+			Return([]sims.Package{{Id: packageId, SimId: simId, InitialData: 1024, DefaultDuration: 1}, queuedPackage}, nil).Once()
 
 		packageRepo.On("Get", queuedPackageId).Return(&queuedPackage, nil).Once()
 
@@ -2649,7 +2649,7 @@ func TestSimManagerServer_UnsetPackageInUseForSim(t *testing.T) {
 
 		packageRepo.On("List", simId.String(), mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 			mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return([]sims.Package{queuedPackage}, nil).Once()
+			Return([]sims.Package{{Id: packageId, SimId: simId, InitialData: 1024, DefaultDuration: 1}, queuedPackage}, nil).Once()
 
 		packageRepo.On("Get", queuedPackageId).Return(&queuedPackage, nil).Once()
 
