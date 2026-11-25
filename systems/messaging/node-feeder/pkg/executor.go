@@ -115,6 +115,11 @@ func (e *requestExecutor) Execute(req *epb.NodeFeederMessage) (int, error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "error sending request")
 	}
+	defer func() {
+		if cErr := resp.Body.Close(); cErr != nil {
+			logrus.Warnf("error closing response body: %v", cErr)
+		}
+	}()
 
 	logrus.Infof("Response status: %d", resp.StatusCode)
 
