@@ -16,19 +16,20 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
-	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
+	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
@@ -85,11 +86,13 @@ func TestControllerServer_RestartNode(t *testing.T) {
 		Return(&copr.OperationInfo{}, nil).Once()
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     testOrgName + "..." + nodeId,
-		HttpMethod: "POST",
-		Path:       "/device/v1/reboot",
-		Msg:        []byte{},
-		NodeId:     nodeId,
+		Target:       testOrgName + "..." + nodeId,
+		HttpMethod:   "POST",
+		Path:         "/device/v1/reboot",
+		Msg:          []byte{},
+		NodeId:       nodeId,
+		OperationId:  "op-restart",
+		FencingToken: 1,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -127,17 +130,15 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-rf", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
-	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-rf"}).
-		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
-	opMgr.On("Complete", "op-rf", uint64(1), mock.Anything, mock.Anything).
-		Return(&copr.OperationInfo{}, nil).Once()
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     testOrgName + "..." + nodeId,
-		HttpMethod: "POST",
-		Path:       "/device/v1/radio",
-		Msg:        data,
-		NodeId:     nodeId,
+		Target:       testOrgName + "..." + nodeId,
+		HttpMethod:   "POST",
+		Path:         "/device/v1/radio",
+		Msg:          data,
+		NodeId:       nodeId,
+		OperationId:  "op-rf",
+		FencingToken: 1,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -173,17 +174,15 @@ func TestControllerServer_ToggleService(t *testing.T) {
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-svc", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
-	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-svc"}).
-		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
-	opMgr.On("Complete", "op-svc", uint64(1), mock.Anything, mock.Anything).
-		Return(&copr.OperationInfo{}, nil).Once()
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     testOrgName + "..." + nodeId,
-		HttpMethod: "POST",
-		Path:       "/device/v1/service",
-		Msg:        data,
-		NodeId:     nodeId,
+		Target:       testOrgName + "..." + nodeId,
+		HttpMethod:   "POST",
+		Path:         "/device/v1/service",
+		Msg:          data,
+		NodeId:       nodeId,
+		OperationId:  "op-svc",
+		FencingToken: 1,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -238,10 +237,6 @@ func TestControllerServer_ToggleSwitchPort_NodeLevelLock(t *testing.T) {
 	}, nil).Once()
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-i", uint64(1), "controller").
-		Return(&copr.OperationInfo{}, nil).Once()
-	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-i"}).
-		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
-	opMgr.On("Complete", "op-i", uint64(1), mock.Anything, mock.Anything).
 		Return(&copr.OperationInfo{}, nil).Once()
 	msgclientRepo.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Once()
 
@@ -332,17 +327,15 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 	opMon.On("Register", mock.Anything).Return(&opmonpb.RegisterIntentResponse{}, nil).Once()
 	opMgr.On("MarkRunning", "op-radio", uint64(1), "controller").
 		Return(&copr.OperationInfo{}, nil).Once()
-	opMon.On("Cancel", &opmonpb.CancelIntentRequest{OperationId: "op-radio"}).
-		Return(&opmonpb.CancelIntentResponse{}, nil).Once()
-	opMgr.On("Complete", "op-radio", uint64(1), mock.Anything, mock.Anything).
-		Return(&copr.OperationInfo{}, nil).Once()
 
 	msgclientRepo.On("PublishRequest", "request.cloud.local.test-org.node.controller.nodefeeder.publish", &epb.NodeFeederMessage{
-		Target:     testOrgName + "..." + nodeId,
-		HttpMethod: "POST",
-		Path:       "/device/v1/radio",
-		Msg:        data,
-		NodeId:     nodeId,
+		Target:       testOrgName + "..." + nodeId,
+		HttpMethod:   "POST",
+		Path:         "/device/v1/radio",
+		Msg:          data,
+		NodeId:       nodeId,
+		OperationId:  "op-radio",
+		FencingToken: 1,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
@@ -408,7 +401,7 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 	t.Run("CompleteFailureKeepsIntent", func(t *testing.T) {
 		opMgr := &mbmocks.ManagerClient{}
 		opMon := &mocks.OperationMonitor{}
-		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, "dispatched").
+		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, reasonNodeAccepted).
 			Return(nil, assert.AnError).Once()
 
 		c := &ControllerServer{opManager: opMgr, opMonitor: opMon}
@@ -422,7 +415,7 @@ func TestControllerServer_operationIntentCleanup(t *testing.T) {
 	t.Run("CancelFailureDoesNotChangeResult", func(t *testing.T) {
 		opMgr := &mbmocks.ManagerClient{}
 		opMon := &mocks.OperationMonitor{}
-		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, "dispatched").
+		opMgr.On("Complete", "op-x", uint64(3), pkg.ServiceName, reasonNodeAccepted).
 			Return(&copr.OperationInfo{}, nil).Once()
 		opMon.On("Cancel", cancelReq).Return(nil, assert.AnError).Once()
 

@@ -10,9 +10,10 @@ import (
 	"context"
 	"time"
 
-	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
 
 type ConfigurationState struct {

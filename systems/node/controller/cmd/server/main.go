@@ -20,7 +20,6 @@ import (
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/node/controller/cmd/version"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
-	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	"github.com/ukama/ukama/systems/node/controller/pkg/server"
 
@@ -33,6 +32,7 @@ import (
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
 )
 
 const registrySystemName = "registry"

@@ -11,11 +11,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/ukama"
-	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
-	spb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
+	spb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
 
 type ConfigurationState interface {
@@ -85,7 +87,8 @@ func (c *ControllerServer) dispatchConfiguration(ctx context.Context, nodeID, re
 	if c.msgbus == nil {
 		return status.Error(codes.Unavailable, "message bus unavailable")
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, nodeID), actions[action].method, actions[action].path, nodeID, data); err != nil {
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, nodeID),
+		actions[action].method, actions[action].path, nodeID, nil, data); err != nil {
 		return status.Errorf(codes.Unavailable, "configuration dispatch: %v", err)
 	}
 	return nil

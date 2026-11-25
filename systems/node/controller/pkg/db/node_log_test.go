@@ -9,19 +9,20 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"errors"
 	"log"
 	"regexp"
 	"testing"
 
-	"github.com/ukama/ukama/systems/common/ukama"
-	int_db "github.com/ukama/ukama/systems/node/controller/pkg/db"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+
+	extsql "database/sql"
+	int_db "github.com/ukama/ukama/systems/node/controller/pkg/db"
 )
 
 type UkamaDbMock struct {

@@ -22,15 +22,16 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	mbmocks "github.com/ukama/ukama/systems/common/mocks"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/rest/client"
-	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/node/controller/mocks"
-	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
 	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+
+	mbmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
@@ -321,11 +322,6 @@ func TestToggleRadios(t *testing.T) {
 	f.mgr.On("MarkRunning", mock.Anything, mock.Anything, pkg.ServiceName).
 		Return(&copr.OperationInfo{}, nil).Twice()
 	f.bus.On("PublishRequest", mock.Anything, mock.Anything).Return(nil).Twice()
-	f.mgr.On("Complete", "op-t", uint64(1), pkg.ServiceName, "dispatched").
-		Return(&copr.OperationInfo{}, nil).Once()
-	f.mgr.On("Complete", "op-a", uint64(2), pkg.ServiceName, "dispatched").
-		Return(&copr.OperationInfo{}, nil).Once()
-	f.mon.On("Cancel", mock.Anything).Return(&opmonpb.CancelIntentResponse{}, nil).Twice()
 
 	resp, err := f.server().ToggleRadios(context.TODO(), &pb.ToggleRadiosRequest{
 		NodeIds: []string{siteTnode, siteAnode}, State: "off",
@@ -334,10 +330,12 @@ func TestToggleRadios(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Len(t, resp.Operations, 2)
 	for _, op := range resp.Operations {
-		assert.Equal(t, opmgrpb.OperationStatus_SUCCESS.String(), op.Status)
+		assert.Equal(t, opmgrpb.OperationStatus_RUNNING.String(), op.Status)
 	}
 	f.mgr.AssertExpectations(t)
 	f.mon.AssertExpectations(t)
+	f.mgr.AssertNotCalled(t, "Complete", mock.Anything, mock.Anything, mock.Anything,
+		mock.Anything)
 }
 
 func TestValidNodeIds(t *testing.T) {

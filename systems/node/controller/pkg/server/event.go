@@ -13,10 +13,12 @@ import (
 	"fmt"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/msgbus"
+
+	log "github.com/sirupsen/logrus"
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 )
 
 type ControllerEventServer struct {
@@ -59,6 +61,16 @@ func (n *ControllerEventServer) EventNotification(ctx context.Context, e *epb.Ev
 			return nil, err
 		}
 
+	case msgbus.PrepareRoute(n.orgName,
+		"event.cloud.local.{{ .Org}}.messaging.nodefeeder.request.result"):
+		msg, err := cpb.UnmarshalProtoEvent[epb.NodeFeederRequestResult](e.Msg)
+		if err != nil {
+			log.Errorf("Failed to unmarshal NodeFeederRequestResult: %v", err)
+			return nil, err
+		}
+
+		n.handleNodeFeederResult(msg)
+
 	default:
 		log.Errorf("No handler routing key %s", e.RoutingKey)
 	}
@@ -88,4 +100,35 @@ func (n *ControllerEventServer) handleRegistryNodeDeleteEvent(msg *epb.EventRegi
 		return err
 	}
 	return nil
+}
+
+func (n *ControllerEventServer) handleNodeFeederResult(msg *epb.NodeFeederRequestResult) {
+	if msg.OperationId == "" {
+		log.Warnf("Ignoring node-feeder %s result without operation for node %s",
+			msg.Outcome, msg.NodeId)
+		return
+	}
+
+	op := &copr.OperationInfo{Id: msg.OperationId, FencingToken: msg.FencingToken}
+	label := msg.HttpMethod + " " + msg.Path
+
+	switch msg.Outcome {
+	case epb.NodeFeederRequestResult_DELIVERED:
+		if isRestartPath(msg.Path) {
+			return
+		}
+		n.s.completeOperation(op, label)
+	case epb.NodeFeederRequestResult_REJECTED:
+		n.s.failOperation(op, label,
+			fmt.Sprintf(reasonNodeRejectedFmt, msg.HttpStatus, msg.Reason))
+	case epb.NodeFeederRequestResult_DROPPED:
+		n.s.failOperation(op, label, fmt.Sprintf(reasonNodeDroppedFmt, msg.Reason))
+	default:
+		log.Warnf("Ignoring node-feeder result with outcome %s for operation %s",
+			msg.Outcome, msg.OperationId)
+	}
+}
+
+func isRestartPath(path string) bool {
+	return strings.Trim(path, "/") == strings.Trim(actions["RESTART"].path, "/")
 }

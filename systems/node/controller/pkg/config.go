@@ -51,6 +51,7 @@ func NewConfig(name string) *Config {
 			ListenerRoutes: []string{
 				"event.cloud.local.{{ .Org}}.registry.node.node.create",
 				"event.cloud.local.{{ .Org}}.registry.node.node.delete",
+				"event.cloud.local.{{ .Org}}.messaging.nodefeeder.request.result",
 			},
 		},
 		Operation: OperationServices{

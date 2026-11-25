@@ -12,10 +12,10 @@ import (
 	"context"
 	"time"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 )
 
