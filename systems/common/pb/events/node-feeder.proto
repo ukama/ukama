@@ -18,4 +18,24 @@ message NodeFeederMessage {
     string path = 3;
     bytes msg = 4;
     string nodeId = 5;
+    string operationId = 6;
+    uint64 fencingToken = 7;
+}
+
+message NodeFeederRequestResult {
+    enum Outcome {
+        UNKNOWN = 0;
+        DELIVERED = 1;
+        REJECTED = 2;
+        DROPPED = 3;
+    }
+
+    string operationId = 1;
+    uint64 fencingToken = 2;
+    string nodeId = 3;
+    string httpMethod = 4;
+    string path = 5;
+    int32 httpStatus = 6;
+    Outcome outcome = 7;
+    string reason = 8;
 }
