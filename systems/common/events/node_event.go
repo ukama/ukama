@@ -6,7 +6,7 @@
  * Copyright (c) 2023-present, Ukama Inc.
  */
 package events
- 
+
 type NodeStateEventId int
 
 type NodeStateEventsConfig struct {
@@ -32,11 +32,11 @@ var NodeStateEventRoutingKey = map[NodeStateEventId]string{
 	NodeStateEventDelete:  "event.cloud.local.{{ .Org}}.registry.node.node.delete",
 	NodeStateEventOnline:  "event.cloud.local.{{ .Org}}.messaging.mesh.node.online",
 	NodeStateEventOffline: "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline",
-	NodeStateTransition: "event.cloud.local.{{ .Org}}.node.state.node.transition",
+	NodeStateTransition:   "event.cloud.local.{{ .Org}}.node.state.node.transition",
 }
 
 var NodeEventToEventConfig = map[NodeStateEventId]NodeStateEventsConfig{
-	
+
 	NodeStateEventAssign: {
 		Key:        NodeStateEventAssign,
 		Name:       "assign",

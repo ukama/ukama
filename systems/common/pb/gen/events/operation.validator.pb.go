@@ -32,3 +32,35 @@ func (this *OperationFailedEvent) Validate() error {
 	}
 	return nil
 }
+func (this *OperationTimedOutEvent) Validate() error {
+	if this.TimedOutAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.TimedOutAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("TimedOutAt", err)
+		}
+	}
+	return nil
+}
+func (this *OperationCancelledEvent) Validate() error {
+	if this.CancelledAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.CancelledAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("CancelledAt", err)
+		}
+	}
+	return nil
+}
+func (this *IntentSatisfiedEvent) Validate() error {
+	if this.ObservedAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ObservedAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ObservedAt", err)
+		}
+	}
+	return nil
+}
+func (this *IntentExpiredEvent) Validate() error {
+	if this.ExpiredAt != nil {
+		if err := github_com_mwitkow_go_proto_validators.CallValidatorIfExists(this.ExpiredAt); err != nil {
+			return github_com_mwitkow_go_proto_validators.FieldError("ExpiredAt", err)
+		}
+	}
+	return nil
+}
