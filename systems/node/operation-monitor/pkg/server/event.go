@@ -26,7 +26,6 @@ import (
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 
 	log "github.com/sirupsen/logrus"
-	evt "github.com/ukama/ukama/systems/common/events"
 	cpb "github.com/ukama/ukama/systems/common/pb/events"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
@@ -49,20 +48,25 @@ func (e *EventServer) EventNotification(ctx context.Context,
 	log.Infof("operation-monitor: received %s", event.RoutingKey)
 
 	switch event.RoutingKey {
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventNodeStateTransition]):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.local.{{ .Org}}.node.state.node.transition"):
 		return e.handleStateTransition(ctx, event)
 	case msgbus.PrepareRoute(e.orgName,
 		"event.cloud.local.{{ .Org}}.node.health.apps.changed"):
 		return e.handleAppsChanged(ctx, event)
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationCompleted]):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.operation.manager.operation.completed"):
 		return e.handleResult(event, db.IntentCompleted,
 			operationIdOf[epb.OperationCompletedEvent])
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationFailed]):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.operation.manager.operation.failed"):
 		return e.handleResult(event, db.IntentFailed, operationIdOf[epb.OperationFailedEvent])
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationTimedOut]):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.operation.manager.operation.timeout"):
 		return e.handleResult(event, db.IntentExpired,
 			operationIdOf[epb.OperationTimedOutEvent])
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationCancelled]):
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.operation.manager.operation.cancelled"):
 		return e.handleResult(event, db.IntentCancelled,
 			operationIdOf[epb.OperationCancelledEvent])
 	default:

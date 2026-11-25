@@ -29,10 +29,19 @@ import (
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+)
+
+const (
+	transitionRoute = "event.cloud.local.{{ .Org}}.node.state.node.transition"
+	completedRoute  = "event.cloud.global.{{ .Org}}.operation.manager.operation.completed"
+	failedRoute     = "event.cloud.global.{{ .Org}}.operation.manager.operation.failed"
+	timeoutRoute    = "event.cloud.global.{{ .Org}}.operation.manager.operation.timeout"
+	cancelledRoute  = "event.cloud.global.{{ .Org}}.operation.manager.operation.cancelled"
+	satisfiedRoute  = "event.cloud.global.{{ .Org}}.node.operationmonitor.intent.satisfied"
+	expiredRoute    = "event.cloud.global.{{ .Org}}.node.operationmonitor.intent.expired"
 )
 
 const (
@@ -61,7 +70,7 @@ func transitionEventFor(t *testing.T, nodeId, state, substate string) *epb.Event
 	if err != nil {
 		t.Fatalf("marshal event: %v", err)
 	}
-	route := msgbus.PrepareRoute(testOrg, evt.EventRoutingKey[evt.EventNodeStateTransition])
+	route := msgbus.PrepareRoute(testOrg, transitionRoute)
 	return &epb.Event{RoutingKey: route, Msg: msg}
 }
 
@@ -133,7 +142,7 @@ func TestHandleStateTransition_ArmedIntentCompletes(t *testing.T) {
 	repo.On("Update", intent.OperationId, closeAs(db.IntentCompleted)).
 		Return(&intent, nil).Once()
 	mb.On("PublishRequest",
-		msgbus.PrepareRoute(testOrg, evt.EventRoutingKey[evt.EventIntentSatisfied]),
+		msgbus.PrepareRoute(testOrg, satisfiedRoute),
 		mock.MatchedBy(func(event *epb.IntentSatisfiedEvent) bool {
 			return event.Actor == operationMonitorActor && event.ObservedAt != nil
 		})).Return(nil).Once()
@@ -368,7 +377,7 @@ func TestHandleAppsChanged_TargetVersionCompletesWithoutArming(t *testing.T) {
 	repo.On("Update", intent.OperationId, closeAs(db.IntentCompleted)).
 		Return(&intent, nil).Once()
 	mb.On("PublishRequest",
-		msgbus.PrepareRoute(testOrg, evt.EventRoutingKey[evt.EventIntentSatisfied]),
+		msgbus.PrepareRoute(testOrg, satisfiedRoute),
 		mock.MatchedBy(func(event *epb.IntentSatisfiedEvent) bool {
 			return event.Actor == operationMonitorActor &&
 				event.FencingToken == intent.FencingToken
@@ -436,12 +445,11 @@ func TestHandleStateTransition_IgnoresAppRuleIntent(t *testing.T) {
 	repo.AssertNotCalled(t, "Update", mock.Anything, closing)
 }
 
-func resultEvent(t *testing.T, key evt.EventId, msg proto.Message) *epb.Event {
+func resultEvent(t *testing.T, route string, msg proto.Message) *epb.Event {
 	t.Helper()
 	body, err := anypb.New(msg)
 	require.NoError(t, err)
-	route := msgbus.PrepareRoute(testOrg, evt.EventRoutingKey[key])
-	return &epb.Event{RoutingKey: route, Msg: body}
+	return &epb.Event{RoutingKey: msgbus.PrepareRoute(testOrg, route), Msg: body}
 }
 
 func TestHandleResult_ClosesIntent(t *testing.T) {
@@ -450,13 +458,13 @@ func TestHandleResult_ClosesIntent(t *testing.T) {
 		event  *epb.Event
 		status db.IntentStatus
 	}{
-		"Completed": {resultEvent(t, evt.EventOperationCompleted,
+		"Completed": {resultEvent(t, completedRoute,
 			&epb.OperationCompletedEvent{OperationId: opId.String()}), db.IntentCompleted},
-		"Failed": {resultEvent(t, evt.EventOperationFailed,
+		"Failed": {resultEvent(t, failedRoute,
 			&epb.OperationFailedEvent{OperationId: opId.String()}), db.IntentFailed},
-		"TimedOut": {resultEvent(t, evt.EventOperationTimedOut,
+		"TimedOut": {resultEvent(t, timeoutRoute,
 			&epb.OperationTimedOutEvent{OperationId: opId.String()}), db.IntentExpired},
-		"Cancelled": {resultEvent(t, evt.EventOperationCancelled,
+		"Cancelled": {resultEvent(t, cancelledRoute,
 			&epb.OperationCancelledEvent{OperationId: opId.String()}), db.IntentCancelled},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -479,7 +487,7 @@ func TestHandleResult_ClosesIntent(t *testing.T) {
 func TestHandleResult_Errors(t *testing.T) {
 	opId := uuid.NewV4()
 	failed := func() *epb.Event {
-		return resultEvent(t, evt.EventOperationFailed,
+		return resultEvent(t, failedRoute,
 			&epb.OperationFailedEvent{OperationId: opId.String()})
 	}
 
@@ -512,7 +520,7 @@ func TestHandleResult_Errors(t *testing.T) {
 		repo := &mocks.IntentRepo{}
 
 		_, err := newEventServer(repo, &mbmocks.MsgBusServiceClient{}).EventNotification(
-			context.TODO(), resultEvent(t, evt.EventOperationCancelled,
+			context.TODO(), resultEvent(t, cancelledRoute,
 				&epb.OperationCancelledEvent{OperationId: "nope"}))
 
 		assert.Error(t, err)
@@ -523,7 +531,7 @@ func TestHandleResult_Errors(t *testing.T) {
 		repo := &mocks.IntentRepo{}
 
 		_, err := newEventServer(repo, &mbmocks.MsgBusServiceClient{}).EventNotification(
-			context.TODO(), resultEvent(t, evt.EventOperationTimedOut,
+			context.TODO(), resultEvent(t, timeoutRoute,
 				&epb.EventResponse{}))
 
 		assert.Error(t, err)

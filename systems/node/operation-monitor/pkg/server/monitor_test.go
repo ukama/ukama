@@ -28,7 +28,6 @@ import (
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	mbmocks "github.com/ukama/ukama/systems/common/mocks"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	pb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
@@ -136,7 +135,7 @@ func TestSweeper_PublishFailureCanRetry(t *testing.T) {
 	repo.AssertNotCalled(t, "Update", mock.Anything, closing)
 
 	mb.On("PublishRequest",
-		msgbus.PrepareRoute(testOrg, evt.EventRoutingKey[evt.EventIntentExpired]),
+		msgbus.PrepareRoute(testOrg, expiredRoute),
 		mock.MatchedBy(func(event *epb.IntentExpiredEvent) bool {
 			return event.OperationId == intent.OperationId.String() &&
 				event.FencingToken == intent.FencingToken &&

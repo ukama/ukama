@@ -12,7 +12,6 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
-	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -36,12 +35,12 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				evt.EventRoutingKey[evt.EventNodeStateTransition],
+				"event.cloud.local.{{ .Org}}.node.state.node.transition",
 				"event.cloud.local.{{ .Org}}.node.health.apps.changed",
-				evt.EventRoutingKey[evt.EventOperationCompleted],
-				evt.EventRoutingKey[evt.EventOperationFailed],
-				evt.EventRoutingKey[evt.EventOperationTimedOut],
-				evt.EventRoutingKey[evt.EventOperationCancelled],
+				"event.cloud.global.{{ .Org}}.operation.manager.operation.completed",
+				"event.cloud.global.{{ .Org}}.operation.manager.operation.failed",
+				"event.cloud.global.{{ .Org}}.operation.manager.operation.timeout",
+				"event.cloud.global.{{ .Org}}.operation.manager.operation.cancelled",
 			},
 		},
 	}
