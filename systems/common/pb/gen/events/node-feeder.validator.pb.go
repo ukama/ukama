@@ -17,3 +17,6 @@ var _ = math.Inf
 func (this *NodeFeederMessage) Validate() error {
 	return nil
 }
+func (this *NodeFeederRequestResult) Validate() error {
+	return nil
+}

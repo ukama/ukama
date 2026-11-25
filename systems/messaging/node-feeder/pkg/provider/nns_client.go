@@ -11,11 +11,11 @@ package providers
 import (
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 type NnsClientProvider interface {
@@ -25,7 +25,7 @@ type NnsClientProvider interface {
 type nnsClientProvider struct {
 	mu        sync.Mutex
 	nnsClient pb.NnsClient
-	nnsHost    string
+	nnsHost   string
 }
 
 func NewNnsClientProvider(nnsHost string) NnsClientProvider {

@@ -14,9 +14,9 @@ import (
 	"sync"
 	"time"
 
-	amqp "github.com/streadway/amqp"
 	"github.com/wagslane/go-rabbitmq"
 
+	amqp "github.com/streadway/amqp"
 	mb "github.com/ukama/ukama/systems/common/msgbus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )

@@ -7,8 +7,9 @@
 package pkg
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestConfigurationStateDefault(t *testing.T) {

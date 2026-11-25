@@ -13,10 +13,11 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/require"
-	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	pb "github.com/ukama/ukama/systems/node/state/pb/gen"
 )
 
 type configurationStateServer struct {

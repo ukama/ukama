@@ -13,29 +13,33 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
-	log "github.com/sirupsen/logrus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
-
 	"strings"
 
-	"github.com/ukama/ukama/systems/common/ukama"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/node/controller/pkg"
+	"github.com/ukama/ukama/systems/node/controller/pkg/db"
+
+	log "github.com/sirupsen/logrus"
 	ugrpc "github.com/ukama/ukama/systems/common/grpc"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	"github.com/ukama/ukama/systems/common/msgbus"
-	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
-
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	copr "github.com/ukama/ukama/systems/common/rest/client/operation"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
-	"github.com/ukama/ukama/systems/node/controller/pkg"
+	pb "github.com/ukama/ukama/systems/node/controller/pb/gen"
 	cclient "github.com/ukama/ukama/systems/node/controller/pkg/client"
-	"github.com/ukama/ukama/systems/node/controller/pkg/db"
 	opmonpb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 	opmgrpb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+)
+
+const (
+	reasonNodeAccepted    = "accepted by node"
+	reasonNodeRejectedFmt = "node rejected: %d %s"
+	reasonNodeDroppedFmt  = "not delivered: %s"
 )
 
 var actions = map[string]struct {
@@ -120,16 +124,14 @@ func (c *ControllerServer) SendNodeCommand(ctx context.Context, req *pb.SendNode
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path, nId.String(), req.Body); err != nil {
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), req.Method, req.Path,
+		nId.String(), op, req.Body); err != nil {
 		c.failOperation(op, "SendNodeCommand", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
 	}
 
-	// Generic command pushes (switch policy, PoE, service/radio via adapters)
-	// never move the locked node's state machine, so there is no transition to
-	// watch for — release on dispatch like the toggles. Reboots use RestartNode.
-	opStatus := c.completeOperation(op, "SendNodeCommand")
-	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+	return &pb.SendNodeCommandResponse{OperationId: op.Id, ResourceKey: op.ResourceKey,
+		Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func (c *ControllerServer) RestartNodes(ctx context.Context,
@@ -156,7 +158,7 @@ func (c *ControllerServer) RestartNodes(ctx context.Context,
 	resp := &pb.RestartNodesResponse{}
 	for i, op := range ops {
 		if err := c.publishMessage(c.orgName+"..."+ids[i], actions["RESTART"].method,
-			actions["RESTART"].path, ids[i], []byte("")); err != nil {
+			actions["RESTART"].path, ids[i], op, []byte("")); err != nil {
 			c.failAll(ops[i:], "RestartNode", fmt.Sprintf("publish failed: %v", err))
 			return nil, status.Errorf(codes.Internal, "Failed to publish message: %s",
 				err.Error())
@@ -181,7 +183,8 @@ func (c *ControllerServer) PingNode(ctx context.Context, req *pb.PingNodeRequest
 			"invalid format of node id. Error %s", err.Error())
 	}
 
-	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"].method, actions["PING"].path, nId.String(), []byte(""))
+	err = c.publishMessage(c.orgName+"."+"."+"."+nId.String(), actions["PING"].method,
+		actions["PING"].path, nId.String(), nil, []byte(""))
 	if err != nil {
 		log.Errorf("Failed to publish message. Errors %s", err.Error())
 		return nil, status.Errorf(codes.Internal, "Failed to publish message: %s", err.Error())
@@ -217,12 +220,13 @@ func (c *ControllerServer) ToggleSwitchPort(ctx context.Context, req *pb.ToggleS
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
-	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method, actions["SWITCH"].path, nId.String(), data); err != nil {
+	if err := c.publishMessage(c.orgName+"..."+nId.String(), actions["SWITCH"].method,
+		actions["SWITCH"].path, nId.String(), op, data); err != nil {
 		c.failOperation(op, "ToggleInternetSwitch", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish switch port reboot message: %s", err.Error())
 	}
-	opStatus := c.completeOperation(op, "ToggleInternetSwitch")
-	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+	return &pb.ToggleSwitchPortResponse{OperationId: op.Id, ResourceKey: op.ResourceKey,
+		Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func (c *ControllerServer) ToggleRadios(ctx context.Context,
@@ -249,7 +253,7 @@ func (c *ControllerServer) ToggleRadios(ctx context.Context,
 	resp := &pb.ToggleRadiosResponse{}
 	for i, op := range ops {
 		if err := c.publishMessage(c.orgName+"..."+ids[i], actions["RADIO"].method,
-			actions["RADIO"].path, ids[i], data); err != nil {
+			actions["RADIO"].path, ids[i], op, data); err != nil {
 			c.failAll(ops[i:], "ToggleRadio", fmt.Sprintf("publish failed: %v", err))
 			return nil, status.Errorf(codes.Internal,
 				"Failed to publish RADIO switch message: %s", err.Error())
@@ -257,7 +261,7 @@ func (c *ControllerServer) ToggleRadios(ctx context.Context,
 		resp.Operations = append(resp.Operations, &pb.ToggleRadioResponse{
 			OperationId: op.Id,
 			ResourceKey: op.ResourceKey,
-			Status:      c.completeOperation(op, "ToggleRadio"),
+			Status:      opmgrpb.OperationStatus_RUNNING.String(),
 		})
 	}
 	return resp, nil
@@ -285,12 +289,14 @@ func (c *ControllerServer) ToggleService(ctx context.Context, req *pb.ToggleServ
 		c.failOperation(op, "ToggleService", fmt.Sprintf("mark running failed: %v", err))
 		return nil, status.Errorf(markRunningCode(err), "mark running: %v", err)
 	}
-	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId), actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), data); err != nil {
+	if err := c.publishMessage(fmt.Sprintf("%s...%s", c.orgName, req.NodeId),
+		actions["SERVICE"].method, actions["SERVICE"].path, nId.String(), op,
+		data); err != nil {
 		c.failOperation(op, "ToggleService", fmt.Sprintf("publish failed: %v", err))
 		return nil, status.Errorf(codes.Internal, "Failed to publish Node SERVICE switch message: %s", err.Error())
 	}
-	opStatus := c.completeOperation(op, "ToggleService")
-	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey, Status: opStatus}, nil
+	return &pb.ToggleServiceResponse{OperationId: op.Id, ResourceKey: op.ResourceKey,
+		Status: opmgrpb.OperationStatus_RUNNING.String()}, nil
 }
 
 func nodeKey(nodeID string) string {
@@ -487,18 +493,12 @@ func (c *ControllerServer) cancelIntent(op *copr.OperationInfo, actionType strin
 	}
 }
 
-// completeOperation releases the lock right after a successful dispatch. Used
-// by toggle actions, which have no node state transition to observe: unlike a
-// reboot, flipping service/radio/switch-port never moves the node state
-// machine, so a monitor watch would only ever expire at the deadline while
-// the lock starves every other action on the resource. If the complete call
-// itself fails, the registered intent still expires the lock at the deadline.
 func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType string) string {
 	if c.opManager == nil || op == nil || op.Id == "" {
 		return opmgrpb.OperationStatus_RUNNING.String()
 	}
 	if _, err := c.opManager.Complete(op.Id, op.FencingToken, pkg.ServiceName,
-		"dispatched"); err != nil {
+		reasonNodeAccepted); err != nil {
 		log.Errorf("%s failed to complete operation %s (lock frees at deadline): %v", actionType, op.Id, err)
 		return opmgrpb.OperationStatus_RUNNING.String()
 	}
@@ -506,7 +506,8 @@ func (c *ControllerServer) completeOperation(op *copr.OperationInfo, actionType 
 	return opmgrpb.OperationStatus_SUCCESS.String()
 }
 
-func (c *ControllerServer) publishMessage(target string, method string, path string, nodeId string, anyMsg []byte) error {
+func (c *ControllerServer) publishMessage(target string, method string, path string,
+	nodeId string, op *copr.OperationInfo, anyMsg []byte) error {
 	route := "request.cloud.local" + "." + c.orgName + "." + pkg.SystemName + "." + pkg.ServiceName + "." + "nodefeeder" + "." + "publish"
 	msg := &epb.NodeFeederMessage{
 		Target:     target,
@@ -514,6 +515,10 @@ func (c *ControllerServer) publishMessage(target string, method string, path str
 		Path:       path,
 		Msg:        anyMsg,
 		NodeId:     nodeId,
+	}
+	if op != nil {
+		msg.OperationId = op.Id
+		msg.FencingToken = op.FencingToken
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 	err := c.msgbus.PublishRequest(route, msg)
