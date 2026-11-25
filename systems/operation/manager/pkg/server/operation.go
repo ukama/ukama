@@ -17,49 +17,46 @@ import (
 	"time"
 	"unicode"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 
-	cgrpc "github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	cgrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 type OperationServer struct {
 	pb.UnimplementedOperationManagerServiceServer
-	orgName    string
-	orgId      string
-	repos      Repos
-	msgbus     mb.MsgBusServiceClient
-	routingKey msgbus.RoutingKeyBuilder
+	orgName string
+	orgId   string
+	repos   Repos
 }
 
-func NewOperationServer(orgName, orgId string, repos Repos,
-	msgBus mb.MsgBusServiceClient) *OperationServer {
-	return &OperationServer{
-		orgName: orgName,
-		orgId:   orgId,
-		repos:   repos,
-		msgbus:  msgBus,
-		routingKey: msgbus.NewRoutingKeyBuilder().
-			SetCloudSource().
-			SetGlobalScope().
-			SetSystem(pkg.SystemName).
-			SetOrgName(orgName).
-			SetService(pkg.ServiceName),
-	}
+func NewOperationServer(orgName, orgId string, repos Repos) *OperationServer {
+	return &OperationServer{orgName: orgName, orgId: orgId, repos: repos}
 }
 
-const maxResourceKeyLen = 255
+const (
+	maxResourceKeyLen = 255
+	defaultLeaseTTL   = 5 * time.Minute
+	maxLeaseTTL       = time.Hour
+	sweeperInterval   = 30 * time.Second
+
+	operationManagerSweeperActor = "operation-manager-sweeper"
+	operationMonitorActor        = "operation-monitor"
+	operationMonitorSweeperActor = "operation-monitor-sweeper"
+)
 
 func validateResourceKey(key string) error {
 	if key == "" || len(key) > maxResourceKeyLen {
@@ -75,7 +72,8 @@ func validateResourceKey(key string) error {
 	return nil
 }
 
-func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
+func (s *OperationServer) StartOperation(ctx context.Context,
+	req *pb.StartOperationRequest) (*pb.StartOperationResponse, error) {
 	targets, err := validateResourceKeys("resourceKeys", req.ResourceKeys)
 	if err != nil {
 		return nil, err
@@ -93,12 +91,12 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 	}
 
 	lease := time.Duration(req.LeaseSeconds) * time.Second
-	if lease > pkg.MaxLeaseTTL {
+	if lease > maxLeaseTTL {
 		return nil, status.Errorf(codes.InvalidArgument,
-			"lease seconds must be at most %d", int(pkg.MaxLeaseTTL.Seconds()))
+			"lease seconds must be at most %d", int(maxLeaseTTL.Seconds()))
 	}
 	if lease == 0 {
-		lease = pkg.DefaultLeaseTTL
+		lease = defaultLeaseTTL
 	}
 
 	if req.IdempotencyKey != "" {
@@ -110,13 +108,13 @@ func (s *OperationServer) StartOperation(ctx context.Context, req *pb.StartOpera
 
 	ops := newGroup(req, targets, lease)
 	err = s.repos.Operations.Add(ctx, ops, func(tx *gorm.DB) error {
-		if err := s.repos.Locks.Acquire(tx, ops, mustBeFree, lease); err != nil {
+		if err := s.repos.Locks.Acquire(tx, ops, mustBeFree); err != nil {
 			return err
 		}
 		for _, op := range ops {
 			if err := s.repos.Audits.AddInTx(tx, &db.OperationAudit{
 				OperationId: op.Id, ResourceKey: op.ResourceKey,
-				Event: "lock_acquired", Actor: op.RequestedBy,
+				Event: pkg.AuditLockAcquired, Actor: op.RequestedBy,
 			}); err != nil {
 				return err
 			}
@@ -242,7 +240,8 @@ func validateResourceKeys(field string, keys []string) ([]string, error) {
 	return out, nil
 }
 
-func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperationRequest) (*pb.GetOperationResponse, error) {
+func (s *OperationServer) GetOperation(ctx context.Context,
+	req *pb.GetOperationRequest) (*pb.GetOperationResponse, error) {
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
@@ -257,7 +256,8 @@ func (s *OperationServer) GetOperation(ctx context.Context, req *pb.GetOperation
 	return &pb.GetOperationResponse{Operation: toPb(op)}, nil
 }
 
-func (s *OperationServer) GetByResource(ctx context.Context, req *pb.GetByResourceRequest) (*pb.GetByResourceResponse, error) {
+func (s *OperationServer) GetByResource(ctx context.Context,
+	req *pb.GetByResourceRequest) (*pb.GetByResourceResponse, error) {
 	if err := validateResourceKey(req.ResourceKey); err != nil {
 		return nil, err
 	}
@@ -275,7 +275,8 @@ func (s *OperationServer) GetByResource(ctx context.Context, req *pb.GetByResour
 	return &pb.GetByResourceResponse{Operation: toPb(op)}, nil
 }
 
-func (s *OperationServer) MarkRunning(ctx context.Context, req *pb.MarkRunningRequest) (*pb.MarkRunningResponse, error) {
+func (s *OperationServer) MarkRunning(ctx context.Context,
+	req *pb.MarkRunningRequest) (*pb.MarkRunningResponse, error) {
 	id, err := uuid.FromString(req.Id)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "invalid id: %v", err)
@@ -305,7 +306,7 @@ func (s *OperationServer) CompleteOperation(ctx context.Context,
 
 	op, err := s.repos.terminate(ctx, id, req.FencingToken, db.OperationSuccess,
 		db.OperationAudit{
-			Event:  "completed",
+			Event:  pkg.AuditCompleted,
 			Actor:  req.Actor,
 			Reason: req.Reason,
 		}, "")
@@ -329,7 +330,7 @@ func (s *OperationServer) FailOperation(ctx context.Context,
 
 	op, err := s.repos.terminate(ctx, id, req.FencingToken, db.OperationFailed,
 		db.OperationAudit{
-			Event:  "failed",
+			Event:  pkg.AuditFailed,
 			Actor:  req.Actor,
 			Reason: req.Reason,
 		}, req.Reason)
@@ -341,7 +342,8 @@ func (s *OperationServer) FailOperation(ctx context.Context,
 	return &pb.FailOperationResponse{Operation: toPb(op)}, nil
 }
 
-func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
+func (s *OperationServer) ForceUnlock(ctx context.Context,
+	req *pb.ForceUnlockRequest) (*pb.ForceUnlockResponse, error) {
 	if err := requireActorAndReason(req.Actor, req.Reason); err != nil {
 		return nil, err
 	}
@@ -359,7 +361,7 @@ func (s *OperationServer) ForceUnlock(ctx context.Context, req *pb.ForceUnlockRe
 
 	op, err := s.repos.terminate(ctx, id, current.FencingToken, db.OperationCancelled,
 		db.OperationAudit{
-			Event:  "force_unlock",
+			Event:  pkg.AuditForceUnlock,
 			Actor:  req.Actor,
 			Reason: req.Reason,
 		}, "force unlocked: "+req.Reason)
@@ -386,7 +388,7 @@ func (s *OperationServer) DeleteOperation(ctx context.Context,
 				id, op.Status, store.ErrPrecondition)
 		}
 		return s.repos.Audits.AddInTx(tx, &db.OperationAudit{
-			OperationId: op.Id, ResourceKey: op.ResourceKey, Event: "deleted",
+			OperationId: op.Id, ResourceKey: op.ResourceKey, Event: pkg.AuditDeleted,
 			Actor: req.Actor,
 		})
 	})
@@ -456,4 +458,256 @@ func toPb(o *db.Operation) *pb.Operation {
 		out.TerminalAt = timestamppb.New(*o.TerminalAt)
 	}
 	return out
+}
+
+type Repos struct {
+	Operations db.OperationRepo
+	Locks      db.LockRepo
+	Audits     db.AuditRepo
+	Results    ResultPublisher
+}
+
+type ResultPublisher interface {
+	Publish(op *db.Operation, audit db.OperationAudit)
+}
+
+type resultPublisher struct {
+	msgbus     mb.MsgBusServiceClient
+	routingKey msgbus.RoutingKeyBuilder
+}
+
+func NewResultPublisher(orgName string, msgBus mb.MsgBusServiceClient) ResultPublisher {
+	return &resultPublisher{
+		msgbus: msgBus,
+		routingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetGlobalScope().
+			SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+	}
+}
+
+func (p *resultPublisher) Publish(op *db.Operation, audit db.OperationAudit) {
+	action, msg := resultEvent(op, audit)
+	if msg == nil {
+		return
+	}
+	route := p.routingKey.SetObject("operation").SetAction(action).MustBuild()
+	if err := p.msgbus.PublishRequest(route, msg); err != nil {
+		log.Errorf("operation/manager: publish %s result for op %s failed: %v", action,
+			op.Id, err)
+	}
+}
+
+func resultEvent(op *db.Operation, audit db.OperationAudit) (string,
+	protoreflect.ProtoMessage) {
+	id, token, key := op.Id.String(), op.FencingToken, op.ResourceKey
+	at := timestamppb.New(audit.At)
+	switch op.Status {
+	case db.OperationSuccess:
+		return "completed", &epb.OperationCompletedEvent{OperationId: id,
+			FencingToken: token, ResourceKey: key, CompletedAt: at, Actor: audit.Actor}
+	case db.OperationFailed:
+		return "failed", &epb.OperationFailedEvent{OperationId: id, FencingToken: token,
+			ResourceKey: key, Reason: op.Error, FailedAt: at, Actor: audit.Actor}
+	case db.OperationTimeout:
+		return "timeout", &epb.OperationTimedOutEvent{OperationId: id,
+			FencingToken: token, ResourceKey: key, Reason: op.Error, TimedOutAt: at,
+			Actor: audit.Actor}
+	case db.OperationCancelled:
+		return "cancelled", &epb.OperationCancelledEvent{OperationId: id,
+			FencingToken: token, ResourceKey: key, Reason: op.Error, CancelledAt: at,
+			Actor: audit.Actor}
+	}
+	return "", nil
+}
+
+type refusal struct {
+	op     db.Operation
+	prefix string
+	reason string
+	cause  error
+}
+
+func (r *refusal) Error() string {
+	if r.cause != nil {
+		return r.cause.Error()
+	}
+	return r.prefix + "transition"
+}
+
+func reject(op *db.Operation, cause error) *refusal {
+	return &refusal{op: *op, prefix: pkg.AuditRejected, cause: cause}
+}
+
+func ignore(op *db.Operation, cause error) *refusal {
+	return &refusal{op: *op, prefix: pkg.AuditIgnored, cause: cause}
+}
+
+func (r Repos) markRunning(ctx context.Context, id uuid.UUID, fencingToken uint64,
+	actor string) (*db.Operation, error) {
+	op, err := r.Operations.Update(ctx, id, func(op *db.Operation, tx *gorm.DB) error {
+		now := time.Now().UTC()
+		var ref *refusal
+		switch {
+		case op.FencingToken != fencingToken:
+			ref = reject(op, fmt.Errorf("fencing token mismatch (op=%d, given=%d): %w",
+				op.FencingToken, fencingToken, store.ErrPrecondition))
+		case op.Status.IsTerminal():
+			ref = reject(op, fmt.Errorf("operation %s is already %s: %w",
+				id, op.Status, store.ErrPrecondition))
+		case !op.LeaseExpiresAt.After(now):
+			ref = reject(op, fmt.Errorf("operation %s lease expired at %s: %w",
+				id, op.LeaseExpiresAt.Format(time.RFC3339), store.ErrPrecondition))
+		case op.Status == db.OperationRunning:
+			return ignore(op, nil)
+		}
+		if ref != nil {
+			ref.reason = ref.cause.Error()
+			return ref
+		}
+
+		op.Status = db.OperationRunning
+		op.StartedAt = &now
+		return r.Audits.AddInTx(tx, &db.OperationAudit{
+			OperationId: op.Id, ResourceKey: op.ResourceKey, Event: pkg.AuditRunning,
+			Actor: actor, At: now,
+		})
+	})
+	return r.settle(ctx, op, err, db.OperationAudit{Event: pkg.AuditRunning, Actor: actor})
+}
+
+func (r Repos) terminate(ctx context.Context, id uuid.UUID, fencingToken uint64,
+	status db.OperationStatus, audit db.OperationAudit,
+	opErr string) (*db.Operation, error) {
+	if !status.IsTerminal() {
+		return nil, fmt.Errorf("terminate: %s is not a terminal status", status)
+	}
+
+	var final db.OperationAudit
+	op, err := r.Operations.Update(ctx, id, func(op *db.Operation, tx *gorm.DB) error {
+		if op.FencingToken != fencingToken {
+			return reject(op, fmt.Errorf("fencing token mismatch (op=%d, given=%d): %w",
+				op.FencingToken, fencingToken, store.ErrPrecondition))
+		}
+		if op.Status.IsTerminal() {
+			var cause error
+			if op.Status != status {
+				cause = fmt.Errorf("operation %s is already %s, cannot move to %s: %w",
+					id, op.Status, status, store.ErrPrecondition)
+			}
+			return ignore(op, cause)
+		}
+		if status == db.OperationSuccess && op.Status == db.OperationPending {
+			return reject(op, fmt.Errorf("operation %s is pending, cannot move to %s: %w",
+				id, status, store.ErrPrecondition))
+		}
+
+		at := endTime(op, audit.At)
+		op.Status = status
+		op.TerminalAt = &at
+		if opErr != "" {
+			op.Error = opErr
+		}
+		if err := r.Locks.Release(tx, op); err != nil {
+			return err
+		}
+		final = audit
+		final.OperationId = op.Id
+		final.ResourceKey = op.ResourceKey
+		final.At = at
+		return r.Audits.AddInTx(tx, &final)
+	})
+	if err == nil && r.Results != nil {
+		r.Results.Publish(op, final)
+	}
+	return r.settle(ctx, op, err, audit)
+}
+
+func endTime(op *db.Operation, observed time.Time) time.Time {
+	now := time.Now().UTC()
+	if observed.IsZero() || observed.After(now) || observed.Before(op.CreatedAt) {
+		return now
+	}
+	return observed.UTC()
+}
+
+func (r Repos) settle(ctx context.Context, op *db.Operation, err error,
+	audit db.OperationAudit) (*db.Operation, error) {
+	var ref *refusal
+	if !errors.As(err, &ref) {
+		return op, err
+	}
+
+	audit.OperationId = ref.op.Id
+	audit.ResourceKey = ref.op.ResourceKey
+	audit.Event = ref.prefix + audit.Event
+	if ref.reason != "" {
+		audit.Reason = ref.reason
+	}
+	if aerr := r.Audits.Add(ctx, &audit); aerr != nil {
+		return nil, aerr
+	}
+	if ref.cause != nil {
+		return nil, ref.cause
+	}
+	return &ref.op, nil
+}
+
+type Sweeper struct {
+	repos    Repos
+	interval time.Duration
+	batch    int
+}
+
+func NewSweeper(repos Repos) *Sweeper {
+	return &Sweeper{
+		repos:    repos,
+		interval: sweeperInterval,
+		batch:    100,
+	}
+}
+
+func (s *Sweeper) Run(ctx context.Context) {
+	log.Infof("operation/manager sweeper started (interval=%s)", s.interval)
+	t := time.NewTicker(s.interval)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info("operation/manager sweeper stopped")
+			return
+		case <-t.C:
+			s.sweepOnce(ctx)
+		}
+	}
+}
+
+func (s *Sweeper) sweepOnce(parent context.Context) {
+	ctx, cancel := context.WithTimeout(parent, s.interval)
+	defer cancel()
+
+	now := time.Now().UTC()
+	expired, err := s.repos.Operations.List(ctx, db.OperationFilter{
+		Statuses:           []db.OperationStatus{db.OperationPending, db.OperationRunning},
+		LeaseExpiresBefore: &now,
+		OrderBy:            db.OrderByLeaseExpiry,
+		Limit:              s.batch,
+	})
+	if err != nil {
+		log.Errorf("sweeper: list expired operations: %v", err)
+		return
+	}
+	if len(expired) == 0 {
+		return
+	}
+	log.Infof("sweeper: timing out %d expired operation(s)", len(expired))
+	for _, op := range expired {
+		_, err := s.repos.terminate(ctx, op.Id, op.FencingToken, db.OperationTimeout,
+			db.OperationAudit{
+				Event:  pkg.AuditTimeout,
+				Actor:  operationManagerSweeperActor,
+				Reason: pkg.ReasonLeaseExpired,
+			}, pkg.ReasonLeaseExpired)
+		if err != nil {
+			log.Warnf("sweeper: terminate(timeout) for %s failed: %v", op.Id, err)
+		}
+	}
 }

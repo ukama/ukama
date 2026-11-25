@@ -189,6 +189,334 @@ func (x *OperationFailedEvent) GetActor() string {
 	return ""
 }
 
+type OperationTimedOutEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,proto3" json:"operationId,omitempty"`
+	FencingToken  uint64                 `protobuf:"varint,2,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	ResourceKey   string                 `protobuf:"bytes,3,opt,name=resourceKey,proto3" json:"resourceKey,omitempty"`
+	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	TimedOutAt    *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=timedOutAt,proto3" json:"timedOutAt,omitempty"`
+	Actor         string                 `protobuf:"bytes,6,opt,name=actor,proto3" json:"actor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationTimedOutEvent) Reset() {
+	*x = OperationTimedOutEvent{}
+	mi := &file_events_operation_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationTimedOutEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationTimedOutEvent) ProtoMessage() {}
+
+func (x *OperationTimedOutEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_operation_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationTimedOutEvent.ProtoReflect.Descriptor instead.
+func (*OperationTimedOutEvent) Descriptor() ([]byte, []int) {
+	return file_events_operation_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *OperationTimedOutEvent) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *OperationTimedOutEvent) GetFencingToken() uint64 {
+	if x != nil {
+		return x.FencingToken
+	}
+	return 0
+}
+
+func (x *OperationTimedOutEvent) GetResourceKey() string {
+	if x != nil {
+		return x.ResourceKey
+	}
+	return ""
+}
+
+func (x *OperationTimedOutEvent) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *OperationTimedOutEvent) GetTimedOutAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.TimedOutAt
+	}
+	return nil
+}
+
+func (x *OperationTimedOutEvent) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
+}
+
+type OperationCancelledEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,proto3" json:"operationId,omitempty"`
+	FencingToken  uint64                 `protobuf:"varint,2,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	ResourceKey   string                 `protobuf:"bytes,3,opt,name=resourceKey,proto3" json:"resourceKey,omitempty"`
+	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	CancelledAt   *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=cancelledAt,proto3" json:"cancelledAt,omitempty"`
+	Actor         string                 `protobuf:"bytes,6,opt,name=actor,proto3" json:"actor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OperationCancelledEvent) Reset() {
+	*x = OperationCancelledEvent{}
+	mi := &file_events_operation_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OperationCancelledEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OperationCancelledEvent) ProtoMessage() {}
+
+func (x *OperationCancelledEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_operation_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OperationCancelledEvent.ProtoReflect.Descriptor instead.
+func (*OperationCancelledEvent) Descriptor() ([]byte, []int) {
+	return file_events_operation_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *OperationCancelledEvent) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *OperationCancelledEvent) GetFencingToken() uint64 {
+	if x != nil {
+		return x.FencingToken
+	}
+	return 0
+}
+
+func (x *OperationCancelledEvent) GetResourceKey() string {
+	if x != nil {
+		return x.ResourceKey
+	}
+	return ""
+}
+
+func (x *OperationCancelledEvent) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *OperationCancelledEvent) GetCancelledAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.CancelledAt
+	}
+	return nil
+}
+
+func (x *OperationCancelledEvent) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
+}
+
+type IntentSatisfiedEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,proto3" json:"operationId,omitempty"`
+	FencingToken  uint64                 `protobuf:"varint,2,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	ResourceKey   string                 `protobuf:"bytes,3,opt,name=resourceKey,proto3" json:"resourceKey,omitempty"`
+	ObservedAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=observedAt,proto3" json:"observedAt,omitempty"`
+	Actor         string                 `protobuf:"bytes,5,opt,name=actor,proto3" json:"actor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntentSatisfiedEvent) Reset() {
+	*x = IntentSatisfiedEvent{}
+	mi := &file_events_operation_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntentSatisfiedEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntentSatisfiedEvent) ProtoMessage() {}
+
+func (x *IntentSatisfiedEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_operation_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntentSatisfiedEvent.ProtoReflect.Descriptor instead.
+func (*IntentSatisfiedEvent) Descriptor() ([]byte, []int) {
+	return file_events_operation_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *IntentSatisfiedEvent) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *IntentSatisfiedEvent) GetFencingToken() uint64 {
+	if x != nil {
+		return x.FencingToken
+	}
+	return 0
+}
+
+func (x *IntentSatisfiedEvent) GetResourceKey() string {
+	if x != nil {
+		return x.ResourceKey
+	}
+	return ""
+}
+
+func (x *IntentSatisfiedEvent) GetObservedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ObservedAt
+	}
+	return nil
+}
+
+func (x *IntentSatisfiedEvent) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
+}
+
+type IntentExpiredEvent struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,proto3" json:"operationId,omitempty"`
+	FencingToken  uint64                 `protobuf:"varint,2,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	ResourceKey   string                 `protobuf:"bytes,3,opt,name=resourceKey,proto3" json:"resourceKey,omitempty"`
+	Reason        string                 `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	ExpiredAt     *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=expiredAt,proto3" json:"expiredAt,omitempty"`
+	Actor         string                 `protobuf:"bytes,6,opt,name=actor,proto3" json:"actor,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IntentExpiredEvent) Reset() {
+	*x = IntentExpiredEvent{}
+	mi := &file_events_operation_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IntentExpiredEvent) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IntentExpiredEvent) ProtoMessage() {}
+
+func (x *IntentExpiredEvent) ProtoReflect() protoreflect.Message {
+	mi := &file_events_operation_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IntentExpiredEvent.ProtoReflect.Descriptor instead.
+func (*IntentExpiredEvent) Descriptor() ([]byte, []int) {
+	return file_events_operation_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *IntentExpiredEvent) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+func (x *IntentExpiredEvent) GetFencingToken() uint64 {
+	if x != nil {
+		return x.FencingToken
+	}
+	return 0
+}
+
+func (x *IntentExpiredEvent) GetResourceKey() string {
+	if x != nil {
+		return x.ResourceKey
+	}
+	return ""
+}
+
+func (x *IntentExpiredEvent) GetReason() string {
+	if x != nil {
+		return x.Reason
+	}
+	return ""
+}
+
+func (x *IntentExpiredEvent) GetExpiredAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiredAt
+	}
+	return nil
+}
+
+func (x *IntentExpiredEvent) GetActor() string {
+	if x != nil {
+		return x.Actor
+	}
+	return ""
+}
+
 var File_events_operation_proto protoreflect.FileDescriptor
 
 const file_events_operation_proto_rawDesc = "" +
@@ -206,6 +534,37 @@ const file_events_operation_proto_rawDesc = "" +
 	"\vresourceKey\x18\x03 \x01(\tR\vresourceKey\x12\x16\n" +
 	"\x06reason\x18\x04 \x01(\tR\x06reason\x126\n" +
 	"\bfailedAt\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\bfailedAt\x12\x14\n" +
+	"\x05actor\x18\x06 \x01(\tR\x05actor\"\xea\x01\n" +
+	"\x16OperationTimedOutEvent\x12 \n" +
+	"\voperationId\x18\x01 \x01(\tR\voperationId\x12\"\n" +
+	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12 \n" +
+	"\vresourceKey\x18\x03 \x01(\tR\vresourceKey\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x12:\n" +
+	"\n" +
+	"timedOutAt\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"timedOutAt\x12\x14\n" +
+	"\x05actor\x18\x06 \x01(\tR\x05actor\"\xed\x01\n" +
+	"\x17OperationCancelledEvent\x12 \n" +
+	"\voperationId\x18\x01 \x01(\tR\voperationId\x12\"\n" +
+	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12 \n" +
+	"\vresourceKey\x18\x03 \x01(\tR\vresourceKey\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x12<\n" +
+	"\vcancelledAt\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\vcancelledAt\x12\x14\n" +
+	"\x05actor\x18\x06 \x01(\tR\x05actor\"\xd0\x01\n" +
+	"\x14IntentSatisfiedEvent\x12 \n" +
+	"\voperationId\x18\x01 \x01(\tR\voperationId\x12\"\n" +
+	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12 \n" +
+	"\vresourceKey\x18\x03 \x01(\tR\vresourceKey\x12:\n" +
+	"\n" +
+	"observedAt\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"observedAt\x12\x14\n" +
+	"\x05actor\x18\x05 \x01(\tR\x05actor\"\xe4\x01\n" +
+	"\x12IntentExpiredEvent\x12 \n" +
+	"\voperationId\x18\x01 \x01(\tR\voperationId\x12\"\n" +
+	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12 \n" +
+	"\vresourceKey\x18\x03 \x01(\tR\vresourceKey\x12\x16\n" +
+	"\x06reason\x18\x04 \x01(\tR\x06reason\x128\n" +
+	"\texpiredAt\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\texpiredAt\x12\x14\n" +
 	"\x05actor\x18\x06 \x01(\tR\x05actorB5Z3github.com/ukama/ukama/systems/common/pb/gen/eventsb\x06proto3"
 
 var (
@@ -220,20 +579,28 @@ func file_events_operation_proto_rawDescGZIP() []byte {
 	return file_events_operation_proto_rawDescData
 }
 
-var file_events_operation_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_events_operation_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_events_operation_proto_goTypes = []any{
 	(*OperationCompletedEvent)(nil), // 0: ukama.events.v1.OperationCompletedEvent
 	(*OperationFailedEvent)(nil),    // 1: ukama.events.v1.OperationFailedEvent
-	(*timestamppb.Timestamp)(nil),   // 2: google.protobuf.Timestamp
+	(*OperationTimedOutEvent)(nil),  // 2: ukama.events.v1.OperationTimedOutEvent
+	(*OperationCancelledEvent)(nil), // 3: ukama.events.v1.OperationCancelledEvent
+	(*IntentSatisfiedEvent)(nil),    // 4: ukama.events.v1.IntentSatisfiedEvent
+	(*IntentExpiredEvent)(nil),      // 5: ukama.events.v1.IntentExpiredEvent
+	(*timestamppb.Timestamp)(nil),   // 6: google.protobuf.Timestamp
 }
 var file_events_operation_proto_depIdxs = []int32{
-	2, // 0: ukama.events.v1.OperationCompletedEvent.completedAt:type_name -> google.protobuf.Timestamp
-	2, // 1: ukama.events.v1.OperationFailedEvent.failedAt:type_name -> google.protobuf.Timestamp
-	2, // [2:2] is the sub-list for method output_type
-	2, // [2:2] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	6, // 0: ukama.events.v1.OperationCompletedEvent.completedAt:type_name -> google.protobuf.Timestamp
+	6, // 1: ukama.events.v1.OperationFailedEvent.failedAt:type_name -> google.protobuf.Timestamp
+	6, // 2: ukama.events.v1.OperationTimedOutEvent.timedOutAt:type_name -> google.protobuf.Timestamp
+	6, // 3: ukama.events.v1.OperationCancelledEvent.cancelledAt:type_name -> google.protobuf.Timestamp
+	6, // 4: ukama.events.v1.IntentSatisfiedEvent.observedAt:type_name -> google.protobuf.Timestamp
+	6, // 5: ukama.events.v1.IntentExpiredEvent.expiredAt:type_name -> google.protobuf.Timestamp
+	6, // [6:6] is the sub-list for method output_type
+	6, // [6:6] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_events_operation_proto_init() }
@@ -247,7 +614,7 @@ func file_events_operation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_events_operation_proto_rawDesc), len(file_events_operation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

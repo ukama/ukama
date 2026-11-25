@@ -9,16 +9,17 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"encoding/json"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	extsql "database/sql"
+	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
 type EventSample struct {
@@ -58,7 +59,8 @@ func TestEventMsgRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), em.Data).
+			WithArgs(sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg(),
+				em.Data).
 			WillReturnRows(sqlmock.NewRows([]string{"id", "data"}).AddRow(1, em.Data))
 
 		mock.ExpectCommit()

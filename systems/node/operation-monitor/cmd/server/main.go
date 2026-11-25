@@ -15,23 +15,22 @@ import (
 	"syscall"
 
 	"github.com/num30/config"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	pb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
+	"github.com/ukama/ukama/systems/node/operation-monitor/cmd/version"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/db"
 	"github.com/ukama/ukama/systems/node/operation-monitor/pkg/server"
 
-	"github.com/ukama/ukama/systems/node/operation-monitor/cmd/version"
+	log "github.com/sirupsen/logrus"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/node/operation-monitor/pb/gen"
 )
 
 var svcConf *pkg.Config
@@ -64,7 +63,7 @@ func initConfig() {
 func initDb() sql.Db {
 	log.Infof("Initializing Database")
 	d := sql.NewDb(svcConf.DB, svcConf.DebugMode)
-	if err := d.Init(&db.MonitoredIntent{}); err != nil {
+	if err := d.Init(&db.Intent{}); err != nil {
 		log.Fatalf("Database initialization failed: %v", err)
 	}
 	return d
@@ -90,7 +89,8 @@ func runGrpcServer(gormDb sql.Db) {
 	})
 
 	grpcSrv.RegisterDependency("db", true, ugrpc.DBCheck(gormDb))
-	grpcSrv.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+	grpcSrv.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

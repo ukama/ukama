@@ -11,10 +11,11 @@ package db
 import (
 	"fmt"
 
-	"github.com/ukama/ukama/systems/common/roles"
-	"github.com/ukama/ukama/systems/common/sql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+
+	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/sql"
 )
 
 const EmptyUUID = "00000000-0000-0000-0000-000000000000"
@@ -25,7 +26,8 @@ type UserRepo interface {
 	GetAllUsers(orgId string) ([]*Users, error)
 	GetSubscriber(subscriberId string) (*Users, error)
 	GetUserWithRoles(orgId string, roles []roles.RoleType) ([]*Users, error)
-	GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error)
+	GetUsers(orgId string, networkId string, subscriberId string, userId string,
+		role uint8) ([]*Users, error)
 }
 
 type userRepo struct {
@@ -43,7 +45,8 @@ func (r *userRepo) Add(user *Users) (err error) {
 	return d.Error
 }
 
-func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string, userId string, role uint8) ([]*Users, error) {
+func (r *userRepo) GetUsers(orgId string, networkId string, subscriberId string,
+	userId string, role uint8) ([]*Users, error) {
 	var users []*Users
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)
@@ -149,7 +152,8 @@ func (r *userRepo) GetSubscriber(subscriberId string) (*Users, error) {
 	return user, nil
 }
 
-func (r *userRepo) GetUserWithRoles(orgId string, roleTypes []roles.RoleType) ([]*Users, error) {
+func (r *userRepo) GetUserWithRoles(orgId string, roleTypes []roles.RoleType) ([]*Users,
+	error) {
 	var users []*Users
 
 	tx := r.Db.GetGormDb().Preload(clause.Associations)

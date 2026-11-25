@@ -12,9 +12,10 @@ import (
 	"context"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
 )
 
 type AuditRepo interface {

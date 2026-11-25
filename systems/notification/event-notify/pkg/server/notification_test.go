@@ -14,21 +14,22 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgtype"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
 
-	"github.com/jackc/pgtype"
 	"github.com/ukama/ukama/systems/common/notification"
-	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
-	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
-	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
-	"google.golang.org/protobuf/reflect/protoreflect"
+
+	upb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
+	pb "github.com/ukama/ukama/systems/notification/event-notify/pb/gen"
 )
 
 func TestGetAll(t *testing.T) {
@@ -102,8 +103,11 @@ func TestGetAll(t *testing.T) {
 		}
 
 		mockMemberClient.On("GetByUserId", userID.String()).Return(memberResp, nil)
-		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).Return([]*db.Users{user}, nil)
-		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).Return(notifications, nil)
+		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000",
+			"00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).
+			Return([]*db.Users{user}, nil)
+		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).
+			Return(notifications, nil)
 
 		// Act
 		resp, err := server.GetAll(context.Background(), req)
@@ -174,8 +178,11 @@ func TestGetAll(t *testing.T) {
 			},
 		}
 
-		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000", subscriberID.String(), userID.String(), uint8(upb.RoleType_ROLE_SUBSCRIBER)).Return([]*db.Users{user}, nil)
-		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).Return(notifications, nil)
+		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000",
+			subscriberID.String(), userID.String(), uint8(upb.RoleType_ROLE_SUBSCRIBER)).
+			Return([]*db.Users{user}, nil)
+		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).
+			Return(notifications, nil)
 
 		// Act
 		resp, err := server.GetAll(context.Background(), req)
@@ -450,7 +457,9 @@ func TestGetAll(t *testing.T) {
 
 		userRepoError := errors.New("user not found")
 		mockMemberClient.On("GetByUserId", userID.String()).Return(memberResp, nil)
-		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).Return(nil, userRepoError)
+		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000",
+			"00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).
+			Return(nil, userRepoError)
 
 		// Act
 		resp, err := server.GetAll(context.Background(), req)
@@ -498,7 +507,9 @@ func TestGetAll(t *testing.T) {
 		}
 
 		mockMemberClient.On("GetByUserId", userID.String()).Return(memberResp, nil)
-		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).Return([]*db.Users{}, nil)
+		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000",
+			"00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).
+			Return([]*db.Users{}, nil)
 
 		// Act
 		resp, err := server.GetAll(context.Background(), req)
@@ -558,8 +569,11 @@ func TestGetAll(t *testing.T) {
 
 		notificationRepoError := errors.New("notification not found")
 		mockMemberClient.On("GetByUserId", userID.String()).Return(memberResp, nil)
-		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000", "00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).Return([]*db.Users{user}, nil)
-		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).Return(nil, notificationRepoError)
+		mockUserRepo.On("GetUsers", orgID.String(), "00000000-0000-0000-0000-000000000000",
+			"00000000-0000-0000-0000-000000000000", userID.String(), uint8(0)).
+			Return([]*db.Users{user}, nil)
+		mockUserNotificationRepo.On("GetNotificationsByUserID", userUUID.String()).
+			Return(nil, notificationRepoError)
 
 		// Act
 		resp, err := server.GetAll(context.Background(), req)
@@ -867,7 +881,8 @@ func (m *mockMsgBusServiceClient) Stop() error {
 	return args.Error(0)
 }
 
-func (m *mockMsgBusServiceClient) PublishRequest(routingKey string, request protoreflect.ProtoMessage) error {
+func (m *mockMsgBusServiceClient) PublishRequest(routingKey string,
+	request protoreflect.ProtoMessage) error {
 	args := m.Called(routingKey, request)
 	return args.Error(0)
 }

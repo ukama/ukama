@@ -18,8 +18,6 @@ import (
 	"testing"
 	"time"
 
-	rconf "github.com/num30/config"
-	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -27,6 +25,9 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
 	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 

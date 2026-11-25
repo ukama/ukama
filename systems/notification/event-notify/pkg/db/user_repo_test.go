@@ -9,18 +9,20 @@
 package db_test
 
 import (
-	extsql "database/sql"
+	"errors"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/roles"
-	"github.com/ukama/ukama/systems/common/uuid"
-	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
+	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
 var user = int_db.Users{
@@ -45,7 +47,8 @@ func TestUserRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId,
+				user.Role, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -84,8 +87,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.UserId).
 			WillReturnRows(rows)
@@ -124,8 +129,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId).
 			WillReturnRows(rows)
@@ -164,8 +171,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId, user.Role).
 			WillReturnRows(rows)
@@ -204,8 +213,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId, user.SubscriberId, user.UserId, user.Role).
 			WillReturnRows(rows)
@@ -227,7 +238,8 @@ func TestUserRepo_GetUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, uint8(roles.TYPE_OWNER))
+		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId,
+			uint8(roles.TYPE_OWNER))
 
 		// Assert
 		assert.NoError(t, err)
@@ -246,8 +258,10 @@ func TestUserRepo_GetSubscriber(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.SubscriberId).
 			WillReturnRows(rows)
@@ -304,9 +318,12 @@ func TestUserRepo_GetAllUsers(t *testing.T) {
 			Role:         roles.TYPE_ADMIN,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
-			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId,
+				user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(testOrgId).
@@ -413,7 +430,8 @@ func TestUserRepo_GetAllUsers(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Return empty result set
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"})
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(testOrgId).
@@ -462,8 +480,10 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_OWNER,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -520,9 +540,12 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_ADMIN,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
-			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId,
+				user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
 
 		// For multiple roles, GORM expands the IN clause to individual arguments
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -571,8 +594,10 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_OWNER,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -613,7 +638,8 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Return empty result set
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"})
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -644,5 +670,75 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+}
+
+func TestUserRepo_ErrorPaths(t *testing.T) {
+	cols := []string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role",
+		"created_at", "updated_at", "deleted_at"}
+	empty := func() *sqlmock.Rows { return sqlmock.NewRows(cols) }
+	dbDown := errors.New("db down")
+
+	t.Run("GetUser", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		_, err := r.GetUser("")
+		assert.Error(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetUser(user.UserId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetUser(user.UserId)
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetSubscriber", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		_, err := r.GetSubscriber(int_db.EmptyUUID)
+		assert.Error(t, err)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetSubscriber(user.SubscriberId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetSubscriber(user.SubscriberId)
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetUsers", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+		networkId := uuid.NewV4().String()
+
+		mock.ExpectQuery(regexp.QuoteMeta(`network_id = $2`)).WillReturnError(dbDown)
+		_, err := r.GetUsers(user.OrgId, networkId, "", "", uint8(roles.TYPE_INVALID))
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnRows(empty())
+		_, err = r.GetUsers(user.OrgId, "", "", "", uint8(roles.TYPE_INVALID))
+		assert.True(t, errors.Is(err, gorm.ErrRecordNotFound))
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("GetAllUsersAndRoles", func(t *testing.T) {
+		mock, udb := newMockRepoDb(t)
+		r := int_db.NewUserRepo(udb)
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err := r.GetAllUsers(user.OrgId)
+		assert.True(t, errors.Is(err, dbDown))
+
+		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).WillReturnError(dbDown)
+		_, err = r.GetUserWithRoles(user.OrgId, []roles.RoleType{user.Role})
+		assert.True(t, errors.Is(err, dbDown))
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

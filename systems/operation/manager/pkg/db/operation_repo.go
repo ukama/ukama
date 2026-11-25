@@ -15,11 +15,12 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgconn"
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 var (

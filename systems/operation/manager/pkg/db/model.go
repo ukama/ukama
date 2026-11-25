@@ -10,11 +10,11 @@ package db
 
 import (
 	"database/sql/driver"
-	"encoding/json"
 	"time"
 
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 type OperationStatus uint8
@@ -53,27 +53,6 @@ func (s OperationStatus) IsTerminal() bool {
 		s == OperationTimeout || s == OperationCancelled
 }
 
-type JSONMap map[string]interface{}
-
-func (m JSONMap) Value() (driver.Value, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return json.Marshal(m)
-}
-
-func (m *JSONMap) Scan(v interface{}) error {
-	if v == nil {
-		*m = nil
-		return nil
-	}
-	b, ok := v.([]byte)
-	if !ok {
-		return nil
-	}
-	return json.Unmarshal(b, m)
-}
-
 // Operation is one locked action on one resource key.
 //
 // One StartOperation request creates a group of operations, one per target key.
@@ -96,7 +75,6 @@ type Operation struct {
 	RequestedBy    string          `gorm:"index" json:"requestedBy,omitempty"`
 	IdempotencyKey *string         `gorm:"uniqueIndex:idx_op_idem,where:deleted_at is null" json:"idempotencyKey,omitempty"`
 	ResourceKey    string          `gorm:"not null;index" json:"resourceKey"`
-	Intent         JSONMap         `gorm:"type:jsonb" json:"intent,omitempty"`
 	LeaseExpiresAt time.Time       `gorm:"not null;index" json:"leaseExpiresAt"`
 	Error          string          `gorm:"" json:"error,omitempty"`
 	StartedAt      *time.Time      `json:"startedAt,omitempty"`
@@ -107,12 +85,10 @@ type Operation struct {
 }
 
 type ResourceLock struct {
-	ResourceKey  string     `gorm:"primaryKey" json:"resourceKey"`
-	OperationId  uuid.UUID  `gorm:"type:uuid;not null;index" json:"operationId"`
-	Operation    *Operation `gorm:"foreignKey:OperationId" json:"operation,omitempty"`
-	FencingToken uint64     `gorm:"not null" json:"fencingToken"`
-	AcquiredAt   time.Time  `gorm:"not null" json:"acquiredAt"`
-	ExpiresAt    time.Time  `gorm:"not null;index" json:"expiresAt"`
+	ResourceKey string     `gorm:"primaryKey" json:"resourceKey"`
+	OperationId uuid.UUID  `gorm:"type:uuid;not null;index" json:"operationId"`
+	Operation   *Operation `gorm:"foreignKey:OperationId" json:"operation,omitempty"`
+	AcquiredAt  time.Time  `gorm:"not null" json:"acquiredAt"`
 }
 
 type OperationAudit struct {

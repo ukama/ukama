@@ -12,6 +12,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -20,47 +21,60 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
+
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
-func newOperationEvent(t *testing.T, key evt.EventId, msg proto.Message) *epb.Event {
+const (
+	completedRoute = "event.cloud.global.{{ .Org}}.operation.manager.operation.completed"
+	failedRoute    = "event.cloud.global.{{ .Org}}.operation.manager.operation.failed"
+	timeoutRoute   = "event.cloud.global.{{ .Org}}.operation.manager.operation.timeout"
+	cancelledRoute = "event.cloud.global.{{ .Org}}.operation.manager.operation.cancelled"
+	satisfiedRoute = "event.cloud.global.{{ .Org}}.node.operationmonitor.intent.satisfied"
+	expiredRoute   = "event.cloud.global.{{ .Org}}.node.operationmonitor.intent.expired"
+)
+
+const monitorDeadlineReason = "deadline exceeded"
+
+func newOperationEvent(t *testing.T, route string, msg proto.Message) *epb.Event {
 	t.Helper()
 
 	body, err := anypb.New(msg)
 	require.NoError(t, err)
 
 	return &epb.Event{
-		RoutingKey: msgbus.PrepareRoute(orgName, evt.EventRoutingKey[key]),
+		RoutingKey: msgbus.PrepareRoute(orgName, route),
 		Msg:        body,
 	}
 }
 
 func TestEventNotification_terminalEvents(t *testing.T) {
+	observed := time.Now().UTC().Add(-time.Minute).Truncate(time.Second)
 	events := []struct {
 		name   string
 		status db.OperationStatus
 		audit  string
+		reason string
 		event  func(t *testing.T, opId uuid.UUID) *epb.Event
 	}{
-		{"Completed", db.OperationSuccess, "completed",
+		{"Satisfied", db.OperationSuccess, pkg.AuditCompleted, "",
 			func(t *testing.T, opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationCompleted,
-					&epb.OperationCompletedEvent{OperationId: opId.String(),
-						FencingToken: 5})
+				return newOperationEvent(t, satisfiedRoute,
+					&epb.IntentSatisfiedEvent{OperationId: opId.String(), FencingToken: 5,
+						ObservedAt: timestamppb.New(observed)})
 			}},
-		{"Failed", db.OperationFailed, "failed",
+		{"Expired", db.OperationTimeout, pkg.AuditTimeout, monitorDeadlineReason,
 			func(t *testing.T, opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationFailed,
-					&epb.OperationFailedEvent{OperationId: opId.String(), FencingToken: 5,
-						Reason: "deadline exceeded"})
+				return newOperationEvent(t, expiredRoute,
+					&epb.IntentExpiredEvent{OperationId: opId.String(), FencingToken: 5,
+						Reason: monitorDeadlineReason, ExpiredAt: timestamppb.New(observed)})
 			}},
 	}
 
@@ -68,6 +82,7 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 		t.Run(e.name+"Applied", func(t *testing.T) {
 			r := newTestRepos()
 			op := runningOp(5)
+			op.CreatedAt = observed.Add(-time.Hour)
 			r.updates(op)
 
 			resp, err := NewEventServer(orgName, r.repos()).
@@ -77,13 +92,18 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 			assert.NotNil(t, resp)
 			assert.Equal(t, []uuid.UUID{op.Id}, r.released)
 			assert.Equal(t, []string{e.audit}, r.events())
+			assert.Equal(t, e.reason, r.saved[0].Reason)
+			require.Len(t, r.published, 1)
+			assert.Equal(t, e.status, r.published[0].Status)
+			assert.Equal(t, observed, *r.published[0].TerminalAt)
+			assert.Equal(t, observed, r.results[0].At)
 			r.assertExpectations(t)
 		})
 
 		t.Run(e.name+"LateIsAcknowledged", func(t *testing.T) {
 			r := newTestRepos()
 			op := runningOp(5)
-			op.Status = db.OperationTimeout
+			op.Status = db.OperationCancelled
 			r.updates(op)
 
 			resp, err := NewEventServer(orgName, r.repos()).
@@ -92,6 +112,7 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 			assert.NoError(t, err)
 			assert.NotNil(t, resp)
 			assert.Equal(t, []string{"ignored_" + e.audit}, r.events())
+			assert.Empty(t, r.published)
 			r.assertExpectations(t)
 		})
 
@@ -105,6 +126,7 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 
 			assert.NoError(t, err)
 			assert.NotNil(t, resp)
+			assert.Empty(t, r.published)
 			r.assertExpectations(t)
 		})
 
@@ -118,6 +140,7 @@ func TestEventNotification_terminalEvents(t *testing.T) {
 
 			assert.Equal(t, codes.Unavailable, status.Code(err))
 			assert.Nil(t, resp)
+			assert.Empty(t, r.published)
 			r.assertExpectations(t)
 		})
 	}
@@ -128,37 +151,37 @@ func TestEventNotification_actor(t *testing.T) {
 		event func(opId uuid.UUID) *epb.Event
 		actor string
 	}{
-		"CompletedCarriesActor": {
+		"SatisfiedCarriesActor": {
 			func(opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationCompleted,
-					&epb.OperationCompletedEvent{OperationId: opId.String(),
-						FencingToken: 5, Actor: "operation-monitor"})
+				return newOperationEvent(t, satisfiedRoute,
+					&epb.IntentSatisfiedEvent{OperationId: opId.String(),
+						FencingToken: 5, Actor: operationMonitorActor})
 			},
-			"operation-monitor",
+			operationMonitorActor,
 		},
-		"FailedCarriesActor": {
+		"ExpiredCarriesActor": {
 			func(opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationFailed,
-					&epb.OperationFailedEvent{OperationId: opId.String(), FencingToken: 5,
-						Reason: "deadline exceeded", Actor: "operation-monitor-sweeper"})
+				return newOperationEvent(t, expiredRoute,
+					&epb.IntentExpiredEvent{OperationId: opId.String(), FencingToken: 5,
+						Reason: monitorDeadlineReason, Actor: operationMonitorSweeperActor})
 			},
-			"operation-monitor-sweeper",
+			operationMonitorSweeperActor,
 		},
 		"MissingActorFallsBack": {
 			func(opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationCompleted,
-					&epb.OperationCompletedEvent{OperationId: opId.String(),
+				return newOperationEvent(t, satisfiedRoute,
+					&epb.IntentSatisfiedEvent{OperationId: opId.String(),
 						FencingToken: 5})
 			},
-			pkg.OperationMonitorActor,
+			operationMonitorActor,
 		},
 		"BlankActorFallsBack": {
 			func(opId uuid.UUID) *epb.Event {
-				return newOperationEvent(t, evt.EventOperationFailed,
-					&epb.OperationFailedEvent{OperationId: opId.String(), FencingToken: 5,
-						Reason: "deadline exceeded", Actor: "  "})
+				return newOperationEvent(t, expiredRoute,
+					&epb.IntentExpiredEvent{OperationId: opId.String(), FencingToken: 5,
+						Reason: monitorDeadlineReason, Actor: "  "})
 			},
-			pkg.OperationMonitorActor,
+			operationMonitorActor,
 		},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -172,7 +195,30 @@ func TestEventNotification_actor(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Len(t, r.saved, 1)
 			assert.Equal(t, tc.actor, r.saved[0].Actor)
+			assert.Equal(t, tc.actor, r.results[0].Actor)
 			r.assertExpectations(t)
+		})
+	}
+}
+
+func TestEventNotification_badPayload(t *testing.T) {
+	for name, route := range map[string]string{
+		"Satisfied": satisfiedRoute,
+		"Expired":   expiredRoute,
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := newTestRepos()
+			body, err := anypb.New(&epb.EventResponse{})
+			require.NoError(t, err)
+
+			_, err = NewEventServer(orgName, r.repos()).EventNotification(
+				context.Background(), &epb.Event{
+					RoutingKey: msgbus.PrepareRoute(orgName, route),
+					Msg:        body,
+				})
+
+			assert.Error(t, err)
+			r.assertUntouched(t)
 		})
 	}
 }
@@ -192,8 +238,8 @@ func TestEventNotification_invalidInput(t *testing.T) {
 		r := newTestRepos()
 
 		_, err := NewEventServer(orgName, r.repos()).EventNotification(
-			context.Background(), newOperationEvent(t, evt.EventOperationCompleted,
-				&epb.OperationCompletedEvent{OperationId: "nope", FencingToken: 5}))
+			context.Background(), newOperationEvent(t, satisfiedRoute,
+				&epb.IntentSatisfiedEvent{OperationId: "nope", FencingToken: 5}))
 
 		assert.Error(t, err)
 		r.assertUntouched(t)
@@ -221,7 +267,7 @@ func TestSweeperActor(t *testing.T) {
 
 	NewSweeper(r.repos()).sweepOnce(context.Background())
 
-	assert.Equal(t, []string{"timeout"}, r.events())
-	assert.Equal(t, pkg.OperationManagerSweeperActor, r.saved[0].Actor)
+	assert.Equal(t, []string{pkg.AuditTimeout}, r.events())
+	assert.Equal(t, operationManagerSweeperActor, r.saved[0].Actor)
 	r.assertExpectations(t)
 }

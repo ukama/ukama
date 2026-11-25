@@ -9,20 +9,21 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"fmt"
 	"regexp"
 	"testing"
 	"time"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
+	log "github.com/sirupsen/logrus"
+	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
 type UkamaDbMock struct {
@@ -77,7 +78,8 @@ func Test_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(un.Id, un.NotificationId, un.UserId, un.IsRead, un.CreatedAt, un.UpdatedAt, sqlmock.AnyArg()).
+			WithArgs(un.Id, un.NotificationId, un.UserId, un.IsRead, un.CreatedAt, un.UpdatedAt,
+				sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -318,13 +320,27 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 		}
 
 		// Create the expected SQL query
-		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, user_notifications.is_read, notifications.title, notifications.description, notifications.scope, notifications.type, notifications.id, notifications.created_at, notifications.updated_at, notifications.resource_id FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id INNER JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY notifications.created_at DESC;", userId)
+		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, "+
+			"user_notifications.is_read, notifications.title, notifications.description, "+
+			"notifications.scope, notifications.type, notifications.id, "+
+			"notifications.created_at, notifications.updated_at, notifications.resource_id FROM "+
+			"user_notifications INNER JOIN notifications ON user_notifications.notification_id "+
+			"= notifications.id INNER JOIN event_msgs ON event_msgs.id = "+
+			"notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY "+
+			"notifications.created_at DESC;", userId)
 
 		rows := sqlmock.NewRows([]string{
-			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at", "updated_at", "resource_id",
+			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at",
+			"updated_at", "resource_id",
 		}).
-			AddRow(notification1.EventKey, notification1.IsRead, notification1.Title, notification1.Description, uint8(notification1.Scope), uint8(notification1.Type), notification1.Id, notification1.CreatedAt, notification1.UpdatedAt, notification1.ResourceId).
-			AddRow(notification2.EventKey, notification2.IsRead, notification2.Title, notification2.Description, uint8(notification2.Scope), uint8(notification2.Type), notification2.Id, notification2.CreatedAt, notification2.UpdatedAt, notification2.ResourceId)
+			AddRow(notification1.EventKey, notification1.IsRead, notification1.Title,
+				notification1.Description, uint8(notification1.Scope), uint8(notification1.Type),
+				notification1.Id, notification1.CreatedAt, notification1.UpdatedAt,
+				notification1.ResourceId).
+			AddRow(notification2.EventKey, notification2.IsRead, notification2.Title,
+				notification2.Description, uint8(notification2.Scope), uint8(notification2.Type),
+				notification2.Id, notification2.CreatedAt, notification2.UpdatedAt,
+				notification2.ResourceId)
 
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
 			WillReturnRows(rows)
@@ -381,12 +397,23 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		}
 
-		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, user_notifications.is_read, notifications.title, notifications.description, notifications.scope, notifications.type, notifications.id, notifications.created_at, notifications.updated_at, notifications.resource_id FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id INNER JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY notifications.created_at DESC;", userId)
+		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, "+
+			"user_notifications.is_read, notifications.title, notifications.description, "+
+			"notifications.scope, notifications.type, notifications.id, "+
+			"notifications.created_at, notifications.updated_at, notifications.resource_id FROM "+
+			"user_notifications INNER JOIN notifications ON user_notifications.notification_id "+
+			"= notifications.id INNER JOIN event_msgs ON event_msgs.id = "+
+			"notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY "+
+			"notifications.created_at DESC;", userId)
 
 		rows := sqlmock.NewRows([]string{
-			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at", "updated_at", "resource_id",
+			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at",
+			"updated_at", "resource_id",
 		}).
-			AddRow(notification.EventKey, notification.IsRead, notification.Title, notification.Description, uint8(notification.Scope), uint8(notification.Type), notification.Id, notification.CreatedAt, notification.UpdatedAt, notification.ResourceId)
+			AddRow(notification.EventKey, notification.IsRead, notification.Title,
+				notification.Description, uint8(notification.Scope), uint8(notification.Type),
+				notification.Id, notification.CreatedAt, notification.UpdatedAt,
+				notification.ResourceId)
 
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
 			WillReturnRows(rows)
@@ -428,11 +455,19 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 
 		userId := uuid.NewV4().String()
 
-		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, user_notifications.is_read, notifications.title, notifications.description, notifications.scope, notifications.type, notifications.id, notifications.created_at, notifications.updated_at, notifications.resource_id FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id INNER JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY notifications.created_at DESC;", userId)
+		expectedQuery := fmt.Sprintf("SELECT event_msgs.key AS event_key, "+
+			"user_notifications.is_read, notifications.title, notifications.description, "+
+			"notifications.scope, notifications.type, notifications.id, "+
+			"notifications.created_at, notifications.updated_at, notifications.resource_id FROM "+
+			"user_notifications INNER JOIN notifications ON user_notifications.notification_id "+
+			"= notifications.id INNER JOIN event_msgs ON event_msgs.id = "+
+			"notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY "+
+			"notifications.created_at DESC;", userId)
 
 		// Return empty result set
 		rows := sqlmock.NewRows([]string{
-			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at", "updated_at", "resource_id",
+			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at",
+			"updated_at", "resource_id",
 		})
 
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
@@ -458,7 +493,8 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		// Accept both nil and empty slice as valid responses
-		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
+		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v",
+			notifications)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
@@ -472,11 +508,18 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 
 		userId := ""
 
-		expectedQuery := "SELECT event_msgs.key AS event_key, user_notifications.is_read, notifications.title, notifications.description, notifications.scope, notifications.type, notifications.id, notifications.created_at, notifications.updated_at, notifications.resource_id FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id INNER JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE user_notifications.user_id = '' ORDER BY notifications.created_at DESC;"
+		expectedQuery := "SELECT event_msgs.key AS event_key, user_notifications.is_read, " +
+			"notifications.title, notifications.description, notifications.scope, " +
+			"notifications.type, notifications.id, notifications.created_at, " +
+			"notifications.updated_at, notifications.resource_id FROM user_notifications INNER " +
+			"JOIN notifications ON user_notifications.notification_id = notifications.id INNER " +
+			"JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE " +
+			"user_notifications.user_id = '' ORDER BY notifications.created_at DESC;"
 
 		// Return empty result set
 		rows := sqlmock.NewRows([]string{
-			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at", "updated_at", "resource_id",
+			"event_key", "is_read", "title", "description", "scope", "type", "id", "created_at",
+			"updated_at", "resource_id",
 		})
 
 		mock.ExpectQuery(regexp.QuoteMeta(expectedQuery)).
@@ -502,7 +545,8 @@ func TestUserNotificationRepo_GetNotificationsByUserID(t *testing.T) {
 		// Assert
 		assert.NoError(t, err)
 		// Accept both nil and empty slice as valid responses
-		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v", notifications)
+		assert.True(t, len(notifications) == 0, "Expected nil or empty slice, got %v",
+			notifications)
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)

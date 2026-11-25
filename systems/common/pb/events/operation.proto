@@ -30,3 +30,38 @@ message OperationFailedEvent {
   google.protobuf.Timestamp failedAt = 5;
   string actor = 6;
 }
+
+message OperationTimedOutEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  string reason = 4;
+  google.protobuf.Timestamp timedOutAt = 5;
+  string actor = 6;
+}
+
+message OperationCancelledEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  string reason = 4;
+  google.protobuf.Timestamp cancelledAt = 5;
+  string actor = 6;
+}
+
+message IntentSatisfiedEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  google.protobuf.Timestamp observedAt = 4;
+  string actor = 5;
+}
+
+message IntentExpiredEvent {
+  string operationId = 1;
+  uint64 fencingToken = 2;
+  string resourceKey = 3;
+  string reason = 4;
+  google.protobuf.Timestamp expiredAt = 5;
+  string actor = 6;
+}

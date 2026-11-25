@@ -8,22 +8,23 @@
 
 package pkg
 
-import "time"
-
 const (
 	SystemName  = "operation"
 	ServiceName = "manager"
 )
 
 const (
-	DefaultLeaseTTL = 5 * time.Minute
-	MaxLeaseTTL     = time.Hour
-	SweeperInterval = 30 * time.Second
-)
+	AuditLockAcquired = "lock_acquired"
+	AuditRunning      = "running"
+	AuditCompleted    = "completed"
+	AuditFailed       = "failed"
+	AuditTimeout      = "timeout"
+	AuditForceUnlock  = "force_unlock"
+	AuditDeleted      = "deleted"
+	AuditRejected     = "rejected_"
+	AuditIgnored      = "ignored_"
 
-const (
-	OperationManagerSweeperActor = "operation-manager-sweeper"
-	OperationMonitorActor        = "operation-monitor"
+	ReasonLeaseExpired = "lease expired"
 )
 
 var (

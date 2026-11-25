@@ -8,39 +8,21 @@
 
 package pkg
 
-import "time"
+// TODO: This service should have be called intent-monitor
+// or just intent, not operation-monitor
 
 const (
 	SystemName  = "node"
 	ServiceName = "operationmonitor"
 )
 
-const (
-	DefaultDeadlineTTL = 4 * time.Minute
-	SweeperInterval    = 30 * time.Second
-)
-
-const (
-	OperationMonitorActor        = "operation-monitor"
-	OperationMonitorSweeperActor = "operation-monitor-sweeper"
-)
-
-// Action → completion rule fallback when caller doesn't supply one.
-// A reboot takes the node offline then back online (substate: on→off→on)
-// without changing the main state (Operational stays Operational), so
-// completion is the node reporting substate=on again.
-// TODO: move to config or per-action proto when we add more actions.
-var DefaultCompletionRule = map[string]string{
-	"SendNodeCommand":      "substate=on",
-	"RestartNode":          "substate=on",
-	"ToggleRadio":          "substate=on",
-	"ToggleInternetSwitch": "substate=on",
-	"ToggleService":        "substate=on",
-}
-
-const AppRulePrefix = "app."
-
 var (
 	IsDebugMode bool   = false
 	InstanceId  string = ServiceName + "-debug"
+)
+
+const (
+	RuleKeySubstate = "substate"
+	SubstateOn      = "on"
+	RuleSubstateOn  = RuleKeySubstate + "=" + SubstateOn
 )
