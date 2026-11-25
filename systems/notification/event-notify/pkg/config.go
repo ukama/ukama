@@ -88,6 +88,8 @@ func NewConfig(name string) *Config {
 				evt.EventRoutingKey[evt.EventNodeStateTransition],
 				evt.EventRoutingKey[evt.EventOperationCompleted],
 				evt.EventRoutingKey[evt.EventOperationFailed],
+				evt.EventRoutingKey[evt.EventOperationTimedOut],
+				evt.EventRoutingKey[evt.EventOperationCancelled],
 			}},
 	}
 }

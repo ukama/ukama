@@ -11,12 +11,13 @@ package db
 import (
 	"time"
 
+	"github.com/jackc/pgtype"
 	"gorm.io/gorm"
 
-	"github.com/jackc/pgtype"
-	notif "github.com/ukama/ukama/systems/common/notification"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
+
+	notif "github.com/ukama/ukama/systems/common/notification"
 )
 
 type JSONB map[string]interface{}

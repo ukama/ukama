@@ -15,23 +15,22 @@ import (
 	"syscall"
 
 	"github.com/num30/config"
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"gopkg.in/yaml.v3"
 
-	ccmd "github.com/ukama/ukama/systems/common/cmd"
-	ugrpc "github.com/ukama/ukama/systems/common/grpc"
-	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
-	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-
-	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+	"github.com/ukama/ukama/systems/operation/manager/cmd/version"
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/server"
 
-	"github.com/ukama/ukama/systems/operation/manager/cmd/version"
+	log "github.com/sirupsen/logrus"
+	ccmd "github.com/ukama/ukama/systems/common/cmd"
+	ugrpc "github.com/ukama/ukama/systems/common/grpc"
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	egenerated "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 var svcConf *pkg.Config
@@ -84,8 +83,9 @@ func runGrpcServer(gormDb sql.Db) {
 		Operations: db.NewOperationRepo(gormDb),
 		Locks:      db.NewLockRepo(gormDb),
 		Audits:     db.NewAuditRepo(gormDb),
+		Results:    server.NewResultPublisher(svcConf.OrgName, mbClient),
 	}
-	opServer := server.NewOperationServer(svcConf.OrgName, svcConf.OrgId, repos, mbClient)
+	opServer := server.NewOperationServer(svcConf.OrgName, svcConf.OrgId, repos)
 	eventServer := server.NewEventServer(svcConf.OrgName, repos)
 
 	grpcSrv := ugrpc.NewGrpcServer(*svcConf.Grpc, func(s *grpc.Server) {
@@ -94,7 +94,8 @@ func runGrpcServer(gormDb sql.Db) {
 	})
 
 	grpcSrv.RegisterDependency("db", true, ugrpc.DBCheck(gormDb))
-	grpcSrv.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
+	grpcSrv.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(svcConf.MsgClient.Host))
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

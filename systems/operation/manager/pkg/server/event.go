@@ -13,20 +13,21 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
-	evt "github.com/ukama/ukama/systems/common/events"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	cpb "github.com/ukama/ukama/systems/common/pb/events"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
+
+	log "github.com/sirupsen/logrus"
+	cpb "github.com/ukama/ukama/systems/common/pb/events"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 type EventServer struct {
@@ -39,48 +40,63 @@ func NewEventServer(orgName string, repos Repos) *EventServer {
 	return &EventServer{orgName: orgName, repos: repos}
 }
 
-func (e *EventServer) EventNotification(ctx context.Context, event *epb.Event) (*epb.EventResponse, error) {
+func (e *EventServer) EventNotification(ctx context.Context,
+	event *epb.Event) (*epb.EventResponse, error) {
 	if event == nil {
 		return nil, fmt.Errorf("nil event")
 	}
 	log.Infof("operation/manager event-consumer: received %s", event.RoutingKey)
 
 	switch event.RoutingKey {
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationCompleted]):
-		return e.handleCompleted(ctx, event)
-	case msgbus.PrepareRoute(e.orgName, evt.EventRoutingKey[evt.EventOperationFailed]):
-		return e.handleFailed(ctx, event)
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.node.operationmonitor.intent.satisfied"):
+		return e.handleSatisfied(ctx, event)
+	case msgbus.PrepareRoute(e.orgName,
+		"event.cloud.global.{{ .Org}}.node.operationmonitor.intent.expired"):
+		return e.handleExpired(ctx, event)
 	default:
-		log.Warnf("operation/manager event-consumer: unhandled routing key %s", event.RoutingKey)
+		log.Warnf("operation/manager event-consumer: unhandled routing key %s",
+			event.RoutingKey)
 		return &epb.EventResponse{}, nil
 	}
 }
 
-func (e *EventServer) handleCompleted(ctx context.Context,
+func (e *EventServer) handleSatisfied(ctx context.Context,
 	event *epb.Event) (*epb.EventResponse, error) {
-	msg, err := cpb.UnmarshalProtoEvent[epb.OperationCompletedEvent](event.Msg)
+	msg, err := cpb.UnmarshalProtoEvent[epb.IntentSatisfiedEvent](event.Msg)
 	if err != nil {
 		return nil, err
 	}
 	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationSuccess,
-		db.OperationAudit{Event: "completed", Actor: eventActor(msg.Actor)}, "")
+		db.OperationAudit{
+			Event: pkg.AuditCompleted, Actor: eventActor(msg.Actor),
+			At: eventTime(msg.ObservedAt),
+		}, "")
 }
 
-func (e *EventServer) handleFailed(ctx context.Context,
+func (e *EventServer) handleExpired(ctx context.Context,
 	event *epb.Event) (*epb.EventResponse, error) {
-	msg, err := cpb.UnmarshalProtoEvent[epb.OperationFailedEvent](event.Msg)
+	msg, err := cpb.UnmarshalProtoEvent[epb.IntentExpiredEvent](event.Msg)
 	if err != nil {
 		return nil, err
 	}
-	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationFailed,
+	return e.terminate(ctx, msg.OperationId, msg.FencingToken, db.OperationTimeout,
 		db.OperationAudit{
-			Event: "failed", Actor: eventActor(msg.Actor), Reason: msg.Reason,
+			Event: pkg.AuditTimeout, Actor: eventActor(msg.Actor), Reason: msg.Reason,
+			At: eventTime(msg.ExpiredAt),
 		}, msg.Reason)
+}
+
+func eventTime(ts *timestamppb.Timestamp) time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return ts.AsTime()
 }
 
 func eventActor(actor string) string {
 	if strings.TrimSpace(actor) == "" {
-		return pkg.OperationMonitorActor
+		return operationMonitorActor
 	}
 	return actor
 }

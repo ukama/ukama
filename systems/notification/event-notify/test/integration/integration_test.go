@@ -12,10 +12,10 @@
 package integration
 
 import (
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/common/config"
 
 	rconf "github.com/num30/config"
+	log "github.com/sirupsen/logrus"
 )
 
 var tConfig *TestConfig

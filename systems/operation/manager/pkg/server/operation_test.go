@@ -10,6 +10,7 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -17,16 +18,23 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/tj/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/reflect/protoreflect"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/uuid"
-	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
+	"github.com/ukama/ukama/systems/operation/manager/mocks"
 	"github.com/ukama/ukama/systems/operation/manager/pkg"
 	"github.com/ukama/ukama/systems/operation/manager/pkg/db"
+
+	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	pb "github.com/ukama/ukama/systems/operation/manager/pb/gen"
 )
 
 func startRequest(keys ...string) *pb.StartOperationRequest {
@@ -39,7 +47,7 @@ func startRequest(keys ...string) *pb.StartOperationRequest {
 func TestStartOperation(t *testing.T) {
 	t.Run("SingleTargetIsLeaderWithoutGroup", func(t *testing.T) {
 		r := newTestRepos()
-		r.adds([]string{}, mock.AnythingOfType("time.Duration"))
+		r.adds([]string{})
 
 		resp, err := r.server().StartOperation(context.Background(),
 			startRequest("node:abc"))
@@ -49,7 +57,7 @@ func TestStartOperation(t *testing.T) {
 		assert.Equal(t, "node:abc", resp.Operations[0].ResourceKey)
 		assert.Equal(t, uint64(1), resp.Operations[0].FencingToken)
 		assert.Empty(t, resp.Operations[0].GroupId)
-		assert.Equal(t, []string{"lock_acquired"}, r.events())
+		assert.Equal(t, []string{pkg.AuditLockAcquired}, r.events())
 		assert.Equal(t, "controller", r.saved[0].Actor)
 		assert.Equal(t, "node:abc", r.saved[0].ResourceKey)
 		r.assertExpectations(t)
@@ -58,7 +66,7 @@ func TestStartOperation(t *testing.T) {
 	t.Run("GroupSortsTargetsAndLinksMembersToLeader", func(t *testing.T) {
 		r := newTestRepos()
 		r.findsGroup(nil)
-		r.adds([]string{"node:c", "node:t"}, mock.AnythingOfType("time.Duration"))
+		r.adds([]string{"node:c", "node:t"})
 		req := startRequest("node:t", "node:a", "node:t")
 		req.MustBeFree = []string{"node:t", "node:c"}
 		req.IdempotencyKey = "key"
@@ -78,7 +86,7 @@ func TestStartOperation(t *testing.T) {
 		assert.Equal(t, ops, r.locks.Calls[0].Arguments.Get(1))
 		assert.Len(t, resp.Operations, 2)
 		assert.Equal(t, ops[0].Id.String(), resp.Operations[1].GroupId)
-		assert.Equal(t, []string{"lock_acquired", "lock_acquired"}, r.events())
+		assert.Equal(t, []string{pkg.AuditLockAcquired, pkg.AuditLockAcquired}, r.events())
 		r.assertExpectations(t)
 	})
 
@@ -105,8 +113,7 @@ func TestStartOperation(t *testing.T) {
 		r := newTestRepos()
 		holder := uuid.NewV4()
 		r.addRunsNested()
-		r.locks.On("Acquire", mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything).
+		r.locks.On("Acquire", mock.Anything, mock.Anything, mock.Anything).
 			Return(&db.ConflictError{ResourceKey: "node:c", HolderId: holder,
 				HolderType: "UpdateSoftware"}).Once()
 
@@ -124,8 +131,8 @@ func TestStartOperation(t *testing.T) {
 	t.Run("AuditFailureIsInternal", func(t *testing.T) {
 		r := newTestRepos()
 		r.addRunsNested()
-		r.locks.On("Acquire", mock.Anything, mock.Anything, mock.Anything,
-			mock.Anything).Return(nil).Once()
+		r.locks.On("Acquire", mock.Anything, mock.Anything, mock.Anything).
+			Return(nil).Once()
 		r.audits.On("AddInTx", mock.Anything, mock.Anything).
 			Return(fmt.Errorf("db down")).Once()
 
@@ -396,7 +403,7 @@ func TestCompleteOperation(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_SUCCESS, resp.Operation.Status)
 		assert.Equal(t, []uuid.UUID{op.Id}, r.released)
-		assert.Equal(t, []string{"completed"}, r.events())
+		assert.Equal(t, []string{pkg.AuditCompleted}, r.events())
 		assert.Equal(t, "controller", r.saved[0].Actor)
 		assert.Equal(t, "dispatched", r.saved[0].Reason)
 		assert.Empty(t, r.calls("Get"))
@@ -411,7 +418,7 @@ func TestCompleteOperation(t *testing.T) {
 
 		assert.Nil(t, resp)
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-		assert.Equal(t, []string{"rejected_completed"}, r.events())
+		assert.Equal(t, []string{pkg.AuditRejected + pkg.AuditCompleted}, r.events())
 	})
 
 	t.Run("MissingOperationMapsToNotFound", func(t *testing.T) {
@@ -455,7 +462,7 @@ func TestFailOperation(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_FAILED, resp.Operation.Status)
 		assert.Equal(t, "publish failed", resp.Operation.Error)
-		assert.Equal(t, []string{"failed"}, r.events())
+		assert.Equal(t, []string{pkg.AuditFailed}, r.events())
 		assert.Equal(t, "publish failed", r.saved[0].Reason)
 		assert.Empty(t, r.calls("Get"))
 	})
@@ -470,7 +477,7 @@ func TestFailOperation(t *testing.T) {
 
 		assert.Nil(t, resp)
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-		assert.Equal(t, []string{"ignored_failed"}, r.events())
+		assert.Equal(t, []string{pkg.AuditIgnored + pkg.AuditFailed}, r.events())
 	})
 
 	t.Run("InvalidId", func(t *testing.T) {
@@ -504,7 +511,7 @@ func TestForceUnlock(t *testing.T) {
 		assert.Equal(t, pb.OperationStatus_CANCELLED, resp.Operation.Status)
 		assert.Equal(t, "force unlocked: stuck operation", resp.Operation.Error)
 		assert.Equal(t, []uuid.UUID{current.Id}, r.released)
-		assert.Equal(t, []string{"force_unlock"}, r.events())
+		assert.Equal(t, []string{pkg.AuditForceUnlock}, r.events())
 		assert.Equal(t, "owner@ukama.com", r.saved[0].Actor)
 		r.assertExpectations(t)
 	})
@@ -562,7 +569,7 @@ func TestMarkRunning(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, pb.OperationStatus_RUNNING, resp.Operation.Status)
-		assert.Equal(t, []string{"running"}, r.events())
+		assert.Equal(t, []string{pkg.AuditRunning}, r.events())
 		r.assertExpectations(t)
 	})
 
@@ -585,7 +592,7 @@ func TestMarkRunning(t *testing.T) {
 		_, err := r.server().MarkRunning(context.Background(), request(op.Id))
 
 		assert.Equal(t, codes.FailedPrecondition, status.Code(err))
-		assert.Equal(t, []string{"rejected_running"}, r.events())
+		assert.Equal(t, []string{pkg.AuditRejected + pkg.AuditRunning}, r.events())
 	})
 
 	t.Run("ZeroTokenIsInvalid", func(t *testing.T) {
@@ -776,12 +783,12 @@ func TestStartOperationLease(t *testing.T) {
 		seconds uint32
 		lease   time.Duration
 	}{
-		"ZeroUsesDefault": {0, pkg.DefaultLeaseTTL},
+		"ZeroUsesDefault": {0, defaultLeaseTTL},
 		"MaxIsAccepted":   {3600, time.Hour},
 	} {
 		t.Run(name, func(t *testing.T) {
 			r := newTestRepos()
-			r.adds(mock.Anything, tc.lease)
+			r.adds(mock.Anything)
 			req := startRequest("node:abc")
 			req.LeaseSeconds = tc.seconds
 
@@ -899,7 +906,7 @@ func TestDeleteOperation(t *testing.T) {
 		_, err := r.server().DeleteOperation(context.Background(), request(op.Id))
 
 		assert.NoError(t, err)
-		assert.Equal(t, []string{"deleted"}, r.events())
+		assert.Equal(t, []string{pkg.AuditDeleted}, r.events())
 		assert.Equal(t, "admin", r.saved[0].Actor)
 		assert.Equal(t, op.Id, r.saved[0].OperationId)
 		assert.Equal(t, op.ResourceKey, r.saved[0].ResourceKey)
@@ -956,4 +963,716 @@ func TestDeleteOperation(t *testing.T) {
 			assert.Equal(t, tc.code, status.Code(err))
 		})
 	}
+}
+
+func TestTerminalPathsPublishResult(t *testing.T) {
+	t.Run("CompleteOperation", func(t *testing.T) {
+		r := newTestRepos()
+		op := runningOp(7)
+		r.updates(op)
+
+		_, err := r.server().CompleteOperation(context.Background(),
+			&pb.CompleteOperationRequest{Id: op.Id.String(), FencingToken: 7,
+				Actor: "controller", Reason: "dispatched"})
+
+		require.NoError(t, err)
+		require.Len(t, r.published, 1)
+		assert.Equal(t, db.OperationSuccess, r.published[0].Status)
+		assert.Equal(t, "controller", r.results[0].Actor)
+	})
+
+	t.Run("FailOperation", func(t *testing.T) {
+		r := newTestRepos()
+		op := runningOp(7)
+		r.updates(op)
+
+		_, err := r.server().FailOperation(context.Background(),
+			&pb.FailOperationRequest{Id: op.Id.String(), FencingToken: 7,
+				Actor: "software", Reason: "publish failed"})
+
+		require.NoError(t, err)
+		require.Len(t, r.published, 1)
+		assert.Equal(t, db.OperationFailed, r.published[0].Status)
+		assert.Equal(t, "publish failed", r.published[0].Error)
+	})
+
+	t.Run("ForceUnlock", func(t *testing.T) {
+		r := newTestRepos()
+		op := runningOp(7)
+		r.ops.On("Get", mock.Anything, op.Id).Return(&op, nil).Once()
+		r.updates(op)
+
+		_, err := r.server().ForceUnlock(context.Background(), &pb.ForceUnlockRequest{
+			Id: op.Id.String(), Actor: "admin", Reason: "stuck"})
+
+		require.NoError(t, err)
+		require.Len(t, r.published, 1)
+		assert.Equal(t, db.OperationCancelled, r.published[0].Status)
+		assert.Equal(t, "admin", r.results[0].Actor)
+	})
+
+	t.Run("Sweeper", func(t *testing.T) {
+		r := newTestRepos()
+		op := runningOp(4)
+		r.ops.On("List", mock.Anything, mock.Anything).
+			Return([]*db.Operation{&op}, nil).Once()
+		r.updates(op)
+
+		NewSweeper(r.repos()).sweepOnce(context.Background())
+
+		require.Len(t, r.published, 1)
+		assert.Equal(t, db.OperationTimeout, r.published[0].Status)
+		assert.Equal(t, operationManagerSweeperActor, r.results[0].Actor)
+	})
+}
+
+const orgName = "ukama"
+
+type testRepos struct {
+	ops       *mocks.OperationRepo
+	locks     *mocks.LockRepo
+	audits    *mocks.AuditRepo
+	saved     []db.OperationAudit
+	released  []uuid.UUID
+	published []db.Operation
+	results   []db.OperationAudit
+}
+
+func (r *testRepos) Publish(op *db.Operation, audit db.OperationAudit) {
+	r.published = append(r.published, *op)
+	r.results = append(r.results, audit)
+}
+
+func newTestRepos() *testRepos {
+	return &testRepos{
+		ops: &mocks.OperationRepo{}, locks: &mocks.LockRepo{}, audits: &mocks.AuditRepo{},
+	}
+}
+
+func (r *testRepos) repos() Repos {
+	return Repos{Operations: r.ops, Locks: r.locks, Audits: r.audits, Results: r}
+}
+
+func (r *testRepos) server() *OperationServer {
+	return NewOperationServer(orgName, "", r.repos())
+}
+
+func (r *testRepos) assertExpectations(t *testing.T) {
+	t.Helper()
+	r.ops.AssertExpectations(t)
+	r.locks.AssertExpectations(t)
+	r.audits.AssertExpectations(t)
+}
+
+func (r *testRepos) assertUntouched(t *testing.T) {
+	t.Helper()
+	assert.Empty(t, r.ops.Calls)
+	assert.Empty(t, r.locks.Calls)
+	assert.Empty(t, r.audits.Calls)
+}
+
+func (r *testRepos) recordAudits() *testRepos {
+	record := func(args mock.Arguments) {
+		r.saved = append(r.saved, *args.Get(1).(*db.OperationAudit))
+	}
+	r.audits.On("AddInTx", mock.Anything, mock.Anything).Run(record).Return(nil).Maybe()
+	r.audits.On("Add", mock.Anything, mock.Anything).Run(record).Return(nil).Maybe()
+	return r
+}
+
+func (r *testRepos) events() []string {
+	out := make([]string, 0, len(r.saved))
+	for _, a := range r.saved {
+		out = append(out, a.Event)
+	}
+	return out
+}
+
+func (r *testRepos) calls(method string) []mock.Call {
+	var out []mock.Call
+	for _, c := range r.ops.Calls {
+		if c.Method == method {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+func (r *testRepos) adds(mustBeFree interface{}) {
+	r.ops.On("Add", mock.Anything, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, ops []*db.Operation,
+			nested func(*gorm.DB) error) error {
+			for i, op := range ops {
+				op.FencingToken = uint64(i + 1)
+			}
+			return nested(nil)
+		}).Once()
+	r.locks.On("Acquire", mock.Anything, mock.Anything, mustBeFree).Return(nil).Once()
+	r.recordAudits()
+}
+
+func (r *testRepos) addRunsNested() {
+	r.ops.On("Add", mock.Anything, mock.Anything, mock.Anything).
+		Return(func(_ context.Context, _ []*db.Operation,
+			nested func(*gorm.DB) error) error {
+			return nested(nil)
+		}).Once()
+}
+
+func (r *testRepos) addFails(err error) {
+	r.ops.On("Add", mock.Anything, mock.Anything, mock.Anything).Return(err).Once()
+}
+
+func leaderFilter(key string) interface{} {
+	return mock.MatchedBy(func(f db.OperationFilter) bool {
+		return f.IdempotencyKey == key && f.GroupId == nil
+	})
+}
+
+func membersFilter(leader uuid.UUID) interface{} {
+	return mock.MatchedBy(func(f db.OperationFilter) bool {
+		return f.GroupId != nil && *f.GroupId == leader &&
+			f.OrderBy == db.OrderByResourceKey && f.IdempotencyKey == ""
+	})
+}
+
+func (r *testRepos) findsGroup(group []*db.Operation) {
+	if len(group) == 0 {
+		r.ops.On("List", mock.Anything, leaderFilter("key")).Return(nil, nil).Once()
+		return
+	}
+	r.ops.On("List", mock.Anything, leaderFilter("key")).Return(group[:1], nil).Once()
+	r.ops.On("List", mock.Anything, membersFilter(group[0].Id)).
+		Return(group[1:], nil).Once()
+}
+
+func (r *testRepos) groupLookupFails(err error) {
+	r.ops.On("List", mock.Anything, leaderFilter("key")).Return(nil, err).Once()
+}
+
+func (r *testRepos) updates(current db.Operation) {
+	r.ops.On("Update", mock.Anything, current.Id, mock.Anything).
+		Return(func(_ context.Context, _ uuid.UUID,
+			nested func(*db.Operation, *gorm.DB) error) (*db.Operation, error) {
+			op := current
+			if err := nested(&op, nil); err != nil {
+				return nil, err
+			}
+			return &op, nil
+		}).Once()
+	r.locks.On("Release", mock.Anything, mock.Anything).
+		Run(func(args mock.Arguments) {
+			r.released = append(r.released, args.Get(1).(*db.Operation).Id)
+		}).Return(nil).Maybe()
+	r.recordAudits()
+}
+
+func (r *testRepos) updateFails(id uuid.UUID, err error) {
+	r.ops.On("Update", mock.Anything, id, mock.Anything).Return(nil, err).Once()
+}
+
+func (r *testRepos) deletes(current db.Operation) {
+	r.ops.On("Delete", mock.Anything, current.Id, mock.Anything).
+		Return(func(_ context.Context, _ uuid.UUID,
+			nested func(*db.Operation, *gorm.DB) error) error {
+			op := current
+			return nested(&op, nil)
+		}).Once()
+	r.recordAudits()
+}
+
+var ctx = context.Background()
+
+func pendingOp() db.Operation {
+	return db.Operation{
+		Id:             uuid.NewV4(),
+		Type:           "RestartNode",
+		System:         "node",
+		Status:         db.OperationPending,
+		FencingToken:   3,
+		ResourceKey:    "node:abc",
+		LeaseExpiresAt: time.Now().Add(time.Minute),
+	}
+}
+
+func TestMarkRunningTransition(t *testing.T) {
+	t.Run("TransitionsPendingToRunning", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		r.updates(op)
+
+		out, err := r.repos().markRunning(ctx, op.Id, op.FencingToken, "controller")
+
+		assert.NoError(t, err)
+		assert.Equal(t, db.OperationRunning, out.Status)
+		assert.NotNil(t, out.StartedAt)
+		assert.Equal(t, []string{pkg.AuditRunning}, r.events())
+		assert.Equal(t, "controller", r.saved[0].Actor)
+		assert.Equal(t, op.Id, r.saved[0].OperationId)
+		assert.Equal(t, op.ResourceKey, r.saved[0].ResourceKey)
+		r.audits.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("RepeatIsAuditedAndSucceeds", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		r.updates(op)
+
+		out, err := r.repos().markRunning(ctx, op.Id, op.FencingToken, "controller")
+
+		assert.NoError(t, err)
+		assert.Equal(t, db.OperationRunning, out.Status)
+		assert.Equal(t, []string{pkg.AuditIgnored + pkg.AuditRunning}, r.events())
+		assert.Empty(t, r.saved[0].Reason)
+		r.audits.AssertNotCalled(t, "AddInTx", mock.Anything, mock.Anything)
+	})
+
+	for name, change := range map[string]func(op *db.Operation) uint64{
+		"RejectsStaleFencingToken": func(op *db.Operation) uint64 {
+			return op.FencingToken - 1
+		},
+		"RejectsFinishedOperation": func(op *db.Operation) uint64 {
+			op.Status = db.OperationTimeout
+			return op.FencingToken
+		},
+		"RejectsExpiredLease": func(op *db.Operation) uint64 {
+			op.LeaseExpiresAt = time.Now().Add(-time.Second)
+			return op.FencingToken
+		},
+		"RejectsExpiredLeaseWhileRunning": func(op *db.Operation) uint64 {
+			op.Status = db.OperationRunning
+			op.LeaseExpiresAt = time.Now().Add(-time.Second)
+			return op.FencingToken
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := newTestRepos()
+			op := pendingOp()
+			token := change(&op)
+			r.updates(op)
+
+			out, err := r.repos().markRunning(ctx, op.Id, token, "controller")
+
+			assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+			assert.Nil(t, out)
+			assert.Equal(t, []string{pkg.AuditRejected + pkg.AuditRunning}, r.events())
+			assert.Equal(t, err.Error(), r.saved[0].Reason)
+			assert.Equal(t, "controller", r.saved[0].Actor)
+			r.audits.AssertNotCalled(t, "AddInTx", mock.Anything, mock.Anything)
+		})
+	}
+
+	t.Run("RepoErrorIsReturnedWithoutAudit", func(t *testing.T) {
+		r := newTestRepos()
+		id := uuid.NewV4()
+		r.updateFails(id, fmt.Errorf("operation %s: %w", id, store.ErrNotFound))
+
+		out, err := r.repos().markRunning(ctx, id, 3, "controller")
+
+		assert.True(t, errors.Is(err, store.ErrNotFound), err)
+		assert.Nil(t, out)
+		r.audits.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("RefusalAuditFailureIsReturned", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		r.ops.On("Update", mock.Anything, op.Id, mock.Anything).
+			Return(nil, ignore(&op, nil)).Once()
+		r.audits.On("Add", mock.Anything, mock.Anything).
+			Return(errors.New("connection reset")).Once()
+
+		out, err := r.repos().markRunning(ctx, op.Id, op.FencingToken, "controller")
+
+		assert.EqualError(t, err, "connection reset")
+		assert.Nil(t, out)
+		r.assertExpectations(t)
+	})
+}
+
+func TestTerminateTransition(t *testing.T) {
+	completed := db.OperationAudit{Event: pkg.AuditCompleted, Actor: "controller",
+		Reason: "dispatched"}
+
+	t.Run("FinishesReleasesAndAudits", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			completed, "")
+
+		assert.NoError(t, err)
+		assert.Equal(t, db.OperationSuccess, out.Status)
+		assert.NotNil(t, out.TerminalAt)
+		assert.Empty(t, out.Error)
+		assert.Equal(t, []uuid.UUID{op.Id}, r.released)
+		assert.Equal(t, []string{pkg.AuditCompleted}, r.events())
+		assert.Equal(t, op.Id, r.saved[0].OperationId)
+		assert.Equal(t, "dispatched", r.saved[0].Reason)
+		assert.Equal(t, *out.TerminalAt, r.saved[0].At)
+	})
+
+	t.Run("FailOnPendingRecordsTheError", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationFailed,
+			db.OperationAudit{Event: pkg.AuditFailed}, "boom")
+
+		assert.NoError(t, err)
+		assert.Equal(t, db.OperationFailed, out.Status)
+		assert.Equal(t, "boom", out.Error)
+		assert.Equal(t, []string{pkg.AuditFailed}, r.events())
+	})
+
+	t.Run("RejectsStaleFencingToken", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		op.FencingToken = 9
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, 4, db.OperationSuccess, completed, "")
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.Equal(t, []string{pkg.AuditRejected + pkg.AuditCompleted}, r.events())
+		assert.Equal(t, "dispatched", r.saved[0].Reason)
+		assert.Empty(t, r.released)
+	})
+
+	t.Run("DuplicateWithSameStatusIsAuditedAndSucceeds", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationSuccess
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			completed, "")
+
+		assert.NoError(t, err)
+		assert.Equal(t, db.OperationSuccess, out.Status)
+		assert.Equal(t, []string{pkg.AuditIgnored + pkg.AuditCompleted}, r.events())
+		assert.Empty(t, r.released)
+	})
+
+	t.Run("DifferentStatusIsAuditedAndRejected", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationTimeout
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			completed, "")
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.Equal(t, []string{pkg.AuditIgnored + pkg.AuditCompleted}, r.events())
+	})
+
+	t.Run("RejectsCompleteOnPending", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		r.updates(op)
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			completed, "")
+
+		assert.True(t, errors.Is(err, store.ErrPrecondition), err)
+		assert.Nil(t, out)
+		assert.Equal(t, []string{pkg.AuditRejected + pkg.AuditCompleted}, r.events())
+	})
+
+	t.Run("ReleaseFailureIsReturnedWithoutAudit", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		r.ops.On("Update", mock.Anything, op.Id, mock.Anything).
+			Return(func(_ context.Context, _ uuid.UUID,
+				nested func(*db.Operation, *gorm.DB) error) (*db.Operation, error) {
+				current := op
+				return nil, nested(&current, nil)
+			}).Once()
+		r.locks.On("Release", mock.Anything, mock.Anything).
+			Return(errors.New("connection reset")).Once()
+
+		out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			completed, "")
+
+		assert.EqualError(t, err, "connection reset")
+		assert.Nil(t, out)
+		r.audits.AssertNotCalled(t, "AddInTx", mock.Anything, mock.Anything)
+		r.audits.AssertNotCalled(t, "Add", mock.Anything, mock.Anything)
+	})
+
+	t.Run("RejectsNonTerminalStatus", func(t *testing.T) {
+		r := newTestRepos()
+
+		out, err := r.repos().terminate(ctx, uuid.NewV4(), 1, db.OperationRunning,
+			db.OperationAudit{Event: pkg.AuditRunning}, "")
+
+		assert.Error(t, err)
+		assert.Nil(t, out)
+		r.assertUntouched(t)
+	})
+}
+
+func TestRefusalError(t *testing.T) {
+	op := pendingOp()
+
+	assert.Equal(t, pkg.AuditIgnored+"transition", ignore(&op, nil).Error())
+	assert.Equal(t, "boom", reject(&op, errors.New("boom")).Error())
+}
+
+func TestTerminatePublishesResult(t *testing.T) {
+	for _, st := range []db.OperationStatus{db.OperationSuccess, db.OperationFailed,
+		db.OperationTimeout, db.OperationCancelled} {
+		t.Run(st.String(), func(t *testing.T) {
+			r := newTestRepos()
+			op := pendingOp()
+			op.Status = db.OperationRunning
+			r.updates(op)
+
+			out, err := r.repos().terminate(ctx, op.Id, op.FencingToken, st,
+				db.OperationAudit{Event: "end", Actor: "controller"}, "reason")
+
+			assert.NoError(t, err)
+			assert.Len(t, r.published, 1)
+			assert.Equal(t, st, r.published[0].Status)
+			assert.Equal(t, "controller", r.results[0].Actor)
+			assert.Equal(t, *out.TerminalAt, r.results[0].At)
+		})
+	}
+
+	t.Run("RefusalPublishesNothing", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		op.FencingToken = 9
+		r.updates(op)
+
+		_, err := r.repos().terminate(ctx, op.Id, 4, db.OperationSuccess,
+			db.OperationAudit{Event: pkg.AuditCompleted}, "")
+
+		assert.Error(t, err)
+		assert.Empty(t, r.published)
+	})
+
+	t.Run("DuplicatePublishesNothing", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationSuccess
+		r.updates(op)
+
+		_, err := r.repos().terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			db.OperationAudit{Event: pkg.AuditCompleted}, "")
+
+		assert.NoError(t, err)
+		assert.Empty(t, r.published)
+	})
+
+	t.Run("NoPublisherIsFine", func(t *testing.T) {
+		r := newTestRepos()
+		op := pendingOp()
+		op.Status = db.OperationRunning
+		r.updates(op)
+		repos := r.repos()
+		repos.Results = nil
+
+		_, err := repos.terminate(ctx, op.Id, op.FencingToken, db.OperationSuccess,
+			db.OperationAudit{Event: pkg.AuditCompleted}, "")
+
+		assert.NoError(t, err)
+	})
+}
+
+func TestEndTime(t *testing.T) {
+	created := time.Now().UTC().Add(-time.Hour)
+	op := &db.Operation{CreatedAt: created}
+	observed := created.Add(time.Minute)
+
+	assert.Equal(t, observed, endTime(op, observed))
+	for name, at := range map[string]time.Time{
+		"Zero":          {},
+		"Future":        time.Now().Add(time.Hour),
+		"BeforeCreated": created.Add(-time.Minute),
+	} {
+		t.Run(name+"UsesNow", func(t *testing.T) {
+			assert.WithinDuration(t, time.Now(), endTime(op, at), time.Second)
+		})
+	}
+}
+
+type fakeBus struct {
+	mb.MsgBusServiceClient
+	routes []string
+	msgs   []protoreflect.ProtoMessage
+	err    error
+}
+
+func (b *fakeBus) PublishRequest(route string, msg protoreflect.ProtoMessage) error {
+	b.routes = append(b.routes, route)
+	b.msgs = append(b.msgs, msg)
+	return b.err
+}
+
+func TestResultPublisher(t *testing.T) {
+	at := time.Now().UTC().Truncate(time.Second)
+	op := func(st db.OperationStatus) *db.Operation {
+		o := pendingOp()
+		o.Status = st
+		o.Error = pkg.ReasonLeaseExpired
+		return &o
+	}
+	audit := db.OperationAudit{Actor: operationManagerSweeperActor, At: at}
+	for name, tc := range map[string]struct {
+		status db.OperationStatus
+		route  string
+		check  func(t *testing.T, msg protoreflect.ProtoMessage)
+	}{
+		"Completed": {db.OperationSuccess, completedRoute,
+			func(t *testing.T, msg protoreflect.ProtoMessage) {
+				m := msg.(*epb.OperationCompletedEvent)
+				assert.Equal(t, at, m.CompletedAt.AsTime())
+				assert.Equal(t, audit.Actor, m.Actor)
+			}},
+		"Failed": {db.OperationFailed, failedRoute,
+			func(t *testing.T, msg protoreflect.ProtoMessage) {
+				m := msg.(*epb.OperationFailedEvent)
+				assert.Equal(t, pkg.ReasonLeaseExpired, m.Reason)
+				assert.Equal(t, at, m.FailedAt.AsTime())
+			}},
+		"Timeout": {db.OperationTimeout, timeoutRoute,
+			func(t *testing.T, msg protoreflect.ProtoMessage) {
+				m := msg.(*epb.OperationTimedOutEvent)
+				assert.Equal(t, pkg.ReasonLeaseExpired, m.Reason)
+				assert.Equal(t, at, m.TimedOutAt.AsTime())
+			}},
+		"Cancelled": {db.OperationCancelled, cancelledRoute,
+			func(t *testing.T, msg protoreflect.ProtoMessage) {
+				m := msg.(*epb.OperationCancelledEvent)
+				assert.Equal(t, pkg.ReasonLeaseExpired, m.Reason)
+				assert.Equal(t, at, m.CancelledAt.AsTime())
+			}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			bus := &fakeBus{}
+			o := op(tc.status)
+
+			NewResultPublisher(orgName, bus).Publish(o, audit)
+
+			assert.Equal(t, []string{msgbus.PrepareRoute(orgName,
+				tc.route)}, bus.routes)
+			tc.check(t, bus.msgs[0])
+		})
+	}
+
+	t.Run("PublishErrorIsLogged", func(t *testing.T) {
+		bus := &fakeBus{err: errors.New("bus down")}
+
+		assert.NotPanics(t, func() {
+			NewResultPublisher(orgName, bus).Publish(op(db.OperationSuccess), audit)
+		})
+		assert.Len(t, bus.routes, 1)
+	})
+
+	t.Run("NonTerminalPublishesNothing", func(t *testing.T) {
+		bus := &fakeBus{}
+
+		NewResultPublisher(orgName, bus).Publish(op(db.OperationRunning), audit)
+
+		assert.Empty(t, bus.routes)
+	})
+}
+
+func newTestSweeper(r *testRepos, interval time.Duration) *Sweeper {
+	return &Sweeper{repos: r.repos(), interval: interval, batch: 10}
+}
+
+func expiredFilter() interface{} {
+	return mock.MatchedBy(func(f db.OperationFilter) bool {
+		return len(f.Statuses) == 2 && f.Statuses[0] == db.OperationPending &&
+			f.Statuses[1] == db.OperationRunning && f.LeaseExpiresBefore != nil &&
+			!f.LeaseExpiresBefore.After(time.Now()) &&
+			f.OrderBy == db.OrderByLeaseExpiry && f.Limit == 10
+	})
+}
+
+func TestSweeperSweepOnce(t *testing.T) {
+	t.Run("TimesOutEveryExpiredOperationOldestFirst", func(t *testing.T) {
+		r := newTestRepos()
+		first := runningOp(3)
+		second := runningOp(4)
+
+		r.ops.On("List", mock.Anything, expiredFilter()).
+			Return([]*db.Operation{&first, &second}, nil).Once()
+		r.updateFails(first.Id, fmt.Errorf("db down"))
+		r.updates(second)
+
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
+
+		assert.Equal(t, []uuid.UUID{second.Id}, r.released)
+		assert.Equal(t, []string{pkg.AuditTimeout}, r.events())
+		assert.Equal(t, pkg.ReasonLeaseExpired, r.saved[0].Reason)
+		assert.Equal(t, operationManagerSweeperActor, r.saved[0].Actor)
+		r.assertExpectations(t)
+	})
+
+	t.Run("BoundsEachSweepByTheInterval", func(t *testing.T) {
+		r := newTestRepos()
+		r.ops.On("List", mock.MatchedBy(func(ctx context.Context) bool {
+			deadline, ok := ctx.Deadline()
+			return ok && time.Until(deadline) <= time.Minute
+		}), expiredFilter()).Return(nil, nil).Once()
+
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
+
+		r.assertExpectations(t)
+		assert.Empty(t, r.calls("Update"))
+	})
+
+	t.Run("ListErrorStopsTheSweep", func(t *testing.T) {
+		r := newTestRepos()
+		r.ops.On("List", mock.Anything, expiredFilter()).
+			Return(nil, fmt.Errorf("db down")).Once()
+
+		newTestSweeper(r, time.Minute).sweepOnce(context.Background())
+
+		assert.Empty(t, r.calls("Update"))
+	})
+}
+
+func TestSweeperRun(t *testing.T) {
+	r := newTestRepos()
+	ctx, cancel := context.WithCancel(context.Background())
+	swept := make(chan struct{})
+
+	r.ops.On("List", mock.Anything, expiredFilter()).
+		Run(func(mock.Arguments) {
+			cancel()
+			close(swept)
+		}).Return(nil, nil).Once()
+
+	done := make(chan struct{})
+	go func() {
+		newTestSweeper(r, 10*time.Millisecond).Run(ctx)
+		close(done)
+	}()
+
+	select {
+	case <-swept:
+	case <-time.After(5 * time.Second):
+		t.Fatal("sweeper did not sweep")
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("sweeper did not stop after cancel")
+	}
+	r.assertExpectations(t)
 }

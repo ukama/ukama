@@ -18,12 +18,16 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jackc/pgx/v5/pgconn"
-	log "github.com/sirupsen/logrus"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/store"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/store"
+	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type UkamaDbMock struct {
@@ -163,7 +167,7 @@ func Test_OperationAdd(t *testing.T) {
 		mock.ExpectBegin()
 		expectLockTimeout(mock)
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "operations"`)).
-			WillReturnError(&pgconn.PgError{Code: "23505"})
+			WillReturnError(&pgconn.PgError{Code: sql.PGERROR_CODE_UNIQUE_VIOLATION})
 		mock.ExpectRollback()
 
 		err := repo.Add(ctx, []*Operation{newOp("node:a")}, nil)
@@ -386,7 +390,7 @@ func Test_OperationUpdate(t *testing.T) {
 			assert.Equal(t, uint64(3), locked.FencingToken)
 			locked.Status = OperationRunning
 			return tx.Create(&OperationAudit{Id: uuid.NewV4(), OperationId: locked.Id,
-				Event: "running", At: time.Now()}).Error
+				Event: pkg.AuditRunning, At: time.Now()}).Error
 		})
 
 		assert.NoError(t, err)
@@ -521,7 +525,7 @@ func Test_OperationDelete(t *testing.T) {
 		err := repo.Delete(ctx, op.Id, func(locked *Operation, tx *gorm.DB) error {
 			assert.Equal(t, OperationSuccess, locked.Status)
 			return tx.Create(&OperationAudit{Id: uuid.NewV4(), OperationId: locked.Id,
-				Event: "deleted", At: time.Now()}).Error
+				Event: pkg.AuditDeleted, At: time.Now()}).Error
 		})
 
 		assert.NoError(t, err)

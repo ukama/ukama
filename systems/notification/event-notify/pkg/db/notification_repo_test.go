@@ -9,19 +9,21 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"regexp"
 	"testing"
 	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	notif "github.com/ukama/ukama/systems/common/notification"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
-	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
+	notif "github.com/ukama/ukama/systems/common/notification"
+	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
 var testOrgId = uuid.NewV4().String()
@@ -48,8 +50,10 @@ func TestNotificationRepo_Get(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		row := sqlmock.NewRows([]string{"id", "title", "description", "type", "scope", "resource_id", "org_id", "user_id"}).
-			AddRow(n.Id, n.Title, n.Description, uint8(n.Type), uint8(n.Scope), n.ResourceId, n.OrgId, n.UserId)
+		row := sqlmock.NewRows([]string{"id", "title", "description", "type", "scope",
+			"resource_id", "org_id", "user_id"}).
+			AddRow(n.Id, n.Title, n.Description, uint8(n.Type), uint8(n.Scope), n.ResourceId,
+				n.OrgId, n.UserId)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(n.Id, 1).

@@ -37,7 +37,8 @@ func (r *notificationRepo) Add(notification *Notification) (err error) {
 	return d.Error
 }
 
-func (r *notificationRepo) AddWithEvent(event *EventMsg, notification *Notification, un []*UserNotification) error {
+func (r *notificationRepo) AddWithEvent(event *EventMsg, notification *Notification,
+	un []*UserNotification) error {
 	return r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
 		if err := tx.Create(event).Error; err != nil {
 			return err

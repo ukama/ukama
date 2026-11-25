@@ -15,9 +15,10 @@ import (
 	"sort"
 	"time"
 
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
 )
 
 var ErrLockConflict = errors.New("resource_locked")
@@ -50,7 +51,7 @@ type heldLock struct {
 }
 
 type LockRepo interface {
-	Acquire(tx *gorm.DB, ops []*Operation, mustBeFree []string, ttl time.Duration) error
+	Acquire(tx *gorm.DB, ops []*Operation, mustBeFree []string) error
 	Release(tx *gorm.DB, op *Operation) error
 	Holder(ctx context.Context, resourceKey string) (*ResourceLock, error)
 }
@@ -63,8 +64,7 @@ func NewLockRepo(db sql.Db) LockRepo {
 	return &lockRepo{db: db}
 }
 
-func (r *lockRepo) Acquire(tx *gorm.DB, ops []*Operation, mustBeFree []string,
-	ttl time.Duration) error {
+func (r *lockRepo) Acquire(tx *gorm.DB, ops []*Operation, mustBeFree []string) error {
 	targets := make([]string, 0, len(ops))
 	for _, op := range ops {
 		targets = append(targets, op.ResourceKey)
@@ -82,11 +82,9 @@ func (r *lockRepo) Acquire(tx *gorm.DB, ops []*Operation, mustBeFree []string,
 	now := time.Now().UTC()
 	for _, op := range ops {
 		if err := tx.Create(&ResourceLock{
-			ResourceKey:  op.ResourceKey,
-			OperationId:  op.Id,
-			FencingToken: op.FencingToken,
-			AcquiredAt:   now,
-			ExpiresAt:    now.Add(ttl),
+			ResourceKey: op.ResourceKey,
+			OperationId: op.Id,
+			AcquiredAt:  now,
 		}).Error; err != nil {
 			if sql.IsDuplicateKeyError(err) {
 				return &ConflictError{ResourceKey: op.ResourceKey}

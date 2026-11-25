@@ -11,9 +11,10 @@ package db
 import (
 	"fmt"
 
+	"gorm.io/gorm"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
 )
 
 type UserNotificationRepo interface {
@@ -37,9 +38,16 @@ func (r *userNotificationRepo) Add(un []*UserNotification) error {
 	return d.Error
 }
 
-func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications, error) {
+func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notifications,
+	error) {
 	var notifications []*Notifications
-	q := fmt.Sprintf("SELECT event_msgs.key AS event_key, user_notifications.is_read, notifications.title, notifications.description, notifications.scope, notifications.type, notifications.id, notifications.created_at, notifications.updated_at, notifications.resource_id FROM user_notifications INNER JOIN notifications ON user_notifications.notification_id = notifications.id INNER JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE user_notifications.user_id = '%s' ORDER BY notifications.created_at DESC;", id)
+	q := fmt.Sprintf("SELECT event_msgs.key AS event_key, user_notifications.is_read, "+
+		"notifications.title, notifications.description, notifications.scope, "+
+		"notifications.type, notifications.id, notifications.created_at, "+
+		"notifications.updated_at, notifications.resource_id FROM user_notifications INNER "+
+		"JOIN notifications ON user_notifications.notification_id = notifications.id INNER "+
+		"JOIN event_msgs ON event_msgs.id = notifications.event_msg_id WHERE "+
+		"user_notifications.user_id = '%s' ORDER BY notifications.created_at DESC;", id)
 	d := r.Db.GetGormDb().Raw(q).Scan(&notifications)
 	if d.Error != nil {
 		return nil, d.Error
@@ -49,7 +57,8 @@ func (r *userNotificationRepo) GetNotificationsByUserID(id string) ([]*Notificat
 
 func (r *userNotificationRepo) Update(id uuid.UUID, isRead bool) error {
 	err := r.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(&UserNotification{}).Where("notification_id = ?", id).Update("is_read", isRead).Error; err != nil {
+		if err := tx.Model(&UserNotification{}).Where("notification_id = ?",
+			id).Update("is_read", isRead).Error; err != nil {
 			return err
 		}
 

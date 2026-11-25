@@ -12,7 +12,6 @@ import (
 	"time"
 
 	uconf "github.com/ukama/ukama/systems/common/config"
-	evt "github.com/ukama/ukama/systems/common/events"
 )
 
 type Config struct {
@@ -36,8 +35,8 @@ func NewConfig(name string) *Config {
 		MsgClient: &uconf.MsgClient{
 			Timeout: 7 * time.Second,
 			ListenerRoutes: []string{
-				evt.EventRoutingKey[evt.EventOperationCompleted],
-				evt.EventRoutingKey[evt.EventOperationFailed],
+				"event.cloud.global.{{ .Org}}.node.operationmonitor.intent.satisfied",
+				"event.cloud.global.{{ .Org}}.node.operationmonitor.intent.expired",
 			},
 		},
 	}

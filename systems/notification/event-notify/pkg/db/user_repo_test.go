@@ -9,18 +9,19 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"regexp"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
-
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/roles"
-	"github.com/ukama/ukama/systems/common/uuid"
-	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/roles"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
+	int_db "github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
 )
 
 var user = int_db.Users{
@@ -45,7 +46,8 @@ func TestUserRepo_Add(t *testing.T) {
 		mock.ExpectBegin()
 
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT`)).
-			WithArgs(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
+			WithArgs(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId,
+				user.Role, sqlmock.AnyArg(), sqlmock.AnyArg(), sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		mock.ExpectCommit()
@@ -84,8 +86,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.UserId).
 			WillReturnRows(rows)
@@ -124,8 +128,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId).
 			WillReturnRows(rows)
@@ -164,8 +170,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId, user.Role).
 			WillReturnRows(rows)
@@ -204,8 +212,10 @@ func TestUserRepo_GetUser(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.OrgId, user.SubscriberId, user.UserId, user.Role).
 			WillReturnRows(rows)
@@ -227,7 +237,8 @@ func TestUserRepo_GetUser(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Act
-		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, uint8(roles.TYPE_OWNER))
+		ruL, err := r.GetUsers(user.OrgId, user.NetworkId, user.SubscriberId, user.UserId,
+			uint8(roles.TYPE_OWNER))
 
 		// Assert
 		assert.NoError(t, err)
@@ -246,8 +257,10 @@ func TestUserRepo_GetSubscriber(t *testing.T) {
 		db, mock, err := sqlmock.New() // mock sql.DB
 		assert.NoError(t, err)
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role, user.CreatedAt, user.UpdatedAt, user.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user.Id, user.OrgId, user.NetworkId, user.SubscriberId, user.UserId, user.Role,
+				user.CreatedAt, user.UpdatedAt, user.DeletedAt)
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(user.SubscriberId).
 			WillReturnRows(rows)
@@ -304,9 +317,12 @@ func TestUserRepo_GetAllUsers(t *testing.T) {
 			Role:         roles.TYPE_ADMIN,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
-			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId,
+				user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(testOrgId).
@@ -413,7 +429,8 @@ func TestUserRepo_GetAllUsers(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Return empty result set
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"})
 
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
 			WithArgs(testOrgId).
@@ -462,8 +479,10 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_OWNER,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -520,9 +539,12 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_ADMIN,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
-			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId, user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt).
+			AddRow(user2.Id, user2.OrgId, user2.NetworkId, user2.SubscriberId, user2.UserId,
+				user2.Role, user2.CreatedAt, user2.UpdatedAt, user2.DeletedAt)
 
 		// For multiple roles, GORM expands the IN clause to individual arguments
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -571,8 +593,10 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 			Role:         roles.TYPE_OWNER,
 		}
 
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"}).
-			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId, user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"}).
+			AddRow(user1.Id, user1.OrgId, user1.NetworkId, user1.SubscriberId, user1.UserId,
+				user1.Role, user1.CreatedAt, user1.UpdatedAt, user1.DeletedAt)
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).
@@ -613,7 +637,8 @@ func TestUserRepo_GetUserWithRoles(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Return empty result set
-		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id", "user_id", "role", "created_at", "updated_at", "deleted_at"})
+		rows := sqlmock.NewRows([]string{"id", "org_id", "network_id", "subscriber_id",
+			"user_id", "role", "created_at", "updated_at", "deleted_at"})
 
 		// Use uint8 for role type to match GORM's expectation
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT`)).

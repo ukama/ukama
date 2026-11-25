@@ -43,7 +43,12 @@ type EventToNotifyServer struct {
 	baseRoutingKey       msgbus.RoutingKeyBuilder
 }
 
-func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo, userNotificationRepo db.UserNotificationRepo, msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient,
+	notificationRepo db.NotificationRepo, userRepo db.UserRepo, eventMsgRepo db.EventMsgRepo,
+	userNotificationRepo db.UserNotificationRepo,
+	msgBus mb.MsgBusServiceClient) *EventToNotifyServer {
+	routingKey := msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).
+		SetOrgName(orgName).SetService(pkg.ServiceName)
 	return &EventToNotifyServer{
 		orgName:              orgName,
 		orgId:                orgId,
@@ -53,11 +58,12 @@ func NewEventToNotifyServer(orgName string, orgId string, mc creg.MemberClient, 
 		eventMsgRepo:         eventMsgRepo,
 		msgbus:               msgBus,
 		memberkClient:        mc,
-		baseRoutingKey:       msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
+		baseRoutingKey:       routingKey,
 	}
 }
 
-func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
+func (n *EventToNotifyServer) UpdateStatus(ctx context.Context,
+	req *pb.UpdateStatusRequest) (*pb.UpdateStatusResponse, error) {
 	log.Infof("Update notification %v", req)
 
 	nuuid, err := uuid.FromString(req.GetId())
@@ -75,7 +81,8 @@ func (n *EventToNotifyServer) UpdateStatus(ctx context.Context, req *pb.UpdateSt
 	}, nil
 }
 
-func (n *EventToNotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
+func (n *EventToNotifyServer) Get(ctx context.Context,
+	req *pb.GetRequest) (*pb.GetResponse, error) {
 	log.Infof("Getting notification %v", req)
 
 	nuuid, err := uuid.FromString(req.GetId())
@@ -93,7 +100,8 @@ func (n *EventToNotifyServer) Get(ctx context.Context, req *pb.GetRequest) (*pb.
 	}, nil
 }
 
-func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
+func (n *EventToNotifyServer) GetAll(ctx context.Context,
+	req *pb.GetAllRequest) (*pb.GetAllResponse, error) {
 	log.Infof("Getting notifications %v", req)
 
 	var ouuid, nuuid, suuid, uuuid uuid.UUID
@@ -148,7 +156,8 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 		roleType = upb.RoleType_ROLE_SUBSCRIBER
 	}
 
-	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(), uuuid.String(), uint8(roleType))
+	user, err := n.userRepo.GetUsers(ouuid.String(), nuuid.String(), suuid.String(),
+		uuuid.String(), uint8(roleType))
 	if err != nil {
 		return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
 	}
@@ -161,7 +170,8 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 	notifications := []*db.Notifications{}
 	for _, u := range user {
 		if u.UserId == req.GetUserId() {
-			userNotifications, err := n.userNotificationRepo.GetNotificationsByUserID(u.Id.String())
+			userNotifications,
+				err := n.userNotificationRepo.GetNotificationsByUserID(u.Id.String())
 			log.Infof("Notifications for user: %+v", userNotifications)
 			if err != nil {
 				return nil, grpc.SqlErrorToGrpc(err, "eventnotify")
@@ -176,7 +186,8 @@ func (n *EventToNotifyServer) GetAll(ctx context.Context, req *pb.GetAllRequest)
 	}, nil
 }
 
-func dbNotificationsToPbNotifications(notifications []*db.Notifications) []*pb.Notifications {
+func dbNotificationsToPbNotifications(
+	notifications []*db.Notifications) []*pb.Notifications {
 	res := []*pb.Notifications{}
 	for _, i := range notifications {
 		n := &pb.Notifications{
@@ -227,7 +238,9 @@ func removeDuplicatesIfAny(users []*db.Users) []*db.Users {
 	return usersList
 }
 
-func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscriberId string, userId string, scope cnotif.NotificationScope) ([]*db.Users, error) {
+func (n *EventToNotifyServer) filterUsersForNotification(orgId string,
+	subscriberId string, userId string, scope cnotif.NotificationScope) ([]*db.Users,
+	error) {
 	var userList []*db.Users
 	var err error
 	roleTypes := cnotif.NotificationScopeToRoles[scope]
@@ -276,8 +289,10 @@ func (n *EventToNotifyServer) filterUsersForNotification(orgId string, subscribe
 	return removeDuplicatesIfAny(userList), err
 }
 
-func (n *EventToNotifyServer) storeNotification(event *db.EventMsg, dn *db.Notification) error {
-	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId, dn.Scope)
+func (n *EventToNotifyServer) storeNotification(event *db.EventMsg,
+	dn *db.Notification) error {
+	users, err := n.filterUsersForNotification(dn.OrgId, dn.SubscriberId, dn.UserId,
+		dn.Scope)
 
 	if err != nil {
 		log.Errorf("Error getting users from db %v", err)

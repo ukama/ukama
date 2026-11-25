@@ -16,7 +16,9 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
+
 	"github.com/ukama/ukama/systems/common/uuid"
+	"github.com/ukama/ukama/systems/operation/manager/pkg"
 )
 
 func Test_AuditAdd(t *testing.T) {
@@ -25,12 +27,13 @@ func Test_AuditAdd(t *testing.T) {
 		repo := NewAuditRepo(udb)
 		opId := uuid.NewV4()
 		audit := &OperationAudit{OperationId: opId, ResourceKey: "node:a",
-			Event: "rejected_running", Actor: "controller", Reason: "lease expired"}
+			Event: pkg.AuditRejected + pkg.AuditRunning, Actor: "controller",
+			Reason: pkg.ReasonLeaseExpired}
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
-			WithArgs(sqlmock.AnyArg(), opId, "node:a", "rejected_running", "controller",
-				"lease expired", sqlmock.AnyArg()).
+			WithArgs(sqlmock.AnyArg(), opId, "node:a", pkg.AuditRejected+pkg.AuditRunning,
+				"controller", pkg.ReasonLeaseExpired, sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 		mock.ExpectCommit()
 
@@ -47,12 +50,12 @@ func Test_AuditAdd(t *testing.T) {
 		repo := NewAuditRepo(udb)
 		id := uuid.NewV4()
 		at := time.Now().Add(-time.Minute).UTC()
-		audit := &OperationAudit{Id: id, OperationId: uuid.NewV4(), Event: "completed",
+		audit := &OperationAudit{Id: id, OperationId: uuid.NewV4(), Event: pkg.AuditCompleted,
 			At: at}
 
 		mock.ExpectBegin()
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "operation_audits"`)).
-			WithArgs(id, audit.OperationId, "", "completed", "", "", at).
+			WithArgs(id, audit.OperationId, "", pkg.AuditCompleted, "", "", at).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		assert.NoError(t, repo.AddInTx(udb.GetGormDb().Begin(), audit))
@@ -70,7 +73,7 @@ func Test_AuditAdd(t *testing.T) {
 			WillReturnError(errors.New("connection reset"))
 		mock.ExpectRollback()
 
-		assert.Error(t, repo.Add(ctx, &OperationAudit{Event: "deleted"}))
+		assert.Error(t, repo.Add(ctx, &OperationAudit{Event: pkg.AuditDeleted}))
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }

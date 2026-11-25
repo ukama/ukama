@@ -19,15 +19,15 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
-	evt "github.com/ukama/ukama/systems/common/events"
-	cmocks "github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus"
-	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	"github.com/ukama/ukama/systems/common/roles"
 	"github.com/ukama/ukama/systems/common/uuid"
-
 	"github.com/ukama/ukama/systems/notification/event-notify/mocks"
 	"github.com/ukama/ukama/systems/notification/event-notify/pkg/db"
+
+	evt "github.com/ukama/ukama/systems/common/events"
+	cmocks "github.com/ukama/ukama/systems/common/mocks"
+	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 )
 
 const (
@@ -168,7 +168,9 @@ func createEventJSON(fields ...string) string {
 	return string(jsonBytes)
 }
 
-func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo, *mocks.UserRepo, *mocks.EventMsgRepo, *cmocks.MemberClient, *cmocks.MsgBusServiceClient, *mocks.UserNotificationRepo) {
+func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo,
+	*mocks.UserRepo, *mocks.EventMsgRepo, *cmocks.MemberClient, *cmocks.MsgBusServiceClient,
+	*mocks.UserNotificationRepo) {
 	nRepo := &mocks.NotificationRepo{}
 	uRepo := &mocks.UserRepo{}
 	emRepo := &mocks.EventMsgRepo{}
@@ -176,7 +178,8 @@ func createTestEventServer() (*EventToNotifyEventServer, *mocks.NotificationRepo
 	msgclient := &cmocks.MsgBusServiceClient{}
 	unRepo := &mocks.UserNotificationRepo{}
 
-	mainServer := NewEventToNotifyServer(testOrgName, testOrgUUID, mc, nRepo, uRepo, emRepo, unRepo, msgclient)
+	mainServer := NewEventToNotifyServer(testOrgName, testOrgUUID, mc, nRepo, uRepo, emRepo,
+		unRepo, msgclient)
 	eventServer := NewNotificationEventServer(testOrgName, testOrgUUID, nil, mainServer)
 
 	return eventServer, nRepo, uRepo, emRepo, mc, msgclient, unRepo
@@ -191,7 +194,8 @@ func createTestEvent(routingKey string, msg proto.Message) *epb.Event {
 	}
 }
 
-func createTestEventFromRaw(routingKey string, rawJSON string, msgType proto.Message) *epb.Event {
+func createTestEventFromRaw(routingKey string, rawJSON string,
+	msgType proto.Message) *epb.Event {
 	m := protojson.UnmarshalOptions{
 		AllowPartial:   true,
 		DiscardUnknown: true,
@@ -231,7 +235,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -243,9 +246,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventOrgCreate.Owner).Return(&db.Users{Id: uuid.FromStringOrNil(eventOrgCreate.Owner), Role: roles.TYPE_OWNER}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventOrgCreate.Owner).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventOrgCreate.Owner),
+				Role: roles.TYPE_OWNER}, nil)
 
 		testEvent := createTestEvent(routingKey, eventOrgCreate)
 		ctx := context.Background()
@@ -277,7 +283,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -289,9 +294,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventUserCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserCreate.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventUserCreate.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventUserCreate.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -322,7 +330,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		uRepo.On("Add", mock.MatchedBy(func(user *db.Users) bool {
 			return user.OrgId == eventMemberCreate.OrgId && user.UserId == eventMemberCreate.UserId
 		})).Return(nil)
@@ -338,9 +345,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventMemberCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberCreate.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventMemberCreate.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberCreate.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -371,7 +381,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -383,9 +392,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventUserDeactivate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDeactivate.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventUserDeactivate.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDeactivate.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -416,7 +428,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -428,9 +439,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventUserDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDelete.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventUserDelete.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventUserDelete.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -461,7 +475,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -473,9 +486,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventMemberDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberDelete.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventMemberDelete.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventMemberDelete.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -495,7 +511,8 @@ func TestEventNotification(t *testing.T) {
 		eventNetworkCreate := &epb.EventNetworkCreate{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventNetworkAdd]),
-			createEventJSON("id", "name", "orgId", "allowedCountries", "allowedNetworks", "budget", "overdraft", "trafficPolicy", "isDeactivated", "paymentLinks"),
+			createEventJSON("id", "name", "orgId", "allowedCountries", "allowedNetworks", "budget",
+				"overdraft", "trafficPolicy", "isDeactivated", "paymentLinks"),
 			eventNetworkCreate,
 		)
 
@@ -505,7 +522,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -518,8 +534,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -550,7 +567,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -562,8 +578,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -594,7 +611,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -606,8 +622,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -638,7 +655,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -650,8 +666,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -682,7 +699,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -694,8 +710,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -726,7 +743,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -738,8 +754,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -770,7 +787,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -782,8 +798,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -814,7 +831,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -826,8 +842,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -847,7 +864,8 @@ func TestEventNotification(t *testing.T) {
 		eventInviteCreate := &epb.EventInvitationCreated{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventInviteCreate]),
-			createEventJSON("invitationId", "id", "link", "email", "name", "role", "invitationStatus", "userId", "expiresAt"),
+			createEventJSON("invitationId", "id", "link", "email", "name", "role",
+				"invitationStatus", "userId", "expiresAt"),
 			eventInviteCreate,
 		)
 
@@ -857,7 +875,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -870,9 +887,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventInviteCreate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteCreate.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventInviteCreate.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteCreate.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -903,7 +923,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -915,9 +934,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventInviteDelete.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteDelete.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventInviteDelete.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteDelete.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -937,7 +959,8 @@ func TestEventNotification(t *testing.T) {
 		eventInviteUpdate := &epb.EventInvitationUpdated{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventInviteUpdate]),
-			createEventJSON("invitationId", "id", "link", "email", "name", "role", "invitationStatus", "userId", "expiresAt"),
+			createEventJSON("invitationId", "id", "link", "email", "name", "role",
+				"invitationStatus", "userId", "expiresAt"),
 			eventInviteUpdate,
 		)
 
@@ -947,7 +970,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -960,9 +982,12 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", eventInviteUpdate.UserId).Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteUpdate.UserId), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", eventInviteUpdate.UserId).
+			Return(&db.Users{Id: uuid.FromStringOrNil(eventInviteUpdate.UserId),
+				Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -993,7 +1018,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1005,8 +1029,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1037,7 +1062,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1049,8 +1073,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1081,7 +1106,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1093,9 +1117,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimServiceOn.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimServiceOn.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1115,7 +1141,8 @@ func TestEventNotification(t *testing.T) {
 		eventSimAllocate := &epb.EventSimAllocation{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSimAllocate]),
-			createEventJSON("id", "subscriberId", "networkId", "orgId", "dataPlanId", "iccid", "msisdn", "imsi", "type", "status", "isPhysical", "packageId", "trafficPolicy"),
+			createEventJSON("id", "subscriberId", "networkId", "orgId", "dataPlanId", "iccid",
+				"msisdn", "imsi", "type", "status", "isPhysical", "packageId", "trafficPolicy"),
 			eventSimAllocate,
 		)
 
@@ -1125,7 +1152,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1138,9 +1164,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimAllocate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimAllocate.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1171,7 +1199,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1183,10 +1210,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimDelete.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimDelete.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1217,7 +1247,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1229,10 +1258,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimAddPackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimAddPackage.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1252,7 +1284,8 @@ func TestEventNotification(t *testing.T) {
 		eventSiteCreate := &epb.EventAddSite{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSiteCreate]),
-			createEventJSON("siteId", "name", "networkId", "backhaulId", "powerId", "accessId", "switchId", "isDeactivated", "latitude", "longitude", "installDate"),
+			createEventJSON("siteId", "name", "networkId", "backhaulId", "powerId", "accessId",
+				"switchId", "isDeactivated", "latitude", "longitude", "installDate"),
 			eventSiteCreate,
 		)
 
@@ -1262,7 +1295,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1275,8 +1307,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1296,7 +1329,8 @@ func TestEventNotification(t *testing.T) {
 		eventSiteUpdate := &epb.EventUpdateSite{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSiteUpdate]),
-			createEventJSON("siteId", "name", "backhaulId", "powerId", "accessId", "switchId", "isDeactivated", "latitude", "longitude", "networkId", "installDate"),
+			createEventJSON("siteId", "name", "backhaulId", "powerId", "accessId", "switchId",
+				"isDeactivated", "latitude", "longitude", "networkId", "installDate"),
 			eventSiteUpdate,
 		)
 
@@ -1306,7 +1340,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1319,8 +1352,9 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1340,7 +1374,8 @@ func TestEventNotification(t *testing.T) {
 		eventSimActivePackage := &epb.EventSimActivePackage{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSimActivePackage]),
-			createEventJSON("id", "subscriberId", "packageId", "planId", "iccid", "imsi", "networkId"),
+			createEventJSON("id", "subscriberId", "packageId", "planId", "iccid", "imsi",
+				"networkId"),
 			eventSimActivePackage,
 		)
 
@@ -1350,7 +1385,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1363,10 +1397,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimActivePackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimActivePackage.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1397,7 +1434,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1409,10 +1445,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSimRemovePackage.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSimRemovePackage.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil)
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1432,7 +1471,8 @@ func TestEventNotification(t *testing.T) {
 		eventSubscriberCreate := &epb.EventSubscriberAdded{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSubscriberCreate]),
-			createEventJSON("name", "subscriberId", "networkId", "email", "phoneNumber", "createdAt", "dob", "gender", "address"),
+			createEventJSON("name", "subscriberId", "networkId", "email", "phoneNumber",
+				"createdAt", "dob", "gender", "address"),
 			eventSubscriberCreate,
 		)
 
@@ -1442,7 +1482,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1455,13 +1494,18 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSubscriberCreate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSubscriberCreate.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 		uRepo.On("Add", mock.MatchedBy(func(user *db.Users) bool {
-			return user.OrgId == testOrgUUID && user.UserId == eventSubscriberCreate.SubscriberId && user.Role == roles.TYPE_SUBSCRIBER
+			return user.OrgId == testOrgUUID &&
+				user.UserId == eventSubscriberCreate.SubscriberId &&
+				user.Role == roles.TYPE_SUBSCRIBER
 		})).Return(nil)
-
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1481,7 +1525,8 @@ func TestEventNotification(t *testing.T) {
 		eventSubscriberUpdate := &epb.EventSubscriberAdded{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventSubscriberUpdate]),
-			createEventJSON("name", "subscriberId", "networkId", "email", "phoneNumber", "createdAt", "dob", "gender", "address"),
+			createEventJSON("name", "subscriberId", "networkId", "email", "phoneNumber",
+				"createdAt", "dob", "gender", "address"),
 			eventSubscriberUpdate,
 		)
 
@@ -1491,7 +1536,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1504,10 +1548,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSubscriberUpdate.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSubscriberUpdate.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1538,7 +1585,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1550,10 +1596,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetSubscriber", eventSubscriberDelete.SubscriberId).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetSubscriber", eventSubscriberDelete.SubscriberId).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1584,7 +1633,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1596,9 +1644,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1629,7 +1679,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1641,9 +1690,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1663,7 +1714,10 @@ func TestEventNotification(t *testing.T) {
 		eventPackageCreate := &epb.CreatePackageEvent{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventPackageCreate]),
-			createEventJSON("uuid", "orgId", "ownerId", "flatrate", "amount", "from", "to", "simType", "smsVolume", "dataVolume", "voiceVolume", "dataUnit", "voiceUnit", "messageunit", "dataUnitCost", "voiceUnitCost", "messageUnitCost", "country", "provider", "Type", "overdraft", "trafficPolicy", "networks"),
+			createEventJSON("uuid", "orgId", "ownerId", "flatrate", "amount", "from", "to",
+				"simType", "smsVolume", "dataVolume", "voiceVolume", "dataUnit", "voiceUnit",
+				"messageunit", "dataUnitCost", "voiceUnitCost", "messageUnitCost", "country",
+				"provider", "Type", "overdraft", "trafficPolicy", "networks"),
 			eventPackageCreate,
 		)
 
@@ -1673,7 +1727,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -1686,9 +1739,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1719,7 +1774,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1731,9 +1785,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1764,7 +1820,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1776,9 +1831,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1809,7 +1866,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1821,9 +1877,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1854,7 +1912,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1866,9 +1923,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1911,7 +1970,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1923,10 +1981,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-		uRepo.On("GetSubscriber", "test-target-id").Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
+		uRepo.On("GetSubscriber", "test-target-id").
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -1969,7 +2030,6 @@ func TestEventNotification(t *testing.T) {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
 
-
 		mockUsers := []*db.Users{
 			{
 				Id:   uuid.NewV4(),
@@ -1981,10 +2041,13 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-		uRepo.On("GetSubscriber", "test-target-id").Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
+		uRepo.On("GetSubscriber", "test-target-id").
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_SUBSCRIBER}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -2004,7 +2067,8 @@ func TestEventNotification(t *testing.T) {
 		eventInvoiceGenerate := &epb.Report{}
 		testEvent := createTestEventFromRaw(
 			msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[evt.EventInvoiceGenerate]),
-			createEventJSON("id", "ownerId", "ownerType", "networkId", "period", "Type", "isPaid", "transactionId", "createdAt"),
+			createEventJSON("id", "ownerId", "ownerType", "networkId", "period", "Type", "isPaid",
+				"transactionId", "createdAt"),
 			eventInvoiceGenerate,
 		)
 
@@ -2014,7 +2078,6 @@ func TestEventNotification(t *testing.T) {
 		nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
 			return event.Key == expectedEventMsg.Key
 		}), mock.Anything, mock.Anything).Return(nil)
-
 
 		mockUsers := []*db.Users{
 			{
@@ -2027,9 +2090,11 @@ func TestEventNotification(t *testing.T) {
 			},
 		}
 
-		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"), mock.AnythingOfType("[]roles.RoleType")).Return(mockUsers, nil)
-		uRepo.On("GetUser", mock.AnythingOfType("string")).Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
-
+		uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+			mock.AnythingOfType("[]roles.RoleType")).
+			Return(mockUsers, nil)
+		uRepo.On("GetUser", mock.AnythingOfType("string")).
+			Return(&db.Users{Id: uuid.NewV4(), Role: roles.TYPE_USERS}, nil).Maybe()
 
 		ctx := context.Background()
 		response, err := eventServer.EventNotification(ctx, testEvent)
@@ -2042,4 +2107,63 @@ func TestEventNotification(t *testing.T) {
 		uRepo.AssertExpectations(t)
 		unRepo.AssertExpectations(t)
 	})
+}
+
+func TestEventNotification_operationResults(t *testing.T) {
+	for name, tc := range map[string]struct {
+		key evt.EventId
+		msg proto.Message
+	}{
+		"Completed": {evt.EventOperationCompleted,
+			&epb.OperationCompletedEvent{OperationId: "op-1"}},
+		"Failed": {evt.EventOperationFailed,
+			&epb.OperationFailedEvent{OperationId: "op-1", Reason: "publish failed"}},
+		"TimedOut": {evt.EventOperationTimedOut,
+			&epb.OperationTimedOutEvent{OperationId: "op-1", Reason: "deadline exceeded"}},
+		"Cancelled": {evt.EventOperationCancelled,
+			&epb.OperationCancelledEvent{OperationId: "op-1", Reason: "stuck"}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			eventServer, nRepo, uRepo, emRepo, _, _, unRepo := createTestEventServer()
+			c := evt.EventToEventConfig[tc.key]
+			nRepo.On("AddWithEvent", mock.MatchedBy(func(event *db.EventMsg) bool {
+				return event.Key == c.Name
+			}), mock.MatchedBy(func(n *db.Notification) bool {
+				return n.ResourceId == "op-1" && n.Title == c.Title
+			}), mock.Anything).Return(nil)
+			uRepo.On("GetUserWithRoles", mock.AnythingOfType("string"),
+				mock.AnythingOfType("[]roles.RoleType")).
+				Return([]*db.Users{{Id: uuid.NewV4(), Role: roles.TYPE_OWNER}}, nil)
+
+			response, err := eventServer.EventNotification(context.Background(),
+				createTestEvent(msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[tc.key]),
+					tc.msg))
+
+			assert.NoError(t, err)
+			assert.NotNil(t, response)
+			emRepo.AssertExpectations(t)
+			nRepo.AssertExpectations(t)
+			uRepo.AssertExpectations(t)
+			unRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestEventNotification_operationResultsBadPayload(t *testing.T) {
+	for name, key := range map[string]evt.EventId{
+		"TimedOut":  evt.EventOperationTimedOut,
+		"Cancelled": evt.EventOperationCancelled,
+	} {
+		t.Run(name, func(t *testing.T) {
+			eventServer, nRepo, _, _, _, _, _ := createTestEventServer()
+
+			_, err := eventServer.EventNotification(context.Background(),
+				createTestEvent(msgbus.PrepareRoute(testOrgName, evt.EventRoutingKey[key]),
+					&epb.EventResponse{}))
+
+			assert.Error(t, err)
+			nRepo.AssertNotCalled(t, "AddWithEvent", mock.Anything, mock.Anything,
+				mock.Anything)
+		})
+	}
 }

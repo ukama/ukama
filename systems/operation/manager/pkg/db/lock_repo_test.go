@@ -12,13 +12,14 @@ import (
 	"errors"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/gorm"
+
+	"github.com/ukama/ukama/systems/common/sql"
+	"github.com/ukama/ukama/systems/common/uuid"
 )
 
 func setupLockRepo(t *testing.T) (sqlmock.Sqlmock, LockRepo, *gorm.DB) {
@@ -49,8 +50,7 @@ func Test_LockAcquire(t *testing.T) {
 	}
 	expectLockInsert := func(mock sqlmock.Sqlmock, op *Operation) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
-			WithArgs(op.ResourceKey, op.Id, op.FencingToken, sqlmock.AnyArg(),
-				sqlmock.AnyArg()).
+			WithArgs(op.ResourceKey, op.Id, sqlmock.AnyArg()).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 	}
 
@@ -62,7 +62,7 @@ func Test_LockAcquire(t *testing.T) {
 		expectHeld(mock)
 		expectLockInsert(mock, op)
 
-		err := repo.Acquire(tx, []*Operation{op}, nil, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{op}, nil)
 
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -77,8 +77,7 @@ func Test_LockAcquire(t *testing.T) {
 		expectLockInsert(mock, first)
 		expectLockInsert(mock, second)
 
-		err := repo.Acquire(tx, []*Operation{first, second}, []string{ctl, tower},
-			5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{first, second}, []string{ctl, tower})
 
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -93,7 +92,7 @@ func Test_LockAcquire(t *testing.T) {
 			Type: "RestartNode", Status: OperationSuccess})
 		expectLockInsert(mock, op)
 
-		err := repo.Acquire(tx, []*Operation{op}, []string{ctl}, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{op}, []string{ctl})
 
 		assert.NoError(t, err)
 		assert.NoError(t, mock.ExpectationsWereMet())
@@ -114,8 +113,7 @@ func Test_LockAcquire(t *testing.T) {
 			expectGuards(mock, ctl, tower)
 			expectHeld(mock, held)
 
-			err := repo.Acquire(tx, []*Operation{newOp(tower)}, []string{ctl},
-				5*time.Minute)
+			err := repo.Acquire(tx, []*Operation{newOp(tower)}, []string{ctl})
 
 			var conflict *ConflictError
 			assert.True(t, errors.As(err, &conflict), err)
@@ -134,9 +132,9 @@ func Test_LockAcquire(t *testing.T) {
 		expectGuards(mock, tower)
 		expectHeld(mock)
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
-			WillReturnError(&pgconn.PgError{Code: "23505"})
+			WillReturnError(&pgconn.PgError{Code: sql.PGERROR_CODE_UNIQUE_VIOLATION})
 
-		err := repo.Acquire(tx, []*Operation{op}, nil, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{op}, nil)
 
 		var conflict *ConflictError
 		assert.True(t, errors.As(err, &conflict), err)
@@ -153,7 +151,7 @@ func Test_LockAcquire(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta(`INSERT INTO "resource_locks"`)).
 			WillReturnError(errors.New("connection reset"))
 
-		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil)
 
 		assert.Error(t, err)
 		assert.False(t, errors.Is(err, ErrLockConflict), err)
@@ -166,7 +164,7 @@ func Test_LockAcquire(t *testing.T) {
 		mock.ExpectExec(regexp.QuoteMeta("SELECT pg_advisory_xact_lock")).
 			WillReturnError(&pgconn.PgError{Code: pgErrLockNotAvailable})
 
-		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil)
 
 		assert.True(t, errors.Is(lockTimeoutErr(err), ErrLockTimeout), err)
 		assert.False(t, errors.Is(err, ErrLockConflict), err)
@@ -180,7 +178,7 @@ func Test_LockAcquire(t *testing.T) {
 		mock.ExpectQuery(`SELECT resource_locks.resource_key.* FROM "resource_locks"`).
 			WillReturnError(errors.New("connection reset"))
 
-		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil, 5*time.Minute)
+		err := repo.Acquire(tx, []*Operation{newOp(tower)}, nil)
 
 		assert.Error(t, err)
 		assert.False(t, errors.Is(err, ErrLockConflict), err)
@@ -235,14 +233,13 @@ func Test_LockHolder(t *testing.T) {
 		mock.ExpectQuery(regexp.QuoteMeta(`SELECT * FROM "resource_locks"`)).
 			WithArgs("node:busy", sqlmock.AnyArg()).
 			WillReturnRows(sqlmock.NewRows([]string{
-				"resource_key", "operation_id", "fencing_token",
-			}).AddRow("node:busy", holder, 4))
+				"resource_key", "operation_id",
+			}).AddRow("node:busy", holder))
 
 		out, err := repo.Holder(ctx, "node:busy")
 
 		assert.NoError(t, err)
 		assert.Equal(t, holder, out.OperationId)
-		assert.Equal(t, uint64(4), out.FencingToken)
 		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 
