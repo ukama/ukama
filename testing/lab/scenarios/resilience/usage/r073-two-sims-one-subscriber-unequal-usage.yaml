@@ -51,9 +51,6 @@ phases:
       - type: traffic
         ues: ue-000002
         amount_mb: 7
-      - type: finalize_ue_sessions
-        ues: all
-        seconds: 60
     checks:
       - type: package_assignment_count
         ues: all

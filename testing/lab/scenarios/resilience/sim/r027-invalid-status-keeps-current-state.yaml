@@ -27,9 +27,6 @@ packages:
 phases:
   - name: known_state
     events:
-      - type: toggle_sim_status
-        ues: all
-        status: service_on
       - type: wait_sim_status
         ues: all
         status: service_on

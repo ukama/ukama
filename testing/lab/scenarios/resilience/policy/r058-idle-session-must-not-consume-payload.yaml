@@ -46,9 +46,6 @@ phases:
         seconds: 90
       - type: wait
         seconds: 60
-      - type: finalize_ue_sessions
-        ues: all
-        seconds: 60
     checks:
       - type: package_state
         ues: all

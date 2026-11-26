@@ -94,6 +94,11 @@ phases:
         nodes: tower-site-001-001
         connectivity: Online
         seconds: 300
+      - type: wait_nodes_ready
+        nodes: tower-site-001-001
+      - type: toggle_service
+        sites: site-001
+        state: 'on'
       - type: start_ues
         ues: ue-000001
       - type: wait_ues_attached

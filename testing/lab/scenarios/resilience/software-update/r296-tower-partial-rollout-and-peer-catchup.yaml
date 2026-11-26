@@ -118,6 +118,8 @@ phases:
         nodes: tower-site-002-001
         connectivity: Online
         seconds: 300
+      - type: wait_nodes_ready
+        nodes: tower-site-002-001
     checks:
       - type: node_version_equals
         nodes: tower-site-002-001
