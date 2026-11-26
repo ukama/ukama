@@ -18,6 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/messaging/node-feeder/mocks"
 
@@ -88,9 +89,14 @@ func newDelivery(t *testing.T, target, method, path string, headers amqp.Table) 
 }
 
 func newOpDelivery(t *testing.T, target string, headers amqp.Table) amqp.Delivery {
+	return newExpiringDelivery(t, target, headers, nil)
+}
+
+func newExpiringDelivery(t *testing.T, target string, headers amqp.Table,
+	expiresAt *timestamppb.Timestamp) amqp.Delivery {
 	msg, err := anypb.New(&epb.NodeFeederMessage{Target: target, HttpMethod: "POST",
 		Path: "/device/v1/service", Msg: []byte(`{}`), NodeId: testNodeId,
-		OperationId: testOpId, FencingToken: testToken})
+		OperationId: testOpId, FencingToken: testToken, ExpiresAt: expiresAt})
 	require.NoError(t, err)
 	body, err := proto.Marshal(msg)
 	require.NoError(t, err)
@@ -364,6 +370,34 @@ func TestHandler_ResultPublishFailureStillAcks(t *testing.T) {
 		Return(errors.New("channel closed")).Once()
 
 	assert.True(t, f.handle(t, newOpDelivery(t, testTarget, nil)))
+}
+
+func TestHandler_ExpiredRequestIsDropped(t *testing.T) {
+	f := newFixture(t)
+	f.expectResult(epb.NodeFeederRequestResult_DROPPED, 0, reasonExpired)
+
+	assert.True(t, f.handle(t, newExpiringDelivery(t, testTarget, nil,
+		timestamppb.New(f.now.Add(-time.Second)))))
+	f.exec.AssertNotCalled(t, "Execute", mock.Anything)
+}
+
+func TestHandler_RetryPastExpiryIsDropped(t *testing.T) {
+	f := newFixture(t)
+	f.exec.On("Execute", mock.Anything).Return(0, errUnavailable).Once()
+	f.expectResult(epb.NodeFeederRequestResult_DROPPED, 0, reasonRetryPassesExpiry)
+
+	assert.True(t, f.handle(t, newExpiringDelivery(t, testTarget, nil,
+		timestamppb.New(f.now.Add(time.Second)))))
+	f.pub.AssertNotCalled(t, "Publish", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestHandler_UnexpiredRequestRuns(t *testing.T) {
+	f := newFixture(t)
+	f.exec.On("Execute", mock.Anything).Return(202, nil).Once()
+	f.expectResult(epb.NodeFeederRequestResult_DELIVERED, 202, "")
+
+	assert.True(t, f.handle(t, newExpiringDelivery(t, testTarget, nil,
+		timestamppb.New(f.now.Add(time.Minute)))))
 }
 
 func TestRetryState_ReadsBrokerIntegerTypes(t *testing.T) {

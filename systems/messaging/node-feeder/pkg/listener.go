@@ -40,6 +40,8 @@ const (
 	reasonMaxAgeReached     = "max request age reached"
 	reasonRetriesExhausted  = "retries exhausted"
 	reasonRetryPassesMaxAge = "next retry would pass max request age"
+	reasonExpired           = "operation deadline passed"
+	reasonRetryPassesExpiry = "next retry would pass the operation deadline"
 )
 
 const resultRouteFormat = "event.cloud.local.%s.messaging.nodefeeder.request.result"
@@ -260,6 +262,12 @@ func (q *QueueListener) incomingMessageHandler(delivery amqp.Delivery, done chan
 	}
 
 	attempt, firstSeen := retryState(delivery.Headers, q.now())
+	if expired(request, q.now()) {
+		q.retire(request, attempt, reasonExpired)
+		done <- true
+		return
+	}
+
 	if q.maxRequestAge > 0 && q.now().Sub(firstSeen) > q.maxRequestAge {
 		q.retire(request, attempt, reasonMaxAgeReached)
 		done <- true
@@ -310,6 +318,11 @@ func (q *QueueListener) scheduleRetry(delivery amqp.Delivery, request *epb.NodeF
 		return true
 	}
 
+	if expired(request, q.now().Add(delay)) {
+		q.retire(request, attempt, reasonRetryPassesExpiry)
+		return true
+	}
+
 	queue := retryQueueName(delay)
 	err := q.retryPub.Publish(queue, delivery.Body, retryHeaders(delivery.Headers, attempt+1, firstSeen))
 	if err != nil {
@@ -325,6 +338,11 @@ func (q *QueueListener) retire(request *epb.NodeFeederMessage, attempt int, reas
 	log.Warnf("Dropping %s %s for %s after %d retries: %s", request.HttpMethod, request.Path, request.Target, attempt, reason)
 	metrics.RecordRetiredRequestMetric()
 	q.report(request, epb.NodeFeederRequestResult_DROPPED, 0, reason)
+}
+
+func expired(request *epb.NodeFeederMessage, at time.Time) bool {
+	expiresAt := request.GetExpiresAt()
+	return expiresAt != nil && at.After(expiresAt.AsTime())
 }
 
 func (q *QueueListener) report(request *epb.NodeFeederMessage,
