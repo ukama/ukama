@@ -115,6 +115,7 @@ func (n *ControllerEventServer) handleNodeFeederResult(msg *epb.NodeFeederReques
 	switch msg.Outcome {
 	case epb.NodeFeederRequestResult_DELIVERED:
 		if isRestartPath(msg.Path) {
+			n.s.dispatchIntent(op, label)
 			return
 		}
 		n.s.completeOperation(op, label)

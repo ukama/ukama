@@ -22,6 +22,7 @@ import (
 type OperationMonitor interface {
 	Register(req *pb.RegisterIntentRequest) (*pb.RegisterIntentResponse, error)
 	Cancel(req *pb.CancelIntentRequest) (*pb.CancelIntentResponse, error)
+	Dispatch(req *pb.DispatchIntentRequest) (*pb.DispatchIntentResponse, error)
 	Close()
 }
 
@@ -54,6 +55,13 @@ func (m *operationMonitor) Cancel(req *pb.CancelIntentRequest) (
 	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
 	defer cancel()
 	return m.client.CancelIntent(ctx, req)
+}
+
+func (m *operationMonitor) Dispatch(req *pb.DispatchIntentRequest) (
+	*pb.DispatchIntentResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), m.timeout)
+	defer cancel()
+	return m.client.DispatchIntent(ctx, req)
 }
 
 func (m *operationMonitor) Close() {

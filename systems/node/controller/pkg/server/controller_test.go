@@ -13,12 +13,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/node/controller/mocks"
 	"github.com/ukama/ukama/systems/node/controller/pkg"
@@ -35,6 +37,11 @@ import (
 )
 
 const testOrgName = "test-org"
+
+var (
+	testNow    = time.Date(2026, 11, 26, 9, 0, 0, 0, time.UTC)
+	testExpiry = timestamppb.New(testNow.Add(60 * time.Second))
+)
 
 func onlineNodeClient() creg.NodeClient {
 	c := &mbmocks.NodeClient{}
@@ -93,9 +100,11 @@ func TestControllerServer_RestartNode(t *testing.T) {
 		NodeId:       nodeId,
 		OperationId:  "op-restart",
 		FencingToken: 1,
+		ExpiresAt:    testExpiry,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s.now = func() time.Time { return testNow }
 
 	resp, err := restartNode(s, nodeId)
 
@@ -139,9 +148,11 @@ func TestControllerServer_ToggleRadio(t *testing.T) {
 		NodeId:       nodeId,
 		OperationId:  "op-rf",
 		FencingToken: 1,
+		ExpiresAt:    testExpiry,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s.now = func() time.Time { return testNow }
 
 	_, err = toggleRadio(s, nodeId, "on")
 
@@ -183,9 +194,11 @@ func TestControllerServer_ToggleService(t *testing.T) {
 		NodeId:       nodeId,
 		OperationId:  "op-svc",
 		FencingToken: 1,
+		ExpiresAt:    testExpiry,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s.now = func() time.Time { return testNow }
 
 	_, err = s.ToggleService(context.TODO(), &pb.ToggleServiceRequest{NodeId: nodeId, State: "on"})
 
@@ -336,9 +349,11 @@ func TestControllerServer_ToggleRadio_TowerNode(t *testing.T) {
 		NodeId:       nodeId,
 		OperationId:  "op-radio",
 		FencingToken: 1,
+		ExpiresAt:    testExpiry,
 	}).Return(nil).Once()
 
 	s := NewControllerServer(testOrgName, conRepo, msgclientRepo, nil, nil, onlineNodeClient(), opMgr, opMon, 30, 60, pkg.IsDebugMode)
+	s.now = func() time.Time { return testNow }
 
 	_, err = toggleRadio(s, nodeId, "on")
 

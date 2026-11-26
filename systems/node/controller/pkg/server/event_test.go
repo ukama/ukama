@@ -91,14 +91,24 @@ func TestNodeFeederResult_ToggleDeliveredCompletes(t *testing.T) {
 	f.assertExpectations(t)
 }
 
-func TestNodeFeederResult_RestartDeliveredWaitsForMonitor(t *testing.T) {
-	f := newResultFixture()
+func TestNodeFeederResult_RestartDeliveredMarksDispatched(t *testing.T) {
+	for name, dispatchErr := range map[string]error{
+		"Marked":        nil,
+		"MonitorFailed": assert.AnError,
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newResultFixture()
+			f.mon.On("Dispatch", &opmonpb.DispatchIntentRequest{OperationId: resultOpId}).
+				Return(&opmonpb.DispatchIntentResponse{}, dispatchErr).Once()
 
-	assert.NoError(t, f.send(t,
-		result(rebootPath, epb.NodeFeederRequestResult_DELIVERED, 202, "")))
-	f.mgr.AssertNotCalled(t, "Complete", mock.Anything, mock.Anything, mock.Anything,
-		mock.Anything)
-	f.mon.AssertNotCalled(t, "Cancel", mock.Anything)
+			assert.NoError(t, f.send(t,
+				result(rebootPath, epb.NodeFeederRequestResult_DELIVERED, 202, "")))
+			f.assertExpectations(t)
+			f.mgr.AssertNotCalled(t, "Complete", mock.Anything, mock.Anything,
+				mock.Anything, mock.Anything)
+			f.mon.AssertNotCalled(t, "Cancel", mock.Anything)
+		})
+	}
 }
 
 func TestNodeFeederResult_FailureFailsOperation(t *testing.T) {
