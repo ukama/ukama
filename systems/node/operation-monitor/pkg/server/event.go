@@ -109,6 +109,11 @@ func (e *EventServer) handleStateTransition(_ context.Context,
 			if intent.Armed || !ruleObserved(intent.CompletionRule, transition) {
 				continue
 			}
+			if !intent.Dispatched {
+				log.Infof("operation-monitor: intent %s saw %v before dispatch, ignoring",
+					intent.OperationId, transition)
+				continue
+			}
 			if _, err := e.monitor.repo.Update(intent.OperationId, arm()); err != nil {
 				log.Errorf("operation-monitor: arm %s: %v", intent.OperationId, err)
 				return nil, retryable("arm %s: %v", intent.OperationId, err)
@@ -227,6 +232,9 @@ func retryable(format string, args ...any) error {
 }
 
 func ruleObserved(rule string, transition map[string]string) bool {
+	if strings.TrimSpace(rule) == ruleNone {
+		return false
+	}
 	for _, pair := range strings.Split(strings.TrimSpace(rule), ",") {
 		k, _, _ := strings.Cut(pair, "=")
 		if transition[strings.TrimSpace(k)] == "" {
@@ -254,7 +262,7 @@ func (e *EventServer) publishSatisfied(intent *db.Intent) error {
 // TODO: replace with a real expression parser if we ever need OR / NOT / globs.
 func ruleMatches(rule string, transition map[string]string) bool {
 	rule = strings.TrimSpace(rule)
-	if rule == "" {
+	if rule == "" || rule == ruleNone {
 		return false
 	}
 	for _, pair := range strings.Split(rule, ",") {

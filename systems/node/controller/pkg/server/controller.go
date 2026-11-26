@@ -14,10 +14,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -68,6 +70,7 @@ type ControllerServer struct {
 	opMonitor            cclient.OperationMonitor
 	opLeaseSecs          uint32
 	opDeadlineSecs       uint32
+	now                  func() time.Time
 	debug                bool
 	orgName              string
 }
@@ -85,6 +88,7 @@ func NewControllerServer(orgName string, nRepo db.NodeLogRepo, msgBus mb.MsgBusS
 		opMonitor:            opMon,
 		opLeaseSecs:          leaseSecs,
 		opDeadlineSecs:       deadlineSecs,
+		now:                  time.Now,
 		nodeFeederRoutingKey: msgbus.NewRoutingKeyBuilder().SetCloudSource().SetSystem(pkg.SystemName).SetOrgName(orgName).SetService(pkg.ServiceName),
 	}
 }
@@ -481,6 +485,18 @@ func (c *ControllerServer) markFailed(op *copr.OperationInfo, actionType,
 	return true
 }
 
+func (c *ControllerServer) dispatchIntent(op *copr.OperationInfo, actionType string) {
+	if c.opMonitor == nil {
+		return
+	}
+	if _, err := c.opMonitor.Dispatch(&opmonpb.DispatchIntentRequest{
+		OperationId: op.Id,
+	}); err != nil {
+		log.Warnf("%s failed to mark intent of operation %s dispatched: %v",
+			actionType, op.Id, err)
+	}
+}
+
 func (c *ControllerServer) cancelIntent(op *copr.OperationInfo, actionType string) {
 	if c.opMonitor == nil {
 		return
@@ -519,6 +535,8 @@ func (c *ControllerServer) publishMessage(target string, method string, path str
 	if op != nil {
 		msg.OperationId = op.Id
 		msg.FencingToken = op.FencingToken
+		msg.ExpiresAt = timestamppb.New(c.now().
+			Add(time.Duration(c.opDeadlineSecs) * time.Second))
 	}
 	log.Infof("Published controller %s on route %s on target %s ", anyMsg, route, target)
 	err := c.msgbus.PublishRequest(route, msg)

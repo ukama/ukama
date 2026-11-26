@@ -63,9 +63,10 @@ type Intent struct {
 	// state. A rule match only completes an armed intent, so a steady-state
 	// report (e.g. an online heartbeat before a reboot begins) can't
 	// prematurely complete a freshly registered intent.
-	Armed     bool           `gorm:"not null;default:false" json:"armed"`
-	Deadline  time.Time      `gorm:"not null;index" json:"deadline"`
-	CreatedAt time.Time      `json:"createdAt"`
-	UpdatedAt time.Time      `json:"updatedAt"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
+	Armed      bool           `gorm:"not null;default:false" json:"armed"`
+	Dispatched bool           `gorm:"not null;default:false" json:"dispatched"`
+	Deadline   time.Time      `gorm:"not null;index" json:"deadline"`
+	CreatedAt  time.Time      `json:"createdAt"`
+	UpdatedAt  time.Time      `json:"updatedAt"`
+	DeletedAt  gorm.DeletedAt `gorm:"index" json:"deletedAt,omitempty"`
 }

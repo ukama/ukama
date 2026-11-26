@@ -16,6 +16,7 @@ package events
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -89,6 +90,7 @@ type NodeFeederMessage struct {
 	NodeId        string                 `protobuf:"bytes,5,opt,name=nodeId,proto3" json:"nodeId,omitempty"`
 	OperationId   string                 `protobuf:"bytes,6,opt,name=operationId,proto3" json:"operationId,omitempty"`
 	FencingToken  uint64                 `protobuf:"varint,7,opt,name=fencingToken,proto3" json:"fencingToken,omitempty"`
+	ExpiresAt     *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=expiresAt,proto3" json:"expiresAt,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -170,6 +172,13 @@ func (x *NodeFeederMessage) GetFencingToken() uint64 {
 		return x.FencingToken
 	}
 	return 0
+}
+
+func (x *NodeFeederMessage) GetExpiresAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ExpiresAt
+	}
+	return nil
 }
 
 type NodeFeederRequestResult struct {
@@ -276,7 +285,7 @@ var File_events_node_feeder_proto protoreflect.FileDescriptor
 
 const file_events_node_feeder_proto_rawDesc = "" +
 	"\n" +
-	"\x18events/node-feeder.proto\x12\x0fukama.events.v1\"\xcf\x01\n" +
+	"\x18events/node-feeder.proto\x12\x0fukama.events.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x89\x02\n" +
 	"\x11NodeFeederMessage\x12\x16\n" +
 	"\x06target\x18\x01 \x01(\tR\x06target\x12\x1e\n" +
 	"\n" +
@@ -286,7 +295,8 @@ const file_events_node_feeder_proto_rawDesc = "" +
 	"\x03msg\x18\x04 \x01(\fR\x03msg\x12\x16\n" +
 	"\x06nodeId\x18\x05 \x01(\tR\x06nodeId\x12 \n" +
 	"\voperationId\x18\x06 \x01(\tR\voperationId\x12\"\n" +
-	"\ffencingToken\x18\a \x01(\x04R\ffencingToken\"\xf1\x02\n" +
+	"\ffencingToken\x18\a \x01(\x04R\ffencingToken\x128\n" +
+	"\texpiresAt\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\texpiresAt\"\xf1\x02\n" +
 	"\x17NodeFeederRequestResult\x12 \n" +
 	"\voperationId\x18\x01 \x01(\tR\voperationId\x12\"\n" +
 	"\ffencingToken\x18\x02 \x01(\x04R\ffencingToken\x12\x16\n" +
@@ -324,14 +334,16 @@ var file_events_node_feeder_proto_goTypes = []any{
 	(NodeFeederRequestResult_Outcome)(0), // 0: ukama.events.v1.NodeFeederRequestResult.Outcome
 	(*NodeFeederMessage)(nil),            // 1: ukama.events.v1.NodeFeederMessage
 	(*NodeFeederRequestResult)(nil),      // 2: ukama.events.v1.NodeFeederRequestResult
+	(*timestamppb.Timestamp)(nil),        // 3: google.protobuf.Timestamp
 }
 var file_events_node_feeder_proto_depIdxs = []int32{
-	0, // 0: ukama.events.v1.NodeFeederRequestResult.outcome:type_name -> ukama.events.v1.NodeFeederRequestResult.Outcome
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	3, // 0: ukama.events.v1.NodeFeederMessage.expiresAt:type_name -> google.protobuf.Timestamp
+	0, // 1: ukama.events.v1.NodeFeederRequestResult.outcome:type_name -> ukama.events.v1.NodeFeederRequestResult.Outcome
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_events_node_feeder_proto_init() }

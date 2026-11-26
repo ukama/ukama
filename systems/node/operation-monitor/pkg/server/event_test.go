@@ -84,6 +84,7 @@ func watchingIntent(armed bool) db.Intent {
 		CompletionRule: pkg.RuleSubstateOn,
 		Status:         db.IntentWatching,
 		Armed:          armed,
+		Dispatched:     true,
 	}
 }
 
@@ -128,6 +129,46 @@ func TestHandleStateTransition_DepartureArmsIntent(t *testing.T) {
 	assert.NoError(t, err)
 	repo.AssertExpectations(t)
 	repo.AssertNotCalled(t, "Update", mock.Anything, closing)
+}
+
+func TestHandleStateTransition_DepartureBeforeDispatchIsIgnored(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(false)
+	intent.Dispatched = false
+
+	repo.On("List", watchingOn(nodeResourcePrefix+testNodeId)).
+		Return([]db.Intent{intent}, nil).Once()
+
+	s := newEventServer(repo, mb)
+	_, err := s.EventNotification(context.TODO(), transitionEvent(t, stateConfiguring,
+		substateOff))
+
+	assert.NoError(t, err)
+	repo.AssertExpectations(t)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+}
+
+func TestHandleStateTransition_NoneRuleIgnoresFlaps(t *testing.T) {
+	repo := &mocks.IntentRepo{}
+	mb := &mbmocks.MsgBusServiceClient{}
+	intent := watchingIntent(true)
+	intent.ActionType = "ToggleService"
+	intent.CompletionRule = ruleNone
+
+	repo.On("List", watchingOn(nodeResourcePrefix+testNodeId)).
+		Return([]db.Intent{intent}, nil).Twice()
+
+	s := newEventServer(repo, mb)
+	for _, substate := range []string{substateOff, pkg.SubstateOn} {
+		_, err := s.EventNotification(context.TODO(), transitionEvent(t, stateConfiguring,
+			substate))
+		assert.NoError(t, err)
+	}
+
+	repo.AssertExpectations(t)
+	repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+	mb.AssertNotCalled(t, "PublishRequest", mock.Anything, mock.Anything)
 }
 
 // An armed intent completes on the next rule match and publishes the

@@ -27,6 +27,7 @@ type fakeMonitorClient struct {
 	deadline bool
 	register *pb.RegisterIntentRequest
 	cancel   *pb.CancelIntentRequest
+	dispatch *pb.DispatchIntentRequest
 }
 
 func (f *fakeMonitorClient) RegisterIntent(ctx context.Context,
@@ -49,6 +50,17 @@ func (f *fakeMonitorClient) CancelIntent(ctx context.Context,
 		return nil, f.err
 	}
 	return &pb.CancelIntentResponse{}, nil
+}
+
+func (f *fakeMonitorClient) DispatchIntent(ctx context.Context,
+	req *pb.DispatchIntentRequest, _ ...grpc.CallOption) (*pb.DispatchIntentResponse,
+	error) {
+	_, f.deadline = ctx.Deadline()
+	f.dispatch = req
+	if f.err != nil {
+		return nil, f.err
+	}
+	return &pb.DispatchIntentResponse{}, nil
 }
 
 func TestOperationMonitor(t *testing.T) {
@@ -79,6 +91,26 @@ func TestOperationMonitor(t *testing.T) {
 		m := &operationMonitor{client: fake, timeout: time.Second}
 
 		_, err := m.Cancel(&pb.CancelIntentRequest{OperationId: "op"})
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
+	})
+
+	t.Run("DispatchForwardsWithDeadline", func(t *testing.T) {
+		fake := &fakeMonitorClient{}
+		m := &operationMonitor{client: fake, timeout: time.Second}
+
+		_, err := m.Dispatch(&pb.DispatchIntentRequest{OperationId: "op"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, "op", fake.dispatch.OperationId)
+		assert.True(t, fake.deadline)
+	})
+
+	t.Run("DispatchReturnsError", func(t *testing.T) {
+		fake := &fakeMonitorClient{err: status.Error(codes.NotFound, "no intent")}
+		m := &operationMonitor{client: fake, timeout: time.Second}
+
+		_, err := m.Dispatch(&pb.DispatchIntentRequest{OperationId: "op"})
 
 		assert.Equal(t, codes.NotFound, status.Code(err))
 	})

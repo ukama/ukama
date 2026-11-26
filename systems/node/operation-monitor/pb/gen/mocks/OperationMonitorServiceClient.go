@@ -53,6 +53,43 @@ func (_m *OperationMonitorServiceClient) CancelIntent(ctx context.Context, in *g
 	return r0, r1
 }
 
+// DispatchIntent provides a mock function with given fields: ctx, in, opts
+func (_m *OperationMonitorServiceClient) DispatchIntent(ctx context.Context, in *gen.DispatchIntentRequest, opts ...grpc.CallOption) (*gen.DispatchIntentResponse, error) {
+	_va := make([]interface{}, len(opts))
+	for _i := range opts {
+		_va[_i] = opts[_i]
+	}
+	var _ca []interface{}
+	_ca = append(_ca, ctx, in)
+	_ca = append(_ca, _va...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DispatchIntent")
+	}
+
+	var r0 *gen.DispatchIntentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DispatchIntentRequest, ...grpc.CallOption) (*gen.DispatchIntentResponse, error)); ok {
+		return rf(ctx, in, opts...)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DispatchIntentRequest, ...grpc.CallOption) *gen.DispatchIntentResponse); ok {
+		r0 = rf(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DispatchIntentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DispatchIntentRequest, ...grpc.CallOption) error); ok {
+		r1 = rf(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetIntent provides a mock function with given fields: ctx, in, opts
 func (_m *OperationMonitorServiceClient) GetIntent(ctx context.Context, in *gen.GetIntentRequest, opts ...grpc.CallOption) (*gen.GetIntentResponse, error) {
 	_va := make([]interface{}, len(opts))

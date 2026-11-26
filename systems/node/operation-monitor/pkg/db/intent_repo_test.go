@@ -40,7 +40,7 @@ func (d testDb) ExecuteInTransaction2(func(tx *gorm.DB) *gorm.DB,
 }
 
 var intentColumns = []string{"id", "operation_id", "resource_key", "action_type",
-	"fencing_token", "completion_rule", "status", "armed", "deadline"}
+	"fencing_token", "completion_rule", "status", "armed", "dispatched", "deadline"}
 
 func setupIntentRepo(t *testing.T) (sqlmock.Sqlmock, IntentRepo) {
 	t.Helper()
@@ -58,7 +58,7 @@ func setupIntentRepo(t *testing.T) (sqlmock.Sqlmock, IntentRepo) {
 
 func intentRow(opId uuid.UUID, st IntentStatus) *sqlmock.Rows {
 	return sqlmock.NewRows(intentColumns).AddRow(uuid.NewV4(), opId, "node:abc",
-		"RestartNode", uint64(3), pkg.RuleSubstateOn, int64(st), false, time.Now())
+		"RestartNode", uint64(3), pkg.RuleSubstateOn, int64(st), false, false, time.Now())
 }
 
 func TestIntentRepoAdd(t *testing.T) {
@@ -70,8 +70,8 @@ func TestIntentRepoAdd(t *testing.T) {
 	mock.ExpectBegin()
 	mock.ExpectExec(`INSERT INTO "intents"`).
 		WithArgs(intent.Id, intent.OperationId, "node:abc", "RestartNode", 3,
-			pkg.RuleSubstateOn, IntentWatching, false, intent.Deadline, sqlmock.AnyArg(),
-			sqlmock.AnyArg(), nil).
+			pkg.RuleSubstateOn, IntentWatching, false, false, intent.Deadline,
+			sqlmock.AnyArg(), sqlmock.AnyArg(), nil).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 	mock.ExpectCommit()
 
@@ -206,6 +206,24 @@ func TestIntentRepoUpdate(t *testing.T) {
 		mock.ExpectCommit()
 
 		out, err := repo.Update(opId, IntentUpdate{Armed: &armed})
+
+		require.NoError(t, err)
+		assert.Equal(t, opId, out.OperationId)
+		assert.NoError(t, mock.ExpectationsWereMet())
+	})
+
+	t.Run("DispatchesWatchingIntent", func(t *testing.T) {
+		mock, repo := setupIntentRepo(t)
+		opId := uuid.NewV4()
+		dispatched := true
+
+		mock.ExpectBegin()
+		mock.ExpectQuery(updateWatching).
+			WithArgs(true, sqlmock.AnyArg(), opId, IntentWatching).
+			WillReturnRows(intentRow(opId, IntentWatching))
+		mock.ExpectCommit()
+
+		out, err := repo.Update(opId, IntentUpdate{Dispatched: &dispatched})
 
 		require.NoError(t, err)
 		assert.Equal(t, opId, out.OperationId)

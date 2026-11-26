@@ -32,6 +32,7 @@ import (
 
 const (
 	appRulePrefix = "app."
+	ruleNone      = "none"
 
 	defaultDeadlineTTL = 4 * time.Minute
 	sweeperInterval    = 30 * time.Second
@@ -54,11 +55,11 @@ const (
 // completion is the node reporting substate=on again.
 // TODO: move to config or per-action proto when we add more actions.
 var defaultCompletionRule = map[string]string{
-	"SendNodeCommand":      pkg.RuleSubstateOn,
+	"SendNodeCommand":      ruleNone,
 	"RestartNode":          pkg.RuleSubstateOn,
-	"ToggleRadio":          pkg.RuleSubstateOn,
-	"ToggleInternetSwitch": pkg.RuleSubstateOn,
-	"ToggleService":        pkg.RuleSubstateOn,
+	"ToggleRadio":          ruleNone,
+	"ToggleInternetSwitch": ruleNone,
+	"ToggleService":        ruleNone,
 }
 
 type MonitorServer struct {
@@ -143,6 +144,19 @@ func (s *MonitorServer) GetIntent(ctx context.Context,
 	return &pb.GetIntentResponse{Intent: toPb(intent)}, nil
 }
 
+func (s *MonitorServer) DispatchIntent(ctx context.Context,
+	req *pb.DispatchIntentRequest) (*pb.DispatchIntentResponse, error) {
+	opId, err := uuid.FromString(req.OperationId)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid operation id: %v", err)
+	}
+	if _, err := s.repo.Update(opId, dispatch()); err != nil {
+		return nil, grpc.StoreErrorToGrpc(err, "intent")
+	}
+	log.Infof("monitor: intent op=%s dispatched", opId)
+	return &pb.DispatchIntentResponse{}, nil
+}
+
 func (s *MonitorServer) CancelIntent(ctx context.Context,
 	req *pb.CancelIntentRequest) (*pb.CancelIntentResponse, error) {
 	opId, err := uuid.FromString(req.OperationId)
@@ -169,6 +183,7 @@ func toPb(i *db.Intent) *pb.Intent {
 		Status:         pb.IntentStatus(i.Status),
 		Deadline:       timestamppb.New(i.Deadline),
 		CreatedAt:      timestamppb.New(i.CreatedAt),
+		Dispatched:     i.Dispatched,
 	}
 }
 
@@ -254,4 +269,9 @@ func closeAs(st db.IntentStatus) db.IntentUpdate {
 func arm() db.IntentUpdate {
 	armed := true
 	return db.IntentUpdate{Armed: &armed}
+}
+
+func dispatch() db.IntentUpdate {
+	dispatched := true
+	return db.IntentUpdate{Dispatched: &dispatched}
 }
