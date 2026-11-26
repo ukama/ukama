@@ -12,6 +12,8 @@ option go_package = "github.com/ukama/ukama/systems/common/pb/gen/events";
 
 package ukama.events.v1;
 
+import "google/protobuf/timestamp.proto";
+
 message NodeFeederMessage {
     string target = 1;
     string httpMethod = 2;
@@ -20,6 +22,7 @@ message NodeFeederMessage {
     string nodeId = 5;
     string operationId = 6;
     uint64 fencingToken = 7;
+    google.protobuf.Timestamp expiresAt = 8;
 }
 
 message NodeFeederRequestResult {
