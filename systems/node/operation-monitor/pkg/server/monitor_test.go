@@ -119,6 +119,55 @@ func TestCancelIntent_Success(t *testing.T) {
 	repo.AssertExpectations(t)
 }
 
+func TestRegisterIntent_ToggleDefaultsToNoneRule(t *testing.T) {
+	for _, action := range []string{"ToggleService", "ToggleRadio",
+		"ToggleInternetSwitch", "SendNodeCommand"} {
+		t.Run(action, func(t *testing.T) {
+			repo := &mocks.IntentRepo{}
+			repo.On("Add", mock.Anything).Return(nil).Once()
+			req := registerRequest()
+			req.ActionType = action
+
+			resp, err := newMonitorServer(repo).RegisterIntent(context.TODO(), req)
+
+			assert.NoError(t, err)
+			assert.Equal(t, ruleNone, resp.Intent.CompletionRule)
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestDispatchIntent(t *testing.T) {
+	for name, tc := range map[string]struct {
+		intent *db.Intent
+		err    error
+		code   codes.Code
+	}{
+		"Success":      {&db.Intent{Dispatched: true}, nil, codes.OK},
+		"Unknown":      {nil, gorm.ErrRecordNotFound, codes.NotFound},
+		"StoreFailure": {nil, errors.New("database unavailable"), codes.Internal},
+	} {
+		t.Run(name, func(t *testing.T) {
+			repo := &mocks.IntentRepo{}
+			opId := uuid.NewV4()
+			repo.On("Update", opId, dispatch()).Return(tc.intent, tc.err).Once()
+
+			_, err := newMonitorServer(repo).DispatchIntent(context.TODO(),
+				&pb.DispatchIntentRequest{OperationId: opId.String()})
+
+			assert.Equal(t, tc.code, status.Code(err))
+			repo.AssertExpectations(t)
+		})
+	}
+
+	t.Run("InvalidId", func(t *testing.T) {
+		_, err := newMonitorServer(&mocks.IntentRepo{}).DispatchIntent(context.TODO(),
+			&pb.DispatchIntentRequest{OperationId: "nope"})
+
+		assert.Equal(t, codes.InvalidArgument, status.Code(err))
+	})
+}
+
 func TestSweeper_PublishFailureCanRetry(t *testing.T) {
 	repo := &mocks.IntentRepo{}
 	mb := &mbmocks.MsgBusServiceClient{}

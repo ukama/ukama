@@ -33,8 +33,9 @@ type IntentFilter struct {
 }
 
 type IntentUpdate struct {
-	Status *IntentStatus
-	Armed  *bool
+	Status     *IntentStatus
+	Armed      *bool
+	Dispatched *bool
 }
 
 type intentRepo struct {
@@ -87,6 +88,9 @@ func (r *intentRepo) Update(operationId uuid.UUID, ch IntentUpdate) (*Intent, er
 	}
 	if ch.Armed != nil {
 		fields["armed"] = *ch.Armed
+	}
+	if ch.Dispatched != nil {
+		fields["dispatched"] = *ch.Dispatched
 	}
 	if len(fields) == 0 {
 		return nil, errors.New("intent update has no fields")

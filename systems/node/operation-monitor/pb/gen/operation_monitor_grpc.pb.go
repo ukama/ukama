@@ -29,6 +29,7 @@ const (
 	OperationMonitorService_RegisterIntent_FullMethodName = "/ukama.node.operationmonitor.v1.OperationMonitorService/RegisterIntent"
 	OperationMonitorService_GetIntent_FullMethodName      = "/ukama.node.operationmonitor.v1.OperationMonitorService/GetIntent"
 	OperationMonitorService_CancelIntent_FullMethodName   = "/ukama.node.operationmonitor.v1.OperationMonitorService/CancelIntent"
+	OperationMonitorService_DispatchIntent_FullMethodName = "/ukama.node.operationmonitor.v1.OperationMonitorService/DispatchIntent"
 )
 
 // OperationMonitorServiceClient is the client API for OperationMonitorService service.
@@ -38,6 +39,7 @@ type OperationMonitorServiceClient interface {
 	RegisterIntent(ctx context.Context, in *RegisterIntentRequest, opts ...grpc.CallOption) (*RegisterIntentResponse, error)
 	GetIntent(ctx context.Context, in *GetIntentRequest, opts ...grpc.CallOption) (*GetIntentResponse, error)
 	CancelIntent(ctx context.Context, in *CancelIntentRequest, opts ...grpc.CallOption) (*CancelIntentResponse, error)
+	DispatchIntent(ctx context.Context, in *DispatchIntentRequest, opts ...grpc.CallOption) (*DispatchIntentResponse, error)
 }
 
 type operationMonitorServiceClient struct {
@@ -78,6 +80,16 @@ func (c *operationMonitorServiceClient) CancelIntent(ctx context.Context, in *Ca
 	return out, nil
 }
 
+func (c *operationMonitorServiceClient) DispatchIntent(ctx context.Context, in *DispatchIntentRequest, opts ...grpc.CallOption) (*DispatchIntentResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DispatchIntentResponse)
+	err := c.cc.Invoke(ctx, OperationMonitorService_DispatchIntent_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // OperationMonitorServiceServer is the server API for OperationMonitorService service.
 // All implementations must embed UnimplementedOperationMonitorServiceServer
 // for forward compatibility.
@@ -85,6 +97,7 @@ type OperationMonitorServiceServer interface {
 	RegisterIntent(context.Context, *RegisterIntentRequest) (*RegisterIntentResponse, error)
 	GetIntent(context.Context, *GetIntentRequest) (*GetIntentResponse, error)
 	CancelIntent(context.Context, *CancelIntentRequest) (*CancelIntentResponse, error)
+	DispatchIntent(context.Context, *DispatchIntentRequest) (*DispatchIntentResponse, error)
 	mustEmbedUnimplementedOperationMonitorServiceServer()
 }
 
@@ -103,6 +116,9 @@ func (UnimplementedOperationMonitorServiceServer) GetIntent(context.Context, *Ge
 }
 func (UnimplementedOperationMonitorServiceServer) CancelIntent(context.Context, *CancelIntentRequest) (*CancelIntentResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CancelIntent not implemented")
+}
+func (UnimplementedOperationMonitorServiceServer) DispatchIntent(context.Context, *DispatchIntentRequest) (*DispatchIntentResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DispatchIntent not implemented")
 }
 func (UnimplementedOperationMonitorServiceServer) mustEmbedUnimplementedOperationMonitorServiceServer() {
 }
@@ -180,6 +196,24 @@ func _OperationMonitorService_CancelIntent_Handler(srv interface{}, ctx context.
 	return interceptor(ctx, in, info, handler)
 }
 
+func _OperationMonitorService_DispatchIntent_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DispatchIntentRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(OperationMonitorServiceServer).DispatchIntent(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: OperationMonitorService_DispatchIntent_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(OperationMonitorServiceServer).DispatchIntent(ctx, req.(*DispatchIntentRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // OperationMonitorService_ServiceDesc is the grpc.ServiceDesc for OperationMonitorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -198,6 +232,10 @@ var OperationMonitorService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CancelIntent",
 			Handler:    _OperationMonitorService_CancelIntent_Handler,
+		},
+		{
+			MethodName: "DispatchIntent",
+			Handler:    _OperationMonitorService_DispatchIntent_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

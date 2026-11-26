@@ -95,3 +95,18 @@ func (this *CancelIntentRequest) Validate() error {
 func (this *CancelIntentResponse) Validate() error {
 	return nil
 }
+
+var _regex_DispatchIntentRequest_OperationId = regexp.MustCompile(`^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$`)
+
+func (this *DispatchIntentRequest) Validate() error {
+	if !_regex_DispatchIntentRequest_OperationId.MatchString(this.OperationId) {
+		return github_com_mwitkow_go_proto_validators.FieldError("OperationId", fmt.Errorf(`value '%v' must be a string conforming to regex "^([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[4][a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12})?$"`, this.OperationId))
+	}
+	if this.OperationId == "" {
+		return github_com_mwitkow_go_proto_validators.FieldError("OperationId", fmt.Errorf(`value '%v' must not be an empty string`, this.OperationId))
+	}
+	return nil
+}
+func (this *DispatchIntentResponse) Validate() error {
+	return nil
+}

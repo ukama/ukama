@@ -44,6 +44,36 @@ func (_m *OperationMonitorServiceServer) CancelIntent(_a0 context.Context, _a1 *
 	return r0, r1
 }
 
+// DispatchIntent provides a mock function with given fields: _a0, _a1
+func (_m *OperationMonitorServiceServer) DispatchIntent(_a0 context.Context, _a1 *gen.DispatchIntentRequest) (*gen.DispatchIntentResponse, error) {
+	ret := _m.Called(_a0, _a1)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DispatchIntent")
+	}
+
+	var r0 *gen.DispatchIntentResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DispatchIntentRequest) (*gen.DispatchIntentResponse, error)); ok {
+		return rf(_a0, _a1)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *gen.DispatchIntentRequest) *gen.DispatchIntentResponse); ok {
+		r0 = rf(_a0, _a1)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*gen.DispatchIntentResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *gen.DispatchIntentRequest) error); ok {
+		r1 = rf(_a0, _a1)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetIntent provides a mock function with given fields: _a0, _a1
 func (_m *OperationMonitorServiceServer) GetIntent(_a0 context.Context, _a1 *gen.GetIntentRequest) (*gen.GetIntentResponse, error) {
 	ret := _m.Called(_a0, _a1)

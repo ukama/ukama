@@ -96,6 +96,7 @@ type Intent struct {
 	Status         IntentStatus           `protobuf:"varint,7,opt,name=status,proto3,enum=ukama.node.operationmonitor.v1.IntentStatus" json:"status,omitempty"`
 	Deadline       *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=deadline,proto3" json:"deadline,omitempty"`
 	CreatedAt      *timestamppb.Timestamp `protobuf:"bytes,9,opt,name=createdAt,proto3" json:"createdAt,omitempty"`
+	Dispatched     bool                   `protobuf:"varint,10,opt,name=dispatched,proto3" json:"dispatched,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -191,6 +192,13 @@ func (x *Intent) GetCreatedAt() *timestamppb.Timestamp {
 		return x.CreatedAt
 	}
 	return nil
+}
+
+func (x *Intent) GetDispatched() bool {
+	if x != nil {
+		return x.Dispatched
+	}
+	return false
 }
 
 type RegisterIntentRequest struct {
@@ -489,11 +497,91 @@ func (*CancelIntentResponse) Descriptor() ([]byte, []int) {
 	return file_operation_monitor_proto_rawDescGZIP(), []int{6}
 }
 
+type DispatchIntentRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	OperationId   string                 `protobuf:"bytes,1,opt,name=operationId,proto3" json:"operationId,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DispatchIntentRequest) Reset() {
+	*x = DispatchIntentRequest{}
+	mi := &file_operation_monitor_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DispatchIntentRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DispatchIntentRequest) ProtoMessage() {}
+
+func (x *DispatchIntentRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_operation_monitor_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DispatchIntentRequest.ProtoReflect.Descriptor instead.
+func (*DispatchIntentRequest) Descriptor() ([]byte, []int) {
+	return file_operation_monitor_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DispatchIntentRequest) GetOperationId() string {
+	if x != nil {
+		return x.OperationId
+	}
+	return ""
+}
+
+type DispatchIntentResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DispatchIntentResponse) Reset() {
+	*x = DispatchIntentResponse{}
+	mi := &file_operation_monitor_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DispatchIntentResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DispatchIntentResponse) ProtoMessage() {}
+
+func (x *DispatchIntentResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_operation_monitor_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DispatchIntentResponse.ProtoReflect.Descriptor instead.
+func (*DispatchIntentResponse) Descriptor() ([]byte, []int) {
+	return file_operation_monitor_proto_rawDescGZIP(), []int{8}
+}
+
 var File_operation_monitor_proto protoreflect.FileDescriptor
 
 const file_operation_monitor_proto_rawDesc = "" +
 	"\n" +
-	"\x17operation_monitor.proto\x12\x1eukama.node.operationmonitor.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x80\x03\n" +
+	"\x17operation_monitor.proto\x12\x1eukama.node.operationmonitor.v1\x1a\x0fvalidator.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\xa0\x03\n" +
 	"\x06Intent\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
 	"\voperationId\x18\x02 \x01(\tR\voperationId\x12 \n" +
@@ -505,7 +593,11 @@ const file_operation_monitor_proto_rawDesc = "" +
 	"\x0ecompletionRule\x18\x06 \x01(\tR\x0ecompletionRule\x12D\n" +
 	"\x06status\x18\a \x01(\x0e2,.ukama.node.operationmonitor.v1.IntentStatusR\x06status\x126\n" +
 	"\bdeadline\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\bdeadline\x128\n" +
-	"\tcreatedAt\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\"\x94\x02\n" +
+	"\tcreatedAt\x18\t \x01(\v2\x1a.google.protobuf.TimestampR\tcreatedAt\x12\x1e\n" +
+	"\n" +
+	"dispatched\x18\n" +
+	" \x01(\bR\n" +
+	"dispatched\"\x94\x02\n" +
 	"\x15RegisterIntentRequest\x12+\n" +
 	"\voperationId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\voperationId\x12(\n" +
 	"\vresourceKey\x18\x02 \x01(\tB\x06\xe2\xdf\x1f\x02X\x01R\vresourceKey\x12&\n" +
@@ -523,18 +615,22 @@ const file_operation_monitor_proto_rawDesc = "" +
 	"\x06intent\x18\x01 \x01(\v2&.ukama.node.operationmonitor.v1.IntentR\x06intent\"B\n" +
 	"\x13CancelIntentRequest\x12+\n" +
 	"\voperationId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\voperationId\"\x16\n" +
-	"\x14CancelIntentResponse*S\n" +
+	"\x14CancelIntentResponse\"D\n" +
+	"\x15DispatchIntentRequest\x12+\n" +
+	"\voperationId\x18\x01 \x01(\tB\t\xe2\xdf\x1f\x05X\x01\x90\x01\x04R\voperationId\"\x18\n" +
+	"\x16DispatchIntentResponse*S\n" +
 	"\fIntentStatus\x12\f\n" +
 	"\bWATCHING\x10\x00\x12\r\n" +
 	"\tCOMPLETED\x10\x01\x12\n" +
 	"\n" +
 	"\x06FAILED\x10\x02\x12\v\n" +
 	"\aEXPIRED\x10\x03\x12\r\n" +
-	"\tCANCELLED\x10\x042\x87\x03\n" +
+	"\tCANCELLED\x10\x042\x88\x04\n" +
 	"\x17OperationMonitorService\x12\x7f\n" +
 	"\x0eRegisterIntent\x125.ukama.node.operationmonitor.v1.RegisterIntentRequest\x1a6.ukama.node.operationmonitor.v1.RegisterIntentResponse\x12p\n" +
 	"\tGetIntent\x120.ukama.node.operationmonitor.v1.GetIntentRequest\x1a1.ukama.node.operationmonitor.v1.GetIntentResponse\x12y\n" +
-	"\fCancelIntent\x123.ukama.node.operationmonitor.v1.CancelIntentRequest\x1a4.ukama.node.operationmonitor.v1.CancelIntentResponseB>Z<github.com/ukama/ukama/systems/node/operation-monitor/pb/genb\x06proto3"
+	"\fCancelIntent\x123.ukama.node.operationmonitor.v1.CancelIntentRequest\x1a4.ukama.node.operationmonitor.v1.CancelIntentResponse\x12\x7f\n" +
+	"\x0eDispatchIntent\x125.ukama.node.operationmonitor.v1.DispatchIntentRequest\x1a6.ukama.node.operationmonitor.v1.DispatchIntentResponseB>Z<github.com/ukama/ukama/systems/node/operation-monitor/pb/genb\x06proto3"
 
 var (
 	file_operation_monitor_proto_rawDescOnce sync.Once
@@ -549,7 +645,7 @@ func file_operation_monitor_proto_rawDescGZIP() []byte {
 }
 
 var file_operation_monitor_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_operation_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_operation_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
 var file_operation_monitor_proto_goTypes = []any{
 	(IntentStatus)(0),              // 0: ukama.node.operationmonitor.v1.IntentStatus
 	(*Intent)(nil),                 // 1: ukama.node.operationmonitor.v1.Intent
@@ -559,25 +655,29 @@ var file_operation_monitor_proto_goTypes = []any{
 	(*GetIntentResponse)(nil),      // 5: ukama.node.operationmonitor.v1.GetIntentResponse
 	(*CancelIntentRequest)(nil),    // 6: ukama.node.operationmonitor.v1.CancelIntentRequest
 	(*CancelIntentResponse)(nil),   // 7: ukama.node.operationmonitor.v1.CancelIntentResponse
-	(*timestamppb.Timestamp)(nil),  // 8: google.protobuf.Timestamp
+	(*DispatchIntentRequest)(nil),  // 8: ukama.node.operationmonitor.v1.DispatchIntentRequest
+	(*DispatchIntentResponse)(nil), // 9: ukama.node.operationmonitor.v1.DispatchIntentResponse
+	(*timestamppb.Timestamp)(nil),  // 10: google.protobuf.Timestamp
 }
 var file_operation_monitor_proto_depIdxs = []int32{
-	0, // 0: ukama.node.operationmonitor.v1.Intent.status:type_name -> ukama.node.operationmonitor.v1.IntentStatus
-	8, // 1: ukama.node.operationmonitor.v1.Intent.deadline:type_name -> google.protobuf.Timestamp
-	8, // 2: ukama.node.operationmonitor.v1.Intent.createdAt:type_name -> google.protobuf.Timestamp
-	1, // 3: ukama.node.operationmonitor.v1.RegisterIntentResponse.intent:type_name -> ukama.node.operationmonitor.v1.Intent
-	1, // 4: ukama.node.operationmonitor.v1.GetIntentResponse.intent:type_name -> ukama.node.operationmonitor.v1.Intent
-	2, // 5: ukama.node.operationmonitor.v1.OperationMonitorService.RegisterIntent:input_type -> ukama.node.operationmonitor.v1.RegisterIntentRequest
-	4, // 6: ukama.node.operationmonitor.v1.OperationMonitorService.GetIntent:input_type -> ukama.node.operationmonitor.v1.GetIntentRequest
-	6, // 7: ukama.node.operationmonitor.v1.OperationMonitorService.CancelIntent:input_type -> ukama.node.operationmonitor.v1.CancelIntentRequest
-	3, // 8: ukama.node.operationmonitor.v1.OperationMonitorService.RegisterIntent:output_type -> ukama.node.operationmonitor.v1.RegisterIntentResponse
-	5, // 9: ukama.node.operationmonitor.v1.OperationMonitorService.GetIntent:output_type -> ukama.node.operationmonitor.v1.GetIntentResponse
-	7, // 10: ukama.node.operationmonitor.v1.OperationMonitorService.CancelIntent:output_type -> ukama.node.operationmonitor.v1.CancelIntentResponse
-	8, // [8:11] is the sub-list for method output_type
-	5, // [5:8] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	0,  // 0: ukama.node.operationmonitor.v1.Intent.status:type_name -> ukama.node.operationmonitor.v1.IntentStatus
+	10, // 1: ukama.node.operationmonitor.v1.Intent.deadline:type_name -> google.protobuf.Timestamp
+	10, // 2: ukama.node.operationmonitor.v1.Intent.createdAt:type_name -> google.protobuf.Timestamp
+	1,  // 3: ukama.node.operationmonitor.v1.RegisterIntentResponse.intent:type_name -> ukama.node.operationmonitor.v1.Intent
+	1,  // 4: ukama.node.operationmonitor.v1.GetIntentResponse.intent:type_name -> ukama.node.operationmonitor.v1.Intent
+	2,  // 5: ukama.node.operationmonitor.v1.OperationMonitorService.RegisterIntent:input_type -> ukama.node.operationmonitor.v1.RegisterIntentRequest
+	4,  // 6: ukama.node.operationmonitor.v1.OperationMonitorService.GetIntent:input_type -> ukama.node.operationmonitor.v1.GetIntentRequest
+	6,  // 7: ukama.node.operationmonitor.v1.OperationMonitorService.CancelIntent:input_type -> ukama.node.operationmonitor.v1.CancelIntentRequest
+	8,  // 8: ukama.node.operationmonitor.v1.OperationMonitorService.DispatchIntent:input_type -> ukama.node.operationmonitor.v1.DispatchIntentRequest
+	3,  // 9: ukama.node.operationmonitor.v1.OperationMonitorService.RegisterIntent:output_type -> ukama.node.operationmonitor.v1.RegisterIntentResponse
+	5,  // 10: ukama.node.operationmonitor.v1.OperationMonitorService.GetIntent:output_type -> ukama.node.operationmonitor.v1.GetIntentResponse
+	7,  // 11: ukama.node.operationmonitor.v1.OperationMonitorService.CancelIntent:output_type -> ukama.node.operationmonitor.v1.CancelIntentResponse
+	9,  // 12: ukama.node.operationmonitor.v1.OperationMonitorService.DispatchIntent:output_type -> ukama.node.operationmonitor.v1.DispatchIntentResponse
+	9,  // [9:13] is the sub-list for method output_type
+	5,  // [5:9] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_operation_monitor_proto_init() }
@@ -591,7 +691,7 @@ func file_operation_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_operation_monitor_proto_rawDesc), len(file_operation_monitor_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   9,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
