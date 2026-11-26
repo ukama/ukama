@@ -43,9 +43,6 @@ packages:
 phases:
   - name: prepare
     events:
-      - type: toggle_sim_status
-        ues: all
-        status: service_on
       - type: wait_sim_status
         ues: all
         status: service_on

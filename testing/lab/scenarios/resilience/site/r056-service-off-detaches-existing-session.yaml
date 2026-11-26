@@ -1,6 +1,6 @@
 version: 1
 name: r056-service-off-detaches-existing-session
-description: Service off blocks an existing PDN; service on restores data on the same PDN with the original package.
+description: Service off removes an existing PDN; service on permits a fresh attach that restores data with the original package.
 seed: 6156
 suite: resilience
 priority: p1
@@ -56,9 +56,11 @@ phases:
     checks:
       - type: ue_pdn
         ues: all
-        expected: blocked
+        expected: absent
         timeout_seconds: 60
-        same_pdn: true
+      - type: traffic_unavailable
+        ues: all
+        amount_mb: 1
       - type: package_assignment_count
         ues: all
         expected_count: 1
@@ -70,6 +72,8 @@ phases:
       - type: toggle_service
         sites: all
         state: 'on'
+      - type: start_ues
+        ues: all
       - type: wait_ues_attached
         ues: all
         seconds: 180
@@ -83,7 +87,7 @@ phases:
       - type: ue_pdn
         ues: all
         expected: allowed
-        same_pdn: true
+        new_pdn: true
       - type: package_state
         ues: all
         package: base

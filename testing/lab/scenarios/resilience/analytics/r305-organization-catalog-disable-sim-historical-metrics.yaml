@@ -48,6 +48,10 @@ phases:
       - type: purchase_package
         ues: ue-000001
         package: next
+      - type: wait_sim_status
+        ues: ue-000001
+        status: service_on
+        seconds: 120
       - type: toggle_sim_status
         ues: ue-000001
         status: service_off

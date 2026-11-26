@@ -43,11 +43,20 @@ packages:
     assign_percent: 0
     scope: network
 phases:
-  - name: mutate
+  - name: purchase
     events:
       - type: purchase_package
         ues: ue-000001
         package: next
+    checks:
+      - type: package_assignment_count
+        ues: ue-000001
+        expected_count: 2
+        timeout_seconds: 120
+        poll_seconds: 2
+        immediate: true
+  - name: mutate
+    events:
       - type: remove_package_from_sim
         ues: ue-000001
     checks:

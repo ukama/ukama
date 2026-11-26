@@ -35,6 +35,10 @@ packages:
 phases:
   - name: disable
     events:
+      - type: wait_sim_status
+        ues: all
+        status: service_on
+        seconds: 120
       - type: toggle_sim_status
         ues: all
         status: service_off

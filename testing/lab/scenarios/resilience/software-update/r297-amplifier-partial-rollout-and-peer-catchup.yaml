@@ -118,6 +118,8 @@ phases:
         nodes: amplifier-site-002-001
         connectivity: Online
         seconds: 300
+      - type: wait_nodes_ready
+        nodes: amplifier-site-002-001
     checks:
       - type: node_version_equals
         nodes: amplifier-site-002-001

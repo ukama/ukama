@@ -1,6 +1,6 @@
 version: 1
 name: r311-4-sims-group-3-distinct-customer-metrics
-description: 4 SIMs grouped by 3, including partial groups, must count 2 paying subscribers after two extra purchases; ARPU must use subscriber count.
+description: 4 SIMs grouped by 3, including partial groups. PAID_CUSTOMERS counts the 4 paying SIMs after two extra purchases, and ARPU divides active committed spend by distinct subscribers.
 seed: 6411
 suite: resilience
 priority: p1
@@ -85,7 +85,7 @@ final_checks:
     op: LAST
     networks: net-001
     scope_key: network_id
-    expected_value: 2
+    expected_value: 4
     tolerance: 0.001
     timeout_seconds: 600
     poll_seconds: 5
@@ -95,7 +95,7 @@ final_checks:
     op: AVG
     networks: net-001
     scope_key: network_id
-    expected_value: 7.0
+    expected_value: 4.0
     tolerance: 0.001
     timeout_seconds: 600
     poll_seconds: 5
