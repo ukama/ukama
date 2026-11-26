@@ -111,6 +111,14 @@ func TestNodeFeederResult_RestartDeliveredMarksDispatched(t *testing.T) {
 	}
 }
 
+func TestDispatchIntent_WithoutMonitorIsNoop(t *testing.T) {
+	s := NewControllerServer(testOrgName, nil, nil, nil, nil, nil, nil, nil, 30, 60, false)
+
+	assert.NotPanics(t, func() {
+		s.dispatchIntent(&copr.OperationInfo{Id: resultOpId}, rebootPath)
+	})
+}
+
 func TestNodeFeederResult_FailureFailsOperation(t *testing.T) {
 	for name, tc := range map[string]struct {
 		path    string
