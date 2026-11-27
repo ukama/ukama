@@ -11,6 +11,7 @@ package payments
 import (
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -18,6 +19,8 @@ import (
 
 const (
 	errFormatMsg = "%w: %s"
+	centsPerUnit = 100
+	centsDigits  = 2
 )
 
 var (
@@ -37,21 +40,25 @@ func ToAmountCents(s string) (int64, error) {
 		return 0, fmt.Errorf(errFormatMsg, ErrMatch, s)
 	}
 
-	if strings.Contains(s, ".") {
-		f, err := strconv.ParseFloat(s, 32)
-		if err != nil {
-			return 0, fmt.Errorf(errFormatMsg, ErrFloat, err)
-		}
+	whole, fraction, _ := strings.Cut(s, ".")
 
-		return int64(f * 100), nil
-	}
-
-	i, err := strconv.ParseInt(s, 10, 64)
+	units, err := strconv.ParseInt(whole, 10, 64)
 	if err != nil {
 		return 0, fmt.Errorf(errFormatMsg, ErrInt, err)
 	}
 
-	return i * 100, nil
+	fraction += strings.Repeat("0", centsDigits-len(fraction))
+
+	cents, err := strconv.ParseInt(fraction, 10, 64)
+	if err != nil {
+		return 0, fmt.Errorf(errFormatMsg, ErrInt, err)
+	}
+
+	if units > (math.MaxInt64-cents)/centsPerUnit {
+		return 0, fmt.Errorf(errFormatMsg, ErrInt, s)
+	}
+
+	return units*centsPerUnit + cents, nil
 }
 
 func ToAmount(amountCents int64) string {
