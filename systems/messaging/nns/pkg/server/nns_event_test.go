@@ -35,6 +35,7 @@ const (
 	releaseRoute  = "event.cloud.local.{{ .Org}}.registry.node.node.release"
 	assignedRoute = "event.cloud.local.{{ .Org}}.registry.node.node.assigned"
 	onlineRoute   = "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"
+	offlineRoute  = "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"
 )
 
 func registryError(code int) error {
@@ -139,6 +140,22 @@ func TestNnsEventServerNodeSiteEvents(t *testing.T) {
 			return testEvent(t, assignRoute,
 				&epb.NodeReleasedEvent{NodeId: testValidNodeID})
 		}, true},
+		{"wrongPayloadOnReleaseFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, releaseRoute,
+				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID})
+		}, true},
+		{"wrongPayloadOnOnlineFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, onlineRoute,
+				&epb.NodeOfflineEvent{NodeId: testValidNodeID})
+		}, true},
+		{"wrongPayloadOnOfflineFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, offlineRoute,
+				&epb.NodeOnlineEvent{NodeId: testValidNodeID})
+		}, true},
+		{"offlineIsAcknowledged", func(t *testing.T) *epb.Event {
+			return testEvent(t, offlineRoute,
+				&epb.NodeOfflineEvent{NodeId: testValidNodeID})
+		}, false},
 	}
 
 	for _, tc := range noStoreCases {
@@ -164,27 +181,55 @@ func TestNnsEventServerNodeSiteEvents(t *testing.T) {
 		})
 	}
 
-	t.Run("assignForUnknownNodeFails", func(t *testing.T) {
-		added := 0
-		store := &fakeNnsStore{
-			get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
-				return nil, errFakeNotImplemented
-			},
-			add: func(_ context.Context, _ pkg.NodeMeshMap) error {
-				added++
-				return nil
-			},
-		}
-		srv := NewNnsEventServer(testEventOrg, nil, NewNnsServer(store, nil, nil),
-			testEventOrg)
+	storeFailureCases := []struct {
+		name   string
+		event  func(t *testing.T) *epb.Event
+		getErr error
+		addErr error
+		added  int
+	}{
+		{"assignForUnknownNodeFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, assignRoute,
+				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID})
+		}, errFakeNotImplemented, nil, 0},
+		{"releaseForUnknownNodeFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, releaseRoute,
+				&epb.NodeReleasedEvent{NodeId: testValidNodeID})
+		}, errFakeNotImplemented, nil, 0},
+		{"assignStoreWriteFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, assignRoute,
+				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID})
+		}, nil, errFakeNotImplemented, 1},
+		{"releaseStoreWriteFails", func(t *testing.T) *epb.Event {
+			return testEvent(t, releaseRoute,
+				&epb.NodeReleasedEvent{NodeId: testValidNodeID})
+		}, nil, errFakeNotImplemented, 1},
+	}
 
-		_, err := srv.EventNotification(context.Background(),
-			testEvent(t, assignRoute,
-				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID}))
+	for _, tc := range storeFailureCases {
+		t.Run(tc.name, func(t *testing.T) {
+			added := 0
+			store := &fakeNnsStore{
+				get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+					if tc.getErr != nil {
+						return nil, tc.getErr
+					}
+					return storedNode(), nil
+				},
+				add: func(_ context.Context, _ pkg.NodeMeshMap) error {
+					added++
+					return tc.addErr
+				},
+			}
+			srv := NewNnsEventServer(testEventOrg, nil, NewNnsServer(store, nil, nil),
+				testEventOrg)
 
-		assert.Error(t, err)
-		assert.Zero(t, added)
-	})
+			_, err := srv.EventNotification(context.Background(), tc.event(t))
+
+			assert.Error(t, err)
+			assert.Equal(t, tc.added, added)
+		})
+	}
 }
 
 func TestNnsEventServerNodeOnlineEvent(t *testing.T) {
