@@ -9,6 +9,7 @@ depend() {
 
 start() {
     ebegin "Resetting u-boot bootcount"
+    mountpoint -q /media/boot || mount /media/boot
     fw_setenv bootcount 0
-    eend $?
+    eend $? "u-boot bootcount was not reset, after 3 more boots u-boot marks this slot bad"
 }
