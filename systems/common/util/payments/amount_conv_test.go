@@ -10,6 +10,8 @@ package payments
 
 import (
 	"errors"
+	"fmt"
+	"math"
 	"testing"
 )
 
@@ -75,6 +77,55 @@ func TestToAmountCents(t *testing.T) {
 			amountCents: 0,
 			expErr:      nil,
 		},
+
+		{
+			name:        "amount losing a cent as float32",
+			amount:      "1.01",
+			amountCents: 101,
+			expErr:      nil,
+		},
+
+		{
+			name:        "amount losing a cent as float32 near ten",
+			amount:      "9.99",
+			amountCents: 999,
+			expErr:      nil,
+		},
+
+		{
+			name:        "one cent",
+			amount:      "0.01",
+			amountCents: 1,
+			expErr:      nil,
+		},
+
+		{
+			name:        "trailing dot",
+			amount:      "1.",
+			amountCents: 100,
+			expErr:      nil,
+		},
+
+		{
+			name:        "largest amount",
+			amount:      "92233720368547758.07",
+			amountCents: math.MaxInt64,
+			expErr:      nil,
+		},
+
+		{
+			name:        "amount overflowing by one cent",
+			amount:      "92233720368547758.08",
+			amountCents: 0,
+			expErr:      ErrInt,
+		},
+
+		{
+			name:        "amount overflowing in units",
+			amount:      "100000000000000000",
+			amountCents: 0,
+			expErr:      ErrInt,
+		},
 	}
 
 	for _, test := range tests {
@@ -87,7 +138,8 @@ func TestToAmountCents(t *testing.T) {
 				}
 
 				if !errors.Is(err, test.expErr) {
-					t.Errorf("fail %s: expecting %q error but got : %q", test.name, test.expErr, err)
+					t.Errorf("fail %s: expecting %q error but got : %q", test.name,
+						test.expErr, err)
 				}
 
 				return
@@ -97,6 +149,25 @@ func TestToAmountCents(t *testing.T) {
 				t.Errorf("Fail. Expecting %d but got %d", test.amountCents, got)
 			}
 		})
+	}
+}
+
+func TestToAmountCentsEveryTwoDecimalAmount(t *testing.T) {
+	for cents := int64(0); cents < 10000; cents++ {
+		amount := fmt.Sprintf("%d.%02d", cents/100, cents%100)
+
+		got, err := ToAmountCents(amount)
+		if err != nil {
+			t.Fatalf("Fail %s: unexpected error %v", amount, err)
+		}
+
+		if got != cents {
+			t.Errorf("Fail %s: expecting %d but got %d", amount, cents, got)
+		}
+
+		if back := ToAmount(got); back != amount {
+			t.Errorf("Fail %d: expecting %s but got %s", got, amount, back)
+		}
 	}
 }
 
