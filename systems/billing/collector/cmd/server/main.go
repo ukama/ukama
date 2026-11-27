@@ -74,18 +74,20 @@ func runGrpcServer() {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri, serviceConfig.Service.Uri,
-		serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount, serviceConfig.MsgClient.ListenerRoutes)
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host,
+		serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount,
+		serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
 	lagoClient := client.NewLagoClient(serviceConfig.LagoAPIKey,
 		serviceConfig.LagoHost, serviceConfig.LagoPort)
 
-	eSrv, err := server.NewCollectorEventServer(serviceConfig.OrgName, serviceConfig.OrgId, serviceConfig.WebhookUrl, lagoClient)
+	eSrv, err := server.NewCollectorEventServer(serviceConfig.OrgName,
+		serviceConfig.OrgId, serviceConfig.WebhookUrl, lagoClient)
 	if err != nil {
 		log.Fatalf("failed to start billing collector event server: %v", err)
 	}
@@ -94,7 +96,8 @@ func runGrpcServer() {
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 
-	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+	grpcServer.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
 
 	go msgBusListener(mbClient)
 
@@ -106,7 +109,7 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 		log.Fatalf("Failed to register to Message Client Service. Error %s", err.Error())
 	}
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s",
-			pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. "+
+			"Error %s", pkg.ServiceName, err.Error())
 	}
 }

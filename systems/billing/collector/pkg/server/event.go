@@ -24,6 +24,7 @@ import (
 
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/util/payments"
 
 	log "github.com/sirupsen/logrus"
 	client "github.com/ukama/ukama/systems/billing/collector/pkg/clients"
@@ -31,7 +32,8 @@ import (
 )
 
 // TODO: We need to think about retry policies for failing interaction between
-// TODO: We have unmarshal methods in common/pb/gen/events for all the event messages. We should use those.
+// TODO: We have unmarshal methods in common/pb/gen/events for all the event messages. We
+// should use those.
 // our backend and the upstream billing service provider.
 
 const (
@@ -58,10 +60,12 @@ type CollectorEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewCollectorEventServer(orgName, orgId, webhookUrl string, client client.BillingClient) (*CollectorEventServer, error) {
+func NewCollectorEventServer(orgName, orgId, webhookUrl string,
+	client client.BillingClient) (*CollectorEventServer, error) {
 	log.Infof("Starting billing collector for org: %s", orgName)
 
-	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId, webhookUrl)
+	bm, err := initBillingDefaults(client, DefaultBillableMetricCode, orgName, orgId,
+		webhookUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize billable metric: %w", err)
 	}
@@ -80,12 +84,15 @@ func NewCollectorEventServer(orgName, orgId, webhookUrl string, client client.Bi
 	}, nil
 }
 
-func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+func (c *CollectorEventServer) EventNotification(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
+	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey,
+		e.Msg)
 
 	switch e.RoutingKey {
-	// Update org subscription
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync"): // or from orchestrator spin
+	// Update org subscription (or from orchestrator spin)
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.inventory.accounting.accounting.sync"):
 		msg, err := unmarshalOrgSubscription(e.Msg)
 		if err != nil {
 			return nil, err
@@ -97,7 +104,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Create plan
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.dataplan.package.package.create"):
 		msg, err := unmarshalPackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -109,7 +117,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Create customer
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.create"):
 		msg, err := unmarshalAddSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -121,7 +130,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Update customer
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.update"):
 		msg, err := unmarshalUpdateSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -133,7 +143,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Delete customer
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.registry.subscriber.delete"):
 		msg, err := unmarshalRemoveSubscriber(e.Msg)
 		if err != nil {
 			return nil, err
@@ -145,7 +156,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// add subscrition to customer
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.allocate"):
 		msg, err := unmarshalSimAllocation(e.Msg)
 		if err != nil {
 			return nil, err
@@ -157,7 +169,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// update subscrition for customer
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.activepackage"):
 		msg, err := unmarshalSimAcivePackage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -169,7 +182,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 		// Send usage event
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.usage"):
 		msg, err := unmarshalSimUsage(e.Msg)
 		if err != nil {
 			return nil, err
@@ -181,7 +195,8 @@ func (c *CollectorEventServer) EventNotification(ctx context.Context, e *epb.Eve
 		}
 
 	// Terminate subscription
-	case msgbus.PrepareRoute(c.orgName, "event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage"):
+	case msgbus.PrepareRoute(c.orgName,
+		"event.cloud.local.{{ .Org}}.subscriber.simmanager.sim.expirepackage"):
 		msg, err := unmarshalSimPackageExpire(e.Msg)
 		if err != nil {
 			return nil, err
@@ -203,7 +218,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, usrAccountItems)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	for _, accountItem := range usrAccountItems.Accounting {
@@ -212,7 +228,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 		if err == nil {
 			// The plan, therefore the subscription exists. Remove those
 			log.Warnf("Plan with similar code %s was found", accountItem.Id)
-			log.Infof("Removing plan and subscription associated with code: %s", accountItem.Id)
+			log.Infof("Removing plan and subscription associated with code: %s",
+				accountItem.Id)
 
 			_, err := b.client.TerminateSubscription(ctx, accountItem.Id)
 			if err != nil {
@@ -229,10 +246,10 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 
 		time.Sleep(1 * time.Second)
 
-		amount, err := strconv.ParseFloat(strings.TrimSpace(accountItem.OpexFee), 64)
+		amountCents, err := payments.ToAmountCents(strings.TrimSpace(accountItem.OpexFee))
 		if err != nil {
-			return fmt.Errorf("fail to parse opex fees %s for org subscription line with account item %s: %w",
-				accountItem.OpexFee, accountItem.Id, err)
+			return fmt.Errorf("fail to parse opex fees %s for org subscription line "+
+				"with account item %s: %w", accountItem.OpexFee, accountItem.Id, err)
 		}
 
 		// Then we recreate the plan and the subscription
@@ -240,9 +257,10 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			Name:        accountItem.Item,
 			Code:        accountItem.Id,
 			Interval:    postpaidBillingInterval,
-			AmountCents: int(amount * 100),
+			AmountCents: int(amountCents),
 
-			//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
+			// TODO: update currency to pkg.Currency when the discussiion about currency
+			// is definetly settled.
 			AmountCurrency: defaultCurrency,
 			PayInAdvance:   false,
 		}
@@ -255,7 +273,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 		}
 
 		log.Infof("New billing plan: %q", plan)
-		log.Infof("Successfuly created org item plan from account item  %q", accountItem.Id)
+		log.Infof("Successfuly created org item plan from account item  %q",
+			accountItem.Id)
 
 		subscriptionInput := client.Subscription{
 			Id:         accountItem.Id,
@@ -263,7 +282,8 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 			PlanCode:   accountItem.Id,
 		}
 
-		log.Infof("Sending org subscription event %v to billing server", subscriptionInput)
+		log.Infof("Sending org subscription event %v to billing server",
+			subscriptionInput)
 
 		subscriptionId, err := b.client.CreateSubscription(ctx, subscriptionInput)
 		if err != nil {
@@ -271,16 +291,19 @@ func handleOrgSubscriptionEvent(key string, usrAccountItems *epb.UserAccountingE
 		}
 
 		log.Infof("New subscription created on billing server:  %q", subscriptionId)
-		log.Infof("Successfuly created new subscription org item from account item: %q", accountItem.Id)
+		log.Infof("Successfuly created new subscription org item from account item: %q",
+			accountItem.Id)
 	}
 
 	return nil
 }
 
-func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *CollectorEventServer) error {
+func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage,
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, simUsage)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	event := client.Event{
@@ -303,10 +326,12 @@ func handleSimUsageEvent(key string, simUsage *epb.EventSimUsage, b *CollectorEv
 	return b.client.AddUsageEvent(ctx, event)
 }
 
-func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b *CollectorEventServer) error {
+func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent,
+	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, pkg)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	// Get the cost of the package per byte
@@ -342,7 +367,8 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		ChargeModel:      defaultChargeModel,
 		ChargeAmount:     amount,
 
-		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
+		// TODO: update currency to pkg.Currency when the discussiion about currency is
+		// definetly settled.
 		ChargeAmountCurrency: defaultCurrency,
 		PackageSize:          int(billableDataSize),
 	}
@@ -353,7 +379,8 @@ func handleDataPlanPackageCreateEvent(key string, pkg *epb.CreatePackageEvent, b
 		Interval:    pkgIntervall,
 		AmountCents: 0,
 
-		//TODO: update currency to pkg.Currency when the discussiion about currency is definetly settled.
+		// TODO: update currency to pkg.Currency when the discussiion about currency is
+		// definetly settled.
 		AmountCurrency: defaultCurrency,
 		PayInAdvance:   false,
 	}
@@ -375,7 +402,8 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.EventSubscr
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customer := client.Customer{
@@ -395,16 +423,18 @@ func handleRegistrySubscriberCreateEvent(key string, subscriber *epb.EventSubscr
 	}
 
 	log.Infof("New billing customer: %q", customerBillingId)
-	log.Infof("Successfuly registered subscriber %q as billing customer", subscriber.SubscriberId)
+	log.Infof("Successfuly registered subscriber %q as billing customer",
+		subscriber.SubscriberId)
 
 	return nil
 }
 
-func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.EventSubscriberUpdate,
-	b *CollectorEventServer) error {
+func handleRegistrySubscriberUpdateEvent(key string,
+	subscriber *epb.EventSubscriberUpdate, b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customer := client.Customer{
@@ -430,11 +460,12 @@ func handleRegistrySubscriberUpdateEvent(key string, subscriber *epb.EventSubscr
 	return nil
 }
 
-func handleRegistrySubscriberDeleteEvent(key string, subscriber *epb.EventSubscriberDeleted,
-	b *CollectorEventServer) error {
+func handleRegistrySubscriberDeleteEvent(key string,
+	subscriber *epb.EventSubscriberDeleted, b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, subscriber)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customerBillingId, err := b.client.DeleteCustomer(ctx, subscriber.SubscriberId)
@@ -451,7 +482,8 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	// Because the Plan object does not expose an external_plan_id, we need to use
@@ -479,11 +511,12 @@ func handleSimManagerAllocateSimEvent(key string, sim *epb.EventSimAllocation,
 	return nil
 }
 
-func handleSimManagerSetActivePackageForSimEvent(key string, sim *epb.EventSimActivePackage,
-	b *CollectorEventServer) error {
+func handleSimManagerSetActivePackageForSimEvent(key string,
+	sim *epb.EventSimActivePackage, b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
@@ -525,7 +558,8 @@ func handleSimManagerSimPackageExpireEvent(key string, sim *epb.EventSimPackageE
 	b *CollectorEventServer) error {
 	log.Infof("Keys %s and Proto is: %+v", key, sim)
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	subscriptionId, err := b.client.TerminateSubscription(ctx, sim.Id)
@@ -542,7 +576,8 @@ func handleSimManagerSimPackageExpireEvent(key string, sim *epb.EventSimPackageE
 func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) {
 	p := &epb.UserAccountingEvent{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal SimUsage message with : %+v. Error %s.",
 			msg, err.Error())
@@ -556,7 +591,8 @@ func unmarshalOrgSubscription(msg *anypb.Any) (*epb.UserAccountingEvent, error) 
 func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.EventSimActivePackage, error) {
 	p := &epb.EventSimActivePackage{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal sim active package message with : %+v. Error %s.",
 			msg, err.Error())
@@ -570,7 +606,8 @@ func unmarshalSimAcivePackage(msg *anypb.Any) (*epb.EventSimActivePackage, error
 func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 	p := &epb.CreatePackageEvent{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal package  message with : %+v. Error %s.",
 			msg, err.Error())
@@ -584,7 +621,8 @@ func unmarshalPackage(msg *anypb.Any) (*epb.CreatePackageEvent, error) {
 func unmarshalAddSubscriber(msg *anypb.Any) (*epb.EventSubscriberAdded, error) {
 	p := &epb.EventSubscriberAdded{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
 			msg, err.Error())
@@ -598,7 +636,8 @@ func unmarshalAddSubscriber(msg *anypb.Any) (*epb.EventSubscriberAdded, error) {
 func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.EventSubscriberUpdate, error) {
 	p := &epb.EventSubscriberUpdate{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
 			msg, err.Error())
@@ -612,7 +651,8 @@ func unmarshalUpdateSubscriber(msg *anypb.Any) (*epb.EventSubscriberUpdate, erro
 func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.EventSubscriberDeleted, error) {
 	p := &epb.EventSubscriberDeleted{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("failed to Unmarshal subscriber message with : %+v. Error %s.",
 			msg, err.Error())
@@ -626,7 +666,8 @@ func unmarshalRemoveSubscriber(msg *anypb.Any) (*epb.EventSubscriberDeleted, err
 func unmarshalSimUsage(msg *anypb.Any) (*epb.EventSimUsage, error) {
 	p := &epb.EventSimUsage{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal SimUsage message with : %+v. Error %s.",
 			msg, err.Error())
@@ -640,7 +681,8 @@ func unmarshalSimUsage(msg *anypb.Any) (*epb.EventSimUsage, error) {
 func unmarshalSimAllocation(msg *anypb.Any) (*epb.EventSimAllocation, error) {
 	p := &epb.EventSimAllocation{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal SimAllocation message with : %+v. Error %s.",
 			msg, err.Error())
@@ -654,7 +696,8 @@ func unmarshalSimAllocation(msg *anypb.Any) (*epb.EventSimAllocation, error) {
 func unmarshalSimPackageExpire(msg *anypb.Any) (*epb.EventSimPackageExpire, error) {
 	p := &epb.EventSimPackageExpire{}
 
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
 		log.Errorf("Failed to Unmarshal SimAllocation message with : %+v. Error %s.",
 			msg, err.Error())
@@ -665,10 +708,12 @@ func unmarshalSimPackageExpire(msg *anypb.Any) (*epb.EventSimPackageExpire, erro
 	return p, nil
 }
 
-func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId, webhookUrl string) (string, error) {
+func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId,
+	webhookUrl string) (string, error) {
 	log.Infof("Initializing billing defaults")
 
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	_, err := clt.GetCustomer(ctx, orgId)
@@ -683,8 +728,10 @@ func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId, webho
 	}
 
 	webhooks, err := clt.ListWebhooks(ctx)
-	if err != nil || webhooks == nil || len(webhooks) == 0 || !slices.Contains(webhooks, webhookUrl) {
-		log.Warnf("failure while getting the list of existing webhook endppints: %v, %v, %v", webhooks, webhookUrl, err)
+	if err != nil || webhooks == nil || len(webhooks) == 0 ||
+		!slices.Contains(webhooks, webhookUrl) {
+		log.Warnf("failure while getting the list of existing webhook endppints: "+
+			"%v, %v, %v", webhooks, webhookUrl, err)
 		log.Infof("Registering default webhook endppint: %s", webhookUrl)
 
 		_, err := registerWebhookEndpoint(clt, webhookUrl)
@@ -710,7 +757,8 @@ func initBillingDefaults(clt client.BillingClient, bmCode, orgName, orgId, webho
 }
 
 func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	customer := client.Customer{
@@ -745,7 +793,8 @@ func createOrgCustomer(clt client.BillingClient, orgId, OrgName string) (string,
 }
 
 func createBillableMetric(clt client.BillingClient) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	bMetric := client.BillableMetric{
@@ -768,8 +817,10 @@ func createBillableMetric(clt client.BillingClient) (string, error) {
 	return bm, nil
 }
 
-func registerWebhookEndpoint(clt client.BillingClient, webhookUrl string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), handlerTimeoutFactor*time.Second)
+func registerWebhookEndpoint(clt client.BillingClient, webhookUrl string) (string,
+	error) {
+	ctx, cancel := context.WithTimeout(context.Background(),
+		handlerTimeoutFactor*time.Second)
 	defer cancel()
 
 	webhook := client.WebhookEndpoint{

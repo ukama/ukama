@@ -65,7 +65,8 @@ func (l *lagoClient) AddUsageEvent(ctx context.Context, ev Event) error {
 	return nil
 }
 
-func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (string, error) {
+func (l *lagoClient) GetBillableMetricId(ctx context.Context,
+	code string) (string, error) {
 	bm, err := l.b.Get(ctx, code)
 	if err != nil {
 		msg := fmt.Sprintf("error while getting billable metrict Id (%s)",
@@ -77,7 +78,8 @@ func (l *lagoClient) GetBillableMetricId(ctx context.Context, code string) (stri
 	return bm.LagoID.String(), nil
 }
 
-func (l *lagoClient) CreateBillableMetric(ctx context.Context, bMetric BillableMetric) (string, error) {
+func (l *lagoClient) CreateBillableMetric(ctx context.Context,
+	bMetric BillableMetric) (string, error) {
 	bmInput := &lago.BillableMetricInput{
 		Name:            bMetric.Name,
 		Code:            bMetric.Code,
@@ -108,7 +110,8 @@ func (l *lagoClient) GetPlan(ctx context.Context, planCode string) (string, erro
 	return plan.LagoID.String(), nil
 }
 
-func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan, charges ...PlanCharge) (string, error) {
+func (l *lagoClient) CreatePlan(ctx context.Context, pl Plan,
+	charges ...PlanCharge) (string, error) {
 	newPlan := &lago.PlanInput{
 		Name:           pl.Name,
 		Code:           pl.Code,
@@ -239,7 +242,8 @@ func (l *lagoClient) DeleteCustomer(ctx context.Context, custId string) (string,
 	return customer.LagoID.String(), nil
 }
 
-func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (string, error) {
+func (l *lagoClient) CreateSubscription(ctx context.Context,
+	sub Subscription) (string, error) {
 	newSub := &lago.SubscriptionInput{
 		ExternalID:         sub.Id,
 		ExternalCustomerID: sub.CustomerId,
@@ -259,15 +263,16 @@ func (l *lagoClient) CreateSubscription(ctx context.Context, sub Subscription) (
 	return subscription.LagoID.String(), nil
 }
 
-func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId string) (string, error) {
+func (l *lagoClient) TerminateSubscription(ctx context.Context,
+	subscriptionId string) (string, error) {
 	subscriptionTerminateInput := lago.SubscriptionTerminateInput{
 		ExternalID: subscriptionId,
 	}
 
 	subscription, err := l.s.Terminate(ctx, subscriptionTerminateInput)
 	if err != nil {
-		msg := fmt.Sprintf("error while sending subscription termination event with Id (%s)",
-			subscriptionTerminateInput.ExternalID)
+		msg := fmt.Sprintf("error while sending subscription termination event with "+
+			"Id (%s)", subscriptionTerminateInput.ExternalID)
 
 		return "", unpackLagoError(msg, err)
 	}
@@ -275,7 +280,8 @@ func (l *lagoClient) TerminateSubscription(ctx context.Context, subscriptionId s
 	return subscription.LagoID.String(), nil
 }
 
-func (l *lagoClient) CreateWebhook(ctx context.Context, wh WebhookEndpoint) (string, error) {
+func (l *lagoClient) CreateWebhook(ctx context.Context,
+	wh WebhookEndpoint) (string, error) {
 	signatureAlgoType := lago.JWT
 
 	if wh.SignatureAlgo == HmacSignatureAlgoType {
@@ -339,12 +345,15 @@ type LagoPlan interface {
 
 type LagoSubscription interface {
 	Create(context.Context, *lago.SubscriptionInput) (*lago.Subscription, *lago.Error)
-	Terminate(context.Context, lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error)
+	Terminate(context.Context,
+		lago.SubscriptionTerminateInput) (*lago.Subscription, *lago.Error)
 }
 
 type LagoWebhookEndpoint interface {
-	Create(context.Context, *lago.WebhookEndpointInput) (*lago.WebhookEndpoint, *lago.Error)
-	GetList(context.Context, *lago.WebhookEndpointListInput) (*lago.WebhookEndpointResult, *lago.Error)
+	Create(context.Context,
+		*lago.WebhookEndpointInput) (*lago.WebhookEndpoint, *lago.Error)
+	GetList(context.Context,
+		*lago.WebhookEndpointListInput) (*lago.WebhookEndpointResult, *lago.Error)
 }
 
 func unpackLagoError(msg string, err *lago.Error) error {
