@@ -17,10 +17,11 @@ import (
 	"github.com/miekg/dns"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/ukama/ukama/systems/messaging/nns/mocks"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/messaging/nns/mocks"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 )
 
 func TestDnsServer_Query(t *testing.T) {
@@ -88,7 +89,8 @@ func TestDnsServer_Query(t *testing.T) {
 					NodeIp: tt.nnsVals.ip,
 				}
 			}
-			nns.On("Get", mock.Anything, mock.Anything).Return(nodeMeshMap, tt.nnsVals.err)
+			nns.On("Get", mock.Anything, mock.Anything).
+				Return(nodeMeshMap, tt.nnsVals.err)
 
 			d := &DnsServer{
 				nns:    &nns,

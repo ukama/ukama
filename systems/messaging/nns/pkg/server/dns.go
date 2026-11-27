@@ -16,10 +16,12 @@ import (
 
 	"github.com/coredns/coredns/pb"
 	"github.com/miekg/dns"
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
+
+	log "github.com/sirupsen/logrus"
 )
 
 type DnsServer struct {

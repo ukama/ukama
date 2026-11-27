@@ -10,17 +10,20 @@ package server
 
 import (
 	"context"
+	"errors"
+	"net/http"
 
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 
 	log "github.com/sirupsen/logrus"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 )
 
 type NnsEventServer struct {
@@ -31,7 +34,8 @@ type NnsEventServer struct {
 	epb.UnimplementedEventNotificationServiceServer
 }
 
-func NewNnsEventServer(orgName string, c creg.NodeClient, s *NnsServer, o string) *NnsEventServer {
+func NewNnsEventServer(orgName string, c creg.NodeClient, s *NnsServer,
+	o string) *NnsEventServer {
 
 	return &NnsEventServer{
 		orgName:    orgName,
@@ -41,10 +45,13 @@ func NewNnsEventServer(orgName string, c creg.NodeClient, s *NnsServer, o string
 	}
 }
 
-func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*epb.EventResponse, error) {
-	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey, e.Msg)
+func (l *NnsEventServer) EventNotification(ctx context.Context,
+	e *epb.Event) (*epb.EventResponse, error) {
+	log.Infof("Received a message with Routing key %s and Message %+v", e.RoutingKey,
+		e.Msg)
 	switch e.RoutingKey {
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
+	case msgbus.PrepareRoute(l.orgName,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.online"):
 		msg, err := l.unmarshalNodeOnlineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -55,7 +62,8 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
+	case msgbus.PrepareRoute(l.orgName,
+		"event.cloud.local.{{ .Org}}.messaging.mesh.node.offline"):
 		msg, err := l.unmarshalNodeOfflineEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -65,7 +73,8 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 		if err != nil {
 			return nil, err
 		}
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.assign"):
+	case msgbus.PrepareRoute(l.orgName,
+		"event.cloud.local.{{ .Org}}.registry.node.node.assign"):
 		msg, err := l.unmarshalNodeAssignedEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -76,7 +85,8 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 			return nil, err
 		}
 
-	case msgbus.PrepareRoute(l.orgName, "event.cloud.local.{{ .Org}}.registry.node.node.release"):
+	case msgbus.PrepareRoute(l.orgName,
+		"event.cloud.local.{{ .Org}}.registry.node.node.release"):
 		msg, err := l.unmarshalNodeReleaseEvent(e.Msg)
 		if err != nil {
 			return nil, err
@@ -94,56 +104,35 @@ func (l *NnsEventServer) EventNotification(ctx context.Context, e *epb.Event) (*
 	return &epb.EventResponse{}, nil
 }
 
-func (l *NnsEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent, error) {
+func (l *NnsEventServer) unmarshalNodeOnlineEvent(msg *anypb.Any) (*epb.NodeOnlineEvent,
+	error) {
 	p := &epb.NodeOnlineEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg,
+			err.Error())
 		return nil, err
 	}
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEvent) error {
+func (l *NnsEventServer) handleNodeOnlineEvent(key string,
+	msg *epb.NodeOnlineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
-	log.Infof("Getting org and network for %s", msg.GetNodeId())
+	site, network := l.onlineSiteAndNetwork(msg.GetNodeId())
 
-	nodeInfo, err := l.NodeClient.Get(msg.GetNodeId())
-	if err != nil {
-		log.Errorf("Failed to get org and network. Error: %+v", err)
-		log.Warningf("Node id %s won't have org and network info", msg.GetNodeId())
-
-		nodeInfo = &creg.NodeInfo{
-			Id: msg.GetNodeId(),
-		}
-
-		nodeInfo.Site = creg.NodeSiteInfo{}
-		nodeInfo.Site.NodeId = msg.GetNodeId()
-		nodeInfo.Site.SiteId = ""
-		nodeInfo.Site.NetworkId = ""
-	}
-
-	node, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
-	if err == nil && node != nil {
-		err = l.Nns.nns.Delete(context.Background(), msg.GetNodeId())
-		if err != nil {
-			log.Errorf("failed to delete node %s. Error %v", msg.GetNodeId(), err)
-			return err
-		}
-	}
-
-	_, err = l.Nns.Set(context.Background(), &pb.SetRequest{
+	_, err := l.Nns.Set(context.Background(), &pb.SetRequest{
 		NodeId:       msg.GetNodeId(),
 		NodeIp:       msg.GetNodeIp(),
 		MeshIp:       msg.GetMeshIp(),
 		NodePort:     msg.GetNodePort(),
 		MeshPort:     msg.GetMeshPort(),
-		Network:      nodeInfo.Site.NetworkId,
-		Site:         nodeInfo.Site.SiteId,
+		Network:      network,
+		Site:         site,
 		MeshHostName: msg.GetMeshHostName(),
 	})
-
 	if err != nil {
 		log.Errorf("Failed to set node IP. Error: %+v", err)
 
@@ -155,42 +144,77 @@ func (l *NnsEventServer) handleNodeOnlineEvent(key string, msg *epb.NodeOnlineEv
 	return nil
 }
 
-func (l *NnsEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOfflineEvent, error) {
-	p := &epb.NodeOfflineEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+func (l *NnsEventServer) onlineSiteAndNetwork(nodeId string) (string, string) {
+	nodeInfo, err := l.NodeClient.Get(nodeId)
+	if err == nil {
+		return nodeInfo.Site.SiteId, nodeInfo.Site.NetworkId
+	}
+
+	var errStatus *client.ErrorStatus
+	if errors.As(err, &errStatus) && errStatus.StatusCode == http.StatusNotFound {
+		log.Infof("Node %s is not registered, storing its address only", nodeId)
+
+		return "", ""
+	}
+
+	log.Warningf("Failed to get site and network of node %s, keeping stored ones. "+
+		"Error: %v", nodeId, err)
+
+	stored, err := l.Nns.nns.Get(context.Background(), nodeId)
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		return "", ""
+	}
+
+	return stored.Site, stored.Network
+}
+
+func (l *NnsEventServer) unmarshalNodeOfflineEvent(msg *anypb.Any) (*epb.NodeOfflineEvent,
+	error) {
+	p := &epb.NodeOfflineEvent{}
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	if err != nil {
+		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg,
+			err.Error())
 		return nil, err
 	}
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeOfflineEvent(key string, msg *epb.NodeOfflineEvent) error {
+func (l *NnsEventServer) handleNodeOfflineEvent(key string,
+	msg *epb.NodeOfflineEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 	return nil
 }
 
-func (l *NnsEventServer) unmarshalNodeAssignedEvent(msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
+func (l *NnsEventServer) unmarshalNodeAssignedEvent(
+	msg *anypb.Any) (*epb.EventRegistryNodeAssign, error) {
 	p := &epb.EventRegistryNodeAssign{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to Unmarshal AddOrgRequest message with : %+v. Error %s.", msg,
+			err.Error())
 		return nil, err
 	}
 	return p, nil
 }
 
-func (l *NnsEventServer) unmarshalNodeReleaseEvent(msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
+func (l *NnsEventServer) unmarshalNodeReleaseEvent(
+	msg *anypb.Any) (*epb.NodeReleasedEvent, error) {
 	p := &epb.NodeReleasedEvent{}
-	err := anypb.UnmarshalTo(msg, p, proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
+	err := anypb.UnmarshalTo(msg, p,
+		proto.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true})
 	if err != nil {
-		log.Errorf("Failed to unmarshal NodeReleasedEvent message with : %+v. Error %s.", msg, err.Error())
+		log.Errorf("Failed to unmarshal NodeReleasedEvent message with : %+v. Error %s.",
+			msg, err.Error())
 		return nil, err
 	}
 	return p, nil
 }
 
-func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.EventRegistryNodeAssign) error {
+func (l *NnsEventServer) handleNodeAssignedEvent(key string,
+	msg *epb.EventRegistryNodeAssign) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())
@@ -220,7 +244,8 @@ func (l *NnsEventServer) handleNodeAssignedEvent(key string, msg *epb.EventRegis
 	return nil
 }
 
-func (l *NnsEventServer) handleNodeReleaseEvent(key string, msg *epb.NodeReleasedEvent) error {
+func (l *NnsEventServer) handleNodeReleaseEvent(key string,
+	msg *epb.NodeReleasedEvent) error {
 	log.Infof("Keys %s and Proto is: %+v", key, msg)
 
 	orgNet, err := l.Nns.nns.Get(context.Background(), msg.GetNodeId())

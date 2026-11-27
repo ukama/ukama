@@ -62,7 +62,8 @@ func initConfig() {
 		// }
 	}
 
-	log.Debugf("\nService: %s Service: %+v MsgClient Config %+v", pkg.ServiceName, serviceConfig.Service, serviceConfig.MsgClient)
+	log.Debugf("\nService: %s Service: %+v MsgClient Config %+v", pkg.ServiceName,
+		serviceConfig.Service, serviceConfig.MsgClient)
 
 	pkg.IsDebugMode = serviceConfig.DebugMode
 }
@@ -76,16 +77,17 @@ func runGrpcServer(nns *pkg.Nns) {
 		instanceId = inst.String()
 	}
 
-	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName, pkg.SystemName,
-		pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
-		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host, serviceConfig.MsgClient.Exchange,
-		serviceConfig.MsgClient.ListenQueue, serviceConfig.MsgClient.PublishQueue,
-		serviceConfig.MsgClient.RetryCount,
+	mbClient := mb.NewMsgBusClient(serviceConfig.MsgClient.Timeout, serviceConfig.OrgName,
+		pkg.SystemName, pkg.ServiceName, instanceId, serviceConfig.Queue.Uri,
+		serviceConfig.Service.Uri, serviceConfig.MsgClient.Host,
+		serviceConfig.MsgClient.Exchange, serviceConfig.MsgClient.ListenQueue,
+		serviceConfig.MsgClient.PublishQueue, serviceConfig.MsgClient.RetryCount,
 		serviceConfig.MsgClient.ListenerRoutes)
 
 	log.Debugf("MessageBus Client is %+v", mbClient)
 
-	regUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient, client.WithDebug(serviceConfig.DebugMode)),
+	regUrl, err := ic.GetHostAddress(ic.NewInitClient(serviceConfig.Http.InitClient,
+		client.WithDebug(serviceConfig.DebugMode)),
 		ic.CreateHostString(serviceConfig.OrgName, "registry"), &serviceConfig.OrgName)
 	if err != nil || regUrl == nil || regUrl.String() == "" {
 		log.Fatalf("Failed to resolve registry address: %v", err)
@@ -95,13 +97,15 @@ func runGrpcServer(nns *pkg.Nns) {
 
 	grpcServer := ugrpc.NewGrpcServer(*serviceConfig.Grpc, func(s *grpc.Server) {
 		srv := server.NewNnsServer(nns, serviceConfig, serviceConfig.Dns)
-		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, nodeClient, srv, serviceConfig.OrgId)
+		eSrv := server.NewNnsEventServer(serviceConfig.OrgName, nodeClient, srv,
+			serviceConfig.OrgId)
 		pb.RegisterNnsServer(s, srv)
 		dnspb.RegisterDnsServiceServer(s, server.NewDnsServer(nns, serviceConfig.Dns))
 		egenerated.RegisterEventNotificationServiceServer(s, eSrv)
 	})
 
-	grpcServer.RegisterDependency("msgclient", true, ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
+	grpcServer.RegisterDependency("msgclient", true,
+		ugrpc.MsgClientCheck(serviceConfig.MsgClient.Host))
 
 	go msgBusListener(mbClient)
 
@@ -115,6 +119,7 @@ func msgBusListener(m mb.MsgBusServiceClient) {
 	}
 
 	if err := m.Start(); err != nil {
-		log.Fatalf("Failed to start to Message Client Service routine for service %s. Error %s", pkg.ServiceName, err.Error())
+		log.Fatalf("Failed to start to Message Client Service routine for service %s. "+
+			"Error %s", pkg.ServiceName, err.Error())
 	}
 }

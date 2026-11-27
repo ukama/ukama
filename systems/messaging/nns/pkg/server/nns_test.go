@@ -15,10 +15,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
+
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 const testValidNodeID = "UK-SA2156-CNODE-A1-XXXX"
@@ -32,7 +34,8 @@ type fakeNnsStore struct {
 	add        func(ctx context.Context, obj pkg.NodeMeshMap) error
 	delete     func(ctx context.Context, nodeId string) error
 	updateMesh func(ctx context.Context, nodeId string, ip string, port int32) error
-	updateNode func(ctx context.Context, nodeId string, nodeIp string, nodePort int32) error
+	updateNode func(ctx context.Context, nodeId string, nodeIp string,
+		nodePort int32) error
 }
 
 func (f *fakeNnsStore) Get(ctx context.Context, nodeId string) (*pkg.NodeMeshMap, error) {
@@ -63,14 +66,16 @@ func (f *fakeNnsStore) Delete(ctx context.Context, nodeId string) error {
 	return errFakeNotImplemented
 }
 
-func (f *fakeNnsStore) UpdateNodeMesh(ctx context.Context, nodeId string, ip string, port int32) error {
+func (f *fakeNnsStore) UpdateNodeMesh(ctx context.Context, nodeId string, ip string,
+	port int32) error {
 	if f.updateMesh != nil {
 		return f.updateMesh(ctx, nodeId, ip, port)
 	}
 	return errFakeNotImplemented
 }
 
-func (f *fakeNnsStore) UpdateNode(ctx context.Context, nodeId string, nodeIp string, nodePort int32) error {
+func (f *fakeNnsStore) UpdateNode(ctx context.Context, nodeId string, nodeIp string,
+	nodePort int32) error {
 	if f.updateNode != nil {
 		return f.updateNode(ctx, nodeId, nodeIp, nodePort)
 	}
@@ -211,9 +216,9 @@ func TestNnsServerUpdateMesh(t *testing.T) {
 		}
 		srv := NewNnsServer(fake, testConfig(), testDns())
 		_, err := srv.UpdateMesh(ctx, &pb.UpdateMeshRequest{
-			NodeId:    testValidNodeID,
-			MeshIp:    "9.9.9.9",
-			MeshPort:  3333,
+			NodeId:   testValidNodeID,
+			MeshIp:   "9.9.9.9",
+			MeshPort: 3333,
 		})
 		require.ErrorIs(t, err, want)
 	})
@@ -223,7 +228,8 @@ func TestNnsServerUpdateMesh(t *testing.T) {
 		var gotIP string
 		var gotPort int32
 		fake := &fakeNnsStore{
-			updateMesh: func(_ context.Context, nodeId string, ip string, port int32) error {
+			updateMesh: func(_ context.Context, nodeId string, ip string,
+				port int32) error {
 				gotID, gotIP, gotPort = nodeId, ip, port
 				return nil
 			},
@@ -253,7 +259,8 @@ func TestNnsServerUpdateNode(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		fake := &fakeNnsStore{
-			updateNode: func(_ context.Context, nodeId string, nodeIp string, nodePort int32) error {
+			updateNode: func(_ context.Context, nodeId string, nodeIp string,
+				nodePort int32) error {
 				assert.Equal(t, testValidNodeID, nodeId)
 				assert.Equal(t, "3.3.3.3", nodeIp)
 				assert.Equal(t, int32(777), nodePort)
