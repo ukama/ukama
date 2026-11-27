@@ -136,7 +136,25 @@ func TestNodeServer_Get(t *testing.T) {
 		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
 			NodeId: nodeId.StringLowercase()})
 
-		assert.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.Nil(t, resp)
+		nodeRepo.AssertExpectations(t)
+	})
+
+	t.Run("NodeRepoError", func(t *testing.T) {
+		var nodeId = ukama.NewVirtualAmplifierNodeId()
+
+		nodeRepo := &mocks.NodeRepo{}
+
+		nodeRepo.On("Get", nodeId).Return(nil, gorm.ErrInvalidDB).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nil, "", nil, nil, orgId,
+			nil, nil)
+
+		resp, err := s.GetNode(context.TODO(), &pb.GetNodeRequest{
+			NodeId: nodeId.StringLowercase()})
+
+		assert.Equal(t, codes.Internal, status.Code(err))
 		assert.Nil(t, resp)
 		nodeRepo.AssertExpectations(t)
 	})

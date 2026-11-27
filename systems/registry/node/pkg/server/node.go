@@ -143,11 +143,8 @@ func (n *NodeServer) GetNode(ctx context.Context,
 	}
 
 	node, err := n.nodeRepo.Get(nodeId)
-
 	if err != nil {
-		log.Error("error getting the node" + err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStoreError("getting the node", err)
 	}
 
 	resp := &pb.GetNodeResponse{Node: utils.DbNodeToPbNode(node)}
@@ -352,12 +349,12 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 
 	err = n.nodeStatusRepo.Update(nodeUpdates, columns...)
 	if err != nil {
-		return nil, nodeStatusUpdateError(err)
+		return nil, nodeStoreError("updating the node state", err)
 	}
 
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
-		return nil, nodeStatusUpdateError(err)
+		return nil, nodeStoreError("updating the node state", err)
 	}
 
 	if n.msgbus != nil {
@@ -643,10 +640,10 @@ func (n *NodeServer) ReleaseSite(ctx context.Context,
 	return resp, nil
 }
 
-func nodeStatusUpdateError(err error) error {
+func nodeStoreError(action string, err error) error {
 	grpcErr := grpc.StoreErrorToGrpc(err, "node")
 	if status.Code(grpcErr) != codes.NotFound {
-		log.Error("error updating the node state, ", err.Error())
+		log.Errorf("error %s: %v", action, err)
 	}
 
 	return grpcErr
