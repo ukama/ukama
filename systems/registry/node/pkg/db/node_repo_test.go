@@ -92,18 +92,9 @@ func TestNodeRepo_Add(t *testing.T) {
 		GormDb: gdb,
 	})
 
-	deletedQuery := `^SELECT count\(\*\) FROM "nodes" WHERE id = \$1` +
-		` AND deleted_at IS NOT NULL`
-
-	expectDeleted := func(count int) {
-		mock.ExpectQuery(deletedQuery).WithArgs(node.Id).
-			WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(count))
-	}
-
 	t.Run("AddNode", func(t *testing.T) {
 		// Arrange
 		mock.ExpectBegin()
-		expectDeleted(0)
 
 		mock.ExpectQuery(regexp.QuoteMeta(`INSERT INTO "nodes"`+
 			` ("id","name","type","created_at","updated_at","deleted_at")`+
@@ -124,37 +115,8 @@ func TestNodeRepo_Add(t *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	t.Run("DeletedIdIsRejected", func(t *testing.T) {
-		mock.ExpectBegin()
-		expectDeleted(1)
-		mock.ExpectRollback()
-
-		nestedCalled := false
-		err := r.Add(&node, func(*nodedb.Node, *gorm.DB) error {
-			nestedCalled = true
-			return nil
-		})
-
-		assert.True(t, errors.Is(err, store.ErrPrecondition))
-		assert.False(t, nestedCalled)
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
-	t.Run("DeletedLookupError", func(t *testing.T) {
-		mock.ExpectBegin()
-		mock.ExpectQuery(deletedQuery).WithArgs(node.Id).
-			WillReturnError(extsql.ErrConnDone)
-		mock.ExpectRollback()
-
-		err := r.Add(&node, nil)
-
-		assert.True(t, errors.Is(err, extsql.ErrConnDone))
-		assert.NoError(t, mock.ExpectationsWereMet())
-	})
-
 	t.Run("NestedFuncError", func(t *testing.T) {
 		mock.ExpectBegin()
-		expectDeleted(0)
 		mock.ExpectRollback()
 
 		err := r.Add(&node, func(*nodedb.Node, *gorm.DB) error {

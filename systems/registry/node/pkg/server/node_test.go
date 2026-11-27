@@ -788,6 +788,30 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 		nodeStatusRepo.AssertExpectations(t)
 	})
 
+	t.Run("DeletedNodeIsNotFound", func(t *testing.T) {
+		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
+
+		nodeRepo := &mocks.NodeRepo{}
+		nodeStatusRepo := &mocks.NodeStatusRepo{}
+
+		nodeStatusRepo.On("Update", mock.Anything, "connectivity").
+			Return(fmt.Errorf("node status %s: %w", nodeId.StringLowercase(),
+				store.ErrNotFound)).Once()
+
+		s := server.NewNodeServer(OrgName, nodeRepo, nil, nodeStatusRepo, "", nil,
+			nil, orgId, nil, nil)
+
+		resp, err := s.UpdateNodeStatus(context.TODO(), &pb.UpdateNodeStateRequest{
+			NodeId:       nodeId.StringLowercase(),
+			Connectivity: ukama.NodeConnectivityOffline.String(),
+		})
+
+		assert.Equal(t, codes.NotFound, status.Code(err))
+		assert.Nil(t, resp)
+		nodeStatusRepo.AssertExpectations(t)
+		nodeRepo.AssertNotCalled(t, "Get", mock.Anything)
+	})
+
 	t.Run("GetNodeError", func(t *testing.T) {
 		nodeId := ukama.NewVirtualNodeId(ukama.NODE_ID_TYPE_HOMENODE)
 
@@ -805,7 +829,7 @@ func TestNodeServer_UpdateNodeStatus(t *testing.T) {
 			Connectivity: ukama.NodeConnectivityOnline.String(),
 		})
 
-		assert.Error(t, err)
+		assert.Equal(t, codes.NotFound, status.Code(err))
 		assert.Nil(t, resp)
 		nodeStatusRepo.AssertExpectations(t)
 		nodeRepo.AssertExpectations(t)

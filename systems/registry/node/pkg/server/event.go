@@ -217,7 +217,7 @@ func (n *NodeEventServer) updateNodeStatus(ctx context.Context, source string,
 	req *pb.UpdateNodeStateRequest) error {
 	_, err := n.s.UpdateNodeStatus(ctx, req)
 	if status.Code(err) == codes.NotFound {
-		log.Warnf("Ignoring %s for unregistered node %s", source, req.NodeId)
+		log.Infof("Ignoring %s for unregistered node %s", source, req.NodeId)
 		return nil
 	}
 	if err != nil {
@@ -242,19 +242,14 @@ func (n *NodeEventServer) handleAddNode(ctx context.Context, key string,
 		NodeId: nodeID.StringLowercase(),
 		Name:   ukama.GetPlaceholderNameByType(nodeID.GetNodeType()),
 	})
-	switch status.Code(err) {
-	case codes.OK:
-		return nil
-	case codes.AlreadyExists:
+	if status.Code(err) == codes.AlreadyExists {
 		log.Infof("Node %s is already registered", nodeID.StringLowercase())
 		return nil
-	case codes.FailedPrecondition:
-		log.Warnf("Ignoring retired node id %s, it needs re-onboarding with a new id: %v",
-			nodeID.StringLowercase(), err)
-		return nil
-	default:
+	}
+	if err != nil {
 		return fmt.Errorf("failed to add node: %w", err)
 	}
+	return nil
 }
 
 func parseCoordinates(coordinates string) (string, string, error) {

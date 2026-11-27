@@ -352,16 +352,12 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 
 	err = n.nodeStatusRepo.Update(nodeUpdates, columns...)
 	if err != nil {
-		log.Error("error updating the node state, ", err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStatusUpdateError(err)
 	}
 
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
-		log.Error("error updating the node state, ", err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStatusUpdateError(err)
 	}
 
 	if n.msgbus != nil {
@@ -645,6 +641,15 @@ func (n *NodeServer) ReleaseSite(ctx context.Context,
 	n.publishNodeReleased(released...)
 
 	return resp, nil
+}
+
+func nodeStatusUpdateError(err error) error {
+	grpcErr := grpc.StoreErrorToGrpc(err, "node")
+	if status.Code(grpcErr) != codes.NotFound {
+		log.Error("error updating the node state, ", err.Error())
+	}
+
+	return grpcErr
 }
 
 // assignNodesToSite assigns the nodes in one transaction and publishes node.assign for

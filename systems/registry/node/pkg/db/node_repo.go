@@ -54,18 +54,6 @@ func NewNodeRepo(db sql.Db) NodeRepo {
 
 func (n *nodeRepo) Add(node *Node, nestedFunc func(node *Node, tx *gorm.DB) error) error {
 	err := n.Db.GetGormDb().Transaction(func(tx *gorm.DB) error {
-		var deleted int64
-		if countErr := tx.Unscoped().Model(&Node{}).
-			Where("id = ? AND deleted_at IS NOT NULL", node.Id).
-			Count(&deleted).Error; countErr != nil {
-			return countErr
-		}
-
-		if deleted > 0 {
-			return fmt.Errorf("node id %s was deleted and cannot be reused: %w",
-				node.Id, store.ErrPrecondition)
-		}
-
 		if nestedFunc != nil {
 			nestErr := nestedFunc(node, tx)
 			if nestErr != nil {
