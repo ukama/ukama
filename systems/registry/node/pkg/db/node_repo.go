@@ -14,12 +14,12 @@ import (
 	"slices"
 	"sort"
 
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
-
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 const MaxAttachedNodes = 2

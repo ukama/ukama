@@ -9,7 +9,6 @@
 package db_test
 
 import (
-	extsql "database/sql"
 	"errors"
 	"log"
 	"regexp"
@@ -19,12 +18,14 @@ import (
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/tj/assert"
-	"github.com/ukama/ukama/systems/common/store"
-	"github.com/ukama/ukama/systems/common/ukama"
-	"github.com/ukama/ukama/systems/common/uuid"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 
+	"github.com/ukama/ukama/systems/common/store"
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/common/uuid"
+
+	extsql "database/sql"
 	nodedb "github.com/ukama/ukama/systems/registry/node/pkg/db"
 )
 
@@ -112,6 +113,18 @@ func TestNodeRepo_Add(t *testing.T) {
 
 		err = mock.ExpectationsWereMet()
 		assert.NoError(t, err)
+	})
+
+	t.Run("NestedFuncError", func(t *testing.T) {
+		mock.ExpectBegin()
+		mock.ExpectRollback()
+
+		err := r.Add(&node, func(*nodedb.Node, *gorm.DB) error {
+			return extsql.ErrTxDone
+		})
+
+		assert.True(t, errors.Is(err, extsql.ErrTxDone))
+		assert.NoError(t, mock.ExpectationsWereMet())
 	})
 }
 

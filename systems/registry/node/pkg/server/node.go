@@ -13,6 +13,9 @@ import (
 	"time"
 
 	"github.com/goombaio/namegenerator"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ukama/ukama/systems/common/grpc"
 	"github.com/ukama/ukama/systems/common/msgbus"
 	"github.com/ukama/ukama/systems/common/ukama"
@@ -21,10 +24,9 @@ import (
 	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"github.com/ukama/ukama/systems/registry/node/pkg/providers"
 	"github.com/ukama/ukama/systems/registry/node/pkg/utils"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	log "github.com/sirupsen/logrus"
+	metric "github.com/ukama/ukama/systems/common/metrics"
 	mb "github.com/ukama/ukama/systems/common/msgBusServiceClient"
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
 	cinvent "github.com/ukama/ukama/systems/common/rest/client/inventory"
@@ -141,11 +143,8 @@ func (n *NodeServer) GetNode(ctx context.Context,
 	}
 
 	node, err := n.nodeRepo.Get(nodeId)
-
 	if err != nil {
-		log.Error("error getting the node" + err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStoreError("getting the node", err)
 	}
 
 	resp := &pb.GetNodeResponse{Node: utils.DbNodeToPbNode(node)}
@@ -350,16 +349,12 @@ func (n *NodeServer) UpdateNodeStatus(ctx context.Context,
 
 	err = n.nodeStatusRepo.Update(nodeUpdates, columns...)
 	if err != nil {
-		log.Error("error updating the node state, ", err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStoreError("updating the node state", err)
 	}
 
 	und, err := n.nodeRepo.Get(nodeId)
 	if err != nil {
-		log.Error("error updating the node state, ", err.Error())
-
-		return nil, grpc.StoreErrorToGrpc(err, "node")
+		return nil, nodeStoreError("updating the node state", err)
 	}
 
 	if n.msgbus != nil {
@@ -643,4 +638,130 @@ func (n *NodeServer) ReleaseSite(ctx context.Context,
 	n.publishNodeReleased(released...)
 
 	return resp, nil
+}
+
+func nodeStoreError(action string, err error) error {
+	grpcErr := grpc.StoreErrorToGrpc(err, "node")
+	if status.Code(grpcErr) != codes.NotFound {
+		log.Errorf("error %s: %v", action, err)
+	}
+
+	return grpcErr
+}
+
+// assignNodesToSite assigns the nodes in one transaction and publishes node.assign for
+// each new assignment.
+func (n *NodeServer) assignNodesToSite(siteId, networkId uuid.UUID,
+	nodeIds []string) error {
+	assigned, err := n.siteRepo.AssignNodes(siteId, networkId, nodeIds)
+	if err != nil {
+		return grpc.StoreErrorToGrpc(err, "node")
+	}
+
+	if n.msgbus == nil {
+		return nil
+	}
+
+	route := n.baseRoutingKey.SetAction("assign").SetObject("node").MustBuild()
+
+	for _, site := range assigned {
+		evt := &epb.EventRegistryNodeAssign{
+			NodeId:  site.NodeId,
+			Type:    ukama.NodeID(site.NodeId).GetNodeType(),
+			Site:    site.SiteId.String(),
+			Network: site.NetworkId.String(),
+		}
+
+		err = n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
+				err.Error())
+		}
+	}
+
+	return nil
+}
+
+// publishNodeReleased publishes node.release for each released assignment.
+func (n *NodeServer) publishNodeReleased(released ...db.Site) {
+	if n.msgbus == nil {
+		return
+	}
+
+	route := n.baseRoutingKey.SetAction("release").SetObject("node").MustBuild()
+
+	for _, site := range released {
+		evt := &epb.NodeReleasedEvent{
+			NodeId:  site.NodeId,
+			Type:    ukama.NodeID(site.NodeId).GetNodeType(),
+			Site:    site.SiteId.String(),
+			Network: site.NetworkId.String(),
+		}
+
+		err := n.msgbus.PublishRequest(route, evt)
+		if err != nil {
+			log.Errorf("Failed to publish message %+v with key %+v. Errors %s", evt, route,
+				err.Error())
+		}
+	}
+}
+
+func (n *NodeServer) pushNodeMeterics(args ...string) {
+	nodesCount, onlineCount, offlineCount, err := n.nodeRepo.GetNodeCount()
+	if err != nil {
+		log.Errorf("Error while getting node count %s", err.Error())
+
+		return
+	}
+
+	log.Infof("Updating metrics for node NodeCount %d Online %d Offline %d", nodesCount,
+		onlineCount, offlineCount)
+
+	counts := map[string]int64{
+		pkg.NumberOfNodes:        nodesCount,
+		pkg.NumberOfOnlineNodes:  onlineCount,
+		pkg.NumberOfOfflineNodes: offlineCount,
+	}
+
+	for _, arg := range args {
+		count, ok := counts[arg]
+		if !ok {
+			continue
+		}
+
+		err = metric.CollectAndPushSystemMetrics(n.pushGateway, pkg.NodeMetric, arg,
+			float64(count), nil, pkg.SystemName+"-"+pkg.ServiceName)
+		if err != nil {
+			log.Errorf("Error while pushing node metric %s to pushgateway %s", arg,
+				err.Error())
+		}
+	}
+}
+
+func (n *NodeServer) PushMetrics() {
+	n.pushNodeMeterics(pkg.NumberOfNodes, pkg.NumberOfOnlineNodes, pkg.NumberOfOfflineNodes)
+}
+
+// requestMetricsPush asks the background pusher for fresh node counts without waiting on
+// the pushgateway. A request already pending covers this one.
+func (n *NodeServer) requestMetricsPush() {
+	select {
+	case n.metricsPush <- struct{}{}:
+	default:
+	}
+}
+
+// StartMetricsPusher pushes node counts after writes, off the request path, until ctx is
+// done.
+func (n *NodeServer) StartMetricsPusher(ctx context.Context) {
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-n.metricsPush:
+				n.PushMetrics()
+			}
+		}
+	}()
 }

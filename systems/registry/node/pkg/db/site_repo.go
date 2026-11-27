@@ -14,12 +14,13 @@ import (
 	"sort"
 	"strings"
 
+	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
+
 	"github.com/ukama/ukama/systems/common/sql"
 	"github.com/ukama/ukama/systems/common/store"
 	"github.com/ukama/ukama/systems/common/ukama"
 	"github.com/ukama/ukama/systems/common/uuid"
-	"gorm.io/gorm"
-	"gorm.io/gorm/clause"
 )
 
 type SiteRepo interface {

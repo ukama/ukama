@@ -11,10 +11,11 @@ package utils
 import (
 	"strings"
 
-	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
+
+	"github.com/ukama/ukama/systems/registry/node/pkg/db"
 
 	cpb "github.com/ukama/ukama/systems/common/pb/gen/ukama"
 	pb "github.com/ukama/ukama/systems/registry/node/pb/gen"

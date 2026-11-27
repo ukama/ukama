@@ -12,11 +12,11 @@ import (
 	"fmt"
 	"sync"
 
-	log "github.com/sirupsen/logrus"
-	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/registry/site/pb/gen"
 )
 
 // SiteClientProvider creates a local client to interact with

@@ -111,7 +111,7 @@ func (n *NodeEventServer) handleHealthReportEvent(ctx context.Context, key strin
 
 	node, err := n.s.GetNode(ctx, &pb.GetNodeRequest{NodeId: msg.NodeId})
 	if status.Code(err) == codes.NotFound {
-		log.Warnf("Ignoring health report for unknown node %s", msg.NodeId)
+		log.Infof("Ignoring health report for unknown node %s", msg.NodeId)
 		return nil
 	}
 	if err != nil {
@@ -217,7 +217,7 @@ func (n *NodeEventServer) updateNodeStatus(ctx context.Context, source string,
 	req *pb.UpdateNodeStateRequest) error {
 	_, err := n.s.UpdateNodeStatus(ctx, req)
 	if status.Code(err) == codes.NotFound {
-		log.Warnf("Ignoring %s for unregistered node %s", source, req.NodeId)
+		log.Infof("Ignoring %s for unregistered node %s", source, req.NodeId)
 		return nil
 	}
 	if err != nil {
