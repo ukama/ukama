@@ -14,8 +14,9 @@ import (
 	"strconv"
 	"strings"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg/metrics"
+
+	log "github.com/sirupsen/logrus"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 
@@ -59,7 +60,10 @@ type NodeMeshMap struct {
 }
 
 func (o *NodeMeshMap) string() string {
-	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s%s%d%s%s%s%s%s%d", o.Org, separator, o.Network, separator, o.Site, separator, o.MeshIp, separator, o.MeshHostName, separator, o.MeshPort, separator, o.NodeId, separator, o.NodeIp, separator, o.NodePort)
+	return fmt.Sprintf("%s%s%s%s%s%s%s%s%s%s%d%s%s%s%s%s%d", o.Org, separator,
+		o.Network, separator, o.Site, separator, o.MeshIp, separator, o.MeshHostName,
+		separator, o.MeshPort, separator, o.NodeId, separator, o.NodeIp, separator,
+		o.NodePort)
 }
 
 func (o *NodeMeshMap) parse(value string) error {
@@ -89,7 +93,7 @@ func (o *NodeMeshMap) parse(value string) error {
 	return nil
 }
 
-func  constructKey(nodeId string) string {
+func constructKey(nodeId string) string {
 	return "mesh" + separator + nodeId
 }
 
@@ -101,7 +105,8 @@ func (n *Nns) Add(ctx context.Context, obj NodeMeshMap) error {
 	key, value := constructKeyAndValue(obj)
 	_, err := n.etcd.Put(ctx, key, value)
 	if err != nil {
-		return fmt.Errorf("failed to add record %s with value %s. Error: %v", key, value, err)
+		return fmt.Errorf("failed to add record %s with value %s. Error: %v", key, value,
+			err)
 	}
 	log.Infof("Added node %s with value %s to etcd", key, value)
 	return nil
@@ -122,7 +127,8 @@ func (n *Nns) Get(ctx context.Context, nodeId string) (*NodeMeshMap, error) {
 	err = nodeMesh.parse(string(val.Kvs[0].Value))
 	if err != nil {
 		metrics.RecordIpRequestFailureMetric()
-		return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. Error: %v", val.Kvs[0].Key, err)
+		return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. Error: %v",
+			val.Kvs[0].Key, err)
 	}
 	log.Infof("Got node %s from etcd", key)
 	metrics.RecordIpRequestSuccessMetric()
@@ -147,7 +153,8 @@ func (n *Nns) GetAll(ctx context.Context) ([]NodeMeshMap, error) {
 		err = nodeMesh.parse(string(val.Value))
 		if err != nil {
 			metrics.RecordIpRequestFailureMetric()
-			return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. Error: %v", val.Key, err)
+			return nil, fmt.Errorf("failed to parse stored node mesh map  for %s. "+
+				"Error: %v", val.Key, err)
 		}
 		obj = append(obj, nodeMesh)
 	}
@@ -175,7 +182,8 @@ func (n *Nns) Delete(ctx context.Context, nodeId string) error {
 	return nil
 }
 
-func (n *Nns) UpdateNodeMesh(ctx context.Context, nodeId string, ip string, port int32) error {
+func (n *Nns) UpdateNodeMesh(ctx context.Context, nodeId string, ip string,
+	port int32) error {
 	item, err := n.Get(ctx, nodeId)
 	if err != nil {
 		return fmt.Errorf("failed to get node mesh map records. Error: %v", err)
@@ -195,14 +203,16 @@ func (n *Nns) UpdateNodeMesh(ctx context.Context, nodeId string, ip string, port
 	key, value := constructKeyAndValue(obj)
 	_, err = n.etcd.Put(ctx, key, value)
 	if err != nil {
-		return fmt.Errorf("failed to update mesh IP and port for %s. Error: %v", obj.NodeId, err)
+		return fmt.Errorf("failed to update mesh IP and port for %s. Error: %v",
+			obj.NodeId, err)
 	}
 	log.Infof("Updated mesh IP and port for %s", obj.NodeId)
 
 	return nil
 }
 
-func (n *Nns) UpdateNode(ctx context.Context, nodeId string, nodeIp string, nodePort int32) error {
+func (n *Nns) UpdateNode(ctx context.Context, nodeId string, nodeIp string,
+	nodePort int32) error {
 	item, err := n.Get(ctx, nodeId)
 	if err != nil {
 		return fmt.Errorf("failed to get node record. Error: %v", err)
@@ -222,7 +232,8 @@ func (n *Nns) UpdateNode(ctx context.Context, nodeId string, nodeIp string, node
 	key, value := constructKeyAndValue(obj)
 	_, err = n.etcd.Put(ctx, key, value)
 	if err != nil {
-		return fmt.Errorf("failed to update node IP and port for %s. Error: %v", obj.NodeId, err)
+		return fmt.Errorf("failed to update node IP and port for %s. Error: %v",
+			obj.NodeId, err)
 	}
 	log.Infof("Updated node IP and port for %s", obj.NodeId)
 	return nil

@@ -10,6 +10,9 @@ package server
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,10 +20,13 @@ import (
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ukama/ukama/systems/common/mocks"
 	"github.com/ukama/ukama/systems/common/msgbus"
+	"github.com/ukama/ukama/systems/common/rest/client"
 	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 
 	epb "github.com/ukama/ukama/systems/common/pb/gen/events"
+	creg "github.com/ukama/ukama/systems/common/rest/client/registry"
 )
 
 const (
@@ -28,7 +34,24 @@ const (
 	assignRoute   = "event.cloud.local.{{ .Org}}.registry.node.node.assign"
 	releaseRoute  = "event.cloud.local.{{ .Org}}.registry.node.node.release"
 	assignedRoute = "event.cloud.local.{{ .Org}}.registry.node.node.assigned"
+	onlineRoute   = "event.cloud.local.{{ .Org}}.messaging.mesh.node.online"
 )
+
+func registryError(code int) error {
+	return fmt.Errorf("GetNode failure: %w", fmt.Errorf("rest api GET failure: %w",
+		&client.ErrorStatus{StatusCode: code, RawError: errors.New("registry error")}))
+}
+
+func onlineEvent() *epb.NodeOnlineEvent {
+	return &epb.NodeOnlineEvent{
+		NodeId:       testValidNodeID,
+		NodeIp:       "10.0.0.2",
+		NodePort:     3001,
+		MeshIp:       "10.1.0.2",
+		MeshPort:     4001,
+		MeshHostName: "mesh-2",
+	}
+}
 
 func testEvent(t *testing.T, route string, msg proto.Message) *epb.Event {
 	anyMsg, err := anypb.New(msg)
@@ -113,7 +136,8 @@ func TestNnsEventServerNodeSiteEvents(t *testing.T) {
 				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID})
 		}, false},
 		{"wrongPayloadOnAssignFails", func(t *testing.T) *epb.Event {
-			return testEvent(t, assignRoute, &epb.NodeReleasedEvent{NodeId: testValidNodeID})
+			return testEvent(t, assignRoute,
+				&epb.NodeReleasedEvent{NodeId: testValidNodeID})
 		}, true},
 	}
 
@@ -155,9 +179,89 @@ func TestNnsEventServerNodeSiteEvents(t *testing.T) {
 			testEventOrg)
 
 		_, err := srv.EventNotification(context.Background(),
-			testEvent(t, assignRoute, &epb.EventRegistryNodeAssign{NodeId: testValidNodeID}))
+			testEvent(t, assignRoute,
+				&epb.EventRegistryNodeAssign{NodeId: testValidNodeID}))
 
 		assert.Error(t, err)
 		assert.Zero(t, added)
 	})
+}
+
+func TestNnsEventServerNodeOnlineEvent(t *testing.T) {
+	registered := &creg.NodeInfo{
+		Id:   testValidNodeID,
+		Site: creg.NodeSiteInfo{SiteId: "site-1", NetworkId: "network-1"},
+	}
+
+	cases := []struct {
+		name        string
+		node        *creg.NodeInfo
+		registryErr error
+		storeErr    error
+		addErr      error
+		wantSite    string
+		wantNetwork string
+		wantErr     bool
+	}{
+		{name: "registeredNodeTakesRegistrySite", node: registered,
+			wantSite: "site-1", wantNetwork: "network-1"},
+		{name: "unregisteredNodeStoresAddressOnly",
+			registryErr: registryError(http.StatusNotFound)},
+		{name: "registryFailureKeepsStoredSite",
+			registryErr: registryError(http.StatusServiceUnavailable),
+			wantSite:    "old-site", wantNetwork: "old-network"},
+		{name: "registryUnreachableKeepsStoredSite",
+			registryErr: errors.New("connection refused"),
+			wantSite:    "old-site", wantNetwork: "old-network"},
+		{name: "registryFailureWithoutStoredEntry",
+			registryErr: registryError(http.StatusServiceUnavailable),
+			storeErr:    errFakeNotImplemented},
+		{name: "storeWriteFailureIsReturned", node: registered,
+			addErr: errFakeNotImplemented, wantSite: "site-1", wantNetwork: "network-1",
+			wantErr: true},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			nodeClient := &mocks.NodeClient{}
+			nodeClient.On("Get", testValidNodeID).Return(tc.node, tc.registryErr).Once()
+
+			var added []pkg.NodeMeshMap
+			deleted := 0
+			store := &fakeNnsStore{
+				get: func(_ context.Context, _ string) (*pkg.NodeMeshMap, error) {
+					if tc.storeErr != nil {
+						return nil, tc.storeErr
+					}
+					return storedNode(), nil
+				},
+				add: func(_ context.Context, obj pkg.NodeMeshMap) error {
+					added = append(added, obj)
+					return tc.addErr
+				},
+				delete: func(_ context.Context, _ string) error {
+					deleted++
+					return nil
+				},
+			}
+			nnsSrv := NewNnsServer(store, &pkg.Config{OrgName: testEventOrg}, nil)
+			srv := NewNnsEventServer(testEventOrg, nodeClient, nnsSrv, testEventOrg)
+
+			_, err := srv.EventNotification(context.Background(),
+				testEvent(t, onlineRoute, onlineEvent()))
+
+			assert.Equal(t, tc.wantErr, err != nil, err)
+			assert.Zero(t, deleted)
+			require.Len(t, added, 1)
+			assert.Equal(t, tc.wantSite, added[0].Site)
+			assert.Equal(t, tc.wantNetwork, added[0].Network)
+			assert.Equal(t, testEventOrg, added[0].Org)
+			assert.Equal(t, "10.0.0.2", added[0].NodeIp)
+			assert.Equal(t, int32(3001), added[0].NodePort)
+			assert.Equal(t, "10.1.0.2", added[0].MeshIp)
+			assert.Equal(t, int32(4001), added[0].MeshPort)
+			assert.Equal(t, "mesh-2", added[0].MeshHostName)
+			nodeClient.AssertExpectations(t)
+		})
+	}
 }

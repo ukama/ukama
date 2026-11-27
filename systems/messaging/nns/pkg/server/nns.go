@@ -11,12 +11,14 @@ package server
 import (
 	"context"
 
-	log "github.com/sirupsen/logrus"
-	"github.com/ukama/ukama/systems/common/ukama"
-	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
-	"github.com/ukama/ukama/systems/messaging/nns/pkg"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ukama/ukama/systems/common/ukama"
+	"github.com/ukama/ukama/systems/messaging/nns/pkg"
+
+	log "github.com/sirupsen/logrus"
+	pb "github.com/ukama/ukama/systems/messaging/nns/pb/gen"
 )
 
 // NnsStore is the persistence layer used by NnsServer (implemented by *pkg.Nns).
@@ -36,7 +38,8 @@ type NnsServer struct {
 	nns       NnsStore
 }
 
-func NewNnsServer(nnsClient NnsStore, config *pkg.Config, dnsConfig *pkg.DnsConfig) *NnsServer {
+func NewNnsServer(nnsClient NnsStore, config *pkg.Config,
+	dnsConfig *pkg.DnsConfig) *NnsServer {
 	return &NnsServer{
 		config:    config,
 		dnsConfig: dnsConfig,
@@ -44,7 +47,8 @@ func NewNnsServer(nnsClient NnsStore, config *pkg.Config, dnsConfig *pkg.DnsConf
 	}
 }
 
-func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
+func (n *NnsServer) GetNode(c context.Context,
+	req *pb.GetNodeRequest) (*pb.GetNodeResponse, error) {
 	log.Infof("Getting node %s", req.GetNodeId())
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -60,7 +64,8 @@ func (n *NnsServer) GetNode(c context.Context, req *pb.GetNodeRequest) (*pb.GetN
 	}, nil
 }
 
-func (n *NnsServer) GetMesh(c context.Context, req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
+func (n *NnsServer) GetMesh(c context.Context,
+	req *pb.GetMeshRequest) (*pb.GetMeshResponse, error) {
 	log.Infof("Getting mesh for node %s", req.GetNodeId())
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -99,7 +104,8 @@ func (n *NnsServer) Set(c context.Context, req *pb.SetRequest) (*pb.SetResponse,
 	return &pb.SetResponse{}, nil
 }
 
-func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
+func (n *NnsServer) UpdateMesh(c context.Context,
+	req *pb.UpdateMeshRequest) (*pb.UpdateMeshResponse, error) {
 	log.Infof("Updating mesh %s:%d", req.GetMeshIp(), req.GetMeshPort())
 	err := n.nns.UpdateNodeMesh(c, req.GetNodeId(), req.GetMeshIp(), req.GetMeshPort())
 	if err != nil {
@@ -108,7 +114,8 @@ func (n *NnsServer) UpdateMesh(c context.Context, req *pb.UpdateMeshRequest) (*p
 	return &pb.UpdateMeshResponse{}, nil
 }
 
-func (n *NnsServer) UpdateNode(c context.Context, req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
+func (n *NnsServer) UpdateNode(c context.Context,
+	req *pb.UpdateNodeRequest) (*pb.UpdateNodeResponse, error) {
 	log.Infof("Updating node %s", req.GetNodeId())
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -120,7 +127,8 @@ func (n *NnsServer) UpdateNode(c context.Context, req *pb.UpdateNodeRequest) (*p
 	return &pb.UpdateNodeResponse{}, nil
 }
 
-func (n *NnsServer) Delete(c context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
+func (n *NnsServer) Delete(c context.Context,
+	req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
 	log.Infof("Deleting node %s", req.GetNodeId())
 	if _, err := ukama.ValidateNodeId(req.GetNodeId()); err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -132,7 +140,8 @@ func (n *NnsServer) Delete(c context.Context, req *pb.DeleteRequest) (*pb.Delete
 	return &pb.DeleteResponse{}, nil
 }
 
-func (n *NnsServer) List(c context.Context, req *pb.ListRequest) (*pb.ListResponse, error) {
+func (n *NnsServer) List(c context.Context,
+	req *pb.ListRequest) (*pb.ListResponse, error) {
 	log.Infof("Listing all nodes")
 	items, err := n.nns.GetAll(c)
 	if err != nil {
